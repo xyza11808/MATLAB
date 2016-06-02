@@ -1,0 +1,27 @@
+basepath='C:\Documents and Settings\Administrator\Desktop\ueli\code\sortingNew\model\';
+load([basepath 'sim3\simulation3.mat']);
+
+train=spiketrains{3};
+
+till=40000;
+
+L=-0.1;
+TE=detect_spikes_wavelet(train(1:till),25,[0.5 1.0],'reset', L ,'bior1.5',1,0);
+
+figure(3);plot(train(1:till));
+
+times=[];
+for i=1:length(spiketimes)
+    times=[times spiketimes{i}];
+end
+times2=sort(times);
+inds=find(times2<till);
+
+figure(2);
+hold on
+plot(times2(inds),-0.8, 'x','MarkerSize', 15);
+hold off
+figure(3);
+hold on
+plot(times2(inds),-0.8, 'x','MarkerSize', 15);
+hold off

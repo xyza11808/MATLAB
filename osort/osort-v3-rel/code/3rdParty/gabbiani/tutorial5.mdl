@@ -1,0 +1,1023 @@
+Model {
+  Name			  "tutorial5"
+  Version		  2.20
+  SimParamPage		  Solver
+  SampleTimeColors	  off
+  InvariantConstants	  off
+  WideVectorLines	  off
+  ShowLineWidths	  off
+  StartTime		  "0.0"
+  StopTime		  "tstop"
+  Solver		  ode5
+  RelTol		  "1e-3"
+  AbsTol		  "1e-3"
+  Refine		  "1"
+  MaxStep		  "tstep"
+  InitialStep		  "auto"
+  FixedStep		  "tstep"
+  MaxOrder		  5
+  OutputOption		  RefineOutputTimes
+  OutputTimes		  "[]"
+  LoadExternalInput	  off
+  ExternalInput		  "[t, u]"
+  SaveTime		  off
+  TimeSaveName		  "tout"
+  SaveState		  off
+  StateSaveName		  "xout"
+  SaveOutput		  off
+  OutputSaveName	  "yout"
+  LoadInitialState	  off
+  InitialState		  "xInitial"
+  SaveFinalState	  off
+  FinalStateName	  "xFinal"
+  LimitMaxRows		  off
+  MaxRows		  "1000"
+  Decimation		  "1"
+  AlgebraicLoopMsg	  warning
+  MinStepSizeMsg	  warning
+  UnconnectedInputMsg	  warning
+  UnconnectedOutputMsg	  warning
+  UnconnectedLineMsg	  warning
+  ConsistencyChecking	  off
+  ZeroCross		  on
+  SimulationMode	  normal
+  RTWSystemTargetFile	  "grt.tlc"
+  RTWInlineParameters	  off
+  RTWPlaceOutputsASAP	  off
+  RTWRetainRTWFile	  off
+  RTWTemplateMakefile	  "grt_default_tmf"
+  RTWMakeCommand	  "make_rtw"
+  RTWGenerateCodeOnly	  off
+  ExtModeMexFile	  "ext_comm"
+  ExtModeBatchMode	  off
+  BlockDefaults {
+    Orientation		    right
+    ForegroundColor	    black
+    BackgroundColor	    white
+    DropShadow		    off
+    NamePlacement	    normal
+    FontName		    "Helvetica"
+    FontSize		    10
+    FontWeight		    normal
+    FontAngle		    normal
+    ShowName		    on
+  }
+  AnnotationDefaults {
+    HorizontalAlignment	    center
+    VerticalAlignment	    middle
+    ForegroundColor	    black
+    BackgroundColor	    white
+    DropShadow		    off
+    FontName		    "Helvetica"
+    FontSize		    10
+    FontWeight		    normal
+    FontAngle		    normal
+  }
+  LineDefaults {
+    FontName		    "Helvetica"
+    FontSize		    9
+    FontWeight		    normal
+    FontAngle		    normal
+  }
+  System {
+    Name		    "tutorial5"
+    Location		    [30, 55, 604, 872]
+    Open		    on
+    ToolBar		    on
+    StatusBar		    on
+    ScreenColor		    white
+    PaperOrientation	    landscape
+    PaperPositionMode	    auto
+    PaperType		    usletter
+    PaperUnits		    inches
+    Block {
+      BlockType		      DiscreteFilter
+      Name		      "Exponential \nlow-pass filter"
+      Position		      [235, 70, 280, 110]
+      Numerator		      "k2"
+      Denominator	      "1"
+      SampleTime	      "dt"
+      MaskType		      "Exponential low-pass filter"
+      MaskDescription	      "Parameters"
+      MaskPromptString	      "Time constant [msec]| Number of  points| time s"
+"tep [msec]"
+      MaskStyleString	      "edit,edit,edit"
+      MaskTunableValueString  "on,on,on"
+      MaskInitialization      "tau = @1; n = @2; dt = @3; t = [0:1:n-1]*dt; k2"
+" = exp(-t/tau) ; k2 = k2/norm(k2);"
+      MaskDisplay	      "plot(t,k2);"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "27|1024|tstep"
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [415, 587, 534, 628]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('Theoretical mean to\\n variance dispersio"
+"n')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info"
+	Location		[88, 348, 360, 836]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [107, 67]
+	  VerticalAlignment	  top
+	  Text			  "sndpdisp(50,2,27,2,10,500,10)"
+	}
+	Annotation {
+	  Position		  [94, 97]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window."
+	}
+	Annotation {
+	  Position		  [72, 122]
+	  VerticalAlignment	  top
+	  Text			  "The parameters are:"
+	}
+	Annotation {
+	  Position		  [112, 152]
+	  VerticalAlignment	  top
+	  Text			  "50 = rate of the input pulses (in Hz)."
+	}
+	Annotation {
+	  Position		  [92, 172]
+	  VerticalAlignment	  top
+	  Text			  "2 = multiplication parameter."
+	}
+	Annotation {
+	  Position		  [127, 197]
+	  VerticalAlignment	  top
+	  Text			  "27 = low-pass filter time constant (msec)."
+	}
+	Annotation {
+	  Position		  [92, 217]
+	  VerticalAlignment	  top
+	  Text			  "2 = refractory period (msec)."
+	}
+	Annotation {
+	  Position		  [134, 242]
+	  VerticalAlignment	  top
+	  Text			  "10 = smallest interval on which the mean an"
+"d\n      variance should be computed (in msec). "
+	}
+	Annotation {
+	  Position		  [94, 272]
+	  VerticalAlignment	  top
+	  Text			  "500 = largest interval (in msec)"
+	}
+	Annotation {
+	  Position		  [102, 297]
+	  VerticalAlignment	  top
+	  Text			  "10 = interval increment (in msec)."
+	}
+	Annotation {
+	  Position		  [122, 22]
+	  VerticalAlignment	  top
+	  Text			  "To compute the theoretical mean to \nvarian"
+"ce dispersions, enter: "
+	}
+	Annotation {
+	  Position		  [52, 327]
+	  VerticalAlignment	  top
+	  Text			  "Similarly, enter:"
+	}
+	Annotation {
+	  Position		  [102, 357]
+	  VerticalAlignment	  top
+	  Text			  "sndpdisp(20,2,27,2,20,1000,20)"
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info1"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [420, 481, 533, 523]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('Dispersion relation\\nat low input\\nfreq"
+"uencies')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info1"
+	Location		[259, 137, 575, 455]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [152, 17]
+	  VerticalAlignment	  top
+	  Text			  "To compute the mean to variance dispersion "
+"at\nlow stimulus frequencies, run the simulation or load\nthe resulting outpu"
+"t spike train by entering:"
+	}
+	Annotation {
+	  Position		  [82, 67]
+	  VerticalAlignment	  top
+	  Text			  "load tutorial5_dat/spk_50"
+	}
+	Annotation {
+	  Position		  [114, 97]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window. Then enter:"
+	}
+	Annotation {
+	  Position		  [112, 127]
+	  VerticalAlignment	  top
+	  Text			  "dispersion(spk_50,tstep,20,1000,20)"
+	}
+	Annotation {
+	  Position		  [112, 202]
+	  VerticalAlignment	  top
+	  Text			  "tstep = time step for the simulation"
+	}
+	Annotation {
+	  Position		  [62, 157]
+	  VerticalAlignment	  top
+	  Text			  "The parameters are:"
+	}
+	Annotation {
+	  Position		  [92, 182]
+	  VerticalAlignment	  top
+	  Text			  "spk_50 = output spike train"
+	}
+	Annotation {
+	  Position		  [144, 222]
+	  VerticalAlignment	  top
+	  Text			  "20 = smallest interval on which the mean an"
+"d\n      variance should be computed (in msec). "
+	}
+	Annotation {
+	  Position		  [104, 257]
+	  VerticalAlignment	  top
+	  Text			  "1000 = largest interval (in msec)"
+	}
+	Annotation {
+	  Position		  [107, 287]
+	  VerticalAlignment	  top
+	  Text			  "20 = interval increment (in msec)."
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info2"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [420, 640, 507, 668]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('Spike count\\ndistributions')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info2"
+	Location		[50, 115, 417, 467]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [172, 17]
+	  VerticalAlignment	  top
+	  Text			  "To plot the spike count distributions, ente"
+"r "
+	}
+	Annotation {
+	  Position		  [122, 57]
+	  VerticalAlignment	  top
+	  Text			  "countprob(spk_20,250,40,tstep)"
+	}
+	Annotation {
+	  Position		  [144, 92]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window. The parameters are"
+":"
+	}
+	Annotation {
+	  Position		  [79, 122]
+	  VerticalAlignment	  top
+	  Text			  "spk_20 = spike train:"
+	}
+	Annotation {
+	  Position		  [94, 152]
+	  VerticalAlignment	  top
+	  Text			  "250 = time interval (msec)"
+	}
+	Annotation {
+	  Position		  [89, 177]
+	  VerticalAlignment	  top
+	  Text			  "40 = maximal spike count"
+	}
+	Annotation {
+	  Position		  [139, 207]
+	  VerticalAlignment	  top
+	  Text			  "tstep = time step for the simulation (in ms"
+"ec)."
+	}
+	Annotation {
+	  Position		  [62, 242]
+	  VerticalAlignment	  top
+	  Text			  "Similarly, enter:"
+	}
+	Annotation {
+	  Position		  [112, 292]
+	  VerticalAlignment	  top
+	  Text			  "countprob(spk_50,250,40,tstep)1"
+	}
+	Annotation {
+	  Position		  [42, 267]
+	  VerticalAlignment	  top
+	  Text			  "hold on"
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info3"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [420, 531, 533, 573]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('Dispersion relation\\nat high input\\nfre"
+"quencies')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info3"
+	Location		[113, 200, 489, 653]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [142, 22]
+	  VerticalAlignment	  top
+	  Text			  "To compute the mean to variance dispersion "
+"at\nhigh stimulus frequencies, proceed as follows:"
+	}
+	Annotation {
+	  Position		  [167, 62]
+	  VerticalAlignment	  top
+	  Text			  "1) Double click on the \"Random current pul"
+"se generator\"\nicon and modify the mean period between pulses to 20 \nmsec. "
+"Similarly, change the name of the output variable\nto spk_20 and then run the"
+" simulation. "
+	}
+	Annotation {
+	  Position		  [172, 122]
+	  VerticalAlignment	  top
+	  Text			  "Alternatively, load the result of the simul"
+"ation by typing:"
+	}
+	Annotation {
+	  Position		  [114, 177]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window. Then enter:"
+	}
+	Annotation {
+	  Position		  [84, 147]
+	  VerticalAlignment	  top
+	  Text			  "load tutorial5_dat/spk_20 "
+	}
+	Annotation {
+	  Position		  [112, 412]
+	  VerticalAlignment	  top
+	  Text			  "10 = interval increment (in msec)."
+	}
+	Annotation {
+	  Position		  [104, 382]
+	  VerticalAlignment	  top
+	  Text			  "500 = largest interval (in msec)"
+	}
+	Annotation {
+	  Position		  [144, 347]
+	  VerticalAlignment	  top
+	  Text			  "10 = smallest interval on which the mean an"
+"d\n      variance should be computed (in msec). "
+	}
+	Annotation {
+	  Position		  [112, 322]
+	  VerticalAlignment	  top
+	  Text			  "tstep = time step for the simulation"
+	}
+	Annotation {
+	  Position		  [92, 297]
+	  VerticalAlignment	  top
+	  Text			  "spk_20 = output spike train"
+	}
+	Annotation {
+	  Position		  [67, 272]
+	  VerticalAlignment	  top
+	  Text			  "The parameters are:"
+	}
+	Annotation {
+	  Position		  [112, 242]
+	  VerticalAlignment	  top
+	  Text			  "dispersion(spk_20,tstep,10,500,10)"
+	}
+	Annotation {
+	  Position		  [37, 212]
+	  VerticalAlignment	  top
+	  Text			  "hold on"
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info4"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [415, 685, 530, 733]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('NTA and Poisson\\nspike count\\ndistribut"
+"ions')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info4"
+	Location		[49, 231, 418, 781]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [144, 92]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window. The parameters are"
+":"
+	}
+	Annotation {
+	  Position		  [79, 122]
+	  VerticalAlignment	  top
+	  Text			  "8.35 = mean spike count."
+	}
+	Annotation {
+	  Position		  [177, 17]
+	  VerticalAlignment	  top
+	  Text			  "To plot the corresponding NTA spike count "
+"\ndistributions, enter "
+	}
+	Annotation {
+	  Position		  [97, 57]
+	  VerticalAlignment	  top
+	  Text			  "neymtacnt(8.35,2.45-1,40)"
+	}
+	Annotation {
+	  Position		  [84, 177]
+	  VerticalAlignment	  top
+	  Text			  "40 = maximal spike count."
+	}
+	Annotation {
+	  Position		  [57, 207]
+	  VerticalAlignment	  top
+	  Text			  "Similarly, enter:"
+	}
+	Annotation {
+	  Position		  [92, 237]
+	  VerticalAlignment	  top
+	  Text			  "neymtacnt(19.7,1.78-1,40)"
+	}
+	Annotation {
+	  Position		  [152, 272]
+	  VerticalAlignment	  top
+	  Text			  "To plot the corresponding Poisson spike cou"
+"nt\ndistributions, enter:"
+	}
+	Annotation {
+	  Position		  [154, 352]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window.  The parameters ar"
+"e:"
+	}
+	Annotation {
+	  Position		  [159, 147]
+	  VerticalAlignment	  top
+	  Text			  "2.45-1 = effective multiplication parameter"
+" (given by\nthe dispersion minus 1)."
+	}
+	Annotation {
+	  Position		  [114, 322]
+	  VerticalAlignment	  top
+	  Text			  "poisscnt(8.35/250e-3,250,40)"
+	}
+	Annotation {
+	  Position		  [99, 407]
+	  VerticalAlignment	  top
+	  Text			  "250 = time interval (in msec)."
+	}
+	Annotation {
+	  Position		  [179, 377]
+	  VerticalAlignment	  top
+	  Text			  "8.35/250e-3 = mean rate of the Poisson proc"
+"ess (in Hz)."
+	}
+	Annotation {
+	  Position		  [94, 432]
+	  VerticalAlignment	  top
+	  Text			  "40 =  maximal spike count."
+	}
+	Annotation {
+	  Position		  [67, 462]
+	  VerticalAlignment	  top
+	  Text			  "Similarly,  enter:"
+	}
+	Annotation {
+	  Position		  [109, 492]
+	  VerticalAlignment	  top
+	  Text			  "poisscnt(19.7/250e-3,250,40)"
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info5"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [420, 750, 523, 786]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('ROC curves')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info5"
+	Location		[80, 156, 442, 742]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [162, 17]
+	  VerticalAlignment	  top
+	  Text			  "To plot the corresponding ROC curves, enter"
+" "
+	}
+	Annotation {
+	  Position		  [147, 72]
+	  VerticalAlignment	  top
+	  Text			  "[cnt,prb1] = countprob(spk_50,250,40,tstep)"
+";"
+	}
+	Annotation {
+	  Position		  [147, 97]
+	  VerticalAlignment	  top
+	  Text			  "[cnt,prb2] = countprob(spk_20,250,40,tstep)"
+";"
+	}
+	Annotation {
+	  Position		  [72, 127]
+	  VerticalAlignment	  top
+	  Text			  "roc(cnt,prb1,prb2)"
+	}
+	Annotation {
+	  Position		  [132, 177]
+	  VerticalAlignment	  top
+	  Text			  "[cnt, nta1] = neymtacnt(8.35,2.45-1,40);"
+	}
+	Annotation {
+	  Position		  [132, 207]
+	  VerticalAlignment	  top
+	  Text			  "[cnt, nta2] = neymtacnt(19.7,1.78-1,40);"
+	}
+	Annotation {
+	  Position		  [107, 147]
+	  VerticalAlignment	  top
+	  Text			  "hold on; subplot(2,1,1); hold on;"
+	}
+	Annotation {
+	  Position		  [72, 237]
+	  VerticalAlignment	  top
+	  Text			  "roc(cnt,nta1,nta2)"
+	}
+	Annotation {
+	  Position		  [144, 267]
+	  VerticalAlignment	  top
+	  Text			  "[cnt, poi1] = poisscnt(8.35/250e-3,250,40);"
+	}
+	Annotation {
+	  Position		  [144, 292]
+	  VerticalAlignment	  top
+	  Text			  "[cnt, poi2] = poisscnt(19.7/250e-3,250,40);"
+	}
+	Annotation {
+	  Position		  [72, 322]
+	  VerticalAlignment	  top
+	  Text			  "roc(cnt,poi1,poi2)"
+	}
+	Annotation {
+	  Position		  [94, 347]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window."
+	}
+	Annotation {
+	  Position		  [149, 372]
+	  VerticalAlignment	  top
+	  Text			  "To compare the experimental roc curve with "
+"the \ncorresponding gaussian roc curve enter:"
+	}
+	Annotation {
+	  Position		  [107, 412]
+	  VerticalAlignment	  top
+	  Text			  "[pds, pfs] = roc(cnt,prb1,prb2);"
+	}
+	Annotation {
+	  Position		  [122, 432]
+	  VerticalAlignment	  top
+	  Text			  "[pdg, pfg] = roc(8.35,4.52,19.7,5.93)"
+	}
+	Annotation {
+	  Position		  [114, 457]
+	  VerticalAlignment	  top
+	  Text			  "figure(5); plot(pfs,pds,pfg,pdg,'g');"
+	}
+	Annotation {
+	  Position		  [99, 487]
+	  VerticalAlignment	  top
+	  Text			  "in  the workspace window."
+	}
+      }
+    }
+    Block {
+      BlockType		      Gain
+      Name		      "Multiplicative \ngain factor"
+      Position		      [145, 73, 180, 107]
+      Gain		      "gain_fact"
+      MaskType		      "Multiplicative gain factor"
+      MaskDescription	      "Parameters"
+      MaskHelp		      "This block computes the multiplicative factor w"
+"ith which a shot noise  pulse should be multiplied to implement a given multi"
+"plicative gain for shot noise cascaded through an exponential filter and a Po"
+"isson pulse generator."
+      MaskPromptString	      "Multiplication factor|Filter time constant [mse"
+"c]|Number of points|time step [msec]|mean threshold [mV]|Capacitance [nF]"
+      MaskStyleString	      "edit,edit,edit,edit,edit,edit"
+      MaskTunableValueString  "on,on,on,on,on,on"
+      MaskInitialization      "k2 = exp(-(0:@3-1)*@4/@2); k2 = k2/norm(k2); hb"
+"ar = sum(k2);gain_fact = @5*@6*@1/(@4*hbar);"
+      MaskDisplay	      "disp('alpha')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "2|27|1024|tstep|10|.5"
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Poisson spike \ngenerator with \nref. period"
+      Ports		      [1, 2, 0, 0, 0]
+      Position		      [340, 62, 385, 113]
+      ShowPortLabels	      off
+      MaskType		      "I&F p. thres., ref. per."
+      MaskDescription	      "Parameters"
+      MaskHelp		      "For a detailled description of the model, pleas"
+"e type 'help piandfr' in the main matlab window"
+      MaskPromptString	      "time step [msec]|mean threshold [mV]|Capacitanc"
+"e [nF]|refractory period [msec]"
+      MaskStyleString	      "edit,edit,edit,edit"
+      MaskTunableValueString  "on,on,on,on"
+      MaskInitialization      "dt = @1; thres = @2; C = @3; ref = @4;"
+      MaskDisplay	      "disp('Vm \\n\\n spikes')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "tstep|10|.5|2"
+      System {
+	Name			"Poisson spike \ngenerator with \nref. period"
+	Location		[65, 93, 431, 311]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  Inport
+	  Name			  "in_1"
+	  Position		  [40, 75, 60, 95]
+	  Port			  "1"
+	  PortWidth		  "-1"
+	  SampleTime		  "-1"
+	}
+	Block {
+	  BlockType		  Demux
+	  Name			  "Demux"
+	  Ports			  [1, 2, 0, 0, 0]
+	  Position		  [180, 66, 220, 99]
+	  Outputs		  "2"
+	}
+	Block {
+	  BlockType		  "S-Function"
+	  Name			  "Poisson spike\ngenerator with\nref. period"
+	  Ports			  [1, 1, 0, 0, 0]
+	  Position		  [90, 66, 140, 104]
+	  FunctionName		  "piandfr"
+	  Parameters		  "dt,thres,C, ref"
+	  PortCounts		  "[]"
+	  SFunctionModules	  "''"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "out_2"
+	  Position		  [250, 95, 270, 115]
+	  Port			  "1"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "out_1"
+	  Position		  [250, 45, 270, 65]
+	  Port			  "2"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Line {
+	  SrcBlock		  "in_1"
+	  SrcPort		  1
+	  DstBlock		  "Poisson spike\ngenerator with\nref. period"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Demux"
+	  SrcPort		  2
+	  DstBlock		  "out_2"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Demux"
+	  SrcPort		  1
+	  DstBlock		  "out_1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Poisson spike\ngenerator with\nref. period"
+	  SrcPort		  1
+	  DstBlock		  "Demux"
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Random current\npulse generator"
+      Ports		      [0, 1, 0, 0, 0]
+      Position		      [50, 70, 80, 110]
+      ShowPortLabels	      off
+      MaskType		      "Pulse generator"
+      MaskDescription	      "Parameters:"
+      MaskHelp		      "Pulse generator, for a detailled description of"
+" the model, type 'help pulsegen' in the main matlab window"
+      MaskPromptString	      "time step [msec]|start time [msec]|period [msec"
+"]|width [msec]|pulse height [nA]"
+      MaskStyleString	      "edit,edit,edit,edit,edit"
+      MaskTunableValueString  "on,on,on,on,on"
+      MaskInitialization      "dt = @1; s = @2; p = @3; w = @4; h = @5;"
+      MaskDisplay	      "plot(0,0,100,100,[90,75,75,60,60,35,35,20,20,10"
+"],[20,20,80,80,20,20,80,80,20,20])"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "tstep|0|50|tstep|1"
+      System {
+	Name			"Random current\npulse generator"
+	Location		[155, 549, 402, 726]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  "S-Function"
+	  Name			  "Random current\npulse generator"
+	  Ports			  [1, 1, 0, 0, 0]
+	  Position		  [70, 69, 130, 111]
+	  FunctionName		  "ppulsegen"
+	  Parameters		  "dt,s,p,w,h"
+	  PortCounts		  "[]"
+	  SFunctionModules	  "''"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "out_1"
+	  Position		  [160, 80, 180, 100]
+	  Port			  "1"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Line {
+	  SrcBlock		  "Random current\npulse generator"
+	  SrcPort		  1
+	  DstBlock		  "out_1"
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
+      BlockType		      Scope
+      Name		      "Scope"
+      Ports		      [1, 0, 0, 0, 0]
+      Position		      [440, 150, 470, 180]
+      Floating		      off
+      Location		      [9, 126, 340, 440]
+      Open		      off
+      Grid		      on
+      TickLabels	      on
+      ZoomMode		      on
+      TimeRange		      "500.000000"
+      YMin		      "-2.000000"
+      YMax		      "2.000000"
+      SaveToWorkspace	      off
+      SaveName		      "ScopeData"
+      LimitMaxRows	      on
+      MaxRows		      "5000"
+      Decimation	      "1"
+      SampleInput	      off
+      SampleTime	      "0"
+    }
+    Block {
+      BlockType		      ToWorkspace
+      Name		      "To Workspace1"
+      Position		      [425, 88, 485, 112]
+      VariableName	      "spk_50"
+      Buffer		      "ceil(tstop/tstep)"
+      Decimation	      "1"
+      SampleTime	      "0"
+    }
+    Line {
+      SrcBlock		      "Random current\npulse generator"
+      SrcPort		      1
+      DstBlock		      "Multiplicative \ngain factor"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Multiplicative \ngain factor"
+      SrcPort		      1
+      DstBlock		      "Exponential \nlow-pass filter"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Exponential \nlow-pass filter"
+      SrcPort		      1
+      DstBlock		      "Poisson spike \ngenerator with \nref. period"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Poisson spike \ngenerator with \nref. period"
+      SrcPort		      2
+      DstBlock		      "To Workspace1"
+      DstPort		      1
+    }
+    Annotation {
+      Position		      [273, 32]
+      VerticalAlignment	      top
+      Text		      "Multiplicative and refractory effects in a shot"
+" noise driven Poisson model"
+    }
+    Annotation {
+      Position		      [268, 207]
+      VerticalAlignment	      top
+      Text		      "To use the floating Scope, double click on the "
+"\"Scope\" icon and select the output line\nthat you wish to plot."
+    }
+    Annotation {
+      Position		      [278, 237]
+      VerticalAlignment	      top
+      Text		      "To change the parameters of the model, double c"
+"lick on the  \"Poisson spike generator\" icon,\n on the \"Random current puls"
+"e generator\" icon or on the \"Exponential low-pass filter\" icon."
+    }
+    Annotation {
+      Position		      [281, 272]
+      VerticalAlignment	      top
+      Text		      "The multiplicative gain factor determines the m"
+"ean number of output spikes per input impulse\n(in the absence of refractory "
+"period)."
+    }
+    Annotation {
+      Position		      [268, 307]
+      VerticalAlignment	      top
+      Text		      "To change the parameters of the simulation, use"
+" the \"Parameters\" selection in the\n\"Simulation\" pull-down menu."
+    }
+    Annotation {
+      Position		      [258, 337]
+      VerticalAlignment	      top
+      Text		      "Currently, the stop time and time step are dete"
+"rmined by two workspace variables \n(tstop and tstep). "
+    }
+    Annotation {
+      Position		      [238, 372]
+      VerticalAlignment	      top
+      Text		      "These two variables can also be changed directl"
+"y in the workspace window."
+    }
+    Annotation {
+      Position		      [256, 397]
+      VerticalAlignment	      top
+      Text		      "To start and stop the simulation, use the \"Sta"
+"rt/Stop\" selection in the \"Simulation\" \npull-down menu"
+    }
+    Annotation {
+      Position		      [256, 442]
+      VerticalAlignment	      top
+      Text		      "By running the stimulations or loading the resu"
+"lting spike trains from the tutorial5_dat\ndirectory, you can:"
+    }
+    Annotation {
+      Position		      [196, 487]
+      VerticalAlignment	      top
+      Text		      "1) Compute the dispersion relation between mean"
+" and variance \nat low input frequency."
+    }
+    Annotation {
+      Position		      [176, 532]
+      VerticalAlignment	      top
+      Text		      "2) Compare with the dispersion relation obtaine"
+"d at high \ninput frequency."
+    }
+    Annotation {
+      Position		      [166, 592]
+      VerticalAlignment	      top
+      Text		      "3) Compare these results with theoretical predi"
+"ctions."
+    }
+    Annotation {
+      Position		      [201, 647]
+      VerticalAlignment	      top
+      Text		      "4) Compute the spike count distributions for a "
+"fixed time interval."
+    }
+    Annotation {
+      Position		      [181, 687]
+      VerticalAlignment	      top
+      Text		      "5) Compare them with Poisson and Neyman-type A "
+"count \ndistributions."
+    }
+    Annotation {
+      Position		      [146, 762]
+      VerticalAlignment	      top
+      Text		      "6) Compute the corresponding ROC curves."
+    }
+  }
+}

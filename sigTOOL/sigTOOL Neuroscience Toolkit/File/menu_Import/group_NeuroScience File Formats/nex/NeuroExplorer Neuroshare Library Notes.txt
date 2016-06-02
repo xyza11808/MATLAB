@@ -1,0 +1,28 @@
+NeuroExplorer NeuroShare Library Notes
+
+Library version 1.1.
+Date: October 17, 2004.
+
+File Version Support: 
+ - Library supports NeuroExplorer files versions 1.01 to 1.04. 
+
+Maximum number of opened files: 
+ - 1024
+
+Some *GetInfo functions do not fill all the information 
+about the entities since this information is not present in Nex files.
+
+ns_GetFileInfo
+ - File creation time is given as the creation time of the Nex file.
+
+ns_GetAnalogInfo and ns_GetSegmentSourceInfo:
+ - Source location, filtering and probe info are not provided.
+
+ns_GetNeuralInfo:
+ - No probe or source info is provided.
+
+NeuroExplorer Neurons and Events are returned as Neural Entities.
+NeuroExplorer Intervals and Markers are returned as Event Entities.
+NeuroExplorer Waveforms are returned as Segment Entities.
+NeuroExplorer Continuous variables are returned as Analog Entities.
+NeuroExplorer Population Vectors are returned as unknown entities.

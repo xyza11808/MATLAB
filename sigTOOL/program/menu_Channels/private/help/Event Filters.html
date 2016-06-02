@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+span.SpellE {mso-style-name:"";
+	mso-spl-e:yes;}
+div.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+li.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+p.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+.style1 {color: #808080}
+.style2 {color: #000000}
+-->
+</style>
+</head>
+
+<body>
+<div align="left">  
+  <p align="right"><img src="../../../Logo.gif" width="80" height="40" alt="Logo" /></p>
+  <h2>Event Filters</h2>
+  <p align="right" class="style1">Email: sigtool@kcl.ac.uk</p>
+</div>
+<hr />
+<p align="right" class="style1">&nbsp;</p>
+<p align="right" class="style1">Author: Malcolm Lidierth</p>
+<p align="right" class="style1">Updated: November 2007 </p>
+<h3 align="left" class="style2">Method</h3>
+<p>Event Filters are activated from the Channels-&gt;Event Filter menu.</p>
+<p>When Event Filters are active, only timestamps or data epochs that satisfy the specified filter conditions should  be processed by the sigTOOL analysis functions.</p>
+<p align="center"><img src="Marker Filters.jpg" alt="Markers" width="260" height="221" /></p>
+<p align="center">&nbsp;</p>
+<p>Each sigTOOL channel has an independent Event Filter.</p>
+<p>The preset Event Filtering methods available from the sigTOOL GUI allow events and data epochs to be selected on the basis of:</p>
+<ul>
+  <li>the number of the epoch or timestamp (e.g. whether it is odd or even)</li>
+  <li>the values stored in the marker field of each sigTOOL data channel.</li>
+</ul>
+<p>&nbsp;</p>
+<h3>The following standard functions are defined that do not require any
+    marker data in the channel</h3>
+<ul>
+  <li>'Off'         selects all events/epochs in the channel (default)</li>
+  <li>'Cursors' selects those events/epochs that fall between pairs of cursors in the parent data view. A pair of cursors has one odd-numbered cursor (number n) and an even  numbered cursor (n+1), e.g. 1+2, 3+4 etc. Missing or incomplete pairs will be ignored. For episodic waveforms, the entire epoch must be contained within the cursor pair.</li>
+  <li>'Odd Epochs'  selects odd numbered epochs, false otherwise</li>
+  <li>'Even Epochs' selects even numbered epochs, false otherwise </li>
+  <li>'Every Nth Epoch' selects every Nth epoch starting at that specified in the subsequent menu:</li>
+</ul>
+<p align="center"><img src="Every N" alt="Every N" width="-1" height="-1" /></p>
+<p>&nbsp;</p>
+<p>The following require a simple numeric matrix in the channel marker field</p>
+<ul>
+  <li>    'Match Any'   selects those events/epochs where <em>any</em> marker value matches 
+    <em>any</em> of the values specified in a template supplied in a subsequent menu</li>
+</ul>
+<p align="center"><img src="MatchAny" alt="MatchAny" /></p>
+<ul>
+  <li>    'Match All'   selects those events/epochs where there is an exact match between <em>each</em>    element in <em>each</em> row of marker data, and the corresponding element in the supplied template </li>
+</ul>
+<p align="center"><img src="MatchAll" alt="MatchAll" /></p>
+<p>&nbsp;</p>
+<h3>Custom filters</h3>
+<p>If you select 'Custom' from the menu you will be prompted to select a
+  custom defined m-file. These files can be used to provide more complex filtering e.g. based on metadata stored in the channel marker field. See the Programmer's Guide for further details</p>
+<h3>&nbsp;</h3>
+<p align="right">&copy; The Author and King's College London, 2007-</p>
+</body>
+</html>

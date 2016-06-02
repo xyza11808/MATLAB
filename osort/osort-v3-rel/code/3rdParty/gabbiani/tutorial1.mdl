@@ -1,0 +1,675 @@
+Model {
+  Name			  "tutorial1"
+  Version		  2.20
+  SimParamPage		  Solver
+  SampleTimeColors	  off
+  InvariantConstants	  off
+  WideVectorLines	  off
+  ShowLineWidths	  off
+  StartTime		  "0.0"
+  StopTime		  "tstop"
+  Solver		  ode5
+  RelTol		  "1e-3"
+  AbsTol		  "1e-3"
+  Refine		  "1"
+  MaxStep		  "tstep"
+  InitialStep		  "auto"
+  FixedStep		  "tstep"
+  MaxOrder		  5
+  OutputOption		  RefineOutputTimes
+  OutputTimes		  "[]"
+  LoadExternalInput	  off
+  ExternalInput		  "[t, u]"
+  SaveTime		  off
+  TimeSaveName		  "tout"
+  SaveState		  off
+  StateSaveName		  "xout"
+  SaveOutput		  off
+  OutputSaveName	  "yout"
+  LoadInitialState	  off
+  InitialState		  "xInitial"
+  SaveFinalState	  off
+  FinalStateName	  "xFinal"
+  LimitMaxRows		  off
+  MaxRows		  "1000"
+  Decimation		  "1"
+  AlgebraicLoopMsg	  warning
+  MinStepSizeMsg	  warning
+  UnconnectedInputMsg	  warning
+  UnconnectedOutputMsg	  warning
+  UnconnectedLineMsg	  warning
+  ConsistencyChecking	  off
+  ZeroCross		  on
+  SimulationMode	  normal
+  RTWSystemTargetFile	  "grt.tlc"
+  RTWInlineParameters	  off
+  RTWPlaceOutputsASAP	  off
+  RTWRetainRTWFile	  off
+  RTWTemplateMakefile	  "grt_default_tmf"
+  RTWMakeCommand	  "make_rtw"
+  RTWGenerateCodeOnly	  off
+  ExtModeMexFile	  "ext_comm"
+  ExtModeBatchMode	  off
+  BlockDefaults {
+    Orientation		    right
+    ForegroundColor	    black
+    BackgroundColor	    white
+    DropShadow		    off
+    NamePlacement	    normal
+    FontName		    "Helvetica"
+    FontSize		    10
+    FontWeight		    normal
+    FontAngle		    normal
+    ShowName		    on
+  }
+  AnnotationDefaults {
+    HorizontalAlignment	    center
+    VerticalAlignment	    middle
+    ForegroundColor	    black
+    BackgroundColor	    white
+    DropShadow		    off
+    FontName		    "Helvetica"
+    FontSize		    10
+    FontWeight		    normal
+    FontAngle		    normal
+  }
+  LineDefaults {
+    FontName		    "Helvetica"
+    FontSize		    9
+    FontWeight		    normal
+    FontAngle		    normal
+  }
+  System {
+    Name		    "tutorial1"
+    Location		    [100, 65, 550, 839]
+    Open		    on
+    ToolBar		    on
+    StatusBar		    on
+    ScreenColor		    white
+    PaperOrientation	    landscape
+    PaperPositionMode	    auto
+    PaperType		    usletter
+    PaperUnits		    inches
+    Block {
+      BlockType		      Constant
+      Name		      "Constant current"
+      Position		      [90, 122, 115, 148]
+      Value		      "i"
+      MaskType		      "constant current"
+      MaskDescription	      "Parameter"
+      MaskHelp		      "Provides a constant input current"
+      MaskPromptString	      "constant current value [nA]"
+      MaskStyleString	      "edit"
+      MaskTunableValueString  "on"
+      MaskInitialization      "i = @1;"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "0.6"
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "I & F neuron\nwith rand. thres.\nand ref. perio"
+"d"
+      Ports		      [1, 2, 0, 0, 0]
+      Position		      [180, 106, 225, 159]
+      ShowPortLabels	      off
+      MaskType		      "I&F g. thres., ref. per."
+      MaskDescription	      "Parameters"
+      MaskHelp		      "For a detailled description of the model, pleas"
+"e type 'help giandfr' in the main matlab window"
+      MaskPromptString	      "time step [msec]|mean threshold [mV]|gamma dist"
+"r. order|Capacitance [nF]|refractory period [msec]"
+      MaskStyleString	      "edit,edit,edit,edit,edit"
+      MaskTunableValueString  "on,on,on,on,on"
+      MaskInitialization      "dt = @1; thres = @2; n = @3; C = @4; ref = @5; "
+"if (ref<dt) disp(' '); disp('Warning: refractory period cannot be smaller tha"
+"n time step.'); disp(' '); end;"
+      MaskDisplay	      "disp('Vm \\n\\n spikes')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "tstep|10|5|0.5|5"
+      System {
+	Name			"I & F neuron\nwith rand. thres.\nand ref. per"
+"iod"
+	Location		[90, 87, 403, 270]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  Inport
+	  Name			  "in_1"
+	  Position		  [55, 75, 75, 95]
+	  Port			  "1"
+	  PortWidth		  "-1"
+	  SampleTime		  "-1"
+	}
+	Block {
+	  BlockType		  Demux
+	  Name			  "Demux"
+	  Ports			  [1, 2, 0, 0, 0]
+	  Position		  [195, 66, 235, 99]
+	  Outputs		  "2"
+	}
+	Block {
+	  BlockType		  "S-Function"
+	  Name			  "I & F  neuron\nwith rand. thres.\nand ref. "
+"period"
+	  Ports			  [1, 1, 0, 0, 0]
+	  Position		  [105, 61, 145, 109]
+	  FunctionName		  "giandfr"
+	  Parameters		  "dt,thres,n,C,ref"
+	  PortCounts		  "[]"
+	  SFunctionModules	  "''"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "out_2"
+	  Position		  [265, 105, 285, 125]
+	  Port			  "1"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "out_1"
+	  Position		  [265, 35, 285, 55]
+	  Port			  "2"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Line {
+	  SrcBlock		  "in_1"
+	  SrcPort		  1
+	  DstBlock		  "I & F  neuron\nwith rand. thres.\nand ref. "
+"period"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Demux"
+	  SrcPort		  2
+	  DstBlock		  "out_2"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Demux"
+	  SrcPort		  1
+	  DstBlock		  "out_1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "I & F  neuron\nwith rand. thres.\nand ref. "
+"period"
+	  SrcPort		  1
+	  DstBlock		  "Demux"
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [305, 540, 392, 568]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('Numerical ISI')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info"
+	Location		[655, 267, 1022, 518]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [142, 22]
+	  VerticalAlignment	  top
+	  Text			  "To compute the ISI distribution \ncorrespon"
+"ding to the spike train, enter "
+	}
+	Annotation {
+	  Position		  [97, 67]
+	  VerticalAlignment	  top
+	  Text			  "isidist(spk,2,100,tstep)."
+	}
+	Annotation {
+	  Position		  [104, 97]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window."
+	}
+	Annotation {
+	  Position		  [84, 132]
+	  VerticalAlignment	  top
+	  Text			  "The parameters are:"
+	}
+	Annotation {
+	  Position		  [194, 152]
+	  VerticalAlignment	  top
+	  Text			  "spk = spike train generated by the simulati"
+"on of the model."
+	}
+	Annotation {
+	  Position		  [84, 172]
+	  VerticalAlignment	  top
+	  Text			  "2 = bin size in msec"
+	}
+	Annotation {
+	  Position		  [99, 192]
+	  VerticalAlignment	  top
+	  Text			  "100 = maximal isi in msec"
+	}
+	Annotation {
+	  Position		  [124, 217]
+	  VerticalAlignment	  top
+	  Text			  "tstep = time step for the simulation"
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info1"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [288, 620, 422, 646]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('Numerical PS and AC')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info1"
+	Location		[631, 133, 1010, 363]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [147, 22]
+	  VerticalAlignment	  top
+	  Text			  "To compute the power spectrum and\nthe auto"
+"correlation of the spike train, enter "
+	}
+	Annotation {
+	  Position		  [92, 67]
+	  VerticalAlignment	  top
+	  Text			  "psautospk(spk,tstep)."
+	}
+	Annotation {
+	  Position		  [124, 197]
+	  VerticalAlignment	  top
+	  Text			  "tstep = time step for the simulation"
+	}
+	Annotation {
+	  Position		  [189, 157]
+	  VerticalAlignment	  top
+	  Text			  "spk = spike train generated by the simulati"
+"on of the model."
+	}
+	Annotation {
+	  Position		  [79, 117]
+	  VerticalAlignment	  top
+	  Text			  "The parameters are:"
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info2"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [305, 580, 392, 608]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('Theoretical ISI')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info2"
+	Location		[197, 142, 569, 525]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [114, 347]
+	  VerticalAlignment	  top
+	  Text			  "tstep = time step for the simulation"
+	}
+	Annotation {
+	  Position		  [94, 322]
+	  VerticalAlignment	  top
+	  Text			  "100 = maximal isi in msec"
+	}
+	Annotation {
+	  Position		  [79, 297]
+	  VerticalAlignment	  top
+	  Text			  "2 = bin size in msec"
+	}
+	Annotation {
+	  Position		  [99, 277]
+	  VerticalAlignment	  top
+	  Text			  "5 = refractory period (msec)"
+	}
+	Annotation {
+	  Position		  [124, 255]
+	  VerticalAlignment	  top
+	  Text			  "0.6 = constant injected current (nA)"
+	}
+	Annotation {
+	  Position		  [164, 220]
+	  VerticalAlignment	  top
+	  Text			  "5 = order of the gamma distribution determi"
+"ning the\n      noise in the threshold."
+	}
+	Annotation {
+	  Position		  [109, 197]
+	  VerticalAlignment	  top
+	  Text			  "10 = mean spike threshold (mV)"
+	}
+	Annotation {
+	  Position		  [124, 177]
+	  VerticalAlignment	  top
+	  Text			  "0.5 = Capacity of the model cell (nF)"
+	}
+	Annotation {
+	  Position		  [74, 152]
+	  VerticalAlignment	  top
+	  Text			  "The parameters are:"
+	}
+	Annotation {
+	  Position		  [167, 22]
+	  VerticalAlignment	  top
+	  Text			  "To compare the theoretical ISI distribution"
+"  with the \npreviously obtained numerical ISI distribution, enter "
+	}
+	Annotation {
+	  Position		  [122, 92]
+	  VerticalAlignment	  top
+	  Text			  "gfitheor(0.5,10,5,0.6,5,2,100,tstep)."
+	}
+	Annotation {
+	  Position		  [47, 67]
+	  VerticalAlignment	  top
+	  Text			  "hold on"
+	}
+	Annotation {
+	  Position		  [94, 122]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window."
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info3"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [287, 660, 420, 686]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('Theoretical PS and AC')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info3"
+	Location		[64, 395, 445, 853]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [182, 22]
+	  VerticalAlignment	  top
+	  Text			  "To compare the theoretical power spectrum a"
+"nd autocorrelation\nfunction with the previously obtained numerical power spe"
+"ctrum\nand autocorrelation function, enter "
+	}
+	Annotation {
+	  Position		  [37, 72]
+	  VerticalAlignment	  top
+	  Text			  "hold on"
+	}
+	Annotation {
+	  Position		  [179, 432]
+	  VerticalAlignment	  top
+	  Text			  "1024 = number of bins between 0 and the Nyq"
+"uist frequency"
+	}
+	Annotation {
+	  Position		  [109, 402]
+	  VerticalAlignment	  top
+	  Text			  "tstep = time step for the simulation"
+	}
+	Annotation {
+	  Position		  [154, 365]
+	  VerticalAlignment	  top
+	  Text			  "5 = order of the gamma distribution determi"
+"ning the\n      noise in the threshold."
+	}
+	Annotation {
+	  Position		  [89, 337]
+	  VerticalAlignment	  top
+	  Text			  "5 = refractory period (msec)"
+	}
+	Annotation {
+	  Position		  [114, 305]
+	  VerticalAlignment	  top
+	  Text			  "0.6 = constant injected current (nA)"
+	}
+	Annotation {
+	  Position		  [99, 277]
+	  VerticalAlignment	  top
+	  Text			  "10 = mean spike threshold (mV)"
+	}
+	Annotation {
+	  Position		  [114, 247]
+	  VerticalAlignment	  top
+	  Text			  "0.5 = Capacity of the model cell (nF)"
+	}
+	Annotation {
+	  Position		  [69, 217]
+	  VerticalAlignment	  top
+	  Text			  "The parameters are:"
+	}
+	Annotation {
+	  Position		  [84, 182]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window."
+	}
+	Annotation {
+	  Position		  [112, 152]
+	  VerticalAlignment	  top
+	  Text			  "gpstheor(0.5,10,0.6,5,5,tstep,1024)"
+	}
+	Annotation {
+	  Position		  [37, 127]
+	  VerticalAlignment	  top
+	  Text			  "hold on "
+	}
+	Annotation {
+	  Position		  [52, 102]
+	  VerticalAlignment	  top
+	  Text			  "subplot(2,1,1)"
+	}
+      }
+    }
+    Block {
+      BlockType		      Scope
+      Name		      "Scope"
+      Ports		      [1, 0, 0, 0, 0]
+      Position		      [290, 90, 320, 120]
+      Floating		      off
+      Location		      [751, 156, 1082, 470]
+      Open		      off
+      Grid		      on
+      TickLabels	      on
+      ZoomMode		      on
+      TimeRange		      "500.000000"
+      YMin		      "-2.000000"
+      YMax		      "2.000000"
+      SaveToWorkspace	      off
+      SaveName		      "ScopeData"
+      LimitMaxRows	      on
+      MaxRows		      "5000"
+      Decimation	      "1"
+      SampleInput	      off
+      SampleTime	      "0"
+    }
+    Block {
+      BlockType		      ToWorkspace
+      Name		      "To Workspace"
+      Position		      [280, 162, 330, 178]
+      VariableName	      "spk"
+      Buffer		      "ceil(tstop/tstep)"
+      Decimation	      "1"
+      SampleTime	      "0"
+    }
+    Line {
+      SrcBlock		      "Constant current"
+      SrcPort		      1
+      DstBlock		      "I & F neuron\nwith rand. thres.\nand ref. perio"
+"d"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "I & F neuron\nwith rand. thres.\nand ref. perio"
+"d"
+      SrcPort		      2
+      Points		      [0, 0]
+      Branch {
+	Points			[25, 0; 0, -40]
+	DstBlock		"Scope"
+	DstPort			1
+      }
+      Branch {
+	Points			[15, 0; 0, 25]
+	DstBlock		"To Workspace"
+	DstPort			1
+      }
+    }
+    Annotation {
+      Position		      [193, 47]
+      VerticalAlignment	      top
+      Text		      "Response of an Integrate-and-fire neuron with "
+"\nrandom threshold to a constant current pulse"
+    }
+    Annotation {
+      Position		      [176, 357]
+      VerticalAlignment	      top
+      Text		      "To start and stop the simulation, use the \"Sta"
+"rt/Stop\"\nselection in the \"Simulation\" pull-down menu"
+    }
+    Annotation {
+      Position		      [203, 217]
+      VerticalAlignment	      top
+      Text		      "To open the Scope screen, double click on the "
+"\"Scope\" icon."
+    }
+    Annotation {
+      Position		      [198, 237]
+      VerticalAlignment	      top
+      Text		      "To change the parameters of the model, double c"
+"lick on the \n\"Constant current\" and on the  \"I&F neuron\" icon."
+    }
+    Annotation {
+      Position		      [213, 267]
+      VerticalAlignment	      top
+      Text		      "To change the parameters of the simulation, use"
+" the \"Parameters\"\nselection in the \"Simulation\" pull-down menu."
+    }
+    Annotation {
+      Position		      [203, 297]
+      VerticalAlignment	      top
+      Text		      "Currently, the stop time and time step are dete"
+"rmined by two\nworkspace variables (tstop and tstep). "
+    }
+    Annotation {
+      Position		      [188, 327]
+      VerticalAlignment	      top
+      Text		      "These two variables can also be changed directl"
+"y in the\nworkspace window."
+    }
+    Annotation {
+      Position		      [211, 392]
+      VerticalAlignment	      top
+      Text		      "In order to generate the vector of spike times "
+"spk needed for the\nsubsequent data analysis, you can let the simulation run "
+"to the end\nor enter:"
+    }
+    Annotation {
+      Position		      [213, 722]
+      VerticalAlignment	      top
+      Text		      "To obtain detailed instructions, double-click o"
+"n the corresponding\nicons. "
+    }
+    Annotation {
+      Position		      [156, 552]
+      VerticalAlignment	      top
+      Text		      "1) Compute the Interspike Interval Distribution"
+    }
+    Annotation {
+      Position		      [141, 582]
+      VerticalAlignment	      top
+      Text		      "2) Compare the numerical result with the\ngamma"
+" distribution with refractory period"
+    }
+    Annotation {
+      Position		      [131, 627]
+      VerticalAlignment	      top
+      Text		      "3) Compute the Power Spectrum and\n Autocorrela"
+"tion of the spike train."
+    }
+    Annotation {
+      Position		      [151, 667]
+      VerticalAlignment	      top
+      Text		      "4) Compare the numerical result with the \ntheo"
+"retical prediction for a renewal process."
+    }
+    Annotation {
+      Position		      [96, 447]
+      VerticalAlignment	      top
+      Text		      "load tutorial1_dat/spk"
+    }
+    Annotation {
+      Position		      [216, 482]
+      VerticalAlignment	      top
+      Text		      "in the main matlab window. Once that the spike "
+"train spk is generated,\nyou can:"
+    }
+  }
+}

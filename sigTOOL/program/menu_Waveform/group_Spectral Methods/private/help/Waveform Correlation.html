@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+span.SpellE {mso-style-name:"";
+	mso-spl-e:yes;}
+div.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+li.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+p.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+.style1 {color: #808080}
+p.MsoNormal1 {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+-->
+</style>
+<style type="text/css">
+<!--
+p.MsoNormal {
+margin:0cm;
+margin-bottom:.0001pt;
+font-size:12.0pt;
+font-family:"Times New Roman";
+}
+-->
+</style>
+</head>
+
+<body>
+<div align="left">  
+  <p align="right"><img src="099.jpg" width="80" height="40" alt="Logo" /></p>
+  <h2>Waveform Correlation</h2>
+  <p align="right" class="style1">Email: sigtool@kcl.ac.uk</p>
+</div>
+<hr />
+<p align="right" class="style1">&nbsp;</p>
+<p align="right" class="style1">Author: Malcolm Lidierth</p>
+<p align="right" class="style1">Updated: February 2008</p>
+<h3>Method Summary</h3>
+<p>Waveform correlation measures the linear correlation between waveforms over time. If two signals are correlated, but one is delayed relative to the other, a peak or trough will appear in the correlogram at that delay (or lag). Features at negative lags indicate a delay in the source channel  relative to the reference channel. Features at postive lags indicate phase advance on the source channel relative to the reference.</p>
+<p><strong>Autocorrelations</strong> can be estimated by selecting the Waveform-&gt;Autocorrelation menu. Alternatively, from the Waveform-&gt;Correlation menu, include the required channel in both the Channel A list (Reference) and Channel B list (Source).</p>
+<p>&nbsp;</p>
+<h3>Options</h3>
+<p align="center"><img src="menu.jpg" alt="" width="462" height="207" /></p>
+<p align="center">&nbsp;</p>
+<p><strong>Channel A (Reference)</strong><strong>/Channel B (Sources)</strong></p>
+<p>Select one or more channels to use as the reference together with one or more channels as sources. Only continuously recorded channels can be selected. The correlation between each pair of channels will be calculated.</p>
+<p><strong>Autocorrelations</strong>: to calculate autocorrelations include the channel in both the Reference and Source list or use the Waveform-&gt;Autocorrelation menu.</p>
+<p> There are no restrictions on the channels you select but cross correlations will be returned only for channels that have the same sample rate and were recorded synchronously.</p>
+<p><strong>Start &amp; Stop</strong></p>
+<p>Only data between the specified times will be processed.</p>
+<h4>Maximum Lag</h4>
+<p>The maximum required lag (in seconds). The correlation will be estimated for both negative and positive lags.</p>
+<h4>Scaling</h4>
+<p>For two time series, x (the reference) and y (the source) of length N, the covariance at lag k is:</p>
+<p align="center"><img src="Waveform Correlation_clip_image002_0014.gif" alt="eqn1" width="377" height="110" /> </p>
+<p align="center">&nbsp;</p>
+<p align="left">for k greater than or equal to zero, and</p>
+<p align="center"><img src="Waveform Correlation_clip_image002_0013.gif" alt="eqn2" width="400" height="120" />   </p>
+<p align="left">for negative k.</p>
+<p align="left">The regression coefficient r is a scaled copy of c. Scaling options available are</p>
+<blockquote>
+  <h4 align="left">None</h4>
+</blockquote>
+<p align="center"><img src="Waveform Correlation_clip_image002_0002.gif" alt="rk=ck" width="107" height="46" /></p>
+<blockquote>
+  <h4 align="left">Biased</h4>
+</blockquote>
+<p align="center"><img src="Waveform Correlation_clip_image002_0003.gif" alt="biased" width="115" height="80" /></p>
+<blockquote>
+  <h4 align="left">Unbiased</h4>
+</blockquote>
+<p align="center"><img src="Waveform Correlation_clip_image002_0004.gif" alt="unbiased" width="184" height="99" /></p>
+<blockquote>
+  <h4 align="left">Coefficient (default)</h4>
+</blockquote>
+<p align="center"><img src="Waveform Correlation_clip_image002_0006.gif" alt="coeff" width="412" height="119" /></p>
+<p align="left">	which results in normalized coefficients in the range ±1. Absolute values of 1 indicate perfect correlations. Postive/negative values indicate positive/negative correlations. </p>
+<p align="center"><img src="example" alt="example" width="577" height="433" /></p>
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p align="justify"><strong>Example of a cross-correlation, in this case of two waveforms (the reference channel) that were highly synchronized leading to the peak at zero lag. Additional peaks arose at intervals of ~100ms  because of a strong 10Hz rhytmicity in the data.</strong></p>
+      <p align="justify">&nbsp;</p>
+      <p align="left">&nbsp;</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+<h4 align="left">Subtract DC</h4>
+<p align="left">If the Subtract DC checkbox is unchecked, subtraction of  means in the above equations will be omitted.</p>
+<h4 align="left">Max BlockSize</h4>
+<p align="left">For speed, the covariance is estimated using an FFT based method (Press et al. 1992). For lengthy channels, with more than Max BlockSize data points, channels will divided into 2, 4, 8 etc sections until the sections are less than Max BlockSize. The maximum size is 2<sup><span style="font-size:14.0pt; ">x</span></sup> : enter x in the GUI. </p>
+<p align="left">The correlations will be calculated independently for each section and averaged to produce the result.  Note in this case that N above relates to the length of the data sections rather than the total channel length. Note also that this procedure ignores the effects between data sections: the correlation between data points at the end of section n and those at the start of section n+1 are ignored.</p>
+<p align="left">Fewer data points contribute to the correlation coefficients at larger lags, hence the correction for lag in the unbiased estimate above. Note that the normalized coefficients are biased, and that even with perfectly correlated waveforms, the values of r will  be less than unity except at zero lag, with the discrepancy increasing linearly as a function of the lag. In general, the data length will be very much larger than  the required lags and these effects should be trivial.</p>
+<p align="left">&nbsp;</p>
+<h3>References:</h3>
+<p class="MsoNormal1">William H. Press, Brian P. Flannery, Saul A. Teukolsky, and William T.   Vetterling (1992)</p>
+<p class="MsoNormal1">Numerical Recipes in C: The Art of Scientific Computing CUP. [<a href="http://www.nrbook.com/a/bookcpdf.php">http://www.nrbook.com/a/bookcpdf.php</a>]</p>
+<blockquote><blockquote><blockquote><blockquote>&nbsp;</blockquote>
+    </blockquote>
+  </blockquote>
+</blockquote>
+<blockquote><blockquote><blockquote><blockquote><blockquote><blockquote><blockquote>&nbsp;</blockquote>
+          </blockquote>
+        </blockquote>
+      </blockquote>
+    </blockquote>
+  </blockquote>
+</blockquote>
+<p align="right">&nbsp;</p>
+<p align="right">&copy; The Author and King's College London, 2008-</p>
+</body>
+</html>

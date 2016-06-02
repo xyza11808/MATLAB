@@ -1,0 +1,42 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+.style1 {color: #808080}
+.style2 {color: #000000; }
+-->
+</style>
+</head>
+
+<body>
+<div align="left">
+  <p align="right"><img src="099.jpg" width="80" height="40" alt="Logo" /></p>
+  <h2>Copy To Temporary Channel</h2>
+  <p align="right" class="style1">Email: sigtool@kcl.ac.uk</p>
+</div>
+<hr />
+<p align="right" class="style1">&nbsp;</p>
+<p align="right" class="style1">Author: Malcolm Lidierth</p>
+<p align="right" class="style1">Updated: November 2007</p>
+<h3 align="left" class="style2">Method summary</h3>
+<p align="left" class="style2">You can copy data from an existing waveform channel to a temporary channel through the Channels-&gt;Copy To Temporary Channel Command.</p>
+<p align="left" class="style2">For episodically sampled channels, only currently valid epochs are copied.</p>
+<p align="left" class="style2">For multiplexed channels, only the currently selected subchannel is copied.</p>
+<p align="left" class="style2">Data for the target channel are copied to a temporary file in your system temp folder. To save the data permanantly, use File-&gt;Save(*) or File_&gt;Save As to write a new file.</p>
+<p align="left" class="style2">(*) TODO: Not presently available - use Save As</p>
+<h3 align="left" class="style2">Options</h3>
+<p align="center" class="style1"><img src="../../../../Copy to temp channel" alt="Copy to temp channel" /></p>
+<h4 align="left" class="style2">Channels</h4>
+<p align="left" class="style2">Select the source channel and target. By default, unused channels are listed as targets. You may however, select an existing channel (including the source) as the target. In this case all existing data will be overwritten.</p>
+<h4 align="left" class="style2">Save as Integer</h4>
+<p align="left" class="style2">If Save as Integer is selected (the default), data will be stored on disc in integer format. If already in integer format on disc,  data from the spource channel will simply be copied. If in floating point format, data will be scaled and offset to use full scale amd converted to signed 16-bit integer.</p>
+<p align="left" class="style2">If Save as Integer is not selected data will be scaled and offset and stored in double precision floating point format on disc. This may be useful if you want to avoid rounding errors due to integer conversion e.g. in applying multiple stage operations on the data. With lengthy data channels, this can lead to slow performance. </p>
+<p align="left" class="style2">&nbsp;</p>
+<p align="left" class="style2">&nbsp;</p>
+<p align="right" class="style2">&copy; The Author and King's College London, 2007-</p>
+<p align="left" class="style2">&nbsp;</p>
+</body>
+</html>

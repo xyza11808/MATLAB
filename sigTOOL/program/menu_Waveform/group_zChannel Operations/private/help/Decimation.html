@@ -1,0 +1,73 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+span.SpellE {mso-style-name:"";
+	mso-spl-e:yes;}
+div.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+li.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+p.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+.style1 {color: #808080}
+-->
+</style>
+</head>
+
+<body>
+<div align="left">  
+  <p align="right"><img src="099.jpg" width="80" height="40" alt="Logo" /></p>
+  <h2>Decimation</h2>
+  <p align="right" class="style1">Email: sigtool@kcl.ac.uk</p>
+</div>
+<hr />
+<p align="right" class="style1">&nbsp;</p>
+<p align="right" class="style1">Author: Malcolm Lidierth</p>
+<p align="right" class="style1">Updated: November 2007 </p>
+<h3>Method Summary</h3>
+<p><span style="mso-ansi-language:EN-GB">Decimation is the process of reducing the sampling rate of a signal by saving only every Nth point</span>. Despite the name, decimation algorithms generally allow N to be set to any integer.</p>
+<p>Decimation is performed in two stages;</p>
+<ul>
+  <li>First, an anti-aliasing filter is applied to the data to limit frequencies to 0.4 * Fs, where Fs is the sampling rate after downsampling.
+    <blockquote>
+      <p>The filter is a Type I Chebyshev lowpass filter of order 3-13 with nominal 0dB magnitude response in the passband and a passband ripple of 0.05dB. An odd order filter is use to ensure a 0dB response at DC (see TMW Technical Solution <a href="http://www.mathworks.com/support/solutions/data/1-2YWEQD.html?solution=1-2YWEQD">1-2YWEQD</a>). The algorithm designs a filter of the highest order possible to meet these condiditons. If such a filter can not be designed you will need to decimate in stages e.g.  by 10, then 10 again to achieve downsampling by a factor of 100.</p>
+    </blockquote>
+  </li>
+  <li>Second, downsampling is performed by taking every Nth point of the filtered signal and discarding the rest. For triggered channels, the data points that are coincident with (or immediately follow) the triggers will always be retained.</li>
+</ul>
+<p>Decimation will be done in RAM if there is sufficient free memory. If not, a temporary channel will be created to receive the filtered data.</p>
+<p>The algorithm used here closely follows that of the decimate function in the MATLAB Signal Processing Toolbox</p>
+<h3>Options</h3>
+<p align="center"><img src="decimate" alt="decimate" /></p>
+<p align="center">&nbsp;</p>
+<p align="left"><strong>Channel selections:</strong></p>
+<p align="left">You must select a single waveform channel as the source in the Channel A selection menu. Channel B lists all empty channels in the file. You may also use a channel that is not empty (including the source channel) but this will overwrite any existing data.</p>
+<p align="left">Note that, with multiplexed channels, only the currently selected subchannel will be decimated. The output will therefore be a non-multiplexed channel.</p>
+<p align="left"><strong>Factor:</strong></p>
+<p align="left">This is N above, the factor to downsample by.</p>
+<p align="left"><strong>Convert to 16 bit integer:</strong></p>
+<p align="left">If this box is checked, filtering will be done in double precsion floating point but the result will be converted to16-bit signed integer format. The channel scale and offset values will then be determined automatically and will use the full range of available integer values (-32767 to 32768).</p>
+<p align="center">&nbsp;</p>
+<p align="right">&nbsp;</p>
+<p align="right">&copy; The Author and King's College London, 2007-</p>
+</body>
+</html>

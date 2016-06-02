@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+span.SpellE {mso-style-name:"";
+	mso-spl-e:yes;}
+div.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+li.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+p.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+.style1 {color: #808080}
+.style2 {color: #000000}
+-->
+</style>
+</head>
+
+<body>
+<div align="left">  
+  <p align="right"><img src="099.jpg" width="80" height="40" alt="Logo" /></p>
+  <h2>Peri-event time histogram (PETH)</h2>
+  <p align="right" class="style1">Email: sigtool@kcl.ac.uk</p>
+</div>
+<hr />
+<p align="right" class="style1">&nbsp;</p>
+<p align="right" class="style1">Author: Malcolm Lidierth</p>
+<p align="right" class="style1">Updated: June 2008 </p>
+<h3 align="left" class="style2">Method</h3>
+<p>A peri-event time  histogram provides an estimate of the probability of observing an event as a function of time following a trigger event, typically a stimulus marker. By default, results are returned as events/sweep (~probability, but note that there is no upper limit of unity). Results can subsequently be normalized relative to the bin width to give the result in events/second (rate).</p>
+<p>&nbsp;</p>
+<h3>Options</h3>
+<p align="center"><img src="008.jpg" alt="" width="490" height="206" /></p>
+<p align="left">&nbsp;</p>
+<h4 align="left">Channel Selection</h4>
+<p align="left">Select the trigger channels  in the Channel A selector and source channels using the Channel B selector. Any channels with multiple events can be selected.</p>
+<h4 align="left">Duration &amp; Bin width</h4>
+<p align="left">Sets the timebase for the resulting event autocorrelations and the bin width to use (in seconds)</p>
+<h4 align="left">Pre-time</h4>
+<p align="left">Sets the pre-time as a percentage of the  duration.</p>
+<h4 align="left">Sweeps per average</h4>
+<p align="left">By default, all triggers will be used. To generate multiple correlations each with a fixed number of sweeps set Sweeps per Average to a number less than the total number of available triggers. The result will be presented as a 3-D histogram.</p>
+<h4 align="left">Retrigger</h4>
+<p align="left">The Retrigger checkbox is unselected by default: triggers that fall before the end of a preceding sweep will be ignored.</p>
+<p align="left">Checking the Retrigger box will cause   triggers that fall during a preceding sweep to be used to trigger a subsequent sweep. </p>
+<p align="left">&nbsp;</p>
+<h3 align="left">Post-processing options</h3>
+<p align="left">Right-click the mouse on the plotted result to display a context-senstive menu. Menu options include the ability to toggle between plotting events/sweep and event rate, to superimpose a cumulative sum (cusum; see Ellaway 1978) plot and to add a smoothed plot of the data (smoothed with a Gaussian with a width of w bins).</p>
+<p align="center"><img src="002.jpg" alt="" width="370" height="263" /></p>
+<h4 align="left">Algorithms:</h4>
+<p align="left">The cusum method subtracts the mean value calculated from a control period from each bin of the PETH, then  plots the cumulative sum of the result.  The control period used by default is  the<em> first half</em> of the pre-stimulus period of the PETH e.g. with a pre-time period from -100 to 0ms, the bins in the range -100 up to -50ms would be used. A pre-time period  must be present.</p>
+<p align="left">Smoothing applies a filter to the result using an odd-length Guassian window of width w and standard deviation of 0.5 [equivalent to gausswin(w, 1/0.5) with the MATLAB Statitics Toolbox].</p>
+<p align="center">&nbsp;</p>
+<p align="left">Ellaway, P.H. (1978) Cumulative sum technique and its application to the analysis of peristimulus   time histograms. <strong>Electroencephalography and Clinical   Neurophysiology</strong> 45, 302-304 [<a href="http://www.sciencedirect.com/science?_ob=MImg&_imagekey=B6SYX-485RKPP-48-1&_cdi=4846&_user=121727&_orig=article&_coverDate=08%2F31%2F1978&_sk=999549997&view=c&wchp=dGLbVlW-zSkWW&md5=01be309c1cb2438dc61de8a1e45ca388&ie=/sdarticle.pdf">Link</a>]</p>
+<p align="left">&nbsp;</p>
+<p align="left">&nbsp;</p>
+<p align="left">&nbsp;</p>
+<h3>&nbsp;</h3>
+<p align="right">&copy; The Author and King's College London, 2008-</p>
+</body>
+</html>

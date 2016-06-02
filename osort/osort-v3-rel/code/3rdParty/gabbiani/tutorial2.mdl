@@ -1,0 +1,553 @@
+Model {
+  Name			  "tutorial2"
+  Version		  2.20
+  SimParamPage		  Solver
+  SampleTimeColors	  off
+  InvariantConstants	  off
+  WideVectorLines	  off
+  ShowLineWidths	  off
+  StartTime		  "0.0"
+  StopTime		  "tstop"
+  Solver		  ode5
+  RelTol		  "1e-3"
+  AbsTol		  "1e-3"
+  Refine		  "1"
+  MaxStep		  "tstep"
+  InitialStep		  "auto"
+  FixedStep		  "tstep"
+  MaxOrder		  5
+  OutputOption		  RefineOutputTimes
+  OutputTimes		  "[]"
+  LoadExternalInput	  off
+  ExternalInput		  "[t, u]"
+  SaveTime		  off
+  TimeSaveName		  "tout"
+  SaveState		  off
+  StateSaveName		  "xout"
+  SaveOutput		  off
+  OutputSaveName	  "yout"
+  LoadInitialState	  off
+  InitialState		  "xInitial"
+  SaveFinalState	  off
+  FinalStateName	  "xFinal"
+  LimitMaxRows		  off
+  MaxRows		  "1000"
+  Decimation		  "1"
+  AlgebraicLoopMsg	  warning
+  MinStepSizeMsg	  warning
+  UnconnectedInputMsg	  warning
+  UnconnectedOutputMsg	  warning
+  UnconnectedLineMsg	  warning
+  ConsistencyChecking	  off
+  ZeroCross		  on
+  SimulationMode	  normal
+  RTWSystemTargetFile	  "grt.tlc"
+  RTWInlineParameters	  off
+  RTWPlaceOutputsASAP	  off
+  RTWRetainRTWFile	  off
+  RTWTemplateMakefile	  "grt_default_tmf"
+  RTWMakeCommand	  "make_rtw"
+  RTWGenerateCodeOnly	  off
+  ExtModeMexFile	  "ext_comm"
+  ExtModeBatchMode	  off
+  BlockDefaults {
+    Orientation		    right
+    ForegroundColor	    black
+    BackgroundColor	    white
+    DropShadow		    off
+    NamePlacement	    normal
+    FontName		    "Helvetica"
+    FontSize		    10
+    FontWeight		    normal
+    FontAngle		    normal
+    ShowName		    on
+  }
+  AnnotationDefaults {
+    HorizontalAlignment	    center
+    VerticalAlignment	    middle
+    ForegroundColor	    black
+    BackgroundColor	    white
+    DropShadow		    off
+    FontName		    "Helvetica"
+    FontSize		    10
+    FontWeight		    normal
+    FontAngle		    normal
+  }
+  LineDefaults {
+    FontName		    "Helvetica"
+    FontSize		    9
+    FontWeight		    normal
+    FontAngle		    normal
+  }
+  System {
+    Name		    "tutorial2"
+    Location		    [756, 161, 1205, 804]
+    Open		    on
+    ToolBar		    on
+    StatusBar		    on
+    ScreenColor		    white
+    PaperOrientation	    landscape
+    PaperPositionMode	    auto
+    PaperType		    usletter
+    PaperUnits		    inches
+    Block {
+      BlockType		      Constant
+      Name		      "Constant current"
+      Position		      [90, 122, 115, 148]
+      Value		      "i"
+      MaskType		      "constant current"
+      MaskDescription	      "Parameter"
+      MaskHelp		      "Provides a constant input current"
+      MaskPromptString	      "constant current value [nA]"
+      MaskStyleString	      "edit"
+      MaskTunableValueString  "on"
+      MaskInitialization      "i = @1;"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "iconst"
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Leaky I&F neuron\nwith ref. period"
+      Ports		      [1, 2, 0, 0, 0]
+      Position		      [180, 104, 220, 166]
+      ShowPortLabels	      off
+      MaskType		      "L I&F ref. per."
+      MaskDescription	      "Parameters"
+      MaskHelp		      "For a detailled description of the model, pleas"
+"e type 'help liandfr' in the main matlab window."
+      MaskPromptString	      "time step [msec]|threshold [mV]|Capacitance [nF"
+"]|Resistance [MOhms]|refractory period [msec]"
+      MaskStyleString	      "edit,edit,edit,edit,edit"
+      MaskTunableValueString  "on,on,on,on,on"
+      MaskInitialization      "dt = @1; thres = @2; C = @3; R = @4; ref = @5;"
+      MaskDisplay	      "disp('Vm \\n\\n spikes')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "tstep|10|.5|50|5"
+      System {
+	Name			"Leaky I&F neuron\nwith ref. period"
+	Location		[135, 636, 436, 782]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  Inport
+	  Name			  "in_1"
+	  Position		  [40, 55, 60, 75]
+	  Port			  "1"
+	  PortWidth		  "-1"
+	  SampleTime		  "-1"
+	}
+	Block {
+	  BlockType		  Demux
+	  Name			  "Demux"
+	  Ports			  [1, 2, 0, 0, 0]
+	  Position		  [180, 46, 220, 79]
+	  Outputs		  "2"
+	}
+	Block {
+	  BlockType		  "S-Function"
+	  Name			  "Leaky I&F neuron\nwith ref. period"
+	  Ports			  [1, 1, 0, 0, 0]
+	  Position		  [90, 47, 140, 83]
+	  FunctionName		  "liandfr"
+	  Parameters		  "dt,thres,C,R,ref"
+	  PortCounts		  "[]"
+	  SFunctionModules	  "''"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "out_2"
+	  Position		  [250, 60, 270, 80]
+	  Port			  "1"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "out_1"
+	  Position		  [250, 45, 270, 65]
+	  Port			  "2"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Line {
+	  SrcBlock		  "Leaky I&F neuron\nwith ref. period"
+	  SrcPort		  1
+	  DstBlock		  "Demux"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Demux"
+	  SrcPort		  1
+	  DstBlock		  "out_1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Demux"
+	  SrcPort		  2
+	  DstBlock		  "out_2"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "in_1"
+	  SrcPort		  1
+	  DstBlock		  "Leaky I&F neuron\nwith ref. period"
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [305, 510, 392, 538]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('Numerical\\nFI-curve')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info"
+	Location		[149, 90, 511, 666]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [157, 22]
+	  VerticalAlignment	  top
+	  Text			  "To compute the FI-curve of the model, follo"
+"w the\nsteps described below:  "
+	}
+	Annotation {
+	  Position		  [122, 72]
+	  VerticalAlignment	  top
+	  Text			  "1) Call the ficurve script by entering:"
+	}
+	Annotation {
+	  Position		  [42, 107]
+	  VerticalAlignment	  top
+	  Text			  "ficurve"
+	}
+	Annotation {
+	  Position		  [94, 132]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window. "
+	}
+	Annotation {
+	  Position		  [167, 162]
+	  VerticalAlignment	  top
+	  Text			  "2) The first time that \"ficurve\" is calle"
+"d, it will ask for :"
+	}
+	Annotation {
+	  Position		  [152, 192]
+	  VerticalAlignment	  top
+	  Text			  "-the name of the model (answer: tutorial2),"
+	}
+	Annotation {
+	  Position		  [137, 217]
+	  VerticalAlignment	  top
+	  Text			  "-the name of the variable containing\nthe s"
+"pike train (answer: spk)"
+	}
+	Annotation {
+	  Position		  [127, 252]
+	  VerticalAlignment	  top
+	  Text			  "-the name of the input parameter\nto be var"
+"ied (answer: iconst),"
+	}
+	Annotation {
+	  Position		  [152, 287]
+	  VerticalAlignment	  top
+	  Text			  "-a vector of values to be used for \"iconst"
+"\"\nin the simulations (answer: [0:0.2:4])."
+	}
+	Annotation {
+	  Position		  [154, 327]
+	  VerticalAlignment	  top
+	  Text			  "For subsequent calls, ficurve will use the "
+"same \nvalues for all the variables entered in step 2)."
+	}
+	Annotation {
+	  Position		  [159, 367]
+	  VerticalAlignment	  top
+	  Text			  "It is possible to test new values of iconst"
+" by \nupdating the vector of values (see 2) above). Enter:"
+	}
+	Annotation {
+	  Position		  [117, 412]
+	  VerticalAlignment	  top
+	  Text			  "values = [i_min:i_step:i_max];"
+	}
+	Annotation {
+	  Position		  [179, 442]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window, where i_min, i_ste"
+"p and i_max\nare the minimal, step increment and maximal value of\nthe curren"
+"t, respectively. Then call the script ficurve again,\nas in 1)."
+	}
+	Annotation {
+	  Position		  [162, 507]
+	  VerticalAlignment	  top
+	  Text			  "The effects of changing other model paramet"
+"ers can\nbe studied in a similar way, by changing the name\nof the parameter "
+"to be varied and/or by modifying the\n\"ficurve\" script. "
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info2"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [305, 555, 392, 583]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('Theoretical\\nFI-curve')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info2"
+	Location		[197, 142, 569, 525]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [74, 152]
+	  VerticalAlignment	  top
+	  Text			  "The parameters are:"
+	}
+	Annotation {
+	  Position		  [94, 122]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window."
+	}
+	Annotation {
+	  Position		  [124, 197]
+	  VerticalAlignment	  top
+	  Text			  "0.5 = Capacity of the model cell (nF)"
+	}
+	Annotation {
+	  Position		  [89, 177]
+	  VerticalAlignment	  top
+	  Text			  "10 = spike threshold (mV)"
+	}
+	Annotation {
+	  Position		  [139, 220]
+	  VerticalAlignment	  top
+	  Text			  "50 = resistance of the model cell (MOhms)."
+	}
+	Annotation {
+	  Position		  [99, 247]
+	  VerticalAlignment	  top
+	  Text			  "5 = refractory period (msec)"
+	}
+	Annotation {
+	  Position		  [99, 272]
+	  VerticalAlignment	  top
+	  Text			  "val = vector of current values"
+	}
+	Annotation {
+	  Position		  [152, 22]
+	  VerticalAlignment	  top
+	  Text			  "To compare the theoretical FI-curve with th"
+"e \npreviously obtained numerical FI-curve, enter "
+	}
+	Annotation {
+	  Position		  [42, 67]
+	  VerticalAlignment	  top
+	  Text			  "hold on"
+	}
+	Annotation {
+	  Position		  [97, 92]
+	  VerticalAlignment	  top
+	  Text			  "fithlifref(10,0.5,50,5,values)."
+	}
+      }
+    }
+    Block {
+      BlockType		      Scope
+      Name		      "Scope"
+      Ports		      [1, 0, 0, 0, 0]
+      Position		      [305, 115, 335, 145]
+      Floating		      off
+      Location		      [673, 559, 1004, 873]
+      Open		      off
+      Grid		      on
+      TickLabels	      on
+      ZoomMode		      on
+      TimeRange		      "500.000000"
+      YMin		      "-2.000000"
+      YMax		      "2.000000"
+      SaveToWorkspace	      off
+      SaveName		      "ScopeData"
+      LimitMaxRows	      on
+      MaxRows		      "5000"
+      Decimation	      "1"
+      SampleInput	      off
+      SampleTime	      "0"
+    }
+    Block {
+      BlockType		      Scope
+      Name		      "Scope1"
+      Ports		      [1, 0, 0, 0, 0]
+      Position		      [305, 65, 335, 95]
+      Floating		      off
+      Location		      [674, 142, 1005, 456]
+      Open		      off
+      Grid		      on
+      TickLabels	      on
+      ZoomMode		      on
+      TimeRange		      "500.000000"
+      YMin		      "-15.000000"
+      YMax		      "15.000000"
+      SaveToWorkspace	      off
+      SaveName		      "ScopeData"
+      LimitMaxRows	      on
+      MaxRows		      "5000"
+      Decimation	      "1"
+      SampleInput	      off
+      SampleTime	      "0"
+    }
+    Block {
+      BlockType		      ToWorkspace
+      Name		      "To Workspace"
+      Position		      [295, 167, 345, 183]
+      VariableName	      "spk"
+      Buffer		      "ceil(tstop/tstep)"
+      Decimation	      "1"
+      SampleTime	      "0"
+    }
+    Line {
+      SrcBlock		      "Constant current"
+      SrcPort		      1
+      DstBlock		      "Leaky I&F neuron\nwith ref. period"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Leaky I&F neuron\nwith ref. period"
+      SrcPort		      2
+      Points		      [0, 0]
+      Branch {
+	Points			[40, 0; 0, -20]
+	DstBlock		"Scope"
+	DstPort			1
+      }
+      Branch {
+	Points			[40, 0; 0, 25]
+	DstBlock		"To Workspace"
+	DstPort			1
+      }
+    }
+    Line {
+      SrcBlock		      "Leaky I&F neuron\nwith ref. period"
+      SrcPort		      1
+      Points		      [30, 0; 0, -40]
+      DstBlock		      "Scope1"
+      DstPort		      1
+    }
+    Annotation {
+      Position		      [203, 217]
+      VerticalAlignment	      top
+      Text		      "To open the Scope screens, double click on the "
+"\"Scope\" icons."
+    }
+    Annotation {
+      Position		      [213, 22]
+      VerticalAlignment	      top
+      Text		      "Firing frequency vs. injected current plot (FI-"
+"curve) for a leaky \nintegrate and fire neuron."
+    }
+    Annotation {
+      Position		      [138, 237]
+      VerticalAlignment	      top
+      Text		      "To change the parameters of the model, \ndouble"
+" click on the \"I&F neuron\" icon."
+    }
+    Annotation {
+      Position		      [198, 267]
+      VerticalAlignment	      top
+      Text		      "To see how the constant current pulse is define"
+"d, double click\non the \"Constant current\" icon. "
+    }
+    Annotation {
+      Position		      [198, 372]
+      VerticalAlignment	      top
+      Text		      "Currently, the stop time and time step are dete"
+"rmined by two\nworkspace variables (tstop and tstep). "
+    }
+    Annotation {
+      Position		      [208, 342]
+      VerticalAlignment	      top
+      Text		      "To change the parameters of the simulation, use"
+" the \"Parameters\"\nselection in the \"Simulation\" pull-down menu."
+    }
+    Annotation {
+      Position		      [208, 297]
+      VerticalAlignment	      top
+      Text		      "The value of the constant current is determined"
+" by a workspace\nvariable \"iconst\", which can be changed directly in the wo"
+"rkspace \nwindow."
+    }
+    Annotation {
+      Position		      [193, 407]
+      VerticalAlignment	      top
+      Text		      "These two variables can also be changed directl"
+"y in the\nworkspace window."
+    }
+    Annotation {
+      Position		      [176, 437]
+      VerticalAlignment	      top
+      Text		      "To start and stop the simulation, use the \"Sta"
+"rt/Stop\"\nselection in the \"Simulation\" pull-down menu"
+    }
+    Annotation {
+      Position		      [61, 487]
+      VerticalAlignment	      top
+      Text		      "You can also:"
+    }
+    Annotation {
+      Position		      [146, 522]
+      VerticalAlignment	      top
+      Text		      "1) Compute the F-I curve for the neuron model"
+    }
+    Annotation {
+      Position		      [131, 552]
+      VerticalAlignment	      top
+      Text		      "2) Compare the numerical result with the \ntheo"
+"retical prediction."
+    }
+    Annotation {
+      Position		      [213, 617]
+      VerticalAlignment	      top
+      Text		      "To obtain detailed instructions, double-click o"
+"n the corresponding\nicons. "
+    }
+  }
+}

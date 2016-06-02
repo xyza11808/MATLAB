@@ -1,0 +1,831 @@
+Model {
+  Name			  "tutorial6"
+  Version		  2.20
+  SimParamPage		  Solver
+  SampleTimeColors	  off
+  InvariantConstants	  off
+  WideVectorLines	  off
+  ShowLineWidths	  off
+  StartTime		  "0.0"
+  StopTime		  "tstop"
+  Solver		  ode5
+  RelTol		  "1e-3"
+  AbsTol		  "1e-3"
+  Refine		  "1"
+  MaxStep		  "tstep"
+  InitialStep		  "auto"
+  FixedStep		  "tstep"
+  MaxOrder		  5
+  OutputOption		  RefineOutputTimes
+  OutputTimes		  "[]"
+  LoadExternalInput	  off
+  ExternalInput		  "[t, u]"
+  SaveTime		  off
+  TimeSaveName		  "tout"
+  SaveState		  off
+  StateSaveName		  "xout"
+  SaveOutput		  off
+  OutputSaveName	  "yout"
+  LoadInitialState	  off
+  InitialState		  "xInitial"
+  SaveFinalState	  off
+  FinalStateName	  "xFinal"
+  LimitMaxRows		  off
+  MaxRows		  "1000"
+  Decimation		  "1"
+  AlgebraicLoopMsg	  warning
+  MinStepSizeMsg	  warning
+  UnconnectedInputMsg	  warning
+  UnconnectedOutputMsg	  warning
+  UnconnectedLineMsg	  warning
+  ConsistencyChecking	  off
+  ZeroCross		  on
+  SimulationMode	  normal
+  RTWSystemTargetFile	  "grt.tlc"
+  RTWInlineParameters	  off
+  RTWPlaceOutputsASAP	  off
+  RTWRetainRTWFile	  off
+  RTWTemplateMakefile	  "grt_default_tmf"
+  RTWMakeCommand	  "make_rtw"
+  RTWGenerateCodeOnly	  off
+  ExtModeMexFile	  "ext_comm"
+  ExtModeBatchMode	  off
+  BlockDefaults {
+    Orientation		    right
+    ForegroundColor	    black
+    BackgroundColor	    white
+    DropShadow		    off
+    NamePlacement	    normal
+    FontName		    "Helvetica"
+    FontSize		    10
+    FontWeight		    normal
+    FontAngle		    normal
+    ShowName		    on
+  }
+  AnnotationDefaults {
+    HorizontalAlignment	    center
+    VerticalAlignment	    middle
+    ForegroundColor	    black
+    BackgroundColor	    white
+    DropShadow		    off
+    FontName		    "Helvetica"
+    FontSize		    10
+    FontWeight		    normal
+    FontAngle		    normal
+  }
+  LineDefaults {
+    FontName		    "Helvetica"
+    FontSize		    9
+    FontWeight		    normal
+    FontAngle		    normal
+  }
+  System {
+    Name		    "tutorial6"
+    Location		    [208, 116, 980, 826]
+    Open		    on
+    ToolBar		    on
+    StatusBar		    on
+    ScreenColor		    white
+    PaperOrientation	    landscape
+    PaperPositionMode	    auto
+    PaperType		    usletter
+    PaperUnits		    inches
+    Block {
+      BlockType		      SubSystem
+      Name		      "Band-Limited\nWhite Noise"
+      Ports		      [0, 1, 0, 0, 0]
+      Position		      [40, 137, 85, 173]
+      ShowPortLabels	      off
+      MaskType		      "Discrete time white noise. "
+      MaskDescription	      "Discrete time white noise"
+      MaskHelp		      "Generates a sequence of normally distributed ra"
+"ndom numbers with standard deviation sigma"
+      MaskPromptString	      "time step [msec]|standard deviation [nA]|random"
+" seed"
+      MaskStyleString	      "edit,edit,edit"
+      MaskTunableValueString  "on,on,on"
+      MaskInitialization      "dt = @1; sigma = @2; seed = @3; r = rand(1,12);"
+" r2 = [r(1),r;r,r(12)]; t =[1:13;1:13];"
+      MaskDisplay	      "plot(t(:),r2(:))"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "tstep|0.1|[23341]"
+      System {
+	Name			"Band-Limited\nWhite Noise"
+	Location		[54, 317, 339, 470]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  Gain
+	  Name			  "Gain"
+	  Position		  [155, 31, 195, 69]
+	  Gain			  "sigma"
+	}
+	Block {
+	  BlockType		  RandomNumber
+	  Name			  "White Noise"
+	  Position		  [25, 40, 45, 60]
+	  Mean			  "0"
+	  Variance		  "1"
+	  Seed			  "seed"
+	  SampleTime		  "-1"
+	}
+	Block {
+	  BlockType		  ZeroOrderHold
+	  Name			  "Zero-Order\nHold"
+	  Position		  [85, 34, 120, 66]
+	  SampleTime		  "dt"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "Out_1"
+	  Position		  [230, 40, 250, 60]
+	  Port			  "1"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Line {
+	  SrcBlock		  "Zero-Order\nHold"
+	  SrcPort		  1
+	  DstBlock		  "Gain"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Gain"
+	  SrcPort		  1
+	  DstBlock		  "Out_1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "White Noise"
+	  SrcPort		  1
+	  DstBlock		  "Zero-Order\nHold"
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
+      BlockType		      DiscreteFilter
+      Name		      "Exponential \nlow-pass filter"
+      Position		      [225, 135, 270, 175]
+      Numerator		      "k2"
+      Denominator	      "1"
+      SampleTime	      "dt"
+      MaskType		      "Exponential low-pass filter"
+      MaskDescription	      "Parameters"
+      MaskPromptString	      "Time constant [msec]| Number of  points| time s"
+"tep [msec]"
+      MaskStyleString	      "edit,edit,edit"
+      MaskTunableValueString  "on,on,on"
+      MaskInitialization      "tau = @1; n = @2; dt = @3; t = [0:1:n-1]*dt; k2"
+" = exp(-t/tau) ; k2 = k2/norm(k2);"
+      MaskDisplay	      "plot(t,k2);"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "20|1024|tstep"
+    }
+    Block {
+      BlockType		      DiscreteFilter
+      Name		      "Fir filter"
+      Position		      [125, 135, 170, 175]
+      Numerator		      "ys"
+      Denominator	      "1"
+      SampleTime	      "dt"
+      MaskType		      "Fir1 filter"
+      MaskDescription	      "Parameters"
+      MaskPromptString	      "Cut-off frequency [Hz]| Number of  points| time"
+" step [msec]"
+      MaskStyleString	      "edit,edit,edit"
+      MaskTunableValueString  "on,on,on"
+      MaskInitialization      "fc = @1; n = @2; dt = @3; fn = 1/(2*dt*1e-3); y"
+"s = fir1(n,fc/fn); ys = ys/norm(ys);"
+      MaskDisplay	      "plot((1:n+1),ys);"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "100|1024|tstep"
+    }
+    Block {
+      BlockType		      Gain
+      Name		      "Gain"
+      Position		      [335, 77, 360, 103]
+      Gain		      "gf"
+    }
+    Block {
+      BlockType		      Gain
+      Name		      "Gain1"
+      Position		      [335, 179, 365, 211]
+      Gain		      "-gf"
+    }
+    Block {
+      BlockType		      Gain
+      Name		      "Gain2"
+      Position		      [565, 190, 600, 220]
+      Gain		      "-1"
+    }
+    Block {
+      BlockType		      Fcn
+      Name		      "Half-wave\nrectifier"
+      Position		      [390, 74, 425, 106]
+      Expr		      "0.5*(u[1] + abs(u[1]))"
+      MaskType		      "half-wave rectifier"
+      MaskInitialization      "x = [-2:0.1:2]; y = 0.5*(x+abs(x));"
+      MaskDisplay	      "plot(x,y);"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+    }
+    Block {
+      BlockType		      Fcn
+      Name		      "Half-wave\nrectifier1"
+      Position		      [395, 179, 430, 211]
+      Expr		      "0.5*(u[1] + abs(u[1]))"
+      MaskType		      "half-wave rectifier"
+      MaskInitialization      "x = [-2:0.1:2]; y = 0.5*(x+abs(x));"
+      MaskDisplay	      "plot(x,y);"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info1"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [605, 518, 743, 583]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('Numerical estimation \\nof the fraction o"
+"f the \\nstimulus encoded as \\na function of mean \\nfiring rate')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info1"
+	Location		[568, 85, 922, 533]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [157, 42]
+	  VerticalAlignment	  top
+	  Text			  "To compute the accuracy of stimulus estimat"
+"ion\nas a function of mean firing rate, you can:"
+	}
+	Annotation {
+	  Position		  [167, 82]
+	  VerticalAlignment	  top
+	  Text			  "1) Call the script \"stestf1\" which will s"
+"equentially\nload in the workspace the results of simulations of the \nmodel "
+"for different values of the gain gf. "
+	}
+	Annotation {
+	  Position		  [172, 127]
+	  VerticalAlignment	  top
+	  Text			  "These results are stored in the directory "
+"\"tutorial6_dat\".\nFrom the results (spike trains and stimuli) the script wi"
+"ll\ncompute the mean firing rate and coding fraction and \nplot them. "
+	}
+	Annotation {
+	  Position		  [177, 192]
+	  VerticalAlignment	  top
+	  Text			  "2) Perform the actual simulations by callin"
+"g the script\n\"stestf\" (this is a computationally very intensive simulation"
+"). \nThe first time that \"stestf\" is called, it will ask for: "
+	}
+	Annotation {
+	  Position		  [172, 368]
+	  VerticalAlignment	  top
+	  Text			  "-a vector of values for gf (answer: [0.25:0"
+".25:2])."
+	}
+	Annotation {
+	  Position		  [182, 332]
+	  VerticalAlignment	  top
+	  Text			  "-the name of the variable to be changed for"
+" each new\nsimulation (answer: gf)."
+	}
+	Annotation {
+	  Position		  [182, 297]
+	  VerticalAlignment	  top
+	  Text			  "-the name of the variable containing the sp"
+"ike trains\n(answer: spk)."
+	}
+	Annotation {
+	  Position		  [172, 262]
+	  VerticalAlignment	  top
+	  Text			  "-the name of the variable containing the st"
+"imulus\n(answer: stim)."
+	}
+	Annotation {
+	  Position		  [157, 242]
+	  VerticalAlignment	  top
+	  Text			  "-the name of the model (answer: tutorial6)."
+" "
+	}
+	Annotation {
+	  Position		  [172, 407]
+	  VerticalAlignment	  top
+	  Text			  "For subsequent calls, stestf will use the s"
+"ame values for\nthe variables as entered in the previous steps.  "
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info3"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [610, 596, 749, 658]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('Comparison with the\\n theoretical result"
+"')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info3"
+	Location		[113, 200, 487, 531]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [182, 27]
+	  VerticalAlignment	  top
+	  Text			  "To compare the  numerical results with the "
+"analytical formula, \nenter:"
+	}
+	Annotation {
+	  Position		  [72, 72]
+	  VerticalAlignment	  top
+	  Text			  "hold on"
+	}
+	Annotation {
+	  Position		  [142, 102]
+	  VerticalAlignment	  top
+	  Text			  "stesttheor(0.1,100,20,10,100,10)"
+	}
+	Annotation {
+	  Position		  [152, 127]
+	  VerticalAlignment	  top
+	  Text			  "in the main matlab window. The parameters a"
+"re:"
+	}
+	Annotation {
+	  Position		  [166, 157]
+	  VerticalAlignment	  top
+	  Text			  "0.1 = standard deviation of the stimulus (i"
+"n nA)."
+	}
+	Annotation {
+	  Position		  [162, 187]
+	  VerticalAlignment	  top
+	  Text			  "100 = cut-off frequency of the stimulus (in"
+" Hz)."
+	}
+	Annotation {
+	  Position		  [172, 217]
+	  VerticalAlignment	  top
+	  Text			  "20 = time constant of low-pass filtering (i"
+"n msec)."
+	}
+	Annotation {
+	  Position		  [177, 242]
+	  VerticalAlignment	  top
+	  Text			  "10 = minimum firing frequency of each neuro"
+"n (in Hz)."
+	}
+	Annotation {
+	  Position		  [177, 272]
+	  VerticalAlignment	  top
+	  Text			  "100 = maximal firing frequency of each neur"
+"on (in Hz)."
+	}
+	Annotation {
+	  Position		  [157, 297]
+	  VerticalAlignment	  top
+	  Text			  "10 = increment step in firing frequency (in"
+" Hz). "
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Poisson spike \ngenerator with \nref. period"
+      Ports		      [1, 2, 0, 0, 0]
+      Position		      [475, 62, 520, 113]
+      ShowPortLabels	      off
+      MaskType		      "I&F p. thres., ref. per."
+      MaskDescription	      "Parameters"
+      MaskHelp		      "For a detailled description of the model, pleas"
+"e type 'help piandfr' in the main matlab window"
+      MaskPromptString	      "time step [msec]|mean threshold [mV]|Capacitanc"
+"e [nF]|refractory period [msec]"
+      MaskStyleString	      "edit,edit,edit,edit"
+      MaskTunableValueString  "on,on,on,on"
+      MaskInitialization      "dt = @1; thres = @2; C = @3; ref = @4;"
+      MaskDisplay	      "disp('Vm \\n\\n spikes')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "tstep|10|.5|tstep"
+      System {
+	Name			"Poisson spike \ngenerator with \nref. period"
+	Location		[65, 93, 431, 311]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  Inport
+	  Name			  "in_1"
+	  Position		  [40, 75, 60, 95]
+	  Port			  "1"
+	  PortWidth		  "-1"
+	  SampleTime		  "-1"
+	}
+	Block {
+	  BlockType		  Demux
+	  Name			  "Demux"
+	  Ports			  [1, 2, 0, 0, 0]
+	  Position		  [180, 66, 220, 99]
+	  Outputs		  "2"
+	}
+	Block {
+	  BlockType		  "S-Function"
+	  Name			  "Poisson spike\ngenerator with\nref. period"
+	  Ports			  [1, 1, 0, 0, 0]
+	  Position		  [90, 66, 140, 104]
+	  FunctionName		  "piandfr"
+	  Parameters		  "dt,thres,C, ref"
+	  PortCounts		  "[]"
+	  SFunctionModules	  "''"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "out_2"
+	  Position		  [250, 95, 270, 115]
+	  Port			  "1"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "out_1"
+	  Position		  [250, 45, 270, 65]
+	  Port			  "2"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Line {
+	  SrcBlock		  "Poisson spike\ngenerator with\nref. period"
+	  SrcPort		  1
+	  DstBlock		  "Demux"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Demux"
+	  SrcPort		  1
+	  DstBlock		  "out_1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Demux"
+	  SrcPort		  2
+	  DstBlock		  "out_2"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "in_1"
+	  SrcPort		  1
+	  DstBlock		  "Poisson spike\ngenerator with\nref. period"
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Poisson spike \ngenerator with \nref. period1"
+      Ports		      [1, 2, 0, 0, 0]
+      Position		      [480, 167, 525, 218]
+      ShowPortLabels	      off
+      MaskType		      "I&F p. thres., ref. per."
+      MaskDescription	      "Parameters"
+      MaskHelp		      "For a detailled description of the model, pleas"
+"e type 'help piandfr' in the main matlab window"
+      MaskPromptString	      "time step [msec]|mean threshold [mV]|Capacitanc"
+"e [nF]|refractory period [msec]"
+      MaskStyleString	      "edit,edit,edit,edit"
+      MaskTunableValueString  "on,on,on,on"
+      MaskInitialization      "dt = @1; thres = @2; C = @3; ref = @4;"
+      MaskDisplay	      "disp('Vm \\n\\n spikes')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "tstep|10|.5|tstep"
+      System {
+	Name			"Poisson spike \ngenerator with \nref. period1"
+	Location		[65, 93, 431, 311]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  Inport
+	  Name			  "in_1"
+	  Position		  [40, 75, 60, 95]
+	  Port			  "1"
+	  PortWidth		  "-1"
+	  SampleTime		  "-1"
+	}
+	Block {
+	  BlockType		  Demux
+	  Name			  "Demux"
+	  Ports			  [1, 2, 0, 0, 0]
+	  Position		  [180, 66, 220, 99]
+	  Outputs		  "2"
+	}
+	Block {
+	  BlockType		  "S-Function"
+	  Name			  "Poisson spike\ngenerator with\nref. period"
+	  Ports			  [1, 1, 0, 0, 0]
+	  Position		  [90, 66, 140, 104]
+	  FunctionName		  "piandfr"
+	  Parameters		  "dt,thres,C, ref"
+	  PortCounts		  "[]"
+	  SFunctionModules	  "''"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "out_2"
+	  Position		  [250, 95, 270, 115]
+	  Port			  "1"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "out_1"
+	  Position		  [250, 45, 270, 65]
+	  Port			  "2"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Line {
+	  SrcBlock		  "Poisson spike\ngenerator with\nref. period"
+	  SrcPort		  1
+	  DstBlock		  "Demux"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Demux"
+	  SrcPort		  1
+	  DstBlock		  "out_1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Demux"
+	  SrcPort		  2
+	  DstBlock		  "out_2"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "in_1"
+	  SrcPort		  1
+	  DstBlock		  "Poisson spike\ngenerator with\nref. period"
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
+      BlockType		      Scope
+      Name		      "Scope"
+      Ports		      [1, 0, 0, 0, 0]
+      Position		      [710, 190, 740, 220]
+      Floating		      off
+      Location		      [9, 128, 340, 442]
+      Open		      off
+      Grid		      on
+      TickLabels	      on
+      ZoomMode		      on
+      TimeRange		      "500.000000"
+      YMin		      "-2.000000"
+      YMax		      "2.000000"
+      SaveToWorkspace	      off
+      SaveName		      "ScopeData"
+      LimitMaxRows	      on
+      MaxRows		      "5000"
+      Decimation	      "1"
+      SampleInput	      off
+      SampleTime	      "0"
+    }
+    Block {
+      BlockType		      Sum
+      Name		      "Sum"
+      Ports		      [2, 1, 0, 0, 0]
+      Position		      [625, 140, 645, 160]
+      Inputs		      "++"
+    }
+    Block {
+      BlockType		      ToWorkspace
+      Name		      "To Workspace"
+      Position		      [220, 77, 270, 93]
+      VariableName	      "stim"
+      Buffer		      "ceil(tstop/tstep)"
+      Decimation	      "1"
+      SampleTime	      "0"
+    }
+    Block {
+      BlockType		      ToWorkspace
+      Name		      "To Workspace1"
+      Position		      [700, 142, 750, 158]
+      VariableName	      "spk"
+      Buffer		      "ceil(tstop/tstep)"
+      Decimation	      "1"
+      SampleTime	      "0"
+    }
+    Line {
+      SrcBlock		      "Half-wave\nrectifier"
+      SrcPort		      1
+      DstBlock		      "Poisson spike \ngenerator with \nref. period"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Half-wave\nrectifier1"
+      SrcPort		      1
+      DstBlock		      "Poisson spike \ngenerator with \nref. period1"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Gain1"
+      SrcPort		      1
+      DstBlock		      "Half-wave\nrectifier1"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Gain"
+      SrcPort		      1
+      DstBlock		      "Half-wave\nrectifier"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Band-Limited\nWhite Noise"
+      SrcPort		      1
+      DstBlock		      "Fir filter"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Poisson spike \ngenerator with \nref. period1"
+      SrcPort		      2
+      DstBlock		      "Gain2"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Sum"
+      SrcPort		      1
+      DstBlock		      "To Workspace1"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Poisson spike \ngenerator with \nref. period"
+      SrcPort		      2
+      Points		      [75, 0; 0, 45]
+      DstBlock		      "Sum"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Fir filter"
+      SrcPort		      1
+      Points		      [0, 0]
+      Branch {
+	DstBlock		"Exponential \nlow-pass filter"
+	DstPort			1
+      }
+      Branch {
+	Points			[30, 0]
+	DstBlock		"To Workspace"
+	DstPort			1
+      }
+    }
+    Line {
+      SrcBlock		      "Gain2"
+      SrcPort		      1
+      Points		      [5, 0]
+      DstBlock		      "Sum"
+      DstPort		      2
+    }
+    Line {
+      SrcBlock		      "Exponential \nlow-pass filter"
+      SrcPort		      1
+      Points		      [0, 0]
+      Branch {
+	Points			[20, 0; 0, 40]
+	DstBlock		"Gain1"
+	DstPort			1
+      }
+      Branch {
+	Points			[20, 0; 0, -65]
+	DstBlock		"Gain"
+	DstPort			1
+      }
+    }
+    Annotation {
+      Position		      [377, 27]
+      VerticalAlignment	      top
+      Text		      "Dependence of the accuracy of stimulus estimati"
+"on on the mean firing rate of Poisson neurons."
+    }
+    Annotation {
+      Position		      [338, 277]
+      VerticalAlignment	      top
+      Text		      "To use the floating Scope, double click on the "
+"\"Scope\" icon and select the output line that you wish to plot."
+    }
+    Annotation {
+      Position		      [343, 307]
+      VerticalAlignment	      top
+      Text		      "To change the parameters of the model, double c"
+"lick on the  \"Poisson spike generator\" icon, on the \"Random \ncurrent puls"
+"e generator\" icon or on the \"Exponential low-pass filter\" icon."
+    }
+    Annotation {
+      Position		      [353, 352]
+      VerticalAlignment	      top
+      Text		      "To change the parameters of the simulation, use"
+" the \"Parameters\" selection in the \"Simulation\" pull-down menu."
+    }
+    Annotation {
+      Position		      [323, 382]
+      VerticalAlignment	      top
+      Text		      "Currently, the stop time and time step are dete"
+"rmined by two workspace variables  (tstop and tstep). "
+    }
+    Annotation {
+      Position		      [316, 442]
+      VerticalAlignment	      top
+      Text		      "To start and stop the simulation, use the \"Sta"
+"rt/Stop\" selection in the \"Simulation\"  pull-down menu"
+    }
+    Annotation {
+      Position		      [258, 412]
+      VerticalAlignment	      top
+      Text		      "These two variables can also be changed directl"
+"y in the workspace window."
+    }
+    Annotation {
+      Position		      [336, 477]
+      VerticalAlignment	      top
+      Text		      "By running the stimulations or loading the resu"
+"lting spike trains from the tutorial6_dat directory, you can:"
+    }
+    Annotation {
+      Position		      [292, 527]
+      VerticalAlignment	      top
+      Text		      "1) Determine numerically the fraction of the st"
+"imulus encoded by the two neuron models\nas a  function of  their mean firing"
+" rate.à"
+    }
+    Annotation {
+      Position		      [202, 607]
+      VerticalAlignment	      top
+      Text		      "2) Compare the numerical result with the analyt"
+"ical result."
+    }
+  }
+}

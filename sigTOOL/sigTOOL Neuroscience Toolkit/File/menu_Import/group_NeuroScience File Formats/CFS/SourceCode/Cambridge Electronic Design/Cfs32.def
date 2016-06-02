@@ -1,0 +1,45 @@
+; module-definition file for cfsdll -- used by LINK.EXE
+
+LIBRARY      CFS32
+
+DESCRIPTION  'CFS filing system as a Windows DLL'
+
+;CODE can be moved in memory and discarded/reloaded
+;;CODE  SHARED
+
+;DATA must be MULTIPLE if program can be invoked more than once
+;;DATA  SHARED
+
+HEAPSIZE     4096
+
+; All functions that will be called by any Windows routine MUST be exported
+
+EXPORTS
+        WEP                     @1
+        CreateCFSFile           @2
+        SetFileChan             @3
+        SetDSChan               @4
+        WriteData               @5
+        ClearDS                 @6
+        SetWriteData            @7
+        InsertDS                @8
+        RemoveDS                @9
+        SetComment              @10
+        SetVarVal               @11
+        CloseCFSFile            @12
+        OpenCFSFile             @13
+        GetGenInfo              @14
+        GetFileInfo             @15
+        GetVarDesc              @16
+        GetVarVal               @17
+        GetFileChan             @18
+        GetDSChan               @19
+        GetChanData             @20
+        GetDSSize               @21
+        ReadData                @22
+        DSFlagValue             @23
+        DSFlags                 @24
+        FileError               @25
+        CommitCFSFile           @26
+        CFSFileSize             @27
+		AppendDS                @28

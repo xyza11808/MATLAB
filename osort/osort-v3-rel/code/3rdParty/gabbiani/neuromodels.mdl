@@ -1,0 +1,2315 @@
+Model {
+  Name			  "neuromodels"
+  Version		  2.20
+  SimParamPage		  Solver
+  SampleTimeColors	  off
+  InvariantConstants	  off
+  WideVectorLines	  off
+  ShowLineWidths	  off
+  StartTime		  "0.0"
+  StopTime		  "999999"
+  Solver		  ode45
+  RelTol		  "1e-3"
+  AbsTol		  "1e-3"
+  Refine		  "1"
+  MaxStep		  "10"
+  InitialStep		  "auto"
+  FixedStep		  "auto"
+  MaxOrder		  5
+  OutputOption		  RefineOutputTimes
+  OutputTimes		  "[]"
+  LoadExternalInput	  off
+  ExternalInput		  "[t, u]"
+  SaveTime		  off
+  TimeSaveName		  "tout"
+  SaveState		  off
+  StateSaveName		  "xout"
+  SaveOutput		  off
+  OutputSaveName	  "yout"
+  LoadInitialState	  off
+  InitialState		  "xInitial"
+  SaveFinalState	  off
+  FinalStateName	  "xFinal"
+  LimitMaxRows		  off
+  MaxRows		  "1000"
+  Decimation		  "1"
+  AlgebraicLoopMsg	  warning
+  MinStepSizeMsg	  warning
+  UnconnectedInputMsg	  warning
+  UnconnectedOutputMsg	  warning
+  UnconnectedLineMsg	  warning
+  ConsistencyChecking	  off
+  ZeroCross		  on
+  SimulationMode	  normal
+  RTWSystemTargetFile	  "grt.tlc"
+  RTWInlineParameters	  off
+  RTWPlaceOutputsASAP	  off
+  RTWRetainRTWFile	  off
+  RTWTemplateMakefile	  "grt_default_tmf"
+  RTWMakeCommand	  "make_rtw"
+  RTWGenerateCodeOnly	  off
+  ExtModeMexFile	  "ext_comm"
+  ExtModeBatchMode	  off
+  BlockDefaults {
+    Orientation		    right
+    ForegroundColor	    black
+    BackgroundColor	    white
+    DropShadow		    off
+    NamePlacement	    normal
+    FontName		    "Helvetica"
+    FontSize		    10
+    FontWeight		    normal
+    FontAngle		    normal
+    ShowName		    on
+  }
+  AnnotationDefaults {
+    HorizontalAlignment	    center
+    VerticalAlignment	    middle
+    ForegroundColor	    black
+    BackgroundColor	    white
+    DropShadow		    off
+    FontName		    "Helvetica"
+    FontSize		    10
+    FontWeight		    normal
+    FontAngle		    normal
+  }
+  LineDefaults {
+    FontName		    "Helvetica"
+    FontSize		    9
+    FontWeight		    normal
+    FontAngle		    normal
+  }
+  System {
+    Name		    "neuromodels"
+    Location		    [86, 55, 826, 200]
+    Open		    on
+    ToolBar		    on
+    StatusBar		    on
+    ScreenColor		    white
+    PaperOrientation	    landscape
+    PaperPositionMode	    auto
+    PaperType		    usletter
+    PaperUnits		    inches
+    Block {
+      BlockType		      SubSystem
+      Name		      "Connections"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [335, 45, 365, 95]
+      ShowPortLabels	      on
+      System {
+	Name			"Connections"
+	Location		[271, 511, 459, 678]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  Gain
+	  Name			  "Gain"
+	  Position		  [40, 102, 65, 128]
+	  Gain			  "1"
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Inner\nProduct"
+	  Ports			  [2, 1, 0, 0, 0]
+	  Position		  [130, 39, 150, 61]
+	  ShowPortLabels	  off
+	  MaskType		  "Dot Product"
+	  MaskDescription	  "Inner (dot) product.\ny=sum(u1.*u2)"
+	  MaskHelp		  "Computes the inner (dot) product of the inp"
+"uts: sum(u1.*u2).  The inputs are vectors of the same length. Output is a sca"
+"lar."
+	  MaskDisplay		  "disp('.\\n')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Inner\nProduct"
+	    Location		    [33, 479, 253, 634]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	    Block {
+	      BlockType		      Inport
+	      Name		      "in_1"
+	      Position		      [15, 25, 35, 45]
+	      Port		      "1"
+	      PortWidth		      "-1"
+	      SampleTime	      "-1"
+	    }
+	    Block {
+	      BlockType		      Inport
+	      Name		      "in_2"
+	      Position		      [15, 90, 35, 110]
+	      Port		      "2"
+	      PortWidth		      "-1"
+	      SampleTime	      "-1"
+	    }
+	    Block {
+	      BlockType		      Product
+	      Name		      "Product"
+	      Ports		      [2, 1, 0, 0, 0]
+	      Position		      [65, 55, 90, 75]
+	      Inputs		      "2"
+	    }
+	    Block {
+	      BlockType		      Sum
+	      Name		      "Sum"
+	      Ports		      [1, 1, 0, 0, 0]
+	      Position		      [125, 55, 145, 75]
+	      Inputs		      "+"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "out_1"
+	      Position		      [185, 55, 205, 75]
+	      Port		      "1"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Line {
+	      SrcBlock		      "in_2"
+	      SrcPort		      1
+	      DstBlock		      "Product"
+	      DstPort		      2
+	    }
+	    Line {
+	      SrcBlock		      "in_1"
+	      SrcPort		      1
+	      DstBlock		      "Product"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Product"
+	      SrcPort		      1
+	      DstBlock		      "Sum"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Sum"
+	      SrcPort		      1
+	      DstBlock		      "out_1"
+	      DstPort		      1
+	    }
+	  }
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum"
+	  Ports			  [2, 1, 0, 0, 0]
+	  Position		  [45, 40, 65, 60]
+	  Inputs		  "++"
+	}
+	Annotation {
+	  Position		  [102, 12]
+	  VerticalAlignment	  top
+	  Text			  "Connection elements"
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Functions"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [235, 45, 265, 95]
+      ShowPortLabels	      on
+      System {
+	Name			"Functions"
+	Location		[597, 220, 799, 458]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  DiscreteFilter
+	  Name			  "Exponential \nlow-pass filter"
+	  Position		  [30, 130, 75, 170]
+	  Numerator		  "k2"
+	  Denominator		  "1"
+	  SampleTime		  "dt"
+	  MaskType		  "Exponential low-pass filter"
+	  MaskDescription	  "Parameters"
+	  MaskPromptString	  "Time constant [msec]| Number of  points| ti"
+"me step [msec]"
+	  MaskStyleString	  "edit,edit,edit"
+	  MaskTunableValueString  "on,on,on"
+	  MaskInitialization	  "tau = @1; n = @2; dt = @3; t = [0:1:n-1]*dt"
+"; k2 = exp(-t/tau) ; k2 = k2/norm(k2);"
+	  MaskDisplay		  "plot(t,k2);"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "20|512|tstep"
+	}
+	Block {
+	  BlockType		  Fcn
+	  Name			  "Half-wave\nrectifier"
+	  Position		  [35, 49, 70, 81]
+	  Expr			  "0.5*(u[1] + abs(u[1]))"
+	  MaskType		  "half-wave rectifier"
+	  MaskInitialization	  "x = [-2:0.1:2]; y = 0.5*(x+abs(x));"
+	  MaskDisplay		  "plot(x,y);"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	}
+	Block {
+	  BlockType		  DiscreteFilter
+	  Name			  "LGN transfer\nfunction"
+	  Position		  [100, 46, 160, 84]
+	  Numerator		  "k2"
+	  Denominator		  "1"
+	  SampleTime		  "dt"
+	  MaskType		  "LGN transfer function"
+	  MaskDescription	  "Parameters"
+	  MaskPromptString	  "cut-off frequency [Hz]|time step [msec]|tim"
+"e constant [msec]"
+	  MaskStyleString	  "edit,edit,edit"
+	  MaskTunableValueString  "on,on,on"
+	  MaskInitialization	  "omega_c = @1*2*pi; dt = @2; tau = @3*1e-3; "
+"b = sqrt(omega_c^2 + tau^(-2)) ; tv = [0:dt:512]; tv_s = tv*1e-3; k2 = tv_s.*"
+"(tau + 0.5*(1-tau*b)*tv_s).*exp(-b*tv_s); k2 = k2/norm(k2);"
+	  MaskDisplay		  "plot(tv,k2);"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "5.5|tstep|1500"
+	}
+	Annotation {
+	  Position		  [102, 12]
+	  VerticalAlignment	  top
+	  Text			  "Functions"
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Functions and Scripts"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [619, 45, 649, 95]
+      ShowPortLabels	      on
+      System {
+	Name			"Functions and Scripts"
+	Location		[488, 63, 946, 876]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 1"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [20, 110, 139, 174]
+	  ShowName		  off
+	  OpenFcn		  "help psautostim"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 1disp('End');"
+	  MaskDisplay		  "disp('Power spectrum \\nand autocorrelation"
+" \\nof a stimulus')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 1"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 10"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [15, 485, 134, 549]
+	  ShowName		  off
+	  OpenFcn		  "help fithifref"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 10disp('End');"
+	  MaskDisplay		  "disp('F-I curve of an\\nintegrate-and-fire"
+"\\nneuron  ')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 10"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 11"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [142, 490, 289, 549]
+	  ShowName		  off
+	  OpenFcn		  "help fithlifref"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 11disp('End');"
+	  MaskDisplay		  "disp('F-I curve of a\\nleaky integrate-and-"
+"fire\\nneuron ')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 11"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 12"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [305, 495, 434, 559]
+	  ShowName		  off
+	  OpenFcn		  "help gfitheor"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 12disp('End');"
+	  MaskDisplay		  "disp('ISI distribution of\\n random thresho"
+"ld \\nneuron models\\n(gamma and Poisson \\ndistributions)  ')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 12"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 13"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [20, 570, 139, 634]
+	  ShowName		  off
+	  OpenFcn		  "help gpstheor"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 13disp('End');"
+	  MaskDisplay		  "disp('Power spectrum and\\nautocorrelation "
+"of\\nrandom threshold\\nneurons ')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 13"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 14"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [170, 565, 289, 629]
+	  ShowName		  off
+	  OpenFcn		  "help buttfilt"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 14disp('End');"
+	  MaskDisplay		  "disp('Transfer function\\nof a Butterworth"
+"\\ndigital filter ')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 14"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 15"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [305, 575, 424, 639]
+	  ShowName		  off
+	  OpenFcn		  "help lgnfilt"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 15disp('End');"
+	  MaskDisplay		  "disp('Transfer function of \\na LGN thalami"
+"c\\nrelay cell  ')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 15"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 16"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [18, 655, 144, 716]
+	  ShowName		  off
+	  OpenFcn		  "help poisscnt"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 16disp('End');"
+	  MaskDisplay		  "disp('Count distribution for \\na Poisson p"
+"rocess ')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 16"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 17"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [170, 650, 289, 714]
+	  ShowName		  off
+	  OpenFcn		  "help neymtacnt"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 17disp('End');"
+	  MaskDisplay		  "disp('Neyman type A\\ncount distribution')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 17"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 18"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [310, 650, 429, 714]
+	  ShowName		  off
+	  OpenFcn		  "help prefdisp"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 18disp('End');"
+	  MaskDisplay		  "disp('Variance vs. mean\\ndispersion for\\n"
+"a Poisson process\\nwith ref. period')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 18"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 19"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [20, 740, 139, 804]
+	  ShowName		  off
+	  OpenFcn		  "help sndpdisp"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 19disp('End');"
+	  MaskDisplay		  "disp('Variance vs. mean\\ndispersion for a"
+"\\nshot noise driven\\nPoisson process')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 19"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 2"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [20, 190, 139, 254]
+	  ShowName		  off
+	  OpenFcn		  "help psautospk"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 2disp('End');"
+	  MaskDisplay		  "disp('Power spectrum \\nand autocorrelation"
+" \\nof a spike train')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 2"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 20"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [165, 735, 299, 804]
+	  ShowName		  off
+	  OpenFcn		  "help gaussroc"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 20disp('End');"
+	  MaskDisplay		  "disp('ROC curves\\nfor\\nGaussian distribut"
+"ions')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 20"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 21"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [305, 735, 439, 804]
+	  ShowName		  off
+	  OpenFcn		  "help stesttheor"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 21disp('End');"
+	  MaskDisplay		  "disp('Coding fraction vs. \\nmean firing ra"
+"te \\nplot for  \\nPoisson neurons')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 21"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 22"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [20, 360, 139, 424]
+	  ShowName		  off
+	  OpenFcn		  "help roc"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 22disp('End');"
+	  MaskDisplay		  "disp('ROC curve \\nfor two spike \\ncount d"
+"istributions')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 22"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 23"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [170, 360, 297, 424]
+	  ShowName		  off
+	  OpenFcn		  "help stestf"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 23disp('End'); eval('help stestf1');"
+" disp('End');"
+	  MaskDisplay		  "disp('Dependence of the \\n accuracy of sti"
+"mulus\\n estimation on the\\n mean firing rate')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 23"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 3"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [170, 110, 289, 174]
+	  ShowName		  off
+	  OpenFcn		  "help isidist"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 3disp('End');"
+	  MaskDisplay		  "disp('ISI distribution\\nof a spike train')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 3"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 4"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [165, 200, 297, 259]
+	  ShowName		  off
+	  OpenFcn		  "help stimest"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 4disp('End');"
+	  MaskDisplay		  "disp('Estimation of a random\\nstimulus fro"
+"m\\na spike train\\n(Wiener-Kolmogorov)')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 4"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 5"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [310, 110, 429, 174]
+	  ShowName		  off
+	  OpenFcn		  "help wiener1"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 5disp('End');"
+	  MaskDisplay		  "disp('First order\\nwiener kernel')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 5"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 6"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [305, 195, 424, 259]
+	  ShowName		  off
+	  OpenFcn		  "help countprob"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 6disp('End');"
+	  MaskDisplay		  "disp('Distribution of  spike\\ncounts in an"
+"\\ninterval')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 6"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 7"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [16, 280, 139, 341]
+	  ShowName		  off
+	  OpenFcn		  "help dispersion"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 7disp('End');"
+	  MaskDisplay		  "disp('Dispersion of the \\nspike count\\n(v"
+"ariance vs. mean)  ')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 7"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 8"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [170, 280, 289, 344]
+	  ShowName		  off
+	  OpenFcn		  "help roc"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 8disp('End');"
+	  MaskDisplay		  "disp('ROC curve for\\nspike count\\ndistrib"
+"utions')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 8"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 9"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [305, 280, 424, 344]
+	  ShowName		  off
+	  OpenFcn		  "help ficurve"
+	  ShowPortLabels	  off
+	  MaskDescription	  "Button 9disp('End');"
+	  MaskDisplay		  "disp('Firing frequency vs. \\ninjected curr"
+"ent')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 9"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Annotation {
+	  Position		  [212, 77]
+	  VerticalAlignment	  top
+	  Text			  "Functions and Scripts for data analysis"
+	}
+	Annotation {
+	  Position		  [227, 27]
+	  VerticalAlignment	  top
+	  Text			  "To obtain a description of the following fu"
+"nctions and scripts in\nthe main Matlab window, double-click on the correspon"
+"ding icon. "
+	}
+	Annotation {
+	  Position		  [222, 452]
+	  VerticalAlignment	  top
+	  Text			  "Theoretical Functions and Scripts"
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Input signals\n"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [35, 34, 71, 95]
+      ShowPortLabels	      on
+      System {
+	Name			"Input signals\n"
+	Location		[550, 291, 812, 724]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Band-Limited\nWhite Noise"
+	  Ports			  [0, 1, 0, 0, 0]
+	  Position		  [40, 282, 85, 318]
+	  ShowPortLabels	  off
+	  MaskType		  "Discrete time white noise. "
+	  MaskDescription	  "Discrete time white noise"
+	  MaskHelp		  "Generates a sequence of normally distribute"
+"d random numbers with standard deviation sigma"
+	  MaskPromptString	  "time step [msec]|standard deviation [nA]|ra"
+"ndom seed"
+	  MaskStyleString	  "edit,edit,edit"
+	  MaskTunableValueString  "on,on,on"
+	  MaskInitialization	  "dt = @1; sigma = @2; seed = @3; r = rand(1,"
+"12); r2 = [r(1),r;r,r(12)]; t =[1:13;1:13];"
+	  MaskDisplay		  "plot(t(:),r2(:))"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "tstep|0.1|[23341]"
+	  System {
+	    Name		    "Band-Limited\nWhite Noise"
+	    Location		    [54, 317, 339, 470]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	    Block {
+	      BlockType		      Gain
+	      Name		      "Gain"
+	      Position		      [155, 31, 195, 69]
+	      Gain		      "sigma"
+	    }
+	    Block {
+	      BlockType		      RandomNumber
+	      Name		      "White Noise"
+	      Position		      [25, 40, 45, 60]
+	      Mean		      "0"
+	      Variance		      "1"
+	      Seed		      "seed"
+	      SampleTime	      "-1"
+	    }
+	    Block {
+	      BlockType		      ZeroOrderHold
+	      Name		      "Zero-Order\nHold"
+	      Position		      [85, 34, 120, 66]
+	      SampleTime	      "dt"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "Out_1"
+	      Position		      [230, 40, 250, 60]
+	      Port		      "1"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Line {
+	      SrcBlock		      "White Noise"
+	      SrcPort		      1
+	      DstBlock		      "Zero-Order\nHold"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Gain"
+	      SrcPort		      1
+	      DstBlock		      "Out_1"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Zero-Order\nHold"
+	      SrcPort		      1
+	      DstBlock		      "Gain"
+	      DstPort		      1
+	    }
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Butterworth Low-Pass \nFiltered White Noise"
+	  Ports			  [0, 1, 0, 0, 0]
+	  Position		  [155, 277, 200, 313]
+	  ShowPortLabels	  off
+	  MaskType		  "Low-pass filtered white noise. "
+	  MaskDescription	  "Discrete time white noise"
+	  MaskHelp		  "Generates a Gaussian noise with fixed stand"
+"ard deviation  in the time domain and fixed cut-off frequency in the frequenc"
+"y domain."
+	  MaskPromptString	  "time step [msec]|standard deviation [nA]|ra"
+"ndom seed|Cut-off frequency [Hz]|filter order"
+	  MaskStyleString	  "edit,edit,edit,edit,edit"
+	  MaskTunableValueString  "on,on,on,on,on"
+	  MaskInitialization	  "dt = @1; sigma = @2; seed = @3;[bint, a] = "
+"butter(@5,@4*2*@1*1e-3); h = freqz(bint,a); nfac = sum(h.*conj(h))/length(h);"
+" b = bint/sqrt(nfac); n = @5; x = rand(1,10*@5); y = filter(b,a,x);"
+	  MaskDisplay		  "plot((5*n:10*n),y(5*n:10*n));"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "tstep|0.63|[23341]|240|4"
+	  System {
+	    Name		    "Butterworth Low-Pass \nFiltered White Noi"
+"se"
+	    Location		    [129, 53, 571, 156]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	    Block {
+	      BlockType		      DiscreteFilter
+	      Name		      "Filter"
+	      Position		      [250, 31, 310, 69]
+	      Numerator		      "b"
+	      Denominator	      "a"
+	      SampleTime	      "dt"
+	    }
+	    Block {
+	      BlockType		      Gain
+	      Name		      "Gain"
+	      Position		      [155, 31, 195, 69]
+	      Gain		      "sigma"
+	    }
+	    Block {
+	      BlockType		      RandomNumber
+	      Name		      "White Noise"
+	      Position		      [25, 40, 45, 60]
+	      Mean		      "0"
+	      Variance		      "1"
+	      Seed		      "seed"
+	      SampleTime	      "-1"
+	    }
+	    Block {
+	      BlockType		      ZeroOrderHold
+	      Name		      "Zero-Order\nHold"
+	      Position		      [85, 34, 120, 66]
+	      SampleTime	      "dt"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "Out_1"
+	      Position		      [380, 40, 400, 60]
+	      Port		      "1"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Line {
+	      SrcBlock		      "Gain"
+	      SrcPort		      1
+	      DstBlock		      "Filter"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Filter"
+	      SrcPort		      1
+	      DstBlock		      "Out_1"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "White Noise"
+	      SrcPort		      1
+	      DstBlock		      "Zero-Order\nHold"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Zero-Order\nHold"
+	      SrcPort		      1
+	      DstBlock		      "Gain"
+	      DstPort		      1
+	    }
+	  }
+	}
+	Block {
+	  BlockType		  Constant
+	  Name			  "Constant current"
+	  Position		  [165, 82, 190, 108]
+	  Value			  "i"
+	  MaskType		  "constant current"
+	  MaskDescription	  "Parameter"
+	  MaskHelp		  "Provides a constant input current"
+	  MaskPromptString	  "constant current value [nA]"
+	  MaskStyleString	  "edit"
+	  MaskTunableValueString  "on"
+	  MaskInitialization	  "i = @1;"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "0.6"
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Current pulse"
+	  Ports			  [0, 1, 0, 0, 0]
+	  Position		  [45, 210, 70, 250]
+	  ShowPortLabels	  off
+	  MaskType		  "Current step"
+	  MaskDescription	  "Parameters:"
+	  MaskHelp		  "At onset tiFor a detailed description of th"
+"e block, please type 'help stepc' in the main matlab window"
+	  MaskPromptString	  "time step [msec]|start time [msec]|pulse le"
+"ngth [msec]|current value [nA]"
+	  MaskStyleString	  "edit,edit,edit,edit"
+	  MaskTunableValueString  "on,on,on,on"
+	  MaskInitialization	  "dt = @1; s = @2; w = @3; h =@4;"
+	  MaskDisplay		  "plot(0,0,100,100,[10,30,30,70,70,90],[20,20"
+",80,80,20,20])"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "tstep|100|200|1"
+	  System {
+	    Name		    "Current pulse"
+	    Location		    [180, 554, 423, 696]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	    Block {
+	      BlockType		      "S-Function"
+	      Name		      "Current step"
+	      Ports		      [1, 1, 0, 0, 0]
+	      Position		      [80, 66, 125, 104]
+	      FunctionName	      "stepc"
+	      Parameters	      "dt, s,  w, h"
+	      PortCounts	      "[]"
+	      SFunctionModules	      "''"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "out_1"
+	      Position		      [155, 75, 175, 95]
+	      Port		      "1"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Line {
+	      SrcBlock		      "Current step"
+	      SrcPort		      1
+	      DstBlock		      "out_1"
+	      DstPort		      1
+	    }
+	  }
+	}
+	Block {
+	  BlockType		  Step
+	  Name			  "Current step"
+	  Position		  [50, 75, 75, 105]
+	  Time			  "t_on"
+	  Before		  "i_in"
+	  After			  "i_fin"
+	  MaskType		  "Current step"
+	  MaskDescription	  "Parameters"
+	  MaskHelp		  "At onset time the value of the current swit"
+"ches between the initial and final value"
+	  MaskPromptString	  "onset time [msec]|initial current [nA]|fina"
+"l current [nA]"
+	  MaskStyleString	  "edit,edit,edit"
+	  MaskTunableValueString  "on,on,on"
+	  MaskInitialization	  "t_on = @1; i_in = @2; i_fin = @3;"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "0|0|0"
+	}
+	Block {
+	  BlockType		  FromWorkspace
+	  Name			  "From\nWorkspace"
+	  Position		  [160, 362, 200, 388]
+	  VariableName		  "[T,U]"
+	}
+	Block {
+	  BlockType		  FromFile
+	  Name			  "From File"
+	  Position		  [25, 366, 95, 394]
+	  FileName		  "untitled.mat"
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Random current\npulse generator"
+	  Ports			  [0, 1, 0, 0, 0]
+	  Position		  [165, 125, 195, 165]
+	  ShowPortLabels	  off
+	  MaskType		  "Pulse generator"
+	  MaskDescription	  "Parameters:"
+	  MaskHelp		  "Pulse generator, for a detailled descriptio"
+"n of the model, type 'help pulsegen' in the main matlab window"
+	  MaskPromptString	  "time step [msec]|start time [msec]|period ["
+"msec]|width [msec]|pulse height [nA]"
+	  MaskStyleString	  "edit,edit,edit,edit,edit"
+	  MaskTunableValueString  "on,on,on,on,on"
+	  MaskInitialization	  "dt = @1; s = @2; p = @3; w = @4; h = @5;"
+	  MaskDisplay		  "plot(0,0,100,100,[90,75,75,60,60,35,35,20,2"
+"0,10],[20,20,80,80,20,20,80,80,20,20])"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "tstep|100|20|2|1"
+	  System {
+	    Name		    "Random current\npulse generator"
+	    Location		    [155, 549, 402, 726]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	    Block {
+	      BlockType		      "S-Function"
+	      Name		      "Random current\npulse generator"
+	      Ports		      [1, 1, 0, 0, 0]
+	      Position		      [70, 69, 130, 111]
+	      FunctionName	      "ppulsegen"
+	      Parameters	      "dt,s,p,w,h"
+	      PortCounts	      "[]"
+	      SFunctionModules	      "''"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "out_1"
+	      Position		      [160, 80, 180, 100]
+	      Port		      "1"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Line {
+	      SrcBlock		      "Random current\npulse generator"
+	      SrcPort		      1
+	      DstBlock		      "out_1"
+	      DstPort		      1
+	    }
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Regular current\npulse generator"
+	  Ports			  [0, 1, 0, 0, 0]
+	  Position		  [50, 125, 80, 165]
+	  ShowPortLabels	  off
+	  MaskType		  "Pulse generator"
+	  MaskDescription	  "Parameters:"
+	  MaskHelp		  "Pulse generator, for a detailled descriptio"
+"n of the model, type 'help pulsegen' in the main matlab window"
+	  MaskPromptString	  "time step [msec]|start time [msec]|period ["
+"msec]|width [msec]|pulse height [nA]"
+	  MaskStyleString	  "edit,edit,edit,edit,edit"
+	  MaskTunableValueString  "on,on,on,on,on"
+	  MaskInitialization	  "dt = @1; s = @2; p = @3; w = @4; h = @5;"
+	  MaskDisplay		  "plot(0,0,100,100,[90,75,75,60,60,35,35,20,2"
+"0,10],[20,20,80,80,20,20,80,80,20,20])"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "tstep|100|50|10|1"
+	  System {
+	    Name		    "Regular current\npulse generator"
+	    Location		    [155, 549, 402, 726]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	    Block {
+	      BlockType		      "S-Function"
+	      Name		      "Regular current\npulse generator"
+	      Ports		      [1, 1, 0, 0, 0]
+	      Position		      [80, 70, 130, 110]
+	      FunctionName	      "pulsegen"
+	      Parameters	      "dt,s,p,w,h"
+	      PortCounts	      "[]"
+	      SFunctionModules	      "''"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "out_1"
+	      Position		      [160, 80, 180, 100]
+	      Port		      "1"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Line {
+	      SrcBlock		      "Regular current\npulse generator"
+	      SrcPort		      1
+	      DstBlock		      "out_1"
+	      DstPort		      1
+	    }
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "sine current"
+	  Ports			  [0, 1, 0, 0, 0]
+	  Position		  [155, 209, 195, 251]
+	  ShowPortLabels	  off
+	  MaskType		  "sine current"
+	  MaskDescription	  "Parameters"
+	  MaskHelp		  "For detailed information about this block, "
+"please type 'help sinec' in the main matlab window"
+	  MaskPromptString	  "time step [msec]|sine amplitude [nA]|freque"
+"ncy [Hz]|phase [percent of period]|offset current [nA]"
+	  MaskStyleString	  "edit,edit,edit,edit,edit"
+	  MaskTunableValueString  "on,on,on,on,on"
+	  MaskInitialization	  "dt = @1; a = @2; f = @3; p = @4; o = @5;"
+	  MaskDisplay		  "plot(0,-1.2,120,1.2,(0:100),sin((2*pi).*(0:"
+"100)./100))"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "tstep|2|10|0.25|2"
+	  System {
+	    Name		    "sine current"
+	    Location		    [180, 601, 393, 733]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	    Block {
+	      BlockType		      "S-Function"
+	      Name		      "S-Function2"
+	      Ports		      [1, 1, 0, 0, 0]
+	      Position		      [65, 56, 120, 84]
+	      FunctionName	      "sinec"
+	      Parameters	      "dt,a,f,p,o"
+	      PortCounts	      "[]"
+	      SFunctionModules	      "''"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "out_1"
+	      Position		      [150, 60, 170, 80]
+	      Port		      "1"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Line {
+	      SrcBlock		      "S-Function2"
+	      SrcPort		      1
+	      DstBlock		      "out_1"
+	      DstPort		      1
+	    }
+	  }
+	}
+	Annotation {
+	  Position		  [132, 32]
+	  VerticalAlignment	  top
+	  Text			  "Signal Source Library"
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Neuron models"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [140, 42, 170, 98]
+      ShowPortLabels	      on
+      System {
+	Name			"Neuron models"
+	Location		[181, 170, 451, 435]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "I & F neuron\nwith rand. thres.\nand ref. p"
+"eriod"
+	  Ports			  [1, 2, 0, 0, 0]
+	  Position		  [65, 151, 110, 204]
+	  ShowPortLabels	  off
+	  MaskType		  "I&F g. thres., ref. per."
+	  MaskDescription	  "Parameters"
+	  MaskHelp		  "For a detailled description of the model, p"
+"lease type 'help giandfr' in the main matlab window"
+	  MaskPromptString	  "time step [msec]|mean threshold [mV]|gamma "
+"distr. order|Capacitance [nF]|refractory period [msec]"
+	  MaskStyleString	  "edit,edit,edit,edit,edit"
+	  MaskTunableValueString  "on,on,on,on,on"
+	  MaskInitialization	  "dt = @1; thres = @2; n = @3; C = @4; ref = "
+"@5; if (ref<dt) disp(' '); disp('Warning: refractory period cannot be smaller"
+" than time step.'); disp(' '); end;"
+	  MaskDisplay		  "disp('Vm \\n\\n spikes')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "tstep|10|2|0.5|5"
+	  System {
+	    Name		    "I & F neuron\nwith rand. thres.\nand ref."
+" period"
+	    Location		    [90, 87, 403, 270]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	    Block {
+	      BlockType		      Inport
+	      Name		      "in_1"
+	      Position		      [55, 75, 75, 95]
+	      Port		      "1"
+	      PortWidth		      "-1"
+	      SampleTime	      "-1"
+	    }
+	    Block {
+	      BlockType		      Demux
+	      Name		      "Demux"
+	      Ports		      [1, 2, 0, 0, 0]
+	      Position		      [195, 66, 235, 99]
+	      Outputs		      "2"
+	    }
+	    Block {
+	      BlockType		      "S-Function"
+	      Name		      "I & F  neuron\nwith rand. thres.\nand r"
+"ef. period"
+	      Ports		      [1, 1, 0, 0, 0]
+	      Position		      [105, 61, 145, 109]
+	      FunctionName	      "giandfr"
+	      Parameters	      "dt,thres,n,C,ref"
+	      PortCounts	      "[]"
+	      SFunctionModules	      "''"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "out_2"
+	      Position		      [265, 105, 285, 125]
+	      Port		      "1"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "out_1"
+	      Position		      [265, 35, 285, 55]
+	      Port		      "2"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Line {
+	      SrcBlock		      "in_1"
+	      SrcPort		      1
+	      DstBlock		      "I & F  neuron\nwith rand. thres.\nand r"
+"ef. period"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Demux"
+	      SrcPort		      2
+	      DstBlock		      "out_2"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Demux"
+	      SrcPort		      1
+	      DstBlock		      "out_1"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "I & F  neuron\nwith rand. thres.\nand r"
+"ef. period"
+	      SrcPort		      1
+	      DstBlock		      "Demux"
+	      DstPort		      1
+	    }
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "I&F neuron\nwith ref. period"
+	  Ports			  [1, 2, 0, 0, 0]
+	  Position		  [170, 151, 215, 204]
+	  ShowPortLabels	  off
+	  MaskType		  "I&F ref. per. "
+	  MaskDescription	  "Parameters"
+	  MaskHelp		  "For a detailled description of the model, p"
+"lease type 'help iandfr' in the main matlab window"
+	  MaskPromptString	  "time step [msec]|threshold [mV]|Capacitance"
+" [nF]|refractory period [msec]"
+	  MaskStyleString	  "edit,edit,edit,edit"
+	  MaskTunableValueString  "on,on,on,on"
+	  MaskInitialization	  "dt = @1; thres = @2; C = @3; ref = @4; if ("
+"ref<dt) disp(' '); disp('Warning: refractory period cannot be smaller than ti"
+"me step.'); disp(' '); end;"
+	  MaskDisplay		  "disp('Vm \\n\\n spikes')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "tstep|10|.5|5"
+	  System {
+	    Name		    "I&F neuron\nwith ref. period"
+	    Location		    [100, 183, 359, 319]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	    Block {
+	      BlockType		      Inport
+	      Name		      "in_1"
+	      Position		      [25, 55, 45, 75]
+	      Port		      "1"
+	      PortWidth		      "-1"
+	      SampleTime	      "-1"
+	    }
+	    Block {
+	      BlockType		      Demux
+	      Name		      "Demux"
+	      Ports		      [1, 2, 0, 0, 0]
+	      Position		      [170, 46, 210, 79]
+	      Outputs		      "2"
+	    }
+	    Block {
+	      BlockType		      "S-Function"
+	      Name		      "I&F neuron \nwith ref. period"
+	      Ports		      [1, 1, 0, 0, 0]
+	      Position		      [75, 43, 125, 87]
+	      FunctionName	      "iandfr"
+	      Parameters	      "dt,thres,C,ref"
+	      PortCounts	      "[]"
+	      SFunctionModules	      "''"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "out_2"
+	      Position		      [240, 60, 260, 80]
+	      Port		      "1"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "out_1"
+	      Position		      [240, 45, 260, 65]
+	      Port		      "2"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Line {
+	      SrcBlock		      "in_1"
+	      SrcPort		      1
+	      DstBlock		      "I&F neuron \nwith ref. period"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Demux"
+	      SrcPort		      2
+	      DstBlock		      "out_2"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Demux"
+	      SrcPort		      1
+	      DstBlock		      "out_1"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "I&F neuron \nwith ref. period"
+	      SrcPort		      1
+	      DstBlock		      "Demux"
+	      DstPort		      1
+	    }
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Leaky I&F neuron\nwith ref. period"
+	  Ports			  [1, 2, 0, 0, 0]
+	  Position		  [175, 44, 215, 106]
+	  ShowPortLabels	  off
+	  MaskType		  "L I&F ref. per."
+	  MaskDescription	  "Parameters"
+	  MaskHelp		  "For a detailled description of the model, p"
+"lease type 'help liandfr' in the main matlab window."
+	  MaskPromptString	  "time step [msec]|threshold [mV]|Capacitance"
+" [nF]|Resistance [MOhms]|refractory period [msec]"
+	  MaskStyleString	  "edit,edit,edit,edit,edit"
+	  MaskTunableValueString  "on,on,on,on,on"
+	  MaskInitialization	  "dt = @1; thres = @2; C = @3; R = @4; ref = "
+"@5; if (ref<dt) disp(' '); disp('Warning: refractory period cannot be smaller"
+" than time step.'); disp(' '); end;"
+	  MaskDisplay		  "disp('Vm \\n\\n spikes')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "tstep|10|.5|50|5"
+	  System {
+	    Name		    "Leaky I&F neuron\nwith ref. period"
+	    Location		    [135, 636, 436, 782]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	    Block {
+	      BlockType		      Inport
+	      Name		      "in_1"
+	      Position		      [40, 55, 60, 75]
+	      Port		      "1"
+	      PortWidth		      "-1"
+	      SampleTime	      "-1"
+	    }
+	    Block {
+	      BlockType		      Demux
+	      Name		      "Demux"
+	      Ports		      [1, 2, 0, 0, 0]
+	      Position		      [180, 46, 220, 79]
+	      Outputs		      "2"
+	    }
+	    Block {
+	      BlockType		      "S-Function"
+	      Name		      "Leaky I&F neuron\nwith ref. period"
+	      Ports		      [1, 1, 0, 0, 0]
+	      Position		      [90, 47, 140, 83]
+	      FunctionName	      "liandfr"
+	      Parameters	      "dt,thres,C,R,ref"
+	      PortCounts	      "[]"
+	      SFunctionModules	      "''"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "out_2"
+	      Position		      [250, 60, 270, 80]
+	      Port		      "1"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "out_1"
+	      Position		      [250, 45, 270, 65]
+	      Port		      "2"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Line {
+	      SrcBlock		      "in_1"
+	      SrcPort		      1
+	      DstBlock		      "Leaky I&F neuron\nwith ref. period"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Demux"
+	      SrcPort		      2
+	      DstBlock		      "out_2"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Demux"
+	      SrcPort		      1
+	      DstBlock		      "out_1"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Leaky I&F neuron\nwith ref. period"
+	      SrcPort		      1
+	      DstBlock		      "Demux"
+	      DstPort		      1
+	    }
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Poisson spike \ngenerator with \nref. perio"
+"d"
+	  Ports			  [1, 2, 0, 0, 0]
+	  Position		  [65, 47, 110, 98]
+	  ShowPortLabels	  off
+	  MaskType		  "I&F p. thres., ref. per."
+	  MaskDescription	  "Parameters"
+	  MaskHelp		  "For a detailled description of the model, p"
+"lease type 'help piandfr' in the main matlab window"
+	  MaskPromptString	  "time step [msec]|mean threshold [mV]|Capaci"
+"tance [nF]|refractory period [msec]"
+	  MaskStyleString	  "edit,edit,edit,edit"
+	  MaskTunableValueString  "on,on,on,on"
+	  MaskInitialization	  "dt = @1; thres = @2; C = @3; ref = @4; if ("
+"ref<dt) disp(' '); disp('Warning: refractory period cannot be smaller than ti"
+"me step.'); disp(' '); end;"
+	  MaskDisplay		  "disp('Vm \\n\\n spikes')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "tstep|10|.5|5"
+	  System {
+	    Name		    "Poisson spike \ngenerator with \nref. per"
+"iod"
+	    Location		    [65, 93, 431, 311]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	    Block {
+	      BlockType		      Inport
+	      Name		      "in_1"
+	      Position		      [40, 75, 60, 95]
+	      Port		      "1"
+	      PortWidth		      "-1"
+	      SampleTime	      "-1"
+	    }
+	    Block {
+	      BlockType		      Demux
+	      Name		      "Demux"
+	      Ports		      [1, 2, 0, 0, 0]
+	      Position		      [180, 66, 220, 99]
+	      Outputs		      "2"
+	    }
+	    Block {
+	      BlockType		      "S-Function"
+	      Name		      "Poisson spike\ngenerator with\nref. per"
+"iod"
+	      Ports		      [1, 1, 0, 0, 0]
+	      Position		      [90, 66, 140, 104]
+	      FunctionName	      "piandfr"
+	      Parameters	      "dt,thres,C, ref"
+	      PortCounts	      "[]"
+	      SFunctionModules	      "''"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "out_2"
+	      Position		      [250, 95, 270, 115]
+	      Port		      "1"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "out_1"
+	      Position		      [250, 45, 270, 65]
+	      Port		      "2"
+	      OutputWhenDisabled      held
+	      InitialOutput	      "0"
+	    }
+	    Line {
+	      SrcBlock		      "in_1"
+	      SrcPort		      1
+	      DstBlock		      "Poisson spike\ngenerator with\nref. per"
+"iod"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Demux"
+	      SrcPort		      2
+	      DstBlock		      "out_2"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Demux"
+	      SrcPort		      1
+	      DstBlock		      "out_1"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "Poisson spike\ngenerator with\nref. per"
+"iod"
+	      SrcPort		      1
+	      DstBlock		      "Demux"
+	      DstPort		      1
+	    }
+	  }
+	}
+	Annotation {
+	  Position		  [142, 17]
+	  VerticalAlignment	  top
+	  Text			  "Neuron Models Library"
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Output devices"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [429, 45, 459, 95]
+      ShowPortLabels	      on
+      System {
+	Name			"Output devices"
+	Location		[419, 467, 613, 648]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Auto-Scale\nGraph"
+	  Ports			  [1, 0, 0, 0, 0]
+	  Position		  [110, 90, 140, 130]
+	  ShowPortLabels	  off
+	  MaskType		  "Storage scope."
+	  MaskDescription	  "Storage scope using MATLAB graph window.\nE"
+"nter plotting ranges and line type."
+	  MaskHelp		  "This block uses a MATLAB figure window to p"
+"lot the input signal.  The graph limits are automatically scaled to the min a"
+"nd max values of the signal stored in the scope's signal buffer.  Line type m"
+"ust be in quotes.  See the M-file sfunyst.m."
+	  MaskPromptString	  "Initial Time Range:|Initial y-min:|Initial "
+"y-max:|Storage pts.:|Line type (rgbw-.:xo):"
+	  MaskStyleString	  "edit,edit,edit,edit,edit"
+	  MaskTunableValueString  "on,on,on,on,on"
+	  MaskInitialization	  "npts = @4; color = @5; ax = [0, @1, @2, @3]"
+"; dt=-1;"
+	  MaskDisplay		  "plot(0,0,100,100,[83,76,63,52,42,38,28,16,1"
+"1,84,11,11,11,90,90,11],[75,58,47,54,72,80,84,74,65,65,65,90,40,40,90,90])"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "5|-10|10|200|'y-/g--/c-./w:/m*/ro/b+'"
+	  System {
+	    Name		    "Auto-Scale\nGraph"
+	    Location		    [0, 59, 274, 252]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	    Block {
+	      BlockType		      Inport
+	      Name		      "x"
+	      Position		      [65, 55, 85, 75]
+	      Port		      "1"
+	      PortWidth		      "-1"
+	      SampleTime	      "-1"
+	    }
+	    Block {
+	      BlockType		      "S-Function"
+	      Name		      "S-function\nM-file which plots\nlines\n"
+	      Ports		      [1, 1, 0, 0, 0]
+	      Position		      [130, 55, 180, 75]
+	      FunctionName	      "sfunyst"
+	      Parameters	      "ax, color, npts, dt"
+	      PortCounts	      "[]"
+	      SFunctionModules	      "''"
+	    }
+	    Line {
+	      SrcBlock		      "x"
+	      SrcPort		      1
+	      DstBlock		      "S-function\nM-file which plots\nlines\n"
+	      DstPort		      1
+	    }
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Graph"
+	  Ports			  [1, 0, 0, 0, 0]
+	  Position		  [30, 91, 60, 129]
+	  ShowPortLabels	  off
+	  MaskType		  "Graph scope."
+	  MaskDescription	  "Graph scope using MATLAB graph window.\nEnt"
+"er plotting ranges and line type."
+	  MaskHelp		  "This block plots to the MATLAB graph window"
+" and can be used as an improved version of the Scope block. Look at the m-fil"
+"e sfuny.m to see how it works. This block can take scalar or vector input sig"
+"nal."
+	  MaskPromptString	  "Time range:|y-min:|y-max:|Line type (rgbw-:"
+"*). Seperate each plot by '/':"
+	  MaskStyleString	  "edit,edit,edit,edit"
+	  MaskTunableValueString  "on,on,on,on"
+	  MaskInitialization	  "color = @4; ax = [0, @1, @2, @3]; dt = -1;"
+	  MaskDisplay		  "plot(0,0,100,100,[90,10,10,10,90,90,10],[65"
+",65,90,40,40,90,90],[90,78,69,54,40,31,25,10],[77,60,48,46,56,75,81,84])"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  MaskValueString	  "20|-1.1|1.2|'y-/g--/c-./w:/m*/ro/b+'"
+	  System {
+	    Name		    "Graph"
+	    Location		    [0, 59, 274, 252]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	    Block {
+	      BlockType		      Inport
+	      Name		      "x"
+	      Position		      [65, 55, 85, 75]
+	      Port		      "1"
+	      PortWidth		      "-1"
+	      SampleTime	      "-1"
+	    }
+	    Block {
+	      BlockType		      "S-Function"
+	      Name		      "S-function\nM-file which plots\nlines\n"
+	      Ports		      [1, 1, 0, 0, 0]
+	      Position		      [130, 55, 180, 75]
+	      FunctionName	      "sfuny"
+	      Parameters	      "ax, color,dt"
+	      PortCounts	      "[]"
+	      SFunctionModules	      "''"
+	    }
+	    Line {
+	      SrcBlock		      "x"
+	      SrcPort		      1
+	      DstBlock		      "S-function\nM-file which plots\nlines\n"
+	      DstPort		      1
+	    }
+	  }
+	}
+	Block {
+	  BlockType		  Scope
+	  Name			  "Scope"
+	  Ports			  [1, 0, 0, 0, 0]
+	  Position		  [30, 35, 60, 65]
+	  Floating		  off
+	  Location		  [112, 160, 443, 474]
+	  Open			  off
+	  Grid			  on
+	  TickLabels		  on
+	  ZoomMode		  on
+	  TimeRange		  "1.000000"
+	  YMin			  "-1.000000"
+	  YMax			  "1.000000"
+	  SaveToWorkspace	  off
+	  SaveName		  "ScopeData"
+	  LimitMaxRows		  on
+	  MaxRows		  "5000"
+	  Decimation		  "1"
+	  SampleInput		  off
+	  SampleTime		  "0"
+	}
+	Block {
+	  BlockType		  ToWorkspace
+	  Name			  "To Workspace"
+	  Position		  [100, 37, 150, 53]
+	  VariableName		  "yout"
+	  Buffer		  "1000"
+	  Decimation		  "1"
+	  SampleTime		  "0"
+	}
+	Annotation {
+	  Position		  [97, 12]
+	  VerticalAlignment	  top
+	  Text			  "Output devices"
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Tutorials"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [515, 45, 545, 95]
+      ShowPortLabels	      on
+      System {
+	Name			"Tutorials"
+	Location		[55, 53, 672, 386]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 1"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [35, 80, 182, 147]
+	  ShowName		  off
+	  OpenFcn		  "tutorial1prep"
+	  ShowPortLabels	  off
+	  MaskDisplay		  "disp('ISI distribution,\\nPower spectrum\\n"
+"and\\nAutocorrelation function')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 1"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 2"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [30, 195, 177, 262]
+	  ShowName		  off
+	  OpenFcn		  "tutorial2prep"
+	  ShowPortLabels	  off
+	  MaskDisplay		  "disp('FI-curve of a \\nleaky integrate \\na"
+"nd fire neuron')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 2"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 3"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [220, 80, 367, 147]
+	  ShowName		  off
+	  OpenFcn		  "tutorial3prep"
+	  ShowPortLabels	  off
+	  MaskDisplay		  "disp('Estimation of a random\\nstimulus enc"
+"oded in\\na Poisson spike train')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 3"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 4"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [215, 195, 381, 262]
+	  ShowName		  off
+	  OpenFcn		  "tutorial4prep"
+	  ShowPortLabels	  off
+	  MaskDisplay		  "disp('Estimation of the\\ntransfer function"
+" of a\\nneuron model\\n(first order Wiener kernel)')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 4"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 5"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [410, 80, 576, 147]
+	  ShowName		  off
+	  OpenFcn		  "tutorial5prep"
+	  ShowPortLabels	  off
+	  MaskDisplay		  "disp('Multiplicative and refractory\\neffec"
+"ts in a model\\nof retinal ganglion cells')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 5"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Block {
+	  BlockType		  SubSystem
+	  Name			  "Button 6"
+	  Ports			  [0, 0, 0, 0, 0]
+	  Position		  [405, 195, 581, 261]
+	  ShowName		  off
+	  OpenFcn		  "tutorial6prep"
+	  ShowPortLabels	  off
+	  MaskDisplay		  "disp('Dependence of the accuracy\\nof stimu"
+"lus encoding\\non the mean firng rate of\\nPoisson neurons')"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  on
+	  MaskIconRotate	  none
+	  MaskIconUnits		  autoscale
+	  System {
+	    Name		    "Button 6"
+	    Location		    [514, 124, 650, 277]
+	    Open		    off
+	    ToolBar		    off
+	    StatusBar		    off
+	    ScreenColor		    white
+	    PaperOrientation	    landscape
+	    PaperPositionMode	    auto
+	    PaperType		    usletter
+	    PaperUnits		    inches
+	  }
+	}
+	Annotation {
+	  Position		  [282, 17]
+	  VerticalAlignment	  top
+	  Text			  "Tutorials"
+	}
+	Annotation {
+	  Position		  [107, 52]
+	  VerticalAlignment	  top
+	  Text			  "Tutorial 1:"
+	}
+	Annotation {
+	  Position		  [302, 177]
+	  VerticalAlignment	  top
+	  Text			  "Tutorial 4:"
+	}
+	Annotation {
+	  Position		  [102, 177]
+	  VerticalAlignment	  top
+	  Text			  "Tutorial 2:"
+	}
+	Annotation {
+	  Position		  [502, 172]
+	  VerticalAlignment	  top
+	  Text			  "Tutorial 6:"
+	}
+	Annotation {
+	  Position		  [287, 52]
+	  VerticalAlignment	  top
+	  Text			  "Tutorial 3:"
+	}
+	Annotation {
+	  Position		  [482, 57]
+	  VerticalAlignment	  top
+	  Text			  "Tutorial 5:"
+	}
+      }
+    }
+    Annotation {
+      Position		      [352, 12]
+      VerticalAlignment	      top
+      Text		      "Neuronal simulation package for statistical sig"
+"nal processing analysis"
+    }
+  }
+}

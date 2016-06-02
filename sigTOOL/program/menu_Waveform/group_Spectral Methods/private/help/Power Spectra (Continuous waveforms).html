@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+span.SpellE {mso-style-name:"";
+	mso-spl-e:yes;}
+div.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+li.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+p.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+.style1 {color: #808080}
+.style2 {color: #FFFFFF}
+-->
+</style>
+<style type="text/css">
+<!--
+p.MsoNormal {
+margin:0cm;
+margin-bottom:.0001pt;
+font-size:12.0pt;
+font-family:"Times New Roman";
+}
+-->
+</style>
+<style type="text/css">
+<!--
+p.MsoNormal {
+margin:0cm;
+margin-bottom:.0001pt;
+font-size:12.0pt;
+font-family:"Times New Roman";
+}
+-->
+</style>
+<style type="text/css">
+<!--
+p.MsoNormal {
+margin:0cm;
+margin-bottom:.0001pt;
+font-size:12.0pt;
+font-family:"Times New Roman";
+}
+-->
+</style>
+</head>
+
+<body>
+<div align="left">  
+  <p align="right"><img src="099.jpg" /></p>
+  <h2>Power Spectral Analysis</h2>
+  <p align="right" class="style1">Email: sigtool@kcl.ac.uk</p>
+</div>
+<hr />
+<p align="right" class="style1">&nbsp;</p>
+<p align="right" class="style1">Author: Malcolm Lidierth</p>
+<p align="right" class="style1">Updated: November 2007 </p>
+<h3>Method Summary</h3>
+<p><span style="mso-ansi-language:EN-GB">Power
+spectra and power spectral densities are estimated using the Welch <span class="SpellE">modified periodogram method (see Press et al. 1992; Chapter 14)</span></span>. The data are divided into sections of user selected length. Optionally, the linear trend is removed from each section. The data section is then multiplied by the weights of a window function and the FFT   is  taken. Successive data sections may   overlap in time. </p>
+<p><strong>Average spectra and spectral densities</strong></p>
+<p>For spectra, the transforms are averaged to form a periodogram which is scaled to provide power spectral or power spectral density estimates as selected.</p>
+<p><strong>Spectrogram</strong>s</p>
+<p>For spectrograms showing a time-frequency analysis, the power at each frequency is shown for  each data section   together with the data section time</p>
+<p>&nbsp;</p>
+<h3>Options</h3>
+<p align="center"><img src="spectral_menu" alt="spectral menu" /></p>
+<p>A standard channel selection panel allows selection of the channels and period for analysis. Note that Channel A and Channel B selections will be treated identically. Any waveform channels may be selected and in any combination: there are no constaints requiring channels to have equal sample rates for example.</p>
+<p>The FFT Options panel sets the parameters for the spectral analysis:</p>
+<h4>Window Length</h4>
+<p>Sets the duration of the data sections in seconds. The bin width of the resulting spectrum will be the reciprocal of this (in Hz). Note that because the window length remains constant, the length of the underlying FFT will vary with the sampling rate on each channel.</p>
+<h4>Window</h4>
+<p> A range of windows is available from the drop-down menu if the Signal Processing Toolbox is installed. If not, the range will be more limited.</p>
+<p align="center"><img src="window" alt="window" /></p>
+<p align="left">The Hamming window is selected by default. For spectral, rather than spectral density measurements, choose a Flat Top window.  For a discussion of Window functions, see Heinzel at al. (2002)</p>
+<p align="left"><strong>Overlap:</strong></p>
+<p align="left">Application of a window means that data at the ends of each section contribute less to the FFT. You can make more of the data by overlapping the data sections. The optimal overlap will depend on the window selected above. The default value is 50% which is suitable for a Hamming window (see Heinzel at al., 2002).</p>
+<p align="left"><strong>Overlap Mode:</strong></p>
+<p align="left">Whether the Overlap is used or not depends on the setting of Overlap Mode:</p>
+<p align="center"><img src="Overlap Mode" alt="OverLap Mode" /></p>
+<p align="left">When set to</p>
+<p align="left"> Auto: Data sections will be overlapped only for continuously sampled waveforms. This is the default.</p>
+<p align="left">Off: Data sections will not be overlapped.</p>
+<p align="left">On: All channels will overlapped including frame-based or triggered waveform channels. In general, overlapping non-contiguous blocks of data will not make sense and will introduce artefacts into the result. </p>
+<p align="left"><strong>Spectrum Mode</strong>:</p>
+<p align="center"><img src="Spectrum Mode" alt="Spectrum Mode" /></p>
+<p align="left">For biological signals, power spectral densities are usually used. Three options are offered:</p>
+<blockquote>
+  <blockquote>
+    <p align="left">Power Spectral Density (Units e.g. V<sup>2</sup>.Hz<sup>-1</sup>)</p>
+    <p align="left">Linear Power Spectral Density (the square root of the PSD; Units e.g. V/√Hz)</p>
+    <p align="left">  PSD x Hz (the PSD multiplied by the binwidth, for comparison with some commercial packages that use this scaling. Units e.g. V<sup>2</sup>).</p>
+  </blockquote>
+</blockquote>
+<p align="left">To find the power within a range of frequencies from a power spectral density, take the average of the power in the bins over that range.</p>
+<p align="left">If you have a rigidly fixed freqency signal (e.g. from a signal generator) power spectra are more suitable. To options are provided:</p>
+<blockquote>
+  <blockquote>
+    <p align="left">	Power Spectrum (Units e.g. V<sup>2</sup>)</p>
+    <p align="left">Linear Power Spectrum (the square root of the power; Units e.g. V)</p>
+  </blockquote>
+</blockquote>
+<p align="left">The power spectrum is scaled so that peaks in the spectrum accurately reflect the power at that frequency. Data to either side of each peak are not accurate.</p>
+<p align="left">For further details see Heinzel et al. (2002).</p>
+<p align="left">.</p>
+<p align="left"><strong>Detrend</strong></p>
+<p align="left">When detrend is selected, each data section will be pre-processed by removing any DC component and linear trend from it. As an alternative, pre-filter the channel to remove low frequencies using the <a href="Digital Filter.html">Waveform-&gt;Digital Filter</a> menu.</p>
+<p align="left">&nbsp;</p>
+<p align="left"><strong>Decimate:</strong></p>
+<p align="left">Biological signals are often oversampled. If you have sampled a signal at 5000Hz, power spectral estimates will be returned for DC-2500Hz. When returning spectrograms, this can lead to out-of-memory errors. If you are interested only in lower frequencies,  pre-process the signal by decimating it. Note, however, that it will often more efficient to decimate a channel from the main sigTOOL menu, writing data to a new channel which can then be analysed without further decimation in the power spectrum functions.</p>
+<p align="left"> Decimation applies a low-pass anti-aliasing filter to the data then selects every Nth data point where N is the value set in   the Decimation menu:</p>
+<p align="center"><img src="demimate" alt="decimate" /></p>
+<p>For further details, see the help from the <a href="../../../group_zChannel Operations/private/help/Decimation.html">Waveform->Decimate</a> menu.</p>
+<p>&nbsp;</p>
+<p align="right">&nbsp;</p>
+<h3>References:</h3>
+<p class="MsoNormal">William H. Press, Brian P. Flannery, Saul A. Teukolsky, and William T.   Vetterling (1992)</p>
+<p class="MsoNormal">Numerical Recipes in C: The Art of Scientific Computing CUP. [<a href="http://www.nrbook.com/a/bookcpdf.php">http://www.nrbook.com/a/bookcpdf.php</a>]</p>
+<p class="MsoNormal">&nbsp;</p>
+<p class="MsoNormal">G. Heinzel, A. Rudiger and R. Schilling (2002) </p>
+<p class="MsoNormal">Spectrum and spectral density estimation by the Discrete Fourier 
+  transform (DFT), including a comprehensive list of window
+  functions and some new 
+  at-top windows. [<a href="http://www.rssd.esa.int/SP/LISAPATHFINDER/docs/Data_Analysis/GH_FFT.pdf">http://www.rssd.esa.int/SP/LISAPATHFINDER/docs/Data_Analysis/GH_FFT.pdf</a>]</p>
+<p align="right">&nbsp;</p>
+<p align="right">&nbsp;</p>
+<p align="right">&copy; The Author and King's College London, 2007-</p>
+</body>
+</html>

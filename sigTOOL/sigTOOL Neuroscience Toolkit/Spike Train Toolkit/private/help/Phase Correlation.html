@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+span.SpellE {mso-style-name:"";
+	mso-spl-e:yes;}
+div.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+li.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+p.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+.style1 {color: #808080}
+.style2 {color: #000000}
+-->
+</style>
+</head>
+
+<body>
+<div align="left">  
+  <p align="right"><img src="099.jpg" width="80" height="40" alt="Logo" /></p>
+  <h2>Phase Correlation</h2>
+  <p align="right" class="style1">Email: sigtool@kcl.ac.uk</p>
+</div>
+<hr />
+<p align="right" class="style1">&nbsp;</p>
+<p align="right" class="style1">Author: Malcolm Lidierth</p>
+<p align="right" class="style1">Updated: August 2008 </p>
+<h3 align="left" class="style2">Method</h3>
+<p>Phase correlation provides an estimate of the probabilty of observing an event as a function of the phase of a rhythm e.g. the step cycle. The trigger channel(s) provide the events that mark the start/stop times for the  cycles. Results are returned as events/sweeps..</p>
+<p>&nbsp;</p>
+<h3>Options</h3>
+<p align="center"><img src="015.jpg" alt="phase" width="414" height="192" /></p>
+<p align="left">&nbsp;</p>
+<h4 align="left">Channel Selection</h4>
+<p align="left">Select the trigger channels  in the Channel A selector. These mark the onset of the rhythm to analyze. Note that only valid triggers will be used to mark the onset of each cycle but that all physical events will be scanned to find the end of the cycle. If the rhythm is interupted, set  those events which mark the onset of each <em>complete</em> cycle as valid. Thus, if there are 10 cycles but the 10th is interupted, mark 1-9 as valid using the Channels menu in the sigTOOL data view.</p>
+<p align="left">  Choose source channels using the Channel B selector.</p>
+<h4 align="left">Duration &amp; Bin width</h4>
+<p align="left">Sets the timebase for the resulting phase correlations and the bin width. The duration should be set in cycles and the binwidth in degrees. </p>
+<h4 align="left">Pre-time</h4>
+<p align="left">Sets the pre-time as a percentage of the  duration.</p>
+<h4 align="left">Sweeps per average</h4>
+<p align="left">By default, all triggers will be used. To generate multiple correlations each with a fixed number of sweeps set Sweeps per Average to a number less than the total number of available triggers. The result will be presented as a 3-D histogram.</p>
+<p align="left">&nbsp;</p>
+<h3 align="left">Post-processing options</h3>
+<p align="left">Right-click the mouse on the plotted result to display a context-senstive menu. Menu options include the ability to  superimpose a cumulative sum (cusum) plot and to add a smoothed plot of the data (smoothed with a Gaussian with a width of w bins).</p>
+<p align="center">&nbsp;</p>
+<p align="center">&nbsp;</p>
+<p align="right">&copy; The Author and King's College London, 2008-</p>
+</body>
+</html>

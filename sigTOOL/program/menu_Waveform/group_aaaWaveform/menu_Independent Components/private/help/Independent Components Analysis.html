@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+span.SpellE {mso-style-name:"";
+	mso-spl-e:yes;}
+div.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+li.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+p.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+.style1 {color: #808080}
+.style2 {color: #FF0000}
+.style3 {color: #000000; }
+-->
+</style>
+</head>
+
+<body>
+<div align="left">  
+  <p align="right"><img src="001.jpg" alt="logo" width="80" height="40" /></p>
+  <h2>Independent Components Analysis</h2>
+  <p align="right" class="style1">Email: sigtool@kcl.ac.uk</p>
+</div>
+<hr />
+<p align="right" class="style1">&nbsp;</p>
+<p align="right" class="style1">Author: Malcolm Lidierth</p>
+<p align="right" class="style1">Updated: November 2008 </p>
+<h3>Method Summary</h3>
+<p>sigTOOL provides mechanisms for independent components analysis using FastICA and Icasso. These third party packages need to be dowloaded separately; they are not included in the sigTOOL distribution. To download both FastICA and Icasso visit <a href="http://www.cis.hut.fi/projects/ica/fastica/">http://www.cis.hut.fi/projects/ica/fastica/</a></p>
+<p>FastICA was written by and is copyright of Hugo Gävert, Jarmo Hurri, Jaakko Särelä, and Aapo Hyvärinen</p>
+<p>Icasso was written by and is copyright of Johan Himberg</p>
+<p>&nbsp;</p>
+<h2>Using FastICA</h2>
+<p>Perform independent components analysis using FastICA by selecting the Waveform-&gt;Independent Components-&gt;FastICA menu option. You will be prompted to select the channels to analyze:</p>
+<p align="center"><img src="002.jpg" alt="fastica" width="608" height="305" /></p>
+<p>You can select a single continuous waveform channel for Channel A and then select from the list of valid channels in the Channel B selector or drag and drop a list of channels into the Channel A selector. All channels must be continously sampled and the same rate and be synchrounous (as defined by the isInSynch sigTOOL function).</p>
+<p>Start and stop times (in seconds) restrict the analysis to the indicated period.</p>
+<p>The Details box allows you to select to</p>
+<ol>
+  <li>Save results to sigTOOL. The independent components will be written to new channels in the source data view (use File-&gt;Save As to save these)</li>
+  <li>Save results to file. The FastICA analysis results will be written to a standard MATLAB MAT-file (in the system temporary folder. The name of the file will be output to the command window and will be FastICA_XXXX.mat where XXXX is the name of the source sigTOOL data view).</li>
+  <li>Save results to MATLAB. The FastICA analysis results will be saved as variables to the base workspace (named 'IC', 'A', 'W', 'whitesig', 'whiteningMatrix',<br />
+'dewhiteningMatrix', 'E', and 'D', all suffixed with '_XXXX' where XXXX is the name of the source sigTOOL data view). See the FastICA documentation for an explanation of these results.</li>
+</ol>
+<p>When you click the OK button, the FastICA GUI will appear:</p>
+<p align="center"><img src="003.jpg" alt="FastICA_GUI" width="533" height="405" /></p>
+<p>This is the standard FastICA GUI provided in the FastICA package but has an 'Export to sigTOOL:' button added. In addition, the 'Load Data' button is not used within sigTOOL: use the Waveform-&gt;Independent Components-&gt;FastICA menu option to load/change the data. </p>
+<p>Select the FastICA options using the GUI then choose 'Do ICA' to perform the analysis followed by 'Export to sigTOOL' to place the results in the sigTOOL data view/save to file/save to base workspace according to the selections made previously in sigTOOL.</p>
+<p>Note that you can not use the FastICA GUI when batch processing files and the Apply to all open files option is not avaible. Both are available when using Icasso as described below.</p>
+<p>&nbsp;</p>
+<h2>Using Icasso</h2>
+<p>The Icasso software calls FastICA repeatedly and tests the reliability of the results using a cluster analysis. The Icasso package provides mechanisms to visualize the results. To run Icasso from sigTOOL choose the Waveform-&gt;Independent Components-&gt;Icasso menu option. This displays</p>
+<p align="center"><img src="004.jpg" alt="Icasso_GUI" width="605" height="305" /></p>
+<p align="left">&nbsp;</p>
+<p align="left">The main panel is basically identical to that for FastICA but allows selection of &quot;Apply to all open files&quot;. In the details, you can select the options for running Icasso:</p>
+<ol>
+  <li>Mode can be set to 'Bootstrap', 'Randinit' or 'Both' as described in the Icasso documentation (default 'Both')</li>
+  <li>Iterations detemines how many times FastICA will be run to form estimates of the independent components for use in clustering</li>
+  <li>Number of components selects how many independent components to return (this can be greater than the number of channels). This number will be reduced automatically if Icasso returns fewer clusters than requested components.</li>
+  <li>FastICA optional arguments. These will be passed in IcassoEst and from there to FastICA e.g. enter
+    <blockquote>
+      <blockquote>
+        <blockquote>
+          <p>'approach', 'symm', 'g', 'pow3', 'maxNumIterations', 100</p>
+        </blockquote>
+      </blockquote>
+    </blockquote>
+    <p>in the text box (note these are the default settings when the box is left empty). See the full documenation at  <a href="http://www.cis.hut.fi/projects/ica/fastica/">http://www.cis.hut.fi/projects/ica/fastica/</a> for details.</p>
+  </li>
+</ol>
+<p>As with FastICA, you can select to save the results to the sigTOOL data view, to a MAT-file and/or to the MATLAB workspace.</p>
+<p>Results saved to sigTOOL will be the independent components saved as new channels and ordered according to their reliability as determined by a call to IccasoResult (IC1 through ICn correspond to the n most reliable estimates ranked by their Iq values).</p>
+<p>Results saved to a file or to the MATLAB base workspace are saved as a standard Icasso output structure. These may be used as input to the visualization routines in Icasso e.g. IcassoShow. Base workspace variables will be named Icasso_XXXX where XXXX is the name of the sigTOOL data view e.g. Icasso_demoICA if you use the file described below.  Files will be named Icasso_XXXX where XXXX is the name of the source sigTOOL data view and will conatin a single structure variable (named 'sR'). Files are saved to the system temporary file folder.</p>
+<p>The sigTOOL/demos folder contains a file called demoICA.kcl. To test out FastICA and Icasso load this file in sigTOOL. Channels 2-4 of the file contain [1] a biological signal mixed with a sinusoid [2] the same signal mixed with a sawtooth [3] a combination of both signal/sinusoid and sawtooth.</p>
+<p align="center"><img src="005.jpg" alt="demoICA1" width="594" height="442" /></p>
+<p> Use FastICA or Icasso to estimate 3 independent components from channels 2-4. What you see will vary - the order of the components and their sign  is not fixed and amplitude information is lost. The trace below shows the output from one rin of FastICA on channels 5 through 7 (the original biological signal is shown for comparison on channel 1).</p>
+<p align="center"><img src="006.jpg" alt="demoICA2" width="602" height="456" /></p>
+<p>Note that, in this run, the sawtooth was inverted in the output while the sinusoid and the biological signal are not.</p>
+<p>For a discussion of how to interpret the output, see the FastICA/Icasso website at <a href="http://www.cis.hut.fi/projects/ica/fastica/">http://www.cis.hut.fi/projects/ica/fastica/</a>.</p>
+<p align="right">&nbsp;</p>
+<p align="right">&copy; The Author and King's College London, 2008-</p>
+</body>
+</html>

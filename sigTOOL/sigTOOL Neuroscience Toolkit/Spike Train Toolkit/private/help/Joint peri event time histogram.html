@@ -1,0 +1,119 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+span.SpellE {mso-style-name:"";
+	mso-spl-e:yes;}
+div.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+li.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+p.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+.style1 {color: #808080}
+.style2 {color: #000000}
+-->
+</style>
+</head>
+
+<body>
+<div align="left">  
+  <p align="right"><img src="099.jpg" width="80" height="40" alt="Logo" /></p>
+  <h2>Joint peri-event time histogram (JPETH)</h2>
+  <p align="right" class="style1">Email: sigtool@kcl.ac.uk</p>
+</div>
+<hr />
+<p align="right" class="style1">&nbsp;</p>
+<p align="right" class="style1">Author: Malcolm Lidierth</p>
+<p align="right" class="style1">Updated: September 2009 </p>
+<h3 align="left" class="style2">Method</h3>
+<p>The joint peri-event time histogram analysis calculates the coincidence matrix and associated one-way perievent time histograms together with the spike correlation and coincidence histogram (Aertson<em> et al.</em> 1989). These are displayed in a single plot:</p>
+<p align="center"><img src="018.jpg" alt="figure" width="512" height="384" /></p>
+<p align="left">For a tutorial on the joint peri-event time histogram by Kyle Kirkland, see <a href="http://mulab.physiol.upenn.edu/jpst.html">http://mulab.physiol.upenn.edu/jpst.html</a></p>
+<p>&nbsp;</p>
+<h3>Options</h3>
+<p align="center"><img src="017.jpg" alt="JPETH" width="493" height="208" /></p>
+<p align="left">&nbsp;</p>
+<h4 align="left">Channel Selection</h4>
+<p align="left">Select the trigger channel  in the Channel A selector (only one channel should be selected). </p>
+<p align="left">Select the event (spike) channels using the Channel B selector (multiple channels allowed).</p>
+<h4 align="left">Duration &amp; Bin width</h4>
+<p align="left">Sets the timebase for the resulting event autocorrelations and the bin width to use (in seconds)</p>
+<h4 align="left">Pre-time</h4>
+<p align="left">Sets the pre-time as a percentage of the  duration.</p>
+<h4 align="left">Mode</h4>
+<p align="left">Sets the mode for returning the conicidence matrix</p>
+<table width="840" border="1">
+  <tr>
+    <td><strong>MODE</strong></td>
+    <td><strong>DESCRIPTION</strong></td>
+  </tr>
+  <tr>
+    <td><strong>'raw'</strong></td>
+    <td>returns the spike counts without scaling</td>
+  </tr>
+  <tr>
+    <td width="71"><strong>'average'</strong></td>
+    <td width="753">the raw jpeth matrix scaled by the number of triggers
+      will be used </td>
+  </tr>
+  <tr>
+    <td><strong>'corrected'</strong></td>
+    <td>the raw matrix will be scaled by subtracting the
+      cross product of peth1 and peth2</td>
+  </tr>
+  <tr>
+    <td><strong>'errors'</strong></td>
+    <td>returns the binomial errors i.e. the number of occasions when more than one coincidence occurred in a single bin in a single sweep</td>
+  </tr>
+  <tr>
+    <td><strong>'normalized'</strong></td>
+    <td>the corrected matrix will be scaled by product of the
+  standard deviations of the peths. Normalized values are
+  therefore correlation coefficients with a range of
+  -1 to 1.</td>
+  </tr>
+
+  <tr>
+    <td><strong>'surprise'</strong></td>
+    <td>returns Palm's &quot;surprise&quot;  measure of significance (see Palm <em>et al.</em>, 1988). Positive values represent excitation and negative values inhibition.</td>
+  </tr>
+</table>
+<p align="left">[Note that custom modes may also be available if user-defined methods have been added to the jpeth class].</p>
+<h4 align="left">Filter Width</h4>
+<p align="left">If a filter width is set, a 2-dimensional filter will be applied to the the coincidence matrix. Each value in the matrix will be the average of the surrounding values in the unfiltered matrix. The filter width should be odd. Note that no correction is made for missing values at the edgse of the matrix. You should therefore choose a pre-time that moves the area of interest away from the edges.<br />
+</p>
+<h4 align="left">Symmetric</h4>
+<p align="left">By default, the output  contains the auto-JPETHs (e.g. spike1 vs spike1) and the cross-JPETHs in both directions e.g.. spike1 vs spike2 as well as spike2 vs spike1. If the Channel B selections are in numerical order, the auto-JPETHs will appear along the diagonal in the display. </p>
+<p align="left">Deselecting the &quot;Symmetric&quot; checkbox will suppress the calculation of spikeN vs spikeM where N&gt;M.</p>
+<p align="left">&nbsp;</p>
+<h4 align="left">Post-processing options</h4>
+<p align="left">Some of the standard context-sensitive menus are disabled for JPETH plots. To view a single JPETH in a new window, double-click on a blank area in its panel. To view individual graphs and their data, double-click on them (for the matrix, only the data will be shown).</p>
+<p align="center"><img src="019.jpg" alt="doubleclick" width="640" height="501" /></p>
+<p align="center">&nbsp;</p>
+<p align="left">Context-sensitive menus for each JPETH panel allow you to change the options. This includes changing the mode, display type for the matrix and filter width. You can also print preview a panel, and export the underlying JPETH object to the base MATLAB workspace.</p>
+<p align="center"><img src="020.jpg" alt="options" width="127" height="122" /></p>
+<h4 align="left">Algorithms:</h4>
+<p align="left">Aertson AMHJ, Gerstein, G, Habib, MK &amp; Palm, G. (1989) Dynamics of neuronal firing correlation: modulation of &quot;effective connectivity&quot;,<em> Journal of Neurophysiology</em>, <strong>61</strong>, 900-917.</p>
+Palm et al. (1988) On the significance of correlations among neural spike trains <em>Biological Cybernetics</em> <strong>59</strong>, 1-11.
+<p align="right">&copy; The Author and King's College London, 2009-</p>
+</body>
+</html>

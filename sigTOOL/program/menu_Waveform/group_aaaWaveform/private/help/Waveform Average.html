@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+span.SpellE {mso-style-name:"";
+	mso-spl-e:yes;}
+div.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+li.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+p.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+.style1 {color: #808080}
+-->
+</style>
+</head>
+
+<body>
+<div align="left">  
+  <p align="right"><img src="099.jpg" alt="" width="80" height="40" /></p>
+  <h2>Waveform Average &amp; Spike-triggered averaging</h2>
+  <p align="right" class="style1">Email: sigtool@kcl.ac.uk</p>
+</div>
+<hr />
+<p align="right" class="style1">&nbsp;</p>
+<p align="right" class="style1">Author: Malcolm Lidierth</p>
+<p align="right" class="style1">Updated: October 2009</p>
+<h3>Method Summary</h3>
+<p>Performs averaging of waveform data about a specified trigger. </p>
+<p>With the Neuroscience Toolkit, a Spike-Triggered Average is available. This is identical to the standard waveform average except that  Retrigger is set by default and overlapped averaging is not supported</p>
+<p>&nbsp;</p>
+<h3>Options</h3>
+<p align="center"><img src="001.jpg" width="615" height="284" /></p>
+<p><strong>Channel A (Trigger)</strong></p>
+<p>Select one or more channels to use as the trigger. Event and episodically sampled waveform channels can both serve as trigger channels. If   a waveform channel is used for triggering and it does not contain  explicit trigger times, the start of sampling will be used.</p>
+<p>If Event/Epoch Filtering is active, only valid triggers will be used in the averaging process. </p>
+<p><strong>Channel B (Waveforms)</strong></p>
+<p>Select one or more waveform channels to average. Both continuous and episodically sampled waveforms may be selected. With episodic data, note that only valid epochs will contribute to the average. Ordinarily, Event Filtering should be applied to the trigger channels (as above) rather than to the waveform channels.</p>
+<p>Note that, for multiplexed data, waveform averaging respects  the Current Subchannel setting for each waveform channel. Only data on the relevant channel will be averaged.</p>
+<blockquote>
+  <p><strong>If the Pairwise checkbox is selected (see below) Channel A and Channel B lists should contain equal numbers of channels. Each trigger channel will be paired with the corresponding source channel and only those averages will be displayed. E.g. 1, 5, 3 in Channel A, and 10, 14, 11 in Channel B will average channel 10 with respect to the trigger on channel 1; 14 with respect to 5 and 11 with respect to 3.</strong></p>
+</blockquote>
+<p><strong>Start &amp; Stop</strong></p>
+<p>Only data between the specified times will be processed.</p>
+<p><strong>Duration &amp; PreTime</strong></p>
+<p>These set the time over which the average will be calculated and the pre-stimulus time as a percentage of the duration. When the Channel B selection is made, a suggested duration will appear in in the Duration box calculated from the <em>first</em> trigger channel selected in Channel A and the waveforms channels in Channel B. Subsequently, the duration will be calculated individually  for each trigger/waveform pair as the averages are formed. If the user-set duration exceeds the maximum possible, the duration for that channel pair will be reduced accordingly.</p>
+<p>Note that if a waveform channel is used as the trigger and it does not contain explicit trigger times the start of sampling for each epoch will be used as the trigger. It follows, that no pre-time data will be available for that channel (or others sampled synchronously with it).</p>
+<p><strong>Sweeps per Average</strong></p>
+<p>Select 'All' to calculate a single average over the period Start to Stop. Otherwise, select the number of sweeps to include in each average to compute multiple averages for each trigger/waveform pair.</p>
+<p align="center"><img src="example" alt="example" /></p>
+<p align="center">Example of multiple averages displayed here as a 'Waterfall' in the sigTOOL result window.</p>
+<p>&nbsp;</p>
+<p><strong>Overlap</strong></p>
+<p>Multiple averages can be overlapped by setting Overlap to a non-zero value. Overlap is set as a percentage e.g., with Sweeps per Average set to 10 and Overlap set to 50%   averages will be that formed from trigger numbers 1 through 10, then 5 through 15, then 10 through 20 etc.</p>
+<p>&nbsp;</p>
+<h4>Method</h4>
+<p>You can selected mean (default) or median averaging. With a mean, error bars will be standard deviations. With medians they will be 25% and 75% percentiles (N.B. this requires the optional MATLAB toolbox prctile function to be present on your PC).</p>
+<h4>Retrigger</h4>
+<p>If this checkbox is set, all triggers will be used - including those that fall within the sweep-time of the preceding trigger(s). </p>
+<p>If the box is not checked, triggers that fall within the sweep-time of an earlier sweep will be rejected. This can be used, for example, to 'debounce' trigger channels where trains of stimuli were delivered.</p>
+<h4>Subtract DC</h4>
+<p>The average (either mean or median) of the pretrigger values will be subtracted from the trace</p>
+<h4>Pairwise</h4>
+<p>Enables pairwise averaging of the trigger and source channels as described above.</p>
+<p>&nbsp;</p>
+<blockquote><blockquote><blockquote><blockquote><blockquote><blockquote><blockquote>&nbsp;</blockquote>
+          </blockquote>
+        </blockquote>
+      </blockquote>
+    </blockquote>
+  </blockquote>
+</blockquote>
+<p align="right">&nbsp;</p>
+<p align="right">&copy; The Author and King's College London, 2007-</p>
+</body>
+</html>

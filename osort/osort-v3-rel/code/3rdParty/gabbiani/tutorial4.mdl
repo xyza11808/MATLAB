@@ -1,0 +1,770 @@
+Model {
+  Name			  "tutorial4"
+  Version		  2.20
+  SimParamPage		  Solver
+  SampleTimeColors	  off
+  InvariantConstants	  off
+  WideVectorLines	  off
+  ShowLineWidths	  off
+  StartTime		  "0.0"
+  StopTime		  "tstop"
+  Solver		  ode5
+  RelTol		  "1e-3"
+  AbsTol		  "1e-3"
+  Refine		  "1"
+  MaxStep		  "tstep"
+  InitialStep		  "auto"
+  FixedStep		  "tstep"
+  MaxOrder		  5
+  OutputOption		  RefineOutputTimes
+  OutputTimes		  "[]"
+  LoadExternalInput	  off
+  ExternalInput		  "[t, u]"
+  SaveTime		  off
+  TimeSaveName		  "tout"
+  SaveState		  off
+  StateSaveName		  "xout"
+  SaveOutput		  off
+  OutputSaveName	  "yout"
+  LoadInitialState	  off
+  InitialState		  "xInitial"
+  SaveFinalState	  off
+  FinalStateName	  "xFinal"
+  LimitMaxRows		  off
+  MaxRows		  "1000"
+  Decimation		  "1"
+  AlgebraicLoopMsg	  warning
+  MinStepSizeMsg	  warning
+  UnconnectedInputMsg	  warning
+  UnconnectedOutputMsg	  warning
+  UnconnectedLineMsg	  warning
+  ConsistencyChecking	  off
+  ZeroCross		  on
+  SimulationMode	  normal
+  RTWSystemTargetFile	  "grt.tlc"
+  RTWInlineParameters	  off
+  RTWPlaceOutputsASAP	  off
+  RTWRetainRTWFile	  off
+  RTWTemplateMakefile	  "grt_default_tmf"
+  RTWMakeCommand	  "make_rtw"
+  RTWGenerateCodeOnly	  off
+  ExtModeMexFile	  "ext_comm"
+  ExtModeBatchMode	  off
+  BlockDefaults {
+    Orientation		    right
+    ForegroundColor	    black
+    BackgroundColor	    white
+    DropShadow		    off
+    NamePlacement	    normal
+    FontName		    "Helvetica"
+    FontSize		    10
+    FontWeight		    normal
+    FontAngle		    normal
+    ShowName		    on
+  }
+  AnnotationDefaults {
+    HorizontalAlignment	    center
+    VerticalAlignment	    middle
+    ForegroundColor	    black
+    BackgroundColor	    white
+    DropShadow		    off
+    FontName		    "Helvetica"
+    FontSize		    10
+    FontWeight		    normal
+    FontAngle		    normal
+  }
+  LineDefaults {
+    FontName		    "Helvetica"
+    FontSize		    9
+    FontWeight		    normal
+    FontAngle		    normal
+  }
+  System {
+    Name		    "tutorial4"
+    Location		    [538, 55, 993, 870]
+    Open		    on
+    ToolBar		    on
+    StatusBar		    on
+    ScreenColor		    white
+    PaperOrientation	    landscape
+    PaperPositionMode	    auto
+    PaperType		    usletter
+    PaperUnits		    inches
+    Block {
+      BlockType		      SubSystem
+      Name		      "Band-Limited\nWhite Noise"
+      Ports		      [0, 1, 0, 0, 0]
+      Position		      [30, 152, 75, 188]
+      ShowPortLabels	      off
+      MaskType		      "Discrete time white noise. "
+      MaskDescription	      "Discrete time white noise"
+      MaskHelp		      "Generates a sequence of normally distributed ra"
+"ndom numbers with standard deviation sigma"
+      MaskPromptString	      "time step [msec]|standard deviation [nA]|random"
+" seed"
+      MaskStyleString	      "edit,edit,edit"
+      MaskTunableValueString  "on,on,on"
+      MaskInitialization      "dt = @1; sigma = @2; seed = @3; r = rand(1,12);"
+" r2 = [r(1),r;r,r(12)]; t =[1:13;1:13];"
+      MaskDisplay	      "plot(t(:),r2(:))"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "tstep|0.1|[23341]"
+      System {
+	Name			"Band-Limited\nWhite Noise"
+	Location		[54, 317, 339, 470]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  Gain
+	  Name			  "Gain"
+	  Position		  [155, 31, 195, 69]
+	  Gain			  "sigma"
+	}
+	Block {
+	  BlockType		  RandomNumber
+	  Name			  "White Noise"
+	  Position		  [25, 40, 45, 60]
+	  Mean			  "0"
+	  Variance		  "1"
+	  Seed			  "seed"
+	  SampleTime		  "-1"
+	}
+	Block {
+	  BlockType		  ZeroOrderHold
+	  Name			  "Zero-Order\nHold"
+	  Position		  [85, 34, 120, 66]
+	  SampleTime		  "dt"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "Out_1"
+	  Position		  [230, 40, 250, 60]
+	  Port			  "1"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Line {
+	  SrcBlock		  "Zero-Order\nHold"
+	  SrcPort		  1
+	  DstBlock		  "Gain"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Gain"
+	  SrcPort		  1
+	  DstBlock		  "Out_1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "White Noise"
+	  SrcPort		  1
+	  DstBlock		  "Zero-Order\nHold"
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
+      BlockType		      Constant
+      Name		      "Constant current"
+      Position		      [120, 82, 145, 108]
+      Value		      "i"
+      MaskType		      "constant current"
+      MaskDescription	      "Parameter"
+      MaskHelp		      "Provides a constant input current"
+      MaskPromptString	      "constant current value [nA]"
+      MaskStyleString	      "edit"
+      MaskTunableValueString  "on"
+      MaskInitialization      "i = @1;"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "0.3"
+    }
+    Block {
+      BlockType		      DiscreteFilter
+      Name		      "LGN transfer\nfunction"
+      Position		      [110, 151, 170, 189]
+      Numerator		      "k2"
+      Denominator	      "1"
+      SampleTime	      "dt"
+      MaskType		      "LGN transfer function"
+      MaskDescription	      "Parameters"
+      MaskPromptString	      "cut-off frequency [Hz]|time step [msec]|time co"
+"nstant [msec]"
+      MaskStyleString	      "edit,edit,edit"
+      MaskTunableValueString  "on,on,on"
+      MaskInitialization      "omega_c = @1*2*pi; dt = @2; tau = @3*1e-3; b = "
+"sqrt(omega_c^2 + tau^(-2)) ; tv = [0:dt:512]; tv_s = tv*1e-3; k2 = tv_s.*(tau"
+" + 0.5*(1-tau*b)*tv_s).*exp(-b*tv_s); k2 = k2/norm(k2);"
+      MaskDisplay	      "plot(tv,k2);"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "5.5|tstep|1500"
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info1"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [320, 675, 409, 713]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('First order\\nWiener kernel')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info1"
+	Location		[131, 322, 555, 751]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [157, 22]
+	  VerticalAlignment	  top
+	  Text			  "To estimate the transfer function by Wiener"
+" kernel\nanalysis, enter:"
+	}
+	Annotation {
+	  Position		  [77, 67]
+	  VerticalAlignment	  top
+	  Text			  "wiener1(stim,spk,tstep)"
+	}
+	Annotation {
+	  Position		  [84, 92]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window."
+	}
+	Annotation {
+	  Position		  [172, 122]
+	  VerticalAlignment	  top
+	  Text			  "Note the high level of noise in the estimat"
+"e of the impulse \nresponse. This is caused by a too small sampling step."
+	}
+	Annotation {
+	  Position		  [207, 162]
+	  VerticalAlignment	  top
+	  Text			  "To obtain a better estimate by resampling a"
+"t a  lower frequency, enter:"
+	}
+	Annotation {
+	  Position		  [187, 197]
+	  VerticalAlignment	  top
+	  Text			  "wiener1(stim,spk,tstep, 20,128,bartlett(128"
+"),64,'none')"
+	}
+	Annotation {
+	  Position		  [194, 267]
+	  VerticalAlignment	  top
+	  Text			  "20 = resampling step (only every 20th point"
+" is taken into account)"
+	}
+	Annotation {
+	  Position		  [202, 292]
+	  VerticalAlignment	  top
+	  Text			  "128 = number of frequency component compute"
+"d (the resampling step \nis 20*tstep = 10 ms, corresponding to 100 Hz samplin"
+"g frequency\nand thus the resolution is 100/128 Hz)."
+	}
+	Annotation {
+	  Position		  [92, 232]
+	  VerticalAlignment	  top
+	  Text			  "The additional parameters are:"
+	}
+	Annotation {
+	  Position		  [107, 342]
+	  VerticalAlignment	  top
+	  Text			  "bartlett(128) = window for the data"
+	}
+	Annotation {
+	  Position		  [125, 367]
+	  VerticalAlignment	  top
+	  Text			  "64 = overlap between adjacent data sets"
+	}
+	Annotation {
+	  Position		  [187, 392]
+	  VerticalAlignment	  top
+	  Text			  "'none' = detrending option in the Fast Four"
+"ier computation (see\nthe matlab signal toolbox for more details)."
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info2"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [320, 617, 424, 663]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('Transfer function\\nof an LGN\\nrelay cel"
+"l')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info2"
+	Location		[590, 328, 912, 553]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [162, 22]
+	  VerticalAlignment	  top
+	  Text			  "To plot the transfer function of an LGN rel"
+"ay cell,enter"
+	}
+	Annotation {
+	  Position		  [92, 57]
+	  VerticalAlignment	  top
+	  Text			  "lgnfilt(1500,5.5,tstep);"
+	}
+	Annotation {
+	  Position		  [84, 92]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window."
+	}
+	Annotation {
+	  Position		  [62, 127]
+	  VerticalAlignment	  top
+	  Text			  "The parameters are:"
+	}
+	Annotation {
+	  Position		  [154, 177]
+	  VerticalAlignment	  top
+	  Text			  "5.5= cut-off frequency of the LGN transfer "
+"function "
+	}
+	Annotation {
+	  Position		  [102, 202]
+	  VerticalAlignment	  top
+	  Text			  "tstep = time step for the simulation"
+	}
+	Annotation {
+	  Position		  [157, 152]
+	  VerticalAlignment	  top
+	  Text			  "1500 = time constant of decay for the stim."
+" ensemble"
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "More Info3"
+      Ports		      [0, 0, 0, 0, 0]
+      Position		      [307, 727, 434, 772]
+      DropShadow	      on
+      ShowName		      off
+      ShowPortLabels	      off
+      MaskDisplay	      "disp('Comparison between\\ntrue and estimated\\"
+"ntransfer function')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      System {
+	Name			"More Info3"
+	Location		[528, 231, 944, 584]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Annotation {
+	  Position		  [152, 22]
+	  VerticalAlignment	  top
+	  Text			  "To compare the theoretical transfer functio"
+"n with \nthe one computed by Wiener kernel analysis, enter:"
+	}
+	Annotation {
+	  Position		  [192, 72]
+	  VerticalAlignment	  top
+	  Text			  "[tf2,t2] = wiener1(stim,spk,tstep, 20,128,b"
+"artlett(128),64,'none')"
+	}
+	Annotation {
+	  Position		  [102, 102]
+	  VerticalAlignment	  top
+	  Text			  "[tf1, t1] = lgnfilt(1500,5.5,tstep)"
+	}
+	Annotation {
+	  Position		  [102, 132]
+	  VerticalAlignment	  top
+	  Text			  "plot(t1,conv_fac*tf1,'g',t2,tf2);"
+	}
+	Annotation {
+	  Position		  [89, 162]
+	  VerticalAlignment	  top
+	  Text			  "in the workspace window."
+	}
+	Annotation {
+	  Position		  [127, 187]
+	  VerticalAlignment	  top
+	  Text			  "The units conversion factor is given by:"
+	}
+	Annotation {
+	  Position		  [129, 212]
+	  VerticalAlignment	  top
+	  Text			  "conv_fac = 1e3/(C*V*tstep*1e-3)"
+	}
+	Annotation {
+	  Position		  [37, 237]
+	  VerticalAlignment	  top
+	  Text			  "where,"
+	}
+	Annotation {
+	  Position		  [72, 267]
+	  VerticalAlignment	  top
+	  Text			  "C = 0.5 nF"
+	}
+	Annotation {
+	  Position		  [87, 292]
+	  VerticalAlignment	  top
+	  Text			  "Vthres = 10 mV"
+	}
+	Annotation {
+	  Position		  [87, 317]
+	  VerticalAlignment	  top
+	  Text			  "tstep = 0.5 msec"
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Poisson spike \ngenerator with \nref. period"
+      Ports		      [1, 2, 0, 0, 0]
+      Position		      [285, 107, 330, 158]
+      ShowPortLabels	      off
+      MaskType		      "I&F p. thres., ref. per."
+      MaskDescription	      "Parameters"
+      MaskHelp		      "For a detailled description of the model, pleas"
+"e type 'help piandfr' in the main matlab window"
+      MaskPromptString	      "time step [msec]|mean threshold [mV]|Capacitanc"
+"e [nF]|refractory period [msec]"
+      MaskStyleString	      "edit,edit,edit,edit"
+      MaskTunableValueString  "on,on,on,on"
+      MaskInitialization      "dt = @1; thres = @2; C = @3; ref = @4;"
+      MaskDisplay	      "disp('Vm \\n\\n spikes')"
+      MaskIconFrame	      on
+      MaskIconOpaque	      on
+      MaskIconRotate	      none
+      MaskIconUnits	      autoscale
+      MaskValueString	      "tstep|10|.5|1"
+      System {
+	Name			"Poisson spike \ngenerator with \nref. period"
+	Location		[65, 93, 431, 311]
+	Open			off
+	ToolBar			off
+	StatusBar		off
+	ScreenColor		white
+	PaperOrientation	landscape
+	PaperPositionMode	auto
+	PaperType		usletter
+	PaperUnits		inches
+	Block {
+	  BlockType		  Inport
+	  Name			  "in_1"
+	  Position		  [40, 75, 60, 95]
+	  Port			  "1"
+	  PortWidth		  "-1"
+	  SampleTime		  "-1"
+	}
+	Block {
+	  BlockType		  Demux
+	  Name			  "Demux"
+	  Ports			  [1, 2, 0, 0, 0]
+	  Position		  [180, 66, 220, 99]
+	  Outputs		  "2"
+	}
+	Block {
+	  BlockType		  "S-Function"
+	  Name			  "Poisson spike\ngenerator with\nref. period"
+	  Ports			  [1, 1, 0, 0, 0]
+	  Position		  [90, 66, 140, 104]
+	  FunctionName		  "piandfr"
+	  Parameters		  "dt,thres,C, ref"
+	  PortCounts		  "[]"
+	  SFunctionModules	  "''"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "out_2"
+	  Position		  [250, 95, 270, 115]
+	  Port			  "1"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "out_1"
+	  Position		  [250, 45, 270, 65]
+	  Port			  "2"
+	  OutputWhenDisabled	  held
+	  InitialOutput		  "0"
+	}
+	Line {
+	  SrcBlock		  "Poisson spike\ngenerator with\nref. period"
+	  SrcPort		  1
+	  DstBlock		  "Demux"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Demux"
+	  SrcPort		  1
+	  DstBlock		  "out_1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Demux"
+	  SrcPort		  2
+	  DstBlock		  "out_2"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "in_1"
+	  SrcPort		  1
+	  DstBlock		  "Poisson spike\ngenerator with\nref. period"
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
+      BlockType		      Scope
+      Name		      "Scope"
+      Ports		      [1, 0, 0, 0, 0]
+      Position		      [275, 215, 305, 245]
+      Floating		      off
+      Location		      [635, 259, 966, 573]
+      Open		      off
+      Grid		      on
+      TickLabels	      on
+      ZoomMode		      on
+      TimeRange		      "500.000000"
+      YMin		      "-0.600000"
+      YMax		      "0.600000"
+      SaveToWorkspace	      off
+      SaveName		      "ScopeData"
+      LimitMaxRows	      on
+      MaxRows		      "5000"
+      Decimation	      "1"
+      SampleInput	      off
+      SampleTime	      "0"
+    }
+    Block {
+      BlockType		      Scope
+      Name		      "Scope1"
+      Ports		      [1, 0, 0, 0, 0]
+      Position		      [390, 105, 420, 135]
+      Floating		      off
+      Location		      [610, 280, 941, 594]
+      Open		      off
+      Grid		      on
+      TickLabels	      on
+      ZoomMode		      on
+      TimeRange		      "500.000000"
+      YMin		      "-2.000000"
+      YMax		      "2.000000"
+      SaveToWorkspace	      off
+      SaveName		      "ScopeData"
+      LimitMaxRows	      on
+      MaxRows		      "5000"
+      Decimation	      "1"
+      SampleInput	      off
+      SampleTime	      "0"
+    }
+    Block {
+      BlockType		      Sum
+      Name		      "Sum"
+      Ports		      [2, 1, 0, 0, 0]
+      Position		      [220, 125, 240, 145]
+      Inputs		      "++"
+    }
+    Block {
+      BlockType		      ToWorkspace
+      Name		      "To Workspace"
+      Position		      [380, 162, 430, 178]
+      VariableName	      "spk"
+      Buffer		      "ceil(tstop/tstep)"
+      Decimation	      "1"
+      SampleTime	      "0"
+    }
+    Block {
+      BlockType		      ToWorkspace
+      Name		      "To Workspace1"
+      Position		      [115, 237, 165, 253]
+      VariableName	      "stim"
+      Buffer		      "ceil(tstop/tstep)"
+      Decimation	      "1"
+      SampleTime	      "0"
+    }
+    Line {
+      SrcBlock		      "Band-Limited\nWhite Noise"
+      SrcPort		      1
+      Points		      [15, 0]
+      Branch {
+	DstBlock		"LGN transfer\nfunction"
+	DstPort			1
+      }
+      Branch {
+	Points			[0, 75]
+	DstBlock		"To Workspace1"
+	DstPort			1
+      }
+    }
+    Line {
+      SrcBlock		      "LGN transfer\nfunction"
+      SrcPort		      1
+      Points		      [15, 0; 0, -30]
+      DstBlock		      "Sum"
+      DstPort		      2
+    }
+    Line {
+      SrcBlock		      "Constant current"
+      SrcPort		      1
+      Points		      [35, 0; 0, 35]
+      DstBlock		      "Sum"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Sum"
+      SrcPort		      1
+      Points		      [10, 0]
+      Branch {
+	DstBlock		"Poisson spike \ngenerator with \nref. period"
+	DstPort			1
+      }
+      Branch {
+	Points			[0, 95]
+	DstBlock		"Scope"
+	DstPort			1
+      }
+    }
+    Line {
+      SrcBlock		      "Poisson spike \ngenerator with \nref. period"
+      SrcPort		      2
+      Points		      [15, 0]
+      Branch {
+	Points			[0, -25]
+	DstBlock		"Scope1"
+	DstPort			1
+      }
+      Branch {
+	Points			[15, 0]
+	DstBlock		"To Workspace"
+	DstPort			1
+      }
+    }
+    Annotation {
+      Position		      [238, 22]
+      VerticalAlignment	      top
+      Text		      "Estimation of the transfer function of a neuron"
+"al model \n(first order Wiener kernel)"
+    }
+    Annotation {
+      Position		      [203, 292]
+      VerticalAlignment	      top
+      Text		      "To open the Scope screens, double click on the "
+"\"Scope\" icons."
+    }
+    Annotation {
+      Position		      [198, 322]
+      VerticalAlignment	      top
+      Text		      "To change the parameters of the model, double c"
+"lick on the \n\"Poisson spike generator\" icon, on the \"Constant current ico"
+"n\"\nor on the \"Band limited white noise\" icon."
+    }
+    Annotation {
+      Position		      [208, 372]
+      VerticalAlignment	      top
+      Text		      "To change the parameters of the simulation, use"
+" the \"Parameters\"\nselection in the \"Simulation\" pull-down menu."
+    }
+    Annotation {
+      Position		      [188, 407]
+      VerticalAlignment	      top
+      Text		      "Currently, the stop time and time step are dete"
+"rmined by two\nworkspace variables (tstop and tstep). "
+    }
+    Annotation {
+      Position		      [178, 447]
+      VerticalAlignment	      top
+      Text		      "These two variables can also be changed directl"
+"y in the\nworkspace window."
+    }
+    Annotation {
+      Position		      [221, 512]
+      VerticalAlignment	      top
+      Text		      "In order to generate the stimulus vector and th"
+"e vector of spike times \nspk needed for the subsequent data analysis, you ca"
+"n let the simulation \nrun to the end or enter:"
+    }
+    Annotation {
+      Position		      [176, 477]
+      VerticalAlignment	      top
+      Text		      "To start and stop the simulation, use the \"Sta"
+"rt/Stop\"\nselection in the \"Simulation\" pull-down menu"
+    }
+    Annotation {
+      Position		      [218, 782]
+      VerticalAlignment	      top
+      Text		      "To obtain detailed instructions, double-click o"
+"n the corresponding\nicons. "
+    }
+    Annotation {
+      Position		      [156, 732]
+      VerticalAlignment	      top
+      Text		      "3) Compare the theoretical transfer function wi"
+"th \nthe estimated one. "
+    }
+    Annotation {
+      Position		      [141, 687]
+      VerticalAlignment	      top
+      Text		      "2) Estimate  the transfer function by Wiener\nk"
+"ernel analysis."
+    }
+    Annotation {
+      Position		      [131, 627]
+      VerticalAlignment	      top
+      Text		      "1) Plot the LGN transfer function of the \nneur"
+"onal model."
+    }
+    Annotation {
+      Position		      [201, 587]
+      VerticalAlignment	      top
+      Text		      "in the main matlab window. Once that the stimul"
+"us and spike train \nvectors are generated, you can:"
+    }
+    Annotation {
+      Position		      [156, 557]
+      VerticalAlignment	      top
+      Text		      "load tutorial4_dat/spk; load tutorial4_dat/stim"
+    }
+  }
+}

@@ -1,0 +1,76 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+span.SpellE {mso-style-name:"";
+	mso-spl-e:yes;}
+div.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+li.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+p.MsoNormal {mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+.style1 {color: #808080}
+.style2 {color: #FF0000}
+.style3 {color: #000000; }
+-->
+</style>
+</head>
+
+<body>
+<div align="left">  
+  <p align="right"><img src="../../../group_aaaWaveform/private/help/099.jpg" alt="" width="80" height="40" /></p>
+  <h2>Digital Filters</h2>
+  <p align="right" class="style1">Email: sigtool@kcl.ac.uk</p>
+</div>
+<hr />
+<p align="right" class="style1">&nbsp;</p>
+<p align="right" class="style1">Author: Malcolm Lidierth</p>
+<p align="right" class="style1">Updated: November 2007 </p>
+<h3>Method Summary</h3>
+<p>Digital filters may be designed using FDATool, which is part of the MATLAB Signal Processing Toolbox. sigTOOL provides a link to this design tool through the Waveform-&gt;Digital Filter menu.</p>
+<p>The output of FDATool is a dfilt filter object. The wvFiltFilt function applies these objects to waveform channels stored in sigTOOL using a zero-phase algorthim that filters the data twice: once forwards and once backwards to achieve  zero-phase shift overall. </p>
+<p>&nbsp;</p>
+<h3><strong>Options:</strong></h3>
+<p>The Waveform-&gt;Digital Filter option displays the following menu</p>
+<p align="center"><img src="Filter" alt="Filter" /></p>
+<p align="center">&nbsp;</p>
+<p align="left"><strong>Channel Selections:</strong></p>
+<p align="left">You should choose a single waveform channel from the Channel A selector to act as the source. The Channel B selector provides a list of empty channels to receive the result. You may, however, select any channel to act as the target, including the source channel. If the target channel is not empty, any existing data will be overwritten.</p>
+<p align="left"><strong>Convert to 16 bit integer</strong></p>
+<p align="left">If this box is checked, data will be saved in 16-bit signed integer format. The channel scale and offset values will be determined automatically to use the full range of available integer values (-32767 to 32768).</p>
+<p align="left">&nbsp;</p>
+<p align="left">When you select OK, sigTOOL will run and display the FDATool:</p>
+<p align="center"><img src="FDATool" alt="FDATool" /></p>
+<p align="left">&nbsp;</p>
+<p align="left">sigTOOL will set the Units and Fs (sampling rate) field in the Frequency Specifications box. All other fields must be set manually. For full details refer to the MATLAB help for FDATool.</p>
+<p align="left">You are provided with a large range of IIR (feedback) and FIR (feedforward) filters. You may also select lowpass, highpass, bandpass or bandstop designs. (Differentiating, Hilbert etc filters should not be used - they are not suitable for use with the sigTOOL zero-phase filter algorithm).</p>
+<p align="left" class="style2">Note that &quot;Apass&quot; in the Magnitude Specifications box sets the RIPPLE in the passband - not the magnitude response. This will be set to 1dB by default which for many applications will be too large. </p>
+<p align="left" class="style3">&quot;Astop&quot; sets the attenuation. As sigTOOL uses a double-pass filter algorithm the attenuation (in dB) will effectively be double this figure.</p>
+<p align="left" class="style2">Changing filter design options in FDATool can reset some values to their defaults, including Fs, Apass and Astop. These may need to be rest manually.</p>
+<p>&nbsp;</p>
+<p align="right">&nbsp;</p>
+<h3>&nbsp;</h3>
+<p align="right">&nbsp;</p>
+<p align="right">&nbsp;</p>
+<p align="right">&copy; The Author and King's College London, 2007-</p>
+</body>
+</html>
