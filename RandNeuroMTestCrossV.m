@@ -222,10 +222,11 @@ ErrorRate=kfoldLoss(CVSVMModel);  %disp kfold loss of validation
 fprintf('Error Rate = %.4f.\n',ErrorRate);
 [~,classscoresT]=predict(CVsvmmodel,scoreT(:,1:3));
 difscore=classscoresT(:,2)-classscoresT(:,1);
-LogDif = log(abs(difscore));
-LogDif(1:3) = -LogDif(1:3);
+% LogDif = log(abs(difscore));
+% LogDif(1:3) = -LogDif(1:3);
 %using sampled SVM classification result to predict all Trials score
-fityAll=(rescaleB-rescaleA)*((LogDif-min(LogDif))./(max(LogDif)-min(LogDif)))+rescaleA;  %rescale to [0 1]
+% fityAll=(rescaleB-rescaleA)*((LogDif-min(LogDif))./(max(LogDif)-min(LogDif)))+rescaleA;  %rescale to [0 1]
+fityAll=(rescaleB-rescaleA)*((difscore-min(difscore))./(max(difscore)-min(difscore)))+rescaleA;  %rescale to [0 1]
 
 %Test data set for error rate calculation
 LeftData=CVScoreTypeTest1';
@@ -233,6 +234,25 @@ RightData = CVScoreTypeTest2';
 PredictL=predict(CVsvmmodel,LeftData);
 PredictR=predict(CVsvmmodel,RightData);
 ErrorRateTest=(sum(PredictL)+sum(1-PredictR))/(length(PredictL)+length(PredictR));  %Test data errorrate
+
+% % % % % % % % % 
+% Calculate performance of every single point and merged together
+[~,xxx] = predict(CVsvmmodel,TrainingData);
+xxxx=xxx(:,2)-xxx(:,1);
+NormalScore = xxxx;
+NormalBase = max(xxxx)-min(xxxx);
+LeftScore = NormalScore(1:300);
+RightScore = NormalScore(301:end);
+LeftTypeScore = reshape(LeftScore,3,100);
+RightTypeScore = reshape(RightScore,3,100);
+
+LeftMean = mean(LeftTypeScore,2);
+RIghtMean = mean(RightTypeScore,2);
+LeftSEM = std(LeftTypeScore,[],2)/(sqrt(size(LeftTypeScore,2))*NormalBase);
+RightSEM = std(RightTypeScore,[],2)/(sqrt(size(RightTypeScore,2))*NormalBase);
+NormalMeanDis = [LeftMean;RIghtMean]';
+NormalMeanDis = (NormalMeanDis-min(NormalMeanDis))/(max(NormalMeanDis)-min(NormalMeanDis));
+MeanSEM = [LeftSEM(:);RightSEM(:)];
 
 SV=CVsvmmodel.SupportVectors;
 plot3(SV(:,1),SV(:,2),SV(:,3),'kp','MarkerSize',15);
@@ -343,6 +363,30 @@ saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_Biyy_plot.png',TimeLength*1000));
 saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_Biyy_plot.fig',TimeLength*1000));
 close(h_doubleyy);
 
+%%
+% plot the everysingle point result for SEM calculation
+[~,bPopSEM]=fit_logistic(Octavex,NormalMeanDis);
+Psemfitline = modelfun(bPopSEM,Curve_x);
+h_PopuSEM = figure('position',[300 150 1100 900],'PaperpositionMode','auto');
+hold on
+[hax,hline1,hline2] = plotyy(Curve_x,curve_realy,Curve_x,Psemfitline);
+set(hline1,'color','k','LineWidth',2);  % behavior 
+set(hline2,'color','r','LineWidth',2);  % model result
+set(hax(1),'xtick',Octavex,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k');
+set(hax(2),'ycolor','r');
+set(hax,'FontSize',20);
+ylabel(hax(1),'Fraction choice (R)');
+ylabel(hax(2),'Model performance');
+xlabel('Tone Frequency (kHz)');
+ylim(hax(1),[-0.1 1.1]);
+ylim(hax(2),[-0.1 1.1]);
+title('Real and fit data comparation');
+errorbar(Octavex,NormalMeanDis,MeanSEM,'ro','LineWidth',1.5,'MarkerSize',10);
+scatter(Octavex,realy,40,'k','o','LineWidth',2);
+saveas(h_PopuSEM,sprintf('Neuro_psycho_%dms_Psem_plot.png',TimeLength*1000));
+saveas(h_PopuSEM,sprintf('Neuro_psycho_%dms_Psem_plot.fig',TimeLength*1000));
+% close(h_PopuSEM);
+
 % %Test test data with sample data result
 % [~,Testscores]=predict(svmmodel,score2(:,1:3));
 % difscoreTest=Testscores(:,2)-Testscores(:,1);
@@ -370,45 +414,46 @@ close(h_doubleyy);
 % saveas(htest,sprintf('Neuro_psycho_%dms_TestData_plot.fig',TimeLength*1000));
 % close(htest);
 
-%% %%%%%%%%%%%%%%%%
-% Trial by trial score prediction value
-[~,classscoresT]=predict(CVsvmmodel,ProjScore);
-difscore=classscoresT(:,2)-classscoresT(:,1);
-LogDif = log(abs(difscore));
-LogDif(1:3) = -LogDif(1:3);
-%using sampled SVM classification result to predict all Trials score
-fityT8T=(rescaleB-rescaleA)*((LogDif-min(LogDif))./(max(LogDif)-min(LogDif)))+rescaleA;  %rescale to [0 1]
-T8TpredSummary = zeros(length(CorrStimType),2);  % first column for mean value and second column for sem
-T8TSummaryCell = cell(length(CorrStimType),1);
-for nType = 1 : length(CorrStimType)
-    cTypeInds = CorrTrialStim == CorrStimType(nType);
-    cTypeValue = fityT8T(cTypeInds);
-    T8TSummaryCell(nType) = {cTypeValue};
-    T8TpredSummary(nType,:) = [mean(cTypeValue),std(cTypeValue)/sqrt(length(cTypeValue))];  % mean and sem value
-end
+% %% %%%%%%%%%%%%%%%%
+% % Trial by trial score prediction value
+% [~,classscoresT]=predict(CVsvmmodel,ProjScore);
+% difscore=classscoresT(:,2)-classscoresT(:,1);
+% LogDif = log(abs(difscore));
+% LogDif(1:3) = -LogDif(1:3);
+% %using sampled SVM classification result to predict all Trials score
+% fityT8T=(rescaleB-rescaleA)*((LogDif-min(LogDif))./(max(LogDif)-min(LogDif)))+rescaleA;  %rescale to [0 1]
+% T8TpredSummary = zeros(length(CorrStimType),2);  % first column for mean value and second column for sem
+% T8TSummaryCell = cell(length(CorrStimType),1);
+% for nType = 1 : length(CorrStimType)
+%     cTypeInds = CorrTrialStim == CorrStimType(nType);
+%     cTypeValue = fityT8T(cTypeInds);
+%     T8TSummaryCell(nType) = {cTypeValue};
+%     T8TpredSummary(nType,:) = [mean(cTypeValue),std(cTypeValue)/sqrt(length(cTypeValue))];  % mean and sem value
+% end
+% 
+% [~,bT8T]=fit_logistic(Octavex,T8TpredSummary(:,1));
+% T8Tfitline = modelfun(bT8T,Curve_x);
+% 
+% h_T8T = figure('position',[300 150 1100 900],'PaperpositionMode','auto');
+% hold on
+% [hax,hline1,hline2] = plotyy(Curve_x,curve_realy,Curve_x,T8Tfitline);
+% set(hline1,'color','k','LineWidth',2);  % behavior 
+% set(hline2,'color','r','LineWidth',2);  % model result
+% set(hax(1),'xtick',Octavex,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k');
+% set(hax(2),'ycolor','r');
+% set(hax,'FontSize',20);
+% ylabel(hax(1),'Fraction choice (R)');
+% ylabel(hax(2),'Model performance');
+% xlabel('Tone Frequency (kHz)');
+% title('Real and fit data comparation');
+% errorbar(Octavex,T8TpredSummary(:,1),T8TpredSummary(:,2),'ro','LineWidth',1.5,'MarkerSize',20);
+% scatter(Octavex,realy,40,'k','o','LineWidth',2);
+% %%
+% saveas(h_T8T,sprintf('Neuro_psycho_%dms_ByT8T_plot.png',TimeLength*1000));
+% saveas(h_T8T,sprintf('Neuro_psycho_%dms_ByT8T_plot.fig',TimeLength*1000));
+% close(h_T8T);
 
-[~,bT8T]=fit_logistic(Octavex,T8TpredSummary(:,1));
-T8Tfitline = modelfun(bT8T,Curve_x);
-
-h_T8T = figure('position',[300 150 1100 900],'PaperpositionMode','auto');
-hold on
-[hax,hline1,hline2] = plotyy(Curve_x,curve_realy,Curve_x,T8Tfitline);
-set(hline1,'color','k','LineWidth',2);  % behavior 
-set(hline2,'color','r','LineWidth',2);  % model result
-set(hax(1),'xtick',Octavex,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k');
-set(hax(2),'ycolor','r');
-set(hax,'FontSize',20);
-ylabel(hax(1),'Fraction choice (R)');
-ylabel(hax(2),'Model performance');
-xlabel('Tone Frequency (kHz)');
-title('Real and fit data comparation');
-errorbar(Octavex,T8TpredSummary(:,1),T8TpredSummary(:,2),'ro','LineWidth',1.5,'MarkerSize',20);
-scatter(Octavex,realy,40,'k','o','LineWidth',2);
 %%
-saveas(h_T8T,sprintf('Neuro_psycho_%dms_ByT8T_plot.png',TimeLength*1000));
-saveas(h_T8T,sprintf('Neuro_psycho_%dms_ByT8T_plot.fig',TimeLength*1000));
-close(h_T8T);
-
 cd ..;
 cd ..;
 if nargout >0
