@@ -599,7 +599,7 @@ elseif str2double(continue_char)==2
         end
     end
     %%
-    ROC_check(data_aligned,TrialTypes,start_frame,frame_rate,[],'Stim_time_Align');
+    ROC_check(smooth_data,TrialTypes,start_frame,frame_rate,[],'Stim_time_Align');
     TimeCorseROC(data_aligned,TrialTypes,start_frame,frame_rate);  %cumulated ROC plot
     TimeCorseROC(data_aligned,TrialTypes,start_frame,frame_rate,[],2);   %seperated ROC plot
     MeanAlignedDataPlot(smooth_data,start_frame,behavResults.Trial_Type,frame_rate);
