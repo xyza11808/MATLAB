@@ -26,10 +26,10 @@ cd('./ROC_Left2Right_result/');
 SizeData=size(AlignedData);
 TrialType=Trial_Type;
 SelectData=AlignedData(:,:,((alignpoint+1):floor(alignpoint+FrameRate*TimeLength)));
-TrialTimeLength=size(SelectData,3);  %select data points number fro each trial
+% TrialTimeLength=size(SelectData,3);  %select data points number fro each trial
 Trials=reshape(TrialType,1,[]);
-TrialInput=double(reshape(repmat(Trials,TrialTimeLength,1),[],1));
-mean_data=max(SelectData,[],3);  %using time trace max value 
+% TrialInput=double(reshape(repmat(Trials,TrialTimeLength,1),[],1));
+mean_data=mean(SelectData,3); 
 LeftTrial=TrialType==0;
 RightTrial=TrialType==1;
 ROCarea=zeros(1,SizeData(2));
@@ -40,12 +40,13 @@ ROCShuffleAll=zeros(500,SizeData(2));
 ROIDiffmd=zeros(1,SizeData(2));
 ROIDiffmn=zeros(1,SizeData(2));
 % % ROIDiffMax=zeros(1,SizeData(2));
+MaxInput = max(SelectData,[],3);
 
 for n=1:SizeData(2)
-    CurrentData=squeeze(SelectData(:,n,:));
+    CurrentData=squeeze(MaxInput(:,n));
     DataInput=reshape(CurrentData',[],1);
-    test_data=[squeeze(mean_data(:,n)),TrialType'];
-    [ROCSummary,LabelMeanS]=rocOnline([DataInput TrialInput]);
+    test_data=mean_data(:,n);
+    [ROCSummary,LabelMeanS]=rocOnline([DataInput double(Trials)']);
 %     LabelMeanS=gpuArray(LabelMeanS);
     ROIDiffmd(n)=abs(median(test_data(LeftTrial))-median(test_data(RightTrial)));
     ROIDiffmn(n)=abs(mean(test_data(LeftTrial))-mean(test_data(RightTrial)));
@@ -55,7 +56,7 @@ for n=1:SizeData(2)
     suptitle(sprintf('ROI%d AUC',n));
     saveas(gcf,['ROC distinguish for LR Trials result for ROI' num2str(n)],'png');
     close(gcf);
-    [AllROC,~,sigvalue]=ROCSiglevelGene([DataInput,TrialInput],500,1,0.01);
+    [AllROC,~,sigvalue]=ROCSiglevelGene([DataInput,double(Trials)'],500,1,0.01);
     ROCShufflearea(n) = sigvalue;
     ROCShuffleAll(:,n) = AllROC(:);
 %     ShuffleType=RandShuffle(test_data(:,2));
@@ -159,7 +160,8 @@ for n=1:size(SelectData,2)
     LeftBase=zeros(length(ROILeftBase),1);
     LeftResp=ones(length(ROILeftResp),1);
     test_data=[[ROILeftBase;ROILeftResp],[LeftBase;LeftResp]];
-    [LeftBase2RespRoc(n),~]=rocOnline(test_data);
+    [cROC,~]=rocOnline(test_data);
+    LeftBase2RespRoc(n)=cROC.AUC;
     ShuffleType=RandShuffle(test_data(:,2));
     DataShuffle=[test_data(:,1),ShuffleType];
     [ShuffleSummary,~]=rocOnlineFoff(DataShuffle);
@@ -177,7 +179,8 @@ for n=1:size(SelectData,2)
     MeanTR=mean(DataRight);
     RightBase2RespMaxAmp(n)=max(MeanTR(alignpoint:end));
     test_data=[[ROIRightBase;ROIRightResp],[RightBase;RightResp]];
-    [RightBase2RespRoc(n),~]=rocOnline(test_data);
+    [cROC,~]=rocOnline(test_data);
+    RightBase2RespRoc(n)=cROC.AUC;
 %     RightBase2RespRoc(n)=ROCR_Base2Resp(n).AUC;
     ShuffleType=RandShuffle(test_data(:,2));
     DataShuffle=[test_data(:,1),ShuffleType];
@@ -254,7 +257,7 @@ end
     saveas(hROC_respCorr,'Amp_value_correlation_with_ROC_value.fig');
     close(hROC_respCorr);
     
-    save LeftRightROC_result.mat ROCL_Base2Resp ROCR_Base2Resp LeftBase2RespRoc RightBase2RespRoc ...
+    save LeftRightROC_result.mat LeftBase2RespRoc RightBase2RespRoc ...
         ShuffleLeftRoc ShuffleRightRoc RightBase2RespMaxAmp RightBase2RespMNDiff LeftBase2RespMaxAmp LeftBase2RespMNDiff -v7.3
     
  cd ..;   
