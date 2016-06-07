@@ -1,4 +1,4 @@
-function varargout=RandNeuroMT(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin)
+function varargout=RandNeuroMTPerfcorr(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin)
 %this function will be used to process the random data profile and try to
 %create a neurometric function to compare with psychometric function
 %RawDataAll should be aligned data
@@ -46,8 +46,10 @@ if FrameScale(2) > DataSize(3)
     warning('Time Selection excceed matrix index, correct to %d',DataSize(3));
 end
 
+
 ConsideringData=CorrTrialData(:,:,FrameScale(1):FrameScale(2));
-% T8TData = max(ConsideringData,[],3);  % trial by ROI matrix, will be project by one projection vector
+T8TData = max(ConsideringData,[],3);  % trial by ROI matrix, will be project by one projection vector
+[nTrial,nROI,nTrace] = size(ConsideringData);
 
 %%  
 if isShuffle
@@ -103,6 +105,11 @@ disp(sum(explainedT(1:3)));
 % ProjScore = (ProjCoeff * meanSubT8TData')'; % Trials by 3 pca score matrix, for single trial prediction
 
 %%
+LeftNonpcaDataTA = zeros(300,nROI);
+RightNonpcaDataTA = zeros(300,nROI);
+LeftNonpcaDataTE = zeros(300,nROI);
+RightNonpcaDataTE = zeros(300,nROI);
+
 LeftStims=CorrStimType(1:length(CorrStimType)/2);
 RightStims=CorrStimType((length(CorrStimType)/2+1):end);
 LeftStimsStr=cellstr(num2str(LeftStims(:)));
@@ -144,7 +151,10 @@ for CVNumber=1:100
 %         CVNumber=CVNumber-1;
 %         continue;
 %     end
-    [coeff2,score2,latent2,~,explained2,~]=pca(ALLROIMeanTestData);
+    meanSubTestData = ALLROIMeanTestData - repmat(mean(ALLROIMeanTestData,2),1,size(ALLROIMeanTestData,2));
+    ProjCoeffT = coeff(:,1:3)'; 
+    score2 = (ProjCoeffT * meanSubTestData')';
+%     [coeff2,score2,latent2,~,explained2,~]=pca(ALLROIMeanTestData);
 
     if sum(explained(1:3))<80
         warning('The first three component explains less than 80 percents, the pca result may not acurate.');
@@ -173,6 +183,11 @@ for CVNumber=1:100
     CVScoreType2(:,(1+(CVNumber-1)*3):(CVNumber*3))=score(4:6,1:3)';
     CVScoreTypeTest1(:,(1+(CVNumber-1)*3):(CVNumber*3))=score2(1:3,1:3)';
     CVScoreTypeTest2(:,(1+(CVNumber-1)*3):(CVNumber*3))=score2(4:6,1:3)';
+    
+    LeftNonpcaDataTA((1+(CVNumber-1)*3):(CVNumber*3),:) = ALLROIMeanData(1:3,:);
+    RightNonpcaDataTA((1+(CVNumber-1)*3):(CVNumber*3),:) = ALLROIMeanData(4:6,:);
+    LeftNonpcaDataTE((1+(CVNumber-1)*3):(CVNumber*3),:) = ALLROIMeanTestData(1:3,:);
+    RightNonpcaDataTE((1+(CVNumber-1)*3):(CVNumber*3),:) = ALLROIMeanTestData(4:6,:);
     
     % h3d=figure;
     % hold on;
@@ -210,9 +225,17 @@ rescaleA=min(realy);
 
 %% 
 hALLL3d=figure;
+subplot(1,2,1)
 hold on
 scatter3(CVScoreType1(1,:),CVScoreType1(2,:),CVScoreType1(3,:),30,'bo');
 scatter3(CVScoreType2(1,:),CVScoreType2(2,:),CVScoreType2(3,:),30,'r*');
+title('Training data');
+
+subplot(1,2,2)
+hold on
+scatter3(CVScoreTypeTest1(1,:),CVScoreTypeTest1(2,:),CVScoreTypeTest1(3,:),30,'bo');
+scatter3(CVScoreTypeTest2(1,:),CVScoreTypeTest2(2,:),CVScoreTypeTest2(3,:),30,'r*');
+title('Testing data');
 
 labelType=[zeros(1,300) ones(1,300)]';
 TrainingData=[CVScoreType1';CVScoreType2'];
@@ -234,6 +257,11 @@ RightData = CVScoreTypeTest2';
 PredictL=predict(CVsvmmodel,LeftData);
 PredictR=predict(CVsvmmodel,RightData);
 ErrorRateTest=(sum(PredictL)+sum(1-PredictR))/(length(PredictL)+length(PredictR));  %Test data errorrate
+LeftTypeScore = reshape(PredictL,3,100);
+RightTypeScore = reshape(PredictR,3,100);
+LeftFitScore = mean(LeftTypeScore');
+RightFitScore = mean(RightTypeScore');
+
 
 % % % % % % % % % 
 % Calculate performance of every single point and merged together

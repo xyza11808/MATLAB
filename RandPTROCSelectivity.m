@@ -30,10 +30,15 @@ if isempty(ModuIndex)
     for nType=1:TypeNum
         TypeInds = FreqType == FreqTypes(nType);
         CurrentData = AlignedData(TypeInds,:,:);
-        CurrentDataBase = CurrentData(:,:,1:AlignPoint);
-        CurrentDataResp = CurrentData(:,:,(AlignPoint+1):(AlignPoint+FrameWin));
-        DataForROC(nType,1)={reshape(permute(CurrentDataBase,[2 3 1]),nROIs,[])};
-        DataForROC(nType,2)={reshape(permute(CurrentDataResp,[2 3 1]),nROIs,[])};
+%         CurrentDataBase = CurrentData(:,:,1:AlignPoint);
+%         CurrentDataResp = CurrentData(:,:,(AlignPoint+1):(AlignPoint+FrameWin));
+%         DataForROC(nType,1)={reshape(permute(CurrentDataBase,[2 3 1]),nROIs,[])};
+%         DataForROC(nType,2)={reshape(permute(CurrentDataResp,[2 3 1]),nROIs,[])};
+        
+        CurrentDataBase = max(CurrentData(:,:,1:AlignPoint),[],3);
+        CurrentDataResp = max(CurrentData(:,:,(AlignPoint+1):(AlignPoint+FrameWin)),[],3);
+        DataForROC(nType,1)={CurrentDataBase'}; % passed as nROIs * Trials matrix
+        DataForROC(nType,2)={CurrentDataResp'};
     end
     clearvars CurrentData CurrentDataBase CurrentDataResp
     

@@ -148,9 +148,12 @@
 % line([-4 4 NaN 0 0 NaN 0 0], [0 0 NaN -4 4 NaN 0 0],[0 0 NaN 0 0 NaN -4 4], 'Color','black')
 
 %###################################
+% classifiers to be considered
 % bayes classification
 % fitcnb can be used to do naive bayes classification, try it out when time is avaluable
 
+%linear discrimination classifier
+% fitcdiscr: discriminant analysis classifier
 
 %%
 %this section used to be used for all trials plot in AFC_ROI_analysis

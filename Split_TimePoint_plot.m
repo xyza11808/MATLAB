@@ -521,6 +521,7 @@ else
             
             subplot((length(stim_type)/2),2,2*n);
             imagesc(single_freq_data(I,:),clims);
+            gcaposition = get(gca,'position');
             set(gca,'xtick',xtick,'xticklabel',xTick_lable);
             set(gca,'ytick',[]);
             ylabel('ROI response');
@@ -528,8 +529,9 @@ else
             if n==length(stim_type)/2
                 h_bar=colorbar;
                 plot_position_3=get(h_bar,'position');
-                set(h_bar,'position',[plot_position_3(1)*1.15 plot_position_3(2) plot_position_3(3)*0.4 plot_position_3(4)]);
+                set(h_bar,'position',[plot_position_3(1)*1.1 plot_position_3(2) plot_position_3(3)*0.4 plot_position_3(4)]);
                 set(get(h_bar,'Title'),'string',ColorBarDesp);
+                set(gca,'position',gcaposition);
             end
             hold on;
             %              hh=axis;
@@ -613,6 +615,7 @@ else
             [single_freq_onset_sorted,I]=sortrows(single_freq_onset,2);
             subplot((length(stim_type)/2),2,2*n);
             imagesc(single_freq_data(I,:),clims);
+            gcaposition = get(gca,'position');
             set(gca,'xtick',xtick,'xticklabel',xTick_lable);
             set(gca,'ytick',[]);
             ylabel('ROI response');
@@ -620,8 +623,9 @@ else
             if n==length(stim_type)/2
                 h_bar=colorbar;
                 plot_position_3=get(h_bar,'position');
-                set(h_bar,'position',[plot_position_3(1)*1.15 plot_position_3(2) plot_position_3(3)*0.4 plot_position_3(4)]);
+                set(h_bar,'position',[plot_position_3(1)*1.1 plot_position_3(2) plot_position_3(3)*0.4 plot_position_3(4)]);
                 set(get(h_bar,'Title'),'string',ColorBarDesp);
+                set(gca,'position',gcaposition);
             end
             hold on;
             %              hh=axis;

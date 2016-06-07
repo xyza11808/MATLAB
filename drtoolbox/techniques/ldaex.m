@@ -1,4 +1,4 @@
-function [mappedX, mapping] = lda(X, labels, no_dims)
+function [mappedX, mapping] = ldaex(X, labels, no_dims)
 %LDA Perform the LDA algorithm
 %
 %   [mappedX, mapping] = lda(X, labels, no_dims)

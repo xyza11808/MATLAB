@@ -608,6 +608,9 @@ elseif str2double(continue_char)==2
       if RandomSession
 %           ShuffleNeuroMTest(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
           RandNeuroMTestCrossV(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,1.5);
+%           RandNeuroMTPerfcorr(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,1.5,[],behavResults);
+          
+          RandNeuroMLRC(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,behavResults.Stim_toneFreq,1.5);
 %           RandNeuroMTestNew(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,1.5);
           if ~isdir('./shuffle_CV_randPlot/')
               mkdir('./shuffle_CV_randPlot/');
