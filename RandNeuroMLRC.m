@@ -50,7 +50,7 @@ ConsideringData=CorrTrialData(:,:,FrameScale(1):FrameScale(2));
 T8TData = max(ConsideringData,[],3);  % trial by ROI matrix, will be project by one projection vector
 [TrialNum,nROI,nTrace] = size(ConsideringData);
 TrialType = double(TrialType);
- UniqueFreqTypes = double(CorrTrialStim);
+ UniqueFreqTypes = double(unique(CorrTrialStim));
  Octa = log2(UniqueFreqTypes/UniqueFreqTypes(1));
  CorrStimTypeTick = double(CorrStimType)/1000;
  %%
@@ -76,7 +76,7 @@ NumIter = 100;
 FreqScoreAll = zeros(length(CorrStimType),2,NumIter); %within second dimension, the first column indicates frequency score ...
 %, the second column indicates frequency SEM
 ClassificationData = cell(NumIter,3);
-
+isBadRegression = zeros(NumIter,1);
 for niter = 1 : NumIter
     TrainingNum = ceil(TrialNum*0.5);
     TestingNum = TrialNum - TrainingNum;
@@ -94,7 +94,7 @@ for niter = 1 : NumIter
     TestingFreq = CorrTrialStim(~AllTInds);
     
     % using training data set to train a logistic regression classifier
-    [BTrain,~,statsTrain] = mnrfit(TrainingDataSet,TrainingTType(:)+1);
+    [BTrain,~,statsTrain,isOUTITern] = mnrfit(TrainingDataSet,TrainingTType(:)+1);
     MatrixWeight = BTrain(2:end);
     %  ROIbias = (statsTrain.beta(2:end))';
     MatrixScore = TrainingDataSet * MatrixWeight + BTrain(1);
@@ -119,16 +119,19 @@ for niter = 1 : NumIter
      end
      FreqScoreAll(:,:,niter) = FreqScores;
      ClassificationData(niter,:) = {{pValue},{statsTrain},{[PredTrialType;TestingTType']}};
-     
+     if isOUTITern
+         isBadRegression (niter) = 1;
+     end
 end
 %end of iteration
+isBadRegression = logical(isBadRegression);
+FreqScoreAll(:,:,isBadRegression) = [];
 
-%saving result
-save LRCsampling.mat FreqScoreAll ClassificationData -v7.3
+
 %%
 AllFreqScore = squeeze(FreqScoreAll(:,1,:));  % 6 by 100 matrix
 MeanFreqScore = mean(AllFreqScore,2);
-SEMfreq = std(AllFreqScore,[],2)/sqrt(NumIter);
+SEMfreq = std(AllFreqScore,[],2)/sqrt(NumIter-sum(isBadRegression));
 [~,bLRCfit]=fit_logistic(Octa,MeanFreqScore);
 % Curve_x=linspace(min(Octa),max(Octa),500);
 modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));
@@ -156,6 +159,8 @@ ylabel(hax(2),'Model performance');
 xlabel('Tone Frequency (kHz)');
 ylim(hax(1),[-0.1 1.1]);
 ylim(hax(2),[-0.1 1.1]);
+xlim(hax(1),[Octa(1)-0.2 Octa(end)+0.2]);
+xlim(hax(2),[Octa(1)-0.2 Octa(end)+0.2]);
 title('Real and fit data comparation');
 errorbar(Octa,MeanFreqScore,SEMfreq,'ro','LineWidth',1.5,'MarkerSize',10);
 scatter(Octa,realy,40,'k','o','LineWidth',2);
@@ -163,6 +168,8 @@ saveas(h_LRC,sprintf('Neuro_psycho_%dms_Psem_plot.png',TimeLength*1000));
 saveas(h_LRC,sprintf('Neuro_psycho_%dms_Psem_plot.fig',TimeLength*1000));
 % close(h_LRC);
 
+%saving result
+save LRCsampling.mat FreqScoreAll ClassificationData isBadRegression -v7.3
 cd ..;
 
 if nargout>0

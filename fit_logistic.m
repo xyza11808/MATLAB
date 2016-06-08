@@ -71,7 +71,7 @@ if isrow(Q)
     Q = Q';
 end
 
-itermax = 1000 ;	% number of maximum iterations
+itermax = 10000 ;	% number of maximum iterations
 epsilon = 1;
 
 ii = 0 ;            % initialize counteredit
