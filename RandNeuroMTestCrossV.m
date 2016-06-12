@@ -1,4 +1,4 @@
-function varargout=RandNeuroMT(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin)
+function varargout=RandNeuroMTestCrossV(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin)
 %this function will be used to process the random data profile and try to
 %create a neurometric function to compare with psychometric function
 %RawDataAll should be aligned data

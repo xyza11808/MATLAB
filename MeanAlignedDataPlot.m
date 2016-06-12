@@ -306,7 +306,7 @@ t_eventOn = TimeOnset;
 t_eventOff = StimLength+TimeOnset;
 XTick=(1:FrameRate:DataSize(3));
 XTickLabel=floor((1:FrameRate:DataSize(3))/FrameRate);
-save MeanTraceSum.mat MeanAlignData -v7.3
+save MeanTraceSum.mat MeanAlignData TimeOnset FrameRate -v7.3
 
 if ~isdir('./Popu_Mean_Trace/')
     mkdir('./Popu_Mean_Trace/');
