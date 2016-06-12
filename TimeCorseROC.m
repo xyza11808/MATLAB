@@ -27,7 +27,7 @@ cd('./TimeFunROC_Plot/');
 LeftTrialInds=Trial_Type==0;
 RIghtTrialInds=Trial_Type==1;
 %considering 2s time after stim onset
-BinLength=floor((DatSize(3)-alignpoint)/FrameBin);  %bin length
+BinLength=floor((DatSize(3))/FrameBin);  %bin length
 % BaseBInLength=floor(alignpoint/FrameBin);
 BINNEDROCResultLR=zeros(DatSize(2),BinLength);
 % % BINNEDROCResultLB=zeros(DatSize(2),BinLength+BaseBInLength);
@@ -46,8 +46,8 @@ if ~CUplot
         %     BasePoints=TempROIData(:,1:alignpoint);
         %     BaseDataFORroc=[BasePoints(:),2*ones(numel(BasePoints),1)];
         for BINNum=1:BinLength
-            LeftPoints=TempROIData(LeftTrialInds,alignpoint:(alignpoint+BINNum*FrameBin));
-            RightPoints=TempROIData(RIghtTrialInds,alignpoint:(alignpoint+BINNum*FrameBin));
+            LeftPoints=TempROIData(LeftTrialInds,1:(alignpoint+BINNum*FrameBin));
+            RightPoints=TempROIData(RIghtTrialInds,1:(alignpoint+BINNum*FrameBin));
             LeftPointsMax = max(LeftPoints,[],2);
             RightPointsMax = max(RightPoints,[],2);
             % LeftPoints=TempROIData(LeftTrialInds,1:(BINNum*FrameBin);
@@ -93,8 +93,8 @@ else
     parfor ROInum=1:DatSize(2)
         TempROIData=squeeze(AlignedData(:,ROInum,:));
         for BINNum=1:BinLength
-            LeftPoints=TempROIData(LeftTrialInds,(alignpoint+((BINNum-1)*FrameBin)+1):(alignpoint+BINNum*FrameBin));
-            RightPoints=TempROIData(RIghtTrialInds,(alignpoint+((BINNum-1)*FrameBin)+1):(alignpoint+BINNum*FrameBin));
+            LeftPoints=TempROIData(LeftTrialInds,(((BINNum-1)*FrameBin)+1):(alignpoint+BINNum*FrameBin));
+            RightPoints=TempROIData(RIghtTrialInds,(((BINNum-1)*FrameBin)+1):(alignpoint+BINNum*FrameBin));
              LeftPointsMax = max(LeftPoints,[],2);
             RightPointsMax = max(RightPoints,[],2);
             
