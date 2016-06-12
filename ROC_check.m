@@ -70,7 +70,7 @@ ShffROCareaABS=ROCShufflearea;
 % ShffROCareaABS(ROCRevertShff == 1) = 1 - ShffROCareaABS(ROCRevertShff == 1);
 ROCareaABS = ROCarea;
 ROCareaABS(ROCRevert == 1) = 1 - ROCareaABS(ROCRevert == 1); 
-
+SigROC = ROCareaABS > ROCShufflearea;
 RandThres=mean(ShffROCareaABS);
 RespFraction=sum(ROCareaABS>RandThres)/length(ROCarea);
 hist(ROCarea);
@@ -259,6 +259,27 @@ end
     
     save LeftRightROC_result.mat LeftBase2RespRoc RightBase2RespRoc ...
         ShuffleLeftRoc ShuffleRightRoc RightBase2RespMaxAmp RightBase2RespMNDiff LeftBase2RespMaxAmp LeftBase2RespMNDiff -v7.3
+    
+    % plot Selection index, which is calculated by 2*(AUC - 0.5), we will
+    % get a result as: better Left selectivity, result close to -1, and
+    % better right selectivity gets a result close to 1
+    SelectIndex = (ROCarea - 0.5)*2;
+    SigAUCValue = SigROC;
+    [Count,Center] = hist(SelectIndex,15);
+    [CountSig,CenterSig] = hist(SelectIndex(SigAUCValue),15);
+    h_Sindex = figure('position',[430 300 1100 800],'PaperPositionMode','auto');
+    hold on
+    bar(Center,Count,'r');
+    alpha(0.3);
+    bar(CenterSig,CountSig,'r');
+    xlabel('Index value');
+    ylabel('Cell Number');
+    title('Population Selection index');
+    set(gca,'FontSize',20);
+    saveas(h_Sindex,'Population selection index plot','png');
+    saveas(h_Sindex,'Population selection index plot','fig');
+    saveas(h_Sindex,'Population selection index plot','epsc');
+    close(h_Sindex);
     
  cd ..;   
  cd ..;
