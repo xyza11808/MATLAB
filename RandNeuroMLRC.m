@@ -71,63 +71,73 @@ Curve_x=linspace(min(Octavex),max(Octavex),500);
 %%
 % iteration start
 % using half of the data for training, and another half for testing
+try
+    NumIter = 100;
+    FreqScoreAll = zeros(length(CorrStimType),2,NumIter); %within second dimension, the first column indicates frequency score ...
+    %, the second column indicates frequency SEM
+    ClassificationData = cell(NumIter,3);
+    isBadRegression = zeros(NumIter,1);
+    for niter = 1 : NumIter
+        TrainingNum = ceil(TrialNum*0.5);
+        TestingNum = TrialNum - TrainingNum;
+        SampleInds = randsample(TrialNum,TrainingNum);
 
-NumIter = 100;
-FreqScoreAll = zeros(length(CorrStimType),2,NumIter); %within second dimension, the first column indicates frequency score ...
-%, the second column indicates frequency SEM
-ClassificationData = cell(NumIter,3);
-isBadRegression = zeros(NumIter,1);
-for niter = 1 : NumIter
-    TrainingNum = ceil(TrialNum*0.5);
-    TestingNum = TrialNum - TrainingNum;
-    SampleInds = randsample(TrialNum,TrainingNum);
-    
-    AllTInds = false(TrialNum,1);
-    AllTInds(SampleInds) = true;
-    
-    TrainingDataSet = T8TData(AllTInds,:);
-    TrainingTType = TrialType(AllTInds);
-    TrainingFreq = CorrTrialStim(AllTInds);
-    
-    TestingDataSet = T8TData(~AllTInds,:);
-    TestingTType = TrialType(~AllTInds);
-    TestingFreq = CorrTrialStim(~AllTInds);
-    
-    % using training data set to train a logistic regression classifier
-    [BTrain,~,statsTrain,isOUTITern] = mnrfit(TrainingDataSet,TrainingTType(:)+1);
-    MatrixWeight = BTrain(2:end);
-    %  ROIbias = (statsTrain.beta(2:end))';
-    MatrixScore = TrainingDataSet * MatrixWeight + BTrain(1);
-    pValue = 1./(1+exp(-1.*MatrixScore));
-    
-    %testing test data set score
-    %  TestMatrixScore = TestingDataSet * MatrixWeight + BTrain(1);
-    [pihat,~,~] = mnrval(BTrain,TestingDataSet,statsTrain);
-    PredTrialType=double(pihat(:,2));
-    ErrorNum = abs(double(pihat(:,2)) - double(TestingTType)');
-    
-     UniqueFreqTypes = unique(TestingFreq);
-     FreqScores = zeros(length(UniqueFreqTypes),2);
-%      FreqCI = zeros(length(UniqueFreqTypes),2);
-     for nfreq = 1 : length(UniqueFreqTypes)
-         cFreq = UniqueFreqTypes(nfreq);
-         cFreqTrials =  TestingFreq == cFreq;
-         cFreqScore = PredTrialType(cFreqTrials);
-         FreqScores(nfreq,:) = [mean(cFreqScore) (std(cFreqScore)/sqrt(length(cFreqScore)))];
-%          FreqCI(nfreq,1) = mean(dlow(cFreqTrials,1));
-%          FreqCI(nfreq,2) = mean(dhi(cFreqTrials,1));
-     end
-     FreqScoreAll(:,:,niter) = FreqScores;
-     ClassificationData(niter,:) = {{pValue},{statsTrain},{[PredTrialType;TestingTType']}};
-     if isOUTITern
-         isBadRegression (niter) = 1;
-     end
+        AllTInds = false(TrialNum,1);
+        AllTInds(SampleInds) = true;
+
+        TrainingDataSet = T8TData(AllTInds,:);
+        TrainingTType = TrialType(AllTInds);
+        TrainingFreq = CorrTrialStim(AllTInds);
+
+        TestingDataSet = T8TData(~AllTInds,:);
+        TestingTType = TrialType(~AllTInds);
+        TestingFreq = CorrTrialStim(~AllTInds);
+
+        % using training data set to train a logistic regression classifier
+        [BTrain,~,statsTrain,isOUTITern] = mnrfit(TrainingDataSet,TrainingTType(:)+1);
+        MatrixWeight = BTrain(2:end);
+        %  ROIbias = (statsTrain.beta(2:end))';
+        MatrixScore = TrainingDataSet * MatrixWeight + BTrain(1);
+        pValue = 1./(1+exp(-1.*MatrixScore));
+
+        %testing test data set score
+        %  TestMatrixScore = TestingDataSet * MatrixWeight + BTrain(1);
+        [pihat,~,~] = mnrval(BTrain,TestingDataSet,statsTrain);
+        PredTrialType=double(pihat(:,2));
+        ErrorNum = abs(double(pihat(:,2)) - double(TestingTType)');
+
+         UniqueFreqTypes = unique(TestingFreq);
+         FreqScores = zeros(length(UniqueFreqTypes),2);
+    %      FreqCI = zeros(length(UniqueFreqTypes),2);
+         for nfreq = 1 : length(UniqueFreqTypes)
+             cFreq = UniqueFreqTypes(nfreq);
+             cFreqTrials =  TestingFreq == cFreq;
+             cFreqScore = PredTrialType(cFreqTrials);
+             FreqScores(nfreq,:) = [mean(cFreqScore) (std(cFreqScore)/sqrt(length(cFreqScore)))];
+    %          FreqCI(nfreq,1) = mean(dlow(cFreqTrials,1));
+    %          FreqCI(nfreq,2) = mean(dhi(cFreqTrials,1));
+         end
+         FreqScoreAll(:,:,niter) = FreqScores;
+         ClassificationData(niter,:) = {{pValue},{statsTrain},{[PredTrialType;TestingTType']}};
+         if isOUTITern
+             isBadRegression (niter) = 1;
+         end
+    end
+    %end of iteration
+    isBadRegression = logical(isBadRegression);
+    FreqScoreAll(:,:,isBadRegression) = [];
+catch
+%     warning('More than 30% of trials show bad classifications, quit function.\n');
+    if ~isdir('./LRC_classification/')
+        mkdir('./LRC_classification/');
+    end
+    cd('./LRC_classification/');
+    fileID = fopen('BAD PERFORMANCE EXIST.txt','w+');
+    fprintf(fileID,'%s\n','Matrix is close to singular or badly scaled,Logistic regression cannot performed.');
+    fclose(fileID);
+    cd ..;
+    return;
 end
-%end of iteration
-isBadRegression = logical(isBadRegression);
-FreqScoreAll(:,:,isBadRegression) = [];
-
-
 %%
 AllFreqScore = squeeze(FreqScoreAll(:,1,:));  % 6 by 100 matrix
 MeanFreqScore = mean(AllFreqScore,2);

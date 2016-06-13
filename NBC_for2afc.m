@@ -74,7 +74,14 @@ end
 
 BadModelPerform = NBCLossAll > 0.3;
 if sum(BadModelPerform) > 1
-    fprintf('%.2f precent of Iterations is bad performed with loss fun larger than 0.3.\n',sum(BadModelPerform)/length(NBCLossAll));
+    fprintf('%.2f of Iterations is bad performed with loss fun larger than 0.3.\n',sum(BadModelPerform)/length(NBCLossAll));
+    if (sum(BadModelPerform)/length(NBCLossAll)) > 0.3
+        warning('More than 30% of trials show bad classifications, quit function.\n');
+        fileID = fopen('BAD PERFORMANCE EXIST.txt','w+');
+        fprintf(fileID,'%s\n',sprintf('%.1f of Iterations is bad performed with loss fun larger than 0.3.\n',100*sum(BadModelPerform)/length(NBCLossAll)));
+        fclose(fileID);
+        return;
+    end
 end
 GoodFreqPeform = NBCScoreAll(:,~BadModelPerform);
 MeanFreqScore = mean(GoodFreqPeform,2);
@@ -89,6 +96,18 @@ modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));
 Curve_x=linspace(min(FreqOct),max(FreqOct),500);
 [~,bPopSEM]=fit_logistic(FreqOct,FitPerf);
 Psemfitline = modelfun(bPopSEM,Curve_x);
+CorrStimTypeTick = freqTypes/1000;
+%%
+% loading real behavior performance
+[filename,filepath,~]=uigetfile('boundary_result.mat','Select your random plot fit result');
+load(fullfile(filepath,filename));
+% Octavex=FreqOct;
+% Octavefit=Octavex;
+realy=boundary_result.StimCorr;
+realy(1:3)=1-realy(1:3);
+% Curve_x=linspace(min(Octavex),max(Octavex),500);
+[~,breal] = fit_logistic(FreqOct,realy);
+RealLine = modelfun(breal,Curve_x);
 
 %%
 h_fitplot = figure('position',[300 150 1100 900]);
@@ -101,10 +120,30 @@ ylabel('RightWard Corr. rate');
 title('Naive bayes classification');
 saveas(h_fitplot,'NBC fit scatterPlot.png');
 saveas(h_fitplot,'NBC fit scatterPlot.fig');
-% close(h_fitplot);
+close(h_fitplot);
 %%
-
 save NBCResult.mat NBCScoreAll NBCLossAll NBCMd1All BadModelPerform -v7.3
+
+h_doubleyy = figure('position',[300 150 1100 900],'PaperpositionMode','auto');
+hold on;
+[hax,hline1,hline2] = plotyy(Curve_x,RealLine,Curve_x,Psemfitline);
+set(hline1,'color','k','LineWidth',2);
+set(hline2,'color','r','LineWidth',2);
+set(hax(1),'xtick',FreqOct,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k');
+set(hax(2),'ycolor','r');
+set(hax,'FontSize',20);
+ylabel(hax(1),'Fraction choice (R)');
+ylabel(hax(2),'Model performance');
+ylim(hax(1),[-0.1,1.1]);
+ylim(hax(2),[-0.1,1.1]);
+xlabel('Tone Frequency (kHz)');
+title('Real and fit data comparation');
+scatter(FreqOct,realy,40,'k','o','LineWidth',2);
+scatter(FreqOct,FitPerf,40,'r','o','LineWidth',2);
+saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_BiyyNBC_plot.png',Timescale*1000));
+saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_BiyyNBC_plot.fig',Timescale*1000));
+close(h_doubleyy);
+
 cd ..;
 
 %     randInds = randsample(TrialNum,round(TrialNum*0.5));

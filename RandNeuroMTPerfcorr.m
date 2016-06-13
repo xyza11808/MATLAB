@@ -24,7 +24,7 @@ CorrTrialStim=StimAll(CorrectInds);
 CorrTrialData=RawDataAll(CorrectInds,:,:);
 CorrStimType=unique(CorrTrialStim);
 ALLROIMeanData=zeros(length(CorrStimType),DataSize(2));
-ALLROIMeanTrial=zeros(length(CorrStimType),DataSize(2));
+% ALLROIMeanTrial=zeros(length(CorrStimType),DataSize(2));
 ALLROIMeanTestData=zeros(length(CorrStimType),DataSize(2));
 
 
@@ -37,10 +37,10 @@ else
     return;
 end
 if FrameScale(1) < 1
-    warning('Time Selection excceed matrix index, correct to 1');
+    warning('Time Selection excceed matrix index start, correct to 1');
 end
 if FrameScale(2) > DataSize(3)
-    warning('Time Selection excceed matrix index, correct to %d',DataSize(3));
+    warning('Time Selection excceed matrix index end, correct to %d',DataSize(3));
 end
 
 
@@ -67,10 +67,10 @@ end
 
 
 %%
-if ~isdir('./NeuroM_test/')
-    mkdir('./NeuroM_test/');
+if ~isdir('./NeuroM_Perf_test/')
+    mkdir('./NeuroM_Perf_test/');
 end
-cd('./NeuroM_test/');
+cd('./NeuroM_Perf_test/');
 
 if ~isdir(sprintf('./AfterTimeLength-%dms/',TimeLength*1000))
     mkdir(sprintf('./AfterTimeLength-%dms/',TimeLength*1000));
@@ -83,12 +83,25 @@ RightNonpcaDataTA = zeros(300,nROI);
 LeftNonpcaDataTE = zeros(300,nROI);
 RightNonpcaDataTE = zeros(300,nROI);
 
+nTypeDataAll = cell(1,length(CorrStimType));
+nTypeTrialNum = zeros(1,length(CorrStimType));
+for nType = 1:length(CorrStimType)
+    TempStim=CorrStimType(nType);
+    SingleStimInds=CorrTrialStim==TempStim;
+    SingleStimDataAll=ConsideringData(SingleStimInds,:,:);
+    TrialNum=size(SingleStimDataAll,1);
+    nTypeDataAll(nType) = {SingleStimDataAll};
+    nTypeTrialNum(nType) = TrialNum;
+end
+
 for CVNumber=1:100
     for n=1:length(CorrStimType)
-        TempStim=CorrStimType(n);
-        SingleStimInds=CorrTrialStim==TempStim;
-        SingleStimDataAll=ConsideringData(SingleStimInds,:,:);
-        TrialNum=size(SingleStimDataAll,1);
+%         TempStim=CorrStimType(n);
+%         SingleStimInds=CorrTrialStim==TempStim;
+%         SingleStimDataAll=ConsideringData(SingleStimInds,:,:);
+%         TrialNum=size(SingleStimDataAll,1);
+        TrialNum = nTypeTrialNum(n);
+        SingleStimDataAll = nTypeDataAll{n};
         SampleTrial=randsample(TrialNum,floor(TrialNum*0.5));
         RawTrialInds=zeros(1,TrialNum);
         RawTrialInds(SampleTrial)=1;
@@ -151,9 +164,9 @@ TestingLabel = TrainingLable;
 
 %%
 % pca for visualization
-[coeffT,scoreT,~,~,explainedT,~]=pca(TrainingData);
-sum(explainedT(1:3));
-MeansubTest = TestingData - repmat(mean(TestingData,2),1,size(TestingData,2));
+[coeffT,scoreT,~,~,explainedT,mu]=pca(TrainingData);
+disp(sum(explainedT(1:3)));
+MeansubTest = TestingData - repmat(mean(TestingData),size(TestingData,1),1);
 ProjScore =MeansubTest * coeffT(:,1:10);
 
 %visualization of data 

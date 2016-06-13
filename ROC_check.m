@@ -55,6 +55,7 @@ for n=1:SizeData(2)
     ROCRevert(n)=gather(LabelMeanS.Type1value > LabelMeanS.Type2value);    %ubar   hbar
     suptitle(sprintf('ROI%d AUC',n));
     saveas(gcf,['ROC distinguish for LR Trials result for ROI' num2str(n)],'png');
+    saveas(gcf,['ROC distinguish for LR Trials result for ROI' num2str(n)],'fig');
     close(gcf);
     [AllROC,~,sigvalue]=ROCSiglevelGene([DataInput,double(Trials)'],500,1,0.01);
     ROCShufflearea(n) = sigvalue;
@@ -69,7 +70,7 @@ end
 ShffROCareaABS=ROCShufflearea;
 % ShffROCareaABS(ROCRevertShff == 1) = 1 - ShffROCareaABS(ROCRevertShff == 1);
 ROCareaABS = ROCarea;
-ROCareaABS(ROCRevert == 1) = 1 - ROCareaABS(ROCRevert == 1); 
+ROCareaABS(ROCRevert == 1) = 1 - ROCareaABS(ROCRevert == 1); % using real AUC value to check whether ROI is significantly response or not
 SigROC = ROCareaABS > ROCShufflearea;
 RandThres=mean(ShffROCareaABS);
 RespFraction=sum(ROCareaABS>RandThres)/length(ROCarea);
@@ -269,11 +270,11 @@ end
     [CountSig,CenterSig] = hist(SelectIndex(SigAUCValue),15);
     h_Sindex = figure('position',[430 300 1100 800],'PaperPositionMode','auto');
     hold on
-    bar(Center,Count,'r');
+    bar(Center,(Count/numel(SelectIndex)),'r');
     alpha(0.3);
-    bar(CenterSig,CountSig,'r');
+    bar(CenterSig,(CountSig/numel(SelectIndex)),'r');
     xlabel('Index value');
-    ylabel('Cell Number');
+    ylabel('Cell Fraction');
     title('Population Selection index');
     set(gca,'FontSize',20);
     saveas(h_Sindex,'Population selection index plot','png');

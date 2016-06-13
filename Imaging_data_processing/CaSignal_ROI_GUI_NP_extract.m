@@ -1472,22 +1472,33 @@ SavedCaTrials.ROIinfoBack=CaTrials(1).ROIinfoBack;
 RawData=zeros(length(CaTrials),CaTrials(1).nROIs,CaTrials(1).nFrames);
 ringData=zeros(length(CaTrials),CaTrials(1).nROIs,CaTrials(1).nFrames);
 SegNPdata=zeros(length(CaTrials),CaSignal.SegNumber,CaTrials(1).nFrames);
-if isempty(CaTrials(1).f_raw) || isempty(CaTrials(1).RingF)
-    RawData=[];
-    ringData=[];
-    SegNPdata=[];
-else
-    for n=1:length(CaTrials)
-        RawData(n,:,:)=CaTrials(n).f_raw;
-        ringData(n,:,:)=CaTrials(n).RingF;
-        SegNPdata(n,:,:)=CaTrials(n).SegNPData;
+try
+    if isempty(CaTrials(1).f_raw) || isempty(CaTrials(1).RingF)
+        RawData=[];
+        ringData=[];
+        SegNPdata=[];
+    else
+        for n=1:length(CaTrials)
+            RawData(n,:,:)=CaTrials(n).f_raw;
+            ringData(n,:,:)=CaTrials(n).RingF;
+            SegNPdata(n,:,:)=CaTrials(n).SegNPData;
+        end
     end
+    SavedCaTrials.f_raw=RawData;
+    SavedCaTrials.RingF=ringData;
+    SavedCaTrials.TrialNum=length(CaTrials);
+    SavedCaTrials.SegNPdataAll=SegNPdata;
+    SavedCaTrials.ROISegLabel=CaSignal.ROINPlabel;
+    %simplified data storage
+    save(CaSignal.SIMsave_fname,'SavedCaTrials','-v7.3');
+    save(CaSignal.ROIinfoback_fname, 'ROIinfoBU','-v7.3');
+catch
+    fprintf('Can''t save current session data in simplified way, may be caused by some frame dropping at trial number %d.\n',n);
+    %redundant data storage
+    save(CaSignal.results_fname, 'CaTrials','-v7.3');
+    save(CaSignal.ROIinfo_fname, 'ROIinfo','-v7.3');
 end
-SavedCaTrials.f_raw=RawData;
-SavedCaTrials.RingF=ringData;
-SavedCaTrials.TrialNum=length(CaTrials);
-SavedCaTrials.SegNPdataAll=SegNPdata;
-SavedCaTrials.ROISegLabel=CaSignal.ROINPlabel;
+
 
 %%
 % save(CaSignal.results_fname, 'CaTrials','ICA_results');
@@ -1497,8 +1508,8 @@ SavedCaTrials.ROISegLabel=CaSignal.ROINPlabel;
 % save(CaSignal.ROIinfo_fname, 'ROIinfo','-v7.3');
 
 %simplified data storage
-save(CaSignal.SIMsave_fname,'SavedCaTrials','-v7.3');
-save(CaSignal.ROIinfoback_fname, 'ROIinfoBU','-v7.3');
+% save(CaSignal.SIMsave_fname,'SavedCaTrials','-v7.3');
+% save(CaSignal.ROIinfoback_fname, 'ROIinfoBU','-v7.3');
 
 % save(fullfile(CaSignal.results_path, ['ICA_ROIs_', FileName_prefix '.mat']), 'ICA_ROIs');
 msg_str = sprintf('CaTrials Saved, with %d trials, %d ROIs', length(CaSignal.CaTrials), CaSignal.CaTrials(TrialNo).nROIs);

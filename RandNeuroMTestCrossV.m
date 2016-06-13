@@ -138,18 +138,24 @@ for CVNumber=1:100
     % [coeff,score,latent,~,explained,~]=pca(ALLROIMeanNor);
     %
     % ALLROIMeanZsTrans=zscore(ALLROIMeanData);
-    [coeff,score,latent,~,explained,~]=pca(ALLROIMeanData);
+   %%%##################### [coeff,score,latent,~,explained,~]=pca(ALLROIMeanData);
 %     if sum(explained(1:3)) < 85
 %         fprintf('Explained ratio less than 85%.\n');
 %         CVNumber=CVNumber-1;
 %         continue;
 %     end
-    [coeff2,score2,latent2,~,explained2,~]=pca(ALLROIMeanTestData);
-
-    if sum(explained(1:3))<80
-        warning('The first three component explains less than 80 percents, the pca result may not acurate.');
-    end
-    save RandPcaResult.mat ALLROIMeanData coeff score latent explained -v7.3
+    %$%%%%############[coeff2,score2,latent2,~,explained2,~]=pca(ALLROIMeanTestData);
+    
+    TrainingMeanSub = ALLROIMeanData - repmat(mean(ALLROIMeanData),size(ALLROIMeanData,1),1);
+    score = TrainingMeanSub * coeffT;
+    
+    TestingMeanSub = ALLROIMeanTestData - repmat(mean(ALLROIMeanTestData),size(ALLROIMeanTestData,1),1);
+    score2 = TestingMeanSub * coeffT;
+    
+%     if sum(explained(1:3))<80
+%         warning('The first three component explains less than 80 percents, the pca result may not acurate.');
+%     end
+%     save RandPcaResult.mat ALLROIMeanData coeff score latent explained -v7.3
 
     % Stimstr=num2str(CorrStimType);
     % StimstrCell=strsplit(Stimstr,' ');

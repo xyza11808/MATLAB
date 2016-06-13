@@ -46,8 +46,8 @@ if ~CUplot
         %     BasePoints=TempROIData(:,1:alignpoint);
         %     BaseDataFORroc=[BasePoints(:),2*ones(numel(BasePoints),1)];
         for BINNum=1:BinLength
-            LeftPoints=TempROIData(LeftTrialInds,1:(alignpoint+BINNum*FrameBin));
-            RightPoints=TempROIData(RIghtTrialInds,1:(alignpoint+BINNum*FrameBin));
+            LeftPoints=TempROIData(LeftTrialInds,1:BINNum*FrameBin);
+            RightPoints=TempROIData(RIghtTrialInds,1:BINNum*FrameBin);
             LeftPointsMax = max(LeftPoints,[],2);
             RightPointsMax = max(RightPoints,[],2);
             % LeftPoints=TempROIData(LeftTrialInds,1:(BINNum*FrameBin);
@@ -93,8 +93,8 @@ else
     parfor ROInum=1:DatSize(2)
         TempROIData=squeeze(AlignedData(:,ROInum,:));
         for BINNum=1:BinLength
-            LeftPoints=TempROIData(LeftTrialInds,(((BINNum-1)*FrameBin)+1):(alignpoint+BINNum*FrameBin));
-            RightPoints=TempROIData(RIghtTrialInds,(((BINNum-1)*FrameBin)+1):(alignpoint+BINNum*FrameBin));
+            LeftPoints=TempROIData(LeftTrialInds,(((BINNum-1)*FrameBin)+1):(BINNum*FrameBin));
+            RightPoints=TempROIData(RIghtTrialInds,(((BINNum-1)*FrameBin)+1):(BINNum*FrameBin));
              LeftPointsMax = max(LeftPoints,[],2);
             RightPointsMax = max(RightPoints,[],2);
             
@@ -110,7 +110,7 @@ else
     clearvars TempROIData LeftPoints RightPoints LeftDataFORroc RightDataFORroc
 end
 
-PXtick=alignpoint:FrameBin:(DatSize(3));
+PXtick=1:FrameBin:(DatSize(3));
 AlignTime=alignpoint/FrameRate;
 PXtick(1)=[];
 PXtickTime=PXtick/FrameRate;
