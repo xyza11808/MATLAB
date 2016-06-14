@@ -129,13 +129,15 @@ hold on;
 [hax,hline1,hline2] = plotyy(Curve_x,RealLine,Curve_x,Psemfitline);
 set(hline1,'color','k','LineWidth',2);
 set(hline2,'color','r','LineWidth',2);
-set(hax(1),'xtick',FreqOct,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k');
-set(hax(2),'ycolor','r');
+set(hax(1),'xtick',FreqOct,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k','ytick',[0 0.2 0.4 0.6 0.8 1]);
+set(hax(2),'ycolor','r','ytick',[0 0.2 0.4 0.6 0.8 1]);
 set(hax,'FontSize',20);
 ylabel(hax(1),'Fraction choice (R)');
 ylabel(hax(2),'Model performance');
 ylim(hax(1),[-0.1,1.1]);
 ylim(hax(2),[-0.1,1.1]);
+xlim(hax(1),[FreqOct(1)-0.1 FreqOct(end)+0.1]);
+xlim(hax(2),[FreqOct(1)-0.1 FreqOct(end)+0.1]);
 xlabel('Tone Frequency (kHz)');
 title('Real and fit data comparation');
 scatter(FreqOct,realy,40,'k','o','LineWidth',2);
@@ -143,7 +145,7 @@ scatter(FreqOct,FitPerf,40,'r','o','LineWidth',2);
 saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_BiyyNBC_plot.png',Timescale*1000));
 saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_BiyyNBC_plot.fig',Timescale*1000));
 close(h_doubleyy);
-
+save ModelPlotData.mat FreqOct realy FitPerf CorrStimTypeTick Timescale -v7.3
 cd ..;
 
 %     randInds = randsample(TrialNum,round(TrialNum*0.5));

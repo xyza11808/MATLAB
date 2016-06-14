@@ -161,23 +161,23 @@ hold on
 [hax,hline1,hline2] = plotyy(Curve_x,curve_realy,Curve_x,curve_fity);
 set(hline1,'color','k','LineWidth',2);  % behavior 
 set(hline2,'color','r','LineWidth',2);  % model result
-set(hax(1),'xtick',Octa,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k');
-set(hax(2),'ycolor','r');
+set(hax(1),'xtick',Octa,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k','ytick',[0 0.2 0.4 0.6 0.8 1]);
+set(hax(2),'ycolor','r','ytick',[0 0.2 0.4 0.6 0.8 1]);
 set(hax,'FontSize',20);
 ylabel(hax(1),'Fraction choice (R)');
 ylabel(hax(2),'Model performance');
 xlabel('Tone Frequency (kHz)');
 ylim(hax(1),[-0.1 1.1]);
 ylim(hax(2),[-0.1 1.1]);
-xlim(hax(1),[Octa(1)-0.2 Octa(end)+0.2]);
-xlim(hax(2),[Octa(1)-0.2 Octa(end)+0.2]);
+xlim(hax(1),[Octa(1)-0.1 Octa(end)+0.1]);
+xlim(hax(2),[Octa(1)-0.1 Octa(end)+0.1]);
 title('Real and fit data comparation');
 errorbar(Octa,MeanFreqScore,SEMfreq,'ro','LineWidth',1.5,'MarkerSize',10);
 scatter(Octa,realy,40,'k','o','LineWidth',2);
 saveas(h_LRC,sprintf('Neuro_psycho_%dms_Psem_plot.png',TimeLength*1000));
 saveas(h_LRC,sprintf('Neuro_psycho_%dms_Psem_plot.fig',TimeLength*1000));
 % close(h_LRC);
-
+save ModelPlotData.mat Octa realy MeanFreqScore CorrStimTypeTick TimeLength -v7.3
 %saving result
 save LRCsampling.mat FreqScoreAll ClassificationData isBadRegression -v7.3
 cd ..;

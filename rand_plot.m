@@ -252,7 +252,7 @@ for n = 1:fileNum
         %     reward_type(1:length(behavSettings.randompureTone_left(1,:)))=1-reward_type(1:length(behavSettings.randompureTone_left(1,:)));
         reward_type(1:length(stim_types)/2)=1-reward_type(1:length(stim_types)/2);
         h3=figure;
-        scatter(octave_dist,reward_type,30,'MarkerEdgeColor','r','MarkerFaceColor','y');
+        scatter(octave_dist,reward_type,30,'MarkerEdgeColor','k','LineWidth',1.5);
         hold on;
         inds_exclude=input('please select the trial inds that should be excluded from analysis.\n','s');
         if ~isempty(inds_exclude)
@@ -291,7 +291,7 @@ for n = 1:fileNum
         
         %         plot(octave_dist,reward_type,'o');
 %         h3=figure;
-        plot(curve_x,curve_y,'color','b');
+        plot(curve_x,curve_y,'color','k','LineWidth',1.8);
         hold off;
         if exist('fn','var')
             saveas(h3,[fn(1:end-4),'_fit plot.png'],'png');
@@ -305,9 +305,11 @@ for n = 1:fileNum
         ylabel('Rightward choice');
         
         if exist('fn','var')
-            saveas(h3,[fn(1:end-4),'_fit plot.png'],'png');
+            saveas(h3,[fn(1:end-4),'_fit plot'],'png');
+            saveas(h3,[fn(1:end-4),'_fit plot'],'fig');
         else
-            saveas(h3,['Behav_fit plot.png'],'png');
+            saveas(h3,'Behav_fit plot','png');
+            saveas(h3,'Behav_fit plot','fig');
         end
         close;
         syms x

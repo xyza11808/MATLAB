@@ -39,8 +39,11 @@ for n=1:10
     SemValue(n)=std(LeftCorrSummary(labelInds))/sqrt(sum(labelInds));
     %/sqrt(sum(labelInds))
 end
-scatter(LeftDisSummary,LeftCorrSummary,20,'c','*');
-errorbar(centerD,CoefValue,SemValue,'r-o');
+scatter(LeftDisSummary,LeftCorrSummary,12,'k','*');
+errorbar(centerD,CoefValue,SemValue,'r-o','linewidth',1.8);
+xlabel('Paired Distance');
+ylabel('Corr. Coefficient');
+set(gca,'FontSize',20);
 hold off
 [LeftCorrCoef,pLeft]=corrcoef(LeftDisSummary,LeftCorrSummary);
 if length(LeftCorrCoef)~=1
@@ -48,7 +51,7 @@ if length(LeftCorrCoef)~=1
 else
     title('ROI distance correlate with corrcoef value within left ROIs');
 end
-
+xlim([0 310])
 %%
 SavePath=uigetdir(pwd,'Left Dis_coef save path');
 saveas(hLeft,fullfile(SavePath,'\Left_Dis_coef.fig'));
@@ -69,8 +72,12 @@ for n=1:10
     CoefValue(n)=mean(RightCorrSummary(labelInds));
     SemValue(n)=std(RightCorrSummary(labelInds))/sqrt(sum(labelInds));
 end
-scatter(RightDisSummary,RightCorrSummary,20,'c','*');
-errorbar(centerD,CoefValue,SemValue,'r-o');
+scatter(RightDisSummary,RightCorrSummary,12,[0.9 0 0.9],'*');
+alpha(0.4);
+errorbar(centerD,CoefValue,SemValue,'k-o','linewidth',1.8);
+xlabel('Paired Distance');
+ylabel('Corr. Coefficient');
+set(gca,'FontSize',20);
 hold off
 [RightCorrCoef,pRight]=corrcoef(RightDisSummary,RightCorrSummary);
 if length(RightCorrCoef) ~= 1
@@ -98,8 +105,12 @@ for n=1:10
     CoefValue(n)=mean(AllCorrSummary(labelInds));
     SemValue(n)=std(AllCorrSummary(labelInds))/sqrt(sum(labelInds));
 end
-scatter(AllDisSummary,AllCorrSummary,20,'c','*');
-errorbar(centerD,CoefValue,SemValue,'r-o');
+scatter(AllDisSummary,AllCorrSummary,12,'g','*');
+alpha(0.3);
+errorbar(centerD,CoefValue,SemValue,'r-o','linewidth',1.8);
+xlabel('Paired Distance');
+ylabel('Corr. Coefficient');
+set(gca,'FontSize',20);
 hold off
 [LRCorrCoef,pAll]=corrcoef(AllDisSummary,AllCorrSummary);
 if length(LRCorrCoef)~=1

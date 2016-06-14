@@ -356,19 +356,23 @@ hold on;
 [hax,hline1,hline2] = plotyy(Curve_x,curve_realy,Curve_x,curve_fity);
 set(hline1,'color','k','LineWidth',2);
 set(hline2,'color','r','LineWidth',2);
-set(hax(1),'xtick',Octavex,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k');
-set(hax(2),'ycolor','r');
+set(hax(1),'xtick',Octavex,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k','ytick',[0 0.2 0.4 0.6 0.8 1]);
+set(hax(2),'ycolor','r','ytick',[0 0.2 0.4 0.6 0.8 1]);
 set(hax,'FontSize',20);
 ylabel(hax(1),'Fraction choice (R)');
 ylabel(hax(2),'Model performance');
 xlabel('Tone Frequency (kHz)');
+ylim(hax(1),[-0.1 1.1]);
+ylim(hax(2),[-0.1 1.1]);
+xlim(hax(1),[Octavex(1)-0.1 Octavex(end)+0.1]);
+xlim(hax(2),[Octavex(1)-0.1 Octavex(end)+0.1]);
 title('Real and fit data comparation');
 scatter(Octavex,realy,40,'k','o','LineWidth',2);
 scatter(Octavexfit,fityAll,40,'r','o','LineWidth',2);
 saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_Biyy_plot.png',TimeLength*1000));
 saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_Biyy_plot.fig',TimeLength*1000));
 close(h_doubleyy);
-
+save ModelPlotData.mat Octavex realy fityAll CorrStimTypeTick TimeLength -v7.3
 %%
 % plot the everysingle point result for SEM calculation
 [~,bPopSEM]=fit_logistic(Octavex,NormalMeanDis);
