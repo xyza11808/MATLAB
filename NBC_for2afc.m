@@ -16,22 +16,42 @@ for nfreq = 1 : length(freqTypes)
     freqPrior(nfreq) = sum(TrialFreq == freqTypes(nfreq)) / length(TrialFreq);
 end
 TrialTypePrior = [sum(freqPrior(1:3)),sum(freqPrior(4:6))];
-FrameScale = round(FrameRate * Timescale);
-if TimeTrace - FrameScale < StartFrame
-    FrameScale = TimeTrace - StartFrame - 1;
+if length(Timescale) == 1
+    FrameScale = sort([AlignFrame,AlignFrame+floor(Timescale*FrameRate)]);
+elseif length(Timescale) == 2
+    StartTime = min(Timescale);
+    TimeScale = max(Timescale) - min(Timescale);
+    FrameScale = sort([AlignFrame+floor(Timescale(1)*FrameRate),AlignFrame+floor(Timescale(2)*FrameRate)]);
+else
+    warning('Input TimeLength variable have a length of %d, but it have to be 1 or 2',length(TimeLength));
+    return;
 end
-SelectData = RawData(:,:,StartFrame:(StartFrame+FrameScale));
+if FrameScale(1) < 1
+    warning('Time Selection excceed matrix index, correct to 1');
+    FrameScale(1) = 1;
+end
+if FrameScale(2) > DataSize(3)
+    warning('Time Selection excceed matrix index, correct to %d',DataSize(3));
+    FrameScale(2) = DataSize(3);
+end
+SelectData = RawData(:,:,FrameScale(1): FrameScale(2));
 TrainingDataAll = max(SelectData,[],3);
 %the current will only used for natlab versions higher than 2014a
 md1 = fitcnb(TrainingDataAll,trialInds(:),'prior',TrialTypePrior);
 defaultCVMdl = crossval(md1);
 defaultLoss = kfoldLoss(defaultCVMdl);
 fprintf('Naive bayes classifier error rate equals %0.4f.\n',defaultLoss);
-if ~isdir('./NBC_analysis_result/')
-    mkdir('./NBC_analysis_result/');
+if length(Timescale) == 1
+    if ~isdir(sprintf('./NBC_analysis_result_%dms/',Timescale*1000))
+        mkdir(sprintf('./NBC_analysis_result_%dms/',Timescale*1000));
+    end
+    cd(sprintf('./NBC_analysis_result_%dms/',Timescale*1000));
+else
+    if ~isdir(sprintf('./NBC_analysis_result_%dms%dmsDur/',StartTime*1000,TimeScale*1000))
+        mkdir(sprintf('./NBC_analysis_result_%dms%dmsDur/',StartTime*1000,TimeScale*1000));
+    end
+    cd(sprintf('./NBC_analysis_result_%dms%dmsDur/',StartTime*1000,TimeScale*1000));
 end
-cd('./NBC_analysis_result/');
-
 % save NBC_result.mat md1 defaultCVMdl defaultLoss -v7.3
 
 
@@ -118,8 +138,13 @@ plot(Curve_x,Psemfitline,'color','r','LineWidth',2);
 xlabel('Octave Diff.');
 ylabel('RightWard Corr. rate');
 title('Naive bayes classification');
-saveas(h_fitplot,'NBC fit scatterPlot.png');
-saveas(h_fitplot,'NBC fit scatterPlot.fig');
+if length(Timescale) == 1
+    saveas(h_fitplot,sprintf('NBC fit scatterPlot%dms.png',Timescale*1000));
+    saveas(h_fitplot,sprintf('NBC fit scatterPlot%dms.fig',Timescale*1000));
+else
+    saveas(h_fitplot,sprintf('NBC fit scatterPlot%dms%dmsDur.png',StartTime*1000,TimeScale*1000));
+    saveas(h_fitplot,sprintf('NBC fit scatterPlot%dms%dmsDur.fig',StartTime*1000,TimeScale*1000));
+end
 close(h_fitplot);
 %%
 save NBCResult.mat NBCScoreAll NBCLossAll NBCMd1All BadModelPerform -v7.3
@@ -142,8 +167,13 @@ xlabel('Tone Frequency (kHz)');
 title('Real and fit data comparation');
 scatter(FreqOct,realy,40,'k','o','LineWidth',2);
 scatter(FreqOct,FitPerf,40,'r','o','LineWidth',2);
-saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_BiyyNBC_plot.png',Timescale*1000));
-saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_BiyyNBC_plot.fig',Timescale*1000));
+if length(Timescale) == 1
+    saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_BiyyNBC_plot.png',Timescale*1000));
+    saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_BiyyNBC_plot.fig',Timescale*1000));
+else
+    saveas(h_doubleyy,sprintf('Neuro_psycho_%dms%dmsDur_BiyyNBC_plot.png',StartTime*1000,TimeScale*1000));
+    saveas(h_doubleyy,sprintf('Neuro_psycho_%dms%dmsDur_BiyyNBC_plot.fig',StartTime*1000,TimeScale*1000));
+end
 close(h_doubleyy);
 save ModelPlotData.mat FreqOct realy FitPerf CorrStimTypeTick Timescale -v7.3
 cd ..;

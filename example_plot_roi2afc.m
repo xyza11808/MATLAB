@@ -8,7 +8,7 @@ cd(fpath);
 RawData = x.FChangeData;
 size_data = size(RawData);
 TrialType = double(x.behavResults.Trial_Type);
-FrameRate = 55;
+FrameRate = 29;
 FrameNum = size(RawData,3);
 onset_time=x.behavResults.Time_stimOnset;
 % stim_type_freq=behavResults.Stim_toneFreq;
@@ -26,7 +26,7 @@ MegOnFrame = start_frame;
 %%
 %example ROI plot for 2AFC task
 %example ROI plot
-ExampROIinds = [3,8,12,13,17,18,23,25,27,29,31,32,36,41,42];
+ExampROIinds = [31,14];
 ExampleTrials = 1:15;  %trial number choosed to plot
 TrialNum = length(ExampleTrials);
 DataToPlot = data_aligned(ExampleTrials,ExampROIinds,:);
@@ -34,7 +34,7 @@ TrialTypeP = TrialType(ExampleTrials);
 save ROIinds.mat ExampROIinds ExampleTrials -v7.3
 GapsBetTrace = 50;  %gaps between each trace
 AfterMegT = 3;  % seconds after stimuli start
-BeforeMegT = 0.5; %Time choossed for baseline
+BeforeMegT = 1; %Time choossed for baseline
 BeforeMegF = floor(BeforeMegT * FrameRate); 
 SelectEndFrame = BeforeMegF + floor(AfterMegT * FrameRate);
 h_example = figure('position',[200 50 1600 1000],'color','w');
@@ -100,15 +100,15 @@ close(h_example);
 %%
 %example ROI plot for 2AFC task
 %example ROI plot, trial type indicated by stim on line
-ExampROIinds = [3,8,12,13,17,18,23,25,27,29,31,32,36,41,42];
-ExampleTrials = 1:15;  %trial number choosed to plot
+ExampROIinds = [31,14];
+ExampleTrials = 5:12;  %trial number choosed to plot
 TrialNum = length(ExampleTrials);
 DataToPlot = data_aligned(ExampleTrials,ExampROIinds,:);
 TrialTypeP = TrialType(ExampleTrials);
 save ROIinds.mat ExampROIinds ExampleTrials -v7.3
 GapsBetTrace = 50;  %gaps between each trace
-AfterMegT = 3;  % seconds after stimuli start
-BeforeMegT = 0.5; %Time choossed for baseline
+AfterMegT = 5;  % seconds after stimuli start
+BeforeMegT = 1; %Time choossed for baseline
 BeforeMegF = floor(BeforeMegT * FrameRate); 
 SelectEndFrame = BeforeMegF + floor(AfterMegT * FrameRate);
 h_example = figure('position',[200 50 1600 1000],'color','w');
@@ -138,7 +138,7 @@ for n = 1 : length(ExampROIinds)
     yBaseAdd = max(cPartData(:));
     cROITrace = cPartData(:);
     TrialLength = length(cROITrace);
-    plot(cROITrace + yBase,'color','k','LineWidth',0.6);
+    plot(cROITrace + yBase,'color','k','LineWidth',1.2);
     
 %     % plot right trials in red color
 %     cPartData(:,logical(TrialTypeP)) = nan;
@@ -155,6 +155,7 @@ for k=1:TrialNum
         else
             line([MegOnFrameTrial MegOnFrameTrial],[-50 yBase],'color','r','LineWidth',1);   %right trial line plot
         end
+%         alpha(0.4)
 end
 %%
 xtickPartStart = 0:FrameNumNew:FrameNumNew*TrialNum;

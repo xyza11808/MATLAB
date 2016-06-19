@@ -38,9 +38,11 @@ else
 end
 if FrameScale(1) < 1
     warning('Time Selection excceed matrix index start, correct to 1');
+    FrameScale(1) = 1;
 end
 if FrameScale(2) > DataSize(3)
     warning('Time Selection excceed matrix index end, correct to %d',DataSize(3));
+    FrameScale(2) = DataSize(3);
 end
 
 
@@ -163,6 +165,13 @@ TestingLabel = TrainingLable;
 % sum(ErrorScore)
 
 %%
+%Nonvisualized SVM analysis for ROI weight calculation
+WeiSVMmodel = fitcsvm(TrainingData,TrainingLable);
+WeiLossFun = kfoldLoss(crossval(WeiSVMmodel));
+fprintf('Population info used for SVM error rate is %.4f',WeiLossFun);
+ROIweight = WeiSVMmodel.Beta;
+save WeiROIresult.mat WeiSVMmodel WeiLossFun ROIweight -v7.3
+
 % pca for visualization
 [coeffT,scoreT,~,~,explainedT,mu]=pca(TrainingData);
 disp(sum(explainedT(1:3)));
@@ -187,6 +196,7 @@ title('Testing data');
 PCSvmModel = fitcsvm(scoreT(:,1:3),TrainingLable);
 PCErrorRate=kfoldLoss(crossval(PCSvmModel)); 
 fprintf('Error Rate = %.4f.\n',PCErrorRate);
+% ROIweight = FItSvmModel.Beta;
 
 %Testing performance 
 PCTestScore = predict(PCSvmModel,ProjScore(:,1:3));

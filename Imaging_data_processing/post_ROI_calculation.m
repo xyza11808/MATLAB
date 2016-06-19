@@ -144,6 +144,7 @@ if strcmpi(type,'RF')
     %this should be two columns num, the first column contains frequency and
     %the second contains corresponded intensity
     DB_array=unique(sound_array(:,2));
+    FreqArray = unique(sound_array(:,1));
     size_DB=length(DB_array);
     freq_rep_times=result_size(1)/size_DB;
     re_organized_data=zeros(size_DB,freq_rep_times,result_size(3));
@@ -165,7 +166,8 @@ if strcmpi(type,'RF')
         mkdir('./ROI_color+plot');
     end
     cd('./ROI_color+plot');
-    
+    AllRFPeak = zeros(size_raw_trials(2),size_DB,length(FreqArray));
+    AllRFMean = zeros(size_raw_trials(2),size_DB,length(FreqArray),size_raw_trials(3));
     for i=1:size_raw_trials(2)
         temp_f_percent=squeeze(f_percent_change(:,i,:));
         if (sum(temp_f_percent(:))==0) || (sum(isnan(temp_f_percent(:)))~=0)
@@ -190,8 +192,16 @@ if strcmpi(type,'RF')
             temp_f_percent_sort=temp_f_percent_DB(I,:);
             re_organized_data(j,:,:)=temp_f_percent_sort;
         end
-        
+        triger_position=floor(triger_time*frame_rate);
         %use unique() function to delete the repeated numbers inside vectory
+        if ~isdir('./MeanTrace_Plot/')
+            mkdir('./MeanTrace_Plot/');
+        end
+        cd('./MeanTrace_Plot/');
+        [PeakResp,fMeanData]=RFDAtaPlot(re_organized_data,FreqArray,triger_position,frame_rate);
+        AllRFPeak(i,:,:) = PeakResp;
+        AllRFMean(i,:,:,:) = fMeanData;
+        cd ..;
         
         yTick_lable=unique(sound_array(:,1));
         yTick_lable=yTick_lable/1000;
@@ -220,7 +230,7 @@ if strcmpi(type,'RF')
         set(gca,'XTickLabel',xTick_lable);
         hold on;
         hh1=axis;
-        triger_position=triger_time*frame_rate;
+%         triger_position=triger_time*frame_rate;
         plot([triger_position,triger_position],[hh1(3),hh1(4)],'color','y','LineWidth',2);
         hold off;
         
@@ -242,7 +252,7 @@ if strcmpi(type,'RF')
             ylabel('Freq(KHz)');
             hold on;
             hh2=axis;
-            triger_position=triger_time*frame_rate;
+%             triger_position=triger_time*frame_rate;
             plot([triger_position,triger_position],[hh2(3),hh2(4)],'color','y','LineWidth',2);
             hold off;
             
@@ -267,7 +277,7 @@ if strcmpi(type,'RF')
             RF_fit_data(i).AvaFitPara(j,:) = [freq_gaussian_fit.a1,freq_gaussian_fit.b1,freq_gaussian_fit.c1,freq_gaussian_fit.a2,freq_gaussian_fit.b2,freq_gaussian_fit.c2,...
                 freq_gaussian_fit.a3,freq_gaussian_fit.b3,freq_gaussian_fit.c3,freq_gaussian_fit.a4,freq_gaussian_fit.b4,freq_gaussian_fit.c4];
             hh3=axis;
-            triger_position=triger_time*frame_rate;
+%             triger_position=triger_time*frame_rate;
             plot([triger_position,triger_position],[hh3(3),hh3(4)],'color','y','LineWidth',2);
             hold off;
             
@@ -278,6 +288,7 @@ if strcmpi(type,'RF')
         %set(gcf,'title',filename);
         suptitle(filename);
         saveas(h,export_filename,'png');
+        saveas(h,export_filename,'fig');
         %print(h,'-dbitmap',export_filename);
         %imwrite(h,[export_filename '.png'],'png')
         close;
@@ -288,24 +299,26 @@ if strcmpi(type,'RF')
         %to sound
         total_mean_trace=mean(temp_f_percent);
         h_total_mean=figure;
+        hold on;
         plot(1:size_raw_trials(3),total_mean_trace,'color','g','LineWidth',0.8);
         xlabel('time(s)');
         set(gca,'XTick',xtick);
         set(gca,'XTickLabel',xTick_lable);
         ylabel('\DeltaF/F_0');
         xlabel('Time(s)');
-        hold on;
+        
         smooth_total_trace=smooth(total_mean_trace);
         freq_gaussian_fit = fit((1:size_raw_trials(3))',smooth_total_trace,'gauss3');
         plot(freq_gaussian_fit,1:size_raw_trials(3),smooth_total_trace);
         hh4=axis;
-        triger_position=triger_time*frame_rate;
+%         triger_position=triger_time*frame_rate;
         plot([triger_position,triger_position],[hh4(3),hh4(4)],'color','y','LineWidth',2);
         hold off;
         saveas(h_total_mean,[export_filename_raw 'ROI' num2str(i) '_TotalMean'],'png');
-        close;
+        saveas(h_total_mean,[export_filename_raw 'ROI' num2str(i) '_TotalMean'],'fig');
+        close(h_total_mean);
     end
-    
+    save RFsummaryData.mat AllRFPeak AllRFMean -v7.3
     save gaussian_fit_para.mat RF_fit_data -v7.3
     cd ..;
     %#########################################################################
@@ -378,7 +391,7 @@ if strcmpi(type,'RF')
                 set(gca,'XTickLabel',xTick_lable);
                 hold on;
                 hh1=axis;
-                triger_position=triger_time*frame_rate;
+%                 triger_position=triger_time*frame_rate;
                 plot([triger_position,triger_position],[hh1(3),hh1(4)],'color','y','LineWidth',2);
                 hold off;
 
@@ -400,7 +413,7 @@ if strcmpi(type,'RF')
                     ylabel('Freq(KHz)');
                     hold on;
                     hh2=axis;
-                    triger_position=triger_time*frame_rate;
+%                     triger_position=triger_time*frame_rate;
                     plot([triger_position,triger_position],[hh2(3),hh2(4)],'color','y','LineWidth',2);
                     hold off;
 
@@ -425,7 +438,7 @@ if strcmpi(type,'RF')
                     RF_fit_data(i).AvaFitPara(j,:) = [freq_gaussian_fit.a1,freq_gaussian_fit.b1,freq_gaussian_fit.c1,freq_gaussian_fit.a2,freq_gaussian_fit.b2,freq_gaussian_fit.c2,...
                         freq_gaussian_fit.a3,freq_gaussian_fit.b3,freq_gaussian_fit.c3,freq_gaussian_fit.a4,freq_gaussian_fit.b4,freq_gaussian_fit.c4];
                     hh3=axis;
-                    triger_position=triger_time*frame_rate;
+%                     triger_position=triger_time*frame_rate;
                     plot([triger_position,triger_position],[hh3(3),hh3(4)],'color','y','LineWidth',2);
                     hold off;
 
@@ -436,6 +449,7 @@ if strcmpi(type,'RF')
                 %set(gcf,'title',filename);
                 suptitle(filename);
                 saveas(h,export_filename,'png');
+                saveas(h,export_filename,'fig');
                 %print(h,'-dbitmap',export_filename);
                 %imwrite(h,[export_filename '.png'],'png')
                 close;
@@ -457,10 +471,11 @@ if strcmpi(type,'RF')
                 freq_gaussian_fit = fit((1:size_raw_trials(3))',smooth_total_trace,'gauss3');
                 plot(freq_gaussian_fit,1:size_raw_trials(3),smooth_total_trace);
                 hh4=axis;
-                triger_position=triger_time*frame_rate;
+%                 triger_position=triger_time*frame_rate;
                 plot([triger_position,triger_position],[hh4(3),hh4(4)],'color','y','LineWidth',2);
                 hold off;
                 saveas(h_total_mean,[export_filename_raw 'ROI' num2str(i) '_TotalMean'],'png');
+                saveas(h_total_mean,[export_filename_raw 'ROI' num2str(i) '_TotalMean'],'fig');
                 close;
             end
 

@@ -33,6 +33,8 @@ ALLROIMeanTestData=zeros(length(CorrStimType),DataSize(2));
 if length(TimeLength) == 1
     FrameScale = sort([AlignFrame,AlignFrame+floor(TimeLength*FrameRate)]);
 elseif length(TimeLength) == 2
+    StartTime = min(TimeLength);
+    TimeScale = max(TimeLength) - min(TimeLength);
     FrameScale = sort([AlignFrame+floor(TimeLength(1)*FrameRate),AlignFrame+floor(TimeLength(2)*FrameRate)]);
 else
     warning('Input TimeLength variable have a length of %d, but it have to be 1 or 2',length(TimeLength));
@@ -40,9 +42,11 @@ else
 end
 if FrameScale(1) < 1
     warning('Time Selection excceed matrix index, correct to 1');
+    FrameScale(1) = 1;
 end
 if FrameScale(2) > DataSize(3)
     warning('Time Selection excceed matrix index, correct to %d',DataSize(3));
+    FrameScale(2) = DataSize(3);
 end
 
 
@@ -77,6 +81,8 @@ try
     %, the second column indicates frequency SEM
     ClassificationData = cell(NumIter,3);
     isBadRegression = zeros(NumIter,1);
+    ROISigpInds = zeros(NumIter,nROI);
+    ROIWeight = zeros(NumIter,nROI);
     for niter = 1 : NumIter
         TrainingNum = ceil(TrialNum*0.5);
         TestingNum = TrialNum - TrainingNum;
@@ -99,7 +105,21 @@ try
         %  ROIbias = (statsTrain.beta(2:end))';
         MatrixScore = TrainingDataSet * MatrixWeight + BTrain(1);
         pValue = 1./(1+exp(-1.*MatrixScore));
-
+        
+         ROIpvalue = zeros(size(TrainingDataSet,2),2);
+         WeightROI = zeros(size(TrainingDataSet,2),2);
+         isOutROI = zeros(size(TrainingDataSet,2),1);
+         for nROI = 1 : size(TrainingDataSet,2)
+             CurrentROID = TrainingDataSet(:,nROI);
+             [BTrain2,~,statsTrain2,isOUTITern2] = mnrfit(CurrentROID,TrainingTType(:)+1);
+             ROIpvalue(nROI,:) = statsTrain2.p;
+             WeightROI(nROI,:) =  BTrain2;
+             isOutROI(nROI) = isOUTITern2;
+         end
+         Sigp = ROIpvalue < 0.05;
+         ROISigpInds(niter,:) = (double(Sigp(:,2)))';
+        ROIWeight(niter,:) = WeightROI(:,2);
+        
         %testing test data set score
         %  TestMatrixScore = TestingDataSet * MatrixWeight + BTrain(1);
         [pihat,~,~] = mnrval(BTrain,TestingDataSet,statsTrain);
@@ -128,10 +148,18 @@ try
     FreqScoreAll(:,:,isBadRegression) = [];
 catch
 %     warning('More than 30% of trials show bad classifications, quit function.\n');
-    if ~isdir('./LRC_classification/')
-        mkdir('./LRC_classification/');
-    end
-    cd('./LRC_classification/');
+     if length(TimeLength) == 1
+        if ~isdir(sprintf('./LRC_classification_%dms/',TimeLength*1000))
+            mkdir(sprintf('./LRC_classification_%dms/',TimeLength*1000));
+        end
+        cd(sprintf('./LRC_classification_%dms/',TimeLength*1000));
+     else
+         if ~isdir(sprintf('./LRC_classification_%dms%dmsDur/',StartTime*1000,TimeScale*1000))
+            mkdir(sprintf('./LRC_classification_%dms%dmsDur/',StartTime*1000,TimeScale*1000));
+        end
+        cd(sprintf('./LRC_classification_%dms%dmsDur/',StartTime*1000,TimeScale*1000));
+     end
+         
     fileID = fopen('BAD PERFORMANCE EXIST.txt','w+');
     fprintf(fileID,'%s\n','Matrix is close to singular or badly scaled,Logistic regression cannot performed.');
     fclose(fileID);
@@ -139,6 +167,23 @@ catch
     return;
 end
 %%
+
+MeanSigInds = mean(ROISigpInds);
+RelatedROIs = find(MeanSigInds > 0.4);
+MeanWeight = mean(ROIWeight);
+
+h_ROISigMean = figure('position',[150 350 1500 750]);
+[haxO,hline1O,hline2O] = plotyy(1:nROI,MeanSigInds,1:nROI,abs(MeanWeight));
+text(RelatedROIs,MeanSigInds(RelatedROIs),cellstr(num2str(RelatedROIs(:),'%d')),'color','b','FontSize',12);
+set(hline1O,'color','r','Marker','o','LineWidth',1.2);
+set(hline2O,'color','b','Marker','*','LineWidth',1,'LineStyle','--');
+ylabel(haxO(1),'ROI significant rate');
+ylabel(haxO(2),'Abs Weight');
+title('ROI weight');
+xlabel('ROIs');
+set(haxO(1),'FontSize',20);
+set(haxO(2),'FontSize',20);
+
 AllFreqScore = squeeze(FreqScoreAll(:,1,:));  % 6 by 100 matrix
 MeanFreqScore = mean(AllFreqScore,2);
 SEMfreq = std(AllFreqScore,[],2)/sqrt(NumIter-sum(isBadRegression));
@@ -150,10 +195,27 @@ curve_fity=modelfun(bLRCfit,Curve_x);
 [~,breal]=fit_logistic(Octa,realy);
 curve_realy=modelfun(breal,Curve_x);
 
-if ~isdir('./LRC_classification/')
-    mkdir('./LRC_classification/');
+if length(TimeLength) == 1
+        if ~isdir(sprintf('./LRC_classification_%dms/',TimeLength*1000))
+            mkdir(sprintf('./LRC_classification_%dms/',TimeLength*1000));
+        end
+        cd(sprintf('./LRC_classification_%dms/',TimeLength*1000));
+else
+         if ~isdir(sprintf('./LRC_classification_%dms%dmsDur/',StartTime*1000,TimeScale*1000))
+            mkdir(sprintf('./LRC_classification_%dms%dmsDur/',StartTime*1000,TimeScale*1000));
+        end
+        cd(sprintf('./LRC_classification_%dms%dmsDur/',StartTime*1000,TimeScale*1000));
 end
-cd('./LRC_classification/');
+
+save ROIweight.mat MeanWeight MeanSigInds RelatedROIs -v7.3
+if length(TimeLength) == 1
+    saveas(h_ROISigMean,sprintf('LRC_ROI_weight_%dms',TimeLength*1000),'png');
+    saveas(h_ROISigMean,sprintf('LRC_ROI_weight_%dms',TimeLength*1000),'fig');
+    % saveas(h_ROISigMean,'LRC_ROI_weight','epsc');
+else
+    saveas(h_ROISigMean,sprintf('LRC_ROI_weight_%dms%dmsDur',StartTime*1000,TimeScale*1000),'png');
+    saveas(h_ROISigMean,sprintf('LRC_ROI_weight_%dms%dmsDur',StartTime*1000,TimeScale*1000),'fig');
+end
 
 h_LRC = figure('position',[300,120,1050,1000],'PaperPositionMode','auto');
 % h_PopuSEM = figure('position',[300 150 1100 900],'PaperpositionMode','auto');
@@ -174,8 +236,13 @@ xlim(hax(2),[Octa(1)-0.1 Octa(end)+0.1]);
 title('Real and fit data comparation');
 errorbar(Octa,MeanFreqScore,SEMfreq,'ro','LineWidth',1.5,'MarkerSize',10);
 scatter(Octa,realy,40,'k','o','LineWidth',2);
-saveas(h_LRC,sprintf('Neuro_psycho_%dms_Psem_plot.png',TimeLength*1000));
-saveas(h_LRC,sprintf('Neuro_psycho_%dms_Psem_plot.fig',TimeLength*1000));
+if length(TimeLength) == 1
+    saveas(h_LRC,sprintf('Neuro_psycho_%dms_Psem_plot.png',TimeLength*1000));
+    saveas(h_LRC,sprintf('Neuro_psycho_%dms_Psem_plot.fig',TimeLength*1000));
+else
+    saveas(h_LRC,sprintf('Neuro_psycho_%dms%dmsDur_Psem_plot.png',StartTime*1000,TimeScale*1000));
+    saveas(h_LRC,sprintf('Neuro_psycho_%dms%dmsDur_Psem_plot.fig',StartTime*1000,TimeScale*1000));
+end
 % close(h_LRC);
 save ModelPlotData.mat Octa realy MeanFreqScore CorrStimTypeTick TimeLength -v7.3
 %saving result

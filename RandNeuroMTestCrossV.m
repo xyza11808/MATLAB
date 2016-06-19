@@ -35,6 +35,8 @@ if length(TimeLength) == 1
     FrameScale = sort([AlignFrame,AlignFrame+floor(TimeLength*FrameRate)]);
 elseif length(TimeLength) == 2
     FrameScale = sort([AlignFrame+floor(TimeLength(1)*FrameRate),AlignFrame+floor(TimeLength(2)*FrameRate)]);
+    StartTime = min(TimeLength);
+    TimeScale = max(TimeLength) - min(TimeLength);
 else
     warning('Input TimeLength variable have a length of %d, but it have to be 1 or 2',length(TimeLength));
     return;
@@ -73,11 +75,20 @@ if ~isdir('./NeuroM_test/')
 end
 cd('./NeuroM_test/');
 
-if ~isdir(sprintf('./AfterTimeLength-%dms/',TimeLength*1000))
-    mkdir(sprintf('./AfterTimeLength-%dms/',TimeLength*1000));
+if length(TimeLength) == 1
+    if ~isdir(sprintf('./AfterTimeLength-%dms/',TimeLength*1000))
+        mkdir(sprintf('./AfterTimeLength-%dms/',TimeLength*1000));
+    end
+    cd(sprintf('./AfterTimeLength-%dms/',TimeLength*1000));
+else
+%     StartTime = min(TimeLength);
+%     TimeScale = max(TimeLength) - min(TimeLength);
+    
+    if ~isdir(sprintf('./AfterTimeLength-%dms%dmsDur/',StartTime*1000,TimeScale*1000))
+        mkdir(sprintf('./AfterTimeLength-%dms%dmsDur/',StartTime*1000,TimeScale*1000));
+    end
+    cd(sprintf('./AfterTimeLength-%dms%dmsDur/',StartTime*1000,TimeScale*1000));
 end
-cd(sprintf('./AfterTimeLength-%dms/',TimeLength*1000));
-
 %%
 for n=1:length(CorrStimType)
         TempStim=CorrStimType(n);
@@ -192,8 +203,15 @@ legend('LeftScore','RightScore','location','northeastoutside');
 xlabel('pc1');
 ylabel('pc2');
 zlabel('pc3');
-saveas(h3d,sprintf('PC_score_distribution_3d_space_%dms.png',TimeLength*1000));
-saveas(h3d,sprintf('PC_score_distribution_3d_space_%dms.fig',TimeLength*1000));
+if length(TimeLength) == 1
+    saveas(h3d,sprintf('PC_score_distribution_3d_space_%dms.png',TimeLength*1000));
+    saveas(h3d,sprintf('PC_score_distribution_3d_space_%dms.fig',TimeLength*1000));
+else
+%     StartTime = min(TimeLength);
+%     TimeScale = max(TimeLength) - min(TimeLength);
+    saveas(h3d,sprintf('PC_score_distribution_3d_space_%dms%dmsDur.png',StartTime*1000,TimeScale*1000));
+    saveas(h3d,sprintf('PC_score_distribution_3d_space_%dms%dmsDur.fig',StartTime*1000,TimeScale*1000));
+end
 close(h3d);
 
 %%
@@ -267,8 +285,15 @@ title(sprintf('Error rate = %.2f(CV), %.3f(Test)',ErrorRate,ErrorRateTest));
 xlabel('pc1');
 ylabel('pc2');
 zlabel('pc3');
-saveas(hALLL3d,sprintf('PC_SampleAll_distribution_3d_space_%dms.png',TimeLength*1000));
-saveas(hALLL3d,sprintf('PC_SampleAll_distribution_3d_space_%dms.fig',TimeLength*1000));
+if length(TimeLength) == 1
+    saveas(hALLL3d,sprintf('PC_SampleAll_distribution_3d_space_%dms.png',TimeLength*1000));
+    saveas(hALLL3d,sprintf('PC_SampleAll_distribution_3d_space_%dms.fig',TimeLength*1000));
+else
+%     StartTime = min(TimeLength);
+%     TimeScale = max(TimeLength) - min(TimeLength);
+    saveas(hALLL3d,sprintf('PC_SampleAll_distribution_3d_space_%dms%dmsDur.png',StartTime*1000,TimeScale*1000));
+    saveas(hALLL3d,sprintf('PC_SampleAll_distribution_3d_space_%dms%dmsDur.fig',StartTime*1000,TimeScale*1000));
+end
 close(hALLL3d);
 
 save FinalClassificationScore.mat CVScoreType1 CVScoreType2 CVsvmmodel ErrorRate fityAll classscoresT -v7.3
@@ -346,8 +371,16 @@ ylim([0 1]);
 CorrStimTypeTick = CorrStimType/1000;
 set(gca,'xtick',Octavex,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'FontSize',20);
 %%
-saveas(h2CompPlot,sprintf('Neuro_psycho_%dms_comp_plot.png',TimeLength*1000));
-saveas(h2CompPlot,sprintf('Neuro_psycho_%dms_comp_plot.fig',TimeLength*1000));
+if length(TimeLength) == 1
+    saveas(h2CompPlot,sprintf('Neuro_psycho_%dms_comp_plot.png',TimeLength*1000));
+    saveas(h2CompPlot,sprintf('Neuro_psycho_%dms_comp_plot.fig',TimeLength*1000));
+else
+%     StartTime = min(TimeLength);
+%     TimeScale = max(TimeLength) - min(TimeLength);
+    saveas(h2CompPlot,sprintf('Neuro_psycho_%dms%dmsDur_comp_plot.png',StartTime*1000,TimeScale*1000));
+    saveas(h2CompPlot,sprintf('Neuro_psycho_%dms%dmsDur_comp_plot.fig',StartTime*1000,TimeScale*1000));
+end
+    
 close(h2CompPlot);
 save randCurveFit.mat CVsvmmodel Octavex realy fityAll breal bfit -v7.3
 
@@ -369,8 +402,13 @@ xlim(hax(2),[Octavex(1)-0.1 Octavex(end)+0.1]);
 title('Real and fit data comparation');
 scatter(Octavex,realy,40,'k','o','LineWidth',2);
 scatter(Octavexfit,fityAll,40,'r','o','LineWidth',2);
-saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_Biyy_plot.png',TimeLength*1000));
-saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_Biyy_plot.fig',TimeLength*1000));
+if length(TimeLength) == 1
+    saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_Biyy_plot.png',TimeLength*1000));
+    saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_Biyy_plot.fig',TimeLength*1000));
+else
+    saveas(h_doubleyy,sprintf('Neuro_psycho_%dms%dmsDur_Biyy_plot.png',StartTime*1000,TimeScale*1000));
+    saveas(h_doubleyy,sprintf('Neuro_psycho_%dms%dmsDur_Biyy_plot.fig',StartTime*1000,TimeScale*1000));
+end
 close(h_doubleyy);
 save ModelPlotData.mat Octavex realy fityAll CorrStimTypeTick TimeLength -v7.3
 %%
@@ -393,8 +431,13 @@ ylim(hax(2),[-0.1 1.1]);
 title('Real and fit data comparation');
 errorbar(Octavex,NormalMeanDis,MeanSEM,'ro','LineWidth',1.5,'MarkerSize',10);
 scatter(Octavex,realy,40,'k','o','LineWidth',2);
-saveas(h_PopuSEM,sprintf('Neuro_psycho_%dms_Psem_plot.png',TimeLength*1000));
-saveas(h_PopuSEM,sprintf('Neuro_psycho_%dms_Psem_plot.fig',TimeLength*1000));
+if length(TimeLength) == 1
+    saveas(h_PopuSEM,sprintf('Neuro_psycho_%dms_Psem_plot.png',TimeLength*1000));
+    saveas(h_PopuSEM,sprintf('Neuro_psycho_%dms_Psem_plot.fig',TimeLength*1000));
+else
+    saveas(h_PopuSEM,sprintf('Neuro_psycho_%dms%dmsDur_Psem_plot.png',StartTime*1000,TimeScale*1000));
+    saveas(h_PopuSEM,sprintf('Neuro_psycho_%dms%dmsDur_Psem_plot.fig',StartTime*1000,TimeScale*1000));
+end
 close(h_PopuSEM);
 
 % %Test test data with sample data result
