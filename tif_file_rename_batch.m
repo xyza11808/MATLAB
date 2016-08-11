@@ -1,4 +1,4 @@
-filepath='L:\imagingdata\batch\batch16\20150813\anm05\test01rf\im_data_reg';
+filepath='M:\batch\batch19\20151127\anm01\test01\im_data_reg_gpu';
 cd(filepath);
 files=dir('*.tif');
 for n=1:length(files)

@@ -32,17 +32,21 @@ end
 
 
 %%
-if ~isdir('./RawDatPlot/')
-    mkdir('./RawDatPlot/');
+f = [0 0.5 0.7 0.3];
+for nnnnnn = 1 : 4
+FactorAdj = f(nnnnnn);
+if ~isdir(sprintf('./RawDatPlot_F%d/',FactorAdj*100))
+    mkdir(sprintf('./RawDatPlot_F%d/',FactorAdj*100));
 end
-cd('./RawDatPlot/');
+cd(sprintf('./RawDatPlot_F%d/',FactorAdj*100));
+
 AJData=zeros(size(RawDataAll));
 F0Raw=zeros(nROIs,1);
 F0Aj=zeros(nROIs,1);
 for n=1:nROIs
     TempROIData=(squeeze(RawDataAll(:,n,:)))';
     TempNPData=(squeeze(RIngRawData(:,n,:)))';
-    h=figure;
+    h=figure('position',[200 100 1300 1000],'paperpositionmode','auto');
     subplot(3,1,1)
     RawStd=mad(TempROIData(:),1);
     plot(TempROIData(:));
@@ -55,8 +59,8 @@ for n=1:nROIs
     title(sprintf('Raw Neuropil Data,Coef with Raw=%.3f',coeecoef(1,2)));
     
     baseline=mean(TempNPData(:));
-    CorrectData=TempROIData-0.7*TempNPData;  
-    CorrectRate=sum(CorrectData(:)<baseline)/numel(CorrectData);
+    CorrectData=TempROIData-FactorAdj*TempNPData;  
+%     CorrectRate=sum(CorrectData(:)<baseline)/numel(CorrectData);
 %     CorrectData(CorrectData<baseline)=baseline;  %avoid over-correction
    
     [N,C]=hist(TempROIData(:),100);
@@ -80,48 +84,55 @@ end
 
 cd ..;
 
-%%
+%
 %NP delta f/f0 plus population ROIs corrcoef matrix
-if ~isdir('./DeltaFluo_DatPlot/')
-    mkdir('./DeltaFluo_DatPlot/');
+if ~isdir(sprintf('./DeltaFluo_DatPlot_F%d/',FactorAdj*100))
+    mkdir(sprintf('./DeltaFluo_DatPlot_F%d/',FactorAdj*100));
 end
-cd('./DeltaFluo_DatPlot/');
+cd(sprintf('./DeltaFluo_DatPlot_F%d/',FactorAdj*100));
 FAjchange = zeros(size(RawDataAll));
 FRawChange = zeros(size(RawDataAll));
 for n=1:nROIs
     TempROIData=(squeeze(RawDataAll(:,n,:)))';
     TempAJData=(squeeze(AJData(:,n,:)))';
-    RawDeltaF=TempROIData-F0Raw(n)/F0Raw(n)*100;
-    AJDeltaF=TempAJData-F0Aj(n)/F0Aj(n)*100;
+    RawDeltaF=(TempROIData-F0Raw(n))/F0Raw(n)*100;
+    AJDeltaF=(TempAJData-F0Aj(n))/F0Aj(n)*100;
     FAjchange(:,n,:)=AJDeltaF';
     FRawChange(:,n,:)=RawDeltaF';
     xTime=(1:numel(RawDeltaF))/FrameRate;
 %     [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCal(CaTrialStruc,behavResults,behavSettings,3,'2afc',ROIinfoBU);
     
-    h=figure;
-%     [hAx,hLine1,hLine2]=plotyy(xTime,RawDeltaF(:),xTime,AJDeltaF(:));
-%      set(hLine1,'color','b')
-%      set(hLine2,'color','r')
-     plot(xTime,RawDeltaF(:),'k',xTime,AJDeltaF(:),'r');
-     legend('Raw \DeltaF/f_0','Adjust \DeltaF/f_0','location','northeast');
-     ylabel('\DeltaF/f_0');
-     xlabel('Time (s)');
-     saveas(h,sprintf('FChange Data ROI%d.png',n));
-     saveas(h,sprintf('FChange Data ROI%d.fig',n));
-     close(h);
-     
-     hcolor=figure;
-     subplot(2,1,1);
-     imagesc(RawDeltaF');
+%     h=figure('position',[200 100 1300 1000],'paperpositionmode','auto');
+% %     [hAx,hLine1,hLine2]=plotyy(xTime,RawDeltaF(:),xTime,AJDeltaF(:));
+% %      set(hLine1,'color','b')
+% %      set(hLine2,'color','r')
+%      plot(xTime,RawDeltaF(:),'k',xTime,AJDeltaF(:),'r');
+%      legend('Raw \DeltaF/f_0','Adjust \DeltaF/f_0','location','northeast');
+%      ylabel('\DeltaF/f_0');
+%      xlabel('Time (s)');
+%      saveas(h,sprintf('FChange Data ROI%d.png',n));
+%      saveas(h,sprintf('FChange Data ROI%d.fig',n));
+%      close(h);
+     %
+     hcolor=figure('position',[200 100 1300 1000],'paperpositionmode','auto');
+     subplot(1,2,1);
+     imagesc(AJDeltaF');
      colorbar;
-     RawcLim=get(gca,'clim');
-     title('Raw Fchange Color plot');
+%      RawcLim=get(gca,'clim');
+     title('Color plot');
      
-     subplot(2,1,2)
-     imagesc(AJDeltaF',RawcLim);
-     colorbar;
+     subplot(1,2,2)
+     hold on;
+     ybase = 0;
+     for nRTrial = 1 : nTrials
+        cTrace = AJDeltaF(:,nRTrial);
+        plot(cTrace+ybase,'k','LineWidth',1.2);
+        ybase = ybase + max(cTrace) + 30;
+     end
+     ylim([-20 ybase+50]);
+%      colorbar;
      title('Adjusted Fchange Color plot');
-     
+     %
      suptitle(sprintf('ROI%d color plot',n));
      saveas(hcolor,sprintf('FChange Data colorplot ROI%d.png',n));
      saveas(hcolor,sprintf('FChange Data colorplot ROI%d.fig',n));
@@ -129,7 +140,7 @@ for n=1:nROIs
 end
 
 cd ..;
-
+end
 %%
 [filename,filepath,~]=uigetfile('*.mat','Select ROI info mat file');
 cd(filepath);

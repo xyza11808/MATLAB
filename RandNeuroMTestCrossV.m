@@ -16,6 +16,14 @@ if nargin>6
         isShuffle=0;
     end
 end
+
+isLoadModel = 0;
+if nargin>7
+    if ~isempty(varargin{3})
+        isLoadModel = varargin{3};
+    end
+end
+
 %%
 DataSize=size(RawDataAll);
 % CorrectInds=TrialResult==1;
@@ -70,10 +78,17 @@ end
 
 
 %%
-if ~isdir('./NeuroM_test/')
-    mkdir('./NeuroM_test/');
+if ~isLoadModel
+    if ~isdir('./NeuroM_test/')
+        mkdir('./NeuroM_test/');
+    end
+    cd('./NeuroM_test/');
+else
+    if ~isdir('./NeuroM_LoadSVM/')
+        mkdir('./NeuroM_LoadSVM/');
+    end
+    cd('./NeuroM_LoadSVM/');
 end
-cd('./NeuroM_test/');
 
 if length(TimeLength) == 1
     if ~isdir(sprintf('./AfterTimeLength-%dms/',TimeLength*1000))
@@ -89,6 +104,16 @@ else
     end
     cd(sprintf('./AfterTimeLength-%dms%dmsDur/',StartTime*1000,TimeScale*1000));
 end
+%%
+% add session for input former classification model
+if isLoadModel
+    [fn,fp,~]=uigetfile('FinalClassificationScore.mat','Please select your former model data');
+    ExData = load(fullfile(fp,fn));
+    ExCoef = ExData.coeffT;
+    Exmodel = ExData.CVsvmmodel;
+    NormalScale = ExData.NorScaleValue;
+end
+
 %%
 for n=1:length(CorrStimType)
         TempStim=CorrStimType(n);
@@ -106,18 +131,32 @@ for n=1:length(CorrStimType)
         ROIMeanData=max(TrialMeanData,[],2);
         ALLROIMeanTrial(n,:)=ROIMeanData';
 end
-[coeffT,scoreT,~,~,explainedT,~]=pca(ALLROIMeanTrial);
-disp(sum(explainedT(1:3)));
+
+if ~isLoadModel
+    [coeffT,scoreT,~,~,explainedT,~]=pca(ALLROIMeanTrial);
+    save PCAresult.mat coeffT scoreT explainedT -v7.3
+    disp(sum(explainedT(1:3)));
+else
+    SumMeanSub = ALLROIMeanTrial - repmat(mean(ALLROIMeanTrial),size(ALLROIMeanTrial,1),1);
+    scoreT = SumMeanSub * ExCoef;
+    coeffT = ExCoef;
+end
 
 % meanSubT8TData = T8TData - repmat(mean(T8TData,2),1,size(T8TData,2));
 % ProjCoeff = coeffT(:,1:3)';  % columns by 3 before transfer
 % ProjScore = (ProjCoeff * meanSubT8TData')'; % Trials by 3 pca score matrix, for single trial prediction
+
 
 %%
 LeftStims=CorrStimType(1:length(CorrStimType)/2);
 RightStims=CorrStimType((length(CorrStimType)/2+1):end);
 LeftStimsStr=cellstr(num2str(LeftStims(:)));
 RightStimsStr=cellstr(num2str(RightStims(:)));
+LeftNonpcaDataTA = zeros(300,DataSize(2));
+RightNonpcaDataTA = zeros(300,DataSize(2));
+LeftNonpcaDataTE = zeros(300,DataSize(2));
+RightNonpcaDataTE = zeros(300,DataSize(2));
+
 h3d=figure;
 hold on;
 for CVNumber=1:100
@@ -163,6 +202,10 @@ for CVNumber=1:100
     TestingMeanSub = ALLROIMeanTestData - repmat(mean(ALLROIMeanTestData),size(ALLROIMeanTestData,1),1);
     score2 = TestingMeanSub * coeffT;
     
+    LeftNonpcaDataTA((1+(CVNumber-1)*3):(CVNumber*3),:) = ALLROIMeanData(1:3,:);
+    RightNonpcaDataTA((1+(CVNumber-1)*3):(CVNumber*3),:) = ALLROIMeanData(4:6,:);
+    LeftNonpcaDataTE((1+(CVNumber-1)*3):(CVNumber*3),:) = ALLROIMeanTestData(1:3,:);
+    RightNonpcaDataTE((1+(CVNumber-1)*3):(CVNumber*3),:) = ALLROIMeanTestData(4:6,:);
 %     if sum(explained(1:3))<80
 %         warning('The first three component explains less than 80 percents, the pca result may not acurate.');
 %     end
@@ -214,6 +257,7 @@ else
 end
 close(h3d);
 
+save RawDataAll.mat LeftNonpcaDataTA RightNonpcaDataTA LeftNonpcaDataTE RightNonpcaDataTE -v7.3
 %%
 % labelType=[zeros(1,length(CorrStimType)/2) ones(1,length(CorrStimType)/2)]';
 % svmmodel=fitcsvm(score(:,1:3),labelType);
@@ -240,17 +284,41 @@ scatter3(CVScoreType2(1,:),CVScoreType2(2,:),CVScoreType2(3,:),30,'r*');
 
 labelType=[zeros(1,300) ones(1,300)]';
 TrainingData=[CVScoreType1';CVScoreType2'];
-CVsvmmodel=fitcsvm(TrainingData,labelType);
-CVSVMModel = crossval(CVsvmmodel);  %performing cross-validation
-ErrorRate=kfoldLoss(CVSVMModel);  %disp kfold loss of validation
-fprintf('Error Rate = %.4f.\n',ErrorRate);
-[~,classscoresT]=predict(CVsvmmodel,scoreT(:,1:3));
-difscore=classscoresT(:,2)-classscoresT(:,1);
+
+if ~isLoadModel
+    CVsvmmodel=fitcsvm(TrainingData,labelType);
+    CVSVMModel = crossval(CVsvmmodel);  %performing cross-validation
+    ErrorRate=kfoldLoss(CVSVMModel);  %disp kfold loss of validation
+    fprintf('Error Rate = %.4f.\n',ErrorRate);
+    [~,classscoresT]=predict(CVsvmmodel,scoreT(:,1:3));
+    difscore=classscoresT(:,2)-classscoresT(:,1);
+else
+    CVsvmmodel = Exmodel;
+    [~,classscoresT]=predict(CVsvmmodel,scoreT(:,1:3));
+    difscore=classscoresT(:,2)-classscoresT(:,1);
+end
+     
 % LogDif = log(abs(difscore));
 % LogDif(1:3) = -LogDif(1:3);
 %using sampled SVM classification result to predict all Trials score
 % fityAll=(rescaleB-rescaleA)*((LogDif-min(LogDif))./(max(LogDif)-min(LogDif)))+rescaleA;  %rescale to [0 1]
-fityAll=(rescaleB-rescaleA)*((difscore-min(difscore))./(max(difscore)-min(difscore)))+rescaleA;  %rescale to [0 1]
+if ~isLoadModel
+    if max(difscore) > 2*abs(min(difscore))
+        fityAll=(rescaleB-rescaleA)*((difscore-min(difscore))./(abs(min(difscore))-min(difscore)))+rescaleA; 
+        fityAll(fityAll>rescaleB) = rescaleB;
+        NorScaleValue = [abs(min(difscore)),min(difscore)];
+    elseif abs(min(difscore)) > 2 * max(difscore)
+        fityAll=(rescaleB-rescaleA)*((difscore+max(difscore))./(abs(max(difscore)*2)))+rescaleA; 
+        fityAll(fityAll<rescaleA) = rescaleA;
+        NorScaleValue = [abs(max(difscore)),max(difscore)];
+    else
+        fityAll=(rescaleB-rescaleA)*((difscore-min(difscore))./(max(difscore)-min(difscore)))+rescaleA;  %rescale to [0 1]
+        NorScaleValue = [max(difscore),min(difscore)];
+    end
+else
+    NorScaleValue = NormalScale;
+    fityAll = (rescaleB-rescaleA)*((difscore-min(difscore))./diff(NorScaleValue)) + rescaleA; %rescale to min and max behav performance
+end
 
 %Test data set for error rate calculation
 LeftData=CVScoreTypeTest1';
@@ -275,13 +343,21 @@ RIghtMean = mean(RightTypeScore,2);
 LeftSEM = std(LeftTypeScore,[],2)/(sqrt(size(LeftTypeScore,2))*NormalBase);
 RightSEM = std(RightTypeScore,[],2)/(sqrt(size(RightTypeScore,2))*NormalBase);
 NormalMeanDis = [LeftMean;RIghtMean]';
-NormalMeanDis = (NormalMeanDis-min(NormalMeanDis))/(max(NormalMeanDis)-min(NormalMeanDis));
+if max(NormalMeanDis) > 2*abs(min(NormalMeanDis))
+    NormalMeanDis = (rescaleB-rescaleA)*((NormalMeanDis-min(NormalMeanDis))./(abs(min(NormalMeanDis))-min(NormalMeanDis)))+rescaleA; 
+    NormalMeanDis(NormalMeanDis > 1) = 1;
+elseif abs(min(NormalMeanDis)) > 2 * max(NormalMeanDis)
+    NormalMeanDis = (rescaleB-rescaleA)*((NormalMeanDis+max(NormalMeanDis))./(max(NormalMeanDis)*2))+rescaleA; 
+    NormalMeanDis(NormalMeanDis < 0) = 0;
+else    
+    NormalMeanDis = (NormalMeanDis-min(NormalMeanDis))/(max(NormalMeanDis)-min(NormalMeanDis));
+end
 MeanSEM = [LeftSEM(:);RightSEM(:)];
 
 SV=CVsvmmodel.SupportVectors;
 plot3(SV(:,1),SV(:,2),SV(:,3),'kp','MarkerSize',15);
 legend('LeftScore','RightScore','Support Vectors','location','northeastoutside');
-title(sprintf('Error rate = %.2f(CV), %.3f(Test)',ErrorRate,ErrorRateTest));
+title(sprintf('Error rate = %.3f(Test)',ErrorRateTest));
 xlabel('pc1');
 ylabel('pc2');
 zlabel('pc3');
@@ -296,7 +372,7 @@ else
 end
 close(hALLL3d);
 
-save FinalClassificationScore.mat CVScoreType1 CVScoreType2 CVsvmmodel ErrorRate fityAll classscoresT -v7.3
+save FinalClassificationScore.mat CVScoreType1 CVScoreType2 CVsvmmodel fityAll classscoresT coeffT NorScaleValue -v7.3
 save TestDataSet.mat CVScoreTypeTest1 CVScoreTypeTest2 ErrorRateTest -v7.3
 %%
 % [~,breal]=fit_logistic(Octavex,realy);
@@ -349,18 +425,18 @@ h2CompPlot=figure('position',[300 150 1100 900],'PaperpositionMode','auto');
 hold on;
 plot(Curve_x,curve_fity,'r','LineWidth',2);
 plot(Curve_x,curve_realy,'k','LineWidth',2);
-scatter(Octavex,realy,40,'k','o','LineWidth',2);
-scatter(Octavexfit,fityAll,40,'r','o','LineWidth',2);
+scatter(Octavex,realy,80,'k','o','LineWidth',2);
+scatter(Octavexfit,fityAll,80,'r','o','LineWidth',2);
 % text(0.1,0.9,sprintf('B=%.3f',double(Realboundary)),'Color','k','FontSize',14);
 % text(0.1,0.8,sprintf('B=%.3f',double(Fitboundary)),'Color','r','FontSize',14);
 
 if ~isempty(inds_exclude)
-    scatter(octave_dist_exclude,reward_type_exclude,100,'x','MarkerEdgeColor','r');
-    scatter(octave_dist_exclude,reward_type_exclude,50,'p','MarkerEdgeColor','r');
+    scatter(octave_dist_exclude,reward_type_exclude,120,'x','MarkerEdgeColor','r');
+    scatter(octave_dist_exclude,reward_type_exclude,100,'p','MarkerEdgeColor','r');
 end
 if ~isempty(inds_excludefit)
-    scatter(octave_dist_excludefit,reward_type_excludefit,100,'x','MarkerEdgeColor','m');
-    scatter(octave_dist_excludefit,reward_type_excludefit,50,'o','MarkerEdgeColor','m');
+    scatter(octave_dist_excludefit,reward_type_excludefit,120,'x','MarkerEdgeColor','m');
+    scatter(octave_dist_excludefit,reward_type_excludefit100,'o','MarkerEdgeColor','m');
 end
 legend('logi\_fitc','logi\_realc','Real\_data','Fit\_data','location','southeast');
 legend('boxoff');
@@ -400,8 +476,8 @@ ylim(hax(2),[-0.1 1.1]);
 xlim(hax(1),[Octavex(1)-0.1 Octavex(end)+0.1]);
 xlim(hax(2),[Octavex(1)-0.1 Octavex(end)+0.1]);
 title('Real and fit data comparation');
-scatter(Octavex,realy,40,'k','o','LineWidth',2);
-scatter(Octavexfit,fityAll,40,'r','o','LineWidth',2);
+scatter(Octavex,realy,80,'k','o','LineWidth',2);
+scatter(Octavexfit,fityAll,80,'r','o','LineWidth',2);
 if length(TimeLength) == 1
     saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_Biyy_plot.png',TimeLength*1000));
     saveas(h_doubleyy,sprintf('Neuro_psycho_%dms_Biyy_plot.fig',TimeLength*1000));
@@ -410,7 +486,7 @@ else
     saveas(h_doubleyy,sprintf('Neuro_psycho_%dms%dmsDur_Biyy_plot.fig',StartTime*1000,TimeScale*1000));
 end
 close(h_doubleyy);
-save ModelPlotData.mat Octavex realy fityAll CorrStimTypeTick TimeLength -v7.3
+save ModelPlotData.mat Octavex realy fityAll CorrStimTypeTick TimeLength TimeLength -v7.3
 %%
 % plot the everysingle point result for SEM calculation
 [~,bPopSEM]=fit_logistic(Octavex,NormalMeanDis);
@@ -430,7 +506,7 @@ ylim(hax(1),[-0.1 1.1]);
 ylim(hax(2),[-0.1 1.1]);
 title('Real and fit data comparation');
 errorbar(Octavex,NormalMeanDis,MeanSEM,'ro','LineWidth',1.5,'MarkerSize',10);
-scatter(Octavex,realy,40,'k','o','LineWidth',2);
+scatter(Octavex,realy,80,'k','o','LineWidth',2);
 if length(TimeLength) == 1
     saveas(h_PopuSEM,sprintf('Neuro_psycho_%dms_Psem_plot.png',TimeLength*1000));
     saveas(h_PopuSEM,sprintf('Neuro_psycho_%dms_Psem_plot.fig',TimeLength*1000));

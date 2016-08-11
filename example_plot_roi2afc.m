@@ -8,7 +8,7 @@ cd(fpath);
 RawData = x.FChangeData;
 size_data = size(RawData);
 TrialType = double(x.behavResults.Trial_Type);
-FrameRate = 29;
+FrameRate = 55;
 FrameNum = size(RawData,3);
 onset_time=x.behavResults.Time_stimOnset;
 % stim_type_freq=behavResults.Stim_toneFreq;
@@ -26,7 +26,7 @@ MegOnFrame = start_frame;
 %%
 %example ROI plot for 2AFC task
 %example ROI plot
-ExampROIinds = [31,14];
+ExampROIinds = [2,4,5,8,16,20,22,23,31,33,51,57,97,130];
 ExampleTrials = 1:15;  %trial number choosed to plot
 TrialNum = length(ExampleTrials);
 DataToPlot = data_aligned(ExampleTrials,ExampROIinds,:);
@@ -100,8 +100,8 @@ close(h_example);
 %%
 %example ROI plot for 2AFC task
 %example ROI plot, trial type indicated by stim on line
-ExampROIinds = [31,14];
-ExampleTrials = 5:12;  %trial number choosed to plot
+ExampROIinds = [4,5,20,23,31,33,51,57,97];
+ExampleTrials = [1,2,3,5,7,11,12,13,15,16,17];  %trial number choosed to plot
 TrialNum = length(ExampleTrials);
 DataToPlot = data_aligned(ExampleTrials,ExampROIinds,:);
 TrialTypeP = TrialType(ExampleTrials);
@@ -138,7 +138,7 @@ for n = 1 : length(ExampROIinds)
     yBaseAdd = max(cPartData(:));
     cROITrace = cPartData(:);
     TrialLength = length(cROITrace);
-    plot(cROITrace + yBase,'color','k','LineWidth',1.2);
+    plot(cROITrace + yBase,'color','k','LineWidth',1);
     
 %     % plot right trials in red color
 %     cPartData(:,logical(TrialTypeP)) = nan;
@@ -163,12 +163,15 @@ xtickPartEnd = SelectEndFrame:FrameNumNew:FrameNumNew*TrialNum;
 xtickLine = BeforeMegF+((1:TrialNum)-1)*FrameNumNew;
 xtickAll = sort([xtickPartStart,xtickPartEnd,xtickLine]);
 xticklabel = repmat({'0',num2str(BeforeMegT),num2str(BeforeMegT+AfterMegT)},1,TrialNum);
-set(gca,'xtick',xtickAll,'xticklabel',xticklabel);
+% set(gca,'xtick',xtickAll,'xticklabel',xticklabel);
 set(gca,'ytick',[],'ycolor','w')
+set(gca,'xtick',[],'xcolor','w')
 xlabel('Time(s)');
 % xscales = get(gca,'xlim');
 line([TrialLength TrialLength],[100,200],'LineWidth',2,'color','k');
 text((TrialLength),150,'100% \DeltaF/F_0');
+line([TrialLength TrialLength+FrameRate*5],[100,100],'LineWidth',2,'color','k');
+text(TrialLength,50,'5 s');
 ylim([-50 yBase]);
 % ylabel('\DeltaF/f_0');
 title('Example ROI plot---Sound Response');

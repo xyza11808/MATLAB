@@ -64,7 +64,7 @@ for n=1:left_data_size(1)
 %     for m=1:left_data_size(2)
 %         trans_data(m,:)=smooth(trans_data(m,:),11);
 %     end
-    trans_data=(zscore(trans_data'))';
+%     trans_data=(zscore(trans_data'))';
     [~,score,~]=pca(trans_data);
     pca_score_all(n,:,:)=score(:,1:3);
 %     score_data_left=score_data_left+score(:,1:3);
@@ -73,7 +73,7 @@ end
 % score_data_left=zeros(left_data_size(3),3);
 
 MeanLeftData=squeeze(mean(left_corr_data));
-MeanLeftData=(zscore(MeanLeftData'))';
+% MeanLeftData=(zscore(MeanLeftData'))';
 trans_data=permute(MeanLeftData,[2 1]);
 [~,score,~]=pca(trans_data);
 score_data_left=score(:,1:3);
@@ -84,7 +84,7 @@ for n=1:right_data_size(1)
 %     for m=1:right_data_size(2)
 %         trans_data(m,:)=smooth(trans_data(m,:),11);
 %     end
-    trans_data=(zscore(trans_data'))';
+%     trans_data=(zscore(trans_data'))';
     [~,score,~]=pca(trans_data);
     pca_score_all(n+left_data_size(1),:,:)=score(:,1:3);
 %     score_data_right=score_data_right+score(:,1:3);
@@ -93,7 +93,7 @@ end
 % score_data_right=zeros(right_data_size(3),3);
 
 MeanRightData=squeeze(mean(right_corr_data));
-MeanRightData=(zscore(MeanRightData'))';
+% MeanRightData=(zscore(MeanRightData'))';
 trans_data=permute(MeanRightData,[2 1]);
 [~,score,~]=pca(trans_data);
 score_data_right=score(:,1:3);
@@ -104,7 +104,7 @@ for n=1:left_erro_size(1)
 %     for m=1:right_data_size(2)
 %         trans_data(m,:)=smooth(trans_data(m,:),11);
 %     end
-    trans_data=(zscore(trans_data'))';
+%     trans_data=(zscore(trans_data'))';
     [~,score,~]=pca(trans_data);
     pca_score_all((n+left_data_size(1)+right_data_size(1)),:,:)=score(:,1:3);
 %     score_erro_left=score_erro_left+score(:,1:3);
@@ -113,7 +113,7 @@ end
 % score_erro_left=zeros(left_erro_size(3),3);
 
 MeanLEData=squeeze(mean(left_erro_data));
-MeanLEData=(zscore(MeanLEData'))';
+% MeanLEData=(zscore(MeanLEData'))';
 trans_data=permute(MeanLEData,[2 1]);
 if size(trans_data,1) < 3
     score_erro_left=zeros(size(score_data_left));
@@ -130,7 +130,7 @@ for n=1:right_erro_size(1)
 %     for m=1:right_data_size(2)
 %         trans_data(m,:)=smooth(trans_data(m,:),11);
 %     end
-    trans_data=(zscore(trans_data'))';
+%     trans_data=(zscore(trans_data'))';
     [~,score,~]=pca(trans_data);
     pca_score_all((n+left_data_size(1)+right_data_size(1)+left_erro_size(1)),:,:)=score(:,1:3);
 %     score_erro_right=score_erro_right+score(:,1:3);
@@ -139,7 +139,7 @@ end
 % score_erro_right=zeros(right_erro_size(3),3);
 
 MeanREData=squeeze(mean(right_erro_data));
-MeanREData=(zscore(MeanREData'))';
+% MeanREData=(zscore(MeanREData'))';
 trans_data=permute(MeanREData,[2 1]);
 if size(trans_data,1) < 3
     score_erro_right=zeros(size(score_data_right));
@@ -150,9 +150,9 @@ else
 end
 
 h_pca=figure;
-plot3(score_data_left(:,1),score_data_left(:,2),score_data_left(:,3),'color','r','LineWidth',2.5);
+plot3(score_data_left(:,1),score_data_left(:,2),score_data_left(:,3),'color','b','LineWidth',2.5);
 hold on;
-plot3(score_data_right(:,1),score_data_right(:,2),score_data_right(:,3),'color','b','LineWidth',2.5);
+plot3(score_data_right(:,1),score_data_right(:,2),score_data_right(:,3),'color','r','LineWidth',2.5);
 plot3(score_erro_left(:,1),score_erro_left(:,2),score_erro_left(:,3),'color',[.8 .8 .8],'LineWidth',1.5);
 plot3(score_erro_right(:,1),score_erro_right(:,2),score_erro_right(:,3),'color',[.1 .1 .1],'LineWidth',1.5);
 x_start=[score_data_left(1,1),score_data_right(1,1),score_erro_left(1,1),score_erro_right(1,1)];

@@ -16,8 +16,8 @@ if iscell(behavResults.Action_numLickLeft)
     %         temp_lick_time_L=behavResults.Action_numLickLeft{n};
     %         lick_time_left(n,:)=[lick_time_left ]
     for n=1:trial_num
-        lick_time_str_left=strrep(behavResults.Action_numLickLeft{n},'|',',');
-        lick_time_str_R=strrep(behavResults.Action_numLickRight{n},'|',',');
+        lick_time_str_left=strrep(behavResults.Action_numLickLeft{n},'|',' ');
+        lick_time_str_R=strrep(behavResults.Action_numLickRight{n},'|',' ');
         left_lickTime_double=str2num(lick_time_str_left);
         right_lickTime_double=str2num(lick_time_str_R);
         left_lickTime_double(left_lickTime_double>=(end_point*1000))=[];
@@ -63,8 +63,8 @@ else
         %     left_lickTime_double=cell_to_double(left_lickTime_cell);
         %     right_lickTime_double=cell_to_double(right_lickTime_cell);
         
-        left_lickTime_cell=strrep(behavResults.Action_lickTimeLeft(n,:),'|',',');
-        right_lickTime_cell=strrep(behavResults.Action_lickTimeRight(n,:),'|',',');
+        left_lickTime_cell=strrep(behavResults.Action_lickTimeLeft(n,:),'|',' ');
+        right_lickTime_cell=strrep(behavResults.Action_lickTimeRight(n,:),'|',' ');
         left_lickTime_double=str2num(left_lickTime_cell);
         right_lickTime_double=str2num(right_lickTime_cell);
         left_lickTime_double(left_lickTime_double>=(end_point*1000))=[];

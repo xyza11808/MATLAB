@@ -136,7 +136,7 @@ OnsetStruct=struct('StimOnset',behavResults.Time_stimOnset,'StimDuration',300);
 
 if isfield(behavResults,'Setted_TimeOnset')
     diff_real_set=diff([behavResults.Time_stimOnset;behavResults.Setted_TimeOnset]);
-    difference_test=sum(diff_real_set<-2 | diff_real_set>2);
+    difference_test=sum(diff_real_set<-3 | diff_real_set>3);
     if difference_test~=0
         warning('The printed stim onset time is different from set, use set time for analysis.\n');
         behavResults.Time_stimOnset=behavResults.Setted_TimeOnset;
@@ -367,8 +367,8 @@ if ~isempty(radom_inds_correct)
     end
     
     rand_trial_data=zeros(length(random_type_stim),size_data(2),size_data(3));
-    m=1:length(random_type_stim);
-    rand_trial_data(m,:,:)=data(radom_inds_correct(m),:,:);
+%     m=1:length(random_type_stim);
+    rand_trial_data=data(radom_inds_correct,:,:);
     rand_plot(behavResults,3);
     RandomSession=1;
     %###########################################################################################
@@ -488,7 +488,19 @@ end
         OmitInds=zeros(1,size_data(1));
         OmitInds(RewardOmitInds)=1;
         OmitInds=logical(OmitInds);
-        RewardOmitPlot(data,OmitInds,trial_outcome,behavResults.Trial_Type,behavResults.Time_answer,frame_rate,session_date',PTclims);
+        if ~exist('PTclims','var')
+            PTclims = [];
+        end
+        if ~isdir('./AnsWerT_omit_sort/')
+            mkdir('./AnsWerT_omit_sort/');
+        end
+        cd('./AnsWerT_omit_sort/');
+        RewardOmitPlot(data,OmitInds,trial_outcome,behavResults.Trial_Type,behavResults.Time_answer,behavResults.Time_stimOnset,frame_rate,session_date',PTclims);
+        Inds = RewardOmitPlot(data,OmitInds,trial_outcome,behavResults.Trial_Type,behavResults.Time_answer,behavResults.Time_stimOnset,frame_rate,session_date',PTclims,0);        
+        ReOmitLickPlot(lick_time_struct,behavResults.Time_stimOnset,behavResults.Time_answer,10,Inds);
+        ReOmtRespComp(data,behavResults.Time_answer,[-0.5,4],0.25,Inds,frame_rate);
+        cd ..;
+
     end
 
 %     %this modulation do not works well with current condition, maybe
@@ -506,7 +518,8 @@ end
 
 analysis_choice=0;
 while analysis_choice==0
-continue_char=input('Select from following analysis type.\n 1 for onset time sequence analysis.\n 2 for alignment analysis.\n 3 for pca analysis.\n Other inputs will quit 2afc analysis.\n please input your option.\n','s');
+% continue_char=input('Select from following analysis type.\n 1 for onset time sequence analysis.\n 2 for alignment analysis.\n 3 for pca analysis.\n Other inputs will quit 2afc analysis.\n please input your option.\n','s');
+continue_char = '2';
 if str2double(continue_char)==1
     
     %################################################
@@ -603,7 +616,7 @@ elseif str2double(continue_char)==2
     TimeCorseROC(data_aligned,TrialTypes,start_frame,frame_rate);  %cumulated ROC plot
     TimeCorseROC(data_aligned,TrialTypes,start_frame,frame_rate,[],2);   %seperated ROC plot
     MeanAlignedDataPlot(smooth_data,start_frame,behavResults.Trial_Type,frame_rate);
-    
+     AlignedSortPLot(data_aligned,behavResults.Time_reward,behavResults.Time_answer,align_time_point,TrialTypes,frame_rate,onset_time);
     Left_right_pca_dis(smooth_data,behavResults,session_name,frame_rate,start_frame,[],[],data,2);
       if RandomSession
 %           ShuffleNeuroMTest(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
@@ -611,23 +624,50 @@ elseif str2double(continue_char)==2
           RandNeuroMTPerfcorr(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,1.5);
           NBC_for2afc(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate,1.5,TrialTypes); %naive bayes
           RandNeuroMLRC(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,TrialTypes,1.5);
-%           RandNeuroMTestNew(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,1.5);
+          MultiTScaleNMT(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,{0.1,0.15,0.2,0.3,[0.1,0.2],[0.2,0.3]});
+          ChoiceProbCal(smooth_data,behavResults.Stim_toneFreq,behavResults.Action_choice,1.5,start_frame,frame_rate,16000);
+          
+          %% #############################################
+          % % % % %plot psychometrical curve based on decision time window
+          ChoicelickTime = double(FLickT);
+          OnsetT = double(behavResults.Time_stimOnset);
+          TrialOut = trial_outcome;
+          TrialType = double(behavResults.Trial_Type);
+          RespTDiff = ChoicelickTime - OnsetT;
+          CorrTrials = TrialOut == 1;
+          CorrTTypes = TrialType(CorrTrials);
+          CorrDiffT = RespTDiff(CorrTrials);
+          CorrLeftDiffT = CorrDiffT(CorrTTypes == 0);
+          CorrRightDiffT = CorrDiffT(CorrTTypes == 1);
+          LeftSelectTWin = median(CorrLeftDiffT); 
+          RightSelectWin = median(CorrRightDiffT); 
+          %%
+          if ~isdir('./Decision_win_Curve/')
+              mkdir('./Decision_win_Curve/');
+          end
+          cd('./Decision_win_Curve/');
+          RandNeuroMTestCrossV(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,LeftSelectTWin/1000);
+          RandNeuroMTestCrossV(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,RightSelectWin/1000);
+          cd ..;
+          % % % %
+          %% #############################################
+          %           RandNeuroMTestNew(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,1.5);
           if ~isdir('./shuffle_CV_randPlot/')
               mkdir('./shuffle_CV_randPlot/');
           end
           cd('./shuffle_CV_randPlot/');
-           RandNeuroMTestCrossV(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,1.5,1);
-           cd ..;
-           RandPTROCSelectivity(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate);
-           
-           ROIremoveNMtest(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate,1.5);
+          RandNeuroMTestCrossV(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,1.5,1);
+          cd ..;
+          RandPTROCSelectivity(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate);
+          
+          ROIremoveNMtest(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate,1.5);
       end
     ROICoefDisCorr(smooth_data,center_ROI);
     TypeRespDistance(center_ROI,[],data);
     FCA_2AFC_classification(smooth_data,(double(behavResults.Trial_Type))',trial_outcome,session_name,frame_rate,start_frame);
 %     All_trial_plot(data_aligned,plot_data_inds,frame_rate,align_time_point,'Stim onset',session_date);
     ROI_sequence_ana_update(smooth_zs_data,data_aligned,behavResults,plot_data_inds,start_frame,frame_rate,session_name);
-    
+    PCA_2AFC_classification(smooth_data,behavResults,session_name,frame_rate,start_frame);
     %###############################################################
     % Binned data generation and for analysis
     [BinnedData,BIn]=DataBinnedFunc(smooth_data,0.1,3,frame_rate);  %100ms binned of data
@@ -641,7 +681,7 @@ elseif str2double(continue_char)==2
     
     %########################################################
     %using alignment data for PCA analysis
-    PCA_2AFC_classification(smooth_data,behavResults,session_name,frame_rate,start_frame);
+    
     BinnedPCAPlot(smooth_data,behavResults,session_name,frame_rate,start_frame,3,3);
     if ~isdir('./Spike_Plot/')
         mkdir('./Spike_Plot/');

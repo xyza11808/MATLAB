@@ -110,9 +110,9 @@ else
     clearvars TempROIData LeftPoints RightPoints LeftDataFORroc RightDataFORroc
 end
 
-PXtick=1:FrameBin:(DatSize(3));
+PXtick=FrameBin:FrameBin:(DatSize(3));
 AlignTime=alignpoint/FrameRate;
-PXtick(1)=[];
+% PXtick(1)=[];
 PXtickTime=PXtick/FrameRate;
 PXtickAfter = PXtick;
 
@@ -122,6 +122,7 @@ if ~isdir(FolderName)
 end
 cd(FolderName);
 
+%%
 for ROInum=1:DatSize(2)
     hROI=figure;
     plot(PXtickTime,BINNEDROCResultLR(ROInum,:),'r-o','LineWidth',2);
@@ -138,6 +139,7 @@ for ROInum=1:DatSize(2)
     close(hROI);
 end
 
+%%
 PopuMean=mean(BINNEDROCResultLR);
 PopuSEM=std(BINNEDROCResultLR)/sqrt(size(BINNEDROCResultLR,1));
 PopuHi=PopuMean+PopuSEM;
@@ -160,10 +162,7 @@ ylabel('ROC value');
 title('Popu timeBINroc','FontSize',14);
 saveas(hPopu,'Popu timeBINroc plot.png');
 saveas(hPopu,'Popu timeBINroc plot.fig');
-close(hPopu);
-cd ..
-
-
+close(hPopu)
 
 % PXtick=1:FrameBin:DatSize(3);
 % PXtick(1)=[];
@@ -173,6 +172,7 @@ cd ..
 %     alignpoint FrameBin DatSize -v7.3
 save timeBinROCResult.mat BINNEDROCResultLR PXtickAfter PXtick ...
     alignpoint FrameBin DatSize -v7.3
+cd ..
 %%
 %plot of left sound response to baseline response
 % if ~isdir('./LB_ROC_timeFun/')
@@ -319,6 +319,31 @@ title('Popu plot of LR AUC');
 saveas(hLR,'Popu 3dplot AUC LR.png');
 saveas(hLR,'Popu 3dplot AUC LR.fig');
 close(hLR);
+
+DataForPlot = BINNEDROCResultLR';
+[~,Inds] = sort(LRRand);
+SmoothData = zeros(size(DataForPlot));
+for nnn = 1 : length(Inds)
+    SmoothData(:,nnn) = smooth(DataForPlot(:,nnn));
+end
+h_surf = figure;
+surf(SmoothData(:,Inds),'LineStyle','none','Facecolor','interp');
+colormap jet
+set(gca,'clim',[0.5 1]);
+set(gca,'xdir','reverse','xtick',1:50:DatSize(2));
+xlabel('ROIs');
+ylabel('Time (s)');
+zlabel('Fraction correct');
+set(gca,'FontSize',20)
+set(gca,'ytick',xtickTime,'yticklabel',xticklabelT);
+set(gca,'ztick',[0.3 0.7 1]);
+grid off; box off;
+view(113.7,63.6);
+hBar = colorbar;
+set(hBar,'Ticks',[0.5,0.8,1]);
+saveas(h_surf,'Popu 3dplot AUC surf.png');
+saveas(h_surf,'Popu 3dplot AUC surf.fig');
+% close(hLR);
 
 cd ..;
 

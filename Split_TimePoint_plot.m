@@ -22,10 +22,10 @@ end
 if nargin>7
     ColorBarDesp=varargin{2};
 else
-    ColorBarDesp='\DeltaF/F_0';
+    ColorBarDesp='\DeltaF/F_0(%%)';
 end
 if isempty(ColorBarDesp)
-    ColorBarDesp='\DeltaF/F_0';
+    ColorBarDesp='\DeltaF/F_0(%%)';
 end
 
 data_size=size(raw_data);
@@ -472,7 +472,7 @@ else
         stim_type=unique(trial_stim_freq);
         Valid_struct=sum([isempty(lick_frame_inds(1).Action_LeftLick_frame),isempty(lick_frame_inds(1).Action_RightLick_frame)]);
         
-        h_rand=figure('color','w','position',[450 140 1000 820]);
+        h_rand=figure('color','w','position',[150 60 1600 1000]);
         set(gcf,'RendererMode','manual')
         set(gcf,'Renderer','OpenGL')
         %         sub_plot_size=length(stim_type);

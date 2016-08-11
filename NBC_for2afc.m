@@ -1,4 +1,4 @@
-function NBC_for2afc(RawData,TrialFreq,StartFrame,FrameRate,Timescale,TrialTypes,varargin)
+function NBC_for2afc(RawData,TrialFreq,AlignFrame,FrameRate,Timescale,TrialTypes,varargin)
 % this function is trying to build a naive bayes classifier to do
 % population decoding
 
@@ -30,9 +30,9 @@ if FrameScale(1) < 1
     warning('Time Selection excceed matrix index, correct to 1');
     FrameScale(1) = 1;
 end
-if FrameScale(2) > DataSize(3)
+if FrameScale(2) > TimeTrace
     warning('Time Selection excceed matrix index, correct to %d',DataSize(3));
-    FrameScale(2) = DataSize(3);
+    FrameScale(2) = TimeTrace;
 end
 SelectData = RawData(:,:,FrameScale(1): FrameScale(2));
 TrainingDataAll = max(SelectData,[],3);

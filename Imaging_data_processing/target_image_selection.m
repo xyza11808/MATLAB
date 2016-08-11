@@ -1,8 +1,8 @@
 %finding the target image for alignment
-cd('J:\batch\batch20\20151125\anm02\test02rf');
-[im, ~] = load_scim_data('b20a02_test02_3x_rf_170um_20161125_050.tif');
+cd('M:\batch\blyh\20160725\anm03\test01');
+[im, ~] = load_scim_data('blyha03_test01_3x_2afc_115um_20160725_166.tif');
 colormap gray;
-selectframe=im(:,:,1:200);
+selectframe=im(:,:,250:320);
 imagesc(mean(selectframe,3),[0 500]);
 im_reg_target = mean(selectframe,3);
 figure(gcf);

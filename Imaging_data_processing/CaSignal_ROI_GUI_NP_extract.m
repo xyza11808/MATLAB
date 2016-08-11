@@ -1471,7 +1471,9 @@ SavedCaTrials.ROIinfoBack=CaTrials(1).ROIinfoBack;
 
 RawData=zeros(length(CaTrials),CaTrials(1).nROIs,CaTrials(1).nFrames);
 ringData=zeros(length(CaTrials),CaTrials(1).nROIs,CaTrials(1).nFrames);
-SegNPdata=zeros(length(CaTrials),CaSignal.SegNumber,CaTrials(1).nFrames);
+if isfield(CaSignal,'SegNumber')
+    SegNPdata=zeros(length(CaTrials),CaSignal.SegNumber,CaTrials(1).nFrames);
+end
 try
     if isempty(CaTrials(1).f_raw) || isempty(CaTrials(1).RingF)
         RawData=[];

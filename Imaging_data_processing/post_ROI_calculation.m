@@ -2,11 +2,14 @@ function post_ROI_calculation
 %this script is used for post analysis of ROI analysis result, need the
 %result mat file of TIFF figure analysis
 
+dbstop if error % stop if error occurs
+
 clc;
 type=input('please input the analysis type.\nRF for receptive field analysis and 2AFC for behavior data analysis.\n','s');
 
 if (strcmpi(type,'RF')||strcmpi(type,'2AFC'))==0
-    error('Wrong analysis type input. quit analysis...');
+    warning('Wrong analysis type input. quit analysis...');
+    return;
 end
 
 %%

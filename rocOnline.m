@@ -103,16 +103,16 @@ end
 clear args default nu
 
 InputLabelType=unique(x(:,2));
-if gpuDeviceCount
-    try
-        x=gpuArray(x);
-        threshold=gpuArray(threshold);
-        alpha=gpuArray(alpha);
-        verbose=gpuArray(verbose);
-    catch
-        warning('GPU device unavaluable, use CPU to do the calculation');
-    end
-end
+% if gpuDeviceCount
+%     try
+%         x=gpuArray(x);
+%         threshold=gpuArray(threshold);
+%         alpha=gpuArray(alpha);
+%         verbose=gpuArray(verbose);
+%     catch
+%         warning('GPU device unavaluable, use CPU to do the calculation');
+%     end
+% end
 if length(InputLabelType) > 2 || length(InputLabelType) < 2
     dbstop if error
     error('Input label type is more or less than 2 types, quit this function.');

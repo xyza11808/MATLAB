@@ -112,8 +112,9 @@ for i=1:data_size(2)
     colorbar;
     set(get(colorbar,'Title'),'string','\Deltaf/f_0');
     hold on;
-    final_name=[save_file_name '_ROI_' num2str(i) '.png'];
+    final_name=[save_file_name '_ROI_' num2str(i)];
     saveas(h1,final_name);
+    saveas(h1,final_name,'png');
     %     close;
     % end
     %

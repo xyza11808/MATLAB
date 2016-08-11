@@ -43,9 +43,23 @@ choice=questdlg('Would you want to do neuropil correction?','Choice Selection','
 switch choice
     case 'Ring NP'
         IsNeuropilExtract=1;
+        if ~isdir('./RingNP_Correction/')
+            mkdir('./RingNP_Correction/');
+        end
+        cd('./RingNP_Correction/');
+        
     case 'SegMental NP'
         IsNeuropilExtract=2;
+        if ~isdir('./SegMentNP_Correction/')
+            mkdir('./SegMentNP_Correction/');
+        end
+        cd('./SegMentNP_Correction/');
+        
     case 'No'
+        if ~isdir('./NO_Correction/')
+            mkdir('./NO_Correction/');
+        end
+        cd('./NO_Correction/');
         IsNeuropilExtract=0;
     otherwise
         disp('Quit Selection.');
@@ -87,6 +101,8 @@ RawRingData=zeros(TrialNum,ROINum,TrialLen);
 FChangeData=zeros(TrialNum,ROINum,TrialLen);
 PreOnsetData=cell(1,TrialNum);
 PreOnsetRingF=cell(1,TrialNum);
+% PreOnsetDataROI = []
+% PreOnsetRingFROI = [];
 FBaseline=zeros(TrialNum,ROINum);
 
 if strcmpi(SessionType,'2afc')
@@ -110,6 +126,7 @@ if length(CaTrials)>1
         end
         RawData(n,:,:)=CaTrials(n).f_raw;
         PreOnsetData{n}=CaTrials(n).f_raw(:,1:TrialOnsetTime(n));
+%         PreOnsetDataROI = [PreOnsetDataROI,PreOnsetData{n}];
         
         if isfield(CaTrials(n),'RingF')
             PreOnsetRingF{n}=CaTrials(n).RingF(:,1:TrialOnsetTime(n));
@@ -128,8 +145,8 @@ else
             baselineDataAll=[baselineDataAll PreOnsetData{n}];
             FBaseline(n,:)=mean(squeeze(RawData(n,:,1:TrialOnsetTime(n))),2);
             if isfield(CaTrials(1),'RingF')
-                baselineDataRing=[baselineDataRing PreOnsetRingF{n}];
                 PreOnsetRingF{n}=squeeze(RawRingData(n,:,1:TrialOnsetTime(n)));
+                baselineDataRing=[baselineDataRing PreOnsetRingF{n}];
             end
         end
 end
@@ -138,25 +155,40 @@ RingFbase=zeros(ROINum,1);
 
 if isfield(CaTrials(1),'RingF') && IsNeuropilExtract == 1
     FCorrectData=zeros(TrialNum,ROINum,TrialLen);
+    NPSubFactors = zeros(ROINum,1);
     CorrePreOnsetData=cell(1,TrialNum);
-    for n=1:ROINum
-        CROIdata=squeeze(RawData(:,n,:));
-        CRingdata=squeeze(RawRingData(:,n,:));
-        RingFbase(n)=mean(CRingdata(:));
-%         [N,C]=hist(CRingdata(:),80);
-%         [~,I]=max(N);
-%         RingFbase(n)=C(I);
-        FCorrectData(:,n,:)=(CROIdata-CRingdata)+RingFbase(n);
+%     for n=1:ROINum
+%         CROIdata=squeeze(RawData(:,n,:));
+%         CRingdata=squeeze(RawRingData(:,n,:));
+%         RingFbase(n)=mean(CRingdata(:));
+% %         [N,C]=hist(CRingdata(:),80);
+% %         [~,I]=max(N);
+% %         RingFbase(n)=C(I);
+%         FCorrectData(:,n,:)=(CROIdata-CRingdata)+RingFbase(n);
+%     end
+%     clearvars CROIdata CRingdata n
+    
+    for nRoi = 1 : ROINum
+        cROIbase = baselineDataAll(nRoi,:);
+        cROIring = baselineDataRing(nRoi,:);
+        if mean(cROIbase) > 1.05 * mean(cROIring)
+            NPSubFactor = 0.7;
+%             BaseSubValue = cROIbase - cROIring * NPSubFactor;
+        else
+            NPSubFactor = 0.5*mean(cROIbase)/mean(cROIring);
+        end
+        CROIdata=squeeze(RawData(:,nRoi,:));
+        CRingdata=squeeze(RawRingData(:,nRoi,:));
+        FCorrectData(:,nRoi,:) = (CROIdata - NPSubFactor*CRingdata);
+        NPSubFactors(nRoi) = NPSubFactor;
     end
-    clearvars CROIdata CRingdata n
-    
-    
+    save ROISubFactor.mat NPSubFactors -v7.3
     for m=1:TrialNum
         RawOnsetData=PreOnsetData{m};
         NPOnsetData=PreOnsetRingF{m};
         CurrentdDataSize=size(RawOnsetData);
-        SavedNPbase=repmat(RingFbase,1,CurrentdDataSize(2));
-        CorrePreOnsetData(m)={RawOnsetData-NPOnsetData+SavedNPbase};
+        SavedNPbase=repmat(NPSubFactors,1,CurrentdDataSize(2));
+        CorrePreOnsetData(m)={RawOnsetData - SavedNPbase.*NPOnsetData};
     end
     
 elseif isfield(CaTrials(1),'SegNPdataAll') && IsNeuropilExtract == 2
@@ -176,13 +208,13 @@ elseif isfield(CaTrials(1),'SegNPdataAll') && IsNeuropilExtract == 2
     SegNPbase=mean(TempNPData,2);   %SegNP value used for correction baseline correction
     
 %     PreOnsetSegNPData=cell(1,TrialNum);
-    for TrialNum=1:TrialNum
-        TempRawData=PreOnsetData{TrialNum}-squeeze(SegROINPdata(TrialNum,:,1:TrialOnsetTime(TrialNum)));
+    for TrialN=1:TrialNum
+        TempRawData=PreOnsetData{TrialN}-squeeze(SegROINPdata(TrialN,:,1:TrialOnsetTime(TrialN)));
         TempSize=size(TempRawData);
         BaseComp=repmat(SegNPbase,1,TempSize(2));
-        CorrePreOnsetData{TrialNum}=TempRawData+BaseComp;  %after SegMental correction data
+        CorrePreOnsetData{TrialN}=TempRawData+BaseComp;  %after SegMental correction data
     end
-    FCorrectData = RawData - SegROINPdata + repmat(SegNPbase',TrialNum,1,TrialLen);
+    FCorrectData = RawData - SegROINPdata + repmat(SegNPbase',TrialN,1,TrialLen);
 else
     FCorrectData=RawData;
     CorrePreOnsetData=PreOnsetData;

@@ -8,7 +8,7 @@ FreqType = unique(sound_array(:,1));
 FerqTick = FreqType/1000;
 
 %%
-ROINum = 25;
+ROINum = 4;
 FrameRate = 55;
 cROIData = squeeze(SingDBData(25,:,:));
 xtick = 0 : FrameRate : size(cROIData,2);
@@ -17,7 +17,7 @@ ytick = 1 : size(cROIData,1);
 
 
 h_RFMean = figure;
-imagesc(cROIData,[0 200]);
+imagesc(cROIData,[0 100]);
 colorbar;
 set(gca,'xtick',xtick,'xticklabel',xticklabel,'ytick',ytick,'yticklabel',cellstr(num2str(FerqTick(:),'%.2f')));
 line([FrameRate FrameRate],[0 size(cROIData,1)+2],'LineWidth',1.5,'color',[.8 .8 .8]);

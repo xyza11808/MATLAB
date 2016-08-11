@@ -101,6 +101,7 @@ subplot(1,2,1)
 [ROIDiffmnS,ROIDiffmnI]=sort(ROIDiffmn);
 [hmn,pmn]=corrcoef(ROIDiffmnS,ROCareaABS(ROIDiffmnI));
 scatter(ROIDiffmnS,ROCareaABS(ROIDiffmnI),45,linspace(1,10,length(ROCarea)),'LineWidth',2);
+axis square
 colormap cool
 title({'mean response value',sprintf('Coef = %0.2f, p=%.2e',hmn(1,2),pmn(1,2))});
 ylabel('L2R AUC')
@@ -110,6 +111,7 @@ subplot(1,2,2)
 [ROIDiffmdS,ROIDiffmdI]=sort(ROIDiffmd);
 [hmd,pmd]=corrcoef(ROIDiffmdS,ROCareaABS(ROIDiffmdI));
 scatter(ROIDiffmdS,ROCareaABS(ROIDiffmdI),45,linspace(1,10,length(ROCarea)),'LineWidth',2);
+axis square
 colormap cool
 title({'median response value',sprintf('Coef = %0.2f, p=%.2e',hmd(1,2),pmd(1,2))});
 xlabel('\DeltaF/f_0');
@@ -276,6 +278,7 @@ end
     xlabel('Index value');
     ylabel('Cell Fraction');
     title('Population Selection index');
+    set(gca,'xtick',[-1,0,1],'xticklabel',[-1,0,1]);
     set(gca,'FontSize',20);
     saveas(h_Sindex,'Population selection index plot','png');
     saveas(h_Sindex,'Population selection index plot','fig');

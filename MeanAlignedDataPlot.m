@@ -112,10 +112,10 @@ for n=1:DataSize(2)
     
     MeanAllTrialsTrace = mean(SingleROIData);
     MeanSEMAllTrials = std(SingleROIData)./sqrt(size(SingleROIData,1));
-    [MaxAllValue,IAll] = max(MeanAllTrialsTrace);
+    [~,IAll] = max(MeanAllTrialsTrace);
     MeanAlignData.AllDataMean(n,:) = MeanAllTrialsTrace;
     MeanAlignData.AllMaxInds(n) = IAll;
-    MeanAlignData.AllDataMeanNor(n,:) = MeanAllTrialsTrace/MaxAllValue;
+    MeanAlignData.AllDataMeanNor(n,:) = zscore(MeanAllTrialsTrace);
     hAll_fig=figure;
     hold on;
     H_ALL = plot_meanCaTrace(MeanAllTrialsTrace, MeanSEMAllTrials, frames, hAll_fig, opt_plot);
@@ -464,14 +464,19 @@ close(h_maxDis);
 %plot all trials mean trace for population response
 RoiDataSeletedAll = MeanAlignData.AllDataMeanNor(SigROIIndsSelect,:);
 [SortedMaxInds,IAllMean] = sort(MeanAlignData.AllMaxInds(SigROIIndsSelect));
-h_AllMean=figure;
-imagesc(RoiDataSeletedAll(IAllMean,:),[0 1]);
+h_AllMean=figure('position',[400 240 1050 800],'PaperPositionMode','auto');
+imagesc(RoiDataSeletedAll(IAllMean,:),[-2,2]);
+hbar=colorbar;
+set(get(hbar,'title'),'string','zscore');
 title('All ROIs sorted by Maxium Time');
 set(gca,'xtick',XTick,'xticklabel',XTickLabel);
+xlabel('Time (s)');
+ylabel('# ROIs');
 yaxis = axis;
 H.eventPatch = patch([t_eventOn, t_eventOn, t_eventOff, t_eventOff],...
     [yaxis(3), yaxis(4), yaxis(4),yaxis(3)],...
     [.1 .8 .1],'Edgecolor','none', 'facealpha',0.8);
+set(gca,'FontSize',20);
 saveas(h_AllMean,'All_Trials_Mean_sorted_by_Peak_time','png');
 saveas(h_AllMean,'All_Trials_Mean_sorted_by_Peak_time');
 close(h_AllMean);

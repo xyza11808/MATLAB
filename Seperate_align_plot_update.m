@@ -242,7 +242,7 @@ if length(unique(trial_type))==2
                 h_bar=colorbar;
                 plot_position_2=get(h_bar,'position');
                 set(h_bar,'position',[plot_position_2(1)*1.13 plot_position_2(2) plot_position_2(3)*0.4 plot_position_2(4)]);
-                set(get(h_bar,'Title'),'string','\DeltaF/F_0');
+                set(get(h_bar,'Title'),'string','\DeltaF/F_0(%%)');
             end
             %###########################################################################
             %statistic test
@@ -319,7 +319,7 @@ if length(unique(trial_type))==2
                 h_bar=colorbar;
                 plot_position_2=get(h_bar,'position');
                 set(h_bar,'position',[plot_position_2(1)*1.13 plot_position_2(2) plot_position_2(3)*0.4 plot_position_2(4)]);
-                set(get(h_bar,'Title'),'string','\DeltaF/F_0');
+                set(get(h_bar,'Title'),'string','\DeltaF/F_0(%%)');
             end
             
             %###########################################################################
@@ -475,7 +475,7 @@ else
                 hbar=colorbar;
                 BarPosition=get(hbar,'position');
                 set(hbar,'position',BarPosition.*[1.13 1 0.4 1]);
-                set(get(hbar,'Title'),'string','\DeltaF/f_0');
+                set(get(hbar,'Title'),'string','\DeltaF/f_0(%%)');
             end
             
             subplot(2,length(TrialTypes),TypeNum+length(TrialTypes));

@@ -152,8 +152,18 @@
 % bayes classification
 % fitcnb can be used to do naive bayes classification, try it out when time is avaluable
 
-%linear discrimination classifier
+% linear discrimination classifier
 % fitcdiscr: discriminant analysis classifier
+
+% calculate the zscore of the given probability
+% two line code:
+% pd = makedist('Normal',0,1);
+% ZScore = icdf(pd,p);  % calculate the corresponded z value given
+% posibility p.  e.g.: if p = 0.5, z = 0;
+
+% combinational number calculate function
+% nchoosek(n,k)
+% factorial(n)   % ½×³Ëº¯Êý
 
 %%
 %this section used to be used for all trials plot in AFC_ROI_analysis

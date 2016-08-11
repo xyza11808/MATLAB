@@ -106,7 +106,7 @@ for nRepeat = 1 : RepeatNum
         CFinds = FreqVector == CFreq;
         cData = f_change_consid(CFinds,:,:);
         CTnum = size(cData,1);
-        SampleTrial=randsample(CTnum,floor(CTnum*0.8));
+        SampleTrial=randsample(CTnum,floor(CTnum*0.5));
         AllTrialInds = false(CTnum,1);
         TrainInds = AllTrialInds;
         TrainInds(SampleTrial) = true;
@@ -152,6 +152,7 @@ title('Test data distribution in PCA space');
 
 %%
 CSVNmodel = fitcsvm([LeftTrainingSet;RightTrainingSet],[zeros(size(LeftTrainingSet,1),1);ones(size(RightTrainingSet,1),1)]);
+ModelLoss = kfoldloss(crossval(CSVNmodel));
 TestScore = predict(CSVNmodel,[LeftTestSet;RightTestSet]);
 RealScore = [zeros(size(LeftTrainingSet,1),1);ones(size(RightTrainingSet,1),1)];
 ErrorRate = sum(abs(RealScore-TestScore))/length(RealScore);
@@ -160,15 +161,29 @@ suptitle(sprintf('Error Rate = %.3f',ErrorRate));
 saveas(hDataset,'DataSet example plot.png');
 saveas(hDataset,'DataSet example plot.fig');
 % close(hDataset);
-
+%%
 [~,classscoresT]=predict(CSVNmodel,scoreAll(:,1:3));
 difscore=classscoresT(:,2)-classscoresT(:,1);
 fityAll=(difscore-min(difscore))./(max(difscore)-min(difscore));
+% check whether this bad normalization is caused by one significantly large
+% value on one side of the boundary
+
 
 save RFpcaResult.mat LeftTestSet LeftTrainingSet RightTestSet RightTrainingSet CSVNmodel ErrorRate scoreAll fityAll -v7.3
 
 hclass = figure;
+hold on;
 plot(OctConsider,fityAll,'ro', 'MarkerSize',10,'LineWidth',0.8);
+xlabel('Oct.Diff from boundary');
+ylabel('Rightward choice');
+set(gca,'fontSize',20);
+title('RF data classification');
+modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));
+[~,bfit]=fit_logistic(OctConsider,fityAll);
+Curve_x = linspace(min(OctConsider),max(OctConsider),500);
+Curve_y = modelfun(bfit,Curve_x);
+plot(Curve_x,Curve_y,'r','LineWidth',1.2);
+
 saveas(hclass,'ScattterPlot for ROI.png');
 saveas(hclass,'ScattterPlot for ROI.fig');
 % close(hclass);

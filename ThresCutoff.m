@@ -5,7 +5,7 @@ function CutOffData=ThresCutoff(RawData,Thres,varargin)
 
 if isempty(Thres)
     RawDataShift=permute(RawData,[2,1,3]);
-    RawDataReshape=reshape(RawDataShift,DataSize(2),DataSize(1)*DataSize(3)); %first dimension if ROI number
+    RawDataReshape=reshape(RawDataShift,DataSize(2),DataSize(1)*DataSize(3)); %first dimension is ROI number
     ROIstd=mad(RawDataReshape,1)*1.4826; %estimated std value
     Thres=ROIstd;
 elseif numel(Thres)==1
@@ -29,6 +29,6 @@ datasize=size(RawData);
 CutOffData=zeros(datasize);
 for n=1:datasize(2)
     SingleData=squeeze(RawData(:,n,:));
-    SingleData(SingleData<=CutThres(n))=0;
+    SingleData(SingleData<=CutThres(n))=CutThres(n);
     CutOffData(:,n,:)=SingleData;  %balues below thres set to zero
 end
