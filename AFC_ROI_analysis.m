@@ -571,7 +571,7 @@ elseif str2double(continue_char)==2
     onset_time=behavResults.Time_stimOnset;
     stim_type_freq=behavResults.Stim_toneFreq;
     align_time_point=min(onset_time);
-    alignment_frames=floor((double((onset_time-align_time_point))/1000)*frame_rate);
+    alignment_frames=floor((double((onset_time-align_time_point))/1000)*frame_rate); 
     framelength=size_data(3)-max(alignment_frames);
     alignment_frames(alignment_frames<1)=1;
     start_frame=floor((double(align_time_point)/1000)*frame_rate);
