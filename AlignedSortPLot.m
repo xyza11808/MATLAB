@@ -41,11 +41,11 @@ for nROI = 1 : nROIs
         clims(2) = 400;
     end
     
-    h_plot=figure('color','w','position',[450 140 1000 820],'PaperPositionMode','auto');
+    h_plot=figure('color','w','position',[350 50 1000 1000],'PaperPositionMode','auto');
 %     set(gcf,'RendererMode','manual')
 %     set(gcf,'Renderer','OpenGL')
     
-    subplot(1,2,1);
+    subplot(3,2,[1,3]);
     hold on;
     imagesc(cLeftData,clims);
     set(gca,'ydir','reverse')
@@ -59,8 +59,9 @@ for nROI = 1 : nROIs
     ylim([0.5,nn]);
     line([AlignFrame AlignFrame],[0.5,nn],'color',[.8 .8 .8],'LineWidth',1.5);
     set(gca,'FontSize',20);
+    LeftMeanTrace = mean(cLeftData);
     
-    subplot(1,2,2);
+    subplot(3,2,[2,4]);
     hold on
     imagesc(cRightData,clims);
     set(gca,'ydir','reverse')
@@ -82,6 +83,30 @@ for nROI = 1 : nROIs
 %     yaxis = axis;
     line([AlignFrame AlignFrame],[0.5,nn],'color',[.8 .8 .8],'LineWidth',1.5);
     set(gca,'FontSize',20);
+    RightMeanTrace = mean(cRightData);
+    
+    LMax = max([max(LeftMeanTrace) max(RightMeanTrace)]) + 10;
+    lMin = min([min(LeftMeanTrace) min(RightMeanTrace)]) - 10;
+    
+    subplot(3,2,5)
+    hold on
+    plot(LeftMeanTrace,'b','LineWidth',1.5);
+    ylim([lMin LMax]);
+    line([AlignFrame AlignFrame],[lMin LMax],'color',[.8 .8 .8],'LineWidth',1.4);
+    set(gca,'xtick',xtick,'xticklabel',xTick_lable);
+    xlabel('Time(s)');
+    ylabel('Mean \DeltaF/F_0');
+    title('Left Mean');
+    
+    subplot(3,2,6)
+    hold on
+    plot(RightMeanTrace,'r','LineWidth',1.5);
+    ylim([lMin LMax]);
+    line([AlignFrame AlignFrame],[lMin LMax],'color',[.8 .8 .8],'LineWidth',1.4);
+    set(gca,'xtick',xtick,'xticklabel',xTick_lable);
+    xlabel('Time(s)');
+    ylabel('Mean \DeltaF/F_0');
+    title('Right Mean');
     
     suptitle(sprintf('ROI%d aligned to sound',nROI));
     saveas(h_plot,sprintf('ROI%d Aligned and sort plot',nROI),'fig');

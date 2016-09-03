@@ -55,12 +55,13 @@ global names
 
 % Choose default command line output for RandomNameGene
 handles.output = hObject;
-
-names.StudentOnlyNames = {'¥ﬁ¿÷¿÷','–¡”Ó','≤ÒÓ£√˜','÷”¡÷','¡ı—Â∫Õ','’≈‘∞','Ã∆À≥∫Ω','∂Œ¥∫”Í'};
+names.StudentOnlyNames = {'¥ﬁ¿÷¿÷','–¡”Ó','≤ÒÓ£√˜','÷”¡÷','¡ı—Â∫Õ','’≈‘∞','Ã∆À≥∫Ω','∂Œ¥∫”Í','’≈’—»ª'};
 names.StaffInNames = {'¥ﬁ¿÷¿÷','–¡”Ó','≤ÒÓ£√˜','÷”¡÷','¡ı—Â∫Õ','’≈‘∞','Ã∆À≥∫Ω',...
-    'panda','÷‹ÃŒÃŒ','Ã¿”≠”≠'};
+    'panda','÷‹ÃŒÃŒ','Ã¿”≠”≠','’≈’—»ª'};
 names.PIInNames = {'¥ﬁ¿÷¿÷','–¡”Ó','≤ÒÓ£√˜','÷”¡÷','¡ı—Â∫Õ','’≈‘∞','Ã∆À≥∫Ω',...
-    'panda','÷‹ÃŒÃŒ','Ã¿”≠”≠','XuNL','XuNL','XuNL','XuNL','XuNL','XuNL'};
+    'XuNL','∂Œ¥∫”Í','’≈’—»ª'};
+names.NameWeight = [];
+names.isProgRun = 0;
 set(handles.StudentCheck,'value',0);
 set(handles.StaffCheck,'value',0);
 set(handles.PICheck,'value',1);
@@ -155,13 +156,39 @@ else
 end
 
 nameLength = length(cNames);
-for n = 1 : 100
-    y = randsample(nameLength,1);
+if nameLength == length(names.NameWeight)
+    if ~names.isProgRun
+        names.NameWeight = ones(nameLength,1)/nameLength;
+    end
+else
+    names.NameWeight = ones(nameLength,1)/nameLength;
+end
+
+rng('shuffle');
+for n = 1 : 80
+    y = randsample(nameLength,1,true,names.NameWeight);
     SampleName = cNames{y};
     set(handles.NameDYN,'string',SampleName);
-    pause(0.02);
+    pause(0.01);
 end
-set(handles.ConfigText,'string','!!!CONGRADUATION!!!');
+names.isProgRun = 1;
+DecreaseWeight = names.NameWeight(y) - 1/(nameLength+1);  % new weight for selected person's weight
+if DecreaseWeight < 0
+    DecreaseWeight = 0.0001;
+end
+ChangedWeight = names.NameWeight(y) - DecreaseWeight;
+ChangeWeight = zeros(nameLength,1) + ChangedWeight/(nameLength-1);
+ChangeWeight(y) = 0;
+names.NameWeight = ChangeWeight + names.NameWeight;
+names.NameWeight(y) = DecreaseWeight;
+% names.NameWeight'
+% sum(names.NameWeight)
+set(handles.ConfigText,'string','!!!CONGRATULATION!!!');
 
+% ####################
+% convert m file function into exe file
+% mbuild -setup
+% mcc -m RandomNameGene 
+% ######################
 
 function ConfigText_CreateFcn(hObject, eventdata, handles)

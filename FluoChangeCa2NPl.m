@@ -153,6 +153,12 @@ end
 
 RingFbase=zeros(ROINum,1);
 
+if IsNeuropilExtract == 1 && ~isfield(CaTrials(1),'RingF')
+    error('Request of Ring-shaped neuropil extraction, but no such field exists.');
+end
+if IsNeuropilExtract == 2 && ~isfield(CaTrials(1),'SegNPdataAll')
+    error('Request of segmental neuropil extraction, but no such field exists.');
+end
 if isfield(CaTrials(1),'RingF') && IsNeuropilExtract == 1
     FCorrectData=zeros(TrialNum,ROINum,TrialLen);
     NPSubFactors = zeros(ROINum,1);
@@ -175,7 +181,7 @@ if isfield(CaTrials(1),'RingF') && IsNeuropilExtract == 1
             NPSubFactor = 0.7;
 %             BaseSubValue = cROIbase - cROIring * NPSubFactor;
         else
-            NPSubFactor = 0.5*mean(cROIbase)/mean(cROIring);
+            NPSubFactor = 0;
         end
         CROIdata=squeeze(RawData(:,nRoi,:));
         CRingdata=squeeze(RawRingData(:,nRoi,:));

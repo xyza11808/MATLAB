@@ -245,6 +245,7 @@ sweep_corr_inds=[];
 RewardOmitInds=[];
 ActiveRewardInds=[];
 ProbTrialInds=[];
+IsRewardGivenInds = [];
 for n=1:length(behavResults.Trial_Type)
     if ~behavResults.Trial_isProbeTrial(n)
         if strcmpi(behavResults.Stim_Type(n,:),'randompureTone')
@@ -266,17 +267,15 @@ for n=1:length(behavResults.Trial_Type)
             error('Unrecognized stimulus type, quit 2AFC analysis and please contact with the one who wrote this code.\n');
         end
     else
+        ProbTrialInds=[ProbTrialInds n]; %this index will be used for future analysis
         if isfield(behavResults,'isRewardIgnore') && isfield(behavResults,'isActiveReward')
             if behavResults.isRewardIgnore(n)
                 RewardOmitInds=[RewardOmitInds n];
             elseif behavResults.isActiveReward(n)
                 ActiveRewardInds=[ActiveRewardInds n];
-            else
-                if ~behavResults.ManWater_choice(n)
-                    ProbTrialInds=[ProbTrialInds n]; %this index will be used for future analysis
-                end
             end
         end
+       
     end
     
 end
@@ -448,35 +447,41 @@ end
 
 %##############################################
 if ~isempty(ProbTrialInds)
-    disp('Prob trial exists, performing prob and non-prob trials comparation plot.\n');
-     probe_trial_inds=ProbTrialInds;
-      prob_type_stim=behavResults.Stim_toneFreq(probe_trial_inds);
-    prob_stim_onset=behavResults.Time_stimOnset(probe_trial_inds);
-    prob_stim_freq=behavResults.Stim_toneFreq(probe_trial_inds);
-%     random_reward_time=behavResults.RewardTime(radom_inds);
-    prob_trial_type=behavResults.Trial_Type(probe_trial_inds);
-    prob_reward_time=behavResults.Time_reward(probe_trial_inds);
-    prob_action_choice=behavResults.Action_choice(probe_trial_inds);
-%     unique_stim_type=unique(random_type_stim);
+    Probtype = squeeze(behavSettings.probe_stimType);
+    CurrentSessionPType = Probtype(1,:);
+    fprintf('Prob trials type within currect session is %s',CurrentSessionPType);
+    if strcmpi(CurrentSessionPType,'CP')
+        % % place for choice probability calculation
+    else
+        disp('Prob trial exists, performing prob and non-prob trials comparation plot.\n');
+         probe_trial_inds=ProbTrialInds;
+          prob_type_stim=behavResults.Stim_toneFreq(probe_trial_inds);
+        prob_stim_onset=behavResults.Time_stimOnset(probe_trial_inds);
+        prob_stim_freq=behavResults.Stim_toneFreq(probe_trial_inds);
+    %     random_reward_time=behavResults.RewardTime(radom_inds);
+        prob_trial_type=behavResults.Trial_Type(probe_trial_inds);
+        prob_reward_time=behavResults.Time_reward(probe_trial_inds);
+        prob_action_choice=behavResults.Action_choice(probe_trial_inds);
+    %     unique_stim_type=unique(random_type_stim);
 
-    if field_count==2
-        prob_lick_time=lick_time_struct(probe_trial_inds);
-        for n=1:length(prob_lick_time)
-            frame_lick_inds(n).Action_LeftLick_frame=floor((double(prob_lick_time(n).LickTimeLeft)/1000)*frame_rate);
-            frame_lick_inds(n).Action_RightLick_frame=floor((double(prob_lick_time(n).LickTimeRight)/1000)*frame_rate);
+        if field_count==2
+            prob_lick_time=lick_time_struct(probe_trial_inds);
+            for n=1:length(prob_lick_time)
+                frame_lick_inds(n).Action_LeftLick_frame=floor((double(prob_lick_time(n).LickTimeLeft)/1000)*frame_rate);
+                frame_lick_inds(n).Action_RightLick_frame=floor((double(prob_lick_time(n).LickTimeRight)/1000)*frame_rate);
+            end
         end
+        Prob_trial_data=data(probe_trial_inds,:,:);
+        prob_trial_outcome = trial_outcome(radom_inds);
+        random_all_plot(Prob_trial_data,behavResults.Stim_toneFreq(probe_trial_inds),behavResults.Time_stimOnset(probe_trial_inds),prob_trial_outcome,frame_rate,session_date','prob');
+          %###############################################################################################
+          Seperate_align_plot_update(Prob_trial_data,prob_trial_type',[prob_stim_onset',prob_reward_time'],frame_rate,session_date');
+    %     %###############################################################################################
+          Split_TimePoint_plot(Prob_trial_data,prob_trial_type',frame_lick_inds,[prob_stim_onset',prob_reward_time'],frame_rate,session_date');
+    %     %###############################################################################################
     end
-    Prob_trial_data=data(probe_trial_inds,:,:);
-    prob_trial_outcome = trial_outcome(radom_inds);
-    random_all_plot(Prob_trial_data,behavResults.Stim_toneFreq(probe_trial_inds),behavResults.Time_stimOnset(probe_trial_inds),prob_trial_outcome,frame_rate,session_date','prob');
-      %###############################################################################################
-      Seperate_align_plot_update(Prob_trial_data,prob_trial_type',[prob_stim_onset',prob_reward_time'],frame_rate,session_date');
-%     %###############################################################################################
-      Split_TimePoint_plot(Prob_trial_data,prob_trial_type',frame_lick_inds,[prob_stim_onset',prob_reward_time'],frame_rate,session_date');
-%     %###############################################################################################
+
 end
-
-
 %%
     
 %     isrewardIgnore=0;
@@ -612,21 +617,25 @@ elseif str2double(continue_char)==2
         end
     end
     %%
-    ROC_check(smooth_data,TrialTypes,start_frame,frame_rate,[],'Stim_time_Align');
-    TimeCorseROC(data_aligned,TrialTypes,start_frame,frame_rate);  %cumulated ROC plot
+    ActiveCellGene(data,behavResults,trial_outcome,frame_rate,1.5);
     TimeCorseROC(data_aligned,TrialTypes,start_frame,frame_rate,[],2);   %seperated ROC plot
-    MeanAlignedDataPlot(smooth_data,start_frame,behavResults.Trial_Type,frame_rate);
+    MeanAlignedDataPlot(smooth_data,start_frame,behavResults.Trial_Type,frame_rate,trial_outcome);
      AlignedSortPLot(data_aligned,behavResults.Time_reward,behavResults.Time_answer,align_time_point,TrialTypes,frame_rate,onset_time);
-    Left_right_pca_dis(smooth_data,behavResults,session_name,frame_rate,start_frame,[],[],data,2);
+    
+     ROC_check(smooth_data,TrialTypes,start_frame,frame_rate,[],'Stim_time_Align');
+    TimeCorseROC(data_aligned,TrialTypes,start_frame,frame_rate);  %cumulated ROC plot
+     Left_right_pca_dis(smooth_data,behavResults,session_name,frame_rate,start_frame,[],[],data,2);
+   
       if RandomSession
 %           ShuffleNeuroMTest(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
-          RandNeuroMTestCrossV(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,1.5);
+          RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5);
           RandNeuroMTPerfcorr(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,1.5);
           NBC_for2afc(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate,1.5,TrialTypes); %naive bayes
           RandNeuroMLRC(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,TrialTypes,1.5);
           MultiTScaleNMT(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,{0.1,0.15,0.2,0.3,[0.1,0.2],[0.2,0.3]});
           ChoiceProbCal(smooth_data,behavResults.Stim_toneFreq,behavResults.Action_choice,1.5,start_frame,frame_rate,16000);
-          
+          FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1.5},frame_rate,start_frame,1);
+          FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1.5},frame_rate,start_frame);
           %% #############################################
           % % % % %plot psychometrical curve based on decision time window
           ChoicelickTime = double(FLickT);

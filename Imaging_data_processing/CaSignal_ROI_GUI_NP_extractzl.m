@@ -1,4 +1,4 @@
-function varargout = CaSignal_ROI_GUI_NP_extract(varargin)
+function varargout = CaSignal_ROI_GUI_NP_extractzl(varargin)
 % CaSignal_ROI_GUI_NP_extract M-file for CaSignal_ROI_GUI_NP_extract.fig
 %      CaSignal_ROI_GUI_NP_extract, by itself, creates a new CaSignal_ROI_GUI_NP_extract or raises the existing
 %      singleton*.
@@ -33,7 +33,7 @@ function varargout = CaSignal_ROI_GUI_NP_extract(varargin)
 
 % Edit the above text to modify the response to help CaSignal_ROI_GUI_NP_extract
 
-% Last Modified by GUIDE v2.5 01-Sep-2016 14:51:57
+% Last Modified by GUIDE v2.5 24-Aug-2016 13:16:02
 
 % Begin initialization code - DO NOT EDIT
 
@@ -85,7 +85,8 @@ end
 set(handles.dispModeGreen, 'Value', 1);
 set(handles.dispModeRed, 'Value', 0);
 set(handles.dispModeImageInfoButton, 'Value', 0);
-set(handles.dispModeWithROI, 'Value', 1);
+set(handles.dispModeWithROI, 'Value', 1); 
+set(handles.ismatload,'Value',0);
 % set(handles.LUTminEdit, 'Value', 0);
 % set(handles.LUTmaxEdit, 'Value', 500);
 % set(handles.LUTminSlider, 'Value', 0);
@@ -110,7 +111,7 @@ set(handles.ROI_draw_poly, 'Value',0);
 
 CaSignal.CaTrials = struct([]);
 CaSignal.ROIinfo = struct('ROImask',{}, 'ROIpos',{}, 'ROItype',{},'BGpos',[],...
-        'BGmask', [], 'ROI_def_trialNo',[], 'Method','','Ringmask',[],'LabelNPmask',{});
+        'BGmask', [], 'ROI_def_trialNo',[], 'Method','','Ringmask',[]);
 CaSignal.ROIinfoBack = CaSignal.ROIinfo;
 % CaSignal.ICA_ROIs = struct('ROImask',{}, 'ROIpos',{}, 'ROItype',{},'Method','ICA');
 CaSignal.ImageArray = [];
@@ -140,10 +141,8 @@ CaSignal.IsDoubleSetROI = 0;
 CaSignal.CurrentAnaTrial=[0,0,0];
 CaSignal.PlotData=cell(1,2);
 CaSignal.HigherVersionWarning = 0;
-CaSignal.ROINPlabel = [];
-CaSignal.EmptyROIsImport = [];
 fprintf('Matlab Two-photon imaging data analysis GUI.\n');
-fprintf('           Version :  2.02.05             \n');
+fprintf('           Version :  2.01.10             \n');
 % Update handles structure
 guidata(hObject, handles);
 
@@ -191,13 +190,11 @@ CaTrial.SessionName = '';
 CaTrial.dff = [];
 CaTrial.f_raw = [];
 CaTrial.RingF = [];
-CaTrial.ROINPlabel = [];
-CaTrial.SegNPData = [];
 % CaTrial.meanImage = [];
 CaTrial.RegTargetFrNo = [];
 % CaTrial.ROIinfo = struct('ROImask',{}, 'ROIpos',{}, 'ROItype',{},'Method','');
 CaTrial.ROIinfo = struct('ROImask',{}, 'ROIpos',{}, 'ROItype',{},'BGpos',[],...
-        'BGmask', [], 'ROI_def_trialNo',[], 'Method','','Ringmask',[],'LabelNPmask',[]);
+        'BGmask', [], 'ROI_def_trialNo',[], 'Method','','Ringmask',[]);
 CaTrial.ROIinfoBack = CaTrial.ROIinfo ;
 CaTrial.SoloDataPath = '';
 CaTrial.SoloFileName = '';
@@ -207,7 +204,21 @@ CaTrial.SoloStartTrialNo = [];
 CaTrial.SoloEndTrialNo = [];
 CaTrial.behavTrial = [];
 % CaTrial.ROIType = '';
+% --- Executes on button press in DispTiff.
+function DispTiff_Callback(hObject, eventdata, handles)
+global CaSignal
+TrialNo=CaSignal.CurrentTrialNo;
+filename = CaSignal.data_file_names{TrialNo};
+[im, ~] = load_scim_data(filename); 
+open_image_file_button_Callback(hObject, eventdata, handles,filename);
 
+handles = update_image_axes(handles,im);
+update_projection_images(handles);
+
+guidata(hObject, handles);
+% hObject    handle to DispTiff (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 % --- Executes on button press in open_image_file_button.
 function open_image_file_button_Callback(hObject, eventdata, handles, filename)
 global CaSignal % ROIinfo ICA_ROIs
@@ -234,7 +245,29 @@ if ~exist('filename', 'var')
     CaSignal.data_file_names = {};
     for i = 1:length(CaSignal.data_files)
         CaSignal.data_file_names{i} = CaSignal.data_files(i).name;
-    end;
+    end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % %%%%%%%%添加条件，只在gui初始打开tif的时候调用时运行这一部分，后期的调用跳过改过程
+    isLoadMat = get(handles.ismatload,'Value');
+    if isLoadMat
+        %=============add here===================
+        CaSignal.MaxMeanPath= dir(['TotalMean_max' '*.mat']);
+        CaSignal.MaxMeanFig=load(CaSignal.MaxMeanPath.name);
+
+        CaSignal.MaxDelta_data_path= dir(['MaxDelta' '*.mat']);
+        CaSignal.MaxDelta=load(CaSignal.MaxDelta_data_path.name);
+
+        CaSignal.Mean_data_path = dir(['Mean' '*.mat']);
+        CaSignal.Mean=load(CaSignal.Mean_data_path.name);
+
+        CaSignal.Max_data_path = dir(['Max_' '*.mat']);
+        CaSignal.Max=load(CaSignal.Max_data_path.name);
+        %=============add here===================   
+    else
+        fprintf('Skip extra mat file loading process.\n');
+        set(handles.dispMaxMeanMode,'Enable','off');
+    end
+
 end
 datapath = pwd;
 set(handles.DataPathEdit,'String',datapath);
@@ -283,12 +316,12 @@ end
 if CaSignal.CaTrials_INIT == 1
    CaSignal.CaTrials = []; % ROIinfo = {};
     if exist(CaSignal.results_fname,'file')
-        load(CaSignal.results_fname, '-mat');
+        load(CaSignal.results_fname, '-mat');   
         CaSignal.CaTrials = CaTrials;
     else
         A = init_CaTrial(filename, TrialNo, header);
         A(TrialNo) = A;
-        if TrialNo ~= 1
+        if TrialNo ~= 1 
             names = fieldnames(A);
             for i = 1:length(names)
                 A(1).(names{i})=[];
@@ -548,9 +581,9 @@ if get(handles.dispMeanMode, 'Value')==1
     end
     if CaSignal.CurrentAnaTrial(1)~=TrialNo
         im = CaSignal.ImageArray;
-        
         mean_im = mean(im,3);
         CaSignal.PlotData(1)={mean_im};
+       
         CaSignal.CurrentAnaTrial(1)=TrialNo;
     end
     sc = CaSignal.Scale;
@@ -561,14 +594,13 @@ if get(handles.dispMeanMode, 'Value')==1
 end
 if get(handles.dispMaxDelta,'Value')==1
     if ~isfield(CaSignal, 'h_maxDelta_fig') || ~ishandle(CaSignal.h_maxDelta_fig)
-        CaSignal.h_maxDelta_fig = figure('Name','max Delta Image','Position',[130   20   1000   900]);
+         CaSignal.h_maxDelta_fig = figure('Name','max Delta Image','Position',[130   20   1000   900]);
          CaSignal.CurrentAnaTrial(2)=0;
     else
         figure(CaSignal.h_maxDelta_fig);
     end
     if CaSignal.CurrentAnaTrial(2)~=TrialNo
         im = CaSignal.ImageArray;
-        sc = CaSignal.Scale; 
         mean_im = uint16(mean(im,3));
         im = im_mov_avg(im,3);
         max_im = max(im,[],3);
@@ -591,10 +623,10 @@ if get(handles.dispMaxMode,'Value')==1
     end
     if CaSignal.CurrentAnaTrial(3)~=TrialNo
         im = CaSignal.ImageArray;
-        
         im = im_mov_avg(im,5);
         max_im = max(im,[],3);
         CaSignal.PlotData(2)={max_im};
+%         max_im=CaSignal.Max.TrailMax{TrailNo};
         CaSignal.CurrentAnaTrial(3)=TrialNo;
     end
     sc = CaSignal.Scale;
@@ -603,6 +635,35 @@ if get(handles.dispMaxMode,'Value')==1
     set(gca, 'Position',[0.05 0.05 0.9 0.9], 'Visible','off');
     update_projection_image_ROIs(handles);
 end
+if get(handles.dispMaxMeanMode,'value')==1
+    if ~isfield(CaSignal, 'h_maxMean_fig') || ~ishandle(CaSignal.h_maxMean_fig)
+        CaSignal.h_maxMean_fig = figure('Name','Max_mean Projection Image','Position',[200   90   1000   900]);
+    else
+        figure(CaSignal.h_maxMean_fig)
+    end
+    if ~isfield(CaSignal,'MaxMeanFig')
+        
+        fprintf('No MaxMean data being imported, please load your matfile first.\n');
+        CaSignal.MaxMeanPath= dir(['TotalMean_max' '*.mat']);
+        CaSignal.MaxMeanFig=load(CaSignal.MaxMeanPath.name);
+
+        CaSignal.MaxDelta_data_path= dir(['MaxDelta' '*.mat']);
+        CaSignal.MaxDelta=load(CaSignal.MaxDelta_data_path.name);
+
+        CaSignal.Mean_data_path = dir(['Mean' '*.mat']);
+        CaSignal.Mean=load(CaSignal.Mean_data_path.name);
+
+        CaSignal.Max_data_path = dir(['Max_' '*.mat']);
+        CaSignal.Max=load(CaSignal.Max_data_path.name);
+    end
+    imMaxMean=CaSignal.MaxMeanFig.TotalMean_max;
+    sc = CaSignal.Scale;
+    imagesc(imMaxMean, sc);
+    colormap(gray); 
+    set(gca, 'Position',[0.05 0.05 0.9 0.9], 'Visible','off');
+    update_projection_image_ROIs(handles);
+end
+     
 guidata(handles.figure1,handles);
 
 % update ROI plotting in projecting image figure, called only by updata_projection image
@@ -720,13 +781,11 @@ if CurrentROINo > 0
     CaSignal.ROIinfo(TrialNo).ROImask(CurrentROINo) = [];
     CaSignal.ROIinfo(TrialNo).ROItype(CurrentROINo) = [];
     CaSignal.ROIinfo(TrialNo).Ringmask(CurrentROINo) = [];
-    CaSignal.ROIinfo(TrialNo).ROI_def_trialNo(CurrentROINo) = [];
     
     CaSignal.ROIinfoBack(1).ROIpos(CurrentROINo) = [];
     CaSignal.ROIinfoBack(1).ROImask(CurrentROINo) = [];
     CaSignal.ROIinfoBack(1).ROItype(CurrentROINo) = [];
     CaSignal.ROIinfoBack(1).Ringmask(CurrentROINo) = [];
-    CaSignal.ROIinfoBack(1).ROI_def_trialNo(CurrentROINo) = [];
     
     CaSignal.CaTrials(TrialNo).nROIs = CaSignal.CaTrials(TrialNo).nROIs - 1;
     CaSignal.CaTrials(TrialNo).ROIinfo = CaSignal.ROIinfo(TrialNo);
@@ -765,13 +824,13 @@ CurrentROINo = str2double(get(handles.CurrentROINoEdit,'String'));
 %     end
 %     nROIs = length(ROIinfo{TrialNo}.ROIpos);
 % end
-% for i = 1:length(CaSignal.ROIinfo(TrialNo).ROIpos)
-%     if isempty(CaSignal.ROIinfo(TrialNo).ROIpos{i})
-%         CaSignal.ROIinfo(TrialNo).ROIpos(i) = [];
-%         CaSignal.ROIinfo(TrialNo).ROImask(i) = [];
-%         CaSignal.ROIinfo(TrialNo).ROItype(i) = [];
-%     end
-% end
+for i = 1:length(CaSignal.ROIinfo(TrialNo).ROIpos)
+    if isempty(CaSignal.ROIinfo(TrialNo).ROIpos{i})
+        CaSignal.ROIinfo(TrialNo).ROIpos(i) = [];
+        CaSignal.ROIinfo(TrialNo).ROImask(i) = [];
+        CaSignal.ROIinfo(TrialNo).ROItype(i) = [];
+    end
+end
     nROIs = length(CaSignal.ROIinfo(TrialNo).ROIpos);
 set(handles.nROIsText, 'String', num2str(nROIs));
 if CurrentROINo > nROIs
@@ -886,13 +945,15 @@ else
         warndlg('For matlab version higher than 2014a, only one figure can be used to draw ROIs','Higher version warning');
         CaSignal.HigherVersionWarning=1;
     end
-        if isfield(CaSignal,'h_mean_fig') && isfield(CaSignal,'h_maxDelta_fig')
-            Fchoice = questdlg('Select one image to plot ROI','Figure selection', 'Mean figure', 'Mex-delta', 'Mex-delta');
+        if isfield(CaSignal,'h_mean_fig') && isfield(CaSignal,'h_maxDelta_fig') && isfield(CaSignal,'h_maxMean_fig')
+            Fchoice = questdlg('Select one image to plot ROI','Figure selection', 'Mean figure', 'Mex-delta', 'Mex-delta','Total Max_mean');
             switch Fchoice
                 case 'Mean figure'
                     figure(CaSignal.h_mean_fig);
                 case 'Mex-delta'
                     figure(CaSignal.h_maxDelta_fig);
+                case 'Total Max_mean'
+                    figure(CaSignal.h_maxMean_fig);
                 otherwise
                     fprintf('No choice selection. using max_delta figure.\n');
                     figure(CaSignal.h_maxDelta_fig);
@@ -901,6 +962,8 @@ else
             figure(CaSignal.h_mean_fig);
         elseif isfield(CaSignal,'h_maxDelta_fig')
             figure(CaSignal.h_maxDelta_fig);
+        elseif isfield(CaSignal,'h_maxMean_fig')
+            figure(CaSignal.h_maxMean_fig);
         end
         
 end
@@ -1050,8 +1113,6 @@ switch choice
         CaSignal.IsROIinfoLoad = 1;
     case 'No'
         return
-    otherwise
-        fprintf('Quit ROIinfo loading processing.\n');
 end
 import_ROIinfo(ROIinfo, handles);
 
@@ -1063,26 +1124,24 @@ global CaSignal
 TrialNo_load = str2double(get(handles.import_ROIinfo_from_trial,'String'));
 if ~isempty(CaSignal.ROIinfo)
     ROIinfo = CaSignal.ROIinfo(TrialNo_load);
-    import_ROIinfo(ROIinfo, handles,hObject,eventdata);% getROIinfoButton_Callback(hObject, eventdata, handles)
+    import_ROIinfo(ROIinfo, handles);% getROIinfoButton_Callback(hObject, eventdata, handles)
 else
     warning('No ROIs specified!');
 end
 
-function import_ROIinfo(ROIinfo, handles,hObject,eventdata)
+function import_ROIinfo(ROIinfo, handles)
 % update the ROIs of the current trial with the input "ROIinfo".
 global CaSignal % ROIinfo ICA_ROIs
 TrialNo = str2double(get(handles.CurrentTrialNo,'String'));
 
 FileName_prefix = CaSignal.CaTrials(TrialNo).FileName_prefix;
 emptyROIs=[];
-if isfield(ROIinfo,'Ringmask') && isfield(ROIinfo,'LabelNPmask')
+if isfield(ROIinfo,'Ringmask')
     CaSignal.ROIinfo(TrialNo) = ROIinfo;
     CaSignal.ROIinfoBack(1) = ROIinfo;
 else
     nROIs=length(ROIinfo.ROImask);
-    ROIinfo.LabelNPmask={};
     ROIinfo.Ringmask=cell(1,nROIs);
-%     ROIinfo.LabelNPmask=cell(1,nROIs);
     FrameSize=CaSignal.imSize(1:2);
     for n=1:nROIs
         BW=ROIinfo.ROImask{n};
@@ -1098,18 +1157,17 @@ else
         end
         [RingMask,ROIsum]= RingShapeMask(FrameSize,CenterXY,pos,[],ROIsum,BW);
         ROIinfo.Ringmask{n}=RingMask;
-%         ROIinfo.LabelNPmask{n}=
     end
     CaSignal.ROIsummask=ROIsum;
-    CaSignal.ROIinfo = ROIinfo;
-    CaSignal.ROIinfoBack = ROIinfo;
+    CaSignal.ROIinfo(TrialNo) = ROIinfo;
+    CaSignal.ROIinfoBack(1) = ROIinfo;
 end
-CaSignal.EmptyROIsImport = emptyROIs;
-% if ~isempty(emptyROIs)
-%     for n=1:length(emptyROIs)
-%         ROI_del_Callback(hObject, eventdata, handles, emptyROIs(n));
-%     end
-% end
+
+if ~isempty(emptyROIs)
+    for n=1:length(emptyROIs)
+        ROI_del_Callback(hObject, eventdata, handles, emptyROIs(n));
+    end
+end
     
 % if exist('ROIinfoBU','var')
 %     CaSignal.ROIinfo(TrialNo) = ROIinfoBU;
@@ -1255,15 +1313,10 @@ numberROIs=CaSignal.CaTrials(1).nROIs;
 emptyROIs=[];
 for n=1:numberROIs
     ALLROImaskR=CaSignal.ROIinfoBack(1).Ringmask;
-    ALLROImask = CaSignal.ROIinfoBack(1).ROImask;
-    if isempty(ALLROImaskR{n}) || isempty(ALLROImask{n})
+    if isempty(ALLROImaskR{n})
         emptyROIs=[emptyROIs n];
     end
 end
-if ~isempty(CaSignal.EmptyROIsImport)
-    emptyROIs = unique([emptyROIs CaSignal.EmptyROIsImport]);
-end
-emptyROIs = sort(emptyROIs,'descend');
 if ~isempty(emptyROIs)
     for n=1:length(emptyROIs)
         ROI_del_Callback(hObject, eventdata, handles, emptyROIs(n));
@@ -1279,7 +1332,7 @@ nTrials = length(CaSignal.CaTrials);
 
 CaTrials_local = CaSignal.CaTrials;
 ROIinfo_local = CaSignal.ROIinfo;
-ROIpos = CaSignal.ROIinfoBack(1).ROIpos;
+ROIpos = CaSignal.ROIinfo(1).ROIpos;
 %#####################################
 %recheck whether Ring back is overlapped with any ROI
 ALLROImaskR=CaSignal.ROIinfoBack(1).Ringmask;
@@ -1304,10 +1357,6 @@ if isempty(CaSignal.ROIsummask) || CaSignal.IsROIinfoLoad
     end
     CaSignal.ROIsummask=SumROI;
 end
-FrameSize=CaSignal.imSize(1:2);
-[LabelNPmask,Labels]=SegNPGeneration(FrameSize,ROIpos,ALLROImask);
-CaSignal.SegNumber = length(LabelNPmask);
-CaSignal.ROINPlabel=Labels;
 % % CaSignal.ROIinfoBack(1).Ringmask(EmptyROIs)=[];
 % ROIinfo_local(1).ROImask(EmptyROIs)=[];
 % ROIinfo_local(1).Ringmask(EmptyROIs)=[];
@@ -1319,6 +1368,7 @@ CaSignal.ROINPlabel=Labels;
 % 
 % nTROIs=nTROIs-length(EmptyROIs);
 % ALLROImaskR(EmptyROIs)=[];
+
 
 for n=1:nTROIs
     ROIRingMask = ALLROImaskR{n};
@@ -1333,9 +1383,7 @@ end
 CaSignal.ROIinfoBack(1).Ringmask = AdjustROImaskR;
 ROIinfo_local(1).Ringmask = AdjustROImaskR;
 CaSignal.ROIinfo(1).Ringmask = AdjustROImaskR;
-CaSignal.ROIinfoBack(1).LabelNPmask = LabelNPmask;
-ROIinfo_local(1).LabelNPmask = LabelNPmask;
-CaSignal.ROIinfo(1).LabelNPmask = LabelNPmask;
+
 %###########################################################################
     % Make sure the ROIinfo of the first trial of the batch is up to date
 for TrialNo = Start_trial:End_trial
@@ -1350,14 +1398,14 @@ for TrialNo = Start_trial:End_trial
 end
 
 %##########################################################################
-CPUCores=str2num(getenv('NUMBER_OF_PROCESSORS')); %#ok<ST2NM>
+% CPUCores=str2num(getenv('NUMBER_OF_PROCESSORS')); %#ok<ST2NM>
 poolobj = gcp('nocreate');
 if isempty(poolobj)
-    parpool('local',CPUCores);
+    parpool('local',4);
 %     poolobj = gcp('nocreate');
 end
 
-parfor TrialNo = Start_trial:End_trial
+for TrialNo = Start_trial:End_trial
     fname = filenames{TrialNo};
     if ~exist(fname,'file')
         [fname, pathname] = uigetfile('*.tif', 'Select Image Data file');
@@ -1386,7 +1434,6 @@ parfor TrialNo = Start_trial:End_trial
 %     update_image_axes(handles,im);
 %     CalculatePlotButton_Callback(handles.figure1, eventdata, handles, im, ROIinfo_local(TrialNo), 0);
     [F, fRing,dff] = extract_roi_fluo(im, ROIinfo_local(TrialNo), 0);
-    LabelSegNPData = SegNPdataExtraction(im,LabelNPmask);
 %     disp(['Currently calculated trial number ' num2str(TrialNo) '...']);
     if isempty(F)
         disp(['Empty fluo data for trial  ' num2str(TrialNo) '...']);
@@ -1394,8 +1441,6 @@ parfor TrialNo = Start_trial:End_trial
     CaTrials_local(TrialNo).dff = dff;
     CaTrials_local(TrialNo).f_raw = F;
     CaTrials_local(TrialNo).RingF = fRing;
-    CaTrials_local(TrialNo).SegNPData = LabelSegNPData;
-    CaTrials_local(TrialNo).ROINPlabel = Labels;
 %     handles = update_projection_images(handles);
 %     handles = get_exp_info(hObject, eventdata, handles);
 %     CaSignal.CaTrials(TrialNo).meanImage = mean(im,3);
@@ -1481,36 +1526,18 @@ SavedCaTrials.ROIinfoBack=CaTrials(1).ROIinfoBack;
 
 RawData=zeros(length(CaTrials),CaTrials(1).nROIs,CaTrials(1).nFrames);
 ringData=zeros(length(CaTrials),CaTrials(1).nROIs,CaTrials(1).nFrames);
-if isfield(CaSignal,'SegNumber')
-    SegNPdata=zeros(length(CaTrials),CaSignal.SegNumber,CaTrials(1).nFrames);
-end
-try
-    if isempty(CaTrials(1).f_raw) || isempty(CaTrials(1).RingF)
-        RawData=[];
-        ringData=[];
-        SegNPdata=[];
-    else
-        for n=1:length(CaTrials)
-            RawData(n,:,:)=CaTrials(n).f_raw;
-            ringData(n,:,:)=CaTrials(n).RingF;
-            SegNPdata(n,:,:)=CaTrials(n).SegNPData;
-        end
+if isempty(CaTrials(1).f_raw) || isempty(CaTrials(1).RingF)
+    RawData=[];
+    ringData=[];
+else
+    for n=1:length(CaTrials)
+        RawData(n,:,:)=CaTrials(n).f_raw;
+        ringData(n,:,:)=CaTrials(n).RingF;
     end
-    SavedCaTrials.f_raw=RawData;
-    SavedCaTrials.RingF=ringData;
-    SavedCaTrials.TrialNum=length(CaTrials);
-    SavedCaTrials.SegNPdataAll=SegNPdata;
-    SavedCaTrials.ROISegLabel=CaSignal.ROINPlabel;
-    %simplified data storage
-    save(CaSignal.SIMsave_fname,'SavedCaTrials','-v7.3');
-    save(CaSignal.ROIinfoback_fname, 'ROIinfoBU','-v7.3');
-catch
-    fprintf('Can''t save current session data in simplified way, may be caused by some frame dropping at trial number %d.\n',n);
-    %redundant data storage
-    save(CaSignal.results_fname, 'CaTrials','-v7.3');
-    save(CaSignal.ROIinfo_fname, 'ROIinfo','-v7.3');
 end
-
+SavedCaTrials.f_raw=RawData;
+SavedCaTrials.RingF=ringData;
+SavedCaTrials.TrialNum=length(CaTrials);
 
 %%
 % save(CaSignal.results_fname, 'CaTrials','ICA_results');
@@ -1520,8 +1547,8 @@ end
 % save(CaSignal.ROIinfo_fname, 'ROIinfo','-v7.3');
 
 %simplified data storage
-% save(CaSignal.SIMsave_fname,'SavedCaTrials','-v7.3');
-% save(CaSignal.ROIinfoback_fname, 'ROIinfoBU','-v7.3');
+save(CaSignal.SIMsave_fname,'SavedCaTrials','-v7.3');
+save(CaSignal.ROIinfoback_fname, 'ROIinfoBU','-v7.3');
 
 % save(fullfile(CaSignal.results_path, ['ICA_ROIs_', FileName_prefix '.mat']), 'ICA_ROIs');
 msg_str = sprintf('CaTrials Saved, with %d trials, %d ROIs', length(CaSignal.CaTrials), CaSignal.CaTrials(TrialNo).nROIs);
@@ -1591,77 +1618,91 @@ global CaSignal % ROIinfo ICA_ROIs
 CaSignal.Last_TrialNo = CaSignal.CurrentTrialNo;
 CaSignal.CurrentTrialNo = str2double(get(handles.CurrentTrialNo,'String'));
 
-TrialNo = CaSignal.CurrentTrialNo;
-if TrialNo>0
-    filename = CaSignal.data_file_names{TrialNo};
-    if exist(filename,'file')
-        open_image_file_button_Callback(hObject, eventdata, handles,filename);
-    end
-end
+% TrialNo = CaSignal.CurrentTrialNo;
+% if TrialNo>0
+%     filename = CaSignal.data_file_names{TrialNo};
+%     if exist(filename,'file')
+%         open_image_file_button_Callback(hObject, eventdata, handles,filename);
+%     end
+% end
 
 function PrevTrialButton_Callback(hObject, eventdata, handles)
 global CaSignal % ROIinfo ICA_ROIs
 CaSignal.Last_TrialNo = CaSignal.CurrentTrialNo;
 TrialNo = str2double(get(handles.CurrentTrialNo,'String'));
 if TrialNo>1
-    filename = CaSignal.data_file_names{TrialNo-1};
-    if exist(filename,'file')
-        open_image_file_button_Callback(hObject, eventdata, handles,filename);
-    end
+     CaSignal.CurrentTrialNo=TrialNo-1;
+%     filename = CaSignal.data_file_names{TrialNo-1};
+%     if exist(filename,'file')
+%         open_image_file_button_Callback(hObject, eventdata, handles,filename);
+%     end
 else
-     filename = CaSignal.data_file_names{length(CaSignal.data_file_names)};
-     if exist(filename,'file')
-        open_image_file_button_Callback(hObject, eventdata, handles,filename);
-     end
+    CaSignal.CurrentTrialNo=1;
+%      filename = CaSignal.data_file_names{length(CaSignal.data_file_names)};
+%      if exist(filename,'file')
+%         open_image_file_button_Callback(hObject, eventdata, handles,filename);
+%      end
 end
+set(handles.CurrentTrialNo,'string',num2str(CaSignal.CurrentTrialNo));
 
 function NextTrialButton_Callback(hObject, eventdata, handles)
 global CaSignal % ROIinfo ICA_ROIs
 CaSignal.Last_TrialNo = CaSignal.CurrentTrialNo;
 TrialNo = str2double(get(handles.CurrentTrialNo,'String'));
 if  TrialNo+1 <= length(CaSignal.data_file_names) % exist(filename,'file')
-    filename = CaSignal.data_file_names{TrialNo+1};
-    open_image_file_button_Callback(hObject, eventdata, handles,filename);
+%     filename = CaSignal.data_file_names{TrialNo+1};
+%     open_image_file_button_Callback(hObject, eventdata, handles,filename);
+    CaSignal.CurrentTrialNo=TrialNo+1;
 else
-    filename = CaSignal.data_file_names{1};
-    open_image_file_button_Callback(hObject, eventdata, handles,filename);
+     CaSignal.CurrentTrialNo=1;
+%     filename = CaSignal.data_file_names{1};
+%     open_image_file_button_Callback(hObject, eventdata, handles,filename);
 end
+set(handles.CurrentTrialNo,'string',num2str(CaSignal.CurrentTrialNo));
 
 function TwoStepPreTrial_Callback(hObject, eventdata, handles)
 global CaSignal % ROIinfo ICA_ROIs
 CaSignal.Last_TrialNo = CaSignal.CurrentTrialNo;
 TrialNo = str2double(get(handles.CurrentTrialNo,'String'));
 if TrialNo>2
-    filename = CaSignal.data_file_names{TrialNo-2};
-    if exist(filename,'file')
-        open_image_file_button_Callback(hObject, eventdata, handles,filename);
-    end
+    CaSignal.CurrentTrialNo=TrialNo-2;
+%     filename = CaSignal.data_file_names{TrialNo-2};
+%     if exist(filename,'file')
+%         open_image_file_button_Callback(hObject, eventdata, handles,filename);
+%     end
 else
-    filename = CaSignal.data_file_names{length(CaSignal.data_file_names)};
-    if exist(filename,'file')
-        open_image_file_button_Callback(hObject, eventdata, handles,filename);
-    end
+    CaSignal.CurrentTrialNo=length(CaSignal.data_file_names);
+%     filename = CaSignal.data_file_names{length(CaSignal.data_file_names)};
+%     if exist(filename,'file')
+%         open_image_file_button_Callback(hObject, eventdata, handles,filename);
+%     end
 end
+set(handles.CurrentTrialNo,'string',num2str(CaSignal.CurrentTrialNo));
 
 function TwoStepNextTrial_Callback(hObject, eventdata, handles)
 global CaSignal % ROIinfo ICA_ROIs
 CaSignal.Last_TrialNo = CaSignal.CurrentTrialNo;
 TrialNo = str2double(get(handles.CurrentTrialNo,'String'));
 if  TrialNo+2 <= length(CaSignal.data_file_names) % exist(filename,'file')
-    filename = CaSignal.data_file_names{TrialNo+2};
-    open_image_file_button_Callback(hObject, eventdata, handles,filename);
+    CaSignal.CurrentTrialNo=TrialNo+2;
+%     filename = CaSignal.data_file_names{TrialNo+2};
+%     open_image_file_button_Callback(hObject, eventdata, handles,filename);
 else
-    filename = CaSignal.data_file_names{1};
-    open_image_file_button_Callback(hObject, eventdata, handles,filename);
+    CaSignal.CurrentTrialNo=1;
+%     filename = CaSignal.data_file_names{1};
+%     open_image_file_button_Callback(hObject, eventdata, handles,filename);
 end
+set(handles.CurrentTrialNo,'string',num2str(CaSignal.CurrentTrialNo));
 
 function go_to_last_trial_button_Callback(hObject, eventdata, handles)
 global CaSignal % ROIinfo ICA_ROIs
 LastTrialNo = CaSignal.Last_TrialNo;
 if  LastTrialNo > 0 % exist(filename,'file')
-    filename = CaSignal.data_file_names{LastTrialNo};
-    open_image_file_button_Callback(hObject, eventdata, handles,filename);
+    CaSignal.CurrentTrialNo=LastTrialNo;
+%     filename = CaSignal.data_file_names{LastTrialNo};
+%     open_image_file_button_Callback(hObject, eventdata, handles,filename);
 end
+set(handles.CurrentTrialNo,'string',num2str(CaSignal.CurrentTrialNo));
 
 
 function AnalysisModeBGsub_Callback(hObject, eventdata, handles)
@@ -1866,6 +1907,73 @@ else
 end
 guidata(hObject, handles);
 
+% --- Executes on button press in dispMaxMeanMode.
+function dispMaxMeanMode_Callback(hObject, eventdata, handles)
+global CaSignal % ROIinfo ICA_ROIs
+if get(hObject, 'Value')==1
+    handles = update_projection_images(handles);
+else
+    try
+        if ishandle(CaSignal.h_maxMean_fig)
+            delete(CaSignal.h_maxMean_fig);
+        end;
+    catch ME
+        
+    end
+    CaSignal=rmfield(CaSignal,'h_maxMean_fig');
+end
+guidata(hObject, handles);
+% hObject    handle to dispMaxMeanMode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of dispMaxMeanMode
+% --- Executes on button press in dispMaxMeanMode.
+
+% hObject    handle to dispMaxMeanMode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of dispMaxMeanMode
+% function dispTotalMaxMeanMode_Callback(hObject, eventdata, handles)
+% global CaSignal % ROIinfo ICA_ROIs
+% % if get(handles.dispTotalMaxMeanMode,'value')==1
+% %     if ~isfield(CaSignal, 'h_maxMean_fig') || ~ishandle(CaSignal.h_maxMean_fig)
+% %         CaSignal.h_maxMean_fig = figure('Name','Max_mean Projection Image','Position',[200   90   1000   900]);
+% % %          CaSignal.CurrentAnaTrial(3)=0;
+% %     else
+% %         figure(CaSignal.h_maxMean_fig)
+% %     end
+% % %     if CaSignal.CurrentAnaTrial(3)~=TrialNo
+% % %         im = CaSignal.ImageArray;
+% %         
+% % %         im = im_mov_avg(im,5);
+% % %         max_im = max(im,[],3);
+% %         imMaxMean=CaSignal.MaxMeanFig.TotalMean_max;
+% % %         CaSignal.CurrentAnaTrial(3)=TrialNo;
+% % %     end
+% %     sc = CaSignal.Scale;
+% %     imagesc(imMaxMean, sc);
+% %     colormap(gray); 
+% %     set(gca, 'Position',[0.05 0.05 0.9 0.9], 'Visible','off');
+% %     update_projection_image_ROIs(handles);
+% % end
+% 
+% 
+% % if get(hObject, 'Value')==1
+% %     handles = update_projection_images(handles);
+% % else
+% %     try
+% %         if ishandle(CaSignal.h_maxMean_fig)
+% %             delete(CaSignal.h_maxMean_fig);
+% %         end;
+% %     catch ME
+% %     end
+% %     CaSignal=rmfield(CaSignal,'h_maxMean_fig');
+% % end
+% guidata(hObject, handles);
+
+
 function ROITypeMenu_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
@@ -1937,11 +2045,13 @@ if get(hObject,'Value') == 1
     if isfield(CaSignal, 'MaxDelta')&& ~isempty(CaSignal.MaxDelta)
         CaSignal.RegTarget = CaSignal.MaxDelta;
     else
-        im = CaSignal.ImageArray;
-        mean_im = uint16(mean(im,3));
-        im = im_mov_avg(im,5);
-        max_im = max(im,[],3);
-        CaSignal.RegTarget = max_im - mean_im;
+%         im = CaSignal.ImageArray;
+%         mean_im = uint16(mean(im,3));
+%         im = im_mov_avg(im,5);
+%         max_im = max(im,[],3);
+%  
+        TrialNo=CaSignal.CurrentTrialNo;
+        CaSignal.RegTarget = CaSignal.MaxDelta.TrailMaxDelta(TrialNo);
         set(handles.setTargetCurrentFrame, 'Value', 0);
         set(handles.setTargetMean, 'Value', 0);
     end 
@@ -2856,48 +2966,32 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-% --- Executes during object creation, after setting all properties.
-function ImageJPathET_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to CurrentTrialNo (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-if exist('D:\Fiji.app\ImageJ-win64.exe','file')
-    set(hObject,'String','D:\Fiji.app\ImageJ-win64.exe');
-end
-
-function ImageJPathB_Callback(hObject, eventdata, handles)
-[fn,fp,fi] = uigetfile('*.exe','Please select you iamge app position');
-if fi
-    ImagjPathFull = fullfile(fp,fn);
-    set(handles.ImageJPathET,'String',ImagjPathFull);
-end
-
-function OpenInImageJ_Callback(hObject, eventdata, handles)
-% button down function
-global CaSignal
-CurrentTrials = CaSignal.CurrentTrialNo;
-CurrentFile = fullfile(CaSignal.data_path,CaSignal.data_file_names{CurrentTrials});
-ImageJPath = get(handles.ImageJPathET,'String');
-if exist(ImageJPath,'file') && strcmp(ImageJPath(end-3:end),'.exe')
-    system([ImageJPath ' ' CurrentFile]);
-else
-    fprintf('ImageJ file doean''t exists, please select your app position.\n');
-    ImageJPathB_Callback(hObject, eventdata, handles);
-    OpenInImageJ_Callback(hObject, eventdata, handles);
-end
-
-
-
-function ImageJPathET_Callback(hObject, eventdata, handles)
-% hObject    handle to ImageJPathET (see GCBO)
+function ismatload_Callback(hObject, eventdata, handles)
+% hObject    handle to ROI_move_all_check (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global CaSignal
+Checkvalue = get(handles.ismatload,'value');
+if Checkvalue
+    set(handles.dispMaxMeanMode,'Enable','on');
+    if ~isfield(CaSignal,'MaxMeanFig')
+        
+        CaSignal.MaxMeanPath= dir(['TotalMean_max' '*.mat']);
+        CaSignal.MaxMeanFig=load(CaSignal.MaxMeanPath.name);
 
-% Hints: get(hObject,'String') returns contents of ImageJPathET as text
-%        str2double(get(hObject,'String')) returns contents of ImageJPathET as a double
+        CaSignal.MaxDelta_data_path= dir(['MaxDelta' '*.mat']);
+        CaSignal.MaxDelta=load(CaSignal.MaxDelta_data_path.name);
+
+        CaSignal.Mean_data_path = dir(['Mean' '*.mat']);
+        CaSignal.Mean=load(CaSignal.Mean_data_path.name);
+
+        CaSignal.Max_data_path = dir(['Max_' '*.mat']);
+        CaSignal.Max=load(CaSignal.Max_data_path.name);
+    end
+else
+    set(handles.dispMaxMeanMode,'Enable','off');
+end
+% Hint: get(hObject,'Value') returns toggle state of ROI_move_all_check
+
+
+% --- Executes on button press in dispTotalMaxMeanMode.

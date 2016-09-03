@@ -21,7 +21,7 @@ if mod(NumberField,2)~=0
     error('Field number should be a even number, cannot performing following analysis.');
 end
 NumObservations = NumberField/2;
-fprintf('Current nput data have %d observations for both control and modulation data.\n',NumObservations);
+fprintf('Current input data have %d observations for both control and modulation data.\n',NumObservations);
 handles = struct(); % the first column will be control plot handle, second column for modulation plot handle
 HandlesPatch = struct(); 
 h_all = figure('position',[400 300 1100 700],'paperpositionmode','auto');

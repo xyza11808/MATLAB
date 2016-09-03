@@ -16,7 +16,9 @@ end
 PlotDespStr = {'CU','SP'};
 PlotDesp = PlotDespStr{CUplot+1};
 
-FrameBin=floor((TimeBins/1000)*FrameRate);
+FrameBin=round((TimeBins/1000)*FrameRate);
+TimeBins = (FrameBin / FrameRate)*1000;
+fprintf('Real Timebin value is %.4f.\n',TimeBins);
 DatSize=size(AlignedData);
 
 if ~isdir('./TimeFunROC_Plot/')
@@ -308,9 +310,9 @@ LRRand=max(BINNEDROCResultLR,[],2);
 
 hLR=Popu_3d_Plot(BINNEDROCResultLR,LRRand);
 figure(hLR);
-xlimvalue=get(gca,'xlim');
-xlimvT=(xlimvalue(2)*TimeBins/1000);
-xtickTime=0:(1/(TimeBins/1000)):xlimvalue(2);
+% xlimvalue=get(gca,'xlim');
+xlimvT=(BinLength*TimeBins/1000);
+xtickTime=0:(1/(TimeBins/1000)):BinLength;
 xticklabelT=0:xlimvT;
 set(gca,'xtick',xtickTime,'xticklabel',xticklabelT);
 % set(gca,'xticklabel',cellstr(num2str(PXtickTime(:),'%.1f')),'FontSize',12);
@@ -320,6 +322,7 @@ saveas(hLR,'Popu 3dplot AUC LR.png');
 saveas(hLR,'Popu 3dplot AUC LR.fig');
 close(hLR);
 
+%%
 DataForPlot = BINNEDROCResultLR';
 [~,Inds] = sort(LRRand);
 SmoothData = zeros(size(DataForPlot));
@@ -330,7 +333,8 @@ h_surf = figure;
 surf(SmoothData(:,Inds),'LineStyle','none','Facecolor','interp');
 colormap jet
 set(gca,'clim',[0.5 1]);
-set(gca,'xdir','reverse','xtick',1:50:DatSize(2));
+set(gca,'xdir','reverse','xtick',1:49:DatSize(2));
+ylim([-10 BinLength+10]);
 xlabel('ROIs');
 ylabel('Time (s)');
 zlabel('Fraction correct');
@@ -343,8 +347,21 @@ hBar = colorbar;
 set(hBar,'Ticks',[0.5,0.8,1]);
 saveas(h_surf,'Popu 3dplot AUC surf.png');
 saveas(h_surf,'Popu 3dplot AUC surf.fig');
-% close(hLR);
+close(h_surf);
 
+[~,MaxIndsSmooth] = max(SmoothData);
+BinTimeValue = MaxIndsSmooth*TimeBins/1000;
+[nCount,nCenters] = hist(BinTimeValue);
+h_PeakDis = figure;
+plot(nCenters,nCount,'k','LineWidth',2);
+xlabel('Time (s)','FontSize',20)
+ylabel('ROI count','FontSize',20)
+title('ROC peak time distribution')
+set(gca,'FontSize',20);
+%%
+saveas(h_PeakDis,'ROC peak time distribution');
+saveas(h_PeakDis,'ROC peak time distribution','png');
+close(h_PeakDis);
 cd ..;
 
 %3d plot in 2d space

@@ -153,6 +153,14 @@ if strcmpi(type,'RF')
     re_organized_data=zeros(size_DB,freq_rep_times,result_size(3));
     RF_fit_data=struct('AvaFitPara',[]);
     
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % extract data for 2afc comparation
+    SelectDb = 70;
+    SelectInds = sound_array(:,2) == SelectDb;
+    FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1.5},frame_rate,frame_rate);
+    FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1.5},frame_rate,frame_rate,1);
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
 %     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %     %RF resp neuron test
 %     TrialFreq = sound_array(:,1);

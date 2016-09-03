@@ -19,7 +19,8 @@ end
 %%
 DataSize=size(RawDataAll);
 % CorrectInds=TrialResult==1;
-CorrectInds=true(1,length(TrialResult));
+% CorrectInds=true(1,length(TrialResult));
+CorrectInds=TrialResult~=2;  %exclude all miss trials
 CorrTrialStim=StimAll(CorrectInds);
 CorrTrialData=RawDataAll(CorrectInds,:,:);
 CorrStimType=unique(CorrTrialStim);
@@ -306,6 +307,7 @@ save randCurveFit.mat Octavex realy FreqScore breal bfit -v7.3
 h_doubleyy = figure('position',[300 150 1100 900],'PaperpositionMode','auto');
 hold on;
 [hax,hline1,hline2] = plotyy(Curve_x,curve_realy,Curve_x,curve_fity);
+text(Curve_x(end-1),0.2,sprintf('nROI = %d',nROI),'FontSize',15);
 set(hline1,'color','k','LineWidth',2);
 set(hline2,'color','r','LineWidth',2);
 set(hax(1),'xtick',Octavex,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k','ytick',[0 0.2 0.4 0.6 0.8 1]);

@@ -39,10 +39,40 @@ for n = 1:fileNum
         FilePath=pwd;
     end
     
+    AnimalActionC = behavResults.Action_choice;
+    MissTrialsInds = AnimalActionC == 2;
+    CorrectInds = behavResults.Time_reward ~= 0;
+    ErrorTrials = behavResults.Time_reward == 0;
+    %  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % excluded all miss trials from analysis
+    behavResults.Trial_Type(MissTrialsInds) = [];
+    behavResults.Time_reward (MissTrialsInds) = [];
+    behavResults.Stim_toneFreq(MissTrialsInds) = [];
+    behavResults.Stim_Type(MissTrialsInds) = [];
+    %  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
     trialInds = 1:length(behavResults.Trial_Type);
     inds_leftTrials = find(behavResults.Trial_Type == 0);
     inds_rightTrials = find(behavResults.Trial_Type == 1);
-    
+    cd(data_save_path);
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    RealMissTrials = logical(double(ErrorTrials) - double(MissTrialsInds));
+    AllTrialsOutcome = ones(length(AnimalActionC),1);
+    h_points = figure;
+    hold on
+    plot(find(CorrectInds),AllTrialsOutcome(CorrectInds),'ko','LineWidth',1.4,'MarkerSize',10);
+    plot(find(RealMissTrials),AllTrialsOutcome(RealMissTrials)*0,'ro','LineWidth',1.4,'MarkerSize',10);
+    plot(find(MissTrialsInds),AllTrialsOutcome(MissTrialsInds)*2,'mo','LineWidth',1.4,'MarkerSize',10);
+    ylim([-1 3]);
+    set(gca,'ytick',[0 1 2],'yticklabel',{'Error','Correct','Miss'});
+    xlabel('# Trials');
+    ylabel('Outcomes');
+    set(gca,'FontSize',20);
+    title('Session animal response plot')
+    saveas(h_points,'Behavior points plot');
+    saveas(h_points,'Behavior points plot','png');
+    close(h_points);
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %     correct_a = behavResults.Trial_Type == behavResults.Action_choice;
     rewarded = behavResults.Time_reward ~= 0;
     figure('color','w'); hold on;
@@ -53,7 +83,6 @@ for n = 1:fileNum
     hold off;
     title_name='Behavior\_plot';
     title(title_name);
-    cd(data_save_path);
     if exist('fn','var')
         saveas(gcf,[fn(1:end-4),'_correct_rate.png'],'png');
         boundary_result(n).SessionName=fn(1:end-4);

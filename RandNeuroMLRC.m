@@ -22,7 +22,8 @@ end
 %%
 DataSize=size(RawDataAll);
 % CorrectInds=TrialResult==1;
-CorrectInds=true(1,length(TrialResult));
+% CorrectInds=true(1,length(TrialResult));
+CorrectInds=TrialResult~=2;  %exclude all miss trials
 CorrTrialStim=StimAll(CorrectInds);
 CorrTrialData=RawDataAll(CorrectInds,:,:);
 CorrStimType=unique(CorrTrialStim);

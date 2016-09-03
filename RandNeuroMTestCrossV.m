@@ -27,7 +27,8 @@ end
 %%
 DataSize=size(RawDataAll);
 % CorrectInds=TrialResult==1;
-CorrectInds=true(1,length(TrialResult));
+% CorrectInds=true(1,length(TrialResult));
+CorrectInds=TrialResult~=2;  %exclude all miss trials
 CorrTrialStim=StimAll(CorrectInds);
 CorrTrialData=RawDataAll(CorrectInds,:,:);
 CorrStimType=unique(CorrTrialStim);
@@ -57,6 +58,7 @@ if FrameScale(2) > DataSize(3)
 end
 
 ConsideringData=CorrTrialData(:,:,FrameScale(1):FrameScale(2));
+nROI = size(ConsideringData,2);
 % T8TData = max(ConsideringData,[],3);  % trial by ROI matrix, will be project by one projection vector
 
 %%  
@@ -427,6 +429,7 @@ plot(Curve_x,curve_fity,'r','LineWidth',2);
 plot(Curve_x,curve_realy,'k','LineWidth',2);
 scatter(Octavex,realy,80,'k','o','LineWidth',2);
 scatter(Octavexfit,fityAll,80,'r','o','LineWidth',2);
+text(Curve_x(end-1),0.2,sprintf('nROI = %d',nROI),'FontSize',15);
 % text(0.1,0.9,sprintf('B=%.3f',double(Realboundary)),'Color','k','FontSize',14);
 % text(0.1,0.8,sprintf('B=%.3f',double(Fitboundary)),'Color','r','FontSize',14);
 
@@ -463,6 +466,7 @@ save randCurveFit.mat CVsvmmodel Octavex realy fityAll breal bfit -v7.3
 h_doubleyy = figure('position',[300 150 1100 900],'PaperpositionMode','auto');
 hold on;
 [hax,hline1,hline2] = plotyy(Curve_x,curve_realy,Curve_x,curve_fity);
+text(Curve_x(end-1),0.2,sprintf('nROI = %d',nROI),'FontSize',15);
 set(hline1,'color','k','LineWidth',2);
 set(hline2,'color','r','LineWidth',2);
 set(hax(1),'xtick',Octavex,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k','ytick',[0 0.2 0.4 0.6 0.8 1]);
@@ -494,6 +498,7 @@ Psemfitline = modelfun(bPopSEM,Curve_x);
 h_PopuSEM = figure('position',[300 150 1100 900],'PaperpositionMode','auto');
 hold on
 [hax,hline1,hline2] = plotyy(Curve_x,curve_realy,Curve_x,Psemfitline);
+text(Curve_x(end-1),0.2,sprintf('nROI = %d',nROI),'FontSize',15);
 set(hline1,'color','k','LineWidth',2);  % behavior 
 set(hline2,'color','r','LineWidth',2);  % model result
 set(hax(1),'xtick',Octavex,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k');

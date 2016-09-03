@@ -201,6 +201,7 @@ cd ..;
 
 MeanAlignData.LeftSig=zeros(sum(inds_left),DataSize(2));
 MeanAlignData.RightSig=zeros(sum(inds_right),DataSize(2));
+MeanAlignData.LRMeanDiff = MeanAlignData.LeftRawData-MeanAlignData.RightRawData;
 
 RangeInds = [];
 MeanAlignData.ROIIndsLeft = zeros(1,DataSize(2));
@@ -313,6 +314,27 @@ if ~isdir('./Popu_Mean_Trace/')
 end
 cd('./Popu_Mean_Trace/');
 
+%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% plot the left and right response diff plot
+DiffLRRaw = SigROIRawDataRight-SigROIRawDataLeft;
+NorDiffLRdata = zscore(DiffLRRaw,0,2);
+AfterRespData = NorDiffLRdata(:,TimeOnset:TimeOnset+FrameRate);  %1s after sound onset
+ROIsResponse = mean(AfterRespData,2);
+[~,ROISeq] = sort(ROIsResponse);
+
+h_diff = figure('position',[400 150 1200 900],'Paperpositionmode','auto');
+subplot(1,2,1);
+imagesc(NorDiffLRdata(ROISeq,:),[-2 2]);
+colorbar;
+
+subplot(1,2,2)
+imagesc(DiffLRRaw(ROISeq,:),[-300 300]);
+colorbar;
+line([TimeOnset TimeOnset],[0 size(DiffLRRaw,1)+1],'LineWidth',2,'color',[.8 .8 .8]);
+saveas(h_diff,'ROI response diff plot');
+saveas(h_diff,'ROI response diff plot','png');
+close(h_diff);
 %%
 %plot the population mean trace color map with left and right distinguished
 
@@ -462,7 +484,7 @@ close(h_maxDis);
 
 %%
 %plot all trials mean trace for population response
-RoiDataSeletedAll = MeanAlignData.AllDataMeanNor(SigROIIndsSelect,:);
+RoiDataSeletedAll = MeanAlignData.AllDataMeanNor(SigROIIndsSelect,:);  %zscored data
 [SortedMaxInds,IAllMean] = sort(MeanAlignData.AllMaxInds(SigROIIndsSelect));
 h_AllMean=figure('position',[400 240 1050 800],'PaperPositionMode','auto');
 imagesc(RoiDataSeletedAll(IAllMean,:),[-2,2]);
