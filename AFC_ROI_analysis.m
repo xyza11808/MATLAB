@@ -617,7 +617,7 @@ elseif str2double(continue_char)==2
         end
     end
     %%
-    ActiveCellGene(data,behavResults,trial_outcome,frame_rate,1.5);
+%     ActiveCellGene(data,behavResults,trial_outcome,frame_rate,1.5);
     TimeCorseROC(data_aligned,TrialTypes,start_frame,frame_rate,[],2);   %seperated ROC plot
     MeanAlignedDataPlot(smooth_data,start_frame,behavResults.Trial_Type,frame_rate,trial_outcome);
      AlignedSortPLot(data_aligned,behavResults.Time_reward,behavResults.Time_answer,align_time_point,TrialTypes,frame_rate,onset_time);
