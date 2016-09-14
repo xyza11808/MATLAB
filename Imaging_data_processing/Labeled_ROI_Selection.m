@@ -22,7 +22,7 @@ function varargout = Labeled_ROI_Selection(varargin)
 
 % Edit the above text to modify the response to help Labeled_ROI_Selection
 
-% Last Modified by GUIDE v2.5 08-Sep-2016 21:06:11
+% Last Modified by GUIDE v2.5 09-Sep-2016 21:33:46
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -61,6 +61,9 @@ CurrentGUIdata.MeanImageData = [];
 CurrentGUIdata.RGBPlotData = [];
 CurrentGUIdata.LabeledROIs = [];
 CurrentGUIdata.ROIinfos = [];
+CurrentGUIdata.GreenSplitChannelf = [];
+CurrentGUIdata.RedSplitChannelf = [];
+CurrentGUIdata.BlueSplitChannelf = [];
 
 % Choose default command line output for Labeled_ROI_Selection
 handles.output = hObject;
@@ -498,4 +501,48 @@ if ffi
         error('Error file selected, quit analysis.');
     end
     CurrentGUIdata.ROIinfos = ROInfos;
+end
+
+
+% --- Executes on button press in ShowSeperatef.
+function ShowSeperatef_Callback(hObject, eventdata, handles)
+% hObject    handle to ShowSeperatef (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global CurrentGUIdata
+MeanImDataPlot = CurrentGUIdata.RGBPlotData;  % 1 for green channel. 2 for red channel, and 3 for blue channel 
+ChannelNum = CurrentGUIdata.ChannelNum;
+if ChannelNum == 2
+    fprintf('Only two channel data exits, show in two figures.');
+    h_Green = figure('position',[40 160 850 750],'Name','Green channel','NumberTitle','off');
+    MeanImdataBU = MeanImDataPlot;
+    MeanImdataBU(:,:,2:3) = 0; 
+    imagesc(MeanImdataBU);
+    CurrentGUIdata.GreenSplitChannelf = h_Green;
+    
+    MeanImdataBU = MeanImDataPlot;
+    h_Red = figure('position',[960 160 850 750],'Name','Red channel','NumberTitle','off');
+    MeanImdataBU(:,:,[1,3]) = 0;
+    imagesc(MeanImdataBU);
+    CurrentGUIdata.RedSplitChannelf = h_Red;
+    
+else
+    fprintf('Three channel data exits, show in three figures.');
+    h_Green = figure('position',[30 200 550 550],'Name','Green channel','NumberTitle','off');
+    MeanImdataBU = MeanImDataPlot;
+    MeanImdataBU(:,:,2:3) = 0; 
+    imagesc(MeanImdataBU);
+     CurrentGUIdata.GreenSplitChannelf = h_Green;
+    
+    MeanImdataBU = MeanImDataPlot;
+    h_Red = figure('position',[650 200 550 550],'Name','Red channel','NumberTitle','off');
+    MeanImdataBU(:,:,[1,3]) = 0;
+    imagesc(MeanImdataBU);
+     CurrentGUIdata.RedSplitChannelf = h_Red;
+    
+    MeanImdataBU = MeanImDataPlot;
+    h_Blue = figure('position',[1250 200 550 550],'Name','Blue channel','NumberTitle','off');
+    MeanImdataBU(:,:,[1,2]) = 0;
+    imagesc(MeanImdataBU);
+    CurrentGUIdata.BlueSplitChannelf = h_Blue;
 end

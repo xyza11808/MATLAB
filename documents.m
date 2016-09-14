@@ -165,6 +165,12 @@
 % nchoosek(n,k)
 % factorial(n)   % ½×³Ëº¯Êý
 
+% function annotation: put a line object outside current axes(basically anywhere settled by the
+% coordinates), can be used as an explanation of current dataset (e.g. modulation time and so on)
+% annotation(figure1,'line',[0.228571428571429 0.508928571428571],...
+%     [0.953761904761905 0.954761904761905],'Color',[0 1 0],'LineWidth',2);
+
+
 %%
 %this section used to be used for all trials plot in AFC_ROI_analysis
 %function, just as a backup

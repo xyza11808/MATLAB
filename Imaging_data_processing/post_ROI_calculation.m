@@ -148,18 +148,21 @@ if strcmpi(type,'RF')
     %the second contains corresponded intensity
     DB_array=unique(sound_array(:,2));
     FreqArray = unique(sound_array(:,1));
+    size_freq = length(FreqArray);
     size_DB=length(DB_array);
-    freq_rep_times=result_size(1)/size_DB;
-    re_organized_data=zeros(size_DB,freq_rep_times,result_size(3));
+    freq_rep_times=result_size(1)/(size_DB*size_freq);
+    re_organized_data=zeros(size_DB,freq_rep_times*size_freq,result_size(3));
+    StimRespMeanData = zeros(size_raw_trials(2),size_DB,size_freq,result_size(3));
+    StimRespAllData = zeros(size_raw_trials(2),size_DB,size_freq,freq_rep_times,result_size(3));
     RF_fit_data=struct('AvaFitPara',[]);
     
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % extract data for 2afc comparation
-    SelectDb = 70;
-    SelectInds = sound_array(:,2) == SelectDb;
-    FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1.5},frame_rate,frame_rate);
-    FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1.5},frame_rate,frame_rate,1);
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     % extract data for 2afc comparation
+%     SelectDb = 70;
+%     SelectInds = sound_array(:,2) == SelectDb;
+%     FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1.5},frame_rate,frame_rate);
+%     FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1.5},frame_rate,frame_rate,1);
+%     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
 %     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %     %RF resp neuron test
@@ -199,9 +202,16 @@ if strcmpi(type,'RF')
         for j=1:size_DB
             temp_inds = sound_array(:,2)==DB_array(j);
             temp_f_percent_DB = temp_f_percent(temp_inds,:);
-            [~,I]=sort(sound_array(temp_inds,1));
+            [FreqValue,I]=sort(sound_array(temp_inds,1));
             temp_f_percent_sort=temp_f_percent_DB(I,:);
             re_organized_data(j,:,:)=temp_f_percent_sort;
+            for nFreqTe = 1 : length(FreqArray)
+                cFreqValue = FreqArray(nFreqTe);
+                cFreqData = temp_f_percent_sort(FreqValue == cFreqValue,:);
+                StimRespAllData(i,j,nFreqTe,:,:) = cFreqData;
+                StimRespMeanData(i,j,nFreqTe,:) = mean(cFreqData);
+            end
+                
         end
         triger_position=floor(triger_time*frame_rate);
         %use unique() function to delete the repeated numbers inside vectory
@@ -235,7 +245,7 @@ if strcmpi(type,'RF')
         else
             imagesc(temp_f_percent,clims);
         end
-        title('Before sorted');
+        title('Before sorted','FontSize',20);
         xlabel('time(s)');
         set(gca,'XTick',xtick);
         set(gca,'XTickLabel',xTick_lable);
@@ -252,7 +262,7 @@ if strcmpi(type,'RF')
         for j=1:size_DB
             subplot(size_DB,3,j*3-1);
             imagesc(squeeze(re_organized_data(j,:,:)),clims);
-            title(['After sorted---',num2str(DB_array(j)),'DB']);
+            
             if j==size_DB
                 xlabel('time(s)');
             end
@@ -261,6 +271,7 @@ if strcmpi(type,'RF')
             set(gca,'YTick',ytick_sort_tick);
             set(gca,'YTickLabel',cellstr(num2str(yTick_lable(:),'%.1f')),'FontSize',6);
             ylabel('Freq(KHz)');
+            title(['After sorted---',num2str(DB_array(j)),'DB'],'FontSize',15);
             hold on;
             hh2=axis;
 %             triger_position=triger_time*frame_rate;
@@ -273,7 +284,7 @@ if strcmpi(type,'RF')
             freq_response=mean(temp_data);
             plot(1:size_raw_trials(3),freq_response,'color','g','LineWidth',0.8);
             hold on;
-            title(['After sorted---',num2str(DB_array(j)),'DB']);
+            title(['After sorted---',num2str(DB_array(j)),'DB'],'FontSize',15);
             %             xlabel('Time(s)');
             smooth_freq_response=smooth(freq_response);
             freq_gaussian_fit = fit((1:size_raw_trials(3))',smooth_freq_response,'gauss4');
@@ -331,11 +342,83 @@ if strcmpi(type,'RF')
     end
     save RFsummaryData.mat AllRFPeak AllRFMean -v7.3
     save gaussian_fit_para.mat RF_fit_data -v7.3
+    save AllRespDat.mat  StimRespAllData StimRespMeanData -v7.3
     cd ..;
     %#########################################################################
     %end of mode percent change plot
     %#########################################################################
+    %%
+    % calculate the signal and noise correlation between ROIs
+    % reshape the high dimensional data into low dimensional data, but
+    % first should change the last dimension into column dimension so that
+    % the trials will be connected one by one
     
+    % calculate the signal correlations
+    ShiftData = permute(StimRespMeanData,[1,4,2,3]); % into column-wise order
+    ReshapedData = reshape(ShiftData,size_raw_trials(2),[]); % ROI by all
+    SigCorrMatrix = corrcoef(ReshapedData');
+    SigCoCoefSum = sum(SigCorrMatrix);
+    [~,SigInds] = sort(SigCoCoefSum);
+    h_sigCorr = figure;
+    imagesc(SigCorrMatrix(SigInds,SigInds));
+    colormap jet
+    title('Signal correlation matrix');
+    xlabel('# ROIs');
+    ylabel('# ROIs');
+    set(gca,'FontSize',20);
+    colorbar;
+    saveas(h_sigCorr,'Signal Correlation RF data');
+    saveas(h_sigCorr,'Signal Correlation RF data','png');
+%     close(h_sigCorr);
+    CoefValue = triu(SigCorrMatrix,1);
+    INDS = [size_raw_trials(2),size_raw_trials(2)];
+    TargetInds = find(CoefValue > 0.6 | CoefValue < -0.3);
+    TargetIndsValue = SigCorrMatrix(TargetInds);
+    [LargeRespValueX,LargeRespValueY] = ind2sub(INDS,TargetInds);
+    SigRespROIpairs = [LargeRespValueX,LargeRespValueY,TargetIndsValue];
+    
+    % calculate the noise correlations
+    ShiftDataNC = permute(StimRespAllData,[1,5,2,3,4]);
+    ReshapedDataNC = reshape(ShiftDataNC,size_raw_trials(2),[]);
+    NoiCorrMatrix = corrcoef(ReshapedDataNC');
+    NoiCorrcoefSum = sum(NoiCorrMatrix);
+    [~,Inds] = sort(NoiCorrcoefSum);
+    h_NoiCorr = figure;
+    imagesc(NoiCorrMatrix(Inds,Inds));
+    colormap jet
+    colorbar;
+    title('Noise correlation matrix');
+    xlabel('# ROIs');
+    ylabel('# ROIs');
+    set(gca,'FontSize',20);
+    saveas(h_NoiCorr,'Noise correlation RF data');
+    saveas(h_NoiCorr,'Noise correlation RF data','png');
+%     close(h_NoiCorr);
+    CoefValue = triu(NoiCorrMatrix,1);
+    INDS = [size_raw_trials(2),size_raw_trials(2)];
+    TargetInds = find(CoefValue > 0.6 | CoefValue < -0.3);
+    TargetIndsValue = NoiCorrMatrix(TargetInds);
+    [LargeRespValueX,LargeRespValueY] = ind2sub(INDS,TargetInds);
+    NoiRespROIpairs = [LargeRespValueX,LargeRespValueY,TargetIndsValue];
+    
+    h_hist = figure;
+    h1 = histogram(SigRespROIpairs(:,3),30,'FaceColor','r');
+    hold on;
+    h2 = histogram(NoiRespROIpairs(:,3),30,'FaceColor','b');
+    h1.Normalization = 'probability';
+    h2.Normalization = 'probability';
+    legend('Signal corrcoef','Noise corrcoef','position','northeastoutside');
+    xlabel('Corr Coef');
+    ylabel('ROI fraction');
+    title('Paired ROI corrcoef distribution (part)');
+    set(gca,'FontSize',15);
+    saveas(h_hist,'Target ROI pairs Corrcoef distribution');
+    saveas(h_hist,'Target ROI pairs Corrcoef distribution','png');
+    close(h_hist);
+    
+    save CorrMatrixData.mat SigCorrMatrix NoiCorrMatrix SigInds Inds SigRespROIpairs NoiRespROIpairs -v7.3
+    
+    %%
     ContChoice=questdlg('Do you wants to try with fluo change based on time before stim onset?','Select your choice',...
         'Yes','No','Yes');
     switch ContChoice

@@ -299,7 +299,15 @@ else
     [~,classscoresT]=predict(CVsvmmodel,scoreT(:,1:3));
     difscore=classscoresT(:,2)-classscoresT(:,1);
 end
-     
+% adding seperation hyperplane
+VectorCoeff = CVsvmmodel.Beta;
+BiasValue = CVsvmmodel.Bias;
+xScales = get(gca,'xlim');
+yScales = get(gca,'ylim');
+[x,y] = meshgrid(xScales(1):10:xScales(2),yScales(1):10:yScales(2));
+z = -1 * (BiasValue + x * VectorCoeff(1) + y * VectorCoeff(2)) / VectorCoeff(3);
+surf(x,y,z,'LineStyle','none','FaceColor','c','FaceAlpha',0.4);  %,'Facecolor','interp'
+alpha(0.4);
 % LogDif = log(abs(difscore));
 % LogDif(1:3) = -LogDif(1:3);
 %using sampled SVM classification result to predict all Trials score
@@ -376,6 +384,42 @@ close(hALLL3d);
 
 save FinalClassificationScore.mat CVScoreType1 CVScoreType2 CVsvmmodel fityAll classscoresT coeffT NorScaleValue -v7.3
 save TestDataSet.mat CVScoreTypeTest1 CVScoreTypeTest2 ErrorRateTest -v7.3
+
+%%
+%plot the 3d seperation plane and current types points
+h_3dplane = figure('position',[420 100 1150 950]);
+hold on;
+PointScores = scoreT(:,1:3);
+scatter3(PointScores(1:3,1),PointScores(1:3,2),PointScores(1:3,3),120,'p','MarkerEdgeColor','b','LineWidth',3);
+scatter3(PointScores(4:6,1),PointScores(4:6,2),PointScores(4:6,3),120,'p','MarkerEdgeColor','r','LineWidth',3);
+% extract coefficients from svm model
+% VectorCoeff = CVsvmmodel.Beta; % calculation exists at early line
+% BiasValue = CVsvmmodel.Bias; % calculation exists at early line
+% SufFunction = [x,y,z]'* VectorCoeff + BiasValue == 0;
+ProjectPoints = zeros(size(PointScores));
+ModelFun = @(x,y,z) (VectorCoeff(1) * x + VectorCoeff(2) * y + VectorCoeff(3) * z + BiasValue)/(sum(VectorCoeff.^2));
+for nPoints = 1 : size(PointScores,1)
+    t_factor = ModelFun(PointScores(nPoints,1),PointScores(nPoints,2),PointScores(nPoints,3));
+    ProjectPoints(nPoints,1) = PointScores(nPoints,1) - t_factor * VectorCoeff(1);
+    ProjectPoints(nPoints,2) = PointScores(nPoints,2) - t_factor * VectorCoeff(2);
+    ProjectPoints(nPoints,3) = PointScores(nPoints,3) - t_factor * VectorCoeff(3);
+    LinePoints = [PointScores(nPoints,:);ProjectPoints(nPoints,:)];
+    line(LinePoints(:,1),LinePoints(:,2),LinePoints(:,3),'color','k','LineStyle','--','LineWidth',3);
+end
+scatter3(ProjectPoints(:,1),ProjectPoints(:,2),ProjectPoints(:,3),100,'o','MarkerEdgeColor','m','LineWidth',3);
+%
+xScales = get(gca,'xlim');
+yScales = get(gca,'ylim');
+[x,y] = meshgrid(xScales(1):10:xScales(2),yScales(1):10:yScales(2));
+z = -1 * (BiasValue + x * VectorCoeff(1) + y * VectorCoeff(2)) / VectorCoeff(3);
+surf(x,y,z,'LineStyle','none','FaceColor','c','FaceAlpha',0.4);  %,'Facecolor','interp'
+alpha(0.4)
+xlabel('PC1');
+ylabel('PC2');
+zlabel('PC3');
+saveas(h_3dplane,'Points to classification plane plot');
+close(h_3dplane);
+
 %%
 % [~,breal]=fit_logistic(Octavex,realy);
 %excludes some bad points from fit

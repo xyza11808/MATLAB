@@ -634,8 +634,8 @@ elseif str2double(continue_char)==2
           RandNeuroMLRC(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,TrialTypes,1.5);
           MultiTScaleNMT(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,{0.1,0.15,0.2,0.3,[0.1,0.2],[0.2,0.3]});
           ChoiceProbCal(smooth_data,behavResults.Stim_toneFreq,behavResults.Action_choice,1.5,start_frame,frame_rate,16000);
-          FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1.5},frame_rate,start_frame,1);
-          FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1.5},frame_rate,start_frame);
+          FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame,1);
+          FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame);
           %% #############################################
           % % % % %plot psychometrical curve based on decision time window
           ChoicelickTime = double(FLickT);

@@ -83,37 +83,65 @@ for nTime = 1 : TimeScaleNum
         AlignedMeanTarace(nFreq,:,:) = squeeze(mean(CDataAll));
     end
     WinData = squeeze(mean(FreqmeanData,3)); % nFreq by nROI
+    TDindex = zeros(ROINum,1);
+    CIindex = zeros(ROINum,1);
+    LLargeThanR = zeros(ROINum,1);
     if isPlot
         for nROI = 1 : ROINum
             cROIData = squeeze(AlignedMeanTarace(:,nROI,:));
+            cROIDataSmooth = zeros(size(cROIData));
             h_ROI = figure('position',[450,150,900,800],'paperpositionmode','auto');
             subplot(2,1,1)
             hold on;
+            LegendText = cell(1,FreqTypeNum);
             for nTrace = 1 : FreqTypeNum
                 plot(xTickTime,cROIData(nTrace,:),'color',ColorSelect(ColorInds(nTrace),:),'LineWidth',1.8);
-                text(OnsetTime+1,cROIData(nTrace,(OnsetFrame+FrameRate)),num2str(FreqType(nTrace)),'FontSize',14,...
-                    'color',ColorSelect(ColorInds(nTrace),:));
+%                 text(OnsetTime+1,cROIData(nTrace,(OnsetFrame+FrameRate)),num2str(FreqType(nTrace)),'FontSize',14,...
+%                     'color',ColorSelect(ColorInds(nTrace),:));
+                LegendText(nTrace) = {sprintf('%.3f KHz',FreqType(nTrace)/1000)}; 
+                cROIDataSmooth(nTrace,:) = smooth(cROIData(nTrace,:),7);
             end
+            legend(LegendText);
             yaxiss = axis;
             line([OnsetTime OnsetTime],[yaxiss(3) yaxiss(4)],'LineWidth',1.4,'color',[.8 .8 .8]);
             WinTime = FrameScale/FrameRate;
             patch([WinTime(1) WinTime(2) WinTime(2) WinTime(1)],[yaxiss(3) yaxiss(3) yaxiss(4) yaxiss(4)],1,'facecolor','g','edgecolor','none','facealpha',0.5);
             xlabel('Time(s)');
             ylabel('\DeltaF/F_0(%)');
-
-            FreqValue = mean(cROIData,2);
+%             set(gca,'fontsize',18);
+            
+            % using the seven values between max as response value
+            % directly using smoothed max value, 
+            FreqValue = max(cROIDataSmooth,[],2);
+            % calculating the tuning depth index and CI
+            LeftFreqResps = FreqValue(1:floor(FreqTypeNum/2));
+            RightFreqResps = FreqValue(ceil(FreqTypeNum/2):end);
+            [MaxResp,~] = max(FreqValue);
+            if MaxResp <= 10
+                TDindex(nROI) = 0;
+                CIindex(nROI) = 0;
+            else
+                TDindex(nROI) = (MaxResp - ((sum(FreqValue) - MaxResp)/(FreqTypeNum - 1)))/MaxResp;
+                CIindex(nROI) = abs(mean(LeftFreqResps) - mean(RightFreqResps))/(MaxResp);
+                LLargeThanR(nROI) = (mean(LeftFreqResps) - mean(RightFreqResps)) > 0;
+            end
+            
             subplot(2,1,2)
             plot(OctaceInds,FreqValue,'ro','MarkerFaceColor','r','MarkerSize',20);
             set(gca,'xtick',OctaceInds,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f'))); % show real frequency value at octave position
             xlabel('Frequency(KHz)');
             ylabel('mean \DeltaF/F_0(%)');
+            axisScale = axis;
+            text(0.4,axisScale(4)*1.05,sprintf('TD = %.3f, CI = %.3f',TDindex(nROI),CIindex(nROI)));
 
             suptitle(sprintf('ROI%d',nROI));
             saveas(h_ROI,sprintf('ROI%d frequency response',nROI));
             saveas(h_ROI,sprintf('ROI%d frequency response',nROI),'png');
             close(h_ROI);
+            
+            
         end
-        save FreqMeanData.mat AlignedMeanTarace FreqType WinData -v7.3
+        save FreqMeanData.mat AlignedMeanTarace FreqType WinData TDindex CIindex LLargeThanR -v7.3
         cd ..;
     end
     if ~isPlot

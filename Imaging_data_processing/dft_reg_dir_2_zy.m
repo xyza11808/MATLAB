@@ -148,7 +148,7 @@ parfor i = 1:length(datafiles)
      [aa,shift] = dft_reg(im_s, im_tg);  % add shift information in here
      
     if max(abs((shift(1,:)))>15) || max(abs((shift(2,:)))>15)       
-        fprintf('the shift in this trail is over 20 pixes do rigister again using itself as target\n');
+        fprintf('the shift in this trial is over 20 pixes do rigistration again using itself as target\n');
         match=abs((shift(1,:)))<20 & abs(shift(2,:))<20;
         im_tg_temp=mean(aa(:,:,match),3);   % change here for the target frame
         funct=tic;

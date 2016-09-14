@@ -78,8 +78,6 @@ elseif length(varargin) ==4
             saveas(hROI,sprintf('ROI%d Freq response plot',nsROI));
             saveas(hROI,sprintf('ROI%d Freq response plot',nsROI),'png');
             close(hROI);
-            
-            
         end
         cd ..;
     end
