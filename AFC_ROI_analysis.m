@@ -618,9 +618,10 @@ elseif str2double(continue_char)==2
     end
     %%
 %     ActiveCellGene(data,behavResults,trial_outcome,frame_rate,1.5);
-    TimeCorseROC(data_aligned,TrialTypes,start_frame,frame_rate,[],2);   %seperated ROC plot
     MeanAlignedDataPlot(smooth_data,start_frame,behavResults.Trial_Type,frame_rate,trial_outcome);
+    TimeCorseROC(data_aligned,TrialTypes,start_frame,frame_rate,[],2);   %seperated ROC plot
      AlignedSortPLot(data_aligned,behavResults.Time_reward,behavResults.Time_answer,align_time_point,TrialTypes,frame_rate,onset_time);
+    SignalCorr2afc(data_aligned,trial_outcome,behavResults.Stim_toneFreq);
     
      ROC_check(smooth_data,TrialTypes,start_frame,frame_rate,[],'Stim_time_Align');
     TimeCorseROC(data_aligned,TrialTypes,start_frame,frame_rate);  %cumulated ROC plot

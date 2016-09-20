@@ -1278,7 +1278,7 @@ nTROIs = CaSignal.CaTrials(1).nROIs;
 nTrials = length(CaSignal.CaTrials);
 
 CaTrials_local = CaSignal.CaTrials;
-ROIinfo_local = CaSignal.ROIinfo;
+ROIinfo_local = CaSignal.ROIinfoBack;
 ROIpos = CaSignal.ROIinfoBack(1).ROIpos;
 %#####################################
 %recheck whether Ring back is overlapped with any ROI

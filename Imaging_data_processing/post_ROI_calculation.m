@@ -89,7 +89,7 @@ else
         error('wrong file path for behavior result!');
     end
     load(filefullpath2);
-    [UserChoice,sessiontype]=behavScore_prob(behavResults,behavSettings,fn2);  %plot the animal behavior trace for select session
+    [UserChoice,sessiontype]=behavScore_prob(behavResults,behavSettings,fn2,1);  %plot the animal behavior trace for select session
     if UserChoice
         return;
     end
@@ -156,13 +156,13 @@ if strcmpi(type,'RF')
     StimRespAllData = zeros(size_raw_trials(2),size_DB,size_freq,freq_rep_times,result_size(3));
     RF_fit_data=struct('AvaFitPara',[]);
     
-%     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%     % extract data for 2afc comparation
-%     SelectDb = 70;
-%     SelectInds = sound_array(:,2) == SelectDb;
-%     FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1.5},frame_rate,frame_rate);
-%     FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1.5},frame_rate,frame_rate,1);
-%     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % extract data for 2afc comparation
+    SelectDb = 70;
+    SelectInds = sound_array(:,2) == SelectDb;
+    FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate);
+    FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate,1);
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
 %     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %     %RF resp neuron test
@@ -342,7 +342,7 @@ if strcmpi(type,'RF')
     end
     save RFsummaryData.mat AllRFPeak AllRFMean -v7.3
     save gaussian_fit_para.mat RF_fit_data -v7.3
-    save AllRespDat.mat  StimRespAllData StimRespMeanData -v7.3
+    save AllRespDat.mat StimRespAllData StimRespMeanData -v7.3
     cd ..;
     %#########################################################################
     %end of mode percent change plot

@@ -6,10 +6,15 @@ if nargin==0
     cd(filepath);
     batch_plot=1;
     %     load(filename);
+elseif nargin == 1
+    filepath = varargin{1};
+    cd(filepath);
+    batch_plot=1;
 else
     behavResults=varargin{1};
     behavSettings=varargin{2};
     fn=varargin{3};
+    IsIgnoringPerf = varargin{4};
     batch_plot=0;
 end
 data_save_path='./session_behav_plots/';
@@ -59,7 +64,7 @@ if batch_plot
                     stim_str = behavSettings.toneFreq{x1}; % '2Groups';
                 end
                 text(x1, 0.1*i, stim_str,'color','g')
-                if ~strncmp(stim_str,'6000',4)
+                if ~strncmp(stim_str,'8000',4)
                     
                     if i==length(inds_blockStart)
                         %temp_trialInds=trialInds(x1:end);
@@ -138,7 +143,7 @@ else
                 stim_str = behavSettings.toneFreq{x1}; % '2Groups';
             end
             text(x1, 0.1*i, stim_str,'color','g')
-            if ~strncmp(stim_str,'6000',4)
+            if ~strncmp(stim_str,'8000',4)
                 
                 if i==length(inds_blockStart)
                     %temp_trialInds=trialInds(x1:end);
@@ -178,24 +183,32 @@ else
     StimFreq=unique(behavResults.Stim_toneFreq);
     if length(StimFreq)==2
         SessionType='puretone';
-    elseif length(StimFreq)>=2
+    elseif length(StimFreq) > 2
         if max(behavResults.Trial_isProbeTrial)
-            SessionType='prob';
-        else
+            if length(StimFreq) > 6
+                SessionType='RandompuretoneProb';
+            else
+                SessionType='prob';
+            end
+        elseif length(StimFreq) == 6
             SessionType='Randompuretone';
         end
     end
-    %use subplot function to plot all result of the given data
-    if (Avg_all_corr < 0.7) || (Avg_left_corr<0.7 || Avg_right_corr < 0.7)
-        GoonChoice=input('The correction rate of this session is not good, are you sure want to go on with the following analysis?\n','s');
-        if strcmpi(GoonChoice,'n')
-            disp('Quit following analysis...\n');
-            UserChoice=1;
+    if IsIgnoringPerf
+        %use subplot function to plot all result of the given data
+        if (Avg_all_corr < 0.7) || (Avg_left_corr<0.7 || Avg_right_corr < 0.7)
+            GoonChoice=input('The correction rate of this session is not good, are you sure want to go on with the following analysis?\n','s');
+            if strcmpi(GoonChoice,'n')
+                disp('Quit following analysis...\n');
+                UserChoice=1;
+            else
+                UserChoice=0;
+            end
         else
             UserChoice=0;
         end
     else
-        UserChoice=0;
+        UserChoice = 0;
     end
     
     if nargout==1

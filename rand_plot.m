@@ -15,18 +15,23 @@ if nargin<1
     fileNum=length(files);
 else
     SelfPlot=0;
-    data_save_path='./RandP_data_plots/';
-    if ~isdir(data_save_path)
-        mkdir(data_save_path);
-    end
     behavResults=varargin{1};
     choice=varargin{2};
+    if nargin > 2 
+        fn = varargin{3};
+        data_save_path = pwd;
+    else
+        data_save_path='./RandP_data_plots/';
+        if ~isdir(data_save_path)
+            mkdir(data_save_path);
+        end
+    end
     fileNum=1;
 %     fn='Behavior_plottest'
 end
     
 boundary_result=struct('SessionName',[],'FitParam',[],'Boundary',[],'LeftCorr',[],'RightCorr',[],'StimType',[],...
-    'StimCorr',[],'Coefficients',[],'P_value',[],'FitValue',[]);
+    'StimCorr',[],'Coefficients',[],'P_value',[],'FitValue',[],'Typenumbers',[]);
 if SelfPlot
     choice=input('please select the logistic analysis method.\n1 for non-linear regression.\n2 for linear regression analysis.\n3 for fit_logistic analysis.\n');
 end
@@ -38,7 +43,18 @@ for n = 1:fileNum
     else
         FilePath=pwd;
     end
-    
+    % exclude prob trials from analysis for current plot
+    IsProbT = double(behavResults.Trial_isProbeTrial);
+    if max(IsProbT)
+        fprintf('Excluded all prob trials for plotting.\n');
+        ProbInds = IsProbT == 1;
+        behavResults.Action_choice(ProbInds) = [];
+        behavResults.Time_reward(ProbInds) = [];
+        behavResults.Trial_Type(ProbInds) = [];
+        behavResults.Stim_toneFreq(ProbInds) = [];
+        behavResults.Stim_Type(ProbInds) = [];
+    end
+        
     AnimalActionC = behavResults.Action_choice;
     MissTrialsInds = AnimalActionC == 2;
     CorrectInds = behavResults.Time_reward ~= 0;
@@ -109,12 +125,14 @@ for n = 1:fileNum
         continue;
     elseif choice==1
         %     stim_types=[behavSettings.randompureTone_left(1,:) behavSettings.randompureTone_right(1,:)];
-        reward_type=zeros(1,length(stim_types));
+        reward_type = zeros(1,length(stim_types));
+        TypeNumber = zeros(1,length(stim_types));
         for i=1:length(stim_types)
-            type_inds= behavResults.Stim_toneFreq==stim_types(i);
+            type_inds = behavResults.Stim_toneFreq==stim_types(i);
+            TypeNumber(i) = sum(type_inds);
             reward_type(i)=mean(rewarded(type_inds));
         end
-        
+        boundary_result(n).Typenumbers = TypeNumber;
         boundary_result(n).StimType=stim_types;
         boundary_result(n).StimCorr=reward_type;
         if(mean(reward_type)<0.5)
@@ -167,6 +185,7 @@ for n = 1:fileNum
         close;
         h3=figure;
         scatter(octave_dist,reward_type,30,'MarkerEdgeColor','r','MarkerFaceColor','y');
+        text(octave_dist,reward_type,cellstr(num2str(TypeNumber(:)),'n=%d'),'Fontsize',15,'color','b');
         hold on;
         plot(fit_plot_x,resp_pred,'-','color','r');
         axis([0 2 0 1]);
@@ -197,10 +216,13 @@ for n = 1:fileNum
         %use the function of log(p/(1-p))=beta(1)*x+beta(2) for linear
         %regression analysis, but not with a nonlinear regression analysis
         reward_type=zeros(1,length(stim_types));
+        TypeNumber = zeros(1,length(stim_types));
         for i=1:length(stim_types)
             type_inds= behavResults.Stim_toneFreq==stim_types(i);
+            TypeNumber(i) = sum(type_inds);
             reward_type(i)=mean(rewarded(type_inds));
         end
+        boundary_result(n).Typenumbers = TypeNumber;
         boundary_result(n).StimType=stim_types;
         boundary_result(n).StimCorr=reward_type;
         if(mean(reward_type)<0.5)
@@ -243,6 +265,7 @@ for n = 1:fileNum
         line_space=linspace(min(octave_dist),max(octave_dist),200);
         fit_data=modelfun(b,line_space);
         plot(octave_dist,reward_type,'o',line_space,fit_data,'color','k');
+        text(octave_dist,reward_type,cellstr(num2str(TypeNumber(:)),'n=%d'),'Fontsize',15,'color','b');
         title([fn(1:end-4),'randompuretone']);
         axis([0 2 0 1]);
         set(gcf,'xtick',0:2/(length(octave_dist)-1):2);
@@ -262,11 +285,13 @@ for n = 1:fileNum
     elseif choice==3
         %for fit_logistic regression analysis
         reward_type=zeros(1,length(stim_types));
+        TypeNumber=zeros(1,length(stim_types));
         for i=1:length(stim_types)
             type_inds= behavResults.Stim_toneFreq==stim_types(i);
+            TypeNumber = sum(type_inds);
             reward_type(i)=mean(rewarded(type_inds));
         end
-        
+         boundary_result(n).Typenumbers = TypeNumber;
         boundary_result(n).StimType=stim_types;
         boundary_result(n).StimCorr=reward_type;
         if(mean(reward_type)<0.5)
@@ -282,16 +307,18 @@ for n = 1:fileNum
         reward_type(1:length(stim_types)/2)=1-reward_type(1:length(stim_types)/2);
         h3=figure;
         scatter(octave_dist,reward_type,30,'MarkerEdgeColor','k','LineWidth',1.5);
+        text(octave_dist,reward_type,cellstr(num2str(TypeNumber(:)),'n=%d'),'Fontsize',15,'color','b');
         hold on;
-        inds_exclude=input('please select the trial inds that should be excluded from analysis.\n','s');
-        if ~isempty(inds_exclude)
-            inds_exclude=str2num(inds_exclude);
-            octave_dist_exclude=octave_dist(inds_exclude);
-            reward_type_exclude=reward_type(inds_exclude);
-            octave_dist(inds_exclude)=[];
-            reward_type(inds_exclude)=[];
-            scatter(octave_dist_exclude,reward_type_exclude,100,'x','MarkerEdgeColor','b');
-        end
+%       % inds exclusion for plot
+%         inds_exclude=input('please select the trial inds that should be excluded from analysis.\n','s');
+%         if ~isempty(inds_exclude)
+%             inds_exclude=str2num(inds_exclude);
+%             octave_dist_exclude=octave_dist(inds_exclude);
+%             reward_type_exclude=reward_type(inds_exclude);
+%             octave_dist(inds_exclude)=[];
+%             reward_type(inds_exclude)=[];
+%             scatter(octave_dist_exclude,reward_type_exclude,100,'x','MarkerEdgeColor','b');
+%         end
         
         [Qreg,b]=fit_logistic(octave_dist,reward_type);
 %         parobj=gcp('nocreate');
@@ -325,7 +352,7 @@ for n = 1:fileNum
         if exist('fn','var')
             saveas(h3,[fn(1:end-4),'_fit plot.png'],'png');
         else
-            saveas(h3,['Behav_fit plot.png'],'png');
+            saveas(h3,'Behav_fit plot.png','png');
         end
         axis([0 2 0 1]);
         set(gca,'xtick',0:2/(length(octave_dist)-1):2);
