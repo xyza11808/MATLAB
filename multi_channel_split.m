@@ -1,23 +1,28 @@
-function multi_channel_split
+function multi_channel_split(varargin)
 %this function is used for three Dimensional calcium imaging data
 %pre-processing, the result data will be used for further analysis
+if nargin < 1
+    [~,filepath,fi]=uigetfile({'*.tif; *.tiff'},'Select Two Photon Imaging Files with multichannels');
+    if fi==0
+        error('Error file selected, quitting...');
+    else
+         cd(filepath);
+    %     [~,im_header]=load_scim_data(file);
+    %     channel_num=length(im_header.SI4.channelsSave);
+    %     imTagStruct = get_tiff_tag_to_struct(file);
 
-[file,filepath]=uigetfile({'*.tif; *.tiff'},'Select Two Photon Imaging Files with multichannels');
-if file==0
-    error('Error file selected, quitting...');
+        files=dir('*.tif');
+    %     save_path=fullfile(filepath,'Mean_tif')
+        %     filename=fulfile(filepath,file);
+        %     file_name=[file(1:end-4) '_mean_pj.tif'];
+        %     save_path=fullfile(filepath,'Mean_tif',file_name);
+    end
 else
-     cd(filepath);
-%     [~,im_header]=load_scim_data(file);
-%     channel_num=length(im_header.SI4.channelsSave);
-%     imTagStruct = get_tiff_tag_to_struct(file);
-    
+    filepath = varargin{1};
+    cd(filepath);
     files=dir('*.tif');
-%     save_path=fullfile(filepath,'Mean_tif')
-    %     filename=fulfile(filepath,file);
-    %     file_name=[file(1:end-4) '_mean_pj.tif'];
-    %     save_path=fullfile(filepath,'Mean_tif',file_name);
 end
-
+    
 poolobj=gcp('nocreate');
 if isempty(poolobj)
     parpool('local',12);

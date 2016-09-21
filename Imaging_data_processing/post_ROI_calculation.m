@@ -160,8 +160,8 @@ if strcmpi(type,'RF')
     % extract data for 2afc comparation
     SelectDb = 70;
     SelectInds = sound_array(:,2) == SelectDb;
-    FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate);
-    FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate,1);
+%     FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate);
+%     FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate,1);
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
 %     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -369,7 +369,7 @@ if strcmpi(type,'RF')
     colorbar;
     saveas(h_sigCorr,'Signal Correlation RF data');
     saveas(h_sigCorr,'Signal Correlation RF data','png');
-%     close(h_sigCorr);
+    close(h_sigCorr);
     CoefValue = triu(SigCorrMatrix,1);
     INDS = [size_raw_trials(2),size_raw_trials(2)];
     TargetInds = find(CoefValue > 0.6 | CoefValue < -0.3);
@@ -393,7 +393,7 @@ if strcmpi(type,'RF')
     set(gca,'FontSize',20);
     saveas(h_NoiCorr,'Noise correlation RF data');
     saveas(h_NoiCorr,'Noise correlation RF data','png');
-%     close(h_NoiCorr);
+    close(h_NoiCorr);
     CoefValue = triu(NoiCorrMatrix,1);
     INDS = [size_raw_trials(2),size_raw_trials(2)];
     TargetInds = find(CoefValue > 0.6 | CoefValue < -0.3);

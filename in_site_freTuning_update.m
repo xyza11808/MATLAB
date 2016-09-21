@@ -82,7 +82,7 @@ end
 
 % maxium_response=maxium_response_mode;
 for i=1:data_size(2)
-    if (sum(maxium_response(:,i,:))==0) | (sum(isnan(maxium_response(:,i,:)))~=0)
+    if (sum(maxium_response(:,i,:))==0) || (sum(isnan(maxium_response(:,i,:)))~=0)
            maxium_response(:,i,:)=[];
             continue;
     end
@@ -98,7 +98,7 @@ for i=1:data_size(2)
     c_save(i,:,:)=C';
     cmin_value=min(C(:));
     cmax_value=max(C(:));
-    h1=figure;
+    h1=figure('position',[260 110 1450 950]);
     imagesc(freq_type,DB_type,C,[cmin_value cmax_value]);
     colormap(flipud(hot));
     set(gca,'YDir','normal');
@@ -108,9 +108,10 @@ for i=1:data_size(2)
     set(gca,'xticklabel',cellstr(num2str(freq_label(:),'%.1f')));
     ylabel('Intensity(Volume)');
     set(gca,'YTick',flipud(DB_type));
-    set(gca,'yticklabel',flipud(DB_label));
-    colorbar;
-    set(get(colorbar,'Title'),'string','\Deltaf/f_0');
+    set(gca,'yticklabel',flipud(DB_label),'FontSize',25);
+    hbar = colorbar;
+    set(get(hbar,'Title'),'string','\DeltaF/F_0');
+    set(hbar,'ytick',[cmin_value cmax_value],'FontSize',25);
     hold on;
     final_name=[save_file_name '_ROI_' num2str(i)];
     saveas(h1,final_name);
@@ -202,6 +203,7 @@ for i=1:data_size(2)
         scatter(freq_tick(I(m-1)),DB_type(end),20,'MarkerEdgeColor','b','MarkerFaceColor','g','LineWidth',0.5);
         hold off;
         saveas(h1,['none-fit result of ' save_file_name,' ROI ' num2str(i) '.png'],'png');
+        saveas(h1,['none-fit result of ' save_file_name,' ROI ' num2str(i) '.png']);
         close;
     end
     
@@ -229,33 +231,33 @@ for i=1:data_size(2)
     saveas(h3,['DB_diff plot of  ' save_file_name,' ROI ' num2str(i) '.png'],'png');
     close;
 %     save tuning_data.mat C 
-    %####################################################################################
-    if ~isdir('./test_line_plot/')
-        mkdir('./test_line_plot/');
-    end
-    cd('./test_line_plot/');
-    h4=figure;
-    c_test=C;
-    c_test(c_test<0)=0;
-    plot(c_test','-o','LineWidth',1.5,'MarkerSize',8);
-    hold off;
-    legend(label,'Location','NorthEastOutside');
-    title(['ROI',num2str(i)]);
-    set(gca,'xtick',1:length(freq_type),'xticklabel',cellstr(num2str(freq_label(:),'%.1f')));
-    xlabel('frequency(KHz)');
-    ylabel('\DeltaF/F_0');
-    saveas(h4,['DB_diff plot of  ' save_file_name,' ROI ' num2str(i) '.png'],'png');
-    close;
-    cd ..;
-    %test plot
-    %#########################################################################
+%     %####################################################################################
+%     if ~isdir('./test_line_plot/')
+%         mkdir('./test_line_plot/');
+%     end
+%     cd('./test_line_plot/');
+%     h4=figure;
+%     c_test=C;
+%     c_test(c_test<0)=0;
+%     plot(c_test','-o','LineWidth',1.5,'MarkerSize',8);
+%     hold off;
+%     legend(label,'Location','NorthEastOutside');
+%     title(['ROI',num2str(i)]);
+%     set(gca,'xtick',1:length(freq_type),'xticklabel',cellstr(num2str(freq_label(:),'%.1f')));
+%     xlabel('frequency(KHz)');
+%     ylabel('\DeltaF/F_0');
+%     saveas(h4,['DB_diff plot of  ' save_file_name,' ROI ' num2str(i) '.png'],'png');
+%     close;
+%     cd ..;
+%     %test plot
+%     %#########################################################################
     
-    Meanc=mean(C);
-    NorMeanC=Meanc/max(abs(Meanc));
-    h_mean=figure;
-    plot(NorMeanC);
-    saveas(h_mean,['test_plot_for_ROI' num2str(i)],'png');
-    close(h_mean);
+%     Meanc=mean(C);
+%     NorMeanC=Meanc/max(abs(Meanc));
+%     h_mean=figure;
+%     plot(NorMeanC);
+%     saveas(h_mean,['test_plot_for_ROI' num2str(i)],'png');
+%     close(h_mean);
     
     
     cd ..;

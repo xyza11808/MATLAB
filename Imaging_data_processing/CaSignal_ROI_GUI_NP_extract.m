@@ -142,6 +142,8 @@ CaSignal.PlotData=cell(1,2);
 CaSignal.HigherVersionWarning = 0;
 CaSignal.ROINPlabel = [];
 CaSignal.EmptyROIsImport = [];
+CaSignal.OpenWithImagJ = 1;
+
 fprintf('Matlab Two-photon imaging data analysis GUI.\n');
 fprintf('           Version :  2.02.05             \n');
 % Update handles structure
@@ -2872,10 +2874,15 @@ if exist('D:\Fiji.app\ImageJ-win64.exe','file')
 end
 
 function ImageJPathB_Callback(hObject, eventdata, handles)
+global CaSignal
 [fn,fp,fi] = uigetfile('*.exe','Please select you iamge app position');
 if fi
     ImagjPathFull = fullfile(fp,fn);
     set(handles.ImageJPathET,'String',ImagjPathFull);
+    CaSignal.OpenWithImagJ = 1;
+else
+    CaSignal.OpenWithImagJ = 0;
+    return;
 end
 
 function OpenInImageJ_Callback(hObject, eventdata, handles)
@@ -2889,7 +2896,9 @@ if exist(ImageJPath,'file') && strcmp(ImageJPath(end-3:end),'.exe')
 else
     fprintf('ImageJ file doean''t exists, please select your app position.\n');
     ImageJPathB_Callback(hObject, eventdata, handles);
-    OpenInImageJ_Callback(hObject, eventdata, handles);
+    if CaSignal.OpenWithImagJ
+        OpenInImageJ_Callback(hObject, eventdata, handles);
+    end
 end
 
 

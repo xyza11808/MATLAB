@@ -112,7 +112,7 @@ for nTime = 1 : TimeScaleNum
             
             % using the seven values between max as response value
             % directly using smoothed max value, 
-            FreqValue = max(cROIDataSmooth,[],2);
+            FreqValue = max(cROIDataSmooth(:,FrameScale(1):FrameScale(2)),[],2);
             % calculating the tuning depth index and CI
             LeftFreqResps = FreqValue(1:floor(FreqTypeNum/2));
             RightFreqResps = FreqValue(ceil(FreqTypeNum/2):end);

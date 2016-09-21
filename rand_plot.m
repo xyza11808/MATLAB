@@ -195,7 +195,8 @@ for n = 1:fileNum
             line([octave_dist(i),octave_dist(i)],[resp_ci(i,1)+resp_pred,resp_ci(i,2)+resp_pred]);
         end
         title('behavior randompuretone');
-        axis([0 2 0 1]);
+%         axis([0 2 0 1]);
+        ylim([0 1]);
         set(gcf,'xtick',0:2/(length(octave_dist)-1):2);
         set(gcf,'xticklabel',sprintf('%.1f|',xtick_label));
         xlabel('Frequency(kHz)');
@@ -267,7 +268,8 @@ for n = 1:fileNum
         plot(octave_dist,reward_type,'o',line_space,fit_data,'color','k');
         text(octave_dist,reward_type,cellstr(num2str(TypeNumber(:)),'n=%d'),'Fontsize',15,'color','b');
         title([fn(1:end-4),'randompuretone']);
-        axis([0 2 0 1]);
+%         axis([0 2 0 1]);
+        ylim([0 1]);
         set(gcf,'xtick',0:2/(length(octave_dist)-1):2);
         set(gcf,'xticklabel',sprintf('%.1f|',xtick_label));
         xlabel('Frequency(kHz)');
@@ -288,7 +290,7 @@ for n = 1:fileNum
         TypeNumber=zeros(1,length(stim_types));
         for i=1:length(stim_types)
             type_inds= behavResults.Stim_toneFreq==stim_types(i);
-            TypeNumber = sum(type_inds);
+            TypeNumber(i) = sum(type_inds);
             reward_type(i)=mean(rewarded(type_inds));
         end
          boundary_result(n).Typenumbers = TypeNumber;
@@ -307,7 +309,7 @@ for n = 1:fileNum
         reward_type(1:length(stim_types)/2)=1-reward_type(1:length(stim_types)/2);
         h3=figure;
         scatter(octave_dist,reward_type,30,'MarkerEdgeColor','k','LineWidth',1.5);
-        text(octave_dist,reward_type,cellstr(num2str(TypeNumber(:)),'n=%d'),'Fontsize',15,'color','b');
+        text(octave_dist,reward_type,cellstr(num2str(TypeNumber(:),'n=%d')),'Fontsize',15,'color','b');
         hold on;
 %       % inds exclusion for plot
 %         inds_exclude=input('please select the trial inds that should be excluded from analysis.\n','s');
@@ -354,7 +356,8 @@ for n = 1:fileNum
         else
             saveas(h3,'Behav_fit plot.png','png');
         end
-        axis([0 2 0 1]);
+%         axis([0 2 0 1]);
+        ylim([0 1]);
         set(gca,'xtick',0:2/(length(octave_dist)-1):2);
         set(gca,'xticklabel',cellstr(num2str(xtick_label(:),'%.1f')));
         xlabel('Frequency(kHz)');

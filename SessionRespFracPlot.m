@@ -60,6 +60,7 @@ MrespSum = length(ROIrespSummary.MixedRespROI);
 NrespSum = length(ROIrespSummary.NonResponseROI);
 if (SrespSum+CrespSum+MrespSum+NrespSum) ~= TotalROINum
     fprintf('%d %d %d %d %d\n',SrespSum,CrespSum,MrespSum,NrespSum,TotalROINum);
+    
     error('Given response type is not equal to total ROI number, please check your input file.')
 end
 H_simplePie = figure('position',[400 220 1150 830]);
