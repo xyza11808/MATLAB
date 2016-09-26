@@ -152,12 +152,21 @@ else
 end
 
 RingFbase=zeros(ROINum,1);
-
+BaselineSubE = 0;
 if IsNeuropilExtract == 1 && ~isfield(CaTrials(1),'RingF')
-    error('Request of Ring-shaped neuropil extraction, but no such field exists.');
+    BaselineSubE = 1;
+    fprintf('Request of Ring-shaped neuropil extraction, but no such field exists.\n');
 end
 if IsNeuropilExtract == 2 && ~isfield(CaTrials(1),'SegNPdataAll')
-    error('Request of segmental neuropil extraction, but no such field exists.');
+    BaselineSubE = 2;
+    fprintf('Request of segmental neuropil extraction, but no such field exists.\n');
+end
+if BaselineSubE
+    if nargout > 3
+%         varargout{1:3} = [];
+        varargout{4} = BaselineSubE;
+    end
+    return;
 end
 if isfield(CaTrials(1),'RingF') && IsNeuropilExtract == 1
     FCorrectData=zeros(TrialNum,ROINum,TrialLen);
@@ -439,4 +448,9 @@ elseif nargout==3
     varargout{1}=FCorrectData;
     varargout{2}=FChangeData;
     varargout{3}=exclude_trials;
+elseif nargout==4
+    varargout{1}=FCorrectData;
+    varargout{2}=FChangeData;
+    varargout{3}=exclude_trials;
+    varargout{4} = BaselineSubE;
 end

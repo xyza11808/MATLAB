@@ -593,7 +593,11 @@ if strcmpi(type,'RF')
     cd ..;
     
 elseif strcmpi(type,'2AFC')
-    [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,3,type,ROIinfo);
+    [f_raw_trials,f_percent_change,exclude_inds,IsBaselineE]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,3,type,ROIinfo);
+    if IsBaselineE
+        fprintf('Please select your choice again without using the same background substraction method.\n');
+        [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,3,type,ROIinfo);
+    end
 %     save RawMatricData.mat f_raw_trials f_percent_change -v7.3
 %     cd('.\plot_save\');
     %AFC_ROI_analysis(f_percent_change,export_filename_raw)

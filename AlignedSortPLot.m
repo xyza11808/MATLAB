@@ -2,7 +2,7 @@ function AlignedSortPLot(AlignedData,TimeReward,TimeAnswer,align_time_point,Tria
 % aligned data sorted by answer time
 
 AnswersT = double(TimeAnswer);
-SelectInds = TimeReward > 0;
+SelectInds = TimeReward > 0;  %only correct trials included for plot
 RealAnsT = AnswersT(SelectInds);
 DiffTimeAnsStim = double(onset_time(SelectInds) - align_time_point);
 AdjustAnsT = RealAnsT - DiffTimeAnsStim;
