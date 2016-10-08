@@ -1,4 +1,4 @@
-function FreqRespCallFun(AlignDataAll,TrialFreq,TrialOutcome,TrialSelect,varargin)
+function varargout = FreqRespCallFun(AlignDataAll,TrialFreq,TrialOutcome,TrialSelect,varargin)
 % this function is just a call function of FreqRespDiffPlot, to easiest
 % functioon structure
 % the value of TrialSelect can be either 0,1,2, whereas 0 means all trials
@@ -29,11 +29,19 @@ if length(varargin) < 3
     error('Not enough input');
 end
 
-if length(varargin) == 3
-    [Timescale,FrameRate,OnsetFrame] = deal(varargin{:});
-    FreqRespDiffPlot(SelectData,SelectTrialFreq,Timescale,FrameRate,OnsetFrame);
-elseif length(varargin) ==4
-    [~,FrameRate,OnsetFrame,TimeWinPlot] = deal(varargin{:});
+if length(varargin) == 3  || length(varargin) == 4
+    [Timescale,FrameRate,OnsetFrame] = deal(varargin{1:3});
+    isplot = 1;
+    if length(varargin) > 3
+        isplot = varargin{4};
+    end
+    if isplot
+        FreqRespDiffPlot(SelectData,SelectTrialFreq,Timescale,FrameRate,OnsetFrame);
+    else
+        [~,MeanTracenFreq] = FreqRespDiffPlot(SelectData,SelectTrialFreq,Timescale,FrameRate,OnsetFrame,isplot);
+    end
+elseif length(varargin) == 5
+    [~,FrameRate,OnsetFrame,~,TimeWinPlot] = deal(varargin{:});
     if TimeWinPlot
         % plotting a serial plot of frequency response accoriding to
         % different time window
@@ -81,4 +89,7 @@ elseif length(varargin) ==4
         end
         cd ..;
     end
+end
+if nargout > 0
+    varargout(1) = {permute(MeanTracenFreq,[2,1,3])};
 end

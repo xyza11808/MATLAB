@@ -2296,7 +2296,7 @@ else
 end
 for i = roi_num_to_move
     CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,1) = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,1)-move_unit;
-    CaSignal.ROIinfoBack(1).ROIpos{i}(:,1) = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,1);
+    CaSignal.ROIinfoBack(1).ROIpos{i}(:,1) = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,1)-move_unit;
     x = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,1);
     y = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,2);
     CaSignal.ROIinfo(TrialNo).ROImask{i} = poly2mask(x,y,imsize(1),imsize(2));
@@ -2322,9 +2322,11 @@ else
 end
 for i = roi_num_to_move
     CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,1) = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,1)+move_unit;
+    CaSignal.ROIinfoBack(1).ROIpos{i}(:,1) = CaSignal.ROIinfoBack(1).ROIpos{i}(:,1) + move_unit;
     x = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,1);
     y = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,2);
     CaSignal.ROIinfo(TrialNo).ROImask{i} = poly2mask(x,y,imsize(1),imsize(2));
+    CaSignal.ROIinfoBack(1).ROImask{i} = CaSignal.ROIinfo(TrialNo).ROImask{i};
 end;
 update_ROI_plot(handles);
 handles = update_projection_images(handles);
@@ -2344,7 +2346,7 @@ else
 end
 for i = roi_num_to_move
     CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,2) = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,2)-move_unit;
-     CaSignal.ROIinfoBack(1).ROIpos{i}(:,2) = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,2)
+     CaSignal.ROIinfoBack(1).ROIpos{i}(:,2) = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,2)-move_unit;
     x = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,1);
     y = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,2);
     CaSignal.ROIinfo(TrialNo).ROImask{i} = poly2mask(x,y,imsize(1),imsize(2));
@@ -2370,7 +2372,7 @@ else
 end
 for i = roi_num_to_move
     CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,2) = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,2)+move_unit;
-    CaSignal.ROIinfoBack(1).ROIpos{i}(:,2) = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,2);
+    CaSignal.ROIinfoBack(1).ROIpos{i}(:,2) = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,2)+move_unit;
     x = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,1);
     y = CaSignal.ROIinfo(TrialNo).ROIpos{i}(:,2);
     CaSignal.ROIinfo(TrialNo).ROImask{i} = poly2mask(x,y,imsize(1),imsize(2));

@@ -131,6 +131,11 @@ if isplot
     CorrDirStr='.\Corr_trials\';
     ErroDirStr='.\Error_trials\';
     
+    if ~isdir('.\MeanTrace_plot\')
+        mkdir('.\MeanTrace_plot\');
+    end
+    
+    
     AllCorrDataSave=struct('LeftCorrData',[],'RightCorrData',[],'LeftDataModu',[],'RightDataModu',[]);
     AllCorrTimeSave=struct('LeftCorrTime',CorrLeftNorTime,'RightCorrTime',CorrRightNorTime,'LeftTimeModu',CorrLeftOmitTime,'RightTimeModu',CorrRightOmitTime);
     AllErrorDataSave=struct('LeftErroData',[],'RightErroData',[],'LeftDataModu',[],'RightDataModu',[]);
@@ -344,6 +349,86 @@ end
 
 if nargout > 0
     varargout(1) = {TypeInds};
+    return;
+end
+% plot the mean trace for two different trial types, for left and right
+% comparation
+DataTimes = [AllCorrTimeSave.LeftCorrTime,AllCorrTimeSave.RightCorrTime,AllCorrTimeSave.LeftTimeModu,AllCorrTimeSave.RightTimeModu];
+DataTimeNumb = [length(AllCorrTimeSave.LeftCorrTime),length(AllCorrTimeSave.RightCorrTime),...
+    length(AllCorrTimeSave.LeftTimeModu),length(AllCorrTimeSave.RightTimeModu)];
+FrameNum = size(AllCorrDataSave(1).LeftCorrData,2);  % total frame number for each trial
+% xtick = 1:xtimes(end);
+AlignedFrameNum = min(DataTimes);  % the min frame number for alignment
+FrameLength = max(DataTimes) - AlignedFrameNum;
+
+xtimes = (1:FrameLength)/FrameRate;
+FrameAdjust = arrayfun(@(x,y,z,a) StrcDataExtraction(x,AllCorrTimeSave,AlignedFrameNum,FrameLength),AllCorrDataSave,'UniformOutput',false);
+MeanTrace = cellfun(@(x) CellDataMean(x),FrameAdjust);
+%%
+% plot all ROI trace for comparation
+cd('MeanTrace_plot');
+for nnROI = 1 : length(MeanTrace)
+    hcROI = figure('position',[150 300 1600 600],'Paperpositionmode','auto');
+    cROIdata = MeanTrace{nnROI};
+    subplot(1,2,1)
+    hold on
+    plot(xtimes,cROIdata(1,:),'b','LineWidth',1.8);
+    plot(xtimes,cROIdata(3,:),'b','LineWidth',1.8,'LineStyle','--');
+    yssss = axis;
+    line([AlignedFrameNum AlignedFrameNum]/FrameRate,[yssss(3) yssss(4)],'color',[.8 .8 .8],'LineWidth',1.4);
+    legend('CorrLeftNormal','CorrLeftOmit','AnswerTime');
+    xlabel('Time(s)');
+    ylabel('Mean \DeltaF/F_0');
+    title('Left trials plot');
+    
+    subplot(1,2,2)
+    hold on
+    plot(xtimes,cROIdata(2,:),'r','LineWidth',1.8);
+    plot(xtimes,cROIdata(4,:),'r','LineWidth',1.8,'LineStyle','--');
+    yssss = axis;
+    line([AlignedFrameNum AlignedFrameNum]/FrameRate,[yssss(3) yssss(4)],'color',[.8 .8 .8],'LineWidth',1.4);
+    legend('CorrRightNormal','CorrRightOmit','AnswerTime');
+    xlabel('Time(s)');
+    ylabel('Mean \DeltaF/F_0');
+    title('Right trials plot');
+    
+    suptitle(sprintf('ROI%d compare plot',nnROI));
+    saveas(hcROI,sprintf('ROI%d_meanTrace_plot',nnROI),'png');
+    saveas(hcROI,sprintf('ROI%d_meanTrace_plot',nnROI));
+    close(hcROI);
+end
+cd ..;
+%%
+cd ..;
+
+% StrcDataExtraction(AllCorrDataSave(1),AllCorrTimeSave,AlignedFrameNum,FrameLength),AllCorrDataSave
+function DataSelectAll = StrcDataExtraction(StrcData,StrcTime,AlignFrame,FrameLength)
+fieldNameData = fieldnames(StrcData);
+fieldNameTime = fieldnames(StrcTime);
+fieldLength = length(fieldNameData);
+DataSelectAll = cell(fieldLength,1);
+for nn = 1 : fieldLength
+    Dataname = fieldNameData{nn};
+    Timename = fieldNameTime{nn};
+    if length(StrcTime.(Timename)) ~= size(StrcData.(Dataname),1)
+        error('Two field names have different data size, please check your data input.');
+    end
+    RepeatNum = length(StrcTime.(Timename));
+    cSelectData = zeros(RepeatNum,FrameLength);
+    for mm = 1 : RepeatNum
+        cStrcTime = StrcTime.(Timename)(mm);
+        Frameadjust = cStrcTime - AlignFrame;
+        cSelectData(mm,:) = StrcData.(Dataname)(mm,(Frameadjust+1):(Frameadjust+FrameLength));
+    end
+    DataSelectAll(nn) = {cSelectData};
 end
 
-cd ..;
+function MeanDataCell = CellDataMean(CellData)
+DataLength = length(CellData);
+FrameLength = size(CellData{1},2);
+MeanDataAll = zeros(DataLength,FrameLength);
+for nxnx = 1 : DataLength
+    cDataSet = CellData{nxnx};
+    MeanDataAll(nxnx,:) = mean(cDataSet);
+end
+MeanDataCell = {MeanDataAll};

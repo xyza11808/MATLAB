@@ -101,8 +101,8 @@ for nnROI = 1 : ROINum
     cLOmtSem = squeeze(CorrLOmtDSum(nnROI,:,2))/sqrt(CorrLOmtDSum(nnROI,1,3));
     cSigInds =  double(LeftSigInds(nnROI,:) < 0.01);
     cSigInds(cSigInds < 1) = nan;
-    plot(cLNorData,'b','LineWidth',1.8,'LineStyle','--');  % control pot
-    plot(cLOmtData,'b','LineWidth',1.8);
+    cline1 = plot(cLNorData,'b','LineWidth',1.8,'LineStyle','--');  % control pot
+    cline2 = plot(cLOmtData,'b','LineWidth',1.8);
     errorbar(1:BinNum,cLNorData,cLNorSem,'bo','LineWidth',1.4);
     errorbar(1:BinNum,cLOmtData,cLOmtSem,'bo','LineWidth',1.4);
     ylimValue = get(gca,'ylim');
@@ -114,6 +114,7 @@ for nnROI = 1 : ROINum
     ylabel('mean \DeltaF/F_0 (%)');
     title('Left Correct trials');
     set(gca,'FontSize',20);
+    legend([cline1,cline2],{'Left_Nor','Left_Omit'},'FontSize',10);
     hold off
     box off
     
@@ -125,8 +126,8 @@ for nnROI = 1 : ROINum
     cROmtSem = squeeze(CorrROmtDSum(nnROI,:,2))/sqrt(CorrROmtDSum(nnROI,1,3));
     cSigInds =  double(RightSigInds(nnROI,:) < 0.01);
     cSigInds(cSigInds < 1) = nan;
-    plot(cRNorData,'r','LineWidth',1.8,'LineStyle','--');
-    plot(cROmtData,'r','LineWidth',1.8);
+    cLine3 = plot(cRNorData,'r','LineWidth',1.8,'LineStyle','--');
+    cLine4 = plot(cROmtData,'r','LineWidth',1.8);
     errorbar(1:BinNum,cRNorData,cRNorSem,'ro','LineWidth',1.4);
     errorbar(1:BinNum,cROmtData,cROmtSem,'ro','LineWidth',1.4);
     ylimValue = get(gca,'ylim');
@@ -138,6 +139,8 @@ for nnROI = 1 : ROINum
     ylabel('mean \DeltaF/F_0 (%)');
     title('Right Correct trials');
     set(gca,'FontSize',20);
+    legend([cLine3,cLine4],{'Right_Nor','Right_Omit'},'FontSize',10);
+    
     hold off
     box off
     

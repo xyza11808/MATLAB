@@ -27,7 +27,7 @@ CorrStimTypeTick = FreqType/1000;
 if mod(FreqTypeNum,2)
     error('Input frequency type can not be a odd number.\n');
 end
-ColorSelect = jet;
+ColorSelect = jet(64);
 ColorIndsL = round(linspace(1,20,FreqTypeNum/2));
 ColorIndsR = round(linspace(44,64,FreqTypeNum/2));
 ColorInds = [ColorIndsL,ColorIndsR];
@@ -83,10 +83,10 @@ for nTime = 1 : TimeScaleNum
         AlignedMeanTarace(nFreq,:,:) = squeeze(mean(CDataAll));
     end
     WinData = squeeze(mean(FreqmeanData,3)); % nFreq by nROI
-    TDindex = zeros(ROINum,1);
-    CIindex = zeros(ROINum,1);
-    LLargeThanR = zeros(ROINum,1);
     if isPlot
+        TDindex = zeros(ROINum,1);
+        CIindex = zeros(ROINum,1);
+        LLargeThanR = zeros(ROINum,1);
         for nROI = 1 : ROINum
             cROIData = squeeze(AlignedMeanTarace(:,nROI,:));
             cROIDataSmooth = zeros(size(cROIData));

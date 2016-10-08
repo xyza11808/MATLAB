@@ -1,4 +1,4 @@
-function ChoiceProbCal(RawData,TrialFreq,ActionChoice,TimeScale,OnFrame,FrameRate,varargin)
+function varargout = ChoiceProbCal(RawData,TrialFreq,ActionChoice,TimeScale,OnFrame,FrameRate,varargin)
 % this function is tried to calculate the choice probability for each ROI
 % and try to find whether there are some differences of firing rate between
 % correct and error trials
@@ -9,6 +9,10 @@ if nargin > 6
         FreqBoundary = varargin{1};
         IsBoundary = 1;
     end
+end
+isplot = 1;
+if nargin > 7
+    isplot = varargin{2};
 end
 if ~IsBoundary
     fprintf('There is no valid frequency boundary input, please input a value as frequency boundary.\n');
@@ -40,11 +44,12 @@ end
 if FrameSelect(2) > nFrames
     FrameSelect(2) = nFrames;
 end
-
-if ~isdir('./Choice_prob_plot/')
-    mkdir('./Choice_prob_plot/');
+if isplot
+    if ~isdir('./Choice_prob_plot/')
+        mkdir('./Choice_prob_plot/');
+    end
+    cd('./Choice_prob_plot/');
 end
-cd('./Choice_prob_plot/');
 
 MeanTypeData = zeros(nROIs,length(FreqType),2);
 StdTypeData = zeros(nROIs,length(FreqType),2);
@@ -66,63 +71,75 @@ for nROI = 1 : nROIs
         NumTypeData(nROI,nfreq,:) = [length(CorrectData),length(ErrorData)];
         DataStoreCell(nROI,nfreq,:) = {{CorrectData},{ErrorData}};
     end
-    
-    h_roi = figure('position',[680 300 970 800],'Paperpositionmode','auto');
-    hold on;
-    for nfreq = 1 : length(FreqType)
-        CorrRandx = ((rand(NumTypeData(nROI,nfreq,1),1)-0.5)*2)*VariScale + OctaveType(nfreq)-VariScale;
-        ErroRandx = ((rand(NumTypeData(nROI,nfreq,2),1)-0.5)*2)*VariScale+ OctaveType(nfreq)+VariScale;
-        scatter(CorrRandx,DataStoreCell{nROI,nfreq,1}{:},50,'ro','filled');
-        scatter(ErroRandx,DataStoreCell{nROI,nfreq,2}{:},50,'ko','filled');
-        if ~(isempty(ErroRandx) || isempty(CorrRandx))
-            [h,p] = ttest2(DataStoreCell{nROI,nfreq,1}{:},DataStoreCell{nROI,nfreq,2}{:});
-            if ~h
-                DataSig(nROI,nfreq,:) = [0,0];
-            else
-                DataSig(nROI,nfreq,:) = [h,p];
+    if isplot
+        h_roi = figure('position',[680 300 970 800],'Paperpositionmode','auto');
+        hold on;
+    %     cROItrialNum = zeros(length(FreqType) * 2,1);
+    %     cROItrialXlabel = zeros(length(FreqType) * 2,1);
+        for nfreq = 1 : length(FreqType)
+            CorrRandx = ((rand(NumTypeData(nROI,nfreq,1),1)-0.5)*2)*VariScale + OctaveType(nfreq)-VariScale;
+            ErroRandx = ((rand(NumTypeData(nROI,nfreq,2),1)-0.5)*2)*VariScale + OctaveType(nfreq)+VariScale;
+    %         cROItrialNum(nfreq*2 - 1: nfreq*2) = reshape(NumTypeData(nROI,nfreq,:),[],1);
+    %         cROItrialXlabel(nfreq*2 - 1: nfreq*2) = [OctaveType(nfreq)-VariScale;OctaveType(nfreq)+VariScale];
+            scatter(CorrRandx,DataStoreCell{nROI,nfreq,1}{:},50,'ro','filled');
+            scatter(ErroRandx,DataStoreCell{nROI,nfreq,2}{:},50,'ko','filled');
+            if ~(isempty(ErroRandx) || isempty(CorrRandx))
+                [h,p] = ttest2(DataStoreCell{nROI,nfreq,1}{:},DataStoreCell{nROI,nfreq,2}{:});
+                if ~h
+                    DataSig(nROI,nfreq,:) = [0,0];
+                else
+                    DataSig(nROI,nfreq,:) = [h,p];
+                end
             end
         end
+        alpha(0.5);
+        errorbar((OctaveType - VariScale),squeeze(MeanTypeData(nROI,:,1)),squeeze(StdTypeData(nROI,:,1)),'co','LineWidth',1.8);
+        errorbar((OctaveType + VariScale),squeeze(MeanTypeData(nROI,:,2)),squeeze(StdTypeData(nROI,:,2)),'bo','LineWidth',1.8);
+        ylimvalue=get(gca,'ylim');
+        text(OctaveType,ones(length(OctaveType),1)*ylimvalue(2)*0.9,strsplit(num2str(squeeze(NumTypeData(nROI,:,1))),' '),'color','r','FontSize',15);
+        text(OctaveType,ones(length(OctaveType),1)*ylimvalue(2)*0.8,strsplit(num2str(squeeze(NumTypeData(nROI,:,2))),' '),'color','k','FontSize',15);
+    %     text(cROItrialXlabel,ones(length(cROItrialXlabel),1)*ylimvalue(2)*0.8,cellstr(num2str(cROItrialNum(:))),'color','b','FontSize',15);
+
+        xlabel('Octave');
+        ylabel('Max \DeltaF/F_0');
+        title(sprintf('ROI%d response',nROI));
+        set(gca,'FontSize',20);
+        saveas(h_roi,sprintf('ROI%d response for choice prob',nROI),'fig');
+        saveas(h_roi,sprintf('ROI%d response for choice prob',nROI),'png');
+        close(h_roi);
+
+        h_line = figure('position',[680 300 970 800],'Paperpositionmode','auto');
+        hold on;
+        errorbar((OctaveType - VariScale),squeeze(MeanTypeData(nROI,:,1)),squeeze(StdTypeData(nROI,:,1)),'r-o','LineWidth',1.8);
+        errorbar((OctaveType + VariScale),squeeze(MeanTypeData(nROI,:,2)),squeeze(StdTypeData(nROI,:,2)),'k-o','LineWidth',1.8);
+        ylimvalue=get(gca,'ylim');
+        SigInds = (squeeze(DataSig(nROI,:,1)) > 0);
+        SigOctave = OctaveType(SigInds);
+        if ~isempty(SigOctave)
+            ytick = 0.9 * ylimvalue(2);
+            scatter(SigOctave,ones(length(SigOctave),1)*ytick,40,'b*','LineWidth',1.8);
+        end
+        xlabel('Octave');
+        ylabel('Max \DeltaF/F_0');
+        title(sprintf('ROI%d response',nROI));
+        set(gca,'FontSize',20);
+        saveas(h_line,sprintf('ROI%d response mean for choice prob',nROI),'fig');
+        saveas(h_line,sprintf('ROI%d response mean for choice prob',nROI),'png');
+        close(h_line);
     end
-    alpha(0.5);
-    errorbar((OctaveType - VariScale),squeeze(MeanTypeData(nROI,:,1)),squeeze(StdTypeData(nROI,:,1)),'co','LineWidth',1.8);
-    errorbar((OctaveType + VariScale),squeeze(MeanTypeData(nROI,:,2)),squeeze(StdTypeData(nROI,:,2)),'bo','LineWidth',1.8);
-    
-    xlabel('Octave');
-    ylabel('Max \DeltaF/F_0');
-    title(sprintf('ROI%d response',nROI));
-    set(gca,'FontSize',20);
-    saveas(h_roi,sprintf('ROI%d response for choice prob',nROI),'fig');
-    saveas(h_roi,sprintf('ROI%d response for choice prob',nROI),'png');
-    close(h_roi);
-    
-    h_line = figure('position',[680 300 970 800],'Paperpositionmode','auto');
-    hold on;
-    errorbar((OctaveType - VariScale),squeeze(MeanTypeData(nROI,:,1)),squeeze(StdTypeData(nROI,:,1)),'r-o','LineWidth',1.8);
-    errorbar((OctaveType + VariScale),squeeze(MeanTypeData(nROI,:,2)),squeeze(StdTypeData(nROI,:,2)),'k-o','LineWidth',1.8);
-    ylimvalue=get(gca,'ylim');
-    SigInds = (squeeze(DataSig(nROI,:,1)) > 0);
-    SigOctave = OctaveType(SigInds);
-    if ~isempty(SigOctave)
-        ytick = 0.9 * ylimvalue(2);
-        scatter(SigOctave,ones(length(SigOctave),1)*ytick,40,'b*','LineWidth',1.8);
-    end
-    xlabel('Octave');
-    ylabel('Max \DeltaF/F_0');
-    title(sprintf('ROI%d response',nROI));
-    set(gca,'FontSize',20);
-    saveas(h_line,sprintf('ROI%d response mean for choice prob',nROI),'fig');
-    saveas(h_line,sprintf('ROI%d response mean for choice prob',nROI),'png');
-    close(h_line);
-    
 end
 save ChoiceProbData.mat MeanTypeData StdTypeData NumTypeData DataStoreCell DataSig -v7.3
-
-if ~isdir('./CP_value_cal/')
-    mkdir('./CP_value_cal/');
+if isplot
+    if ~isdir('./CP_value_cal/')
+        mkdir('./CP_value_cal/');
+    end
+    cd('./CP_value_cal/');
+    CP_And_dprime_cal(RawData,TrialFreq,OnFrame,TimeScale,FrameRate,ActionChoice,FreqBoundary)
+    % ChoiceProbCal(RawData,TrialFreq,ActionChoice,TimeScale,OnFrame,FrameRate,varargin)
+    cd ..;
 end
-cd('./CP_value_cal/');
-CP_And_dprime_cal(RawData,TrialFreq,OnFrame,TimeScale,FrameRate,ActionChoice,FreqBoundary)
-% ChoiceProbCal(RawData,TrialFreq,ActionChoice,TimeScale,OnFrame,FrameRate,varargin)
-cd ..;
-
+if nargout > 0
+    varargout(1) = {DataStoreCell};
+    varargout(2) = {NumTypeData};
+end
 cd ..;

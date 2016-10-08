@@ -618,11 +618,49 @@ elseif strcmpi(type,'2AFC')
     end
     
     if choice==1
+        cWorkingPath = pwd;
+        fprintf('Loading RF ROI analysis files...\n');
+        [filename,filepath,Findex]=uigetfile('*.mat','Select your 2p analysis storage data','MultiSelect','on');
+        if ~Findex
+            disp('Quit analysis...\n');
+            return;
+        end
+        cd(filepath);
+        % files=dir('*.mat');
+        for i=1:length(filename);
+            RealFileName=filename{i};
+            x=load(RealFileName);
+            if (isfield(x,'CaTrials') || isfield(x,'CaSignal'))
+        %     if strncmp(RealFileName,'CaTrials',8)
+                export_filename_raw=RealFileName(1:end-4);
+                fieldN=fieldnames(x);
+                CaTrials_RF=x.(fieldN{1});
+            end
+            if isfield(x,'SavedCaTrials')
+                export_filename_raw=RealFileName(1:end-4);
+                fieldN=fieldnames(x);
+                CaTrials_RF=x.(fieldN{1});
+               
+            end
+            if isfield(x,'ROIinfo')
+                ROIinfo_RF=x.ROIinfo;
+                
+            elseif isfield(x,'ROIinfoBU')
+                ROIinfo_RF=x.ROIinfoBU;
+                
+            end
+
+            disp(['loading file ',RealFileName,'...']);
+        end
+        
         disp('please input the RF stimulus file position.\n');
         [fn,fn_path]=uigetfile('*.*');
         sound_Stim=textread([fn_path,filesep,fn]);
+        
+        [f_raw_trialsRF,f_percent_changeRF,exclude_indsRF]=FluoChangeCa2NPl(CaTrials_RF,[],[],2,'RF',ROIinfo_RF);
         %         sound_Stim(exclude_inds,:)=[];
-        ROI_CF=in_site_freTuning(sound_Stim,type,'simple_fit');
+        [ROI_CF,VSDataStrc] = in_site_freTuning_update(f_percent_changeRF,sound_Stim,export_filename_raw,frame_rate,'simple_fit',CaTrials_RF,0);
+        
         %###############################################temp_block#####################
 %         disp('performing mode fluo change analysis.\n');
 %         if isdir('.\mode_f_change\')==0
@@ -631,13 +669,13 @@ elseif strcmpi(type,'2AFC')
 %         cd('.\mode_f_change\');
 %         AFC_ROI_analysis(f_percent_change,session_date,exclude_inds,eval(['CaSignal_',type]),ROI_CF,1,'mode',behavResults,behavSettings,sessiontype);
 %         cd ..;
-        
+        cd(cWorkingPath);
         disp('performing baseline fluo change analysis.\n');
-        if isdir('.\base_f_change\')==0
-            mkdir('.\base_f_change\');
+        if isdir('.\mode_f_change\')==0
+            mkdir('.\mode_f_change\');
         end
-        cd('.\base_f_change\');
-        AFC_ROI_analysis(f_baseline_change,session_date,exclude_inds,eval(['CaSignal_',type]),ROI_CF,1,'baseline',behavResults,behavSettings,sessiontype);
+        cd('.\mode_f_change\');
+        AFC_ROI_analysis(f_percent_change,session_date,exclude_inds,eval(['CaSignal_',type]),ROI_CF,1,'baseline',behavResults,behavSettings,sessiontype,VSDataStrc);
         cd ..;
     elseif choice==2
                 disp('performing mode fluo change analysis.\n');

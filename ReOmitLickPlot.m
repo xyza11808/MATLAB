@@ -228,6 +228,8 @@ ylabel('Lick Rate (Hz)');
 set(gca,'xtick',xtickNum,'xticklabel',xtickNum*TimeWin);
 xlabel('Time(s)');
 set(gca,'FontSize',20);
+legend([handlesL(1,1).LineH,handlesL(1,2).LineH,handlesL(2,1).LineH,handlesL(2,2).LineH],...
+    {'Left Control';'Left Omit';'Right Control';'Right Omit'},'FontSize',10);
 saveas(h_allL,'Left trials lick rate plot');
 saveas(h_allL,'Left trials lick rate plot','png');
 close(h_allL);
@@ -247,6 +249,8 @@ ylabel('Lick Rate (Hz)');
 set(gca,'xtick',xtickNum,'xticklabel',xtickNum*TimeWin);
 xlabel('Time(s)');
 set(gca,'FontSize',20);
+legend([handlesR(1,1).LineH,handlesR(1,2).LineH,handlesR(2,1).LineH,handlesR(2,2).LineH],...
+    {'Left Control';'Left Omit';'Right Control';'Right Omit'},'FontSize',10);
 saveas(h_allR,'Right trials lick rate plot');
 saveas(h_allR,'Right trials lick rate plot','png');
 close(h_allR);

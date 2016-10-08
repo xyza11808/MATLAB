@@ -21,24 +21,30 @@ if nargin==5
     ROI_cf=varargin{1};
     traj_choice=0;
     input_data_type='mode';
-   
 elseif nargin==6
     ROI_cf=varargin{1};
     traj_choice=varargin{2};
     input_data_type='mode';
 %     SessionType='puretone';
-elseif nargin>=7
+elseif nargin==7
+    ROI_cf=varargin{1};
+    traj_choice=varargin{2};
+    input_data_type=varargin{3};
+elseif nargin > 7
     ROI_cf=varargin{1};
     traj_choice=varargin{2};
     input_data_type=varargin{3};
     
+end
+if length(varargin) >= 7
+    VShapeData = varargin{7};
 end
 %define a index structure used for data plot index save
 plot_data_inds=struct('left_trials_inds',[],'right_trials_inds',[],'left_trials_bingo_inds',[],'right_trials_bingo_inds',[],...
     'left_trials_oops_inds',[],'right_trials_oops_inds',[],'left_stim_tone',[],'right_stim_tone',[],...
     'left_trials_miss_inds',[],'right_trials_miss_inds',[],'left_stim_tone_prob',[],'right_stim_tone_prob',[]);
 
-
+SessionDesp = 'Twotone2afc';
 size_data=size(data);
 frame_rate=floor(1000/CaTrials_signal(1).FrameTime);
 session_name=CaTrials_signal(1).FileName_prefix(:);
@@ -370,8 +376,9 @@ if ~isempty(radom_inds_correct)
     rand_trial_data=data(radom_inds_correct,:,:);
     rand_plot(behavResults,3);
     RandomSession=1;
+    SessionDesp = 'RandomPuretone';
     %###########################################################################################
-%     random_all_plot(data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),behavResults.Time_stimOnset(radom_inds),rand_trial_outcome,frame_rate,session_date');
+   random_all_plot(data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),behavResults.Time_stimOnset(radom_inds),rand_trial_outcome,frame_rate,session_date');
     %#############################################################################################
     %##############################################################################################
 %     Seperate_align_plot_update(rand_trial_data,rand_trial_type',[random_stim_onset',rand_reward_time',rand_first_lick'],frame_rate,session_date');
@@ -487,6 +494,8 @@ end
 %     isrewardIgnore=0;
 %     isactivereawrd=0;
     if ~isempty(RewardOmitInds)
+        isRewardOmit = 1;
+        SessionDesp = 'RewardOmit';
         disp('Reward ignoring trials exists, doing following analysis.\n');
 %         ROresults=trial_outcome(RewardOmitInds);
 %         isrewardIgnore = 1;
@@ -500,8 +509,11 @@ end
             mkdir('./AnsWerT_omit_sort/');
         end
         cd('./AnsWerT_omit_sort/');
-        RewardOmitPlot(data,OmitInds,trial_outcome,behavResults.Trial_Type,behavResults.Time_answer,behavResults.Time_stimOnset,frame_rate,session_date',PTclims);
+        ReOmitStrc = ReomitPlot(data,OmitInds,trial_outcome,behavResults.Trial_Type,behavResults.Time_answer,behavResults.Time_stimOnset,frame_rate,0);
+%         RewardOmitPlot(data,OmitInds,trial_outcome,behavResults.Trial_Type,behavResults.Time_answer,behavResults.Time_stimOnset,frame_rate,session_date',PTclims);
         Inds = RewardOmitPlot(data,OmitInds,trial_outcome,behavResults.Trial_Type,behavResults.Time_answer,behavResults.Time_stimOnset,frame_rate,session_date',PTclims,0);        
+        %data strc for summarized data plot
+        
         ReOmitLickPlot(lick_time_struct,behavResults.Time_stimOnset,behavResults.Time_answer,10,Inds);
         ReOmtRespComp(data,behavResults.Time_answer,[-0.5,4],0.25,Inds,frame_rate);
         cd ..;
@@ -571,6 +583,8 @@ if str2double(continue_char)==1
     
 elseif str2double(continue_char)==2
     %%
+    SessionData.nROI = size_data(2);
+    SessionData.FrameRate = frame_rate;
     %performing stimulus onset alignment
     %2AFC trigger should be at the begaining of each loop
     onset_time=behavResults.Time_stimOnset;
@@ -619,10 +633,30 @@ elseif str2double(continue_char)==2
     NormalTrialInds = behavResults.Trial_isProbeTrial == 0;
     
     %%
+    LRAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
+         behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
+         frame_rate,onset_time(NormalTrialInds),0);
+     TimeCourseStrc = TimeCorseROC(data_aligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);   
+     AUCDataAS = ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align',0);
+     if RandomSession
+         FreqAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
+         behavResults.Time_answer(NormalTrialInds),align_time_point,behavResults.Stim_toneFreq(NormalTrialInds),...
+         frame_rate,onset_time(NormalTrialInds),0);
+         FreqMeanTrace = FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),...
+         trial_outcome(radom_inds),2,{1},frame_rate,start_frame,0);
+         [ChoiceDataValue,ChoiceDataNumber] = ChoiceProbCal(smooth_data(NormalTrialInds,:,:),behavResults.Stim_toneFreq(NormalTrialInds),...
+             behavResults.Action_choice(NormalTrialInds),1.5,start_frame,frame_rate,16000,0);
+     end
+     
+     %%
+     script_for_summarizedPlot;  % call a script for data preparation and call summarized plot function
+    %%
 %     ActiveCellGene(data,behavResults,trial_outcome,frame_rate,1.5);
     MeanAlignedDataPlot(smooth_data(NormalTrialInds,:,:),start_frame,behavResults.Trial_Type(NormalTrialInds),frame_rate,trial_outcome(NormalTrialInds));
     TimeCorseROC(data_aligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2);   %seperated ROC plot
-     AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),frame_rate,onset_time(NormalTrialInds));
+     AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
+         behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
+         frame_rate,onset_time(NormalTrialInds));
     SignalCorr2afc(data_aligned(NormalTrialInds,:,:),trial_outcome(NormalTrialInds),behavResults.Stim_toneFreq(NormalTrialInds),start_frame,frame_rate,1);
     
      ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align');
@@ -637,8 +671,8 @@ elseif str2double(continue_char)==2
           RandNeuroMLRC(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,TrialTypes,1.5);
           MultiTScaleNMT(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,{0.1,0.15,0.2,0.3,[0.1,0.2],[0.2,0.3]});
           ChoiceProbCal(smooth_data,behavResults.Stim_toneFreq,behavResults.Action_choice,1.5,start_frame,frame_rate,16000);
-%           FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame,1);
-          FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame);
+%           FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame,[],1);
+%           FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame);
           %% #############################################
           % % % % %plot psychometrical curve based on decision time window
           ChoicelickTime = double(FLickT);

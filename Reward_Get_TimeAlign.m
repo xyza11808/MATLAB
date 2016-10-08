@@ -4,7 +4,10 @@ function AnswerAlignData=Reward_Get_TimeAlign(Data,LickTime,behavResults,behavSe
 %time that is actually happens late than 3s before trace time ends will not
 %be counted in order to save enough data for final plot, the least answer
 %time before will also be counted in the final trace plot
-
+isplot = 1;
+if isempty(varargin)
+    isplot = varargin{1};
+end
 TrialTypes=behavResults.Trial_Type;
 TrialStimOnT=behavResults.Time_stimOnset;
 RewardGivenT=behavResults.Time_reward;
@@ -62,12 +65,14 @@ end
 AlignedTraceLength=BeforeFrameLength+AfterFrameLength;
 Linds=CorrTrialTypes==0;
 Rinds=CorrTrialTypes==1;
-if ~isdir('./Trial_color_plot/')
-    mkdir('./Trial_color_plot/');
-end
+if isplot
+    if ~isdir('./Trial_color_plot/')
+        mkdir('./Trial_color_plot/');
+    end
 
-if ~isdir('./Trial_Trace_plot/')
-    mkdir('./Trial_Trace_plot/');
+    if ~isdir('./Trial_Trace_plot/')
+        mkdir('./Trial_Trace_plot/');
+    end
 end
 XTick=0:FrameRate:AlignedTraceLength;
 Xticklabel=XTick./FrameRate;
