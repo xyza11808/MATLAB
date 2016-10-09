@@ -13,9 +13,12 @@ if strcmpi(SessionDesp,'Twotone2afc')
     SessionData.ROIauc = AUCDataAS;
     SessionData.ROCCoursexTick = TimeCourseStrc.tickTime;
     SessionData.BinROCLR = TimeCourseStrc.ROIBinAUC;
+    SessionData.AnsLRMeanTrace = AnsAlignData.LRMeanSemData;
+    SessionData.AnsAlignF = AnsAlignData.AlignFrame;
     if exist('VShapeData','var')
         SessionData.VShapeData = VShapeData;
     end
+    
 %%   
 elseif strcmpi(SessionDesp,'RandomPuretone')
     %%

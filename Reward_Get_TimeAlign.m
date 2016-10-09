@@ -78,6 +78,10 @@ XTick=0:FrameRate:AlignedTraceLength;
 Xticklabel=XTick./FrameRate;
 Event.t_eventOn=BeforeFrameLength;
 Event.isPatchPlot=0;
+LeftDataAll = AlignData(Linds,:,:);
+RightDatAll = AlignData(Rinds,:,:);
+LRMeanSemData = zeros(DataSize(2),4,BeforeFrameLength+AfterFrameLength);
+
 for m=1:DataSize(2)  %ROI number
     TempData=squeeze(AlignData(:,m,:));
     ColorScale=[0 min(max(TempData(:)),300)];
@@ -87,6 +91,10 @@ for m=1:DataSize(2)  %ROI number
     RightDataMean=mean(RightData);
     LeftDataSEM=std(LeftData)./sqrt(DataSize(1));
     RightDataSEM=std(RightData)./sqrt(DataSize(1));
+    LRMeanSemData(m,1,:) = LeftDataMean;
+    LRMeanSemData(m,2,:) = LeftDataSEM;
+    LRMeanSemData(m,3,:) = RightDataMean;
+    LRMeanSemData(m,4,:) = RightDataSEM;
     
     h_colorplot=figure;
     hold on
@@ -133,5 +141,8 @@ save Aligned_data_answerT.mat AlignData CorrTrialTypes BeforeFrameLength AfterFr
 if nargout
     AnswerAlignData.Data=AlignData;
     AnswerAlignData.TrialType=CorrTrialTypes;
-    AnswerAlignData.AlignFrame=BeforeFrameLength-1;
+    AnswerAlignData.AlignFrame=BeforeFrameLength;
+    AnswerAlignData.AllMeanData = LRMeanSemData;
+    AnswerAlignData.LeftDataAll = LeftDataAll;
+    AnswerAlignData.RightDataAll = RightDatAll;
 end

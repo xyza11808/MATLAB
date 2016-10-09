@@ -19,7 +19,9 @@ if nargin<2 || isempty(ROIinfo)
     disp('please select your ROI analysis result data, the mat file contains ROI position infomation.\n');
     [filename,filepath,~]=uigetfile('*.mat','Select your ROI analysis result');
     cd(filepath);
-    load(filename);
+    xx = load(filename);
+    xxnames = fieldnames(xx);
+    ROIinfo = xx.(xxnames{1});
 end
 if nargin>2
     ROISChoice=varargin{3};
@@ -59,7 +61,7 @@ end
 im=mean(image_data(:,:,:),3);
 clims=[];
 clims(1)=max([0,min(im(:))]);
-clims(2)=min([max(im(:)),600]);
+clims(2)=min([max(im(:)),350]);
 h=imshow(im,clims,'Border','tight');
 hold on;
 if ~ROISChoice
@@ -67,13 +69,14 @@ if ~ROISChoice
         single_roi_position=ROI_position{n};
         center_pos=mean(single_roi_position);
         line(single_roi_position(:,1),single_roi_position(:,2),'color','r','Linewidth',0.2);
-        text(center_pos(1),center_pos(2),num2str(n),'color','g','FontSize',8,'HorizontalAlignment','center');
+        text(center_pos(1),center_pos(2),num2str(n),'color','g','FontSize',12,'HorizontalAlignment','center');
     end
     hold off;
     start_path=pwd;
     save_path=uigetdir(start_path,'Please select the image save path');
     cd(save_path);
     saveas(h,'ROI position plot.png');
+    saveas(h,'ROI position plot');
     close;
 else
     im=mean(image_data(:,:,:),3);
@@ -98,5 +101,6 @@ else
     save_path=uigetdir(pwd,'Please select the image save path');
     cd(save_path);
     saveas(h,'ROI position plot.png');
+    saveas(h,'ROI position plot');
     close;
 end

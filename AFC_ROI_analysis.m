@@ -550,6 +550,7 @@ if str2double(continue_char)==1
     cd('.\Answer_time_align\');
 %     sequence_analysis(data,frame_rate,session_name(19:end),behavResults);
     AnsAlignData=Reward_Get_TimeAlign(data,lick_time_struct,behavResults,behavSettings,trial_outcome,frame_rate,imaging_time); %output is a three field variable with: Data, TrialType, AlignFrame
+%     AnsAlignData=Reward_Get_TimeAlign(data,lick_time_struct,behavResults,behavSettings,trial_outcome,frame_rate,imaging_time,0);  % generate data only
     ROC_check(AnsAlignData.Data,AnsAlignData.TrialType,AnsAlignData.AlignFrame,frame_rate,[],'AnsT_Align');
     
     %###############################################
@@ -638,6 +639,7 @@ elseif str2double(continue_char)==2
          frame_rate,onset_time(NormalTrialInds),0);
      TimeCourseStrc = TimeCorseROC(data_aligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);   
      AUCDataAS = ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align',0);
+     AnsAlignData=Reward_Get_TimeAlign(data,lick_time_struct,behavResults,behavSettings,trial_outcome,frame_rate,imaging_time,0);
      if RandomSession
          FreqAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
          behavResults.Time_answer(NormalTrialInds),align_time_point,behavResults.Stim_toneFreq(NormalTrialInds),...
