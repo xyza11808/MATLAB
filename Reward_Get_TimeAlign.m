@@ -5,7 +5,7 @@ function AnswerAlignData=Reward_Get_TimeAlign(Data,LickTime,behavResults,behavSe
 %be counted in order to save enough data for final plot, the least answer
 %time before will also be counted in the final trace plot
 isplot = 1;
-if isempty(varargin)
+if ~isempty(varargin)
     isplot = varargin{1};
 end
 TrialTypes=behavResults.Trial_Type;
@@ -96,44 +96,46 @@ for m=1:DataSize(2)  %ROI number
     LRMeanSemData(m,3,:) = RightDataMean;
     LRMeanSemData(m,4,:) = RightDataSEM;
     
-    h_colorplot=figure;
-    hold on
-    subplot(2,1,1)
-    imagesc(LeftData,ColorScale);
-    hLbar=colorbar;
-    set(get(hLbar,'Title'),'string','\DeltaF/F_0');
-    yaxis=axis();
-    line([BeforeFrameLength BeforeFrameLength],[yaxis(3) yaxis(4)],'LineWidth',2.5,'color',[.8 .8 .8]);
-    set(gca,'xtick',XTick,'xticklabel',Xticklabel);
-    title('Left Trials');
-    
-    subplot(2,1,2)
-    imagesc(RightData,ColorScale);
-    hRbar=colorbar;
-    set(get(hRbar,'Title'),'string','\DeltaF/F_0');
-    yaxis=axis();
-    line([BeforeFrameLength BeforeFrameLength],[yaxis(3) yaxis(4)],'LineWidth',2.5,'color',[1 0 1]);
-    set(gca,'xtick',XTick,'xticklabel',Xticklabel);
-    title('Right Trials');
-    
-    suptitle(sprintf('Color plot for ROI%d',m));
-    saveas(h_colorplot,sprintf('./Trial_color_plot/Answertime_Align_ROI%d.png',m));
-    saveas(h_colorplot,sprintf('./Trial_color_plot/Answertime_Align_ROI%d.fig',m));
-    close(h_colorplot);
-    
-    h_meanTrace=figure;
-    hold on;
-    H_L=plot_meanCaTrace(LeftDataMean,LeftDataSEM,1:AlignedTraceLength,h_meanTrace,Event);
-    H_R=plot_meanCaTrace(RightDataMean,RightDataSEM,1:AlignedTraceLength,h_meanTrace,Event);
-    set(H_L.meanPlot, 'color','b');
-    set(H_R.meanPlot, 'color','r');
-    set(gca,'xtick',XTick,'xticklabel',Xticklabel);
-    ylabel('\DeltaF/F_0');
-    xlabel('Time (s)');
-    title(sprintf('Aligned Mean Trace for ROI%d',m));
-    saveas(h_meanTrace,sprintf('./Trial_Trace_plot/AT_mean_ROI%d.png',m));
-    saveas(h_meanTrace,sprintf('./Trial_Trace_plot/AT_mean_ROI%d.fig',m));
-    close(h_meanTrace);
+    if isplot
+        h_colorplot=figure;
+        hold on
+        subplot(2,1,1)
+        imagesc(LeftData,ColorScale);
+        hLbar=colorbar;
+        set(get(hLbar,'Title'),'string','\DeltaF/F_0');
+        yaxis=axis();
+        line([BeforeFrameLength BeforeFrameLength],[yaxis(3) yaxis(4)],'LineWidth',2.5,'color',[.8 .8 .8]);
+        set(gca,'xtick',XTick,'xticklabel',Xticklabel);
+        title('Left Trials');
+
+        subplot(2,1,2)
+        imagesc(RightData,ColorScale);
+        hRbar=colorbar;
+        set(get(hRbar,'Title'),'string','\DeltaF/F_0');
+        yaxis=axis();
+        line([BeforeFrameLength BeforeFrameLength],[yaxis(3) yaxis(4)],'LineWidth',2.5,'color',[1 0 1]);
+        set(gca,'xtick',XTick,'xticklabel',Xticklabel);
+        title('Right Trials');
+
+        suptitle(sprintf('Color plot for ROI%d',m));
+        saveas(h_colorplot,sprintf('./Trial_color_plot/Answertime_Align_ROI%d.png',m));
+        saveas(h_colorplot,sprintf('./Trial_color_plot/Answertime_Align_ROI%d.fig',m));
+        close(h_colorplot);
+
+        h_meanTrace=figure;
+        hold on;
+        H_L=plot_meanCaTrace(LeftDataMean,LeftDataSEM,1:AlignedTraceLength,h_meanTrace,Event);
+        H_R=plot_meanCaTrace(RightDataMean,RightDataSEM,1:AlignedTraceLength,h_meanTrace,Event);
+        set(H_L.meanPlot, 'color','b');
+        set(H_R.meanPlot, 'color','r');
+        set(gca,'xtick',XTick,'xticklabel',Xticklabel);
+        ylabel('\DeltaF/F_0');
+        xlabel('Time (s)');
+        title(sprintf('Aligned Mean Trace for ROI%d',m));
+        saveas(h_meanTrace,sprintf('./Trial_Trace_plot/AT_mean_ROI%d.png',m));
+        saveas(h_meanTrace,sprintf('./Trial_Trace_plot/AT_mean_ROI%d.fig',m));
+        close(h_meanTrace);
+    end
     
 end
 save Aligned_data_answerT.mat AlignData CorrTrialTypes BeforeFrameLength AfterFrameLength -v7.3

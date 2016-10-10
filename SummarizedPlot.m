@@ -84,6 +84,7 @@ switch SessionDesp
             yaxis = axis;
             patch([AlignT AlignT+0.3 AlignT+0.3 AlignT],[yaxis(3) yaxis(3) yaxis(4) yaxis(4)],1,...
                 'facecolor',[.1 .8 .1],'Edgecolor','none','facealpha',0.3);
+            ylim([yaxis(3) yaxis(4)]);
             legend([lh1,lh2],'LeftMean','RightMean');
             xlabel('Time (s)');
             ylabel('Mean \DeltaF/F_0 (%)');
@@ -105,25 +106,26 @@ switch SessionDesp
             % plot the mean trace aligned to answer onset time
             
             subplot(3,2,6)
+            hold on;
             LeftAnsMean = squeeze(SessionData.AnsLRMeanTrace(ROInumber,1,:));
             LeftAnsSem = squeeze(SessionData.AnsLRMeanTrace(ROInumber,2,:));
             RightAnsMean = squeeze(SessionData.AnsLRMeanTrace(ROInumber,3,:));
             RightAnsSem = squeeze(SessionData.AnsLRMeanTrace(ROInumber,4,:));
             xt = (1:length(LeftAnsMean))/SessionData.FrameRate;
-            pxt = [xt,flipud(xt)];
-            LeftPData = [(LeftAnsMean'+LeftAnsSem') flipud(LeftAnsMean'-LeftAnsSem')];
-            RightPData = [(RightAnsMean'+RightAnsSem') flipud(RightAnsMean'-RightAnsSem')];
-            patch(pxt,LeftPData,1,'FaceColor',[.8 .8 .8],'EdgeColor','none','Facealpha',0.6);
-            patch(pxt,RightPData,1,'FaceColor',[.8 .8 .8],'EdgeColor','none','Facealpha',0.6);
-            line1 = plot(LeftAnsMean,'b','LineWidth',1.8);
-            line2 = plot(RightAnsMean,'r','LineWidth',1.8);
+            pxt = [xt,fliplr(xt)];
+            LeftPData = [(LeftAnsMean'+LeftAnsSem') fliplr(LeftAnsMean'-LeftAnsSem')];
+            RightPData = [(RightAnsMean'+RightAnsSem') fliplr(RightAnsMean'-RightAnsSem')];
+            patch(pxt,LeftPData,1,'FaceColor',[.8 .8 .8],'EdgeColor','none','Facealpha',0.8);
+            patch(pxt,RightPData,1,'FaceColor',[.8 .8 .8],'EdgeColor','none','Facealpha',0.8);
+            line1 = plot(xt,LeftAnsMean,'b','LineWidth',1.8);
+            line2 = plot(xt,RightAnsMean,'r','LineWidth',1.8);
             yaxis = axis;
-            line([SessionData.AnsAlignF SessionData.AnsAlignF],[yaxis(3) yaxis(4)],'Color',[.8 .8 .8],'LineWidth',1.8);
+            line([SessionData.AnsAlignF SessionData.AnsAlignF]/SessionData.FrameRate,[yaxis(3) yaxis(4)],'Color',[.8 .8 .8],'LineWidth',1.8);
             xlabel('Time (s)');
             ylabel('Mean \DeltaF/F_0 (%)');
             title('Ans Aligned mean trace');
             set(gca,'FontSize',18);
-            legend([line1 line2],{'Left corr','Right corr'},'FontSize',12);
+            legend([line1,line2],{'Left corr','Right corr'},'FontSize',12);
             text(SessionData.AnsAlignF, yaxis(4)*0.85, 'AnswerT','HorizontalAlignment','Right','FontSize',10,'Color','k');
             
             if isfield(SessionData,'VShapeData')
