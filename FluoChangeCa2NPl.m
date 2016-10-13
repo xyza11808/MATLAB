@@ -126,6 +126,7 @@ if length(CaTrials)>1
         end
         RawData(n,:,:)=CaTrials(n).f_raw;
         PreOnsetData{n}=CaTrials(n).f_raw(:,1:TrialOnsetTime(n));
+        FBaseline(n,:) = mean(CaTrials(n).f_raw(:,1:TrialOnsetTime(n)),2);
 %         PreOnsetDataROI = [PreOnsetDataROI,PreOnsetData{n}];
         
         if isfield(CaTrials(n),'RingF')
@@ -204,6 +205,7 @@ if isfield(CaTrials(1),'RingF') && IsNeuropilExtract == 1
         CurrentdDataSize=size(RawOnsetData);
         SavedNPbase=repmat(NPSubFactors,1,CurrentdDataSize(2));
         CorrePreOnsetData(m)={RawOnsetData - SavedNPbase.*NPOnsetData};
+        FBaseline(m,:) = mean(CorrePreOnsetData{m},2);
     end
     
 elseif isfield(CaTrials(1),'SegNPdataAll') && IsNeuropilExtract == 2
@@ -228,6 +230,7 @@ elseif isfield(CaTrials(1),'SegNPdataAll') && IsNeuropilExtract == 2
         TempSize=size(TempRawData);
         BaseComp=repmat(SegNPbase,1,TempSize(2));
         CorrePreOnsetData{TrialN}=TempRawData+BaseComp;  %after SegMental correction data
+        FBaseline(TrialN,:) = mean(CorrePreOnsetData{TrialN},2);
     end
     FCorrectData = RawData - SegROINPdata + repmat(SegNPbase',TrialN,1,TrialLen);
 else
@@ -291,10 +294,10 @@ end
 switch MethodChoice
     case 1
         ModeF0=zeros(ROINum,1);
-        if ~isdir('./f0_distribution/')
-            mkdir('./f0_distribution/');
+        if ~isdir('./Mode_f0_all/')
+            mkdir('./Mode_f0_all/');
         end
-        cd('./f0_distribution/');
+        cd('./Mode_f0_all/');
         for n=1:ROINum
             a=reshape(FCorrectData(:,n,:),[],1);
             [N,x]=hist(a,100);

@@ -116,6 +116,7 @@ for i=1:data_size(2)
         set(gca,'YDir','normal');
         title(['sound response of ROI ',num2str(i)]);
         xlabel('frequency(KHz)');
+        
         set(gca,'XTick',freq_tick);
         set(gca,'xticklabel',cellstr(num2str(freq_label(:),'%.1f')));
         ylabel('Intensity(Volume)');

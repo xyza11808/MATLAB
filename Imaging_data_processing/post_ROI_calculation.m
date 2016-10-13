@@ -593,10 +593,27 @@ if strcmpi(type,'RF')
     cd ..;
     
 elseif strcmpi(type,'2AFC')
-    [f_raw_trials,f_percent_change,exclude_inds,IsBaselineE]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,3,type,ROIinfo);
-    if IsBaselineE
-        fprintf('Please select your choice again without using the same background substraction method.\n');
-        [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,3,type,ROIinfo);
+    BaselineMethod = 2;
+    if BaselineMethod == 3
+        if ~isdir('./Type3_f0_calculation/')
+            mkdir('./Type3_f0_calculation/');
+        end
+        cd('./Type3_f0_calculation/');
+        [f_raw_trials,f_percent_change,exclude_inds,IsBaselineE]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,3,type,ROIinfo);
+        if IsBaselineE
+            fprintf('Please select your choice again without using the same background substraction method.\n');
+            [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,3,type,ROIinfo);
+        end
+    elseif BaselineMethod == 2
+        if ~isdir('./Type2_f0_calculation/')
+            mkdir('./Type2_f0_calculation/');
+        end
+        cd('./Type2_f0_calculation/');
+        [f_raw_trials,f_percent_change,exclude_inds,IsBaselineE]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,2,type,ROIinfo);
+        if IsBaselineE
+            fprintf('Please select your choice again without using the same background substraction method.\n');
+            [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,2,type,ROIinfo);
+        end
     end
 %     save RawMatricData.mat f_raw_trials f_percent_change -v7.3
 %     cd('.\plot_save\');
@@ -696,7 +713,7 @@ elseif strcmpi(type,'2AFC')
     end
     
     cd ..;
-    
+    cd ..;
 end
 %%
 % %pca analysis performed later

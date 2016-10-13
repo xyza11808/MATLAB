@@ -76,20 +76,22 @@ switch SessionDesp
             ypR = [RightMeanTrace+RightSEMTrace,fliplr(RightMeanTrace-RightSEMTrace)];
             subplot(3,2,5)
             hold on;
-            lh1 = plot(ts,LeftMeanTrace,'b','LineWidth',1.5);
-            lh2 = plot(ts,RightMeanTrace,'r','LineWidth',1.5);
             patch(xp,yp,1,'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6);
             patch(xp,ypR,1,'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6);
+            lh1 = plot(ts,LeftMeanTrace,'b','LineWidth',1.5);
+            lh2 = plot(ts,RightMeanTrace,'r','LineWidth',1.5);
             AlignT = SessionData.AlignFrame/SessionData.FrameRate;
             yaxis = axis;
             patch([AlignT AlignT+0.3 AlignT+0.3 AlignT],[yaxis(3) yaxis(3) yaxis(4) yaxis(4)],1,...
                 'facecolor',[.1 .8 .1],'Edgecolor','none','facealpha',0.3);
             ylim([yaxis(3) yaxis(4)]);
-            legend([lh1,lh2],'LeftMean','RightMean');
+            xlim([0 ts(end)]);
+            
             xlabel('Time (s)');
             ylabel('Mean \DeltaF/F_0 (%)');
             title(sprintf('TimeWin AUC = %.4f',SessionData.ROIauc(ROInumber)));
             set(gca,'FontSize',20);
+            legend([lh1,lh2],{'LeftMean','RightMean'},'FontSize',8);
             
             subplot(3,2,2)
             xTime = SessionData.ROCCoursexTick;
@@ -98,6 +100,8 @@ switch SessionDesp
             line([AlignT AlignT],[0 1],'color',[.8 .8 .8],'LineWidth',1.5,'LineStyle','--');
             xx=get(gca,'xlim');
             line([0 xx(2)],[0.5 0.5],'color',[.8 .8 .8],'LineWidth',1.5,'LineStyle','--');
+            xlim([0 xTime(end)]);
+            ylim([0 1]);
             xlabel('Time (s)');
             ylabel('ROC value');
             title('AUC Time course');
@@ -121,6 +125,8 @@ switch SessionDesp
             line2 = plot(xt,RightAnsMean,'r','LineWidth',1.8);
             yaxis = axis;
             line([SessionData.AnsAlignF SessionData.AnsAlignF]/SessionData.FrameRate,[yaxis(3) yaxis(4)],'Color',[.8 .8 .8],'LineWidth',1.8);
+            ylim([yaxis(3) yaxis(4)]);
+            xlim([0 xt(end)]);
             xlabel('Time (s)');
             ylabel('Mean \DeltaF/F_0 (%)');
             title('Ans Aligned mean trace');
@@ -217,21 +223,22 @@ switch SessionDesp
             ypR = [RightMeanTrace+RightSEMTrace,fliplr(RightMeanTrace-RightSEMTrace)];
             subplot(3,4,9)
             hold on;
-            lh1 = plot(ts,LeftMeanTrace,'b','LineWidth',1.5);
-            lh2 = plot(ts,RightMeanTrace,'r','LineWidth',1.5);
             patch(xp,yp,1,'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6);
             patch(xp,ypR,1,'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6);
+            lh1 = plot(ts,LeftMeanTrace,'b','LineWidth',1.5);
+            lh2 = plot(ts,RightMeanTrace,'r','LineWidth',1.5);
             AlignT = SessionData.AlignFrame/SessionData.FrameRate;
             xlim([0 max(ts)]);
             yaxis = axis;
             patch([AlignT AlignT+0.3 AlignT+0.3 AlignT],[yaxis(3) yaxis(3) yaxis(4) yaxis(4)],1,...
                 'facecolor',[.1 .8 .1],'Edgecolor','none','facealpha',0.3);
-            legend([lh1,lh2],'LeftMean','RightMean');
+            
             xlabel('Time (s)');
             ylabel('Mean \DeltaF/F_0');
 %             title('Mean Trace Plot');
             title(sprintf('TimeWin AUC = %.4f',SessionData.ROIauc(ROInumber)));
             set(gca,'FontSize',10);
+            legend([lh1,lh2],{'LeftMean','RightMean'},'FontSize',8);
                         
             % plotting the different frequencies response seperately
             if ROInumber == 1
@@ -303,6 +310,8 @@ switch SessionDesp
                 line([AlignT AlignT],[0 1],'color',[.8 .8 .8],'LineWidth',1.5,'LineStyle','--');
                 xx=get(gca,'xlim');
                 line([0 xx(2)],[0.5 0.5],'color',[.8 .8 .8],'LineWidth',1.5,'LineStyle','--');
+                xlim([0 xTime(end)]);
+                ylim([0 1]);
                 xlabel('Time (s)');
                 ylabel('ROC value');
                 title('Time Course of AUC');
@@ -414,14 +423,16 @@ switch SessionDesp
             ypR = [RightMeanTrace+RightSEMTrace,fliplr(RightMeanTrace-RightSEMTrace)];
             subplot(3,3,7)
             hold on;
-            lh1 = plot(ts,LeftMeanTrace,'b','LineWidth',1.5);
-            lh2 = plot(ts,RightMeanTrace,'r','LineWidth',1.5);
             patch(xp,yp,1,'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6);
             patch(xp,ypR,1,'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6);
+            lh1 = plot(ts,LeftMeanTrace,'b','LineWidth',1.5);
+            lh2 = plot(ts,RightMeanTrace,'r','LineWidth',1.5);
             AlignT = SessionData.AlignFrame/SessionData.FrameRate;
             yaxis = axis;
             patch([AlignT AlignT+0.3 AlignT+0.3 AlignT],[yaxis(3) yaxis(3) yaxis(4) yaxis(4)],1,...
                 'facecolor',[.1 .8 .1],'Edgecolor','none','facealpha',0.3);
+            ylim([yaxis(3) yaxis(4)]);
+            xlim([0 xt(end)]);
             xlabel('Time (s)');
             ylabel('Mean \DeltaF/F_0 (%)');
             title(sprintf('TimeWin AUC = %.4f',SessionData.ROIauc(ROInumber)));
@@ -485,6 +496,8 @@ switch SessionDesp
             hline2 = plot(xt,LeftOmitMeanAns,'Color',[1 0 1],'LineWidth',1.5);
             yaxis = axis;
             line([AnsT AnsT],[yaxis(3) yaxis(4)],'Color',[.8 .8 .8],'LineWidth',1.6);
+            ylim([yaxis(3) yaxis(4)]);
+            xlim([0 xt(end)]);
             xlabel('Time (s)');
             ylabel('Mean \DeltaF/F_0 (%)');
             xlim([0 max(xt)]);
@@ -512,6 +525,8 @@ switch SessionDesp
             hline2 = plot(xt,RightOmitMeanAns,'Color','k','LineWidth',1.8);
             yaxis = axis;
             line([AnsT AnsT],[yaxis(3) yaxis(4)],'Color',[.8 .8 .8],'LineWidth',1.6);
+            ylim([yaxis(3) yaxis(4)]);
+            xlim([0 xt(end)]);
             xlabel('Time (s)');
             ylabel('Mean \DeltaF/F_0 (%)');
             xlim([0 max(xt)]);
@@ -525,6 +540,8 @@ switch SessionDesp
             line([AlignT AlignT],[0 1],'color',[.8 .8 .8],'LineWidth',1.5,'LineStyle','--');
             xx=get(gca,'xlim');
             line([0 xx(2)],[0.5 0.5],'color',[.8 .8 .8],'LineWidth',1.5,'LineStyle','--');
+            xlim([0 xTime(end)]);
+            ylim([0 1]);
             xlabel('Time (s)');
             ylabel('ROC value');
             title('Time Course AUC');

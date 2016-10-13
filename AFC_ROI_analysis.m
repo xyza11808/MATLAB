@@ -378,7 +378,7 @@ if ~isempty(radom_inds_correct)
     RandomSession=1;
     SessionDesp = 'RandomPuretone';
     %###########################################################################################
-   random_all_plot(data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),behavResults.Time_stimOnset(radom_inds),rand_trial_outcome,frame_rate,session_date');
+%    random_all_plot(data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),behavResults.Time_stimOnset(radom_inds),rand_trial_outcome,frame_rate,session_date');
     %#############################################################################################
     %##############################################################################################
 %     Seperate_align_plot_update(rand_trial_data,rand_trial_type',[random_stim_onset',rand_reward_time',rand_first_lick'],frame_rate,session_date');
@@ -632,7 +632,7 @@ elseif str2double(continue_char)==2
         end
     end
     NormalTrialInds = behavResults.Trial_isProbeTrial == 0;
-    
+    FreqRespOnsetHist(data_aligned,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
     %%
     LRAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
          behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
