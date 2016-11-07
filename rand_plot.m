@@ -13,23 +13,27 @@ if nargin<1
     %mkdir('./session_data_plots');
     files = dir('*.mat');
     fileNum=length(files);
+    isProbAsPuretone = 0;
 else
+    isProbAsPuretone = 0;
     SelfPlot=0;
     behavResults=varargin{1};
     choice=varargin{2};
     if nargin > 2 
-        fn = varargin{3};
-        data_save_path = pwd;
-    else
-        data_save_path='./RandP_data_plots/';
-        if ~isdir(data_save_path)
-            mkdir(data_save_path);
+        if ~isempty(varargin{3})
+            fn = varargin{3};
+        end
+        if nargin >3
+            isProbAsPuretone = varargin{4};
         end
     end
+    data_save_path='./RandP_data_plots/';
+    if ~isdir(data_save_path)
+        mkdir(data_save_path);
+    end
     fileNum=1;
-%     fn='Behavior_plottest'
 end
-    
+
 boundary_result=struct('SessionName',[],'FitParam',[],'Boundary',[],'LeftCorr',[],'RightCorr',[],'StimType',[],...
     'StimCorr',[],'Coefficients',[],'P_value',[],'FitValue',[],'Typenumbers',[]);
 if SelfPlot
@@ -43,16 +47,19 @@ for n = 1:fileNum
     else
         FilePath=pwd;
     end
-    % exclude prob trials from analysis for current plot
-    IsProbT = double(behavResults.Trial_isProbeTrial);
-    if max(IsProbT)
-        fprintf('Excluded all prob trials for plotting.\n');
-        ProbInds = IsProbT == 1;
-        behavResults.Action_choice(ProbInds) = [];
-        behavResults.Time_reward(ProbInds) = [];
-        behavResults.Trial_Type(ProbInds) = [];
-        behavResults.Stim_toneFreq(ProbInds) = [];
-        behavResults.Stim_Type(ProbInds) = [];
+    
+    if ~isProbAsPuretone
+        % exclude prob trials from analysis for current plot
+        IsProbT = double(behavResults.Trial_isProbeTrial);
+        if max(IsProbT)
+            fprintf('Excluded all prob trials for plotting.\n');
+            ProbInds = IsProbT == 1;
+            behavResults.Action_choice(ProbInds) = [];
+            behavResults.Time_reward(ProbInds) = [];
+            behavResults.Trial_Type(ProbInds) = [];
+            behavResults.Stim_toneFreq(ProbInds) = [];
+            behavResults.Stim_Type(ProbInds) = [];
+        end
     end
         
     AnimalActionC = behavResults.Action_choice;
@@ -64,7 +71,11 @@ for n = 1:fileNum
     behavResults.Trial_Type(MissTrialsInds) = [];
     behavResults.Time_reward (MissTrialsInds) = [];
     behavResults.Stim_toneFreq(MissTrialsInds) = [];
-    behavResults.Stim_Type(MissTrialsInds) = [];
+    if iscell(behavResults.Stim_Type(1))
+        behavResults.Stim_Type(MissTrialsInds) = [];
+    else
+        behavResults.Stim_Type(MissTrialsInds,:) = [];
+    end
     %  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     trialInds = 1:length(behavResults.Trial_Type);
@@ -85,8 +96,13 @@ for n = 1:fileNum
     ylabel('Outcomes');
     set(gca,'FontSize',20);
     title('Session animal response plot')
-    saveas(h_points,'Behavior points plot');
-    saveas(h_points,'Behavior points plot','png');
+    if exist('fn','var')
+        saveas(h_points,[fn(1:end-4),'_Behav_plot']);
+        saveas(h_points,[fn(1:end-4),'_Behav_plot'],'png');
+    else
+        saveas(h_points,'Behav_plot_Save');
+        saveas(h_points,'Behav_plot_Save','png');
+    end
     close(h_points);
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %     correct_a = behavResults.Trial_Type == behavResults.Action_choice;
@@ -101,9 +117,11 @@ for n = 1:fileNum
     title(title_name);
     if exist('fn','var')
         saveas(gcf,[fn(1:end-4),'_correct_rate.png'],'png');
+        saveas(gcf,[fn(1:end-4),'_correct_rate.png']);
         boundary_result(n).SessionName=fn(1:end-4);
     else
         saveas(gcf,'Behavior_correct_rate.png','png');
+        saveas(gcf,'Behavior_correct_rate.png');
         boundary_result(n).SessionName='';
     end
     close;
@@ -118,7 +136,12 @@ for n = 1:fileNum
     %      rand_left_type(inds_left==0)=[];
     
     stim_types=unique(behavResults.Stim_toneFreq);
-    if length(stim_types)==2 || strcmpi(behavResults.Stim_Type,'sweep')
+    if iscell(behavResults.Stim_Type(1))
+        FirstTrType = behavResults.Stim_Type(1);
+    else
+        FirstTrType = behavResults.Stim_Type(1,:);
+    end
+    if length(stim_types)==2 || strcmpi(FirstTrType,'sweep')
         %for probe trial data analysis, further analysis can be added here
         disp('This behavior data is not the random puretone trial result, quit analysis.\n');
 %         cd(FilePath);
@@ -351,12 +374,6 @@ for n = 1:fileNum
 %         h3=figure;
         plot(curve_x,curve_y,'color','k','LineWidth',1.8);
         hold off;
-        if exist('fn','var')
-            saveas(h3,[fn(1:end-4),'_fit plot.png'],'png');
-        else
-            saveas(h3,'Behav_fit plot.png','png');
-        end
-%         axis([0 2 0 1]);
         ylim([0 1]);
         set(gca,'xtick',0:2/(length(octave_dist)-1):2);
         set(gca,'xticklabel',cellstr(num2str(xtick_label(:),'%.1f')));

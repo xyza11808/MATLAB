@@ -7,7 +7,7 @@ end
 if length(unique(TrialTypes)) == 2
     fprintf('Two tone 2afc session, generate data according to given parameters.\n');
     israndomSession = 0;
-elseif length(unique(TrialTypes)) == 6
+elseif length(unique(TrialTypes)) >= 6
     fprintf('Random puretone 2afc session, generate dataset only.\n');
     isplot = 0;
     israndomSession = 1;

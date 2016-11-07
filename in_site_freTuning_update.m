@@ -110,7 +110,7 @@ for i=1:data_size(2)
     cmax_value=min(max(C(:)),300);
     ROIRFClim(i,:) = [cmin_value cmax_value];
     if isplot
-        h1=figure('position',[260 110 1450 950]);
+        h1=figure('position',[260 110 900 700]);
         imagesc(freq_type,DB_type,C,[cmin_value cmax_value]);
         colormap(hot);
         set(gca,'YDir','normal');

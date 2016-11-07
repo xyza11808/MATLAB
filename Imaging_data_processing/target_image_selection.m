@@ -1,9 +1,9 @@
 %finding the target image for alignment
-cd('M:\batch\batch32\20160829\anm03\test01');
-[im, ~] = load_scim_data('b32a03_test01_3x_2afc_160um_20160829_080.tif');
+cd('K:\batch35\anm04\test01');
+[im, ~] = load_scim_data('b35a04_test01_2afc_140um_20161001_100.tif');
 colormap gray;
-selectframe=im(:,:,1:30);
-imagesc(mean(selectframe,3),[0 500]);
+selectframe=im(:,:,70:105);
+imagesc(mean(selectframe,3),[0 200]);
 im_reg_target = mean(selectframe,3);
 figure(gcf);
 
@@ -18,12 +18,12 @@ disp(t);
 % save TargetImage.mat im_reg_target
 %
 % % % 
-dir_imreg_src = 'M:\batch\batch32\20160829\anm03\test01rf';
+dir_imreg_src = 'K:\batch35\anm04\test01rf';
 dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
 dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target)
 % % 
-% dir_imreg_src = 'H:\data\batch\batch27_PV\20160430\anm03\test12rf\channel1';
-% dir_imreg_dest = ['H:\data\batch\batch27_PV\20160430\anm03\test12rf\channel1' filesep 'im_data_reg'];
+% dir_imreg_src = 'K:\batch34\20161001\anm01\test12rf';
+% dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg'];
 % dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target)
 % % 
 % dir_imreg_src = 'H:\data\batch\batch22_yang\20160123\anm03\test04';

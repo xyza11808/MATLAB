@@ -57,12 +57,20 @@ function [n_best P_best V C]=fast_oopsi(F,V,P)
 %   b:      background fluorescence
 %   sig:    standard deviation of observation noise
 %   gam:    decayish, ie, tau=dt/(1-gam)
-%   lam:    firing rate-ish, ie, expected # of spikes per Second
+%   lam:    firing rate-ish, ie, expected # of spikes per frame
 %
 % Output---
 % n_best:   inferred spike train
 % P_best:   inferred parameter structure
 % V:        structure of Variables for algorithm to run
+
+
+
+%% check data
+
+if any(isnan(F));
+    error('nan in your data')
+end
 
 %% initialize algorithm Variables
 starttime   = cputime;
@@ -132,7 +140,7 @@ if ~isfield(P,'lam'),   P.lam   = 10*ones(V.Ncells,1);          end
 if ~isfield(P,'a'),     P.a     = median(F,2);                  end
 
 if ~isfield(P,'b'),
-    if V.Npixels==1, P.b = quantile(F,0.05);
+    if V.Npixels==1, P.b = quantile(F,0.15);
     else P.b=median(F,2);
     end
 end    

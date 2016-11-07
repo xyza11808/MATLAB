@@ -39,10 +39,22 @@ end
 if length(varargin) >= 7
     VShapeData = varargin{7};
 end
+
+% %%################################################################################################
+% ##################################################################################################
+% global settings section
 %define a index structure used for data plot index save
 plot_data_inds=struct('left_trials_inds',[],'right_trials_inds',[],'left_trials_bingo_inds',[],'right_trials_bingo_inds',[],...
     'left_trials_oops_inds',[],'right_trials_oops_inds',[],'left_stim_tone',[],'right_stim_tone',[],...
     'left_trials_miss_inds',[],'right_trials_miss_inds',[],'left_stim_tone_prob',[],'right_stim_tone_prob',[]);
+isProbAsRandTone = 1;
+% global settings end
+% %%################################################################################################
+% ##################################################################################################
+
+
+
+
 
 SessionDesp = 'Twotone2afc';
 size_data=size(data);
@@ -53,8 +65,6 @@ ROI_info=CaTrials_signal(1).ROIinfo;
 
 save ROICenters.mat center_ROI EmptyROIs -v7.3
 %%
-%this section is used for 2AFC data analysis while analized recptive field
-%first
 % if strcmpi(input_data_type,'mode')
 %     disp('please select the full data path for behavior file(*.beh) analysis result.\n');
 %     [fn2,file_path2]=uigetfile('*.*');
@@ -135,7 +145,7 @@ trial_outcome(Error_trial_inds) = 0;
 trial_outcome(miss_tiral) = 2;
 OnsetStruct=struct('StimOnset',behavResults.Time_stimOnset,'StimDuration',300);
 
-[FLickT,FRewardLickT]=FirstLickTime(lick_time_struct,behavResults.Action_choice,trial_outcome,OnsetStruct,behavResults.Time_answer);
+[FLickT,FRewardLickT,FlickInds]=FirstLickTime(lick_time_struct,behavResults.Action_choice,trial_outcome,OnsetStruct,behavResults.Time_answer);
 
 
 % FLickFrame=floor((double(FLickT)/1000)*frame_rate);
@@ -237,7 +247,7 @@ disp(['The suggested frame range for Seperate_align_plot function is: ' num2str(
 %     onset_delay_dis(right_side_data,frame_rate,'event',[right_stim_onset',right_reward']);
 %     
 % end
-% %###########################################################################
+%% %###########################################################################
 
 %################################
 %Inds extraction of all kinds of behavior types
@@ -252,19 +262,25 @@ RewardOmitInds=[];
 ActiveRewardInds=[];
 ProbTrialInds=[];
 IsRewardGivenInds = [];
+PureProbTrInds = [];
 for n=1:length(behavResults.Trial_Type)
     if ~behavResults.Trial_isProbeTrial(n)
-        if strcmpi(behavResults.Stim_Type(n,:),'randompureTone')
+        if iscell(behavResults.Stim_Type(n))
+            CurrentTr = behavResults.Stim_Type(n);
+        else
+            CurrentTr = behavResults.Stim_Type(n,:);
+        end
+        if strcmpi(CurrentTr,'randompureTone')
             radom_inds=[radom_inds n];
             if behavResults.Time_reward(n)>0
                 radom_inds_correct=[radom_inds_correct n];
             end
-        elseif strcmpi(behavResults.Stim_Type(n,:),'pureTone') || strcmpi(behavResults.Stim_Type(n,:),'SAMtone')
+        elseif strcmpi(CurrentTr,'pureTone') || strcmpi(behavResults.Stim_Type(n),'SAMtone')
             pure_tone_inds=[pure_tone_inds n];
             if behavResults.Time_reward(n)>0
                 pure_tone_corr_inds=[pure_tone_corr_inds n];
             end
-        elseif strcmpi(behavResults.Stim_Type(n,:),'sweep')
+        elseif strcmpi(CurrentTr,'sweep')
             sweep_inds=[sweep_inds n];
             if behavResults.Time_reward(n)>0
                 sweep_corr_inds=[sweep_corr_inds n];
@@ -280,12 +296,20 @@ for n=1:length(behavResults.Trial_Type)
             elseif behavResults.isActiveReward(n)
                 ActiveRewardInds=[ActiveRewardInds n];
             end
+        else
+            PureProbTrInds = [PureProbTrInds n];
         end
        
     end
     
 end
 RandomSession=0;
+if isProbAsRandTone && ~isempty(PureProbTrInds)  % only when there is any prob puretone trial exists
+    radom_inds_correct = sort([pure_tone_inds,PureProbTrInds]);
+    SessionDesp = 'RandomPuretone';
+    RandomSession=1;
+    radom_inds = radom_inds_correct;
+end
 %%
 left_trials_stim=behavResults.Trial_Type(behavResults.Trial_Type==0 & behavResults.Trial_isProbeTrial==0);
 right_trials_stim=behavResults.Trial_Type(behavResults.Trial_Type==1 & behavResults.Trial_isProbeTrial==0);
@@ -296,7 +320,6 @@ if max(behavResults.Trial_isProbeTrial)
     right_trials_stim_prob=behavResults.Trial_Type(behavResults.Trial_Type==1 & behavResults.Trial_isProbeTrial==1);
     plot_data_inds.left_stim_tone_prob=unique(left_trials_stim);
     plot_data_inds.right_stim_tone_prob=unique(right_trials_stim);
-
 end
 
 %################################################################################################
@@ -374,7 +397,11 @@ if ~isempty(radom_inds_correct)
     rand_trial_data=zeros(length(random_type_stim),size_data(2),size_data(3));
 %     m=1:length(random_type_stim);
     rand_trial_data=data(radom_inds_correct,:,:);
-    rand_plot(behavResults,3);
+    if isProbAsRandTone
+        rand_plot(behavResults,3,[],1);
+    else
+        rand_plot(behavResults,3);
+    end
     RandomSession=1;
     SessionDesp = 'RandomPuretone';
     %###########################################################################################
@@ -631,15 +658,22 @@ elseif str2double(continue_char)==2
 %             smooth_zs_data(n,m,:)=smooth(zscore_data_aligned(n,m,:),7,'sgolay',5);
         end
     end
-    NormalTrialInds = behavResults.Trial_isProbeTrial == 0;
-    FreqRespOnsetHist(data_aligned,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
+    if isProbAsRandTone
+        NormalTrialInds = true(length(behavResults.Trial_isProbeTrial),1);
+    else
+        NormalTrialInds = behavResults.Trial_isProbeTrial == 0;
+    end
+        
+    if RandomSession
+        SigROIinds = FreqRespOnsetHist(data_aligned,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
+    end
     %%
     LRAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
          behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
          frame_rate,onset_time(NormalTrialInds),0);
      TimeCourseStrc = TimeCorseROC(data_aligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);   
-     AUCDataAS = ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align',0);
-     AnsAlignData=Reward_Get_TimeAlign(data,lick_time_struct,behavResults,behavSettings,trial_outcome,frame_rate,imaging_time,0);
+     AUCDataAS = ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align',0,[1.5,2.5]);
+     AnsAlignData=Reward_Get_TimeAlign(data,lick_time_struct,behavResults,trial_outcome,frame_rate,imaging_time,0);
      if RandomSession
          FreqAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
          behavResults.Time_answer(NormalTrialInds),align_time_point,behavResults.Stim_toneFreq(NormalTrialInds),...
@@ -649,9 +683,10 @@ elseif str2double(continue_char)==2
          [ChoiceDataValue,ChoiceDataNumber] = ChoiceProbCal(smooth_data(NormalTrialInds,:,:),behavResults.Stim_toneFreq(NormalTrialInds),...
              behavResults.Action_choice(NormalTrialInds),1.5,start_frame,frame_rate,16000,0);
      end
-     
+     nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
      %%
      script_for_summarizedPlot;  % call a script for data preparation and call summarized plot function
+     RandomSession
     %%
 %     ActiveCellGene(data,behavResults,trial_outcome,frame_rate,1.5);
     MeanAlignedDataPlot(smooth_data(NormalTrialInds,:,:),start_frame,behavResults.Trial_Type(NormalTrialInds),frame_rate,trial_outcome(NormalTrialInds));
@@ -661,18 +696,39 @@ elseif str2double(continue_char)==2
          frame_rate,onset_time(NormalTrialInds));
     SignalCorr2afc(data_aligned(NormalTrialInds,:,:),trial_outcome(NormalTrialInds),behavResults.Stim_toneFreq(NormalTrialInds),start_frame,frame_rate,1);
     
+    
+    FlickAnaFun(data,FLickT,FlickInds,TrialTypes,trial_outcome,frame_rate,1.5);
      ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align');
     TimeCorseROC(data_aligned,TrialTypes(NormalTrialInds),start_frame,frame_rate);  %cumulated ROC plot
      Left_right_pca_dis(smooth_data,behavResults,session_name,frame_rate,start_frame,[],[],data,2);
     FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame);
       if RandomSession
 %           ShuffleNeuroMTest(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
-          RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5);
+          FlickAnaFun(data,FLickT,FlickInds,double(behavResults.Stim_toneFreq(NormalTrialInds)),trial_outcome,frame_rate,1.5);
+          RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
           RandNeuroMTPerfcorr(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,1.5);
           NBC_for2afc(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate,1.5,TrialTypes); %naive bayes
           RandNeuroMLRC(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,TrialTypes,1.5);
           MultiTScaleNMT(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,{0.1,0.15,0.2,0.3,[0.1,0.2],[0.2,0.3]});
           ChoiceProbCal(smooth_data,behavResults.Stim_toneFreq,behavResults.Action_choice,1.5,start_frame,frame_rate,16000);
+          %%
+          TbyTAllROIclass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5);
+          FracTbyTPlot(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,AUCDataAS,...
+              1,1);
+          MultiTimeWinClass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
+          
+          %%
+          if ~isdir('./EM_spike_analysis/')
+              mkdir('./EM_spike_analysis/');
+          end
+          cd('./EM_spike_analysis/');
+           TbyTAllROIclass(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,2);
+           FracTbyTPlot(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,AUCDataAS,...
+              [0.5,1.5],1);
+           MultiTimeWinClass(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
+           RandNeuroMTestCrossV(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
+           %%
+          cd ..;
 %           FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame,[],1);
 %           FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame);
           %% #############################################
@@ -694,8 +750,23 @@ elseif str2double(continue_char)==2
               mkdir('./Decision_win_Curve/');
           end
           cd('./Decision_win_Curve/');
-          RandNeuroMTestCrossV(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,LeftSelectTWin/1000);
-          RandNeuroMTestCrossV(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,RightSelectWin/1000);
+          RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),...
+              start_frame,frame_rate,LeftSelectTWin/1000,[],[],SigROIinds);
+          RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),...
+              start_frame,frame_rate,RightSelectWin/1000,[],[],SigROIinds);
+          RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),...
+              start_frame,frame_rate,0.3,[],[],SigROIinds);
+          RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),...
+              start_frame,frame_rate,1,[],[],SigROIinds);
+          %%
+          % Classification model loaded from outside
+          RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),...
+              start_frame,frame_rate,LeftSelectTWin/1000,[],1,SigROIinds);
+          RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),...
+              start_frame,frame_rate,RightSelectWin/1000,[],1,SigROIinds);
+          RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),...
+              start_frame,frame_rate,0.3,[],1,SigROIinds);
+          %%
           cd ..;
           % % % %
           %% #############################################

@@ -126,6 +126,7 @@ for n=1:DataSize(2)
     ylabel('\DeltaF/F_0');
     title('Mean Calcium Trace Sorted by Peak Time');
     saveas(hAll_fig,['Aligned_AllMean_plot_ROI' num2str(n)],'png');
+    saveas(hAll_fig,['Aligned_AllMean_plot_ROI' num2str(n)]);
     close(hAll_fig);
     
     MeanTraceLeft = mean(SingleROIData(inds_left,:));
@@ -167,6 +168,7 @@ for n=1:DataSize(2)
 %     saveas(h_fig,sprintf('Aligned_plot_ROI%d',n),'png');
     print(h_fig,sprintf('Aligned_plot_ROI%d',n),'-dpng');
     saveas(h_fig,sprintf('Aligned_plot_ROI%d',n),'fig');
+%     saveas(h_fig,sprintf('Aligned_plot_ROI%d',n),'png');
     %     hE = MeanTrace + MeanStd;
     %     lE = MeanTrace - MeanStd;
     %     yP = [lE fliplr(hE)];
@@ -377,6 +379,7 @@ H.eventPatch = patch([t_eventOn, t_eventOn, t_eventOff, t_eventOff],...
 
 suptitle('All sig trials sorted by max inds');
 saveas(h_max,'Max_Inds_sorted_sigtrials_plot','png');
+saveas(h_max,'Max_Inds_sorted_sigtrials_plot');
 close;
 
 h_left_ALL=figure;

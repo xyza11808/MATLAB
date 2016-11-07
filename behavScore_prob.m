@@ -97,7 +97,8 @@ if batch_plot
         set(gca,'fontsize',25,'xlim',[0 length(trialInds)]);
         title(fn(1:end-4),'fontsize',20,'interpreter','none');
         
-        saveas(gcf,sprintf('./session_behav_plots/plot_%s.png', fn(1:end-4)), 'png')
+        saveas(gcf,sprintf('./session_behav_plots/plot_%s.png', fn(1:end-4)), 'png');
+        saveas(gcf,sprintf('./session_behav_plots/plot_%s.png', fn(1:end-4)));
         close;
         
         %use subplot function to plot all result of the given data
@@ -176,7 +177,8 @@ else
     set(gca,'fontsize',25,'xlim',[0 length(trialInds)]);
     title(fn(1:end-4),'fontsize',20,'interpreter','none');
     
-    saveas(gcf,sprintf('./session_behav_plots/plot_%s.png', fn(1:end-4)), 'png')
+    saveas(gcf,sprintf('./session_behav_plots/plot_%s.png', fn(1:end-4)), 'png');
+    saveas(gcf,sprintf('./session_behav_plots/plot_%s.png', fn(1:end-4)));
     close;
     
     %defining trial types for further analysis

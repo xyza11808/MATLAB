@@ -89,7 +89,13 @@ else
         error('wrong file path for behavior result!');
     end
     load(filefullpath2);
-    [UserChoice,sessiontype]=behavScore_prob(behavResults,behavSettings,fn2,1);  %plot the animal behavior trace for select session
+    if exist('behavResults','var') && exist('behavSettings','var')
+        [UserChoice,sessiontype]=behavScore_prob(behavResults,behavSettings,fn2,1);  %plot the animal behavior trace for select session
+    elseif exist('SessionResults','var') && exist('SessionSettings','var')
+        [behavResults,behavSettings] = behav_cell2struct(SessionResults,SessionSettings);
+        [UserChoice,sessiontype]=behavScore_prob(behavResults,behavSettings,fn2,1);  %plot the animal behavior trace for select session
+    end
+        
     if UserChoice
         return;
     end
@@ -173,6 +179,18 @@ if strcmpi(type,'RF')
 %     ResprfInds = sum(rfRespInds,2) > 0;
 %     save RFRespInds.mat ResprfInds -v7.3
 %     in_site_freTuning_update(f_percent_change,sound_array,export_filename_raw,frame_rate,'simple_fit',CaTrials);
+    
+ %% 
+    if isdir('.\v_shape_plot\')==0
+        mkdir('.\v_shape_plot\');
+    end
+    cd('.\v_shape_plot\');
+    %     in_site_freTuning(sound_array,type,CaTrials,'simple_fit');
+    in_site_freTuning_update(f_percent_change,sound_array,export_filename_raw,frame_rate,'simple_fit',CaTrials);
+%     in_site_freTuning(sound_array,type,CaTrials,'simple_fit',triger_inds);
+    %      ROI_CF=in_site_freTuning(sound_Stim,type,'fit');
+    cd ..;
+    %%
     %#########################################################################
     %start of mode percent change plot
     %#########################################################################
@@ -582,16 +600,9 @@ if strcmpi(type,'RF')
     %#########################################################################
     %end of baseline percent change plot
     %#########################################################################
-    if isdir('.\v_shape_plot\')==0
-        mkdir('.\v_shape_plot\');
-    end
-    cd('.\v_shape_plot\');
-    %     in_site_freTuning(sound_array,type,CaTrials,'simple_fit');
-    in_site_freTuning_update(f_percent_change,sound_array,export_filename_raw,frame_rate,'simple_fit',CaTrials);
-%     in_site_freTuning(sound_array,type,CaTrials,'simple_fit',triger_inds);
-    %      ROI_CF=in_site_freTuning(sound_Stim,type,'fit');
-    cd ..;
     
+   
+    %%
 elseif strcmpi(type,'2AFC')
     BaselineMethod = 2;
     if BaselineMethod == 3

@@ -27,7 +27,7 @@ poolobj=gcp('nocreate');
 if isempty(poolobj)
     parpool('local',12);
 end
-disp(['total file number is ' num2str(length(files)) '\n']);
+fprintf('Total file number is %d.\n', length(files));
 parfor m=1:length(files)
     filename=files(m).name;
     file_name=filename(1:end-4);

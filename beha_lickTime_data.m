@@ -5,7 +5,7 @@ function [Lick_time_data,Lick_bias_side]=beha_lickTime_data(behavResults,end_poi
 Lick_time_data=struct('LickTimeLeft',[],'LickTimeRight',[],'LickNumLeft',[],'LickNumRight',[]);
 trial_num=length(behavResults.Time_stimOnset);
 Lick_bias_side=zeros(trial_num,1);
-if iscell(behavResults.Action_numLickLeft)
+if iscell(behavResults.Action_lickTimeLeft(1))
 %     lick_time_len_L=cellfun(@length,behavResults.Action_numLickLeft);
 %     lick_time_len_R=cellfun(@length,behavResults.Action_numLickLeft);
     %     left_lick_length=max(lick_time_len_L);
@@ -16,8 +16,8 @@ if iscell(behavResults.Action_numLickLeft)
     %         temp_lick_time_L=behavResults.Action_numLickLeft{n};
     %         lick_time_left(n,:)=[lick_time_left ]
     for n=1:trial_num
-        lick_time_str_left=strrep(behavResults.Action_numLickLeft{n},'|',' ');
-        lick_time_str_R=strrep(behavResults.Action_numLickRight{n},'|',' ');
+        lick_time_str_left=strrep(behavResults.Action_lickTimeLeft{n},'|',' ');
+        lick_time_str_R=strrep(behavResults.Action_lickTimeRight{n},'|',' ');
         left_lickTime_double=str2num(lick_time_str_left);
         right_lickTime_double=str2num(lick_time_str_R);
         left_lickTime_double(left_lickTime_double>=(end_point*1000))=[];

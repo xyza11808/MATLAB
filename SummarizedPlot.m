@@ -171,12 +171,14 @@ switch SessionDesp
         % if frequency tuning data exists, plot it out instead of
         % time-course ROC
         nROIs = SessionData.nROI;
+        FreqNum = length(SessionData.Frequency);
+        Columns = (FreqNum/2)+1;
         for ROInumber = 1 : nROIs
-            h_RandTone2afc = figure('position',[100,100,1600,1000],'paperpositionmode','auto');
+            h_RandTone2afc = figure('position',[40,100,1800,920],'paperpositionmode','auto');
 
             imagextick = 0:SessionData.FrameRate:size(SessionData.LeftAlignData,3); % Data with a three dimensional form, ROI by Trials by Frames
             Timextick = imagextick/SessionData.FrameRate;
-            cAx = subplot(3,4,1);
+            cAx = subplot(3,Columns,1);
             imagesc(squeeze(SessionData.LeftAlignData(ROInumber,:,:)),SessionData.clims(ROInumber,:));
             set(gca,'ydir','reverse');
             set(gca,'xtick',imagextick,'xticklabel',Timextick);
@@ -198,7 +200,7 @@ switch SessionDesp
             LeftSEMTrace = std(squeeze(SessionData.LeftAlignData(ROInumber,:,:)))/sqrt(size(SessionData.LeftAlignData,2));
             
 
-            subplot(3,4,5)
+            subplot(3,Columns,Columns+1)
             imagesc(squeeze(SessionData.RightAlignData(ROInumber,:,:)),SessionData.clims(ROInumber,:));
             set(gca,'ydir','reverse');
             set(gca,'xtick',imagextick,'xticklabel',Timextick);
@@ -221,7 +223,7 @@ switch SessionDesp
             xp = [ts,fliplr(ts)];
             yp = [LeftMeanTrace+LeftSEMTrace,fliplr(LeftMeanTrace-LeftSEMTrace)];
             ypR = [RightMeanTrace+RightSEMTrace,fliplr(RightMeanTrace-RightSEMTrace)];
-            subplot(3,4,9)
+            subplot(3,Columns,1+Columns*2)
             hold on;
             patch(xp,yp,1,'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6);
             patch(xp,ypR,1,'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6);
@@ -249,11 +251,11 @@ switch SessionDesp
     %             cLims = SessionData.clims;
     %             SessionData.AlignFrame
             end
-            for nfreq = 1 : 6
-                if nfreq < 4
-                    subplot(3,4,nfreq+1);
+            for nfreq = 1 : FreqNum
+                if nfreq <= FreqNum/2
+                    subplot(3,Columns,nfreq+1);
                 else
-                    subplot(3,4,nfreq+2);
+                    subplot(3,Columns,nfreq+2);
                 end
                 cfreqData = FreqDataAll{nfreq,ROInumber};
                 cfreqAns = AnsFrameAll{nfreq};
@@ -272,7 +274,7 @@ switch SessionDesp
                 ylabel('# Trials');
                 title(sprintf('%d Hz',SessionData.Frequency(nfreq)));
                 set(gca,'FontSize',20);
-                if nfreq == 6
+                if nfreq == FreqNum
                     imax = gca;
                     imaxis = get(imax,'position');
                     hbar = colorbar;
@@ -282,7 +284,7 @@ switch SessionDesp
             
             if isfield(SessionData,'VShapeData')
                 cROIVshapeData = SessionData.VShapeData;
-                im_ax = subplot(3,4,10);
+                im_ax = subplot(3,Columns,2+Columns*2);
                 imagesc(1:length(cROIVshapeData.FreqType),cROIVshapeData.DBType,squeeze(cROIVshapeData.RespData(ROInumber,:,:)),...
                     cROIVshapeData.RFclim(ROInumber,:));
 %                 colormap(hot);
@@ -303,7 +305,7 @@ switch SessionDesp
                 title('Frequency tuning');
                 set(gca,'FontSize',20);
             elseif isfield(SessionData,'ROCCoursexTick') && isfield(SessionData,'BinROCLR')
-                subplot(3,4,10);
+                subplot(3,Columns,2+Columns*2);
                 xTime = SessionData.ROCCoursexTick;
                 ROCourseData = SessionData.BinROCLR(ROInumber,:);
                 plot(xTime,ROCourseData,'r-o','LineWidth',1.6);
@@ -319,14 +321,14 @@ switch SessionDesp
             end
             
             % plot frequency response lines
-            subplot(3,4,11)
+            subplot(3,Columns,3+Columns*2)
             hold on;
             RespData = squeeze(SessionData.MeanRespData(ROInumber,:,:)); % mean response trace for different frequency
             xt = (1:size(RespData,2))/SessionData.FrameRate;
             FreqStr = double(SessionData.Frequency)/1000;
-            LineDataColor = jet(6);
-            LegendStr = cell(1,6);
-            for nn = 1 : 6
+            LineDataColor = jet(FreqNum);
+            LegendStr = cell(1,FreqNum);
+            for nn = 1 : FreqNum
                 plot(xt,RespData(nn,:),'color',LineDataColor(nn,:),'LineWidth',1.5);
                 LegendStr{nn} = sprintf('%.2f kHz',FreqStr(nn));
             end
@@ -341,20 +343,20 @@ switch SessionDesp
             set(gca,'FontSize',10);
             
             % plot the last piece
-            subplot(3,4,12)
+            subplot(3,Columns,4+Columns*2)
             hold on;
             cellfreq = double(SessionData.Frequency)/1000;
             if isfield(SessionData,'ChoiceProbData')
                 DataStoreCell = SessionData.ChoiceProbData;
                 FreqTypeTrialNum = SessionData.TypeNumber;
-                for nfreq = 1 : 6
+                for nfreq = 1 : FreqNum
                     CorrRandx = ones(FreqTypeTrialNum(ROInumber,nfreq,1),1)*(nfreq-0.2);
                     ErroRandx = ones(FreqTypeTrialNum(ROInumber,nfreq,2),1)*(nfreq+0.2);
                     scatter(CorrRandx,DataStoreCell{ROInumber,nfreq,1}{:},50,'ro','filled');
                     scatter(ErroRandx,DataStoreCell{ROInumber,nfreq,2}{:},50,'bo','filled');
                 end
             end
-            set(gca,'xtick',1:6,'xticklabel',cellstr(num2str(cellfreq(:),'%.1f')));
+            set(gca,'xtick',1:FreqNum,'xticklabel',cellstr(num2str(cellfreq(:),'%.1f')));
             xlabel('Frequency (kHz)');
             ylabel('\DeltaF/F_0');
             title('Choice Prob Plot');

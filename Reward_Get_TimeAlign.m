@@ -1,4 +1,4 @@
-function AnswerAlignData=Reward_Get_TimeAlign(Data,LickTime,behavResults,behavSettings,TrialResult,FrameRate,TraceTime,varargin)
+function varargout=Reward_Get_TimeAlign(Data,LickTime,behavResults,TrialResult,FrameRate,TraceTime,varargin)
 %this function will be used for extrating first lick time that mouse
 %actually get water reward
 %time that is actually happens late than 3s before trace time ends will not
@@ -11,14 +11,14 @@ end
 TrialTypes=behavResults.Trial_Type;
 TrialStimOnT=behavResults.Time_stimOnset;
 RewardGivenT=behavResults.Time_reward;
-RespDelay=behavSettings.responseDelay;
+% RespDelay=behavSettings.responseDelay;
 
 LickStr={'LickTimeLeft','LickTimeRight'};
 CorrTrialInds=TrialResult==1;
 CorrTrialTypes=TrialTypes(CorrTrialInds);
 CorrTrialStimOnT=TrialStimOnT(CorrTrialInds);
 CorrRewardGivenT=RewardGivenT(CorrTrialInds);
-CorrRespDelay=RespDelay(CorrTrialInds);
+% CorrRespDelay=RespDelay(CorrTrialInds);
 CorrLickTime=LickTime(CorrTrialInds);
 CorrData=Data(CorrTrialInds',:,:);
 
@@ -44,7 +44,7 @@ end
 
 CorrTrialTypes(OutLierinds)=[];
 CorrTrialStimOnT(OutLierinds)=[];
-CorrRespDelay(OutLierinds)=[];
+% CorrRespDelay(OutLierinds)=[];
 % CorrLickTime(OutLierinds)=[];
 CorrData(OutLierinds,:,:)=[];
 DataSize=size(CorrData);
@@ -147,4 +147,10 @@ if nargout
     AnswerAlignData.AllMeanData = LRMeanSemData;
     AnswerAlignData.LeftDataAll = LeftDataAll;
     AnswerAlignData.RightDataAll = RightDatAll;
+    varargout{1} = AnswerAlignData;
+    if nargout > 1
+        RewardTime.RealRTime = RewardGetTime;
+        RewardTime.Inds = CorrTrialInds;
+        varargout{2} = RewardTime;
+    end
 end

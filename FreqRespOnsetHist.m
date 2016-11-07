@@ -23,14 +23,23 @@ SoundOffResponse = squeeze(MeanTraceDataSet(:,:,SoundOffF));
 h_hist = figure;
 hdata = histogram(SoundOffResponse(:),30);
 xx = get(gca,'xlim');
-xlim([-200 xx(2)]);
+if xx(1) < -200
+    xlim([-200 xx(2)]);
+end
 xlabel('Cell Response');
 ylabel('Cell Count');
 
 %%
 [Counts, Centers] = hist(SoundOffResponse(:),30);
 [~,inds] = max(Counts);
-TargetValue = Centers(inds+1);
+TargetValue = Centers(inds+2);
 SigRespInds = SoundOffResponse > TargetValue;
 SigROIinds = sum(SigRespInds) > 0;
 fprintf('Significant ROI number is %d out of %d ROIs.\n',sum(SigROIinds),length(SigROIinds));
+save SigROIInds.mat SigROIinds TargetValue SoundOffResponse -v7.3
+
+yaxis = axis;
+line([TargetValue TargetValue],[yaxis(3) yaxis(4)],'LineWidth',2,'Color','r');
+saveas(h_hist,sprintf('Session Resp hist plot %d Frac %dROI',floor(sum(SigROIinds)/length(SigROIinds)*100),sum(SigROIinds)));
+saveas(h_hist,sprintf('Session Resp hist plot %d Frac %dROI',floor(sum(SigROIinds)/length(SigROIinds)*100),sum(SigROIinds)),'png');
+close(h_hist);

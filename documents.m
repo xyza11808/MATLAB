@@ -7,7 +7,7 @@
 %function fir1 and fir2 can be used as lowband-pass filter or highbang-pass
 %filter
 
-%eval('string') can be used to make the valus of an variable to be the name
+% eval('string') can be used to make the valus of an variable to be the name
 %of a new variable
 
 %function flipud can be used to reverse the given array upside down, can be
@@ -109,6 +109,7 @@
 % % vector can be used to do some group calculations to X
 %#################
 % [curve, goodness, output] = fit(month,pressure,'smoothingspline');
+% or using the smooth function, with 'rloess' option
 % plot(curve,month,pressure);
 %this fitting can be used to fit a smoothing spine curve through given
 %variables
@@ -120,11 +121,11 @@
 
 %% %%%%% ##################################################################
 %extract data from fig file
-%   h = gcf; %current figure handle
-%   axesObjs = get(h, 'Children');  %axes handles
-%   dataObjs = get(axesObjs, 'Children'); %handles to low-level graphics objects in axes
-%   xdata = get(dataObjs, 'XData');  %data from low-level grahics objects
-%   ydata = get(dataObjs, 'YData');
+  h = gcf; %current figure handle
+  axesObjs = get(h, 'Children');  %axes handles
+  dataObjs = get(axesObjs, 'Children'); %handles to low-level graphics objects in axes
+  xdata = get(dataObjs{2}, 'XData');  %data from low-level grahics objects
+  ydata = get(dataObjs{2}, 'YData');
 %   zdata = get(dataObjs, 'ZData');
 %   uData = get(dataObjs, 'UData');  %extract errorbar data is using errorbar plot, the sem value
 %  %find line objects data
@@ -151,6 +152,7 @@
 % classifiers to be considered
 % bayes classification
 % fitcnb can be used to do naive bayes classification, try it out when time is avaluable
+% fitrsvm : support vector regression model generation
 
 % linear discrimination classifier
 % fitcdiscr: discriminant analysis classifier

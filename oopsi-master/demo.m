@@ -1,15 +1,16 @@
-clear, clc,
+clc
 
 % set simulation metadata
 T       = 1000; % # of time steps
 V.dt    = 1/8;  % time step size
+V.fast_plot = 1;
 
 % initialize params
 P.a     = 1;    % observation scale
 P.b     = 0;    % observation bias
 tau     = 1.5;    % decay time constant
 P.gam   = 1-V.dt/tau; % C(t) = gam*C(t-1)
-P.lam   = 0.1;  % firing rate = lam*dt firing rate in Hz
+P.lam   = 0.1;  % firing rate = lam*dt
 P.sig   = 0.1;  % standard deviation of observation noise 
 
 % simulate data

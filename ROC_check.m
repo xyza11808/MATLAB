@@ -36,9 +36,33 @@ if isplot
     end
     cd('./ROC_Left2Right_result/');
 end
+
+if length(TimeLength) == 1
+    FrameScale = sort([(alignpoint+1),floor(alignpoint+FrameRate*TimeLength)]);
+elseif length(TimeLength) == 2
+    FrameScale = sort([(alignpoint+round(FrameRate*TimeLength(1))),(alignpoint+round(FrameRate*TimeLength(2)))]);
+else
+    warning('Input TimeLength variable have a length of %d, but it have to be 1 or 2',length(TimeLength));
+    return;
+end
+if FrameScale(1) < 1
+    warning('Time Selection excceed matrix index, correct to 1');
+    FrameScale(1) = 1;
+    if FrameScale(2) < 1
+        error('ErrorTimeScaleInput');
+    end
+end
+if FrameScale(2) > size(AlignedData,3)
+    warning('Time Selection excceed matrix index, correct to %d',DataSize(3));
+    FrameScale(2) = size(AlignedData,3);
+    if FrameScale(2) > size(AlignedData,3)
+        error('ErrorTimeScaleInput');
+    end
+end
+
 SizeData=size(AlignedData);
 TrialType=Trial_Type;
-SelectData=AlignedData(:,:,((alignpoint+1):floor(alignpoint+FrameRate*TimeLength)));
+SelectData=AlignedData(:,:,FrameScale(1):FrameScale(2));
 % TrialTimeLength=size(SelectData,3);  %select data points number fro each trial
 Trials=reshape(TrialType,1,[]);
 % TrialInput=double(reshape(repmat(Trials,TrialTimeLength,1),[],1));

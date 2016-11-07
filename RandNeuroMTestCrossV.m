@@ -24,11 +24,22 @@ if nargin>7
     end
 end
 
+ROIindsSelect = true(size(RawDataAll,2),1);
+isPartialROI = 0;
+if nargin > 8
+    if ~isempty(varargin{4})
+        ROIindsSelect = varargin{4};
+        isPartialROI = 1;
+        ROIFraction = sum(ROIindsSelect)/length(ROIindsSelect);
+    end
+end
+
 %%
+RawDataAll = RawDataAll(:,ROIindsSelect,:);
 DataSize=size(RawDataAll);
 % CorrectInds=TrialResult==1;
 % CorrectInds=true(1,length(TrialResult));
-CorrectInds=TrialResult~=2;  %exclude all miss trials
+CorrectInds=TrialResult == 1;  %using all correct trials
 CorrTrialStim=StimAll(CorrectInds);
 CorrTrialData=RawDataAll(CorrectInds,:,:);
 CorrStimType=unique(CorrTrialStim);
@@ -52,9 +63,17 @@ else
 end
 if FrameScale(1) < 1
     warning('Time Selection excceed matrix index, correct to 1');
+    FrameScale(1) = 1;
+    if FrameScale(2) < 1
+        error('ErrorTimeScaleInput');
+    end
 end
 if FrameScale(2) > DataSize(3)
     warning('Time Selection excceed matrix index, correct to %d',DataSize(3));
+    FrameScale(2) = DataSize(3);
+    if FrameScale(2) > DataSize(3)
+        error('ErrorTimeScaleInput');
+    end
 end
 
 ConsideringData=CorrTrialData(:,:,FrameScale(1):FrameScale(2));
@@ -85,12 +104,21 @@ if ~isLoadModel
         mkdir('./NeuroM_test/');
     end
     cd('./NeuroM_test/');
+    
 else
     if ~isdir('./NeuroM_LoadSVM/')
         mkdir('./NeuroM_LoadSVM/');
     end
     cd('./NeuroM_LoadSVM/');
+    
 end
+
+    if isPartialROI
+        if ~isdir(sprintf('./Partial_%.2fROI/',ROIFraction*100))
+            mkdir(sprintf('./Partial_%.2fROI/',ROIFraction*100));
+        end
+        cd(sprintf('./Partial_%.2fROI/',ROIFraction*100));
+    end
 
 if length(TimeLength) == 1
     if ~isdir(sprintf('./AfterTimeLength-%dms/',TimeLength*1000))
@@ -113,7 +141,7 @@ if isLoadModel
     ExData = load(fullfile(fp,fn));
     ExCoef = ExData.coeffT;
     Exmodel = ExData.CVsvmmodel;
-    NormalScale = ExData.NorScaleValue;
+%     NormalScale = ExData.NorScaleValue;
 end
 
 %%
@@ -140,8 +168,8 @@ if ~isLoadModel
     disp(sum(explainedT(1:3)));
 else
     SumMeanSub = ALLROIMeanTrial - repmat(mean(ALLROIMeanTrial),size(ALLROIMeanTrial,1),1);
-    scoreT = SumMeanSub * ExCoef;
-    coeffT = ExCoef;
+    scoreT = SumMeanSub * ExCoef(ROIindsSelect,:);
+    coeffT = ExCoef(ROIindsSelect,:);
 end
 
 % meanSubT8TData = T8TData - repmat(mean(T8TData,2),1,size(T8TData,2));
@@ -304,7 +332,8 @@ VectorCoeff = CVsvmmodel.Beta;
 BiasValue = CVsvmmodel.Bias;
 xScales = get(gca,'xlim');
 yScales = get(gca,'ylim');
-[x,y] = meshgrid(xScales(1):10:xScales(2),yScales(1):10:yScales(2));
+Step = min([diff(yScales),diff(xScales)])/100;
+[x,y] = meshgrid(xScales(1):Step:xScales(2),yScales(1):Step:yScales(2));
 z = -1 * (BiasValue + x * VectorCoeff(1) + y * VectorCoeff(2)) / VectorCoeff(3);
 surf(x,y,z,'LineStyle','none','FaceColor','c','FaceAlpha',0.4);  %,'Facecolor','interp'
 alpha(0.4);
@@ -312,23 +341,26 @@ alpha(0.4);
 % LogDif(1:3) = -LogDif(1:3);
 %using sampled SVM classification result to predict all Trials score
 % fityAll=(rescaleB-rescaleA)*((LogDif-min(LogDif))./(max(LogDif)-min(LogDif)))+rescaleA;  %rescale to [0 1]
-if ~isLoadModel
+% Normalized to itself, not using outside normalization scale
+% % % % if ~isLoadModel
     if max(difscore) > 2*abs(min(difscore))
         fityAll=(rescaleB-rescaleA)*((difscore-min(difscore))./(abs(min(difscore))-min(difscore)))+rescaleA; 
         fityAll(fityAll>rescaleB) = rescaleB;
-        NorScaleValue = [abs(min(difscore)),min(difscore)];
-    elseif abs(min(difscore)) > 2 * max(difscore)
+        NorScaleValue = [min(difscore),abs(min(difscore))];
+    elseif abs(min(difscore)) > 2 * max(difscore) && max(difscore) > 0
         fityAll=(rescaleB-rescaleA)*((difscore+max(difscore))./(abs(max(difscore)*2)))+rescaleA; 
         fityAll(fityAll<rescaleA) = rescaleA;
-        NorScaleValue = [abs(max(difscore)),max(difscore)];
+        NorScaleValue = [(-1)*abs(max(difscore)),max(difscore)];
     else
         fityAll=(rescaleB-rescaleA)*((difscore-min(difscore))./(max(difscore)-min(difscore)))+rescaleA;  %rescale to [0 1]
-        NorScaleValue = [max(difscore),min(difscore)];
+        NorScaleValue = [min(difscore),max(difscore)];
     end
-else
-    NorScaleValue = NormalScale;
-    fityAll = (rescaleB-rescaleA)*((difscore-min(difscore))./diff(NorScaleValue)) + rescaleA; %rescale to min and max behav performance
-end
+% % % % else
+% % % %     NorScaleValue = NormalScale;
+% % % %     fityAll = (rescaleB-rescaleA)*((difscore-min(difscore))./diff(NorScaleValue)) + rescaleA; %rescale to min and max behav performance
+% % % %     fityAll(fityAll < 0) = 0;
+% % % %     fityAll(fityAll > 1) = 1;
+% % % % end
 
 %Test data set for error rate calculation
 LeftData=CVScoreTypeTest1';
@@ -410,7 +442,7 @@ scatter3(ProjectPoints(:,1),ProjectPoints(:,2),ProjectPoints(:,3),100,'o','Marke
 %
 xScales = get(gca,'xlim');
 yScales = get(gca,'ylim');
-[x,y] = meshgrid(xScales(1):10:xScales(2),yScales(1):10:yScales(2));
+[x,y] = meshgrid(xScales(1):Step:xScales(2),yScales(1):Step:yScales(2));
 z = -1 * (BiasValue + x * VectorCoeff(1) + y * VectorCoeff(2)) / VectorCoeff(3);
 surf(x,y,z,'LineStyle','none','FaceColor','c','FaceAlpha',0.4);  %,'Facecolor','interp'
 alpha(0.4)
@@ -473,7 +505,7 @@ plot(Curve_x,curve_fity,'r','LineWidth',2);
 plot(Curve_x,curve_realy,'k','LineWidth',2);
 scatter(Octavex,realy,80,'k','o','LineWidth',2);
 scatter(Octavexfit,fityAll,80,'r','o','LineWidth',2);
-text(Curve_x(end-1),0.2,sprintf('nROI = %d',nROI),'FontSize',15);
+text(Octavex(2),0.8,sprintf('nROI = %d',nROI),'FontSize',15);
 % text(0.1,0.9,sprintf('B=%.3f',double(Realboundary)),'Color','k','FontSize',14);
 % text(0.1,0.8,sprintf('B=%.3f',double(Fitboundary)),'Color','r','FontSize',14);
 
@@ -510,7 +542,7 @@ save randCurveFit.mat CVsvmmodel Octavex realy fityAll breal bfit -v7.3
 h_doubleyy = figure('position',[300 150 1100 900],'PaperpositionMode','auto');
 hold on;
 [hax,hline1,hline2] = plotyy(Curve_x,curve_realy,Curve_x,curve_fity);
-text(Curve_x(end-1),0.2,sprintf('nROI = %d',nROI),'FontSize',15);
+text(Octavex(2),0.8,sprintf('nROI = %d',nROI),'FontSize',15);
 set(hline1,'color','k','LineWidth',2);
 set(hline2,'color','r','LineWidth',2);
 set(hax(1),'xtick',Octavex,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k','ytick',[0 0.2 0.4 0.6 0.8 1]);
@@ -542,7 +574,7 @@ Psemfitline = modelfun(bPopSEM,Curve_x);
 h_PopuSEM = figure('position',[300 150 1100 900],'PaperpositionMode','auto');
 hold on
 [hax,hline1,hline2] = plotyy(Curve_x,curve_realy,Curve_x,Psemfitline);
-text(Curve_x(end-1),0.2,sprintf('nROI = %d',nROI),'FontSize',15);
+text(Octavex(2),0.8,sprintf('nROI = %d',nROI),'FontSize',15);
 set(hline1,'color','k','LineWidth',2);  % behavior 
 set(hline2,'color','r','LineWidth',2);  % model result
 set(hax(1),'xtick',Octavex,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'ycolor','k');
@@ -634,6 +666,9 @@ close(h_PopuSEM);
 %%
 cd ..;
 cd ..;
+if isPartialROI
+    cd ..;
+end
 if nargout >0
     varargout{1} = realy;
 end
