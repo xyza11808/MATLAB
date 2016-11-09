@@ -34,28 +34,32 @@ else
     cd(sprintf('./AfterTimeLength-%dms%dmsDur/',StartTime*1000,TimeScale*1000));
 end
 
-AUCThres = 0.3:0.05:1;
+AUCThres = 0.1:0.05:1;
 AUCValueThres = prctile(ROIauc,AUCThres*100);
 MaxAUCvalue = zeros(1,length(AUCValueThres));
 CellFracClassPerf = zeros(length(AUCValueThres),1);
-CellFracClassModel = cell(length(AUCValueThres),10);
-CellFracClassPerfAll = zeros(length(AUCValueThres),10);
+% CellFracClassModel = cell(length(AUCValueThres),1000);
+CellFracClassPerfAll = zeros(length(AUCValueThres),1000);
+ROIFracIAll = cell(length(AUCThres),1);
 for nAUCthres = 1 : length(AUCValueThres)
     fprintf('ROI fraction is %.2f, with AUC thres value is %.4f.\n ',AUCThres(nAUCthres),AUCValueThres(nAUCthres));
     ROIFracInds = ROIauc < AUCValueThres(nAUCthres);
     MaxAUCvalue(nAUCthres) = max(ROIauc(ROIFracInds));
+    ROIFracIAll{nAUCthres} = ROIFracInds;
 %     ROIFrac = ROIauc(ROIFracInds);
-    [MinTloss,AllTloss,TrainM] = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,...
+    [MinTloss,AllTloss,~] = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,...
         TimeLength,[],[],ROIFracInds,TrOutcome,1);
     CellFracClassPerf(nAUCthres) = MinTloss;
     CellFracClassPerfAll(nAUCthres,:) = AllTloss;
-    CellFracClassModel(nAUCthres,:) = TrainM;
+%     CellFracClassModel(nAUCthres,:) = TrainM;
 end
 
 ModelPerfMean = 1 - mean(CellFracClassPerfAll,2);
-ModelPerfsem = std(CellFracClassPerfAll,[],2)/sqrt(size(CellFracClassPerfAll,2));
+ModelPerfsemL = 1 - prctile(CellFracClassPerfAll,97.5,2);
+ModelPerfsemU = 1 - prctile(CellFracClassPerfAll,2.5,2);
 xauc = [AUCValueThres,fliplr(AUCValueThres)];
-yperf = ([ModelPerfMean+ModelPerfsem;flipud(ModelPerfMean - ModelPerfsem)]);
+% yperf = ([ModelPerfMean+ModelPerfsem;flipud(ModelPerfMean - ModelPerfsem)]);
+yperf = [ModelPerfsemU;flipud(ModelPerfsemL)];
 h_fracPlot = figure;
 hold on;
 patch(xauc,yperf,1,'facecolor',[.8 .8 .8],...
@@ -91,7 +95,7 @@ saveas(h_fracPlotMax,'Cell Frac to Perf plot PercMax');
 saveas(h_fracPlotMax,'Cell Frac to Perf plot PercMax','png');
 close(h_fracPlotMax);
 
-save FracModelClass.mat MaxAUCvalue CellFracClassPerfAll CellFracClassPerf CellFracClassModel AUCValueThres AUCThres ROIauc -v7.3
+save FracModelClass.mat MaxAUCvalue CellFracClassPerfAll ROIFracIAll CellFracClassPerf AUCValueThres AUCThres ROIauc -v7.3
 
 cd ..;
 cd ..;

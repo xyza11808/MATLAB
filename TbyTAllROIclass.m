@@ -101,6 +101,7 @@ UsingData = max(RawDataAll(TrialInds,ROIindsSelect,FrameScale(1):FrameScale(2)),
 UsingStim = StimAll(TrialInds);
 UsingStimType = unique(UsingStim);
 UsingTrialType = double(UsingStim>UsingStimType(length(UsingStimType)/2));
+UsingTrialType = UsingTrialType (:);
 
 % shuffling option
 if isShuffle
@@ -163,10 +164,10 @@ BaseTraingInds = false(length(UsingStim),1);
 
 % using given data to train the TbyT model
 % Training ten times and save  all options
-TrainModel = cell(10,1);
-TrainModelLoss = zeros(10,1);
-TestLoss = zeros(10,1);
-parfor nTimes = 1 : 10
+TrainModel = cell(1000,1);
+TrainModelLoss = zeros(1000,1);
+TestLoss = zeros(1000,1);
+parfor nTimes = 1 : 1000
     TrainSeeds = randsample(length(UsingStim),round(0.5*length(UsingStim)));
     TrainInds = BaseTraingInds;
     TrainInds(TrainSeeds) = true;
@@ -175,11 +176,13 @@ parfor nTimes = 1 : 10
     TestData = UsingData(TestInds,:);
     TrainM = fitcsvm(TrainData,UsingTrialType(TrainInds));
     TrainModel{nTimes} = TrainM;
-    TrainModelLoss(nTimes) = kfoldLoss(crossval(TrainM));
+    if size(TrainData,1) > 40
+        TrainModelLoss(nTimes) = kfoldLoss(crossval(TrainM));
+    end
     ModelPred = predict(TrainM,TestData);
-    TestDataLoss = sum(abs(ModelPred' - UsingTrialType(TestInds)))/length(ModelPred);
+    TestDataLoss = sum(abs(ModelPred - UsingTrialType(TestInds)))/length(ModelPred);
     TestLoss(nTimes) = TestDataLoss;
-    fprintf('Test Data error rate is %.3f.\n',TestDataLoss);
+%     fprintf('Test Data error rate is %.3f.\n',TestDataLoss);
 end
 MinTestLoss = min(TestLoss);
 fprintf('Min Test Data error rate is %.3f.\n',MinTestLoss);

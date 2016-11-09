@@ -684,6 +684,10 @@ elseif str2double(continue_char)==2
              behavResults.Action_choice(NormalTrialInds),1.5,start_frame,frame_rate,16000,0);
      end
      nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
+     TimeCourseStrcSP = TimeCorseROC(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);  
+     AUCDataASSP = ROC_check(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align',0,1.5);
+     ROIAUCcolorp(TimeCourseStrc,start_frame/frame_rate);
+     ROIAUCcolorp(TimeCourseStrcSP,start_frame/frame_rate,[],'Spike train');
      %%
      script_for_summarizedPlot;  % call a script for data preparation and call summarized plot function
      RandomSession
@@ -709,14 +713,15 @@ elseif str2double(continue_char)==2
           RandNeuroMTPerfcorr(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,1.5);
           NBC_for2afc(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate,1.5,TrialTypes); %naive bayes
           RandNeuroMLRC(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,TrialTypes,1.5);
+           TrialByTNMtest(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5);
           MultiTScaleNMT(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,{0.1,0.15,0.2,0.3,[0.1,0.2],[0.2,0.3]});
           ChoiceProbCal(smooth_data,behavResults.Stim_toneFreq,behavResults.Action_choice,1.5,start_frame,frame_rate,16000);
           %%
           TbyTAllROIclass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5);
           FracTbyTPlot(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,AUCDataAS,...
-              1,1);
+              1.5,1);
           MultiTimeWinClass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
-          
+         
           %%
           if ~isdir('./EM_spike_analysis/')
               mkdir('./EM_spike_analysis/');

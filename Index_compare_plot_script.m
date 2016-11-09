@@ -9,7 +9,7 @@ end
 
 %%
 % loading rf index
-[fnrf,fprf,firf] = uigetfile('FreqMeanData.mat','Please select your 2afc analysis index value');
+[fnrf,fprf,firf] = uigetfile('FreqMeanData.mat','Please select your rf analysis index value');
 if firf
     xx = load(fullfile(fprf,fnrf));
     TuDIndexrf = xx.TDindex;
@@ -31,12 +31,13 @@ if length(TuDIndex2afc) ~= length(TuDIndexrf)
         ClIndexrfP = ClIndexrf(1:TargetIndx);
     end
 else
+    TargetIndx = length(TuDIndex2afc);
     TuDIndex2afcP = TuDIndex2afc(1:TargetIndx);
     ClIndex2afcP = ClIndex2afc(1:TargetIndx);
     TuDIndexrfP = TuDIndexrf(1:TargetIndx);
-    ClIndexrfP = ClIndexrfP(1:TargetIndx);
+    ClIndexrfP = ClIndexrf(1:TargetIndx);
 end
-
+%%
 % scatter plot of two index
 h_tdindex = figure('position',[300,120,1000,850]);
 scatter(TuDIndex2afcP, TuDIndexrfP,40,'r*');

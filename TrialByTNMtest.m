@@ -23,8 +23,8 @@ end
 %%
 %some preprocesing and prelocation
 DataSize=size(RawDataAll);
-% CorrectInds=TrialResult==1;
-CorrectInds=true(1,length(TrialResult));
+CorrectInds=TrialResult==1;
+% CorrectInds=true(1,length(TrialResult));
 CorrTrialStim=StimAll(CorrectInds);
 CorrTrialData=RawDataAll(CorrectInds,:,:);
 CorrStimType=unique(CorrTrialStim);

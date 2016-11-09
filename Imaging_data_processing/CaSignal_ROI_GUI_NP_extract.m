@@ -1507,7 +1507,24 @@ try
     save(CaSignal.SIMsave_fname,'SavedCaTrials','-v7.3');
     save(CaSignal.ROIinfoback_fname, 'ROIinfoBU','-v7.3');
 catch
-    fprintf('Can''t save current session data in simplified way, may be caused by some frame dropping at trial number %d.\n',n);
+    nFrame = CaSignal.nFrames;
+    nFramesAll = zeros(length(CaTrials),1);
+    for nTrial = 1 : length(CaTrials)
+        nFramesAll(nTrial) = CaTrials(nTrial).nFrames;
+    end
+    AbnormTrInds = find(nFramesAll ~= nFrame);
+    f_abTr = fopen('Trial with abnormal frames.txt','w');
+    fprintf(f_abTr,'Trials with abnormal frame numbers: \n');
+    for nx = 1 : length(AbnormTrInds)
+        if nx == 1
+            fprintf(f_abTr,'%d  ',AbnormTrInds(nx));
+        else
+            fprintf(f_abTr,',%d  ',AbnormTrInds(nx));
+        end
+    end
+    fprintf(f_abTr,'.\n');
+    fclose(f_abTr);
+    fprintf('Can''t save current session data in simplified way, may be caused by some frame dropping at trial number %d.\n',AbnormTrInds);
     %redundant data storage
     save(CaSignal.results_fname, 'CaTrials','-v7.3');
     save(CaSignal.ROIinfo_fname, 'ROIinfo','-v7.3');

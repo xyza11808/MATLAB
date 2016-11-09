@@ -122,7 +122,7 @@ for nTime = 1 : TimeScaleNum
                 CIindex(nROI) = 0;
             else
                 TDindex(nROI) = (MaxResp - ((sum(FreqValue) - MaxResp)/(FreqTypeNum - 1)))/MaxResp;
-                CIindex(nROI) = abs(mean(LeftFreqResps) - mean(RightFreqResps))/(MaxResp);
+                CIindex(nROI) = abs(mean(LeftFreqResps) - mean(RightFreqResps))/(MaxResp - min(FreqValue));
                 LLargeThanR(nROI) = (mean(LeftFreqResps) - mean(RightFreqResps)) > 0;
             end
             

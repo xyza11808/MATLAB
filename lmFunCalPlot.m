@@ -17,7 +17,7 @@ Fitx = linspace(min(x),max(x),500);
 PredValue = predict(tb1,Fitx');
 h_data = figure('position',[450 240 1050 750]);
 hold on;
-h1 = scatter(x,y,30,'ro');
+h1 = scatter(x,y,40,'ro');
 h2 = plot(Fitx,PredValue,'k','LineWidth',1.6);
 xlabel('predictor variables');
 ylabel('Response');
