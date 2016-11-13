@@ -14,8 +14,8 @@ MultiTScale(MultiTScale == 0) = [];
 fprintf('Time window number is %d.\n',length(MultiTScale));
 
 TrWinClassPerf = zeros(length(MultiTScale),1);
-TrWinClassModel = cell(length(MultiTScale),10);
-TrWinClassPerfAll = zeros(length(MultiTScale),10);
+% TrWinClassModel = cell(length(MultiTScale),1000);
+TrWinClassPerfAll = zeros(length(MultiTScale),1000);
 for nn = 1 : length(MultiTScale)
     CurrentWin = MultiTScale(nn);
     if abs(CurrentWin) < 1
@@ -23,11 +23,11 @@ for nn = 1 : length(MultiTScale)
     else
         TimeWin = [CurrentWin-0.5,CurrentWin];
     end
-    [MinTloss,AllTloss,TrainM] = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,...
+    [MinTloss,AllTloss,~] = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,...
         TimeWin,[],[],[],trOutcome,1);
     TrWinClassPerf(nn) = MinTloss;
     TrWinClassPerfAll(nn,:) = AllTloss;
-    TrWinClassModel(nn,:) = TrainM;
+%     TrWinClassModel(nn,:) = TrainM;
 end
 
 MlWinClassScore = 1 - mean(TrWinClassPerfAll,2);
@@ -52,5 +52,5 @@ saveas(h_TWinPlot,'Time Win Correct rate plot');
 saveas(h_TWinPlot,'Time Win Correct rate plot','png');
 close(h_TWinPlot);
 
-save MWinCLassData.mat MultiTScale TrWinClassPerf TrWinClassPerfAll TrWinClassModel -v7.3
+save MWinCLassData.mat MultiTScale TrWinClassPerf TrWinClassPerfAll -v7.3
 cd ..;

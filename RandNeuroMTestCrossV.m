@@ -205,9 +205,14 @@ for CVNumber=1:100
         TrialMeanData=squeeze(mean(SingleStimData));
         ROIMeanData=max(TrialMeanData,[],2);
         ALLROIMeanData(n,:)=ROIMeanData';
-
+        
         SingleTestData=SingleStimDataAll(RawTestInds,:,:);
-        TrialTestData=squeeze(mean(SingleTestData));
+        if sum(RawTestInds) <= 1
+            warning('Too few test trials esist, the calculation result might be affected.');
+            TrialTestData=squeeze(SingleTestData);
+        else
+            TrialTestData=squeeze(mean(SingleTestData));
+        end
         TestMeanData=max(TrialTestData,[],2);
         ALLROIMeanTestData(n,:)=TestMeanData';
     end

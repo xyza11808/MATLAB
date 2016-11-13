@@ -83,7 +83,7 @@ if FrameScale(2) > size(RawDataAll,3)
 end
 
 % trial outcome selection
-% using only correct trials for analysis, but using non-missing trial us
+% using only correct trials for analysis, but using non-missing trials is
 % also an option
 switch TrOutcomeOp
     case 0  % non-miss trials option
@@ -164,8 +164,10 @@ BaseTraingInds = false(length(UsingStim),1);
 
 % using given data to train the TbyT model
 % Training ten times and save  all options
-TrainModel = cell(1000,1);
-TrainModelLoss = zeros(1000,1);
+if ~isDataOutput
+    TrainModel = cell(1000,1);
+    TrainModelLoss = zeros(1000,1);
+end
 TestLoss = zeros(1000,1);
 parfor nTimes = 1 : 1000
     TrainSeeds = randsample(length(UsingStim),round(0.5*length(UsingStim)));
@@ -175,9 +177,11 @@ parfor nTimes = 1 : 1000
     TrainData = UsingData(TrainInds,:);
     TestData = UsingData(TestInds,:);
     TrainM = fitcsvm(TrainData,UsingTrialType(TrainInds));
-    TrainModel{nTimes} = TrainM;
-    if size(TrainData,1) > 40
-        TrainModelLoss(nTimes) = kfoldLoss(crossval(TrainM));
+    if ~isDataOutput
+        TrainModel{nTimes} = TrainM;
+        if size(TrainData,1) > 40
+            TrainModelLoss(nTimes) = kfoldLoss(crossval(TrainM));
+        end
     end
     ModelPred = predict(TrainM,TestData);
     TestDataLoss = sum(abs(ModelPred - UsingTrialType(TestInds)))/length(ModelPred);
@@ -198,5 +202,5 @@ if ~isDataOutput
 else
     varargout{1} = MinTestLoss;
     varargout{2} = TestLoss;
-    varargout{3} = TrainModel;
+    varargout{3} = [];
 end

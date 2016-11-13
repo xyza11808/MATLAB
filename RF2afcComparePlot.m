@@ -4,8 +4,14 @@ function RF2afcComparePlot(TaskData,TaskStim,RFdata,RFstim,FrameRate,AlignFrame,
 % also this function will tried to class ROIs as sound responsive ROI or an
 % non-direct sound responsive ROI
 
+if ~isdir('./Task_rf_compPlot/')
+    mkdir('./Task_rf_compPlot/');
+end
+cd('./Task_rf_compPlot/');
+
+save AllInputData.mat TaskData TaskStim RFdata RFstim FrameRate AlignFrame -v7.3
 [TaskTr,TaskROI,TaskFrame] = size(TaskData);
-[rfTr.rfROI,rfFrame] = size(RFdata);
+[rfTr,rfROI,rfFrame] = size(RFdata);
 FinalROI = TaskROI;
 if TaskROI ~= rfROI
     if rfROI > TaskROI
@@ -78,61 +84,95 @@ else
     end
 end
 
-if ~isdir('./Task_rf_compPlot/')
-    mkdir('./Task_rf_compPlot/');
-end
-cd('./Task_rf_compPlot/');
-
-[lmtb,~,Rsqur,hf] = lmFunCalPlot(reshape(TasknROIResp,[],1),reshape(RFnROIResp,[],1));
+[lmtb,coefv,Rsqur,hf,Coeffi] = lmFunCalPlot(reshape(TasknROIResp,[],1),reshape(RFnROIResp,[],1));
 % scatter(reshape(TasknROIResp,[],1),reshape(RFnROIResp,[],1),40,'ro','LineWidth',1.5);
+xlims = get(gca,'xlim');
+set(gca,'ylim',xlims);
+line(xlims,xlims,'color',[.8 .8 .8],'LineWidth',1.6,'LineStyle','--');
 xlabel('Task \DeltaF/F_0(%)');
 ylabel('RF \DeltaF/F_0(%)');
-title({'Task and rf response comparation';sprintf('R = %.3f',Rsqur)});
+title({'Task and rf response comparation';sprintf('R = %.3f, slope = %.3f',Rsqur,coefv(2))});
 saveas(hf,'Scatter plot for task and rf response comp');
 saveas(hf,'Scatter plot for task and rf response comp','png');
 close(hf);
 
-save sumResult.mat lmtb Rsqur hf TasknROIResp RFnROIResp TaskMeanTrace RFMeanTrace -v7.3
+save sumResult.mat lmtb coefv Rsqur hf Coeffi TasknROIResp RFnROIResp TaskMeanTrace RFMeanTrace -v7.3
+
 RsqrAll = zeros(length(TaskStimType),1);
 lmMdlAll = cell(length(TaskStimType),1);
+CoefTableAll = cell(length(TaskStimType),1);
+CoefVall = zeros(length(TaskStimType),2);
 for nnn = 1 : length(TaskStimType)
-    [lmdl,~,Rsqr,h_sf] = lmFunCalPlot(TasknROIResp(:,nnn),RFnROIResp(:,nnn));
+    [lmdl,CoefValue,Rsqr,h_sf,CoeffTable] = lmFunCalPlot(TasknROIResp(:,nnn),RFnROIResp(:,nnn));
     RsqrAll(nnn) = Rsqr;
     lmMdlAll{nnn} = lmdl;
+    CoefTableAll{nnn} = CoeffTable;
+    CoefVall(nnn,:) = CoefValue;
+    xlims = get(gca,'xlim');
+    set(gca,'ylim',xlims);
+    line(xlims,xlims,'color',[.8 .8 .8],'LineWidth',1.6,'LineStyle','--');
     xlabel('Task \DeltaF/F_0(%)');
     ylabel('RF \DeltaF/F_0(%)');
-    title({'Task and rf response comparation';sprintf('R = %.3f',Rsqr)});
-    saveas(h_sf,'Scatter plot for task and rf response comp');
-    saveas(h_sf,'Scatter plot for task and rf response comp','png');
+    title({sprintf('Task and rf response Freq%d Comp',nnn);sprintf('R = %.3f, Slope = %.3f',Rsqr,CoefValue(2))});
+    saveas(h_sf,sprintf('Scatter plot for task and rf Freq%d comp',nnn));
+    saveas(h_sf,sprintf('Scatter plot for task and rf Freq%d comp',nnn),'png');
     close(h_sf);
 end
-save TypeSepResult.mat RsqrAll lmMdlAll -v7.3
-
+save TypeSepResult.mat RsqrAll lmMdlAll CoefTableAll CoefVall -v7.3
+%%
+OnsetIndsTask = zeros(length(TaskStimType),FinalROI);
+OnsetIndsRF = zeros(length(TaskStimType),FinalROI);
+SoundRespTask = zeros(length(TaskStimType),FinalROI);
+SoundRespRF = zeros(length(TaskStimType),FinalROI);
 for nnnn = 1 : length(TaskStimType)
     for nxr = 1 : FinalROI
         cTraceTask = squeeze(TaskMeanTrace(nnnn,nxr,:));
         cTracerf = squeeze(RFMeanTrace(nnnn,nxr,:));
+        [TaskOI,SoundResp] = OnsetTimeDec(cTraceTask,AlignFrame(1),0.3,40,fRate(1));
+        OnsetIndsTask(nnnn,nxr) = TaskOI;
+        SoundRespTask(nnnn,nxr) = SoundResp;
         
+        [RFOI,SoundResp] = OnsetTimeDec(cTracerf,AlignFrame(2),0.3,40,fRate(2));
+        OnsetIndsRF(nnnn,nxr) = RFOI;
+        SoundRespRF(nnnn,nxr) = SoundResp;
+    end
+end
+%%
+save OnsetFInds.mat OnsetIndsTask OnsetIndsRF SoundRespTask SoundRespRF -v7.3
 cd ..;
 
 
-function [] = OnsetTimeDec(TraceData,AligeF,TimeLim,ValueThres,FrameRate)
+function [OnsetInds,SoundResp] = OnsetTimeDec(TraceData,AligeF,TimeLim,ValueThres,FrameRate)
 % within func onset time detection
-
 Strace = smooth(TraceData,0.05,'rloess');
+Strace = Strace(:);
 [MaxV,MaxInds] = max(Strace);
 if max(Strace) <= ValueThres || MaxInds < TimeLim
-    OnsetF = 0;
+    OnsetInds = 0;
+    SoundResp = 0;
     return;
 else
     HalfMaxWid = MaxV/2;
-    BeforeHalfInds = find(fliplr(Strace(1:MaxInds)) < HalfMaxWid,1,'first');
+    BeforeHalfInds = find(flipud(Strace(1:MaxInds)) < HalfMaxWid,1,'first');
     AfterHalfInds = find(Strace(MaxInds:end) < HalfMaxWid,1,'first');
     if (AfterHalfInds + BeforeHalfInds) < FrameRate
+        OnsetInds = 0;
+        SoundResp = 0;
         fprintf('Current peak seems not to be a real calcium peak.\n');
         return;
     else
         RealHalfInds = [MaxInds - BeforeHalfInds, MaxInds + AfterHalfInds];
         HalfPeakWidth = diff(RealHalfInds);
     end
+end
+DiffTrace = diff([Strace(1);Strace]);
+DiffChange = smooth(double(DiffTrace > 0),5);
+xx = flipud(DiffChange(1:MaxInds-4));
+OnsetInds = find(xx<1,1,'first');
+RealOnsetInds = MaxInds - OnsetInds;
+OnsetInds = find(DiffTrace(1:RealOnsetInds)<0,1,'last')+1;
+if OnsetInds > (AligeF+round(TimeLim*FrameRate))
+    SoundResp = 0;
+else
+    SoundResp = 1;
 end

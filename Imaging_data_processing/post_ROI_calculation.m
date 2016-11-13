@@ -166,10 +166,12 @@ if strcmpi(type,'RF')
     % extract data for 2afc comparation
     SelectDb = 70;
     SelectInds = sound_array(:,2) == SelectDb;
-    FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate);
+    SelectData = f_percent_change(SelectInds,:,:);
+    SelectSArray = sound_array(SelectInds,1);
+    FreqRespCallFun(SelectData,SelectSArray,ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate);
 %     FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate,1);
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+    save rfSelectDataSet.mat SelectData SelectSArray frame_rate -v7.3
 %     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %     %RF resp neuron test
 %     TrialFreq = sound_array(:,1);

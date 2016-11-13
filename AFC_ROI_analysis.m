@@ -47,7 +47,7 @@ end
 plot_data_inds=struct('left_trials_inds',[],'right_trials_inds',[],'left_trials_bingo_inds',[],'right_trials_bingo_inds',[],...
     'left_trials_oops_inds',[],'right_trials_oops_inds',[],'left_stim_tone',[],'right_stim_tone',[],...
     'left_trials_miss_inds',[],'right_trials_miss_inds',[],'left_stim_tone_prob',[],'right_stim_tone_prob',[]);
-isProbAsRandTone = 1;
+isProbAsRandTone = 0;
 % global settings end
 % %%################################################################################################
 % ##################################################################################################
@@ -672,7 +672,7 @@ elseif str2double(continue_char)==2
          behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
          frame_rate,onset_time(NormalTrialInds),0);
      TimeCourseStrc = TimeCorseROC(data_aligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);   
-     AUCDataAS = ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align',0,[1.5,2.5]);
+     AUCDataAS = ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align',0,1.5);
      AnsAlignData=Reward_Get_TimeAlign(data,lick_time_struct,behavResults,trial_outcome,frame_rate,imaging_time,0);
      if RandomSession
          FreqAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
@@ -683,29 +683,33 @@ elseif str2double(continue_char)==2
          [ChoiceDataValue,ChoiceDataNumber] = ChoiceProbCal(smooth_data(NormalTrialInds,:,:),behavResults.Stim_toneFreq(NormalTrialInds),...
              behavResults.Action_choice(NormalTrialInds),1.5,start_frame,frame_rate,16000,0);
      end
+     ROIAUCcolorp(TimeCourseStrc,start_frame/frame_rate);
+     %%
      nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
      TimeCourseStrcSP = TimeCorseROC(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);  
      AUCDataASSP = ROC_check(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align',0,1.5);
-     ROIAUCcolorp(TimeCourseStrc,start_frame/frame_rate);
+     
      ROIAUCcolorp(TimeCourseStrcSP,start_frame/frame_rate,[],'Spike train');
      %%
      script_for_summarizedPlot;  % call a script for data preparation and call summarized plot function
      RandomSession
     %%
 %     ActiveCellGene(data,behavResults,trial_outcome,frame_rate,1.5);
-    MeanAlignedDataPlot(smooth_data(NormalTrialInds,:,:),start_frame,behavResults.Trial_Type(NormalTrialInds),frame_rate,trial_outcome(NormalTrialInds));
-    TimeCorseROC(data_aligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2);   %seperated ROC plot
-     AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
-         behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
-         frame_rate,onset_time(NormalTrialInds));
+    CallFunCompPlot(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),frame_rate,start_frame,1.5);  % need rf data as function input
+    multiCClass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5)
+%     MeanAlignedDataPlot(smooth_data(NormalTrialInds,:,:),start_frame,behavResults.Trial_Type(NormalTrialInds),frame_rate,trial_outcome(NormalTrialInds));
+%     TimeCorseROC(data_aligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2);   %seperated ROC plot
+%      AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
+%          behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
+%          frame_rate,onset_time(NormalTrialInds));
     SignalCorr2afc(data_aligned(NormalTrialInds,:,:),trial_outcome(NormalTrialInds),behavResults.Stim_toneFreq(NormalTrialInds),start_frame,frame_rate,1);
     
     
     FlickAnaFun(data,FLickT,FlickInds,TrialTypes,trial_outcome,frame_rate,1.5);
-     ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align');
-    TimeCorseROC(data_aligned,TrialTypes(NormalTrialInds),start_frame,frame_rate);  %cumulated ROC plot
+%      ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align');
+%     TimeCorseROC(data_aligned,TrialTypes(NormalTrialInds),start_frame,frame_rate);  %cumulated ROC plot
      Left_right_pca_dis(smooth_data,behavResults,session_name,frame_rate,start_frame,[],[],data,2);
-    FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame);
+%     FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame);
       if RandomSession
 %           ShuffleNeuroMTest(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
           FlickAnaFun(data,FLickT,FlickInds,double(behavResults.Stim_toneFreq(NormalTrialInds)),trial_outcome,frame_rate,1.5);
@@ -731,7 +735,7 @@ elseif str2double(continue_char)==2
            FracTbyTPlot(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,AUCDataAS,...
               [0.5,1.5],1);
            MultiTimeWinClass(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
-           RandNeuroMTestCrossV(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
+%            RandNeuroMTestCrossV(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
            %%
           cd ..;
 %           FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame,[],1);

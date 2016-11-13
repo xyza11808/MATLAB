@@ -58,7 +58,11 @@ for n = 1:fileNum
             behavResults.Time_reward(ProbInds) = [];
             behavResults.Trial_Type(ProbInds) = [];
             behavResults.Stim_toneFreq(ProbInds) = [];
-            behavResults.Stim_Type(ProbInds) = [];
+            if iscell(behavResults.Stim_Type(1))
+                behavResults.Stim_Type(ProbInds) = [];
+            else
+                behavResults.Stim_Type(ProbInds,:) = [];
+            end
         end
     end
         

@@ -12,6 +12,7 @@ disp(tb1.Coefficients);
 InterValue = tb1.Coefficients.Estimate(1);
 CoefValue = tb1.Coefficients.Estimate(2);
 Rsqr = tb1.Rsquared.Adjusted;
+Coeffiall = tb1.Coefficients;
 
 Fitx = linspace(min(x),max(x),500);
 PredValue = predict(tb1,Fitx');
@@ -30,4 +31,5 @@ if nargout > 0
     varargout{2} = [InterValue,CoefValue];
     varargout{3} = Rsqr;
     varargout{4} = h_data;
+    varargout{5} = Coeffiall;
 end

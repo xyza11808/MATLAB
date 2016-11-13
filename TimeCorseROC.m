@@ -104,14 +104,23 @@ else
             RightPoints=TempROIData(RIghtTrialInds,(((BINNum-1)*FrameBin)+1):(BINNum*FrameBin));
              LeftPointsMax = max(LeftPoints,[],2);
             RightPointsMax = max(RightPoints,[],2);
-            
-            LeftDataFORroc=[LeftPointsMax(:),zeros(numel(LeftPointsMax),1)];
-            RightDataFORroc=[RightPointsMax(:),ones(numel(RightPointsMax),1)];
-            [dataBIN,LMMean]=rocOnlineFoff([LeftDataFORroc;RightDataFORroc]);
-            if LMMean
-                dataBIN = 1 - dataBIN;
+            if length(unique(LeftPointsMax)) < 20 || length(unique(RightPointsMax)) < 20
+                fprintf('Too few data points for calculation, set to chance level.\n');
+                dataBIN = 0.5;
+            else
+                LeftDataFORroc=[LeftPointsMax(:),zeros(numel(LeftPointsMax),1)];
+                RightDataFORroc=[RightPointsMax(:),ones(numel(RightPointsMax),1)];
+                try
+                    [dataBIN,LMMean]=rocOnlineFoff([LeftDataFORroc;RightDataFORroc]);
+                catch
+                    fprintf('Current ROI is %d, BinNum is %d. error occurs.\n',ROInum,BINNum);
+                    waitforbuttonpress;
+                end
+                if LMMean
+                    dataBIN = 1 - dataBIN;
+                end
+                BINNEDROCResultLR(ROInum,BINNum)=dataBIN;
             end
-            BINNEDROCResultLR(ROInum,BINNum)=dataBIN;
         end
     end
     clearvars TempROIData LeftPoints RightPoints LeftDataFORroc RightDataFORroc
