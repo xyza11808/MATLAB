@@ -1,5 +1,5 @@
 
-GrandPath = 'H:\data\behavior\2p_data\behaviro_data\batch32';
+GrandPath = 'H:\data\behavior\2p_data\behaviro_data\batch36';
 xpath = genpath(GrandPath);
 nameSplit = strsplit(xpath,';');
 DirLength = length(nameSplit);

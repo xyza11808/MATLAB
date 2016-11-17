@@ -167,8 +167,11 @@ classErroAll = cell2mat(classErroAllC);
 save StimPredResult.mat MeanErroAll stimErroAll classErroAll Lfun -v7.3
 h_ecoc = figure;
 scatter(MeanErroAll(:,1),MeanErroAll(:,2),40,'ro');
+xlabel('Between Stimlus error');
+ylabel('Between class error');
+title('Class error scatter plot');
 xlims = get(gca,'xlim');
-set(gca,'ylim',xlims);
+set(gca,'ylim',xlims,'FontSize',20);
 line(xlims,xlims,'Color',[.8 .8 .8],'LineWidth',1.8,'Linestyle','--');
 saveas(h_ecoc,'BetStim error vs BetTrType error scatter plot');
 saveas(h_ecoc,'BetStim error vs BetTrType error scatter plot','png');

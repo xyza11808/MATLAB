@@ -92,8 +92,8 @@ set(h(3),'box','off');
 axis(h(3),'off','tight');
 % xlabel(h(3),'hehe1')
 
-saveas(hhx1,'TD Scatter hist plot');
-saveas(hhx1,'TD Scatter hist plot','png');
+saveas(hhx1,'CI Scatter hist plot');
+saveas(hhx1,'CI Scatter hist plot','png');
 close(hhx1);
 
 %%
@@ -127,8 +127,8 @@ set(h(3),'box','off');
 axis(h(3),'off','tight');
 xlabel(h(3),'hehe1')
 
-saveas(hhx2,'CI Scatter hist plot');
-saveas(hhx2,'CI Scatter hist plot','png');
+saveas(hhx2,'TD Scatter hist plot');
+saveas(hhx2,'TD Scatter hist plot','png');
 close(hhx2);
 
 

@@ -530,6 +530,7 @@ ylabel('Fraction choice (R)');
 ylim([0 1]);
 CorrStimTypeTick = CorrStimType/1000;
 set(gca,'xtick',Octavex,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'FontSize',20);
+set(gca,'FontSize',18);
 %%
 if length(TimeLength) == 1
     saveas(h2CompPlot,sprintf('Neuro_psycho_%dms_comp_plot.png',TimeLength*1000));

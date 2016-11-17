@@ -168,8 +168,12 @@ if ~isDataOutput
     TrainModel = cell(1000,1);
     TrainModelLoss = zeros(1000,1);
 end
-TestLoss = zeros(1000,1);
-parfor nTimes = 1 : 1000
+nIters = 1000;
+TestLoss = zeros(nIters,1);
+ProbLoss = zeros(nIters,1);
+ProbLossCell = cell(nIters,1);
+isBadRegression = zeros(nIters,1);
+parfor nTimes = 1 : nIters
     TrainSeeds = randsample(length(UsingStim),round(0.5*length(UsingStim)));
     TrainInds = BaseTraingInds;
     TrainInds(TrainSeeds) = true;
@@ -186,13 +190,49 @@ parfor nTimes = 1 : 1000
     ModelPred = predict(TrainM,TestData);
     TestDataLoss = sum(abs(ModelPred - UsingTrialType(TestInds)))/length(ModelPred);
     TestLoss(nTimes) = TestDataLoss;
+    
+    SVMWeights = TrainM.Beta;
+    SVMbias = TrainM.Bias;
+    TrainData = UsingData(TrainInds,:);
+    TrainScore = TrainData*SVMWeights + SVMbias;
+    TestingDataSet = UsingData(TestInds,:);
+    TestScore = TestingDataSet*SVMWeights + SVMbias;
+    sp = categorical(UsingTrialType(TrainInds));  % turn current vector's format from double to categorical format
+%     Testsp = categorical(UsingTrialType(TestInds));
+    
+    [BTrain2,~,statsTrain2,isOUTITern] = mnrfit(TrainScore,sp);
+    [pihat,~,~] = mnrval(BTrain2,TestScore,statsTrain2);
+    PredTrialType = double(pihat(:,2));  % probability for current score being class one
+    ProbLossCell{nTimes} = [PredTrialType,UsingTrialType(TestInds)];
+    ProbLoss(nTimes) = sum(abs(PredTrialType-UsingTrialType(TestInds)))/length(PredTrialType);
+    if isOUTITern
+        isBadRegression(nTimes) = 1;
+    end
 %     fprintf('Test Data error rate is %.3f.\n',TestDataLoss);
 end
 MinTestLoss = min(TestLoss);
 fprintf('Min Test Data error rate is %.3f.\n',MinTestLoss);
 
 if ~isDataOutput
-    save TbyTClass.mat TrainModel TrainModelLoss TestLoss -v7.3
+    save TbyTClass.mat TrainModel TrainModelLoss TestLoss ProbLossCell ProbLoss isBadRegression -v7.3
+    h = figure('position',[230 230 1450 600]);
+    subplot(1,2,1)
+    hist(TestLoss,20);
+    xlabel('Error rate');
+    ylabel('Rank number');
+    title('Error rate distribution of test dataset');
+    
+    ProbLossBate = ProbLoss;
+    ProbLossBate(logical(isBadRegression)) = [];
+    subplot(1,2,2)
+    hist(ProbLossBate,20);
+    xlabel('Error rate');
+    ylabel('Rank number');
+    title('Prob error rate distribution of test dataset');
+    saveas(h,'Error rate distribution plot');
+    saveas(h,'Error rate distribution plot','png');
+    close(h);
+    
     cd ..;  
     cd ..;
 
@@ -202,5 +242,5 @@ if ~isDataOutput
 else
     varargout{1} = MinTestLoss;
     varargout{2} = TestLoss;
-    varargout{3} = [];
+    varargout{3} = ProbLoss;
 end

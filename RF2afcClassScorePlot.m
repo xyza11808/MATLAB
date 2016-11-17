@@ -33,7 +33,7 @@ TrialTypes = double(RFStim > RFboundary);
 % [nrfTr,nrfROI] = size(DataSelection);
 % TrStimType = unique(RFStim);
 
-[fn,fp,fi] = uigetfile('FracModelClass.mat','Please ROI fraction inds data');
+[fn,fp,fi] = uigetfile('FracModelClass.mat','Please select your 2AFC ROI fraction inds data');
 if ~fi
     error('Error file selection, quit analysis');
 end
@@ -47,6 +47,9 @@ TaskPerfMean = 1 - mean(ClassScore,2);
 TaskPerfsemU = 1 - prctile(ClassScore,2.5,2);
 TaskPerfsemL = 1 - prctile(ClassScore,97.5,2);
 if length(xxxx.ROIauc) ~= size(RFdata,2)
+    if length(xxxx.ROIauc) > size(RFdata,2)
+        error('2AFC data ROI number can''t be less than RF data ROI number, Pleas check your input data file,');
+    end
     fprintf('Two sessions have different ROI number, using the smaller ROI index to do the calculation.\n');
     RFdata(:,(length(xxxx.ROIauc)+1):end,:) = [];
 end

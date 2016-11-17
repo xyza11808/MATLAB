@@ -4,7 +4,7 @@ function [ROCout,LabelMeanS]=rocOnline(varargin)
 % visualizing their performance. ROC graphs are commonly used in medical
 % decision making.
 %
-% Syntax: ROCout=roc(x,thresholds,alpha,verbose)
+% Syntax: ROCout=rocOnline(x,thresholds,alpha,verbose)
 %
 % Input: x - This is a Nx2 data matrix. The first column is the column of the data value;
 %            The second column is the column of the tag: unhealthy (1) and

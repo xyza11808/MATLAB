@@ -6,7 +6,9 @@ ResultPath=uigetdir(pwd,'Please Select your tif file analysis result save path')
 cd(ResultPath);
 files=dir('*.mat');
 for n=1:length(files)
-    load(files(n).name);
+    if ~isempty(strcmpi(files(n).name,'CaTrials')) || ~isempty(strfind(files(n).name,'ROIinfo'))
+        load(files(n).name);
+    end
 end
 if ~exist('CaTrials','var')
     CaTrials=SavedCaTrials;
@@ -68,6 +70,7 @@ FreqVSLabel(~NoneClassiInds,:) = [];
 ConsiderFreqLen = size(FreqVSLabel,1);
 ConsiderFreq = FreqVSLabel(:,1);
 OctConsider = log2(ConsiderFreq / BehavBoundary);
+RFpesudoType = FreqVector > BehavBoundary;
 
 AllDataSize = size(f_change_consid);
 SVMdata = zeros(ConsiderFreqLen,AllDataSize(2),AllDataSize(3));
@@ -81,6 +84,72 @@ for nType = 1 : ConsiderFreqLen
 end
 [coeff,scoreAll,~,~,Explain,~] = pca(AllROIData);
 disp(sum(Explain(1:3)));
+
+%%
+% multi class classification analysis
+multiCClass(f_change_consid,FreqVector,ones(length(FreqVector),1),FrameRate,FrameRate,1.5)
+
+%%
+% performing trial by trial classification
+AllFreqvector = FreqVector;
+DataAll = max(f_change_consid(:,:,(FrameRate+1):(FrameRate*2)),[],3);
+RFTypeInds = double(AllFreqvector > BehavBoundary);
+
+%%
+nIter = 1000;
+TbyTErrorSum = zeros(nIter,1);
+TbyTScoreProb = cell(nIter,1);
+TbyTScoreregSum = zeros(nIter,1);
+% TbyTScoreSum = zeros(nIter,2);
+parfor nmnm = 1 : nIter
+    TrainInds = false(length(AllFreqvector),1);
+    TrainIndex = randsample(length(AllFreqvector),round(length(AllFreqvector)*0.8));
+    TrainInds(TrainIndex) = true;
+    TestInds = ~TrainInds;
+    
+    %training current classifier
+    mdl = fitcsvm(DataAll(TrainInds,:),RFTypeInds(TrainInds));
+    [TestResult,~] = predict(mdl,DataAll(TestInds,:));
+    ErrVector = sum(abs(TestResult - RFTypeInds(TestInds)))/length(TestResult);
+    TbyTErrorSum(nmnm) = ErrVector;
+    
+    SVMWeights = mdl.Beta;
+    SVMbias = mdl.Bias;
+    TrainData = DataAll(TrainInds,:);
+    TrainScore = TrainData*SVMWeights + SVMbias;
+    TestingDataSet = DataAll(TestInds,:);
+    TestScore = TestingDataSet*SVMWeights + SVMbias;
+    sp = categorical(RFTypeInds(TrainInds));
+    Testsp = categorical(RFTypeInds(TestInds));
+    %
+    [BTrain2,~,statsTrain2,isOUTITern2] = mnrfit(TrainScore,sp);
+    [pihat,~,~] = mnrval(BTrain2,TestScore,statsTrain2);
+    PredTrialType=double(pihat(:,2));  % probability for current score being class one
+    
+    TbyTScoreProb{nmnm} = [PredTrialType,RFTypeInds(TestInds)];
+    TbyTScoreregSum(nmnm) = sum(abs(PredTrialType-RFTypeInds(TestInds)))/length(PredTrialType);
+%     TbyTScoreSum(nmnm,:) = TestScore;
+end
+
+h_rfError = figure('position',[230 230 1410 740]);
+subplot(1,2,1);
+hist(TbyTErrorSum,20);
+title('Test Error rate distribution');
+xlabel('Error rate');
+ylabel('nIters');
+set(gca,'Fontsize',20);
+
+subplot(1,2,2)
+hist(TbyTScoreregSum,20);
+title('Prob error hist')
+xlabel('Error rate');
+ylabel('nIters');
+set(gca,'Fontsize',20);
+
+saveas(h_rfError,'RF trial by trial classification error rate');
+saveas(h_rfError,'RF trial by trial classification error rate','png');
+% close(h_rfError);
+
 
 %%
 % load behavior result

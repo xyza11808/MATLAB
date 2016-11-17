@@ -11,6 +11,8 @@ cd('./mWin_perfPlot/');
 nFrame = size(RawDataAll,3);
 MultiTScale = -0.5:0.5:((nFrame - AlignFrame)/FrameRate);
 MultiTScale(MultiTScale == 0) = []; 
+PlotxTick = MultiTScale;
+PlotxTick(1) = 0;
 fprintf('Time window number is %d.\n',length(MultiTScale));
 
 TrWinClassPerf = zeros(length(MultiTScale),1);
@@ -32,14 +34,14 @@ end
 
 MlWinClassScore = 1 - mean(TrWinClassPerfAll,2);
 MlWinClassSem = std(TrWinClassPerfAll,[],2)/sqrt(size(TrWinClassPerfAll,2));
-xTime = [MultiTScale,fliplr(MultiTScale)];
+xTime = [PlotxTick,fliplr(PlotxTick)];
 WinPerf = [(MlWinClassScore + MlWinClassSem);flipud(MlWinClassScore - MlWinClassSem)];
 h_TWinPlot = figure('position',[500 250 1050 720]);
 hold on;
 patch(xTime,WinPerf,1,'facecolor',[.8 .8 .8],...
               'edgecolor','none',...
               'facealpha',0.7);
-plot(MultiTScale,MlWinClassScore,'k','LineWidth',1.6);
+plot(PlotxTick,MlWinClassScore,'k','LineWidth',1.6);
 xlims = get(gca,'xlim');
 line(xlims,[0.5,0.5],'Color',[.8 .8 .8],'LineWidth',1.6,'LineStyle','--');
 line([0 0],[0.4 1],'Color',[.8 .8 .8],'LineWidth',1.6,'LineStyle','--');

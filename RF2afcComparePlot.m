@@ -85,18 +85,21 @@ else
 end
 
 [lmtb,coefv,Rsqur,hf,Coeffi] = lmFunCalPlot(reshape(TasknROIResp,[],1),reshape(RFnROIResp,[],1));
+%%
 % scatter(reshape(TasknROIResp,[],1),reshape(RFnROIResp,[],1),40,'ro','LineWidth',1.5);
+[Coef,p] = corrcoef(reshape(TasknROIResp,[],1),reshape(RFnROIResp,[],1));
 xlims = get(gca,'xlim');
 set(gca,'ylim',xlims);
 line(xlims,xlims,'color',[.8 .8 .8],'LineWidth',1.6,'LineStyle','--');
 xlabel('Task \DeltaF/F_0(%)');
 ylabel('RF \DeltaF/F_0(%)');
-title({'Task and rf response comparation';sprintf('R = %.3f, slope = %.3f',Rsqur,coefv(2))});
+title({'Task and rf response comparation';sprintf('R = %.3f, slope = %.3f',Rsqur,coefv(2));...
+    sprintf('Coef = %.3f, P = %.4f',Coef(1,2),p(1,2))});
 saveas(hf,'Scatter plot for task and rf response comp');
 saveas(hf,'Scatter plot for task and rf response comp','png');
 close(hf);
 
-save sumResult.mat lmtb coefv Rsqur hf Coeffi TasknROIResp RFnROIResp TaskMeanTrace RFMeanTrace -v7.3
+save sumResult.mat lmtb coefv Rsqur hf Coeffi TasknROIResp RFnROIResp TaskMeanTrace RFMeanTrace Coef p -v7.3
 
 RsqrAll = zeros(length(TaskStimType),1);
 lmMdlAll = cell(length(TaskStimType),1);
@@ -108,12 +111,14 @@ for nnn = 1 : length(TaskStimType)
     lmMdlAll{nnn} = lmdl;
     CoefTableAll{nnn} = CoeffTable;
     CoefVall(nnn,:) = CoefValue;
+    [CorrCoef,p] = corrcoef(TasknROIResp(:,nnn),RFnROIResp(:,nnn));
     xlims = get(gca,'xlim');
     set(gca,'ylim',xlims);
     line(xlims,xlims,'color',[.8 .8 .8],'LineWidth',1.6,'LineStyle','--');
     xlabel('Task \DeltaF/F_0(%)');
     ylabel('RF \DeltaF/F_0(%)');
-    title({sprintf('Task and rf response Freq%d Comp',nnn);sprintf('R = %.3f, Slope = %.3f',Rsqr,CoefValue(2))});
+    title({sprintf('Task and rf response Freq%d Comp',nnn);sprintf('R = %.3f, Slope = %.3f',Rsqr,CoefValue(2));...
+        sprintf('Coef = %.3f, p = %.4f',CorrCoef(1,2),p(1,2))});
     saveas(h_sf,sprintf('Scatter plot for task and rf Freq%d comp',nnn));
     saveas(h_sf,sprintf('Scatter plot for task and rf Freq%d comp',nnn),'png');
     close(h_sf);

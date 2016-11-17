@@ -101,7 +101,8 @@ try
         TestingFreq = CorrTrialStim(~AllTInds);
 
         % using training data set to train a logistic regression classifier
-        [BTrain,~,statsTrain,isOUTITern] = mnrfit(TrainingDataSet,TrainingTType(:)+1);
+        
+        [BTrain,~,statsTrain,isOUTITern] = mnrfit(TrainingDataSet,categorical(TrainingTType(:)));
         MatrixWeight = BTrain(2:end);
         %  ROIbias = (statsTrain.beta(2:end))';
         MatrixScore = TrainingDataSet * MatrixWeight + BTrain(1);
@@ -112,7 +113,7 @@ try
          isOutROI = zeros(size(TrainingDataSet,2),1);
          for nROI = 1 : size(TrainingDataSet,2)
              CurrentROID = TrainingDataSet(:,nROI);
-             [BTrain2,~,statsTrain2,isOUTITern2] = mnrfit(CurrentROID,TrainingTType(:)+1);
+             [BTrain2,~,statsTrain2,isOUTITern2] = mnrfit(CurrentROID,categorical(TrainingTType(:)));
              ROIpvalue(nROI,:) = statsTrain2.p;
              WeightROI(nROI,:) =  BTrain2;
              isOutROI(nROI) = isOUTITern2;

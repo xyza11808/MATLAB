@@ -1,6 +1,6 @@
 %%
 %load deltaf/f data save file
-[fn,fpath,~] = uigetfile('*.mat','Select your normalized calcium trace saving file.');
+[fn,fpath,~] = uigetfile('DiffFluoResult.mat','Select your normalized calcium trace saving file.');
 x=load(fullfile(fpath,fn));
 cd(fpath);
 
@@ -8,7 +8,11 @@ cd(fpath);
 RawData = x.FChangeData;
 size_data = size(RawData);
 TrialType = double(x.behavResults.Trial_Type);
-FrameRate = 55;
+if size_data(3) > 300
+    FrameRate = 55;
+else
+    FrameRate = 29;
+end
 FrameNum = size(RawData,3);
 onset_time=x.behavResults.Time_stimOnset;
 % stim_type_freq=behavResults.Stim_toneFreq;
@@ -26,7 +30,9 @@ MegOnFrame = start_frame;
 %%
 %example ROI plot for 2AFC task
 %example ROI plot
-ExampROIinds = [2,4,5,8,16,20,22,23,31,33,51,57,97,130];
+% @######################using updated plot meothods below #####################
+%%%
+ExampROIinds = [1,10,17,32,37,44,48,63,78,91];
 ExampleTrials = 1:15;  %trial number choosed to plot
 TrialNum = length(ExampleTrials);
 DataToPlot = data_aligned(ExampleTrials,ExampROIinds,:);
@@ -45,6 +51,7 @@ for n = 1 : length(ExampROIinds)
 %     cROIData = (squeeze(AllDataChange(:,cROINum,:)))';
     cROIData = (squeeze(DataToPlot(:,n,:)))';
     cPartData = cROIData;
+    cPartData = dataSmoothHD(cPartData,1,1);
     if (MegOnFrame - BeforeMegF) < 1
         warning('Before StimFrame is larger than real StimOn frame, set to frame start inds');
         BeforeMegF = MegOnFrame - 1;
@@ -92,16 +99,17 @@ text((TrialLength),150,'100% \DeltaF/F_0');
 ylim([-50 yBase]);
 % ylabel('\DeltaF/f_0');
 title('Example ROI plot---Sound Response');
-saveas(h_example,'Example ROI plot.png');
-saveas(h_example,'Example ROI plot.fig');
-close(h_example);
+set(gca,'fontSize',20)
+% saveas(h_example,'Example ROI plot.png');
+% saveas(h_example,'Example ROI plot.fig');
+% close(h_example);
 
 
 %%
 %example ROI plot for 2AFC task
 %example ROI plot, trial type indicated by stim on line
-ExampROIinds = [4,5,20,23,31,33,51,57,97];
-ExampleTrials = [1,2,3,5,7,11,12,13,15,16,17];  %trial number choosed to plot
+ExampROIinds = [7,10,20,24,38,65,87,93,97,72];
+% ExampleTrials = 1:3:size_data(1);  %trial number choosed to plot
 TrialNum = length(ExampleTrials);
 DataToPlot = data_aligned(ExampleTrials,ExampROIinds,:);
 TrialTypeP = TrialType(ExampleTrials);
@@ -175,5 +183,7 @@ text(TrialLength,50,'5 s');
 ylim([-50 yBase]);
 % ylabel('\DeltaF/f_0');
 title('Example ROI plot---Sound Response');
+set(gca,'fontSize',20);
 saveas(h_example,'Example ROI plot.png');
 saveas(h_example,'Example ROI plot.fig');
+close(h_example);

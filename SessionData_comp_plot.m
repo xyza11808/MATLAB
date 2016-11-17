@@ -41,7 +41,9 @@ scatter(BehavResult(:),ModelResult(:),30,'ro');
 
 %%
 [mdl,CoefValue,Rsqur,hF] = lmFunCalPlot(BehavResult(:),ModelResult(:));
+[Coef,p_Coef] = corrcoef(BehavResult(:),ModelResult(:));
 figure(hF);
+title({'Linear regression result';sprintf('R-Squr = %.3f, Slope = %.3f',Rsqur,CoefValue(2));sprintf('Coef = %.3f, p_coef = %.4f',Coef(1,2),p_Coef(1,2))});
 set(gca,'xtick',0:0.2:1,'ytick',0:0.2:1);
 xlabel('Behav rightward choice');
 ylabel('Model rightward choice');

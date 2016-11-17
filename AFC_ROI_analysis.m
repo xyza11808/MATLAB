@@ -704,7 +704,6 @@ elseif str2double(continue_char)==2
 %          frame_rate,onset_time(NormalTrialInds));
     SignalCorr2afc(data_aligned(NormalTrialInds,:,:),trial_outcome(NormalTrialInds),behavResults.Stim_toneFreq(NormalTrialInds),start_frame,frame_rate,1);
     
-    
     FlickAnaFun(data,FLickT,FlickInds,TrialTypes,trial_outcome,frame_rate,1.5);
 %      ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align');
 %     TimeCorseROC(data_aligned,TrialTypes(NormalTrialInds),start_frame,frame_rate);  %cumulated ROC plot
