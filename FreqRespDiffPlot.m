@@ -86,6 +86,7 @@ for nTime = 1 : TimeScaleNum
     if isPlot
         TDindex = zeros(ROINum,1);
         CIindex = zeros(ROINum,1);
+        CIindexM2 = zeros(ROINum,1);
         LLargeThanR = zeros(ROINum,1);
         for nROI = 1 : ROINum
             cROIData = squeeze(AlignedMeanTarace(:,nROI,:));
@@ -114,15 +115,37 @@ for nTime = 1 : TimeScaleNum
             % directly using smoothed max value, 
             FreqValue = max(cROIDataSmooth(:,FrameScale(1):FrameScale(2)),[],2);
             % calculating the tuning depth index and CI
-            LeftFreqResps = FreqValue(1:floor(FreqTypeNum/2));
-            RightFreqResps = FreqValue(ceil(FreqTypeNum/2):end);
-            [MaxResp,~] = max(FreqValue);
-            if MaxResp <= 10
+            if ~mod(FreqTypeNum,2)
+                LeftFreqResps = FreqValue(1:(FreqTypeNum/2));
+                RightFreqResps = FreqValue(((FreqTypeNum/2)+1):end);
+                [MaxResp,~] = max(FreqValue);
+            else
+                LeftFreqResps = FreqValue(1:floor(FreqTypeNum/2));
+                RightFreqResps = FreqValue((ceil(FreqTypeNum/2)+1):end);
+                TempFreqv = FreqValue;
+                TempFreqv(ceil(FreqTypeNum/2)) = [];
+                [MaxResp,~] = max(TempFreqv);
+            end
+            if mean(RightFreqResps) >= mean(LeftFreqResps)
+                PreferSide = RightFreqResps;
+                NullSide = LeftFreqResps;
+            else
+                PreferSide = LeftFreqResps;
+                NullSide = RightFreqResps;
+            end
+            SSpref = sqrt(sum((PreferSide - mean(PreferSide)).^2));
+            SSnull = sqrt(sum((NullSide - mean(NullSide)).^2));
+            if MaxResp <= 10 || mean(NullSide) <= 0
+                % skip calculation of assumed non-responsive cells
                 TDindex(nROI) = 0;
                 CIindex(nROI) = 0;
+                CIindexM2(nROI) = 0;
             else
                 TDindex(nROI) = (MaxResp - ((sum(FreqValue) - MaxResp)/(FreqTypeNum - 1)))/MaxResp;
-                CIindex(nROI) = abs(mean(LeftFreqResps) - mean(RightFreqResps))/(MaxResp - min(FreqValue));
+%                 CIindex(nROI) = abs(mean(LeftFreqResps) - mean(RightFreqResps))/(MaxResp - min(FreqValue));
+                CIindex(nROI) = max([(mean(PreferSide) - mean(NullSide))/mean(PreferSide) - (max(PreferSide) - mean(PreferSide))/max(PreferSide),0]);
+                
+                CIindexM2(nROI) = max([(mean(PreferSide) - mean(NullSide))/mean(PreferSide) - (abs(SSpref - SSnull)/(SSpref + SSnull)),0]);
                 LLargeThanR(nROI) = (mean(LeftFreqResps) - mean(RightFreqResps)) > 0;
             end
             
@@ -132,7 +155,8 @@ for nTime = 1 : TimeScaleNum
             xlabel('Frequency(KHz)');
             ylabel('mean \DeltaF/F_0(%)');
             axisScale = axis;
-            text(0.4,axisScale(4)*1.05,sprintf('TD = %.3f, CI = %.3f',TDindex(nROI),CIindex(nROI)));
+            text(0.4,axisScale(4)*1.05,sprintf('TD = %.3f, CI = %.3f, CIm2 = %.3f,Meanpref = %.1f, Meannull = %.1f',...
+                TDindex(nROI),CIindex(nROI),CIindexM2(nROI),mean(PreferSide),mean(NullSide)));
 
             suptitle(sprintf('ROI%d',nROI));
             saveas(h_ROI,sprintf('ROI%d frequency response',nROI));
@@ -141,7 +165,7 @@ for nTime = 1 : TimeScaleNum
             
             
         end
-        save FreqMeanData.mat AlignedMeanTarace FreqType WinData TDindex CIindex LLargeThanR -v7.3
+        save FreqMeanData.mat AlignedMeanTarace FreqType WinData TDindex CIindex CIindexM2 LLargeThanR -v7.3
         cd ..;
     end
     if ~isPlot

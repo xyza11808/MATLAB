@@ -72,6 +72,8 @@ line([0.5,0.5],[0 1],'color',[.8 .8 .8],'LineWidth',1.8,'lineStyle','--');
 line([0 1],[0.5 0.5],'color',[.8 .8 .8],'LineWidth',1.8,'lineStyle','--');
 line([0 1],[0 1],'color',[.8 .8 .8],'LineWidth',1.8,'lineStyle','--');
 xlim([0 1]);ylim([0 1]);
+xlabel('TDI-Task');
+ylabel('TDI-Passive');
 % x axis plot
 histogram(h(2),ClIndex2afcP,20,'FaceColor','none','edgeColor','k','LineWidth',2);
 set(h(2),'box','off');
@@ -107,6 +109,8 @@ line([0.5,0.5],[0 1],'color',[.8 .8 .8],'LineWidth',1.8,'lineStyle','--');
 line([0 1],[0.5 0.5],'color',[.8 .8 .8],'LineWidth',1.8,'lineStyle','--');
 line([0 1],[0 1],'color',[.8 .8 .8],'LineWidth',1.8,'lineStyle','--');
 xlim([0 1]);ylim([0 1]);
+xlabel('CI-Task');
+ylabel('CI-Passive');
 % x axis plot
 histogram(h(2),TuDIndex2afcP,20,'FaceColor','none','edgeColor','k','LineWidth',2);
 set(h(2),'box','off');
@@ -125,7 +129,7 @@ xlim([0 1])
 view(h(3),90,270); 
 set(h(3),'box','off');
 axis(h(3),'off','tight');
-xlabel(h(3),'hehe1')
+% xlabel(h(3),'hehe1')
 
 saveas(hhx2,'TD Scatter hist plot');
 saveas(hhx2,'TD Scatter hist plot','png');

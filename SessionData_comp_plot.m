@@ -1,5 +1,7 @@
 
 [fn,fp,fi] = uigetfile('ModelBehavComp.mat','Please select your sessions summary data of behav and model comparation');
+cd(fp);
+load(fn);
 %%
 TargRespInds = SessionCenter == 0.75;
 TargRespData = InputData(TargRespInds,:);
@@ -22,8 +24,8 @@ for nn = 1 : size(BehavResult,1)
     RsqurAll(nn) = tbl.Rsquared.Adjusted;
     CoefAll(nn,:) = (tbl.Coefficients.Estimate)';
 end
-xlabel('Behav Rightward choice');
-ylabel('Model Rightward choice');
+xlabel('Rightward choice (Behavior)');
+ylabel('Rightward choice (Neuron)');
 set(gca,'FontSize',16);
 MeanSqr = mean(RsqurAll);
 SemSqr = std(RsqurAll)/sqrt(length(RsqurAll));
@@ -31,22 +33,47 @@ AllSlope = CoefAll(:,2);
 MeanSlope = mean(AllSlope);
 SemSlope = std(AllSlope)/sqrt(length(AllSlope));
 title(sprintf('Mean line slope %.3f, Mean square is %.3f',MeanSlope,MeanSqr));
+
+%%
 saveas(gcf,'Scatter Plot Behav vs Model');
 saveas(gcf,'Scatter Plot Behav vs Model','png');
 save ScatterPlotData.mat  BehavResult ModelResult tbAll RsqurAll CoefAll -v7.3
 
 %%
-figure;
-scatter(BehavResult(:),ModelResult(:),30,'ro');
-
+StimType = [8000;10565;13929;18379;24251;32000];
+h_colorPlot = figure;
+hold on;
+FreqNum = size(BehavResult,2);
+ColorMap = jet(FreqNum);
+for nn = 1 : size(BehavResult,1)
+    scatter(BehavResult(nn,:),ModelResult(nn,:),50,ColorMap,'o','filled','LineWidth',1.6);
+end
+set(gca,'xtick',0:0.2:1,'ytick',0:0.2:1);
+colormap(ColorMap);
+h = colorbar('southoutside');
+set(h,'ytick',(1/FreqNum:1/FreqNum:1)-(0.5/FreqNum),'yticklabel',cellstr(num2str(StimType/1000,'%.2f')),...
+    'Ticklength',0);
+[mdl,CoefValue,Rsqur,~] = lmFunCalPlot(BehavResult(:),ModelResult(:),0);
+FitPlotx = linspace(min(BehavResult(:)),max(ModelResult(:)),500);
+FitPloty = predict(mdl,FitPlotx');
+plot(FitPlotx,FitPloty,'k','LineWidth',1.8);
+xlim([0 1]);ylim([0 1]);
+xlabel('Rightward choice (Behavior)');
+ylabel('Rightward choice (Neuron)');
+title({'Behavior vs neuron compare plot',sprintf('R-Squr = %.3f, Slope = %.3f',Rsqur,CoefValue(2))});
+set(gca,'FOntSize',20);
+%%
+saveas(h_colorPlot,'Scatter color plot save');
+saveas(h_colorPlot,'Scatter color plot save','png');
+close(h_colorPlot);
 %%
 [mdl,CoefValue,Rsqur,hF] = lmFunCalPlot(BehavResult(:),ModelResult(:));
 [Coef,p_Coef] = corrcoef(BehavResult(:),ModelResult(:));
 figure(hF);
 title({'Linear regression result';sprintf('R-Squr = %.3f, Slope = %.3f',Rsqur,CoefValue(2));sprintf('Coef = %.3f, p_coef = %.4f',Coef(1,2),p_Coef(1,2))});
 set(gca,'xtick',0:0.2:1,'ytick',0:0.2:1);
-xlabel('Behav rightward choice');
-ylabel('Model rightward choice');
+xlabel('Rightward choice (Behavior)');
+ylabel('Rightward choice (Neuron)');
 saveas(hF,'All Points scatter plot and linear regression');
 saveas(hF,'All Points scatter plot and linear regression','png');
 

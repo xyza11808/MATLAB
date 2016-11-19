@@ -1,4 +1,4 @@
-function RandNeuroMTestALLROI(Flag,RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin)
+function RandNeuroMTestALLROI(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin)
 %this function will be used to process the random data profile and try to
 %create a neurometric function to compare with psychometric function
 %RawDataAll should be aligned data
@@ -8,14 +8,11 @@ if ~isempty(varargin{1})
 else
     TimeLength=1.5;
 end
+isShuffle=0;
 if nargin>7
     if ~isempty(varargin{2})
         isShuffle=varargin{2};
-    else
-        isShuffle=0;
     end
-else
-    isShuffle=0;
 end
 %%
 DataSize=size(RawDataAll);
@@ -77,17 +74,17 @@ if FrameScale(2) > DataSize(3)
 end
 
 
-if Flag == 1
-    if ~isdir('./NeuroM_test/Opto/')
-        mkdir('./NeuroM_test/Opto/');
+% if Flag == 1
+    if ~isdir('./NeuroM_test/')
+        mkdir('./NeuroM_test/');
     end
-    cd('./NeuroM_test/Opto/');
-elseif Flag == 0
-    if ~isdir('./NeuroM_test/nonOpto/')
-        mkdir('./NeuroM_test/nonOpto/');
-    end
-    cd('./NeuroM_test/nonOpto/');
-end
+    cd('./NeuroM_test/');
+% elseif Flag == 0
+%     if ~isdir('./NeuroM_test/nonOpto/')
+%         mkdir('./NeuroM_test/nonOpto/');
+%     end
+%     cd('./NeuroM_test/nonOpto/');
+% end
 
 if length(TimeLength) == 1
     if ~isdir(sprintf('./AfterTimeLength-%dms/',TimeLength*1000))

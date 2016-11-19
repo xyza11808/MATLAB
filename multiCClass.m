@@ -95,7 +95,10 @@ DataSelect = RawDataAll(TrialInds,ROIindsSelect,FrameScale(1):FrameScale(2));
 DataUsing = max(DataSelect,[],3);
 StimTrUsing = StimAll(TrialInds);
 AllStimTypes = unique(StimTrUsing);
-
+if mod(length(AllStimTypes),2)
+    fprintf('Input trial stimlus should have even number of frequency types.');
+    return;
+end
 if isPlot
     if ~isShuffle
         if ~isdir('./NeuroM_MC_TbyT/')
@@ -207,20 +210,70 @@ for nStimtype = 1 : length(StimTypesAll)
         m = m + 1;
     end
 end
+
 %%
+StimIndex = 1 : length(StimTypesAll);
+StimForStr = double(StimTypesAll)/1000;
 TypeErro = mean(Class82CVErro,2);
 matrixData = squareform(TypeErro);
-h_mt = figure;
-imagesc(matrixData)
-xlabel('Stim Types');
-ylabel('Stim Types');
-title('Type by type classification error rate');
-colorbar;
-%%
 if isPlot
+    h_mt = figure('position',[720 240 1000 680]);
+    imagesc(StimIndex,StimIndex,matrixData)
+    set(gca,'xtick',StimIndex,'xticklabel',cellstr(num2str(StimForStr(:),'%.2f')),...
+        'ytick',StimIndex,'yticklabel',cellstr(num2str(StimForStr(:),'%.2f')));
+    xlabel('Stim Types (kHz)');
+    ylabel('Stim Types (kHz)');
+    title('Type by type classification error rate');
+    set(gca,'FontSize',20)
+    colorbar;
     saveas(h_mt,'Multi class classification error rate');
     saveas(h_mt,'Multi class classification error rate','png');
     close(h_mt);
+end
+save PairedClassResult.mat matrixData StimTypesAll -v7.3
+%%
+% calculate the classification error compared with stimlus distance
+TempMatrixData = matrixData;
+ClassNum = length(StimTypesAll)/2;
+OvatveStep = log2(double(StimTypesAll(2))/double(StimTypesAll(1)));
+TempMatrixData(1:3,4:6) =  matrixData(4:6,4:6);
+TempMatrixData(4:6,4:6) = matrixData(1:3,4:6);  % upper class are all within class error, bottom data are all between class data
+WinClassDis = WithinCmask(ClassNum);
+BetClassDis = BetCmask(ClassNum);
+WithinClassMask = WinClassDis > 0;
+LeftWinClassDis = WinClassDis(WithinClassMask);
+leftMatrixData = TempMatrixData(1:3,1:3);
+LeftWinClassError = leftMatrixData(WithinClassMask);
+
+RightWinClassDis = LeftWinClassDis;
+rightMatrixData = TempMatrixData(1:3,4:6);
+RightWinClassError = rightMatrixData(WithinClassMask);
+
+BetClassWinDis = BetClassDis;
+BetClassWinError = TempMatrixData(4:6,1:3);
+[BetweenClassCorrData,BetweenClassCorrDataM] = DistanceBasedError(BetClassWinDis,BetClassWinError);
+
+[LeftClassCorrData,LeftClassCorrDataM] = DistanceBasedError(LeftWinClassDis,LeftWinClassError);
+[RightClassCorrData,RightClassCorrDataM] = DistanceBasedError(RightWinClassDis,RightWinClassError);
+save DisErrorDataAllSave.mat BetweenClassCorrData LeftClassCorrData RightClassCorrData OvatveStep StimTypesAll -v7.3
+
+%%
+if isPlot
+    h_sum = figure;
+    hold on
+    plot(BetweenClassCorrDataM(:,2)*OvatveStep,BetweenClassCorrDataM(:,1),'r-o','LineWidth',1.6);% between class distance vs error
+    plot(LeftClassCorrDataM(:,2)*OvatveStep,LeftClassCorrDataM(:,1),'b-o','LineWidth',1.6); % left winthin group error
+    plot(RightClassCorrDataM(:,2)*OvatveStep,RightClassCorrDataM(:,1),'k-o','LineWidth',1.6); %right within group error
+    xlim([0 2.4]);
+    set(gca,'xtick',BetweenClassCorrDataM(:,2)*OvatveStep);
+    xlabel('Octave Difference');
+    ylabel('Mean Error rate');
+    title('Distance vs mean error rate plot');
+    set(gca,'Fontsize',20);
+    saveas(h_sum,'Distance vs error plot save');
+    saveas(h_sum,'Distance vs error plot save','png');
+    close(h_sum);
+
     cd ..;
     cd ..;
     if isPartialROI
@@ -228,3 +281,42 @@ if isPlot
     end
 end
 
+function WithinClass = WithinCmask(ClassSize)
+% input the number of components within any class, return within class mask
+% for distance based error rate calculation
+k = (ClassSize - 1) .* (ClassSize/2);
+MaskValue = zeros(k,1);
+Count = 1;
+for n = 1 : ClassSize
+    for m = (n+1) : ClassSize
+        MaskValue(Count) = m - n;
+        Count = Count + 1;
+    end
+end
+WithinClassMask = squareform(MaskValue);
+WithinClass = triu(WithinClassMask);
+
+function BetweenClass = BetCmask(ClassSize)
+% input the number of components between two class, return between class mask
+% for distance based error rate calculation
+% k = ClassSize^2;
+BetweenClass = zeros(ClassSize);
+BaseVector = (1:ClassSize)';
+for nx = ClassSize : (-1) : 1
+    BetweenClass(:,nx) = BaseVector + ClassSize - nx;
+end
+
+function [DisErro,DisErroMean] = DistanceBasedError(Dis,Err)
+% yhis function is used to calculate the distance dependence of error rate
+% distribution
+if length(Dis) ~= numel(Dis)
+    Dis = Dis(:);
+    Err = Err(:);
+end
+C = unique(Dis);
+DisErro = cell(length(C),1);
+DisErroMean = zeros(length(C),2);
+for nn = 1 : length(C)
+    DisErro(nn) = {Err(Dis == C(nn))};
+    DisErroMean(nn,:) = [mean(DisErro{nn}),C(nn)];
+end

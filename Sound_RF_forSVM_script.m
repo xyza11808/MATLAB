@@ -95,6 +95,55 @@ AllFreqvector = FreqVector;
 DataAll = max(f_change_consid(:,:,(FrameRate+1):(FrameRate*2)),[],3);
 RFTypeInds = double(AllFreqvector > BehavBoundary);
 
+ROCvalueAll = zeros(size(DataAll,2),1);
+ROCisreverse = zeros(size(DataAll,2),1);
+for nnROI = 1 : size(DataAll,2)
+    DataForROC = [DataAll(:,nnROI),RFTypeInds(:)];
+    [ROCountROC,isreverse] = rocOnlineFoff(DataForROC);
+    ROCvalueAll(nnROI) = ROCountROC;
+    ROCisreverse(nnROI) = isreverse;
+end
+ROCvalueAllABS = ROCvalueAll;
+ROCvalueAllABS(logical(ROCisreverse)) = 1 - ROCvalueAllABS(logical(ROCisreverse));
+[ROCvalueSort,ROCvalueInds] = sort(ROCvalueAllABS,'descend');
+
+h_roc = figure;
+plot(ROCvalueSort,'o','LineWidth',1.8,'MarkerSize',12,'MarkerEdgeColor','k');
+xlims = get(gca,'xlim');
+line(xlims,[0.5 0.5],'Color',[.8 .8 .8],'LineWidth',1.8,'LineStyle','--');
+xlabel('ROI rank');
+ylabel('ROC value');
+title('Sorted ROC rank');
+%%
+saveas(h_roc,'RF Ranked auc plot');
+saveas(h_roc,'RF Ranked auc plot','png');
+close(h_roc);
+
+%%
+% auc compare plot
+[fn,fp,fi] = uigetfile('SumReaultSave.mat','Please selct your summarized data save file');
+xxx = load(fullfile(fp,fn));
+ROCdata2afc = xxx.SessionData.ROIauc(:);
+if length(ROCdata2afc) ~= length(ROCvalueAllABS)
+    ROIindex = 1 : length(ROCdata2afc);
+    ROCdataRF = ROCvalueAllABS(ROIindex);
+end
+h_comp = figure;
+scatter(ROCdata2afc,ROCdataRF,40,'ko');
+line([0 1],[0.5 0.5],'color',[.8 .8 .8],'LineWidth',1.8,'LineStyle','--');
+line([0.5 0.5],[0 1],'color',[.8 .8 .8],'LineWidth',1.8,'LineStyle','--');
+line([0 1],[0 1],'color',[.8 .8 .8],'LineWidth',1.8,'LineStyle','--');
+xlim([0 1]);ylim([0 1]);
+xlabel('2afc data auc');
+ylabel('rf data auc');
+[~,p] = ttest2(ROCdata2afc,ROCdataRF);
+title(sprintf('P = %.2e',p));
+set(gca,'FontSize',20);
+
+%%
+saveas(gcf,'Task and rf auc plot');
+saveas(gcf,'Task and rf auc plot','png');
+
 %%
 nIter = 1000;
 TbyTErrorSum = zeros(nIter,1);
@@ -149,7 +198,7 @@ set(gca,'Fontsize',20);
 saveas(h_rfError,'RF trial by trial classification error rate');
 saveas(h_rfError,'RF trial by trial classification error rate','png');
 % close(h_rfError);
-
+save ErrorRateResult.mat TbyTErrorSum TbyTScoreregSum -v7.3
 
 %%
 % load behavior result
