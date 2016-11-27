@@ -21,27 +21,51 @@ filesavepath_tiff='.\result_tiff\';
 if (isdir(filesavepath_tiff))~=1
     mkdir(filesavepath_tiff);
 end
+[BehavFn,BehavFp,BehavFi] = uigetfile('*.mat','Please select your behavior mat file of current session');
+if ~BehavFi
+    fprintf('Selection skipped, quit function.\n');
+else
+    load(fullfile(BehavFp,BehavFn));
+end
 
 savenamePre='Combined_smooth';
+filename_smooth_avi2=[savenamePre, '_022','.avi'];
+cd(filesavepath_avi);
+savePath = pwd;
+cd ..;
+FullFilePath = fullfile(savePath,filename_smooth_avi2);
+FRate = 29;
+StimFrameLen = ceil(FRate * 0.3);
+if verLessThan('matlab','8.4')
+    HighVerMethod = 0;
+else
+    HighVerMethod = 1;
+    v = VideoWriter(FullFilePath,'Motion JPEG AVI');
+    v.FrameRate = FRate;
+%     v.Quality = 100;
+    open(v);
+end
 %%
-for j=1:length(filenames);
+for j=1:length(filenames)
     filename=filenames{j};
     trialNum=str2num(filename(end-6:end-4));
     StimOnTime=behavResults.Time_stimOnset(trialNum);
     RewardTime=behavResults.Time_reward(trialNum);
-    StimOnFrame=floor((double(StimOnTime)/1000)*55);
-    RewardFrame=floor((double(RewardTime)/1000)*55);
+    StimOnFrame=floor((double(StimOnTime)/1000)*FRate);
+    RewardFrame=floor((double(RewardTime)/1000)*FRate);
     SideStr={'Low Freq Sound','High Freq Sound'};
     TrialSide=behavResults.Trial_Type(trialNum);
     
     InfoImage=imfinfo(filename);
     mImage=InfoImage(1).Width;
     nImage=InfoImage(1).Height;
-    Number_Images=length(InfoImage);
+    Number_Images=length(InfoImage);  % frames within a tiff file
     
-    if j==1
-        mov(1:Number_Images*length(filenames)) = struct('cdata', [],...
-            'colormap', []);
+    if ~HighVerMethod
+        if j==1
+            mov(1:Number_Images*length(filenames)) = struct('cdata', [],...
+                'colormap', []);
+        end
     end
     
     % %first way of tiff files read
@@ -65,10 +89,12 @@ for j=1:length(filenames);
     
     %second way of tiff files read
     [finalImage2,~]=load_scim_data(filename);
-    finalImage=double(finalImage2);
-    finalImageSmooth=filter_design(finalImage);
-    finalImageSmooth=int16(finalImageSmooth);
-    
+%     % % % if not performing image smooth, comment following lines
+%     finalImage=double(finalImage2);
+%     finalImageSmooth=filter_design(finalImage);
+%     finalImageSmooth=int16(finalImageSmooth);
+      finalImageSmooth = finalImage2;
+%     % end of smooth comment lines
     
     
     % filename_smooth=[filename(1:end-4),'_smoothed'];
@@ -203,34 +229,74 @@ for j=1:length(filenames);
     % cd(filesavepath_avi);
 %     disp('writing files into AVI files...\n');
     %%
-    for i=135:225
-        imshow(finalImageSmooth(:,:,i),[0,400],'Border','tight');
-        if i>=StimOnFrame && i<(StimOnFrame+15)
-            patch([5 25 25 5],[30 30 10 10],'r');
-%             text(5,15,SideStr{TrialSide+1},'color','red','FontSize',10);
+    if ~HighVerMethod
+        for i=1:Number_Images
+            imshow(finalImageSmooth(:,:,i),[0,1000],'Border','tight');
+            if mImage == 256
+                if i>=StimOnFrame && i<(StimOnFrame+StimFrameLen)
+                    patch([5 25 25 5],[30 30 10 10],'r');
+        %             text(5,15,SideStr{TrialSide+1},'color','red','FontSize',10);
+                end
+                if i>=RewardFrame && i<(RewardFrame+10) && RewardFrame >0
+                    patch([220 240 240 220],[30 30 10 10],'g')
+        %             text(180,15,'Reward On','color','g','FontSize',10);
+                end
+            elseif mImage == 512
+                 if i>=StimOnFrame && i<(StimOnFrame+StimFrameLen)
+                    patch([5 50 50 5],[60 60 10 10],'r');
+        %             text(5,15,SideStr{TrialSide+1},'color','red','FontSize',10);
+                end
+                if i>=RewardFrame && i<(RewardFrame+10) && RewardFrame >0
+                    patch([450 500 500 450],[60 60 10 10],'g')
+        %             text(180,15,'Reward On','color','g','FontSize',10);
+                end
+            end
+            mov(i+(j-1)*Number_Images)=getframe(gcf);
         end
-        if i>=RewardFrame && i<(RewardFrame+10)
-            patch([220 240 240 220],[30 30 10 10],'g')
-%             text(180,15,'Reward On','color','g','FontSize',10);
+    %     movie2avi(mov,filename_smooth_avi2,'compression','none','fps',55);
+    %     disp('GVI files exported successfully!\n');
+    %     cd(filepath);
+    else
+        for i=1:Number_Images
+            imshow(finalImageSmooth(:,:,i),[0,1000],'Border','tight');
+            if mImage == 256
+                if i>=StimOnFrame && i<(StimOnFrame+StimFrameLen)
+                    patch([5 25 25 5],[30 30 10 10],'r');
+        %             text(5,15,SideStr{TrialSide+1},'color','red','FontSize',10);
+                end
+                if i>=RewardFrame && i<(RewardFrame+10) && RewardFrame >0
+                    patch([220 240 240 220],[30 30 10 10],'g')
+        %             text(180,15,'Reward On','color','g','FontSize',10);
+                end
+            elseif mImage == 512
+                if i>=StimOnFrame && i<(StimOnFrame+StimFrameLen)
+                    patch([5 50 50 5],[60 60 10 10],'r');
+        %             text(5,15,SideStr{TrialSide+1},'color','red','FontSize',10);
+                end
+                if i>=RewardFrame && i<(RewardFrame+10) && RewardFrame >0
+                    patch([450 500 500 450],[60 60 10 10],'g')
+        %             text(180,15,'Reward On','color','g','FontSize',10);
+                end
+            end
+            fff=getframe(gcf);
+            writeVideo(v,fff);
         end
-        mov(i+(j-1)*Number_Images)=getframe(gcf);
     end
-%     movie2avi(mov,filename_smooth_avi2,'compression','none','fps',55);
-%     disp('GVI files exported successfully!\n');
-    close;
-%     cd(filepath);
-    
 end
 
 %%
-filename_smooth_avi2=[savenamePre, '_022','.avi'];
-cd(filesavepath_avi);
 disp('writing files into AVI files...\n');
-movie2avi(mov,filename_smooth_avi2,'compression','none','fps',55);
+if ~HighVerMethod
+    movie2avi(mov,FullFilePath,'compression','none','fps',FRate);
+    close;
+else
+    close(v);
+    close;
+end
+    
 disp('GVI files exported successfully!\n');
 
 %%
-close;
 
 totaltime=toc;
 %disp('All done.');

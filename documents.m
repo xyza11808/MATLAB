@@ -124,8 +124,12 @@
   h = gcf; %current figure handle
   axesObjs = get(h, 'Children');  %axes handles
   dataObjs = get(axesObjs, 'Children'); %handles to low-level graphics objects in axes
-  xdata = get(dataObjs{2}, 'XData');  %data from low-level grahics objects
-  ydata = get(dataObjs{2}, 'YData');
+  % high bersion matlab
+  xdata = get(dataObjs, 'XData');  %data from low-level grahics objects
+  ydata = get(dataObjs, 'YData');
+  % low version matlab
+%    xdata = get(dataObjs{2}, 'XData');  %data from low-level grahics objects
+%   ydata = get(dataObjs{2}, 'YData');
 %   zdata = get(dataObjs, 'ZData');
 %   uData = get(dataObjs, 'UData');  %extract errorbar data is using errorbar plot, the sem value
 %  %find line objects data

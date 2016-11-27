@@ -16,8 +16,6 @@ isShuffle=0;
 if nargin>6
     if ~isempty(varargin{2})
         isShuffle=varargin{2};
-    else
-        isShuffle=0;
     end
 end
 % external model load option
@@ -96,26 +94,29 @@ switch TrOutcomeOp
         error('Error trial outcome option, which can only be either 0,1 or 2');
 end
 
+% shuffling option
+% % #######################################
+% % this section will be skipped, shuffled data as threshold option
+% if isShuffle
+% %     ShuffleType = StimAll;
+% %     TrialLength = length(StimAll);
+% %     for n=1:TrialLength
+% %         w = ceil(rand*n);
+% %         t = ShuffleType(w);
+% %         ShuffleType(w) = ShuffleType(n);
+% %         ShuffleType(n) = t;
+% %     end
+%     OrderTrialStim=StimAll;
+%     StimAll=Vshuffle(StimAll);
+% end
+% % #######################################
+
 % Data considered 
 UsingData = max(RawDataAll(TrialInds,ROIindsSelect,FrameScale(1):FrameScale(2)),[],3);
 UsingStim = StimAll(TrialInds);
 UsingStimType = unique(UsingStim);
 UsingTrialType = double(UsingStim>UsingStimType(length(UsingStimType)/2));
 UsingTrialType = UsingTrialType (:);
-
-% shuffling option
-if isShuffle
-    ShuffleType = UsingStim;
-    TrialLength = length(UsingStim);
-    for n=1:TrialLength
-        w = ceil(rand*n);
-        t = ShuffleType(w);
-        ShuffleType(w) = ShuffleType(n);
-        ShuffleType(n) = t;
-    end
-    OrderTrialStim=UsingStim;
-    UsingStim=ShuffleType;
-end
 
 %%
 if ~isDataOutput
@@ -164,11 +165,13 @@ BaseTraingInds = false(length(UsingStim),1);
 
 % using given data to train the TbyT model
 % Training ten times and save  all options
-if ~isDataOutput
-    TrainModel = cell(1000,1);
-    TrainModelLoss = zeros(1000,1);
-end
 nIters = 1000;
+if ~isDataOutput
+%     TrainModel = cell(1000,1);
+    TrainModelLoss = zeros(nIters,1);
+    SUFTrainModelLoss = zeros(nIters,1);
+end
+
 TestLoss = zeros(nIters,1);
 ProbLoss = zeros(nIters,1);
 ProbLossCell = cell(nIters,1);
@@ -182,7 +185,7 @@ parfor nTimes = 1 : nIters
     TestData = UsingData(TestInds,:);
     TrainM = fitcsvm(TrainData,UsingTrialType(TrainInds));
     if ~isDataOutput
-        TrainModel{nTimes} = TrainM;
+%         TrainModel{nTimes} = TrainM;
         if size(TrainData,1) > 40
             TrainModelLoss(nTimes) = kfoldLoss(crossval(TrainM));
         end
@@ -213,8 +216,64 @@ end
 MinTestLoss = min(TestLoss);
 fprintf('Min Test Data error rate is %.3f.\n',MinTestLoss);
 
+if isShuffle
+    % ####################################################
+    % shuffle section, for baseline calculation
+    shuStimAll = Vshuffle(StimAll);
+    UsingStim = shuStimAll(TrialInds);
+    UsingTrialType = double(UsingStim>UsingStimType(length(UsingStimType)/2));
+    UsingTrialType = UsingTrialType(:);
+
+    SUFTestLoss = zeros(nIters,1);
+    SUFProbLoss = zeros(nIters,1);
+    SUFProbLossCell = cell(nIters,1);
+    SUFisBadRegression = zeros(nIters,1);
+    parfor nTimes = 1 : nIters
+        TrainSeeds = randsample(length(UsingStim),round(0.5*length(UsingStim)));
+        TrainInds = BaseTraingInds;
+        TrainInds(TrainSeeds) = true;
+        TestInds = ~TrainInds;
+        TrainData = UsingData(TrainInds,:);
+        TestData = UsingData(TestInds,:);
+        TrainM = fitcsvm(TrainData,UsingTrialType(TrainInds));
+        if ~isDataOutput
+    %         TrainModel{nTimes} = TrainM;
+            if size(TrainData,1) > 40
+                SUFTrainModelLoss(nTimes) = kfoldLoss(crossval(TrainM));
+            end
+        end
+        ModelPred = predict(TrainM,TestData);
+        TestDataLoss = sum(abs(ModelPred - UsingTrialType(TestInds)))/length(ModelPred);
+        SUFTestLoss(nTimes) = TestDataLoss;
+
+        SVMWeights = TrainM.Beta;
+        SVMbias = TrainM.Bias;
+        TrainData = UsingData(TrainInds,:);
+        TrainScore = TrainData*SVMWeights + SVMbias;
+        TestingDataSet = UsingData(TestInds,:);
+        TestScore = TestingDataSet*SVMWeights + SVMbias;
+        sp = categorical(UsingTrialType(TrainInds));  % turn current vector's format from double to categorical format
+    %     Testsp = categorical(UsingTrialType(TestInds));
+
+        [BTrain2,~,statsTrain2,isOUTITern] = mnrfit(TrainScore,sp);
+        [pihat,~,~] = mnrval(BTrain2,TestScore,statsTrain2);
+        PredTrialType = double(pihat(:,2));  % probability for current score being class one
+        SUFProbLossCell{nTimes} = [PredTrialType,UsingTrialType(TestInds)];
+        SUFProbLoss(nTimes) = sum(abs(PredTrialType-UsingTrialType(TestInds)))/length(PredTrialType);
+        if isOUTITern
+            SUFisBadRegression(nTimes) = 1;
+        end
+    %     fprintf('Test Data error rate is %.3f.\n',TestDataLoss);
+    end
+    % % % end of shuffle section
+end
+
 if ~isDataOutput
-    save TbyTClass.mat TrainModel TrainModelLoss TestLoss ProbLossCell ProbLoss isBadRegression -v7.3
+    if isShuffle
+        save TbyTClass.mat TrainModelLoss TestLoss ProbLossCell ProbLoss isBadRegression SUFTestLoss SUFProbLoss SUFisBadRegression SUFProbLossCell -v7.3
+    else
+        save TbyTClassNoSUF.mat TrainModelLoss TestLoss ProbLossCell ProbLoss isBadRegression -v7.3
+    end
     h = figure('position',[230 230 1450 600]);
     subplot(1,2,1)
     hist(TestLoss,20);
@@ -240,7 +299,12 @@ if ~isDataOutput
         cd ..;
     end
 else
-    varargout{1} = MinTestLoss;
-    varargout{2} = TestLoss;
-    varargout{3} = ProbLoss;
+    ProbLoss(logical(isBadRegression)) = [];
+    varargout{1} = TestLoss;
+    varargout{2} = ProbLoss;
+    if isShuffle
+        SUFProbLoss(logical(SUFisBadRegression)) = [];
+        varargout{3} = SUFTestLoss;
+        varargout{4} = SUFProbLoss;
+    end
 end

@@ -29,9 +29,10 @@ TrialTypes = double(RFStim > RFboundary);
 %     end
 % end
 
-% DataSelection = max(RFdata(:,:,FrameScale(1):FrameScale(2)),[],3);
-% [nrfTr,nrfROI] = size(DataSelection);
-% TrStimType = unique(RFStim);
+if ~isdir('./Frac_class_compPlot/')
+    mkdir('./Frac_class_compPlot/');
+end
+cd('./Frac_class_compPlot/');
 
 [fn,fp,fi] = uigetfile('FracModelClass.mat','Please select your 2AFC ROI fraction inds data');
 if ~fi
@@ -40,12 +41,19 @@ end
 xxxx = load(fullfile(fp,fn));
 FracROIValue = xxxx.AUCThres;
 FracROIinds = xxxx.ROIFracIAll;
-FracROIMaxAUC = xxxx.AUCValueThres;
+% FracROIMaxAUC = xxxx.AUCValueThres;
 ClassScore = xxxx.CellFracClassPerfAll;
 FracMaxAUCV = xxxx.MaxAUCvalue;
+SUFVlassScore = xxxx.SUFFracclfPerfAll;
 TaskPerfMean = 1 - mean(ClassScore,2);
-TaskPerfsemU = 1 - prctile(ClassScore,2.5,2);
-TaskPerfsemL = 1 - prctile(ClassScore,97.5,2);
+SUFTaskPerfMean = 1 - mean(SUFVlassScore,2);
+TaskPerfsemU = TaskPerfMean + std(ClassScore,[],2)/sqrt(size(ClassScore,1));
+TaskPerfsemL = TaskPerfMean - std(ClassScore,[],2)/sqrt(size(ClassScore,1));
+SUFTaskPerfsemU = SUFTaskPerfMean + std(SUFVlassScore,[],2)/sqrt(size(SUFVlassScore,1));
+SUFTaskPerfsemL = SUFTaskPerfMean - std(SUFVlassScore,[],2)/sqrt(size(SUFVlassScore,1));
+
+% TaskPerfsemU = 1 - prctile(ClassScore,2.5,2);
+% TaskPerfsemL = 1 - prctile(ClassScore,97.5,2);
 if length(xxxx.ROIauc) ~= size(RFdata,2)
     if length(xxxx.ROIauc) > size(RFdata,2)
         error('2AFC data ROI number can''t be less than RF data ROI number, Pleas check your input data file,');
@@ -55,21 +63,24 @@ if length(xxxx.ROIauc) ~= size(RFdata,2)
 end
 
 RFFracClassPerfAll = zeros(length(FracROIValue),1000);
-MinCLassScoreRF = zeros(length(FracROIValue),1);
+% MinCLassScoreRF = zeros(length(FracROIValue),1);
 for nnn = 1:length(FracROIValue)
     ROIfracInds = FracROIinds{nnn};
-    [MinLoss,AllTloss,~] = TbyTAllROIclass(RFdata,TrialTypes,ones(size(RFdata,1),1),AlignFrame,FrameRate,...
-        TimeScale,[],[],ROIfracInds,TrComeType,1);
+    [AllTloss,~] = TbyTAllROIclass(RFdata,TrialTypes,ones(size(RFdata,1),1),AlignFrame,FrameRate,...
+        TimeScale,0,[],ROIfracInds,TrComeType,1);
     RFFracClassPerfAll(nnn,:) = AllTloss;
-    MinCLassScoreRF(nnn) = MinLoss;
+%     MinCLassScoreRF(nnn) = MinLoss;
 end
 
 ModelPerfMean = 1 - mean(RFFracClassPerfAll,2);
-ModelPerfsemL = 1 - prctile(RFFracClassPerfAll,97.5,2);
-ModelPerfsemU = 1 - prctile(RFFracClassPerfAll,2.5,2);
+ModelPerfsemL = ModelPerfMean - std(RFFracClassPerfAll,[],2)/sqrt(size(RFFracClassPerfAll,1));
+ModelPerfsemU = ModelPerfMean + std(RFFracClassPerfAll,[],2)/sqrt(size(RFFracClassPerfAll,1));
+% ModelPerfsemL = 1 - prctile(RFFracClassPerfAll,97.5,2);
+% ModelPerfsemU = 1 - prctile(RFFracClassPerfAll,2.5,2);
 xPrc = [FracROIValue,fliplr(FracROIValue)];
 RFyperf = [ModelPerfsemU;flipud(ModelPerfsemL)];
 Taskyperf = [TaskPerfsemU;flipud(TaskPerfsemL)];
+SUFTaskyperf = [SUFTaskPerfsemU;flipud(SUFTaskPerfsemL)];
 h_sumPlot = figure('position',[200,200,800,650]);
 hold on
 patch(xPrc,RFyperf,1,'facecolor',[.8 .8 .8],...
@@ -78,14 +89,19 @@ patch(xPrc,RFyperf,1,'facecolor',[.8 .8 .8],...
 patch(xPrc,Taskyperf,1,'facecolor',[.8 .8 .8],...
               'edgecolor','none',...
               'facealpha',0.7);
+patch(xPrc,SUFTaskyperf,1,'facecolor',[.8 .8 .8],...
+              'edgecolor','none',...
+              'facealpha',0.6);
 h1 = plot(FracROIValue,ModelPerfMean,'r','LineWidth',1.8);
 h2 = plot(FracROIValue,TaskPerfMean,'k','LineWidth',1.8);
+h3 = plot(FracROIValue,SUFTaskPerfMean,'color',[.6 .6 .6],'LineWidth',1.8);
 xlabel('ROI percentile')
 ylabel('Classification perf.');
 title('population classification score vs ROI fraction')
 set(gca,'FontSize',20);
-legend([h1,h2],{'RF data' ,'Task data'},'FontSize',12);
+legend([h1,h2,h3],{'RF data' ,'Task data','Shuffled data'},'FontSize',12);
 saveas(h_sumPlot,'Cell Fraction vs Popu Perf plot');
 saveas(h_sumPlot,'Cell Fraction vs Popu Perf plot','png');
 close(h_sumPlot);
-
+save RFtaskFracClass.mat ClassScore RFFracClassPerfAll SUFVlassScore FracROIValue FracMaxAUCV -v7.3
+cd ..;

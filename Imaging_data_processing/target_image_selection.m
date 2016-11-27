@@ -1,9 +1,9 @@
 %finding the target image for alignment
-cd('K:\batch35\anm04\test01');
-[im, ~] = load_scim_data('b35a04_test01_2afc_140um_20161001_100.tif');
+cd('K:\batch37\20161122\anm02\test01');
+[im, ~] = load_scim_data('b37a02_test01_3x_2afc_190um_20161122_191.tif');
 colormap gray;
-selectframe=im(:,:,70:105);
-imagesc(mean(selectframe,3),[0 200]);
+selectframe=im(:,:,325:378);
+imagesc(mean(selectframe,3),[0 500]);
 im_reg_target = mean(selectframe,3);
 figure(gcf);
 
@@ -18,7 +18,7 @@ disp(t);
 % save TargetImage.mat im_reg_target
 %
 % % % 
-dir_imreg_src = 'K:\batch35\anm04\test01rf';
+dir_imreg_src = 'K:\batch37\20161122\anm02\test01rf';
 dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
 dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target)
 % % 

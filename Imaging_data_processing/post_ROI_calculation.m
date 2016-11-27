@@ -22,7 +22,7 @@ if ~Findex
 end
 cd(filepath);
 % files=dir('*.mat');
-for i=1:length(filename);
+for i=1:length(filename)
     RealFileName=filename{i};
     x=load(RealFileName);
     if (isfield(x,'CaTrials') || isfield(x,'CaSignal'))
@@ -52,7 +52,14 @@ for i=1:length(filename);
 end
 Ca_string=whos('CaTri*');
 eval(['CaSignal_',type,'=',Ca_string.name,';']);
-
+if exist('cSessionExcludeInds.mat','file')
+    fprintf('Trial inds excluded from analysis exists, loading as trial excluded files.\n');
+    xx = load('cSessionExcludeInds.mat');
+    TrExcludedInds = xx.ExcludedTrInds;
+    fprintf('Totally Number of %d trials excluded from analsis.\n',sum(TrExcludedInds));
+else
+    TrExcludedInds = [];
+end
 
 % %exclude error trials from whole behavior data
 % exclude_trials = input('please inut the trials needed to be excluded.Seperated by '',''\n','s');
@@ -94,6 +101,8 @@ else
     elseif exist('SessionResults','var') && exist('SessionSettings','var')
         [behavResults,behavSettings] = behav_cell2struct(SessionResults,SessionSettings);
         [UserChoice,sessiontype]=behavScore_prob(behavResults,behavSettings,fn2,1);  %plot the animal behavior trace for select session
+    else
+       UserChoice = 1;
     end
         
     if UserChoice
@@ -131,7 +140,7 @@ end
 cd('.\plot_save\');
 
 if strcmpi(type,'RF')
-    [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,[],[],2,type,ROIinfo);
+    [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,[],[],2,type,ROIinfo,TrExcludedInds);
     NoiseRFStd=NoiseExtraction(f_percent_change);
     save ROINoise.mat NoiseRFStd -v7.3
 %     %ROI response towards given sounds
@@ -169,8 +178,10 @@ if strcmpi(type,'RF')
     SelectData = f_percent_change(SelectInds,:,:);
     SelectSArray = sound_array(SelectInds,1);
     save rfSelectDataSet.mat SelectData SelectSArray frame_rate -v7.3
-     RF2afcClassScorePlot(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),16000,frame_rate,frame_rate,1.5,1);
-    FreqRespCallFun(SelectData,SelectSArray,ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate);
+    
+     RF2afcClassScorePlot(SelectData,SelectSArray,16000,frame_rate,frame_rate,1.5,1);
+     FreqRespCallFun(SelectData,SelectSArray,ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate);
+     RFTaskclf_accuracy_plot
 %     FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate,1);
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -445,7 +456,7 @@ if strcmpi(type,'RF')
         'Yes','No','Yes');
     switch ContChoice
         case 'Yes'
-            [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,2,type,ROIinfo);
+            [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,2,type,ROIinfo,TrExcludedInds);
             %#########################################################################
             %start of baseline percent change plot
             %#########################################################################
@@ -614,20 +625,20 @@ elseif strcmpi(type,'2AFC')
             mkdir('./Type3_f0_calculation/');
         end
         cd('./Type3_f0_calculation/');
-        [f_raw_trials,f_percent_change,exclude_inds,IsBaselineE]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,3,type,ROIinfo);
+        [f_raw_trials,f_percent_change,exclude_inds,IsBaselineE]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,3,type,ROIinfo,TrExcludedInds);
         if IsBaselineE
             fprintf('Please select your choice again without using the same background substraction method.\n');
-            [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,3,type,ROIinfo);
+            [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,3,type,ROIinfo,TrExcludedInds);
         end
     elseif BaselineMethod == 2
         if ~isdir('./Type2_f0_calculation/')
             mkdir('./Type2_f0_calculation/');
         end
         cd('./Type2_f0_calculation/');
-        [f_raw_trials,f_percent_change,exclude_inds,IsBaselineE]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,2,type,ROIinfo);
+        [f_raw_trials,f_percent_change,exclude_inds,IsBaselineE]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,2,type,ROIinfo,TrExcludedInds);
         if IsBaselineE
             fprintf('Please select your choice again without using the same background substraction method.\n');
-            [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,2,type,ROIinfo);
+            [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,2,type,ROIinfo,TrExcludedInds);
         end
     end
 %     save RawMatricData.mat f_raw_trials f_percent_change -v7.3
@@ -659,7 +670,7 @@ elseif strcmpi(type,'2AFC')
         end
         cd(filepath);
         % files=dir('*.mat');
-        for i=1:length(filename);
+        for i=1:length(filename)
             RealFileName=filename{i};
             x=load(RealFileName);
             if (isfield(x,'CaTrials') || isfield(x,'CaSignal'))
@@ -689,7 +700,7 @@ elseif strcmpi(type,'2AFC')
         [fn,fn_path]=uigetfile('*.*');
         sound_Stim=textread([fn_path,filesep,fn]);
         
-        [f_raw_trialsRF,f_percent_changeRF,exclude_indsRF]=FluoChangeCa2NPl(CaTrials_RF,[],[],2,'RF',ROIinfo_RF);
+        [f_raw_trialsRF,f_percent_changeRF,exclude_indsRF]=FluoChangeCa2NPl(CaTrials_RF,[],[],2,'RF',ROIinfo_RF,TrExcludedInds);
         %         sound_Stim(exclude_inds,:)=[];
         [ROI_CF,VSDataStrc] = in_site_freTuning_update(f_percent_changeRF,sound_Stim,export_filename_raw,frame_rate,'simple_fit',CaTrials_RF,0);
         
@@ -750,7 +761,7 @@ end
 % cd ..;
 
 % %%
-% %making sequence analysis of theraw data
+% %making sequence analysis of the raw data
 % if isdir('.\sequence_save\')==0
 %     mkdir('.\sequence_save\');
 % end

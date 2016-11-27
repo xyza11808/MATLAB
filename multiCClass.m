@@ -1,4 +1,4 @@
-function multiCClass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin)
+function varargout = multiCClass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin)
 % this function is trying to performing a multiclass classification of
 % different sounds and seeing whether there is any pattern exists for
 % stimulus belongs to different octave diff and categories
@@ -186,6 +186,7 @@ StimTypesAll = unique(StimTrUsing);
 ClassNum = length(StimTypesAll)*(length(StimTypesAll) - 1)/2;
 DataAllCVerro = zeros(ClassNum,10);
 Class82CVErro = zeros(ClassNum,100);
+PairedROCAll = zeros(ClassNum,size(DataUsing,2));
 m = 1;
 for nStimtype = 1 : length(StimTypesAll)
     for npairType = (nStimtype+1) : length(StimTypesAll)
@@ -193,6 +194,8 @@ for nStimtype = 1 : length(StimTypesAll)
         cNegtive = StimTrUsing == StimTypesAll(npairType);
         DataSetAll = [DataUsing(cPositive,:);DataUsing(cNegtive,:)];
         StimSetAll = StimTrUsing(logical(cPositive+cNegtive));
+        ROIabs = PairedStimROC(DataSetAll,StimSetAll);
+        PairedROCAll(m,:) = ROIabs;
         mdl = fitcsvm(DataSetAll,StimSetAll(:));
         CVerror = kfoldLoss(crossval(mdl),'mode','individual');
         DataAllCVerro(m,:) = CVerror;
@@ -210,7 +213,8 @@ for nStimtype = 1 : length(StimTypesAll)
         m = m + 1;
     end
 end
-
+% StimIndex = 1 : length(StimTypesAll);
+save pairROCresult.mat PairedROCAll StimTypesAll -v7.3
 %%
 StimIndex = 1 : length(StimTypesAll);
 StimForStr = double(StimTypesAll)/1000;
@@ -236,40 +240,42 @@ save PairedClassResult.mat matrixData StimTypesAll -v7.3
 TempMatrixData = matrixData;
 ClassNum = length(StimTypesAll)/2;
 OvatveStep = log2(double(StimTypesAll(2))/double(StimTypesAll(1)));
-TempMatrixData(1:3,4:6) =  matrixData(4:6,4:6);
-TempMatrixData(4:6,4:6) = matrixData(1:3,4:6);  % upper class are all within class error, bottom data are all between class data
+TempMatrixData(1:ClassNum,(ClassNum+1):end) =  matrixData((ClassNum+1):end,(ClassNum+1):end);
+TempMatrixData((ClassNum+1):end,(ClassNum+1):end) = matrixData(1:ClassNum,(ClassNum+1):end);  % upper class are all within class error, bottom data are all between class data
 WinClassDis = WithinCmask(ClassNum);
 BetClassDis = BetCmask(ClassNum);
 WithinClassMask = WinClassDis > 0;
 LeftWinClassDis = WinClassDis(WithinClassMask);
-leftMatrixData = TempMatrixData(1:3,1:3);
+leftMatrixData = TempMatrixData(1:ClassNum,1:ClassNum);
 LeftWinClassError = leftMatrixData(WithinClassMask);
 
 RightWinClassDis = LeftWinClassDis;
-rightMatrixData = TempMatrixData(1:3,4:6);
+rightMatrixData = TempMatrixData(1:ClassNum,(ClassNum+1):end);
 RightWinClassError = rightMatrixData(WithinClassMask);
 
 BetClassWinDis = BetClassDis;
-BetClassWinError = TempMatrixData(4:6,1:3);
+BetClassWinError = TempMatrixData((ClassNum+1):end,1:ClassNum);
 [BetweenClassCorrData,BetweenClassCorrDataM] = DistanceBasedError(BetClassWinDis,BetClassWinError);
 
 [LeftClassCorrData,LeftClassCorrDataM] = DistanceBasedError(LeftWinClassDis,LeftWinClassError);
 [RightClassCorrData,RightClassCorrDataM] = DistanceBasedError(RightWinClassDis,RightWinClassError);
-save DisErrorDataAllSave.mat BetweenClassCorrData LeftClassCorrData RightClassCorrData OvatveStep StimTypesAll -v7.3
+save DisErrorDataAllSave.mat BetweenClassCorrData LeftClassCorrData RightClassCorrData OvatveStep StimTypesAll ...
+   BetweenClassCorrDataM LeftClassCorrDataM RightClassCorrDataM -v7.3
 
 %%
 if isPlot
-    h_sum = figure;
+    h_sum = figure('position',[100 200 1000 800]);
     hold on
-    plot(BetweenClassCorrDataM(:,2)*OvatveStep,BetweenClassCorrDataM(:,1),'r-o','LineWidth',1.6);% between class distance vs error
-    plot(LeftClassCorrDataM(:,2)*OvatveStep,LeftClassCorrDataM(:,1),'b-o','LineWidth',1.6); % left winthin group error
-    plot(RightClassCorrDataM(:,2)*OvatveStep,RightClassCorrDataM(:,1),'k-o','LineWidth',1.6); %right within group error
+    h1 = plot(BetweenClassCorrDataM(:,2)*OvatveStep,BetweenClassCorrDataM(:,1),'k-o','LineWidth',1.6);% between class distance vs error
+    h2 = plot(LeftClassCorrDataM(:,2)*OvatveStep,LeftClassCorrDataM(:,1),'b-o','LineWidth',1.6); % left winthin group error
+    h3 = plot(RightClassCorrDataM(:,2)*OvatveStep,RightClassCorrDataM(:,1),'r-o','LineWidth',1.6); %right within group error
     xlim([0 2.4]);
     set(gca,'xtick',BetweenClassCorrDataM(:,2)*OvatveStep);
     xlabel('Octave Difference');
     ylabel('Mean Error rate');
     title('Distance vs mean error rate plot');
     set(gca,'Fontsize',20);
+    legend([h1,h2,h3],{'BetweenClass','WithinLeftClass','WithinRightClass'},'FontSize',14);
     saveas(h_sum,'Distance vs error plot save');
     saveas(h_sum,'Distance vs error plot save','png');
     close(h_sum);
@@ -278,6 +284,17 @@ if isPlot
     cd ..;
     if isPartialROI
         cd ..;
+    end
+    
+    if nargout > 0
+        OutData.BCCD = BetweenClassCorrData;
+        OutData.LCCD = LeftClassCorrData;
+        OutData.RCCD = RightClassCorrData;
+        OutData.OvatveStep = OvatveStep;
+        OutData.BCCDM = BetweenClassCorrDataM;
+        OutData.LCCDM = LeftClassCorrDataM;
+        OutData.RCCDM = RightClassCorrDataM;
+        varargout{1} = OutData;
     end
 end
 

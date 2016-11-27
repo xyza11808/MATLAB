@@ -1,4 +1,5 @@
-
+clear;
+clc;
 %loading 2afc index
 [fn2afc,fp2afc,fi2] = uigetfile('FreqMeanData.mat','Please select your 2afc analysis index value');
 if fi2
@@ -15,7 +16,9 @@ if firf
     TuDIndexrf = xx.TDindex;
     ClIndexrf = xx.CIindex;
 end
-
+cd(fprf);
+cd ..;
+cd ..;
 %%
 % comparing the value between two different conditions
 if length(TuDIndex2afc) ~= length(TuDIndexrf)
@@ -38,6 +41,7 @@ else
     ClIndexrfP = ClIndexrf(1:TargetIndx);
 end
 %%
+% skip this plot section
 % scatter plot of two index
 h_tdindex = figure('position',[300,120,1000,850]);
 scatter(TuDIndex2afcP, TuDIndexrfP,40,'r*');
@@ -62,8 +66,13 @@ saveas(h_CIindex,'Classification index plot for comparation');
 saveas(h_CIindex,'Classification index plot for comparation','png');
 
 %%
+% skip this plot session
+close(h_CIindex);
+close(h_tdindex);
+
+%%
 hhx1 = figure('position',[300,120,1000,850]);
-h = scatterhist(ClIndex2afcP, ClIndexrfP,'Location','NorthEast','Direction','out','color','k','Linewidth',2,'NBins',[20,20],'LineStyle',{'-'});
+h = scatterhist(ClIndex2afcP, ClIndexrfP,'Location','NorthEast','Direction','out','color','r','Linewidth',2,'NBins',[20,20],'LineStyle',{'-'},'MarkerSize',14);
 set(h(1),'FontSize',16)
 set(h(1),'XAxisLocation','bottom','YAxisLocation','left')
 set(h(1),'xtick',0:0.2:1,'ytick',0:0.2:1)
@@ -72,8 +81,8 @@ line([0.5,0.5],[0 1],'color',[.8 .8 .8],'LineWidth',1.8,'lineStyle','--');
 line([0 1],[0.5 0.5],'color',[.8 .8 .8],'LineWidth',1.8,'lineStyle','--');
 line([0 1],[0 1],'color',[.8 .8 .8],'LineWidth',1.8,'lineStyle','--');
 xlim([0 1]);ylim([0 1]);
-xlabel('TDI-Task');
-ylabel('TDI-Passive');
+xlabel('CI-Task');
+ylabel('CI-Passive');
 % x axis plot
 histogram(h(2),ClIndex2afcP,20,'FaceColor','none','edgeColor','k','LineWidth',2);
 set(h(2),'box','off');
@@ -93,14 +102,14 @@ view(h(3),90,270);
 set(h(3),'box','off');
 axis(h(3),'off','tight');
 % xlabel(h(3),'hehe1')
-
+%
 saveas(hhx1,'CI Scatter hist plot');
 saveas(hhx1,'CI Scatter hist plot','png');
 close(hhx1);
 
 %%
 hhx2 = figure('position',[300,120,1000,850]);
-h = scatterhist(TuDIndex2afcP, TuDIndexrfP,'Location','NorthEast','Direction','out','color','k','Linewidth',2,'NBins',[20,20],'LineStyle',{'-'});
+h = scatterhist(TuDIndex2afcP, TuDIndexrfP,'Location','NorthEast','Direction','out','color','r','Linewidth',6,'NBins',[20,20],'LineStyle',{'-'},'MarkerSize',14);
 set(h(1),'FontSize',16)
 set(h(1),'XAxisLocation','bottom','YAxisLocation','left')
 set(h(1),'xtick',0:0.2:1,'ytick',0:0.2:1)
@@ -109,8 +118,8 @@ line([0.5,0.5],[0 1],'color',[.8 .8 .8],'LineWidth',1.8,'lineStyle','--');
 line([0 1],[0.5 0.5],'color',[.8 .8 .8],'LineWidth',1.8,'lineStyle','--');
 line([0 1],[0 1],'color',[.8 .8 .8],'LineWidth',1.8,'lineStyle','--');
 xlim([0 1]);ylim([0 1]);
-xlabel('CI-Task');
-ylabel('CI-Passive');
+xlabel('TDI-Task');
+ylabel('TDI-Passive');
 % x axis plot
 histogram(h(2),TuDIndex2afcP,20,'FaceColor','none','edgeColor','k','LineWidth',2);
 set(h(2),'box','off');
@@ -130,12 +139,7 @@ view(h(3),90,270);
 set(h(3),'box','off');
 axis(h(3),'off','tight');
 % xlabel(h(3),'hehe1')
-
+%
 saveas(hhx2,'TD Scatter hist plot');
 saveas(hhx2,'TD Scatter hist plot','png');
 close(hhx2);
-
-
-%%
-close(h_CIindex);
-close(h_tdindex);

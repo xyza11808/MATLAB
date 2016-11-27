@@ -115,6 +115,13 @@ if ~isempty(exclude_inds)
     behavResults.Time_answer(exclude_inds)=[];
     behavResults.Trial_Num(exclude_inds)=[];
     behavResults.Trial_isProbeTrial(exclude_inds)=[];
+    behavResults.Trial_isOptoProbeTrial(exclude_inds)=[];
+    behavResults.ManWater_choice(exclude_inds)=[];
+    behavResults.Time_optoStimOffTime(exclude_inds)=[];
+    behavResults.Trial_isRandRGiven(exclude_inds)=[];
+    behavResults.Trial_isOptoTraingTrial(exclude_inds)=[];
+    behavResults.Time_optoStimOnset(exclude_inds)=[];
+    
      behavResults.Stim_Type(exclude_inds,:)=[];
     if max(behavResults.Trial_isProbeTrial)
         behavResults.Trial_isProbeTrial(exclude_inds)=[];
@@ -160,7 +167,7 @@ if isfield(behavResults,'Setted_TimeOnset')
 else
     disp('It seems the behavior data is printed by old version behavior training code, performing stim onset time correction?\n');
     choice_char=input('Go on(y/n)?\n','s');
-    if strcmpi(choice_char,'y');
+    if strcmpi(choice_char,'y')
 %         disp('please input the random onset range before stim onset in setting file.\n');
         set_range=input('please input the random onset range before stim onset in setting file.\n','s');
         set_range_Avg=mean(str2num(set_range));
@@ -329,7 +336,7 @@ TrialSelfZS_data=zeros(size_data);
 %################################################################################################
 %population normalized data for further analysis
 NorData=zeros(size_data);
-nSpikes = zeros(size_data);
+% nSpikes = zeros(size_data);
 ROIstd=zeros(1,size_data(2));
 
 %parameter struc
@@ -626,12 +633,12 @@ elseif str2double(continue_char)==2
     data_aligned=zeros(size_data(1),size_data(2),framelength);
     zscore_data_aligned=zeros(size_data(1),size_data(2),framelength);
     NorDataAligned=zeros(size_data(1),size_data(2),framelength);
-    SpikeAlign = zeros(size_data(1),size_data(2),framelength);
+%     SpikeAlign = zeros(size_data(1),size_data(2),framelength);
     for i=1:size_data(1)
         data_aligned(i,:,1:framelength)=data(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
         zscore_data_aligned(i,:,1:framelength)=zscore_data(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
         NorDataAligned(i,:,1:framelength)=NorData(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
-        SpikeAlign(i,:,:) = nSpikes(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
+%         SpikeAlign(i,:,:) = nSpikes(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
     end
     TrialTypes=behavResults.Trial_Type;
 %     GPUdata=gpuArray(data_aligned);
@@ -646,7 +653,7 @@ elseif str2double(continue_char)==2
     smooth_data=zeros(size_data(1),size_data(2),framelength);
     smooth_zs_data=zeros(size_data(1),size_data(2),framelength);
     smoothNorData=zeros(size_data(1),size_data(2),framelength);
-    smoothSpikes = zeros(size_data(1),size_data(2),framelength);
+%     smoothSpikes = zeros(size_data(1),size_data(2),framelength);
     NumROIs=size_data(2);
     parfor n=1:size_data(1)
         for m=1:NumROIs
@@ -654,7 +661,7 @@ elseif str2double(continue_char)==2
             smooth_data(n,m,:)=smooth(data_aligned(n,m,:),5);
             smooth_zs_data(n,m,:)=smooth(zscore_data_aligned(n,m,:));
             smoothNorData(n,m,:)=smooth(NorDataAligned(n,m,:));
-            smoothSpikes(n,m,:) = smooth(SpikeAlign(n,m,:),3);
+%             smoothSpikes(n,m,:) = smooth(SpikeAlign(n,m,:),3);
 %             smooth_zs_data(n,m,:)=smooth(zscore_data_aligned(n,m,:),7,'sgolay',5);
         end
     end
@@ -672,7 +679,10 @@ elseif str2double(continue_char)==2
          behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
          frame_rate,onset_time(NormalTrialInds),0);
      TimeCourseStrc = TimeCorseROC(data_aligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);   
+     %
      AUCDataAS = ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,1.5,'Stim_time_Align',0);
+     save AUCClassData.mat AUCDataAS -v7.3
+     %
      AnsAlignData=Reward_Get_TimeAlign(data,lick_time_struct,behavResults,trial_outcome,frame_rate,imaging_time,0);
      if RandomSession
          FreqAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
@@ -684,15 +694,16 @@ elseif str2double(continue_char)==2
              behavResults.Action_choice(NormalTrialInds),1.5,start_frame,frame_rate,16000,0);
      end
      ROIAUCcolorp(TimeCourseStrc,start_frame/frame_rate);
-     %%
+     %
      nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
      TimeCourseStrcSP = TimeCorseROC(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);  
-     AUCDataASSP = ROC_check(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align',0,1.5);
+%      AUCDataASSP = ROC_check(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align',0,1.5);
      
      ROIAUCcolorp(TimeCourseStrcSP,start_frame/frame_rate,[],'Spike train');
-     %%
+     %
      script_for_summarizedPlot;  % call a script for data preparation and call summarized plot function
      RandomSession
+     save CSessionData.mat smooth_data trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
     %%
 %     ActiveCellGene(data,behavResults,trial_outcome,frame_rate,1.5);
     CallFunCompPlot(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),frame_rate,start_frame,1.5);  % need rf data as function input
@@ -719,26 +730,28 @@ elseif str2double(continue_char)==2
           MultiTScaleNMT(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,{0.1,0.15,0.2,0.3,[0.1,0.2],[0.2,0.3]});
           ChoiceProbCal(smooth_data,behavResults.Stim_toneFreq,behavResults.Action_choice,1.5,start_frame,frame_rate,16000);
           %%
+          SessionSumColorplot(data_aligned,start_frame,trial_outcome,frame_rate,[],1);
           multiCClass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5)
           TbyTAllROIclass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5);
           FracTbyTPlot(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,AUCDataAS,...
-              1.5,1);
+              1.5,1,1);
+          RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
           MultiTimeWinClass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
-         
+%           FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame,[],1);
+%           FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame);         
           %%
           if ~isdir('./EM_spike_analysis/')
               mkdir('./EM_spike_analysis/');
           end
           cd('./EM_spike_analysis/');
-           TbyTAllROIclass(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,2);
+           TbyTAllROIclass(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
            FracTbyTPlot(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,AUCDataAS,...
               [0.5,1.5],1);
-           MultiTimeWinClass(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
+           MultiTimeWinClass(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1,0.1);
 %            RandNeuroMTestCrossV(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
-           %%
+           %
           cd ..;
-%           FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame,[],1);
-          FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame);
+
           %% #############################################
           % % % % %plot psychometrical curve based on decision time window
           ChoicelickTime = double(FLickT);

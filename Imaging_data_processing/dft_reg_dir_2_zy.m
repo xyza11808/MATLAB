@@ -40,7 +40,7 @@ if ~isdir(save_path)
 end
 
 if nargin < 3 || isempty(main_fname)
-    main_fname = '*';
+    main_fname = '';
 end
 
 if nargin < 4 || isempty(targetImage)
@@ -52,7 +52,7 @@ end
 
 fprintf('Output path: %s\n', save_path);
 
-datafiles = dir([src_dir filesep main_fname '*.tif']);
+datafiles = dir(fullfile(src_dir,[main_fname,'*.tif']));
 fprintf('total data files %d\n', length(datafiles));
 
 % DETERMINE THE TARGET IMAGE
@@ -85,7 +85,7 @@ parfor i = 1:length(datafiles)
     a =  datafiles(i).name;
     % Check whether the file name fits the trial data file
     % "main_fname_000.tif"
-    if ~strcmp(main_fname, '*')
+    if ~strcmp(main_fname, '')
         if length(a) == length(main_fname) + 7
             fname = [src_dir filesep a];
         end
@@ -113,7 +113,7 @@ parfor i = 1:length(datafiles)
         im_describ = strrep(im_describ, 'channelsSave = 1');
     end
     
-    save_name = [save_path filesep  file_basename 'dftReg_' fname(end-6:end-4) '.tif'];
+    save_name = [save_path filesep  file_basename 'dftReg_'  a(end-6:end-4) '.tif'];
     
 %%%%% READ SOURCE IMAGE DATA. With the option of offset data to mode.
     [im_s, header] = load_scim_data(fname, [], 1);

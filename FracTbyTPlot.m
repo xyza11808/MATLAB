@@ -17,7 +17,7 @@ saveas(hAUC,'ROI AUC cumulative plot');
 saveas(hAUC,'ROI AUC cumulative plot','png');
 close(hAUC);
 
-[TimeLength,TrOutcome] = deal(varargin{:});
+[TimeLength,TrOutcome] = deal(varargin{1:2});
 
 if length(TimeLength) == 1
     if ~isdir(sprintf('./AfterTimeLength-%dms/',TimeLength*1000))
@@ -33,13 +33,20 @@ else
     end
     cd(sprintf('./AfterTimeLength-%dms%dmsDur/',StartTime*1000,TimeScale*1000));
 end
+Isshuffle = 0;
+if length(varargin) > 2
+    if ~isempty(varargin{3})
+        Isshuffle = varargin{3};
+    end
+end
 
 AUCThres = 0.1:0.05:1;
 AUCValueThres = prctile(ROIauc,AUCThres*100);
 MaxAUCvalue = zeros(1,length(AUCValueThres));
-CellFracClassPerf = zeros(length(AUCValueThres),1);
+% CellFracClassPerf = zeros(length(AUCValueThres),1);
 % CellFracClassModel = cell(length(AUCValueThres),1000);
 CellFracClassPerfAll = zeros(length(AUCValueThres),1000);
+SUFFracclfPerfAll = zeros(length(AUCValueThres),1000);
 ROIFracIAll = cell(length(AUCThres),1);
 for nAUCthres = 1 : length(AUCValueThres)
     fprintf('ROI fraction is %.2f, with AUC thres value is %.4f.\n ',AUCThres(nAUCthres),AUCValueThres(nAUCthres));
@@ -47,25 +54,34 @@ for nAUCthres = 1 : length(AUCValueThres)
     MaxAUCvalue(nAUCthres) = max(ROIauc(ROIFracInds));
     ROIFracIAll{nAUCthres} = ROIFracInds;
 %     ROIFrac = ROIauc(ROIFracInds);
-    [MinTloss,AllTloss,~] = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,...
-        TimeLength,[],[],ROIFracInds,TrOutcome,1);
-    CellFracClassPerf(nAUCthres) = MinTloss;
+    [AllTloss,~,SUFTloss,~] = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,...
+        TimeLength,Isshuffle,[],ROIFracInds,TrOutcome,1);
+%     CellFracClassPerf(nAUCthres) = MinTloss;
     CellFracClassPerfAll(nAUCthres,:) = AllTloss;
+    SUFFracclfPerfAll(nAUCthres,:) = SUFTloss;
 %     CellFracClassModel(nAUCthres,:) = TrainM;
 end
-
+%%
 ModelPerfMean = 1 - mean(CellFracClassPerfAll,2);
-ModelPerfsemL = 1 - prctile(CellFracClassPerfAll,97.5,2);
-ModelPerfsemU = 1 - prctile(CellFracClassPerfAll,2.5,2);
+ModelPerfsem = std(CellFracClassPerfAll,[],2)/sqrt(size(CellFracClassPerfAll,1));
+SUFTperfMean = 1 - mean(SUFFracclfPerfAll,2);
+SUFTperfsem = std(SUFFracclfPerfAll,[],2)/sqrt(size(SUFFracclfPerfAll,1));
 xauc = [AUCValueThres,fliplr(AUCValueThres)];
-% yperf = ([ModelPerfMean+ModelPerfsem;flipud(ModelPerfMean - ModelPerfsem)]);
-yperf = [ModelPerfsemU;flipud(ModelPerfsemL)];
+yperf = ([ModelPerfMean+ModelPerfsem;flipud(ModelPerfMean - ModelPerfsem)]);
+SUFyperf = ([SUFTperfMean+SUFTperfsem;flipud(SUFTperfMean - SUFTperfsem)]);
+% ModelPerfsemL = 1 - prctile(CellFracClassPerfAll,97.5,2);
+% ModelPerfsemU = 1 - prctile(CellFracClassPerfAll,2.5,2);
+% yperf = [ModelPerfsemU;flipud(ModelPerfsemL)];
 h_fracPlot = figure;
 hold on;
 patch(xauc,yperf,1,'facecolor',[.8 .8 .8],...
               'edgecolor','none',...
               'facealpha',0.7);
+patch(xauc,SUFyperf,1,'facecolor',[.8 .8 .8],...
+              'edgecolor','none',...
+              'facealpha',0.7);
 plot(AUCValueThres,ModelPerfMean,'k','LineWidth',1.8);
+plot(AUCValueThres,SUFTperfMean,'b','LineWidth',1.8);
 xlims = get(gca,'xlim');
 line(xlims,xlims,'Color',[.8 .8 .8],'LineWidth',1.6,'LineStyle','--');
 xlabel('Percentile AUC value');
@@ -95,7 +111,7 @@ saveas(h_fracPlotMax,'Cell Frac to Perf plot PercMax');
 saveas(h_fracPlotMax,'Cell Frac to Perf plot PercMax','png');
 close(h_fracPlotMax);
 
-save FracModelClass.mat MaxAUCvalue CellFracClassPerfAll ROIFracIAll CellFracClassPerf AUCValueThres AUCThres ROIauc -v7.3
+save FracModelClass.mat MaxAUCvalue CellFracClassPerfAll SUFFracclfPerfAll ROIFracIAll AUCValueThres AUCThres ROIauc -v7.3
 
 cd ..;
 cd ..;

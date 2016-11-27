@@ -142,4 +142,6 @@ if nargout > 0
     varargout(1) = {DataStoreCell};
     varargout(2) = {NumTypeData};
 end
-cd ..;
+if isplot
+    cd ..;
+end

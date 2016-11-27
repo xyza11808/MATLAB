@@ -1,4 +1,4 @@
-classdef ClfMethodSum < handle
+classdef ClfMethodSum
     properties
         PopuData
         TrialStim

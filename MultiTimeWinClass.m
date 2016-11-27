@@ -1,7 +1,14 @@
-function MultiTimeWinClass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,trOutcome)
+function MultiTimeWinClass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,trOutcome,varargin)
 % this function is try to generating different time window to calculate
 % classification performance within given time win, and plot the
 % classificatio rate change time course
+
+TimeStep = 0.5; % time step for each time window
+if ~isempty(varargin)
+    if ~isempty(varargin{1})
+        TimeStep = varargin{1};
+    end
+end
 
 if ~isdir('./mWin_perfPlot/')
     mkdir('./mWin_perfPlot/');
@@ -9,22 +16,29 @@ end
 cd('./mWin_perfPlot/');
     
 nFrame = size(RawDataAll,3);
-MultiTScale = -0.5:0.5:((nFrame - AlignFrame)/FrameRate);
+MultiTScale = -0.5:TimeStep:((nFrame - AlignFrame)/FrameRate);
 MultiTScale(MultiTScale == 0) = []; 
 PlotxTick = MultiTScale;
-PlotxTick(1) = 0;
+BaseScaleInds = MultiTScale < 0;
+PlotxTick(BaseScaleInds) = PlotxTick(BaseScaleInds) + TimeStep;
 fprintf('Time window number is %d.\n',length(MultiTScale));
 
 TrWinClassPerf = zeros(length(MultiTScale),1);
 % TrWinClassModel = cell(length(MultiTScale),1000);
 TrWinClassPerfAll = zeros(length(MultiTScale),1000);
+TimeWinValue = cell(length(MultiTScale),1);
 for nn = 1 : length(MultiTScale)
     CurrentWin = MultiTScale(nn);
-    if abs(CurrentWin) < 1
+    if abs(CurrentWin) < (TimeStep*1.8)
         TimeWin = CurrentWin;
     else
-        TimeWin = [CurrentWin-0.5,CurrentWin];
+        if CurrentWin < 0
+            TimeWin = [CurrentWin,CurrentWin+TimeStep];
+        else
+            TimeWin = [CurrentWin-TimeStep,CurrentWin];
+        end
     end
+    TimeWinValue{nn} = TimeWin;
     [MinTloss,AllTloss,~] = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,...
         TimeWin,[],[],[],trOutcome,1);
     TrWinClassPerf(nn) = MinTloss;

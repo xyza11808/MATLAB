@@ -33,7 +33,7 @@ function varargout = CaSignal_ROI_GUI_NP_extract(varargin)
 
 % Edit the above text to modify the response to help CaSignal_ROI_GUI_NP_extract
 
-% Last Modified by GUIDE v2.5 12-Nov-2016 18:24:11
+% Last Modified by GUIDE v2.5 25-Nov-2016 21:45:21
 
 % Begin initialization code - DO NOT EDIT
 
@@ -314,7 +314,7 @@ if CaSignal.CaTrials_INIT == 1
         if iscell(ROIinfo)
             f1 = fieldnames(ROIinfo{TrialNo}); f2 = fieldnames(CaSignal.ROIinfo);
             for i = 1:length(ROIinfo)
-                for j = 1:length(f1),
+                for j = 1:length(f1)
                     CaSignal.ROIinfo(i).(f2{strcmpi(f2,f1{j})}) = ROIinfo{i}.(f1{j});
                 end
             end
@@ -552,7 +552,8 @@ TrialNo = str2double(get(handles.CurrentTrialNo,'String'));
 % CaSignal.CurrentAnaTrial=[0,0,0];
 if get(handles.dispMeanMode, 'Value')==1
     if ~isfield(CaSignal, 'h_mean_fig') || ~ishandle(CaSignal.h_mean_fig)
-        CaSignal.h_mean_fig = figure('Name','Mean Image','Position',[20   70   1000   900]);
+        CaSignal.h_mean_fig = figure('Name','Mean Image','Position',[20   70   1000   900],'WindowKeyPressFcn',...
+            {@figure1_WindowKeyPressFcn,handles});
         CaSignal.CurrentAnaTrial(1)=0;
 %         CaSignal.CurrentAnaTrial=TrialNo;
     else
@@ -573,7 +574,8 @@ if get(handles.dispMeanMode, 'Value')==1
 end
 if get(handles.dispMaxDelta,'Value')==1
     if ~isfield(CaSignal, 'h_maxDelta_fig') || ~ishandle(CaSignal.h_maxDelta_fig)
-        CaSignal.h_maxDelta_fig = figure('Name','max Delta Image','Position',[130   20   1000   900]);
+        CaSignal.h_maxDelta_fig = figure('Name','max Delta Image','Position',[130   20   1000   900],'WindowKeyPressFcn',...
+            {@figure1_WindowKeyPressFcn,handles});
          CaSignal.CurrentAnaTrial(2)=0;
     else
         figure(CaSignal.h_maxDelta_fig);
@@ -596,7 +598,8 @@ if get(handles.dispMaxDelta,'Value')==1
 end
 if get(handles.dispMaxMode,'Value')==1
     if ~isfield(CaSignal, 'h_max_fig') || ~ishandle(CaSignal.h_max_fig)
-        CaSignal.h_max_fig = figure('Name','Max Projection Image','Position',[200   90   1000   900]);
+        CaSignal.h_max_fig = figure('Name','Max Projection Image','Position',[200   90   1000   900],'WindowKeyPressFcn',...
+            {@figure1_WindowKeyPressFcn,handles});
          CaSignal.CurrentAnaTrial(3)=0;
     else
         figure(CaSignal.h_max_fig)
@@ -2759,7 +2762,7 @@ global CaSignal
 if iscell(ROIinfo)
     f1 = fieldnames(ROIinfo{1}); f2 = fieldnames(CaSignal.ROIinfo);
     for i = 1:length(ROIinfo)
-        for j = 1:length(f1),
+        for j = 1:length(f1)
             CaSignal.ROIinfo(i).(f2{strcmpi(f2,f1{j})}) = ROIinfo{i}.(f1{j});
         end
     end
@@ -3010,3 +3013,24 @@ function cTrFNumDisp_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 set(hObject,'ForegroundColor','r','FontSize',10);
+
+% --- Executes on key press with focus on figure1 or any of its controls.
+function figure1_WindowKeyPressFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  structure with the following fields (see MATLAB.UI.FIGURE)
+%	Key: name of the key that was pressed, in lower case
+%	Character: character interpretation of the key(s) that was pressed
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
+% handles    structure with handles and user data (see GUIDATA)
+switch eventdata.Key   %'uparrow','downarrow','leftarrow','rightarrow'.
+    case 'rightarrow'
+        NextTrialButton_Callback(hObject, eventdata, handles);
+    case 'leftarrow'
+        PrevTrialButton_Callback(hObject, eventdata, handles);
+    case 'downarrow'
+        TwoStepNextTrial_Callback(hObject, eventdata, handles);
+    case 'uparrow'
+        TwoStepPreTrial_Callback(hObject, eventdata, handles);
+    otherwise
+        fprintf('Key pressed without response.\n');
+end

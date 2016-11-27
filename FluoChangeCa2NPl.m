@@ -23,7 +23,7 @@ if nargin<1
         error('wrong file path for behavior result!');
     end
     load(filefullpath2);
-    
+    TrialsExcluded = [];
 else
     CaTrials=varargin{1};
     behavResults=varargin{2};
@@ -31,6 +31,7 @@ else
     MethodChoice=varargin{4};
     SessionType=varargin{5};
     ROIinfo=varargin{6};
+    TrialsExcluded = varargin{7};
 %     IsNeuropilExtract=varargin{7};
 end
 
@@ -65,18 +66,25 @@ switch choice
         disp('Quit Selection.');
         return;
 end
-    
+ExCludedInds = find(TrialsExcluded);
 %exclude error trials from whole behavior data
 exclude_trials = input('please inut the trials needed to be excluded.Seperated by '',''\n','s');
 exclude_trials=strrep(exclude_trials,' ',',');
 exclude_inds = str2num(exclude_trials);
-% exclude_trials=[];
-if length(CaTrials)>1
-    if ~isempty(exclude_inds)
-        CaTrials(exclude_inds)=[];
-        eval(['CaSignal_',type,'(exclude_inds)','=','[];']);
-    end
-end
+exclude_inds = [exclude_inds(:);ExCludedInds(:)];
+% exclude_inds = logical([exclude_inds;TrialsExcluded(:)]);
+% if ~isempty(exclude_inds)
+%     % exclude_trials=[];
+%     if length(CaTrials)>1
+%         if ~isempty(exclude_inds)
+%             CaTrials(exclude_inds)=[];
+% %             eval(['CaSignal_',SessionType,'(exclude_inds)','=','[];']);
+%         end
+%     else
+%         CaTrials.f_raw(exclude_inds,:,:) = [];
+% %         eval(['CaSignal_',SessionType,'.f_raw(exclude_inds,:,:)','=','[];']);
+%     end
+% end
 if length(CaTrials)>1
     TrialNum=length(CaTrials);
 else
@@ -113,14 +121,14 @@ elseif strcmpi(SessionType,'rf')
     TrialOnsetTime=ones(1,TrialNum)*FrameRate;
 end
 
-exclude_trials=[];
+% exclude_trials=[];
 baselineDataAll=[];
 baselineDataRing=[];
 if length(CaTrials)>1
     for n=1:TrialNum
         if size(CaTrials(n).f_raw,2)~=TrialLen  %check whether there are some frame drops during acqsition
             CaTrials(n).f_raw=NaN;
-            exclude_trials=[exclude_trials n];
+            exclude_inds=[exclude_inds;n];
             fprintf(['Trial number ' num2str(n) ' have some frames dropped during acqusition.\n']);
             continue;
         end
@@ -247,7 +255,7 @@ save ROIStd.mat ROIThres -v7.3
 if strcmpi(SessionType,'rf')
     FBaseline = mean(FCorrectData(:,:,1:FrameRate),3);
 end
-    
+exclude_trials = unique(exclude_inds);
 if ~isempty(exclude_trials)
     if length(CaTrials)>1
         CaTrials(exclude_trials) = [];
