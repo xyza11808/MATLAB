@@ -44,14 +44,14 @@ for n = 1 : DirLength
     end
 end
 
-%
+%%
 % writing down current foders session types
 cd(GrandPath);
 save SessionTypePath.mat RandomPTSession ProbSession NorPTsession -v7.3
 % writing random puretone session path
 fprintf('Writing random puretone session path into file...\n');
 fID1 = fopen('Random_puretone_path.txt','w+');
-FormatSpec = '%s\n';
+FormatSpec = '%s\r\n';
 for nSession = 1 : (nRandomPurePath-1)
     fprintf(fID1,FormatSpec,RandomPTSession{nSession});
 end
@@ -60,7 +60,7 @@ fclose(fID1);
 % writing normal puretone session path
 fprintf('Writing normal puretone session path into file...\n');
 fID2 = fopen('Normal_puretone_path.txt','w+');
-FormatSpec = '%s\n';
+FormatSpec = '%s\r\n';
 for nSession = 1 : (nNormalPTPath-1)
     fprintf(fID2,FormatSpec,NorPTsession{nSession});
 end
@@ -69,7 +69,7 @@ fclose(fID2);
 % writing Prob session path
 fprintf('Writing Prob session path into file...\n');
 fID3 = fopen('Prob_tone_path.txt','w+');
-FormatSpec = '%s\n';
+FormatSpec = '%s\r\n';
 for nSession = 1 : (nProbPath-1)
     fprintf(fID3,FormatSpec,ProbSession{nSession});
 end

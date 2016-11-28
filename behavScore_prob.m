@@ -192,7 +192,7 @@ else
             else
                 SessionType='prob';
             end
-        elseif length(StimFreq) == 6
+        elseif length(StimFreq) >= 6
             SessionType='Randompuretone';
         end
     end

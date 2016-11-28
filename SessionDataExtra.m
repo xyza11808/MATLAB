@@ -8,7 +8,7 @@ if sum(NormalInds)
     TrialResult = TrialResult(NormalInds);
     TrialStim = TrialStim(NormalInds);
 end
-if isequal(length(TrialStim),size(AlignedData,1),length(TrialResult))
+if ~isequal(length(TrialStim),size(AlignedData,1),length(TrialResult))
     error('Input data size mismatch, please check your input data');
 end
 % function will only use correct trials for further analysis
@@ -31,7 +31,7 @@ for nFreq = 1 : FreqNum
     cFreqTrData = DataUsingResp(cFreqTrInds,:);
     if size(cFreqTrData,1) > SingleStimTrNum
         RandInds = randsample(size(cFreqTrData,1),SingleStimTrNum);
-        DataOutput(nFreq,:,:) = cFreqTrData(RandInds);
+        DataOutput(nFreq,:,:) = cFreqTrData(RandInds,:);
     elseif size(cFreqTrData,1) == SingleStimTrNum
         DataOutput(nFreq,:,:) = cFreqTrData;
     else

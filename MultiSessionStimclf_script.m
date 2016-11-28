@@ -32,7 +32,7 @@ while ~strcmpi(add_char,'n')
         DataSum{m} = xx;
         [DataOutput,SessionStim] = SessionDataExtra(xx.smooth_data,xx.trial_outcome,xx.behavResults.Stim_toneFreq,xx.start_frame,...
             xx.frame_rate,xx.NormalTrialInds,30);
-        SumSessionData{m} = DataOutput; % finally should be a 1 by m cell vector
+        SumSessionData{m} = reshape(permute(DataOutput,[2,1,3]),[],size(DataOutput,3)); % finally should be a 1 by m cell vector
         SumSessionStim{m} = SessionStim;
     end
     add_char = input('Do you want to add with more session data?\n','s');
@@ -57,25 +57,89 @@ if length(unique(SessionStimNum)) > 1
     OutlengthStimInds = SessionStimNum == SelectStimLen;
     SessionStimSelect = SumSessionStim(OutlengthStimInds);
     SessionDataSelect = SumSessionData(OutlengthStimInds);
+else
+    SessionStimSelect = SumSessionStim;
+    SessionDataSelect = SumSessionData;
 end
-isequalStim = false(length(SessionStimSelect),1);
-for nxnx = 1 : length(SessionStimSelect)
-    if isequal(SessionStimSelect(nxnx),SessionStimSelect(1))
-        isequalStim(nxnx) = true;
-    end
-end
+isequalStim = true(length(SessionStimSelect),1);
+% for nxnx = 1 : length(SessionStimSelect)
+%     if isequal(SessionStimSelect(nxnx),SessionStimSelect(1))
+%         isequalStim(nxnx) = true;
+%     end
+% end
 equalStimSession = SessionStimSelect(isequalStim);
-equalDataSession = SessionDataSelect(isequalStim);
+equalDataSession = cell2mat(SessionDataSelect(isequalStim));
 
-StimTypes = equalStimSession{1};
+StimTypes = double(equalStimSession{1});
+xtickStr = cellstr(num2str(StimTypes(:)/1000,'%.2f'));
 StimNums = length(StimTypes);
 disp(StimTypes);
 StimDataSet = repmat((StimTypes(:))',30,1);
 StimDataSet = StimDataSet(:);  % vector used for y input, corresponded to the input dataset
 
+%%
+nIters = 1000;
+TainingFrac = 0.8;  % percent of trials used for model traing
 PairNum = StimNums*(StimNums - 1)/2;
+TestLossAll = zeros(PairNum,nIters);  % test data correct rate
+ModelLossAll = zeros(PairNum,nIters); % model data correct rate
+kk = 1;
 for nxnx = 1 : StimNums
     for nmnm = (nxnx+1) : StimNums 
         cNegStim = StimTypes(nxnx);
         cPosStim = StimTypes(nmnm);
+        NegStimDataInds = StimDataSet == cNegStim;
+        PosStimDataInds = StimDataSet == cPosStim;
+        SumStimInds = logical(NegStimDataInds + PosStimDataInds);
+        CLFdata = equalDataSession(SumStimInds);
+        CLFstim = StimDataSet(SumStimInds);
+        nTrials = length(CLFdata);
         
+        parfor nbnb = 1 : nIters
+            TrainingInds = false(nTrials,1);
+            TrainIndsReal = randsample(nTrials,round(nTrials*TainingFrac));
+            TrainingInds(TrainIndsReal) = true;
+            TestingInds = ~TrainingInds;
+            PairCLFmodel = fitcsvm(CLFdata(TrainingInds,:),CLFstim(TrainingInds));
+            ModelLoss = kfoldLoss(crossval(PairCLFmodel));
+            ModelLossAll(kk,nbnb) = 1 - ModelLoss;
+            TestPred = predict(PairCLFmodel,CLFdata(TestingInds,:));
+            TestPerf = double(TestPred == CLFstim(TestingInds));
+            TestLossAll(kk,nbnb) = sum(TestPerf)/length(TestPerf);
+        end
+        kk = kk + 1;
+    end
+end
+save SumDataCLFSave.mat TestLossAll ModelLossAll StimTypes -v7.3
+%%
+% data plotting
+MeanModelPerf = mean(ModelLossAll,2);
+ModelPerfsem = std(ModelLossAll,[],2)/sqrt(size(ModelLossAll,2));
+MeanTestPerf = mean(TestLossAll,2);
+TestPerfsem = std(TestLossAll,[],2)/sqrt(size(TestLossAll,2));
+ModelMatrix = squareform(MeanModelPerf);
+TestPerfMatrix = squareform(MeanTestPerf);
+
+h_model = figure('position',[200 200 950 850]);
+imagesc(ModelMatrix);
+h = colorbar;
+% set(get(h,'title'),'string',{'Model';'Correct rate'});
+set(gca,'xtick',1 : StimNums,'xticklabel',xtickStr,'ytick',1 : StimNums,'yticklabel',xtickStr);
+xlabel('Fraquency (kHz)');
+ylabel('Fraquency (kHz)');
+title('Model classfication loss');
+set(gca,'FontSize',20);
+saveas(h_model,'Model perf color plot');
+saveas(h_model,'Model perf color plot','png');
+
+h_test = figure('position',[500 200 950 850]);
+imagesc(TestPerfMatrix);
+h = colorbar;
+% set(get(h,'title'),'string',{'Test Data';'Correct rate'});
+set(gca,'xtick',1 : StimNums,'xticklabel',xtickStr,'ytick',1 : StimNums,'yticklabel',xtickStr);
+xlabel('Fraquency (kHz)');
+ylabel('Fraquency (kHz)');
+title('Test data classfication loss');
+set(gca,'FontSize',20);
+saveas(h_test,'Test perf color plot');
+saveas(h_test,'Test perf color plot','png');
