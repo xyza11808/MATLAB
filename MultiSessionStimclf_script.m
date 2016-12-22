@@ -31,7 +31,7 @@ while ~strcmpi(add_char,'n')
         xx = load(fullfile(fp,fn));
         DataSum{m} = xx;
         [DataOutput,SessionStim] = SessionDataExtra(xx.smooth_data,xx.trial_outcome,xx.behavResults.Stim_toneFreq,xx.start_frame,...
-            xx.frame_rate,xx.NormalTrialInds,30);
+            xx.frame_rate,xx.NormalTrialInds,20);
         SumSessionData{m} = reshape(permute(DataOutput,[2,1,3]),[],size(DataOutput,3)); % finally should be a 1 by m cell vector
         SumSessionStim{m} = SessionStim;
     end
@@ -127,7 +127,7 @@ h = colorbar;
 set(gca,'xtick',1 : StimNums,'xticklabel',xtickStr,'ytick',1 : StimNums,'yticklabel',xtickStr);
 xlabel('Fraquency (kHz)');
 ylabel('Fraquency (kHz)');
-title('Model classfication loss');
+title('Model classfication accuracy');
 set(gca,'FontSize',20);
 saveas(h_model,'Model perf color plot');
 saveas(h_model,'Model perf color plot','png');
@@ -139,7 +139,8 @@ h = colorbar;
 set(gca,'xtick',1 : StimNums,'xticklabel',xtickStr,'ytick',1 : StimNums,'yticklabel',xtickStr);
 xlabel('Fraquency (kHz)');
 ylabel('Fraquency (kHz)');
-title('Test data classfication loss');
+title('Test data classfication accuracy');
 set(gca,'FontSize',20);
 saveas(h_test,'Test perf color plot');
 saveas(h_test,'Test perf color plot','png');
+save MatrixDataSave.mat TestPerfMatrix ModelMatrix -v7.3

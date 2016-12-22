@@ -48,7 +48,7 @@ Savepath = uigetdir(pwd,'Please select a folder to save current result');
 cd(Savepath);
 save ModelBehavComp.mat UsedNamePath MeanPerform InputData SessionCenter SelectOctAll -v7.3
 fID = fopen('SVMBahevpath.txt','w+');
-formatSpec = '%s\n';
+formatSpec = '%s\r\n';
 fprintf(fID,'Data path used for model and behav performance comparament:\n');
 for NSession = 1 : m
     cDataPath = UsedNamePath{NSession};
@@ -145,7 +145,7 @@ fcomp=figure;
 hold on;
 bar(1,mean(CMeanPerform(1,:)),0.2,'k');
 bar(2,mean(CMeanPerform(2,:)),0.2,'r');
-line([ones(11,1),2*ones(11,1)]',CMeanPerform,'color',[.5 .5 .5],'LineWidth',4);
+line([ones(m,1),2*ones(m,1)]',CMeanPerform,'color',[.5 .5 .5],'LineWidth',4);
 PlotError = [std(CMeanPerform(1,:))/sqrt(numel(CMeanPerform(1,:))),std(CMeanPerform(2,:))/sqrt(numel(CMeanPerform(2,:)))];
 PlotHeight = [mean(CMeanPerform(1,:)),mean(CMeanPerform(2,:))];
 errorbar([1,2],PlotHeight,PlotError,'ko','LineWidth',3,'MarkerSize',0.1);

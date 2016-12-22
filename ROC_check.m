@@ -21,7 +21,7 @@ if nargin>4
         if ~isempty(varargin{2})
             ProcessDesp=varargin{2};
             if isplot
-                if ~isdir(['./',ProcessDesp,'/']);
+                if ~isdir(['./',ProcessDesp,'/'])
                     mkdir(['./',ProcessDesp,'/']);
                 end
                 cd(['./',ProcessDesp,'/']);
@@ -83,19 +83,19 @@ for n=1:SizeData(2)
     CurrentData=squeeze(MaxInput(:,n));
     DataInput=reshape(CurrentData',[],1);
     test_data=mean_data(:,n);
-    if isplot
-        [ROCSummary,LabelMeanS]=rocOnline([DataInput double(Trials)']);
-        ROCarea(n)=ROCSummary.AUC;
-        ROCRevert(n)=gather(LabelMeanS.Type1value > LabelMeanS.Type2value);    %ubar   hbar
-        suptitle(sprintf('ROI%d AUC',n));
-        saveas(gcf,['ROC distinguish for LR Trials result for ROI' num2str(n)],'png');
-        saveas(gcf,['ROC distinguish for LR Trials result for ROI' num2str(n)],'fig');
-        close(gcf);
-    else
+%     if isplot
+%         [ROCSummary,LabelMeanS]=rocOnline([DataInput double(Trials)']);
+%         ROCarea(n)=ROCSummary.AUC;
+%         ROCRevert(n)=gather(LabelMeanS.Type1value > LabelMeanS.Type2value);    %ubar   hbar
+%         suptitle(sprintf('ROI%d AUC',n));
+%         saveas(gcf,['ROC distinguish for LR Trials result for ROI' num2str(n)],'png');
+%         saveas(gcf,['ROC distinguish for LR Trials result for ROI' num2str(n)],'fig');
+%         close(gcf);
+%     else
         [ROCSummary,LabelMeanS]=rocOnlineFoff([DataInput double(Trials)']);
         ROCarea(n)=ROCSummary;
         ROCRevert(n)=double(LabelMeanS);
-    end
+%     end
     %     LabelMeanS=gpuArray(LabelMeanS);
     ROIDiffmd(n)=abs(median(test_data(LeftTrial))-median(test_data(RightTrial)));
     ROIDiffmn(n)=abs(mean(test_data(LeftTrial))-mean(test_data(RightTrial)));
@@ -139,26 +139,35 @@ if isplot
     close(h_popu_sort);
     
     %%
-    h_popu_correl=figure('position',[90 200 1200 800],'PaperPositionMode','auto');
+    h_popu_correl=figure('position',[200 200 1550 800],'PaperPositionMode','auto');
     
     subplot(1,2,1)
+    hold on
     [ROIDiffmnS,ROIDiffmnI]=sort(ROIDiffmn);
     [hmn,pmn]=corrcoef(ROIDiffmnS,ROCareaABS(ROIDiffmnI));
     scatter(ROIDiffmnS,ROCareaABS(ROIDiffmnI),45,linspace(1,10,length(ROCarea)),'LineWidth',2);
-    axis square
     colormap cool
-    title({'mean response value',sprintf('Coef = %0.2f, p=%.2e',hmn(1,2),pmn(1,2))});
-    ylabel('L2R AUC')
-    xlabel('\DeltaF/f_0');
+    [~,CoefEstimate,Rsqur,~,PredData] = lmFunCalPlot(ROIDiffmn,ROCareaABS,0);
+    plot(PredData{1},PredData{2},'color','k','LineStyle','--');
+    axis square
+%     colormap cool
+    title({sprintf('mean response value slop = %.3f, Rsqur = %.3f',CoefEstimate(2),Rsqur),sprintf('Coef = %0.2f, p=%.2e',hmn(1,2),pmn(1,2))});
+    ylabel('AUC');
+    xlabel('\DeltaF/F_0(%)');
+    set(gca,'FontSize',20);
     
     subplot(1,2,2)
+    hold on;
     [ROIDiffmdS,ROIDiffmdI]=sort(ROIDiffmd);
     [hmd,pmd]=corrcoef(ROIDiffmdS,ROCareaABS(ROIDiffmdI));
     scatter(ROIDiffmdS,ROCareaABS(ROIDiffmdI),45,linspace(1,10,length(ROCarea)),'LineWidth',2);
+     [~,CoefEstimate,Rsqur,~,PredData] = lmFunCalPlot(ROIDiffmd,ROCareaABS,0);
+    plot(PredData{1},PredData{2},'color','k','LineStyle','--');
     axis square
     colormap cool
-    title({'median response value',sprintf('Coef = %0.2f, p=%.2e',hmd(1,2),pmd(1,2))});
-    xlabel('\DeltaF/f_0');
+    title({sprintf('median response value slop = %.3f, Rsqur = %.3f',CoefEstimate(2),Rsqur),sprintf('Coef = %0.2f, p=%.2e',hmd(1,2),pmd(1,2))});
+    xlabel('\DeltaF/F_0(%)');
+    set(gca,'FontSize',20);
     
     % subplot(1,3,3)
     % [ROIDiffmaxS,ROIDiffmaxI]=sort(ROIDiffMax);
@@ -167,7 +176,7 @@ if isplot
     % colormap cool
     % title({'max response value',sprintf('Coef = %0.2f, p=%.2e',hmax(1,2),pmax(1,2))})
     % xlabel('\DeltaF/f_0');
-    
+    %%
     suptitle('Scatter plot of ROC vs ROI response');
     saveas(h_popu_correl,'PopuSort_ROC_corr_resp.png');
     saveas(h_popu_correl,'PopuSort_ROC_corr_resp');
@@ -179,13 +188,13 @@ if isplot
     %left trials response compared with baseline levels
     SelectData=AlignedData(:,:,(alignpoint:floor(alignpoint+FrameRate*TimeLength)));
     % TraceDatapoints=size(SelectData,3);
-    if ~isdir('./Left_resp2base_roc/')
-        mkdir('./Left_resp2base_roc/');
-    end
-    
-    if ~isdir('./Right_resp2base_roc/')
-        mkdir('./Right_resp2base_roc/');
-    end
+%     if ~isdir('./Left_resp2base_roc/')
+%         mkdir('./Left_resp2base_roc/');
+%     end
+%     
+%     if ~isdir('./Right_resp2base_roc/')
+%         mkdir('./Right_resp2base_roc/');
+%     end
     LeftBase2RespRoc=zeros(size(SelectData,2),1);
     RightBase2RespRoc=zeros(size(SelectData,2),1);
     ShuffleLeftRoc=zeros(size(SelectData,2),1);
@@ -207,16 +216,16 @@ if isplot
         LeftBase=zeros(length(ROILeftBase),1);
         LeftResp=ones(length(ROILeftResp),1);
         test_data=[[ROILeftBase;ROILeftResp],[LeftBase;LeftResp]];
-        [cROC,~]=rocOnline(test_data);
-        LeftBase2RespRoc(n)=cROC.AUC;
+        [cROC,~]=rocOnlineFoff(test_data);
+        LeftBase2RespRoc(n)=cROC;
         ShuffleType=RandShuffle(test_data(:,2));
         DataShuffle=[test_data(:,1),ShuffleType];
         [ShuffleSummary,~]=rocOnlineFoff(DataShuffle);
         ShuffleLeftRoc(n)=ShuffleSummary;
         %     LeftBase2RespRoc(n)=ROCL_Base2Resp(n).AUC;
-        saveas(gcf,sprintf('./Left_resp2base_roc/ROC_resultL_ROI%d.png',n));
-        saveas(gcf,sprintf('./Left_resp2base_roc/ROC_resultL_ROI%d.fig',n));
-        close(gcf);
+%         saveas(gcf,sprintf('./Left_resp2base_roc/ROC_resultL_ROI%d.png',n));
+%         saveas(gcf,sprintf('./Left_resp2base_roc/ROC_resultL_ROI%d.fig',n));
+%         close(gcf);
         
         ROIRightBase=max(DataRight(:,1:alignpoint),[],2);
         ROIRightResp=max(DataRight(:,(alignpoint+1):end),[],2);
@@ -226,16 +235,16 @@ if isplot
         MeanTR=mean(DataRight);
         RightBase2RespMaxAmp(n)=max(MeanTR(alignpoint:end));
         test_data=[[ROIRightBase;ROIRightResp],[RightBase;RightResp]];
-        [cROC,~]=rocOnline(test_data);
-        RightBase2RespRoc(n)=cROC.AUC;
+        [cROC,~]=rocOnlineFoff(test_data);
+        RightBase2RespRoc(n)=cROC;
         %     RightBase2RespRoc(n)=ROCR_Base2Resp(n).AUC;
         ShuffleType=RandShuffle(test_data(:,2));
         DataShuffle=[test_data(:,1),ShuffleType];
         [ShuffleSummary,~]=rocOnlineFoff(DataShuffle);
         ShuffleRightRoc(n)=ShuffleSummary;
-        saveas(gcf,sprintf('./Right_resp2base_roc/ROC_resultR_ROI%d.png',n));
-        saveas(gcf,sprintf('./Right_resp2base_roc/ROC_resultR_ROI%d.fig',n));
-        close(gcf);
+%         saveas(gcf,sprintf('./Right_resp2base_roc/ROC_resultR_ROI%d.png',n));
+%         saveas(gcf,sprintf('./Right_resp2base_roc/ROC_resultR_ROI%d.fig',n));
+%         close(gcf);
     end
     c=linspace(1,10,length(LeftBase2RespRoc));
     hROC_sum=figure;
@@ -316,9 +325,9 @@ if isplot
     [CountSig,CenterSig] = hist(SelectIndex(SigAUCValue),15);
     h_Sindex = figure('position',[430 300 1100 800],'PaperPositionMode','auto');
     hold on
-    bar(Center,(Count/numel(SelectIndex)),'r');
+    bar(Center,(Count/numel(SelectIndex)),'k');
     alpha(0.3);
-    bar(CenterSig,(CountSig/numel(SelectIndex)),'r');
+    bar(CenterSig,(CountSig/numel(SelectIndex)),'k');
     xlabel('Index value');
     ylabel('Cell Fraction');
     title('Population Selection index');

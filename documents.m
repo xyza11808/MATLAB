@@ -138,6 +138,7 @@
 %for matlab version later than 2014b, we can also use dot calculator to
 %extract data
 
+%%
 % %rebuilt data matrix from pca result
 % [coeff,scoreT,~,~,explainedT,~]=pca(data);
 % PopuMean = repmat(mean(data),size(data,1),1);

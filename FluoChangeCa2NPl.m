@@ -1,7 +1,7 @@
 function varargout=FluoChangeCa2NPl(varargin)
 %this function is used for change the raw fluo data into the deltaF/F data
 %form
-
+% p = inputParser;
 if nargin<1
     disp('please input the 2afc ROIs analysis result file path.\n');
     filepath=uigetdir();

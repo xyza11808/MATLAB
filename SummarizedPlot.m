@@ -335,7 +335,7 @@ switch SessionDesp
             legend(LegendStr,'FontSize',4);
             yaxis = axis;
             patch([AlignT AlignT+0.3 AlignT+0.3 AlignT],[yaxis(3) yaxis(3) yaxis(4) yaxis(4)],1,'FaceColor','g',...
-                'EdgeColor','None','FaceAlpha',0.4);
+                'EdgeColor','None','FaceAlpha',0.7);
 %             line([AlignT AlignT],[yaxis(3) yaxis(4)],'color',[.8 .8 .8],'LineWidth',1.6);
             xlabel('Time (s)');
             ylabel('\DeltaF/F_0  (%)');

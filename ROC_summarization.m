@@ -1,4 +1,3 @@
-
 %this script will be used for summarizing all cortical ROC discrimination
 %ability sessions together
 
@@ -8,6 +7,8 @@ ROCValueAll = [];
 ROCshuffleAll = [];
 ROCSigFrac = [];
 ROIRealIndex = [];
+ROIDiffmean = [];
+ROCIsRevert = [];
 ROCfpathAll = {};
 
 while ~strcmpi(Add_char,'n')
@@ -19,9 +20,11 @@ while ~strcmpi(Add_char,'n')
         RealROC = xx.ROCarea;
         RealROC(logical(xx.ROCRevert)) = 1 - RealROC(logical(xx.ROCRevert));
         ROCValueAll = [ROCValueAll,RealROC];
-        ROCshuffleAll = [ROCshuffleAll,xx.ROCShufflearea];
+        ROCshuffleAll = [mean(ROCshuffleAll),mean(xx.ROCShufflearea)];
         ROCSigFrac = [ROCSigFrac,xx.RespFraction];
         ROIRealIndex = [ROIRealIndex,xx.ROCarea];
+        ROIDiffmean = [ROIDiffmean,xx.ROIDiffmn];
+        ROCIsRevert = [ROCIsRevert,xx.ROCIsRevert];
     catch
         fprintf('Something wrong about current data storage, can''t add to summarized data.\n');
     end
@@ -32,11 +35,11 @@ end
  m = m - 1;
 saveDir = uigetdir(pwd,'Please select a path to save summarized ROC data');
 cd(saveDir);
-save ROCSummary.mat ROCValueAll ROCfpathAll ROCshuffleAll ROCSigFrac ROIRealIndex -v7.3
+save ROCSummary.mat ROCValueAll ROCfpathAll ROCshuffleAll ROCSigFrac ROIRealIndex ROIDiffmean ROCIsRevert -v7.3
 fileID = fopen('ROCsummary_datapath.txt','w+');
-fprintf(fileID,'%s\n','ROC analysis data path used for summary:');
+fprintf(fileID,'%s\r\n','ROC analysis data path used for summary:');
 for nn = 1 : m
-    fprintf(fileID,'%s\n',ROCfpathAll{nn});
+    fprintf(fileID,'%s\r\n',ROCfpathAll{nn});
 end
 fclose(fileID);
 
@@ -55,7 +58,7 @@ text(1.05,mean(ROCSigFrac)+0.02,sprintf(['Sig.Frac. = %.2f',char(177),'%.2f'],me
 
 saveas(h_SIgF,'Population SigAUC distribution','png');
 saveas(h_SIgF,'Population SigAUC distribution','fig');
-saveas(h_SIgF,'Population SigAUC distribution','epsc');
+% saveas(h_SIgF,'Population SigAUC distribution','epsc');
 close(h_SIgF);
 
 %%
@@ -75,4 +78,49 @@ title('Population Selection index');
 set(gca,'FontSize',20);
 saveas(h_hist,'Population selection index plot','png');
 saveas(h_hist,'Population selection index plot','fig');
-saveas(h_hist,'Population selection index plot','epsc');
+% saveas(h_hist,'Population selection index plot','epsc');
+
+%%
+% plot the ROI response value v.s. ROI ROC value
+ROCABS = ROCValueAll;
+ROCABS(logical(ROCIsRevert)) = 1 - ROCABS(logical(ROCIsRevert));
+% ROIDiffmean
+[SortDiffMean,SortInds] = sort(ROIDiffmean);
+[hmn,pmn] = corrcoef(ROIDiffmean,ROCABS);
+
+hrespAUC = figure('position',[300 200 1000 800]);
+hold on;
+scatter(SortDiffMean,ROCABS(SortInds),45,linspace(1,10,length(SortDiffMean)),'LineWidth',2);
+[~,CoefEstimate,Rsqur,~,PredData] = lmFunCalPlot(ROIDiffmean,ROCABS,0);
+plot(PredData{1},PredData{2},'color','k','LineStyle','--');
+axis square
+colormap cool
+title({sprintf('median response value slop = %.3f, Rsqur = %.3f',CoefEstimate(2),Rsqur),...
+    sprintf('Coef = %0.2f, p=%.2e',hmn(1,2),pmn(1,2))});
+xlabel('\DeltaF/F_0(%)');
+set(gca,'FontSize',20);
+saveas(hrespAUC,'summary plot result of ROI response with AUC value');
+saveas(hrespAUC,'summary plot result of ROI response with AUC value','png');
+close(hrespAUC);
+
+save RespAUCCorrelation.mat ROCValueAll ROCIsRevert ROIDiffmean -v7.3
+
+%%
+% Overall ROI AUC sorted scatter plot
+SessionShufThres = mean(ROCshuffleAll);
+[SortAUC,SortInds] = sort(ROCABS);
+SigFrac = mean(ROCABS > SessionShufThres);
+
+h_sortAUCall = figure('position',[300 200 700 500]);
+plot(SortAUC,'o','LineWidth',1.8,'MarkerSize',14,'color','k');
+ValueXlim = get(gca,'xlim');
+line(ValueXlim,[SessionShufThres SessionShufThres],'color',[.8 .8 .8],'LineWidth',1.6,'LineStyle','-.');
+text(0.65*ValueXlim(2),0.75,sprintf('Frac. Above Thershold = %.4f',SigFrac));
+set(gca,'xlim',ValueXlim,'ylim',[0 1]);
+xlabel('# ROIs');ylabel('AUC value');
+title('Multi-session AUC distribution');
+saveas(h_sortAUCall,'Summary AUC significant fraction');
+saveas(h_sortAUCall,'Summary AUC significant fraction','png');
+close(h_sortAUCall);
+save MulSessAUC.mat ROCABS SessionShufThres -v7.3
+

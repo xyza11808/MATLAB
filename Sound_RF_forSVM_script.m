@@ -41,7 +41,7 @@ SessionTick=SessionTickLable*FrameRate;
 if ~exist('ROIinfo','var')
     ROIinfo=ROIinfoBU;
 end
-[f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,[],[],2,'rf',ROIinfo);
+[f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,[],[],2,'rf',ROIinfo,[]);
 
 [Sfname,Sfpath,~]=uigetfile('*.txt','Please Select your Sound stimuli text file');
 SArray = textread(fullfile(Sfpath,Sfname));
@@ -87,10 +87,10 @@ disp(sum(Explain(1:3)));
 
 %%
 % multi class classification analysis
-multiCClass(f_change_consid,FreqVector,ones(length(FreqVector),1),FrameRate,FrameRate,1.5)
+% multiCClass(f_change_consid,FreqVector,ones(length(FreqVector),1),FrameRate,FrameRate,1.5)
 
 %%
-% performing trial by trial classification
+% Passive ROC analysis, and compare plot with task data
 AllFreqvector = FreqVector;
 DataAll = max(f_change_consid(:,:,(FrameRate+1):(FrameRate*2)),[],3);
 RFTypeInds = double(AllFreqvector > BehavBoundary);
@@ -127,7 +127,10 @@ ROCdata2afc = xxx.SessionData.ROIauc(:);
 if length(ROCdata2afc) ~= length(ROCvalueAllABS)
     ROIindex = 1 : length(ROCdata2afc);
     ROCdataRF = ROCvalueAllABS(ROIindex);
+else
+    ROCdataRF = ROCvalueAllABS;
 end
+%
 h_comp = figure;
 scatter(ROCdata2afc,ROCdataRF,40,'ko');
 line([0 1],[0.5 0.5],'color',[.8 .8 .8],'LineWidth',1.8,'LineStyle','--');
@@ -140,9 +143,11 @@ ylabel('rf data auc');
 title(sprintf('P = %.2e',p));
 set(gca,'FontSize',20);
 
+save ROIrocsave.mat ROCdata2afc ROCdataRF ROCvalueAll ROCisreverse -v7.3
 %%
 saveas(gcf,'Task and rf auc plot');
 saveas(gcf,'Task and rf auc plot','png');
+close
 
 %%
 nIter = 1000;
@@ -197,7 +202,7 @@ set(gca,'Fontsize',20);
 
 saveas(h_rfError,'RF trial by trial classification error rate');
 saveas(h_rfError,'RF trial by trial classification error rate','png');
-% close(h_rfError);
+close(h_rfError);
 save ErrorRateResult.mat TbyTErrorSum TbyTScoreregSum -v7.3
 
 %%
@@ -206,9 +211,12 @@ save ErrorRateResult.mat TbyTErrorSum TbyTScoreregSum -v7.3
 xx=load(fullfile(filepath,filename));
 BehavFreq = xx.boundary_result.StimType;
 Realy = xx.boundary_result.StimCorr;
+Corry = Realy;
 Realy(1:3) = 1 - Realy(1:3);
 BehavOctave = log2(double(BehavFreq)/BehavBoundary);
 [~,breal] = fit_logistic(BehavOctave(:),Realy(:));
+rescaleB = max(Realy);
+rescaleA = min(Realy);
 
 %%
 % Generate SVM training dataset
@@ -251,7 +259,7 @@ for nRepeat = 1 : RepeatNum
 end
 
 %%
-hDataset=figure;
+hDataset=figure('position',[250 200 1200 800]);
 
 subplot(1,2,1)
 hold on
@@ -267,10 +275,9 @@ plot3(RightTestSet(:,1),RightTestSet(:,2),RightTestSet(:,3),'ro','MarkerSize',10
 xlabel('PC1');ylabel('PC2');zlabel('PC3');
 title('Test data distribution in PCA space');
 
-
 %%
 CSVNmodel = fitcsvm([LeftTrainingSet;RightTrainingSet],[zeros(size(LeftTrainingSet,1),1);ones(size(RightTrainingSet,1),1)]);
-ModelLoss = kfoldloss(crossval(CSVNmodel));
+ModelLoss = kfoldLoss(crossval(CSVNmodel));
 TestScore = predict(CSVNmodel,[LeftTestSet;RightTestSet]);
 RealScore = [zeros(size(LeftTrainingSet,1),1);ones(size(RightTrainingSet,1),1)];
 ErrorRate = sum(abs(RealScore-TestScore))/length(RealScore);
@@ -278,20 +285,22 @@ fprintf('Error Rate = %.4f.\n',ErrorRate);
 suptitle(sprintf('Error Rate = %.3f',ErrorRate));
 saveas(hDataset,'DataSet example plot.png');
 saveas(hDataset,'DataSet example plot.fig');
-% close(hDataset);
+close(hDataset);
 %%
 [~,classscoresT]=predict(CSVNmodel,scoreAll(:,1:3));
 difscore=classscoresT(:,2)-classscoresT(:,1);
-fityAll=(difscore-min(difscore))./(max(difscore)-min(difscore));
+fityAll=(rescaleB-rescaleA)*(difscore-min(difscore))./(max(difscore)-min(difscore)) + rescaleA; 
 % check whether this bad normalization is caused by one significantly large
 % value on one side of the boundary
 
 
-save RFpcaResult.mat LeftTestSet LeftTrainingSet RightTestSet RightTrainingSet CSVNmodel ErrorRate scoreAll fityAll -v7.3
+save RFpcaResult.mat LeftTestSet LeftTrainingSet RightTestSet RightTrainingSet CSVNmodel ErrorRate scoreAll fityAll OctConsider ...
+    BehavFreq Corry BehavOctave -v7.3
 
 hclass = figure;
 hold on;
 plot(OctConsider,fityAll,'ro', 'MarkerSize',10,'LineWidth',0.8);
+plot(BehavOctave,Realy,'ko','MarkerSize',10,'LineWidth',0.8);
 xlabel('Oct.Diff from boundary');
 ylabel('Rightward choice');
 set(gca,'fontSize',20);
@@ -300,11 +309,13 @@ modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));
 [~,bfit]=fit_logistic(OctConsider,fityAll);
 Curve_x = linspace(min(OctConsider),max(OctConsider),500);
 Curve_y = modelfun(bfit,Curve_x);
-plot(Curve_x,Curve_y,'r','LineWidth',1.2);
+CurveBehavy = modelfun(breal,Curve_x);
+plot(Curve_x,Curve_y,'r','LineWidth',1.6);
+plot(Curve_x,CurveBehavy,'k','LineWidth',1.6)
 
 saveas(hclass,'ScattterPlot for ROI.png');
 saveas(hclass,'ScattterPlot for ROI.fig');
-% close(hclass);
+close(hclass);
 
 %%
 % another method to Generate SVM training dataset

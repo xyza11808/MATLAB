@@ -100,6 +100,7 @@ set(gca,'ytick',0.5:0.25:1);
 ylabel('Classfication accuracy');
 title('Task vs passive compare plot');
 set(gca,'FontSize',20);
+legend([h1,h2,h3],{'Task','Passive','Task Shuffle'},'Location','northwest','FontSize',14);
 saveas(h,'Task vs passive FracClassification plot');
 saveas(h,'Task vs passive FracClassification plot','png');
 % close(h);

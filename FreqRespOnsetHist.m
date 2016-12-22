@@ -14,7 +14,11 @@ FreqNum = length(AllTrialTypes);
 MeanTraceDataSet = zeros(FreqNum,ROINum,FrameNum);
 for nnn = 1 : FreqNum
     cfreqinds = CorrTrTypes == AllTrialTypes(nnn);
-    MeanTraceDataSet(nnn,:,:) = squeeze(mean(CorrTrData(cfreqinds,:,:)));
+    if sum(cfreqinds) > 1
+        MeanTraceDataSet(nnn,:,:) = squeeze(mean(CorrTrData(cfreqinds,:,:)));
+    elseif sum(cfreqinds) == 1
+        MeanTraceDataSet(nnn,:,:) = squeeze(CorrTrData(cfreqinds,:,:));
+    end
 end
 SoundOffF = round(AlignOnset + 0.3*FrameRate);
 SoundOffResponse = squeeze(MeanTraceDataSet(:,:,SoundOffF));

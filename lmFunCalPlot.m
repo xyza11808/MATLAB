@@ -40,4 +40,7 @@ if nargout > 0
     if isplot
         varargout{5} = h_data;
     end
+    if nargout > 4
+        varargout{5} = {Fitx,PredValue};
+    end
 end

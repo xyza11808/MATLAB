@@ -231,7 +231,7 @@ for j=1:length(filenames)
     %%
     if ~HighVerMethod
         for i=1:Number_Images
-            imshow(finalImageSmooth(:,:,i),[0,1000],'Border','tight');
+            imshow(finalImageSmooth(:,:,i),[0,600],'Border','tight');
             if mImage == 256
                 if i>=StimOnFrame && i<(StimOnFrame+StimFrameLen)
                     patch([5 25 25 5],[30 30 10 10],'r');
@@ -258,7 +258,7 @@ for j=1:length(filenames)
     %     cd(filepath);
     else
         for i=1:Number_Images
-            imshow(finalImageSmooth(:,:,i),[0,1000],'Border','tight');
+            imshow(finalImageSmooth(:,:,i),[0,600],'Border','tight');
             if mImage == 256
                 if i>=StimOnFrame && i<(StimOnFrame+StimFrameLen)
                     patch([5 25 25 5],[30 30 10 10],'r');
@@ -300,5 +300,5 @@ disp('GVI files exported successfully!\n');
 
 totaltime=toc;
 %disp('All done.');
-disp(['All ', num2str(length(files)), ' files smoothed done in ', num2str(totaltime),' seconds\n']);
+disp(['All ', num2str(length(filenames)), ' files smoothed done in ', num2str(totaltime),' seconds\n']);
 

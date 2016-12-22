@@ -165,23 +165,49 @@ if strcmpi(type,'RF')
     FreqArray = unique(sound_array(:,1));
     size_freq = length(FreqArray);
     size_DB=length(DB_array);
-    freq_rep_times=result_size(1)/(size_DB*size_freq);
-    re_organized_data=zeros(size_DB,freq_rep_times*size_freq,result_size(3));
-    StimRespMeanData = zeros(size_raw_trials(2),size_DB,size_freq,result_size(3));
-    StimRespAllData = zeros(size_raw_trials(2),size_DB,size_freq,freq_rep_times,result_size(3));
-    RF_fit_data=struct('AvaFitPara',[]);
-    
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if mod(result_size(1),(size_DB*size_freq))
+       fprintf('Trial number cannot be fully divided by freqIntensity product, saved in cell format');
+       IsFullyDived = 0;
+    else
+        IsFullyDived = 1;
+        freq_rep_times=result_size(1)/(size_DB*size_freq);
+        re_organized_data=zeros(size_DB,freq_rep_times*size_freq,result_size(3));
+        StimRespMeanData = zeros(size_raw_trials(2),size_DB,size_freq,result_size(3));
+        StimRespAllData = zeros(size_raw_trials(2),size_DB,size_freq,freq_rep_times,result_size(3));
+        RF_fit_data=struct('AvaFitPara',[]);
+    end
+    %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % extract data for 2afc comparation
     SelectDb = 70;
     SelectInds = sound_array(:,2) == SelectDb;
     SelectData = f_percent_change(SelectInds,:,:);
     SelectSArray = sound_array(SelectInds,1);
+    PassOutcome = ones(length(SelectSArray),1);
     save rfSelectDataSet.mat SelectData SelectSArray frame_rate -v7.3
-    
+    SoundFreqs = double(sound_array(:,1) > 16000);
+    %%
+    ROC_check(f_percent_change,SoundFreqs,frame_rate,frame_rate,1.5,'Stim_time_Align');
      RF2afcClassScorePlot(SelectData,SelectSArray,16000,frame_rate,frame_rate,1.5,1);
      FreqRespCallFun(SelectData,SelectSArray,ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate);
+     MultiTimeWinClass(SelectData,SelectSArray,PassOutcome,frame_rate,frame_rate,1,0.1);
      RFTaskclf_accuracy_plot
+     %%
+     %parameter struc
+    V.Ncells = 1;
+    V.T = size(f_percent_change,3);
+    V.Npixels = 1;
+    V.dt = 1/frame_rate;
+    P.lam = 10;
+     nnspike = DataFluo2Spike(SelectData,V,P); % estimated spike
+     if ~isdir('./SpikeData_analysis/')
+         mkdir('./SpikeData_analysis/');
+     end
+     cd('./SpikeData_analysis/');
+     
+     MultiTimeWinClass(nnspike,SelectSArray,PassOutcome,frame_rate,frame_rate,1,0.1);
+     save EsSpikeSave.mat nnspike SelectSArray frame_rate -v7.3
+     cd ..;
+     %%
 %     FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate,1);
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -205,6 +231,11 @@ if strcmpi(type,'RF')
 %     in_site_freTuning(sound_array,type,CaTrials,'simple_fit',triger_inds);
     %      ROI_CF=in_site_freTuning(sound_Stim,type,'fit');
     cd ..;
+    
+    %%
+    if ~IsFullyDived
+        
+    end
     %%
     %#########################################################################
     %start of mode percent change plot

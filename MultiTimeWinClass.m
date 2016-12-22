@@ -23,7 +23,7 @@ BaseScaleInds = MultiTScale < 0;
 PlotxTick(BaseScaleInds) = PlotxTick(BaseScaleInds) + TimeStep;
 fprintf('Time window number is %d.\n',length(MultiTScale));
 
-TrWinClassPerf = zeros(length(MultiTScale),1);
+% TrWinClassPerf = zeros(length(MultiTScale),1);
 % TrWinClassModel = cell(length(MultiTScale),1000);
 TrWinClassPerfAll = zeros(length(MultiTScale),1000);
 TimeWinValue = cell(length(MultiTScale),1);
@@ -39,9 +39,9 @@ for nn = 1 : length(MultiTScale)
         end
     end
     TimeWinValue{nn} = TimeWin;
-    [MinTloss,AllTloss,~] = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,...
+    [AllTloss,~] = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,...
         TimeWin,[],[],[],trOutcome,1);
-    TrWinClassPerf(nn) = MinTloss;
+%     TrWinClassPerf(nn) = MinTloss;
     TrWinClassPerfAll(nn,:) = AllTloss;
 %     TrWinClassModel(nn,:) = TrainM;
 end
@@ -68,5 +68,5 @@ saveas(h_TWinPlot,'Time Win Correct rate plot');
 saveas(h_TWinPlot,'Time Win Correct rate plot','png');
 close(h_TWinPlot);
 
-save MWinCLassData.mat MultiTScale TrWinClassPerf TrWinClassPerfAll -v7.3
+save MWinCLassData.mat MultiTScale TrWinClassPerfAll -v7.3
 cd ..;

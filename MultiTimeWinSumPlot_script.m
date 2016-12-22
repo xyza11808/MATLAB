@@ -19,6 +19,7 @@ if ~isOldLoad
     DataSum = {};
     TimeWinScale = {};
     TrWinPerf = {};
+    TrWinPerfAll = {};
 else
    m = length(DataSum) + 1;
 end
@@ -30,8 +31,8 @@ while ~strcmpi(add_char,'n')
         xx = load(fullfile(fp,fn));
         DataSum{m} = xx;
         TimeWinScale{m} = xx.MultiTScale;
-        TrWinPerf{m} = xx.TrWinClassPerf;
-        
+        TrWinPerfAll{m} = xx.TrWinClassPerfAll;
+        TrWinPerf{m} = mean(xx.TrWinClassPerfAll,2);
     end
     add_char = input('Do you want to add with more session data?\n','s');
     m = m + 1;
@@ -47,7 +48,7 @@ for nbnb = 1 : m
     fprintf(f,FormatStr,datapath{nbnb});
 end
 fclose(f);
-save SessionDataSum.mat DataSum TimeWinScale TrWinPerf -v7.3
+save SessionDataSum.mat DataSum TimeWinScale TrWinPerf TrWinPerfAll -v7.3
 
 %%
 TrScaleLen = cellfun(@length,TimeWinScale);
@@ -60,6 +61,7 @@ if length(unique(TrScaleLen)) > 1
     DataMatrixAll = (cell2mat(DataCellAll))';
 else
     fprintf('Unique length of all time scales, convert into number matrix.\n');
+    TargetLen = TrScaleLen(1);
     DataCellAll = (TrWinPerf(:))';
     DataMatrixAll = (cell2mat(DataCellAll))';
 end
@@ -74,7 +76,7 @@ xTickP = [xTickScaleLen;flipud(xTickScaleLen)];
 TrWinPerfPatch = [(TrWinPerfMean + TrWinPerfSEM),fliplr(TrWinPerfMean - TrWinPerfSEM)];
 
 h = figure('position',[300 200 1000 800]);
-patch(xTickP,TrWinPerfPatch,1,'facecolor',[.8 .8 .8],...
+patch(xTickP,TrWinPerfPatch,1,'facecolor',[.5 .5 .5],...
               'edgecolor','none',...
               'facealpha',0.7);
 plot(xTickScaleLen,TrWinPerfMean,'k','LineWidth',1.6);
@@ -91,3 +93,37 @@ saveas(h,'Time Win classification of choice by extimated spike','png');
 % close(h);
 
 save MeanTimeWinData.mat xTickScaleLen DataMatrixAll -v7.3
+
+
+%%
+% scripts for compare plot of task and passive data summary set
+[fn,fp,fi] = uigetfile('MeanTimeWinData.mat','Select Task across session choice classification result plot');
+xxtask = load(fullfile(fp,fn));
+TaskTicks = xxtask.xTickScaleLen;
+TaskCLassidata = xxtask.DataMatrixAll;
+
+[fn,fp,fi] = uigetfile('MeanTimeWinData.mat','Select passive across session choice classification result plot');
+xxPass = load(fullfile(fp,fn));
+PassTicks = xxPass.xTickScaleLen;
+PassCLassidata = xxPass.DataMatrixAll;
+
+[h,~,~] = MeanSemPlot(TaskCLassidata,TaskTicks,[],'k','LineWidth',1.6);
+[hPlotf,hp,~] = MeanSemPlot(PassCLassidata,PassTicks,h,'r','LineWidth',1.6);
+set(hp,'facecolor','r','facealpha',0.4);
+
+%%
+% single trace compare plot
+for nTr = 1 : size(PassCLassidatacomp,1)
+    h = figure;
+    hold on;
+    plot(TaskTicks,TaskCLassidata(nTr,:),'k','LineWidth',1.6);
+    plot(PassTicks,PassCLassidatacomp(nTr,:),'r','LineWidth',1.6);
+    xlabel('Time (s)');
+    ylabel('Classification accuracy');
+    title(sprintf('Session%d compare plot',nTr));
+    set(gca,'FontSize',20)
+    xlim([-1 max(TaskTicks)]);
+    saveas(h,sprintf('Session%d task passive compare plot',nTr));
+    saveas(h,sprintf('Session%d task passive compare plot',nTr),'png');
+    close(h);
+end

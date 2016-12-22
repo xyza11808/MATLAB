@@ -1,4 +1,4 @@
-function dft_reg_dir_2_zy(src_dir, save_path, main_fname, targetImage, varargin)
+function varargout = dft_reg_dir_2_zy(src_dir, save_path, main_fname, targetImage, varargin)
 % shift = batch_dft_reg(source_filenames, targetImage, padding_flag,save_path)
 %
 % Perform dft whole frame registration for the a whole directory. All image
@@ -76,7 +76,8 @@ if isempty(poolobj)
     parpool('local',CPUCores);
 end
 % total_time_GPU=zeros(1,length(datafiles));
-total_time_CPU=zeros(1,length(datafiles));
+total_time_CPU = zeros(1,length(datafiles));
+FrameIsBadAlign = zeros(1,length(datafiles));
 parfor i = 1:length(datafiles)
 %   for i = 1:length(datafiles)
     %%
@@ -145,11 +146,22 @@ parfor i = 1:length(datafiles)
 %     total_time_CPU(i)=t;
 %     disp(t);
 
-     [aa,shift] = dft_reg(im_s, im_tg);  % add shift information in here
-     
+%     if gpuDeviceCount
+%         im_s = gpuArray(im_s);
+%         im_tg = gpuArray(im_tg);
+%         isGPUuse = 1;
+%     end
+    [aa,shift] = dft_reg(im_s, im_tg);  % add shift information in here
+%     if isGPUuse
+%        aa = gather(aa);
+%        shift = gather(shift);
+%        
+%     end
+     im_dft_reg = aa;
     if max(abs((shift(1,:)))>15) || max(abs((shift(2,:)))>15)       
         fprintf('the shift in this trial is over 20 pixes do rigistration again using itself as target\n');
         match=abs((shift(1,:)))<20 & abs(shift(2,:))<20;
+        FrameIsBadAlign(i) = 1;
         im_tg_temp=mean(aa(:,:,match),3);   % change here for the target frame
         funct=tic;
         [im_dft_reg,shift] = dft_reg(im_s, im_tg_temp); 
@@ -157,13 +169,13 @@ parfor i = 1:length(datafiles)
         total_time_CPU(i)=t;
         disp(t);
         
-    else
-        
-        function_t=tic;
-        [im_dft_reg,shift] = dft_reg(im_s, im_tg);
-        t=toc(function_t);
-        total_time_CPU(i)=t;
-        disp(t);     
+%     else
+%         
+%         function_t=tic;
+%         [im_dft_reg,shift] = dft_reg(im_s, im_tg);
+%         t=toc(function_t);
+%         total_time_CPU(i)=t;
+%         disp(t);     
         
     end
     
@@ -197,8 +209,12 @@ end
 %     dft_reg_trial(1).dft_im_data = im_dft_reg;
 %     parsave_dft_dir(dft_reg_trial(1).filename, dft_reg_trial);
 
-save time_dis_CPU.mat total_time_CPU -v7.3
+save time_dis_CPU.mat total_time_CPU FrameIsBadAlign -v7.3
+if nargout > 0
+   varargout{1} = FrameIsBadAlign ;
 end
+end
+
    %change here to save shift information
 % save time_dis_GPU.mat total_time_GPU -v7.3
 

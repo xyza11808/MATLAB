@@ -146,7 +146,7 @@ CaSignal.OpenWithImagJ = 1;
 CaSignal.IsTrialExcluded = [];
 CaSignal.ROIdefineTr = [];
 fprintf('Matlab Two-photon imaging data analysis GUI.\n');
-fprintf('           Version :  2.02.05             \n');
+fprintf('           Version :  2.02.15             \n');
 % Update handles structure
 guidata(hObject, handles);
 
@@ -591,7 +591,7 @@ if get(handles.dispMaxDelta,'Value')==1
         CaSignal.CurrentAnaTrial(2)=TrialNo;
     end
     sc = CaSignal.Scale; 
-    imagesc(CaSignal.MaxDelta, sc);
+    imagesc(CaSignal.MaxDelta, sc); 
     colormap(gray); 
     set(gca, 'Position',[0.05 0.05 0.9 0.9], 'Visible','off');
     update_projection_image_ROIs(handles);
@@ -1370,7 +1370,8 @@ if isempty(poolobj)
     parpool('local',CPUCores);
 %     poolobj = gcp('nocreate');
 end
-
+PopuMeanSave = cell((End_trial - Start_trial + 1),1);
+PopuMaxSave = cell((End_trial - Start_trial + 1),1);
 parfor TrialNo = Start_trial:End_trial
     fname = filenames{TrialNo};
     if ~exist(fname,'file')
@@ -1386,7 +1387,11 @@ parfor TrialNo = Start_trial:End_trial
     [im, header] = load_scim_data(fname);
     if isempty(im)
         disp(['Empty image data for trial  ' num2str(TrialNo) '...']);
+        continue;
     end
+    [mean_im,MAxDelta] = FigMeanMaxFrame(im);
+    PopuMeanSave{TrialNo} = mean_im;
+    PopuMaxSave{TrialNo} = MAxDelta;
 %     set(handles.CurrentTrialNo,'String', int2str(TrialNo));
     % if isempty(ROIinfo{TrialNo})
     if (nTrials <TrialNo || isempty( CaTrials_local(TrialNo).FileName))
@@ -1421,12 +1426,25 @@ end
 
 % delete(poolobj);
 CaSignal.CaTrials = CaTrials_local;
+PopuProjData = struct('MeanFrame',PopuMeanSave,'MaxFrame',PopuMaxSave);
+CaSignal.PopuFrameProj = PopuProjData;
 
 SaveResultsButton_Callback(hObject, eventdata, handles);
 disp(['Batch analysis completed for ' CaSignal.CaTrials(1).FileName_prefix]);
 set(handles.msgBox, 'String', ['Batch analysis completed for ' CaSignal.CaTrials(1).FileName_prefix]);
 % delete(gcp('nocreate'));
 guidata(hObject, handles);
+
+function [mean_im,MAxDelta] = FigMeanMaxFrame(im,varargin)
+if nargin > 1
+    span = varargin{1};
+else
+    span = 3;
+end
+mean_im = uint16(mean(double(im),3));
+Smoothim = im_mov_avg(im,span);
+max_im = max(Smoothim,[],3);
+MAxDelta = max_im - mean_im;
 
 
 function SaveResultsButton_Callback(hObject, eventdata, handles)
@@ -1561,6 +1579,10 @@ if sum(double(CaSignal.IsTrialExcluded))
     fprintf('Excluded trial exists, saved to mat file for future analysis...\n');
     ExcludedTrInds = CaSignal.IsTrialExcluded;
     save(fullfile(CaSignal.results_path,'cSessionExcludeInds.mat'),'ExcludedTrInds','-v7.3');
+end
+if isfield(CaSignal,'PopuFrameProj')
+   FrameProjSave = CaSignal.PopuFrameProj;
+   save(fullfile(CaSignal.results_path,'SessionFrameProj.mat'),'FrameProjSave','-v7.3');
 end
 
 % save(fullfile(CaSignal.results_path, ['ICA_ROIs_', FileName_prefix '.mat']), 'ICA_ROIs');

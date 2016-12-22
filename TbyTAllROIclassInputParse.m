@@ -1,78 +1,101 @@
-function varargout = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin)
-% this function will be used for trial by trial classiifcation of trial
+function varargout = TbyTAllROIclassInputParse(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin)
+% This function will be used for trial by trial classiifcation of trial
 % type, and will try to predict the animal's final choice result
 % RawDataAll can be any kind of aligned data set, and the AlignFrame should
 % be the correponded aligned frame position
+% optional input parameters: 
+%       %TimeLen: Time window used for calculation neuron response
+%       %isShuffle: 0 or 1, whether performing data shuffling
+%       %isLoadModel: whether loading external classification model for
+%                     calculation
+%       %PartialROIInds: ROI inds used for analysis, logical vector
+%       %TrOutcomeOp: Trial oucomes used for analysis, 0 as non-missing
+%                      trials, 1 for correct trials, and 2 for all trials
+%       %isDataOutput: whether output current function result
+%       % Yu XIN, 30th, Dec., 2016
 
-% p = inputParser;
-% defaultTimeLen = 1.5;
-% defaultIsshuffle = 0;
-% defaultIsmodelload = 0;
-% defaultIspartialROI = 0;
-% defaultTroutcome = 1;
-% defaultisDataOutput = 0;
-% addRequired(p,'RawDataAll',@isnumeric);
-% addRequired(p,'StimAll',@isnumeric);
-% addRequired(p,'TrialResult',@isnumeric);
-% addRequired(p,'AlignFrame',@isnumeric);
-% addRequired(p,'FrameRate',@isnumeric);
-% addParameter(p,'TimeLen',defaultTimeLen);
-% addParameter(p,'isShuffle',defaultIsshuffle);
-% addParameter(p,'isLoadModel',defaultIsmodelload);
-% addParameter(p,'isPartialROI',defaultIspartialROI);
-% addParameter(p,'TrOutcomeOp',defaultTroutcome);
-% addParameter(p,'isDataOutput',defaultisDataOutput);
-% p.KeepUnmatched = true;
-% parse(p,RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin{:});
 
-%Time scale selection, default is 1.5 after aligned frame
-if ~isempty(varargin{1})
-    TimeLength=varargin{1};
-else
-    TimeLength=1.5;
-end
+p = inputParser;
+defaultTimeLen = 1.5;
+defaultIsshuffle = 0;
+defaultIsmodelload = 0;
+defaultIspartialROI = true(size(RawDataAll,2),1);
+defaultTroutcome = 1;
+defaultisDataOutput = 0;
+addRequired(p,'RawDataAll',@isnumeric);
+addRequired(p,'StimAll',@isnumeric);
+addRequired(p,'TrialResult',@isnumeric);
+addRequired(p,'AlignFrame',@isnumeric);
+addRequired(p,'FrameRate',@isnumeric);
+addParameter(p,'TimeLen',defaultTimeLen);
+addParameter(p,'isShuffle',defaultIsshuffle);
+addParameter(p,'isLoadModel',defaultIsmodelload);
+addParameter(p,'PartialROIInds',defaultIspartialROI);
+addParameter(p,'TrOutcomeOp',defaultTroutcome);
+addParameter(p,'isDataOutput',defaultisDataOutput);
+p.KeepUnmatched = true;
+parse(p,RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin{:});
 
-% label shuffling option
-isShuffle=0;
-if nargin>6
-    if ~isempty(varargin{2})
-        isShuffle=varargin{2};
-    end
-end
-% external model load option
-isLoadModel = 0;
-if nargin>7
-    if ~isempty(varargin{3})
-        isLoadModel = varargin{3};
-    end
-end
+TimeLength = p.Results.TimeLen;
+isShuffle = p.Results.isShuffle;
+isLoadModel = p.Results.isLoadModel;
+ROIindsSelect = p.Results.PartialROIInds;
+TrOutcomeOp = p.Results.TrOutcomeOp;
+isDataOutput = p.Results.isDataOutput;
 
-% ROI fraction option
-ROIindsSelect = true(size(RawDataAll,2),1);
 isPartialROI = 0;
-if nargin > 8
-    if ~isempty(varargin{4})
-        ROIindsSelect = varargin{4};
-        isPartialROI = 1;
-        ROIFraction = sum(ROIindsSelect)/length(ROIindsSelect);
-    end
+if ~sum(strcmpi(p.UsingDefaults,'isPartialROI'))
+    isPartialROI = 1;
+    ROIFraction = sum(ROIindsSelect)/length(ROIindsSelect);
 end
-
-% Trial outcome option
-TrOutcomeOp = 1; % 0 for non-miss trials, 1 for correct trials, 2 for all trials
-if nargin > 9
-    if ~isempty(varargin{5})
-        TrOutcomeOp = varargin{5};
-    end
-end
-
-% Output option, used when only function is just called by other functions
-isDataOutput = 0;
-if nargin > 10
-    if ~isempty(varargin{6})
-        isDataOutput = varargin{6};
-    end
-end
+% %Time scale selection, default is 1.5 after aligned frame
+% if ~isempty(varargin{1})
+%     TimeLength=varargin{1};
+% else
+%     TimeLength=1.5;
+% end
+% 
+% % label shuffling option
+% isShuffle=0;
+% if nargin>6
+%     if ~isempty(varargin{2})
+%         isShuffle=varargin{2};
+%     end
+% end
+% % external model load option
+% isLoadModel = 0;
+% if nargin>7
+%     if ~isempty(varargin{3})
+%         isLoadModel = varargin{3};
+%     end
+% end
+% 
+% % ROI fraction option
+% ROIindsSelect = true(size(RawDataAll,2),1);
+% isPartialROI = 0;
+% if nargin > 8
+%     if ~isempty(varargin{4})
+%         ROIindsSelect = varargin{4};
+%         isPartialROI = 1;
+%         ROIFraction = sum(ROIindsSelect)/length(ROIindsSelect);
+%     end
+% end
+% 
+% % Trial outcome option
+% TrOutcomeOp = 1; % 0 for non-miss trials, 1 for correct trials, 2 for all trials
+% if nargin > 9
+%     if ~isempty(varargin{5})
+%         TrOutcomeOp = varargin{5};
+%     end
+% end
+% 
+% % Output option, used when only function is just called by other functions
+% isDataOutput = 0;
+% if nargin > 10
+%     if ~isempty(varargin{6})
+%         isDataOutput = varargin{6};
+%     end
+% end
 
 % Time scale to frame scale
 %
@@ -194,9 +217,9 @@ if ~isDataOutput
 end
 
 TestLoss = zeros(nIters,1);
-% ProbLoss = zeros(nIters,1);
-% ProbLossCell = cell(nIters,1);
-% isBadRegression = zeros(nIters,1);
+ProbLoss = zeros(nIters,1);
+ProbLossCell = cell(nIters,1);
+isBadRegression = zeros(nIters,1);
 parfor nTimes = 1 : nIters
     TrainSeeds = randsample(length(UsingStim),round(0.8*length(UsingStim)));
     TrainInds = BaseTraingInds;
@@ -215,25 +238,24 @@ parfor nTimes = 1 : nIters
     TestDataLoss = sum(abs(ModelPred - UsingTrialType(TestInds)))/length(ModelPred);
     TestLoss(nTimes) = TestDataLoss;
     
-    % skip model score estimation
-%     SVMWeights = TrainM.Beta;
-%     SVMbias = TrainM.Bias;
-%     TrainData = UsingData(TrainInds,:);
-%     TrainScore = TrainData*SVMWeights + SVMbias;
-%     TestingDataSet = UsingData(TestInds,:);
-%     TestScore = TestingDataSet*SVMWeights + SVMbias;
-%     sp = categorical(UsingTrialType(TrainInds));  % turn current vector's format from double to categorical format
-% %     Testsp = categorical(UsingTrialType(TestInds));
-%     
-%     [BTrain2,~,statsTrain2,isOUTITern] = mnrfit(TrainScore,sp);
-%     [pihat,~,~] = mnrval(BTrain2,TestScore,statsTrain2);
-%     PredTrialType = double(pihat(:,2));  % probability for current score being class one
-%     ProbLossCell{nTimes} = [PredTrialType,UsingTrialType(TestInds)];
-%     ProbLoss(nTimes) = sum(abs(PredTrialType-UsingTrialType(TestInds)))/length(PredTrialType);
-%     if isOUTITern
-%         isBadRegression(nTimes) = 1;
-%     end
-% %     fprintf('Test Data error rate is %.3f.\n',TestDataLoss);
+    SVMWeights = TrainM.Beta;
+    SVMbias = TrainM.Bias;
+    TrainData = UsingData(TrainInds,:);
+    TrainScore = TrainData*SVMWeights + SVMbias;
+    TestingDataSet = UsingData(TestInds,:);
+    TestScore = TestingDataSet*SVMWeights + SVMbias;
+    sp = categorical(UsingTrialType(TrainInds));  % turn current vector's format from double to categorical format
+%     Testsp = categorical(UsingTrialType(TestInds));
+    
+    [BTrain2,~,statsTrain2,isOUTITern] = mnrfit(TrainScore,sp);
+    [pihat,~,~] = mnrval(BTrain2,TestScore,statsTrain2);
+    PredTrialType = double(pihat(:,2));  % probability for current score being class one
+    ProbLossCell{nTimes} = [PredTrialType,UsingTrialType(TestInds)];
+    ProbLoss(nTimes) = sum(abs(PredTrialType-UsingTrialType(TestInds)))/length(PredTrialType);
+    if isOUTITern
+        isBadRegression(nTimes) = 1;
+    end
+%     fprintf('Test Data error rate is %.3f.\n',TestDataLoss);
 end
 MinTestLoss = min(TestLoss);
 fprintf('Min Test Data error rate is %.3f.\n',MinTestLoss);
@@ -247,9 +269,9 @@ if isShuffle
     UsingTrialType = UsingTrialType(:);
 
     SUFTestLoss = zeros(nIters,1);
-%     SUFProbLoss = zeros(nIters,1);
-%     SUFProbLossCell = cell(nIters,1);
-%     SUFisBadRegression = zeros(nIters,1);
+    SUFProbLoss = zeros(nIters,1);
+    SUFProbLossCell = cell(nIters,1);
+    SUFisBadRegression = zeros(nIters,1);
     parfor nTimes = 1 : nIters
         TrainSeeds = randsample(length(UsingStim),round(0.8*length(UsingStim)));
         TrainInds = BaseTraingInds;
@@ -267,25 +289,24 @@ if isShuffle
         ModelPred = predict(TrainM,TestData);
         TestDataLoss = sum(abs(ModelPred - UsingTrialType(TestInds)))/length(ModelPred);
         SUFTestLoss(nTimes) = TestDataLoss;
-        
-        %skip logistic fitting result
-%         SVMWeights = TrainM.Beta;
-%         SVMbias = TrainM.Bias;
-%         TrainData = UsingData(TrainInds,:);
-%         TrainScore = TrainData*SVMWeights + SVMbias;
-%         TestingDataSet = UsingData(TestInds,:);
-%         TestScore = TestingDataSet*SVMWeights + SVMbias;
-%         sp = categorical(UsingTrialType(TrainInds));  % turn current vector's format from double to categorical format
-%     %     Testsp = categorical(UsingTrialType(TestInds));
-% 
-%         [BTrain2,~,statsTrain2,isOUTITern] = mnrfit(TrainScore,sp);
-%         [pihat,~,~] = mnrval(BTrain2,TestScore,statsTrain2);
-%         PredTrialType = double(pihat(:,2));  % probability for current score being class one
-%         SUFProbLossCell{nTimes} = [PredTrialType,UsingTrialType(TestInds)];
-%         SUFProbLoss(nTimes) = sum(abs(PredTrialType-UsingTrialType(TestInds)))/length(PredTrialType);
-%         if isOUTITern
-%             SUFisBadRegression(nTimes) = 1;
-%         end
+
+        SVMWeights = TrainM.Beta;
+        SVMbias = TrainM.Bias;
+        TrainData = UsingData(TrainInds,:);
+        TrainScore = TrainData*SVMWeights + SVMbias;
+        TestingDataSet = UsingData(TestInds,:);
+        TestScore = TestingDataSet*SVMWeights + SVMbias;
+        sp = categorical(UsingTrialType(TrainInds));  % turn current vector's format from double to categorical format
+    %     Testsp = categorical(UsingTrialType(TestInds));
+
+        [BTrain2,~,statsTrain2,isOUTITern] = mnrfit(TrainScore,sp);
+        [pihat,~,~] = mnrval(BTrain2,TestScore,statsTrain2);
+        PredTrialType = double(pihat(:,2));  % probability for current score being class one
+        SUFProbLossCell{nTimes} = [PredTrialType,UsingTrialType(TestInds)];
+        SUFProbLoss(nTimes) = sum(abs(PredTrialType-UsingTrialType(TestInds)))/length(PredTrialType);
+        if isOUTITern
+            SUFisBadRegression(nTimes) = 1;
+        end
     %     fprintf('Test Data error rate is %.3f.\n',TestDataLoss);
     end
     % % % end of shuffle section
@@ -293,27 +314,24 @@ end
 
 if ~isDataOutput
     if isShuffle
-%         save TbyTClass.mat TrainModelLoss TestLoss ProbLossCell ProbLoss isBadRegression SUFTestLoss SUFProbLoss SUFisBadRegression SUFProbLossCell -v7.3
-        save TbyTClass.mat TrainModelLoss TestLoss SUFTestLoss -v7.3
+        save TbyTClass.mat TrainModelLoss TestLoss ProbLossCell ProbLoss isBadRegression SUFTestLoss SUFProbLoss SUFisBadRegression SUFProbLossCell -v7.3
     else
-%         save TbyTClassNoSUF.mat TrainModelLoss TestLoss ProbLossCell ProbLoss isBadRegression -v7.3
-        save TbyTClassNoSUF.mat TrainModelLoss TestLoss -v7.3
+        save TbyTClassNoSUF.mat TrainModelLoss TestLoss ProbLossCell ProbLoss isBadRegression -v7.3
     end
-    h = figure;
-%     h = figure('position',[230 230 1450 600]);
-%     subplot(1,2,1)
+    h = figure('position',[230 230 1450 600]);
+    subplot(1,2,1)
     hist(TestLoss,20);
     xlabel('Error rate');
     ylabel('Rank number');
     title('Error rate distribution of test dataset');
     
-%     ProbLossBate = ProbLoss;
-%     ProbLossBate(logical(isBadRegression)) = [];
-%     subplot(1,2,2)
-%     hist(ProbLossBate,20);
-%     xlabel('Error rate');
-%     ylabel('Rank number');
-%     title('Prob error rate distribution of test dataset');
+    ProbLossBate = ProbLoss;
+    ProbLossBate(logical(isBadRegression)) = [];
+    subplot(1,2,2)
+    hist(ProbLossBate,20);
+    xlabel('Error rate');
+    ylabel('Rank number');
+    title('Prob error rate distribution of test dataset');
     saveas(h,'Error rate distribution plot');
     saveas(h,'Error rate distribution plot','png');
     close(h);
@@ -325,14 +343,12 @@ if ~isDataOutput
         cd ..;
     end
 else
-%     ProbLoss(logical(isBadRegression)) = [];
+    ProbLoss(logical(isBadRegression)) = [];
     varargout{1} = TestLoss;
-    varargout{2} = [];
-%     varargout{2} = ProbLoss;
+    varargout{2} = ProbLoss;
     if isShuffle
-%         SUFProbLoss(logical(SUFisBadRegression)) = [];
+        SUFProbLoss(logical(SUFisBadRegression)) = [];
         varargout{3} = SUFTestLoss;
-        varargout{4} = [];
-%         varargout{4} = SUFProbLoss;
+        varargout{4} = SUFProbLoss;
     end
 end

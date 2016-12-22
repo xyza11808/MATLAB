@@ -32,12 +32,12 @@ if iscell(behavResults.Action_lickTimeLeft(1))
 %             Lick_bias_side(n)=2;  %indicates no bias side
 %         end
         if isempty(left_lickTime_double) && ~isempty(right_lickTime_double)
-            if min(right_lickTime_double)<behavResults.Time_stimOnset(n);
+            if min(right_lickTime_double)<behavResults.Time_stimOnset(n)
                  Lick_bias_side(n)=1;  %indicates right bias side
             end
         end
         if ~isempty(left_lickTime_double) && isempty(right_lickTime_double)
-            if min(left_lickTime_double)<behavResults.Time_stimOnset(n);
+            if min(left_lickTime_double)<behavResults.Time_stimOnset(n)
                  Lick_bias_side(n)=0;  %indicates left bias side
             end
         end
@@ -79,12 +79,12 @@ else
 %             Lick_bias_side(n)=2;  %indicates no bias side
 %         end
         if isempty(left_lickTime_double) && ~isempty(right_lickTime_double)
-            if min(right_lickTime_double)<behavResults.Time_stimOnset(n);
+            if min(right_lickTime_double)<behavResults.Time_stimOnset(n)
                  Lick_bias_side(n)=1;  %indicates right bias side
             end
         end
         if ~isempty(left_lickTime_double) && isempty(right_lickTime_double)
-            if min(left_lickTime_double)<behavResults.Time_stimOnset(n);
+            if min(left_lickTime_double)<behavResults.Time_stimOnset(n)
                  Lick_bias_side(n)=0;  %indicates left bias side
             end
         end

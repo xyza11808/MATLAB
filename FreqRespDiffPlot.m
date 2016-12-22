@@ -76,11 +76,19 @@ for nTime = 1 : TimeScaleNum
     for nFreq = 1 : FreqTypeNum
         cfreqInds = TrialFreq == FreqType(nFreq);
         cfreqData = SelectData(cfreqInds,:,:);
-        cfreqMeanData = squeeze(mean(cfreqData));
+        if sum(cfreqInds) > 1
+            cfreqMeanData = squeeze(mean(cfreqData));
+        else
+            cfreqMeanData = squeeze(cfreqData);
+        end
         FreqmeanData(nFreq,:,:) = cfreqMeanData;
         
         CDataAll = AlignData(cfreqInds,:,:);
-        AlignedMeanTarace(nFreq,:,:) = squeeze(mean(CDataAll));
+        if size(CDataAll) > 1
+            AlignedMeanTarace(nFreq,:,:) = squeeze(mean(CDataAll));
+        else
+            AlignedMeanTarace(nFreq,:,:) = squeeze(CDataAll);
+        end
     end
     WinData = squeeze(mean(FreqmeanData,3)); % nFreq by nROI
     if isPlot
