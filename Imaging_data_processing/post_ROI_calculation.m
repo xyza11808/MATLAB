@@ -166,7 +166,7 @@ if strcmpi(type,'RF')
     size_freq = length(FreqArray);
     size_DB=length(DB_array);
     if mod(result_size(1),(size_DB*size_freq))
-       fprintf('Trial number cannot be fully divided by freqIntensity product, saved in cell format');
+       fprintf('Trial number cannot be fully divided by freqIntensity product, saved in cell format.\n');
        IsFullyDived = 0;
     else
         IsFullyDived = 1;
@@ -185,13 +185,14 @@ if strcmpi(type,'RF')
     PassOutcome = ones(length(SelectSArray),1);
     save rfSelectDataSet.mat SelectData SelectSArray frame_rate -v7.3
     SoundFreqs = double(sound_array(:,1) > 16000);
+    SessionBoundary = FreqArray(length(FreqArray)/2);
+    TrialTypes = SelectSArray > SessionBoundary;
+    
     %%
-    ROC_check(f_percent_change,SoundFreqs,frame_rate,frame_rate,1.5,'Stim_time_Align');
-     RF2afcClassScorePlot(SelectData,SelectSArray,16000,frame_rate,frame_rate,1.5,1);
-     FreqRespCallFun(SelectData,SelectSArray,ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate);
-     MultiTimeWinClass(SelectData,SelectSArray,PassOutcome,frame_rate,frame_rate,1,0.1);
-     RFTaskclf_accuracy_plot
-     %%
+    
+    TimeCourseStrcSP = TimeCorseROC(SelectData,TrialTypes,frame_rate,frame_rate,[],2,0); 
+     ROIAUCcolorp(TimeCourseStrcSP,1);
+    
      %parameter struc
     V.Ncells = 1;
     V.T = size(f_percent_change,3);
@@ -203,10 +204,19 @@ if strcmpi(type,'RF')
          mkdir('./SpikeData_analysis/');
      end
      cd('./SpikeData_analysis/');
-     
+     TimeCourseStrcSipke = TimeCorseROC(nnspike,TrialTypes,frame_rate,frame_rate,[],2,0); 
+     ROIAUCcolorp(TimeCourseStrcSipke,1);
      MultiTimeWinClass(nnspike,SelectSArray,PassOutcome,frame_rate,frame_rate,1,0.1);
      save EsSpikeSave.mat nnspike SelectSArray frame_rate -v7.3
      cd ..;
+     
+     %%
+     ROC_check(f_percent_change,SoundFreqs,frame_rate,frame_rate,1.5,'Stim_time_Align');
+     RF2afcClassScorePlot(SelectData,SelectSArray,16000,frame_rate,frame_rate,1.5,1);
+     FreqRespCallFun(SelectData,SelectSArray,ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate);
+     MultiTimeWinClass(SelectData,SelectSArray,PassOutcome,frame_rate,frame_rate,1,0.1);
+     RFTaskclf_accuracy_plot
+     
      %%
 %     FreqRespCallFun(f_percent_change(SelectInds,:,:),sound_array(SelectInds,1),ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate,1);
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -234,7 +244,9 @@ if strcmpi(type,'RF')
     
     %%
     if ~IsFullyDived
-        
+        % if the total trial number can not be fully divided by freq and
+        % intensity product, using extra plot
+        UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);
     end
     %%
     %#########################################################################

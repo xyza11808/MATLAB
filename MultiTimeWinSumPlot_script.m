@@ -48,7 +48,7 @@ for nbnb = 1 : m
     fprintf(f,FormatStr,datapath{nbnb});
 end
 fclose(f);
-save SessionDataSum.mat DataSum TimeWinScale TrWinPerf TrWinPerfAll -v7.3
+save SessionDataSum.mat DataSum TimeWinScale TrWinPerf TrWinPerfAll datapath -v7.3
 
 %%
 TrScaleLen = cellfun(@length,TimeWinScale);
@@ -106,18 +106,28 @@ TaskCLassidata = xxtask.DataMatrixAll;
 xxPass = load(fullfile(fp,fn));
 PassTicks = xxPass.xTickScaleLen;
 PassCLassidata = xxPass.DataMatrixAll;
-
-[h,~,~] = MeanSemPlot(TaskCLassidata,TaskTicks,[],'k','LineWidth',1.6);
-[hPlotf,hp,~] = MeanSemPlot(PassCLassidata,PassTicks,h,'r','LineWidth',1.6);
+%
+[h,~,hLine1] = MeanSemPlot(TaskCLassidata,TaskTicks,[],'k','LineWidth',1.6);
+[hPlotf,hp,hLine2] = MeanSemPlot(PassCLassidata,PassTicks,h,'r','LineWidth',1.6);
+line([0 0],[0.4,1],'color',[.8 .8 .8],'LineWidth',1.6,'LineStyle','--');
 set(hp,'facecolor','r','facealpha',0.4);
-
+xlabel('Time (s)');
+ylabel('Accuracy');
+title('Task Passive comparation');
+set(gca,'FontSize',20,'ytick',[0.4,0.6,0.8,1]);
+ylim([0.4 1]);
+legend([hLine1,hLine2],{'Task','Passive'},'FontSize',14);
+saveas(hPlotf,'Task Passive comparation plot');
+saveas(hPlotf,'Task Passive comparation plot','png');
+close(hPlotf);
+save CompSaveResult.mat TaskCLassidata TaskTicks PassCLassidata PassTicks -v7.3
 %%
 % single trace compare plot
-for nTr = 1 : size(PassCLassidatacomp,1)
+for nTr = 1 : size(PassCLassidata,1)
     h = figure;
     hold on;
     plot(TaskTicks,TaskCLassidata(nTr,:),'k','LineWidth',1.6);
-    plot(PassTicks,PassCLassidatacomp(nTr,:),'r','LineWidth',1.6);
+    plot(PassTicks,PassCLassidata(nTr,:),'r','LineWidth',1.6);
     xlabel('Time (s)');
     ylabel('Classification accuracy');
     title(sprintf('Session%d compare plot',nTr));

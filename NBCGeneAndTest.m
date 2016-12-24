@@ -126,22 +126,27 @@ if ~isSingleObs
 else
     nTTr = size(TestingSet,1);
     switch DensityFun
-        case strcmpi(DensityFun,'normal')
-            fptintf('Using normal distribution as probability density function.\n');
-           
+        case {'normal','gaussian'}
+            fprintf('Using normal distribution as probability density function.\n');
+           %%
             % calculate p(x|f) value using normal distribution
+            % may need to normalized to summation equals to 1
             FreqProbTestAll = zeros(nTTr,length(NumFreq));
             for nf = 1 : length(NumFreq)
                 cfDisFuncProb = normcdf(TestingSet,FreqClassMean(nf),FreqClassStd(nf));
                 FreqProbTestAll(:,nf) = cfDisFuncProb(:);
             end
             
+            %%
             % calculate the p(x|c) value using same distribution
+            % may need to normalized to summation equals to 1
             ClassProbTestAll = zeros(nTTr,length(numChoice));
             for nc = 1 : length(numChoice)
                 ccDisFuncProb = normcdf(TestingSet,ChoiceMu(nc),ChoiceSigma(nc));
                 ClassProbTestAll(:,nc) = ccDisFuncProb(:);
             end
+            
+            %%
             classPAll = (CHoiceProb(:))';
             p_xGivenc_pc = ClassProbTestAll .* repmat(classPAll,nTTr,1);
             p_cGivenx = p_xGivenc_pc ./ repmat(sum(p_xGivenc_pc,2),1,length(numChoice)); % nTestTrials-by-numberClass
@@ -151,7 +156,7 @@ else
                 p_cGivenf(nnn,:,:) = p_cGivenx(nnn,:)' * FreqProbTestAll(nnn,:);
             end
             
-        case strcmpi(DensityFun,'ProbKernal')
+        case 'ProbKernal'
             fptintf('Using kernal distribution as probability density function.\n');
             
             % calculate p(x|f) using kernal density function
@@ -175,7 +180,7 @@ else
             for nnn = 1 : nTTr
                 p_cGivenf(nnn,:,:) = p_cGivenx(nnn,:)' * FreqProbTestAll(nnn,:);
             end
-        case strcmpi(DensityFun,'ProbKernalCdf')
+        case 'ProbKernalCdf'
             fptintf('Using kernal distribution as probability density function, but using cdf function.\n');
             
             % calculate p(x|f) using kernal density function

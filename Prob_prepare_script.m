@@ -16,8 +16,8 @@ if SelectInds > 20
 else
     fprintf('The first %d dimensions explains above 90%% of total variance.\n',SelectInds);
 end
-pcaData = scoreT(:,1:SelectInds);
-
+% pcaData = scoreT(:,1:SelectInds);
+pcaData = scoreT(:,1);
 %%
 nIters = 20;
 RightWradFracSum = zeros(nIters,length(unique(TrStimFreq)));

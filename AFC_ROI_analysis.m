@@ -683,6 +683,7 @@ elseif str2double(continue_char)==2
     SessionSumColorplot(data_aligned,start_frame,trial_outcome,frame_rate,[],1);
     save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
     %%
+    Data_pcTrace_script
     LRAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
          behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
          frame_rate,onset_time(NormalTrialInds),0);
@@ -710,7 +711,6 @@ elseif str2double(continue_char)==2
      ROIAUCcolorp(TimeCourseStrcSP,start_frame/frame_rate,[],'Spike train');
      %
      script_for_summarizedPlot;  % call a script for data preparation and call summarized plot function
-     RandomSession
      
     %%
 %     ActiveCellGene(data,behavResults,trial_outcome,frame_rate,1.5);
