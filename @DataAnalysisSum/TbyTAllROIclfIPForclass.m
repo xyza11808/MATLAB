@@ -1,4 +1,4 @@
-function varargout = TbyTAllROIclassInputParse(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin)
+function varargout = TbyTAllROIclfIPForclass(ClassObj)
 % This function will be used for trial by trial classiifcation of trial
 % type, and will try to predict the animal's final choice result
 % RawDataAll can be any kind of aligned data set, and the AlignFrame should
@@ -14,46 +14,25 @@ function varargout = TbyTAllROIclassInputParse(RawDataAll,StimAll,TrialResult,Al
 %       %isDataOutput: whether output current function result
 %       % Yu XIN, 30th, Dec., 2016
 
+RawDataAll = ClassObj.SmoothData;
+StimAll = ClassObj.TrialStims;  % can both be trial types or trial stimulus
+TrialResult = ClassObj.TrialOutcome;
+AlignFrame = ClassObj.AlignedF;
+FrameRate = ClassObj.FrameRate;
+ResultsPara = ClassObj.NeuroCLFStrc;
 
-p = inputParser;
-defaultTimeLen = 1.5;
-defaultIsshuffle = 0;
-defaultIsmodelload = 0;
-defaultIspartialROI = true(size(RawDataAll,2),1);
-defaultTroutcome = 1;
-defaultisDataOutput = 0;
-defaultisErrorCal = 0;
-defaultisDisLogiFit = 0;
-defaultisWeightsave = 0;
-addRequired(p,'RawDataAll',@isnumeric);
-addRequired(p,'StimAll',@isnumeric);
-addRequired(p,'TrialResult',@isnumeric);
-addRequired(p,'AlignFrame',@isnumeric);
-addRequired(p,'FrameRate',@isnumeric);
-addParameter(p,'TimeLen',defaultTimeLen);
-addParameter(p,'isShuffle',defaultIsshuffle);
-addParameter(p,'isLoadModel',defaultIsmodelload);
-addParameter(p,'PartialROIInds',defaultIspartialROI);
-addParameter(p,'TrOutcomeOp',defaultTroutcome);
-addParameter(p,'isDataOutput',defaultisDataOutput);
-addParameter(p,'isErCal',defaultisErrorCal);
-addParameter(p,'isDisLogisFit',defaultisDisLogiFit);
-addParameter(p,'isWeightsave',defaultisWeightsave);
-p.KeepUnmatched = true;
-parse(p,RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin{:});
-
-TimeLength = p.Results.TimeLen;
-isShuffle = p.Results.isShuffle;
-isLoadModel = p.Results.isLoadModel;
-ROIindsSelect = p.Results.PartialROIInds;
-TrOutcomeOp = p.Results.TrOutcomeOp;
-isDataOutput = p.Results.isDataOutput;
-isErrorCal = p.Results.isErCal;
-isDisLogFit = p.Results.isDisLogisFit;
-isWeightDisp = p.Results.isWeightsave;
+TimeLength = ResultsPara.TimeLen;
+isShuffle = ResultsPara.isShuffle;
+isLoadModel = ResultsPara.isLoadModel;
+ROIindsSelect = ResultsPara.PartialROIInds;
+TrOutcomeOp = ResultsPara.TrOutcomeOp;
+isDataOutput = ResultsPara.isDataOutput;
+isErrorCal = ResultsPara.isErCal;
+isDisLogFit = ResultsPara.isDisLogisFit;
+isWeightDisp = ResultsPara.isWeightsave;
 
 isPartialROI = 0;
-if ~sum(strcmpi(p.UsingDefaults,'isPartialROI'))
+if sum(ROIindsSelect) ~= length(ROIindsSelect)
     isPartialROI = 1;
     ROIFraction = sum(ROIindsSelect)/length(ROIindsSelect);
 end
@@ -233,13 +212,13 @@ BaseTraingInds = false(length(UsingStim),1);
 % using given data to train the TbyT model
 % Training ten times and save  all options
 nIters = 1000;
-% if ~isDataOutput
-% %     TrainModel = cell(1000,1);
-%     TrainModelLoss = zeros(nIters,1);
-%     if isDisLogFit
-%         SUFTrainModelLoss = zeros(nIters,1);
-%     end
-% end
+if ~isDataOutput
+%     TrainModel = cell(1000,1);
+    TrainModelLoss = zeros(nIters,1);
+    if isDisLogFit
+        SUFTrainModelLoss = zeros(nIters,1);
+    end
+end
 
 TestLoss = zeros(nIters,1);
 if isDisLogFit
@@ -263,12 +242,12 @@ parfor nTimes = 1 : nIters
     TrainData = UsingData(TrainInds,:);
     TestData = UsingData(TestInds,:);
     TrainM = fitcsvm(TrainData,UsingTrialType(TrainInds));
-%     if ~isDataOutput
-% %         TrainModel{nTimes} = TrainM;
-%         if size(TrainData,1) > 40
-%             TrainModelLoss(nTimes) = kfoldLoss(crossval(TrainM));
-%         end
-%     end
+    if ~isDataOutput
+%         TrainModel{nTimes} = TrainM;
+        if size(TrainData,1) > 40
+            TrainModelLoss(nTimes) = kfoldLoss(crossval(TrainM));
+        end
+    end
     ModelPred = predict(TrainM,TestData);
     TestTypes = UsingTrialType(TestInds);
     TestDataLoss = sum(abs(ModelPred - TestTypes))/length(ModelPred);
@@ -349,12 +328,12 @@ if isShuffle
         TrainData = UsingData(TrainInds,:);
         TestData = UsingData(TestInds,:);
         TrainM = fitcsvm(TrainData,UsingTrialType(TrainInds));
-%         if ~isDataOutput
-%     %         TrainModel{nTimes} = TrainM;
-%             if size(TrainData,1) > 40
-%                 SUFTrainModelLoss(nTimes) = kfoldLoss(crossval(TrainM));
-%             end
-%         end
+        if ~isDataOutput
+    %         TrainModel{nTimes} = TrainM;
+            if size(TrainData,1) > 40
+                SUFTrainModelLoss(nTimes) = kfoldLoss(crossval(TrainM));
+            end
+        end
         ModelPred = predict(TrainM,TestData);
         TestDataLoss = sum(abs(ModelPred - UsingTrialType(TestInds)))/length(ModelPred);
         SUFTestLoss(nTimes) = TestDataLoss;
@@ -392,15 +371,15 @@ end
 if ~isDataOutput
     if isShuffle
          if isDisLogFit
-            save TbyTClass.mat TestLoss ProbLossCell ProbLoss isBadRegression SUFTestLoss SUFProbLoss SUFisBadRegression SUFProbLossCell -v7.3
+            save TbyTClass.mat TrainModelLoss TestLoss ProbLossCell ProbLoss isBadRegression SUFTestLoss SUFProbLoss SUFisBadRegression SUFProbLossCell -v7.3
          else
-             save TbyTClass.mat TestLoss isBadRegression SUFTestLoss SUFisBadRegression -v7.3
+             save TbyTClass.mat TrainModelLoss TestLoss isBadRegression SUFTestLoss SUFisBadRegression -v7.3
          end
     else
         if isDisLogFit
-            save TbyTClassNoSUF.mat TestLoss ProbLossCell ProbLoss isBadRegression -v7.3
+            save TbyTClassNoSUF.mat TrainModelLoss TestLoss ProbLossCell ProbLoss isBadRegression -v7.3
         else
-            save TbyTClassNoSUF.mat TestLoss -v7.3
+            save TbyTClassNoSUF.mat TrainModelLoss TestLoss -v7.3
         end
     end
     if isErrorCal

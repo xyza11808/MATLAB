@@ -134,10 +134,10 @@ end
 
 %plot the percent result
 %temp_f_percent=zeros(size_raw_trials(1),size_raw_trials(3));
-if isdir('.\plot_save\')==0
-    mkdir('.\plot_save\');
+if isdir('./plot_save/')==0
+    mkdir('./plot_save/');
 end
-cd('.\plot_save\');
+cd('./plot_save/');
 
 if strcmpi(type,'RF')
     [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,[],[],2,type,ROIinfo,TrExcludedInds);
@@ -154,7 +154,7 @@ if strcmpi(type,'RF')
 %     end
     disp('please input the RF stimulus file position.\n');
     [fn,fn_path]=uigetfile('*.*');
-    sound_array=textread([fn_path,'\',fn]);
+    sound_array=textread([fn_path,'/',fn]);
     sound_array(exclude_inds,:)=[];
     size_raw_trials=size(f_raw_trials);
     ROI_insite_label(ROIinfo(1));
@@ -179,7 +179,7 @@ if strcmpi(type,'RF')
     %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % extract data for 2afc comparation
     SelectDb = 70;
-    SelectInds = sound_array(:,2) == SelectDb;
+    SelectInds = sound_array(:,2) >= SelectDb;
     SelectData = f_percent_change(SelectInds,:,:);
     SelectSArray = sound_array(SelectInds,1);
     PassOutcome = ones(length(SelectSArray),1);
@@ -187,7 +187,9 @@ if strcmpi(type,'RF')
     SoundFreqs = double(sound_array(:,1) > 16000);
     SessionBoundary = FreqArray(length(FreqArray)/2);
     TrialTypes = SelectSArray > SessionBoundary;
-    
+    DataAnaObj = DataAnalysisSum(SelectData,SelectSArray,frame_rate,frame_rate,1);
+    DataAnaObj.PairedAUCCal(1.5,'Max');
+    DataAnaObj.popuZscoredCorr(1.5,'Mean');
     %%
     
     TimeCourseStrcSP = TimeCorseROC(SelectData,TrialTypes,frame_rate,frame_rate,[],2,0); 
@@ -232,10 +234,10 @@ if strcmpi(type,'RF')
 %     in_site_freTuning_update(f_percent_change,sound_array,export_filename_raw,frame_rate,'simple_fit',CaTrials);
     
  %% 
-    if isdir('.\v_shape_plot\')==0
-        mkdir('.\v_shape_plot\');
+    if isdir('./v_shape_plot/')==0
+        mkdir('./v_shape_plot/');
     end
-    cd('.\v_shape_plot\');
+    cd('./v_shape_plot/');
     %     in_site_freTuning(sound_array,type,CaTrials,'simple_fit');
     in_site_freTuning_update(f_percent_change,sound_array,export_filename_raw,frame_rate,'simple_fit',CaTrials);
 %     in_site_freTuning(sound_array,type,CaTrials,'simple_fit',triger_inds);
@@ -749,34 +751,34 @@ elseif strcmpi(type,'2AFC')
         
         %###############################################temp_block#####################
 %         disp('performing mode fluo change analysis.\n');
-%         if isdir('.\mode_f_change\')==0
-%             mkdir('.\mode_f_change\');
+%         if isdir('./mode_f_change/')==0
+%             mkdir('./mode_f_change/');
 %         end
-%         cd('.\mode_f_change\');
+%         cd('./mode_f_change/');
 %         AFC_ROI_analysis(f_percent_change,session_date,exclude_inds,eval(['CaSignal_',type]),ROI_CF,1,'mode',behavResults,behavSettings,sessiontype);
 %         cd ..;
         cd(cWorkingPath);
         disp('performing baseline fluo change analysis.\n');
-        if isdir('.\mode_f_change\')==0
-            mkdir('.\mode_f_change\');
+        if isdir('./mode_f_change/')==0
+            mkdir('./mode_f_change/');
         end
-        cd('.\mode_f_change\');
+        cd('./mode_f_change/');
         AFC_ROI_analysis(f_percent_change,session_date,exclude_inds,eval(['CaSignal_',type]),ROI_CF,1,'baseline',behavResults,behavSettings,sessiontype,VSDataStrc);
         cd ..;
     elseif choice==2
                 disp('performing mode fluo change analysis.\n');
-                if isdir('.\mode_f_change\')==0
-                    mkdir('.\mode_f_change\');
+                if isdir('./mode_f_change/')==0
+                    mkdir('./mode_f_change/');
                 end
-                cd('.\mode_f_change\');
+                cd('./mode_f_change/');
                  AFC_ROI_analysis(f_percent_change,session_date,exclude_inds,eval(['CaSignal_',type]),[],1,'mode',behavResults,behavSettings,sessiontype);
                  cd ..;
         %
 %         disp('performing baseline fluo change analysis.\n');
-%         if isdir('.\base_f_change\')==0
-%             mkdir('.\base_f_change\');
+%         if isdir('./base_f_change/')==0
+%             mkdir('./base_f_change/');
 %         end
-%         cd('.\base_f_change\');
+%         cd('./base_f_change/');
 %         AFC_ROI_analysis(f_baseline_change,session_date,exclude_inds,eval(['CaSignal_',type]),[],1,'baseline',behavResults,behavSettings,sessiontype);
 %         cd ..;
     end
@@ -787,28 +789,28 @@ end
 %%
 % %pca analysis performed later
 %
-% if isdir('.\pca_save\')==0
-%     mkdir('.\pca_save\');
+% if isdir('./pca_save/')==0
+%     mkdir('./pca_save/');
 % end
-% cd('.\pca_save\');
+% cd('./pca_save/');
 % ROI_pca_ana(f_raw_trials,export_filename_raw);
 % cd ..;
 
 %%
 % %2AFC pca analysis
-% if isdir('.\2AFC_pca_save\')==0
-%     mkdir('.\2AFC_pca_save\');
+% if isdir('./2AFC_pca_save/')==0
+%     mkdir('./2AFC_pca_save/');
 % end
-% cd('.\2AFC_pca_save\');
+% cd('./2AFC_pca_save/');
 % AFC_ROI_analysis(f_raw_trials,export_filename_raw);
 % cd ..;
 
 % %%
 % %making sequence analysis of the raw data
-% if isdir('.\sequence_save\')==0
-%     mkdir('.\sequence_save\');
+% if isdir('./sequence_save/')==0
+%     mkdir('./sequence_save/');
 % end
-% cd('.\sequence_save\');
+% cd('./sequence_save/');
 % ROI_sequence_ana(f_raw_trials,export_filename_raw);
 % cd ..;
 %

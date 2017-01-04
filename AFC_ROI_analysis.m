@@ -583,10 +583,10 @@ if str2double(continue_char)==1
     %data aligned to answer time, and performing following analysis
     %or maybe this part should be aligned to real reward time??? using
     %variabel 'FRewardLickT'
-    if isdir('.\Answer_time_align\')==0
-        mkdir('.\Answer_time_align\');
+    if isdir('./Answer_time_align/')==0
+        mkdir('./Answer_time_align/');
     end
-    cd('.\Answer_time_align\');
+    cd('./Answer_time_align/');
 %     sequence_analysis(data,frame_rate,session_name(19:end),behavResults);
     AnsAlignData=Reward_Get_TimeAlign(data,lick_time_struct,behavResults,behavSettings,trial_outcome,frame_rate,imaging_time); %output is a three field variable with: Data, TrialType, AlignFrame
 %     AnsAlignData=Reward_Get_TimeAlign(data,lick_time_struct,behavResults,behavSettings,trial_outcome,frame_rate,imaging_time,0);  % generate data only
@@ -681,9 +681,11 @@ elseif str2double(continue_char)==2
     end
     
     SessionSumColorplot(data_aligned,start_frame,trial_outcome,frame_rate,[],1);
+    Partitioned_neurometric_prediction 
     save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
-    %%
     Data_pcTrace_script
+    
+    %%
     LRAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
          behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
          frame_rate,onset_time(NormalTrialInds),0);
@@ -721,7 +723,15 @@ elseif str2double(continue_char)==2
 %          behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
 %          frame_rate,onset_time(NormalTrialInds));
     SignalCorr2afc(data_aligned(NormalTrialInds,:,:),trial_outcome(NormalTrialInds),behavResults.Stim_toneFreq(NormalTrialInds),start_frame,frame_rate,1);
-    
+    popuROIpairCorr(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate,[],'Max');
+   %%
+    % class define session and class based analysis
+    DataAnaObj = DataAnalysisSum(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate,1);
+    if RandomSession
+        DataAnaObj.PairedAUCCal(1.5);
+    end
+    DataAnaObj.popuZscoredCorr(1.5,'Mean');
+    %%
     FlickAnaFun(data,FLickT,FlickInds,TrialTypes,trial_outcome,frame_rate,1.5);
 %      ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,1.5,'Stim_time_Align');
 %     TimeCorseROC(data_aligned,TrialTypes(NormalTrialInds),start_frame,frame_rate);  %cumulated ROC plot
@@ -739,20 +749,29 @@ elseif str2double(continue_char)==2
           ChoiceProbCal(smooth_data,behavResults.Stim_toneFreq,behavResults.Action_choice,1.5,start_frame,frame_rate,16000);
           %%
 %           SessionSumColorplot(data_aligned,start_frame,trial_outcome,frame_rate,[],1);
-          RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
-          multiCClass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5)
-          TbyTAllROIclassInputParse(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,'TimeLen',1);
+          if isempty(radom_inds)
+                radom_inds = pure_tone_inds;
+          end
+          TbyTAllROIclassInputParse(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,...
+              'isDataOutput',0,'isErCal',1,'TimeLen',1,'TrOutcomeOp',1,'isWeightsave',1);
           FracTbyTPlot(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,AUCDataAS,...
               1.5,1,1);
           
           MultiTimeWinClass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
 %           FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame,[],1);
-          FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame);         
+          if RandomSession
+            RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
+            multiCClass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5);
+            FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame);         
+          end
           %%
           if ~isdir('./EM_spike_analysis/')
               mkdir('./EM_spike_analysis/');
           end
           cd('./EM_spike_analysis/');
+          if ~exist('nnspike','var')
+             nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
+          end
            TbyTAllROIclass(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
            FracTbyTPlot(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,AUCDataAS,...
               1.5,1,1);
@@ -882,10 +901,10 @@ elseif str2double(continue_char)==2
     
     
     %plot the 2-D color map with a new function
-%     if ~isdir('.\alignment_plot_save\')
-%         mkdir('.\alignment_plot_save\');
+%     if ~isdir('./alignment_plot_save/')
+%         mkdir('./alignment_plot_save/');
 %     end
-%     cd('.\alignment_plot_save\');
+%     cd('./alignment_plot_save/');
 %     session_plot(data_aligned,stim_type_freq,session_date,plot_data_inds,frame_rate,align_time_point);
 %     
 %     cd ..;

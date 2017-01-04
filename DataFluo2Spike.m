@@ -10,9 +10,12 @@ P.lam = 20;
 for nROI = 1 : nROIs
     cROIdata = squeeze(DataAligned(:,nROI,:));
     cStd = std(reshape(cROIdata',[],1));
+    if isnan(cStd)
+        error('Input data cannot contains nan value.');
+    end
     ROIstd(nROI) = cStd;
     P.sig = cStd;
-    parfor nTr = 1 : nTrials
+    for nTr = 1 : nTrials
         nTrace = cROIdata(nTr,:);
         nsTrace = smooth(nTrace,11,'rloess');
 %         nsTrace = zscore(nsTrace);

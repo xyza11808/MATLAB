@@ -24,11 +24,14 @@ RightMeanTrace = squeeze(mean(RightMeanData));
 
 LeftErroMean = squeeze(mean(FSDataNorm(LeftErrorInds,:,:)));
 RightErroMean = squeeze(mean(FSDataNorm(RightErroInds,:,:)));
+
 %%
 if ~isdir('./DimRed_Resplot/')
     mkdir('./DimRed_Resplot/');
 end
 cd('./DimRed_Resplot/');
+
+save FactorAnaData.mat FSDataNorm trial_outcome behavResults LeftCorrInds LeftErrorInds RightCorrInds RightErroInds -v7.3
 
 h_meanLine = figure('position',[200 200 1000 800]);
 hold on
@@ -122,15 +125,80 @@ plot(xTimes,Rightmean,'r','LineWidth',2);
 plot(xTimes,mean(cLRIndexSumNor(LeftErrorInds,:)),'b','LineStyle','--');
 plot(xTimes,mean(cLRIndexSumNor(RightErroInds,:)),'r','LineStyle','--');
 AxisScale = axis;
+text(StartTime,0.7*AxisScale(4),sprintf('nErro = %d',sum(LeftErrorInds)),'color','b','HorizontalAlignment','right');
+text(StartTime,0.6*AxisScale(4),sprintf('nErro = %d',sum(RightErroInds)),'color','r','HorizontalAlignment','right');
 line([StartTime StartTime],[AxisScale(3) AxisScale(4)],'color',[.8 .8 .8],'lineStyle','--','LineWidth',2);
 ylim(AxisScale(3:4));
 xlim([0 xTimes(end)]);
+title('Selection index');
+xlabel('Time(s)');
+ylabel('Selection index');
 set(gca,'FontSize',20);
-%
+
+%%
 saveas(hsf,'LR selection index plot');
 saveas(hsf,'LR selection index plot','png');
 close(hsf);
+save MeanPlotData.mat xTimes Leftmean Rightmean cLRIndexSumNor LeftErrorInds RightErroInds LeftCorrInds RightCorrInds -v7.3
 
+%%
+% calculate the error and correct trials mean index trace
+LeftCorrDataAll = cLRIndexSumNor(LeftCorrInds,:);
+RightCorrDataAll = cLRIndexSumNor(RightCorrInds,:);
+LeftErroDataAll = cLRIndexSumNor(LeftErrorInds,:);
+RightErroDataAll = cLRIndexSumNor(RightErroInds,:);
+save TypeDataSave.mat LeftCorrDataAll RightCorrDataAll LeftErroDataAll RightErroDataAll start_frame frame_rate -v7.3
+LeftCorrErroDiff = mean(LeftErroDataAll) - mean(LeftCorrDataAll);
+RightCorrErroDiff = mean(RightCorrDataAll) - mean(RightErroDataAll);
+% NorSensoryPercLeft = LeftCorrErroDiff./abs(mean(LeftCorrDataAll));
+% NorSensoryPercRight = RightCorrErroDiff./abs(mean(RightCorrDataAll));
+
+h_CorrErroDif = figure('position',[200 200 1000 800]);
+hold on;
+plot(xTimes,LeftCorrErroDiff,'b','LineWidth',1.6);
+plot(xTimes,RightCorrErroDiff,'r','LineWidth',1.6);
+AxisScale = axis;
+line([StartTime StartTime],[AxisScale(3) AxisScale(4)],'color',[.8 .8 .8],'lineStyle','--','LineWidth',2);
+ylabel('Time (s)');
+xlabel('Sensory percent')
+title('Sensory and choice explaination of index');
+set(gca,'FontSize',20);
+saveas(h_CorrErroDif,'sensory contribution to index value');
+saveas(h_CorrErroDif,'sensory contribution to index value','png');
+close(h_CorrErroDif);
+
+%%
+% calculate the choice contribution to correct response component
+TimeWin = 1.5;
+FrameScale = [(start_frame+1),(start_frame + round(1.5*frame_rate))];
+LeftErroPeakMean = mean(mean(LeftErroDataAll(:,FrameScale(1):FrameScale(2))));
+LeftCorrPeakMean = mean(mean(LeftCorrDataAll(:,FrameScale(1):FrameScale(2))));
+RightCorrPeakMean = mean(mean(RightCorrDataAll(:,FrameScale(1):FrameScale(2))));
+RightErroPeakMean = mean(mean(RightErroDataAll(:,FrameScale(1):FrameScale(2))));
+
+RightstackFrac = [(RightCorrPeakMean - RightErroPeakMean), (RightErroPeakMean - LeftCorrPeakMean)] / (RightCorrPeakMean - LeftCorrPeakMean);
+LeftstackFrac = [(LeftErroPeakMean - LeftCorrPeakMean), (RightCorrPeakMean - LeftErroPeakMean)] / (RightCorrPeakMean - LeftCorrPeakMean);
+LRThresValue = RightCorrPeakMean / (RightCorrPeakMean - LeftCorrPeakMean);
+
+%%
+hstack = figure('position',[200 200 1000 800]);
+baxes = bar([1,2],[LeftstackFrac;RightstackFrac],'stacked','BarWidth',0.4);
+set(baxes(1),'FaceColor','c','EdgeColor','none');
+set(baxes(2),'FaceColor','y','EdgeColor','none');
+set(gca,'xtick',[1,2],'xticklabel',{'Left Mean','Right Mean'});
+xlim([0 3]);
+line([0 3],[LRThresValue LRThresValue],'color',[.7 .7 .7],'LineWidth',2,'lineStyle','--');
+text(0,(LRThresValue+0.05),'Thres','HorizontalAlignment','left','FontSize',15);
+set(gca,'ytick',[0.2,0.8],'yticklabel',{'Prefer sensory','Prefer Choice'});
+set(gca,'FontSize',20,'box','off','TickLength',[0;0]);
+title('Sensory Choice Preference');
+saveas(hstack,'Sensory choice perference plot');
+saveas(hstack,'Sensory choice perference plot','png');
+save SensoyChoicePrefer.mat LeftstackFrac RightstackFrac LeftErroPeakMean LeftCorrPeakMean RightCorrPeakMean RightErroPeakMean -v7.3
+
+close(hstack);
+% ylabel('')
+%%
 cd ..;
 %%
 % hold on;

@@ -33,11 +33,13 @@ for nROI = 1 : nROIs
     Coloraxis = subplot(numDB,2,1:2:(numDB*2));
     clim = [0 min([300,max(cROIdata(:))])];
     imagesc(cROIdata,clim);
+    set(gca,'xtick',xTicks,'xticklabel',Ticklabel);
     cAxisPos = get(gca,'position');
+    xlabel('Time(s)');
     colorbar('westoutside');
     set(Coloraxis,'position',cAxisPos);
     patch([StimOnF,StimOffF,StimOffF,StimOnF],[0.5 0.5 (nTrials+0.5) (nTrials+0.5)],1,'FaceColor','g','EdgeColor','none','facealpha',0.4);
-    set(gca,'FontSize',20);
+    set(gca,'FontSize',16);
     
     for nDBType = 1 : numDB
         for nFreqtype = 1 : numFreq

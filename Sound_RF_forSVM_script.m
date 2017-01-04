@@ -294,8 +294,8 @@ fityAll=(rescaleB-rescaleA)*(difscore-min(difscore))./(max(difscore)-min(difscor
 % value on one side of the boundary
 
 
-save RFpcaResult.mat LeftTestSet LeftTrainingSet RightTestSet RightTrainingSet CSVNmodel ErrorRate scoreAll fityAll OctConsider ...
-    BehavFreq Corry BehavOctave -v7.3
+save RFpcaResult.mat fityAll OctConsider BehavFreq Corry BehavOctave -v7.3
+save rfCLFmodelsave.mat LeftTestSet LeftTrainingSet RightTestSet RightTrainingSet CSVNmodel ErrorRate scoreAll -v7.3
 
 hclass = figure;
 hold on;

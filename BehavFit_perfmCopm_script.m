@@ -7,15 +7,23 @@ MeanPerform = [];
 InputData = {};
 SessionCenter = [];
 SelectOctAll = [];
+SelectBehavAll = [];
+SelectFitAll = [];
+SelectbfitAll = [];
+SelectbrealAll = [];
+StimTypesAll = [];
+DataAll = {};
 while ~strcmpi(add_char,'n')
     [fn ,fp,~] = uigetfile('randCurveFit.mat','Please Select your behavior and model compare data');
     cd(fp);
     UsedNamePath(m) = {fullfile(fp,fn)};
     xx = load(fullfile(fp,fn));
+    DataAll{m} = xx;
     OctDiff = max(xx.Octavex) - min(xx.Octavex);
     SelectOctAll(m,:) = xx.Octavex;
+    
     if OctDiff < 2
-        fprintf('Current Session Frequency isn''t includes training frequency, using all frequencies for calculation');
+        fprintf('Current Session Frequency isn''t includes training frequency, using all frequencies for calculation.\n');
         ConsiderInds = true(size(xx.Octavex));
     else
         ConsiderInds = true(size(xx.Octavex));
@@ -33,11 +41,21 @@ while ~strcmpi(add_char,'n')
     SelectOct = xx.Octavex(ConsiderInds);
     SelectBehav = xx.realy;
     SelectFit = xx.fityAll;
+    SelectbfitAll(m,:) = xx.bfit;
+    SelectbrealAll(m,:) = xx.breal;
+    SelectBehavAll(m,:) = SelectBehav;
+    SelectFitAll(m,:) = SelectFit;
+
     HalfLength = length(SelectOct)/2;
     SelectBehav(1:HalfLength) = 1 - SelectBehav(1:HalfLength);
     SelectFit(1:HalfLength) = 1 - SelectFit(1:HalfLength);
     MeanPerform(m,1:2) = [mean(SelectBehav),mean(SelectFit)];
     InputData(m,1:2) = {SelectBehav,SelectFit};
+    
+    yy = load('ModelPlotData.mat');
+    StimTypes = yy.CorrStimTypeTick;  % kHz value
+    StimTypesAll(m,:) = StimTypes;
+    
     add_char = input('Do you want to add another session data?\n','s');
     m = m + 1;
 end
@@ -46,10 +64,11 @@ end
 m=m-1;
 Savepath = uigetdir(pwd,'Please select a folder to save current result');
 cd(Savepath);
-save ModelBehavComp.mat UsedNamePath MeanPerform InputData SessionCenter SelectOctAll -v7.3
+save ModelBehavComp.mat UsedNamePath MeanPerform InputData SessionCenter SelectOctAll DataAll -v7.3
+save ModelPoints.mat SelectOctAll SelectBehavAll SelectFitAll SelectbrealAll SelectbfitAll StimTypesAll -v7.3
 fID = fopen('SVMBahevpath.txt','w+');
 formatSpec = '%s\r\n';
-fprintf(fID,'Data path used for model and behav performance comparament:\n');
+fprintf(fID,'Data path used for model and behav performance comparament:\r\n');
 for NSession = 1 : m
     cDataPath = UsedNamePath{NSession};
     fprintf(fID,formatSpec,cDataPath);
@@ -159,3 +178,44 @@ set(gca,'fontsize',20);
 hold off
 saveas(fcomp,'BehavModelPerfSingle Compare bar','png');
 saveas(fcomp,'BehavModelPerfSingle Compare bar','fig');
+
+%%
+% plot every single session psychometrical curve
+if ~isdir('./Single_session_plots/')
+    mkdir('./Single_session_plots/');
+end
+cd('./Single_session_plots/');
+
+SessionNum = m;
+modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));
+for nSession = 1 : SessionNum
+    cOctave = SelectOctAll(nSession,:);
+    cBehavPoints = SelectBehavAll(nSession,:);
+    cFitPoints = SelectFitAll(nSession,:);
+    cBehavParab = SelectbrealAll(nSession,:);
+    cFitParab = SelectbfitAll(nSession,:);
+    cRealStim = StimTypesAll(nSession,:);
+    
+    Curve_x = linspace(min(cOctave),max(cOctave),500);
+    Curve_realy = modelfun(cBehavParab,Curve_x);
+    Curve_fity = modelfun(cFitParab,Curve_x);
+    
+    h2CompPlot=figure('position',[300 150 1100 900],'PaperpositionMode','auto');
+    hold on;
+    plot(Curve_x,Curve_fity,'r','LineWidth',4);
+    plot(Curve_x,Curve_realy,'k','LineWidth',4);
+    scatter(cOctave,cBehavPoints,80,'k','o','LineWidth',2);
+    scatter(cOctave,cFitPoints,80,'r','o','LineWidth',2);
+    legend('logi\_fitc','logi\_realc','Real\_data','Fit\_data','location','southeast');
+    legend('boxoff');
+    set(gca,'xtick',cOctave,'xticklabel',cRealStim);
+    title('Real and fit data comparation');
+    xlabel('Tone Frequency (kHz)');
+    ylabel('Fraction choice (R)');
+    ylim([0 1]);
+    set(gca,'FontSize',18);
+    saveas(h2CompPlot,sprintf('Session %d behav and model compare plot',nSession));
+    saveas(h2CompPlot,sprintf('Session %d behav and model compare plot',nSession),'png');
+    close(h2CompPlot);
+end
+cd ..;

@@ -186,7 +186,8 @@ if isplot
     
     %%
     %left trials response compared with baseline levels
-    SelectData=AlignedData(:,:,(alignpoint:floor(alignpoint+FrameRate*TimeLength)));
+%     SelectData=AlignedData(:,:,(alignpoint:floor(alignpoint+FrameRate*TimeLength)));
+    SelectData=AlignedData;
     % TraceDatapoints=size(SelectData,3);
 %     if ~isdir('./Left_resp2base_roc/')
 %         mkdir('./Left_resp2base_roc/');

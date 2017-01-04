@@ -2,11 +2,12 @@ function [DataOutput,FreqTypes] = SessionDataExtra(AlignedData,TrialResult,Trial
 % this function is specifically used for extracting data from input data
 % set and return a formalized matrix data so that multisession data can be
 % put together
-
-if sum(NormalInds)
-    AlignedData = AlignedData(NormalInds,:,:);
-    TrialResult = TrialResult(NormalInds);
-    TrialStim = TrialStim(NormalInds);
+if ~isempty(NormalInds)
+    if sum(NormalInds)
+        AlignedData = AlignedData(NormalInds,:,:);
+        TrialResult = TrialResult(NormalInds);
+        TrialStim = TrialStim(NormalInds);
+    end
 end
 if ~isequal(length(TrialStim),size(AlignedData,1),length(TrialResult))
     error('Input data size mismatch, please check your input data');
@@ -20,10 +21,17 @@ DataUsing = SelectTrData(:,:,FrameScale(1):FrameScale(2));
 DataUsingResp = max(DataUsing,[],3);
 
 FreqTypes = unique(SelectTrStim);
+fprintf('Mean Freq type Trials number is %.1f.\n',length(SelectTrStim)/length(FreqTypes));
+disp((FreqTypes(:))');
+xx = input('Please Select target Frequency inds:\n','s');
+SelecXinds = str2num(xx);
+FreqTypes = FreqTypes(SelecXinds);
 FreqNum = length(FreqTypes);
+
 if mod(FreqNum,2)
     error('Input Trial stims should be an even number, please check your input data');
 end
+%%
 DataOutput = zeros(FreqNum,SingleStimTrNum,size(DataUsingResp,2));
 for nFreq = 1 : FreqNum
     cFreq = FreqTypes(nFreq);

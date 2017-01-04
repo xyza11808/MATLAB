@@ -34,15 +34,40 @@ if nargin > 8
     end
 end
 
+TrialUseTypeOp = 1;
+if nargin > 9
+    if ~isempty(varargin{5})
+        TrialUseTypeOp = varargin{5};
+    end
+end
+
+ifErrorChoiceCorrect = 0;
+switch TrialUseTypeOp
+    case 0
+        CorrectInds=TrialResult ~= 2;
+        ifErrorChoiceCorrect = 1;
+    case 1
+        CorrectInds=TrialResult == 1;
+    case 2
+        CorrectInds=true(1,length(TrialResult));
+        ifErrorChoiceCorrect = 1;
+    otherwise
+        error('Error trial outcomme type selection choice.');
+end
 %%
 RawDataAll = RawDataAll(:,ROIindsSelect,:);
 DataSize=size(RawDataAll);
-% CorrectInds=TrialResult==1;
-% CorrectInds=true(1,length(TrialResult));
-CorrectInds=TrialResult == 1;  %using all correct trials
+
 CorrTrialStim=StimAll(CorrectInds);
 CorrTrialData=RawDataAll(CorrectInds,:,:);
 CorrStimType=unique(CorrTrialStim);
+CorrTrialTypes = CorrTrialStim > CorrStimType(length(CorrStimType)/2);
+CorrTrialResults = CorrTrialTypes(CorrectInds);
+if ifErrorChoiceCorrect
+    ErrorInds = CorrTrialResults == 0;
+    CorrTrialResults(ErrorInds) = 1 - CorrTrialResults(ErrorInds);   % real behav choice used for training tag
+end
+
 ALLROIMeanData=zeros(length(CorrStimType),DataSize(2));
 ALLROIMeanTrial=zeros(length(CorrStimType),DataSize(2));
 ALLROIMeanTestData=zeros(length(CorrStimType),DataSize(2));
@@ -194,6 +219,7 @@ for CVNumber=1:100
         TempStim=CorrStimType(n);
         SingleStimInds=CorrTrialStim==TempStim;
         SingleStimDataAll=ConsideringData(SingleStimInds,:,:);
+        SingleStimTrialResult = CorrTrialResults(SingleStimInds);
         TrialNum=size(SingleStimDataAll,1);
         SampleTrial=randsample(TrialNum,floor(TrialNum*0.8));
         RawTrialInds=zeros(1,TrialNum);
@@ -202,11 +228,13 @@ for CVNumber=1:100
         RawTestInds=~RawSampleInds;
 
         SingleStimData=SingleStimDataAll(RawSampleInds,:,:);
+%         cStimTrChoiceTrain = SingleStimTrialResult(RawSampleInds);
         TrialMeanData=squeeze(mean(SingleStimData));
         ROIMeanData=max(TrialMeanData,[],2);
         ALLROIMeanData(n,:)=ROIMeanData';
         
         SingleTestData=SingleStimDataAll(RawTestInds,:,:);
+%         cStimTrChoiceTest = SingleStimTrialResult(RawTestInds);
         if sum(RawTestInds) <= 1
             warning('Too few test trials esist, the calculation result might be affected.');
             TrialTestData=squeeze(SingleTestData);
@@ -524,7 +552,7 @@ if ~isempty(inds_excludefit)
 end
 legend('logi\_fitc','logi\_realc','Real\_data','Fit\_data','location','southeast');
 legend('boxoff');
-title('Real and fit data comparation');
+title('Behavior and  neuron comparation');
 xlabel('Tone Frequency (kHz)');
 ylabel('Fraction choice (R)');
 ylim([0 1]);

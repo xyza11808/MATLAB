@@ -22,6 +22,7 @@ if ~isOldLoad
     PavClassDataSum = [];
     FracMaxAUC = [];
     SUFClfDataSum = [];
+    SessionAUCAll = {};
 else
    m = length(DataSum) + 1;
 end
@@ -36,6 +37,7 @@ while ~strcmpi(add_char,'n')
         PavClassDataSum(m,:) = 1 - mean(xx.RFFracClassPerfAll,2);
         SUFClfDataSum(m,:) = 1 - mean(xx.SUFVlassScore,2);
         FracMaxAUC(m,:) = xx.FracMaxAUCV;
+        SessionAUCAll{m} = xx.ROIauc;
         if m == 1
             ROIfrac = xx.FracROIValue(:);
         end
@@ -54,7 +56,7 @@ for nbnb = 1 : m
     fprintf(f,FormatStr,datapath{nbnb});
 end
 fclose(f);
-save SessionDataSum.mat DataSum TaskClassDataSum PavClassDataSum SUFClfDataSum FracMaxAUC ROIfrac -v7.3
+save SessionDataSum.mat DataSum TaskClassDataSum PavClassDataSum SUFClfDataSum FracMaxAUC ROIfrac SessionAUCAll -v7.3
 %%
 TaskMeanPerf = mean(TaskClassDataSum);
 TaskPerfSEM = std(TaskClassDataSum)/sqrt(size(TaskClassDataSum,1));
@@ -85,11 +87,15 @@ h3 = plot(ROIfrac,SUFTaskMeanPerf,'color',[.5 .5 .5],'LineWidth',2);
 set(gca,'xticklabel',[]);
 ylims = get(gca,'ylim');
 %
+% ROCmean = zeros(5,1);
+% k = 1;
 for nxnx = 0.2:0.2:1
     cFrac = nxnx;
     FracMean = MeanMaxAUC(abs(ROIfrac - cFrac) < 0.01);
+%     ROCmean(k) = FracMean;
     text('Units', 'Data', 'Position', [cFrac, ylims(1) - 0.025], 'HorizontalAlignment', 'center', 'String',num2str(FracMean,'%.2f'),'FontSize',14);
     text('Units', 'Data', 'Position', [cFrac, ylims(1) - 0.01], 'HorizontalAlignment', 'center', 'String',num2str(cFrac,'%.2f'),'FontSize',14);
+%     k = k + 1;
 end
 text('Units', 'Data', 'Position', [0 ylims(1) - 0.025],'HorizontalAlignment', 'center','String','Mean MaxAUC','FontSize',8);
 text('Units', 'Data', 'Position', [0 ylims(1) - 0.01],'HorizontalAlignment', 'center','String','Cell Frac.','FontSize',8);
@@ -99,6 +105,7 @@ set(gca,'ytick',0.5:0.25:1);
 % xlabel('Cell Frac');
 ylabel('Classfication accuracy');
 title('Task vs passive compare plot');
+% line(0.2:0.2:1,ROCmean,'color',[.8 .8 .8],'LineWidth',1.6,'LineStyle','--');
 set(gca,'FontSize',20);
 legend([h1,h2,h3],{'Task','Passive','Task Shuffle'},'Location','northwest','FontSize',14);
 saveas(h,'Task vs passive FracClassification plot');

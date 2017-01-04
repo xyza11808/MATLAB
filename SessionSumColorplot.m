@@ -39,6 +39,8 @@ for nmnm = 1 : nROIs
 end
 [~,maxInds] = max(DataNor,[],2);
 [~,SortRowInds] = sort(maxInds);
+xticks = 0:FrameRate:size(DataNor,2);
+xtickalabels = xticks/FrameRate;
 
 if ~isdir('./Session_Sum_plot/')
     mkdir('./Session_Sum_plot/');
@@ -50,8 +52,9 @@ if isplot
     imagesc(DataNor(SortRowInds,:));
     line([alignF,alignF],[0.5,nFrames+0.5],'color',[.8 .8 .8],'LineWidth',1.8);
     colorbar;
-    xlabel('nframes');
+    xlabel('Time (s)');
     ylabel('nROIs');
+    set(gca,'xtick',xticks,'xticklabel',xtickalabels);
     title('Session mean response color plot');
     saveas(h_colorall,'Session Mean Resp Color plot');
     saveas(h_colorall,'Session Mean Resp Color plot','png');

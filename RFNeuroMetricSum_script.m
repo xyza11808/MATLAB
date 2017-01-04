@@ -36,7 +36,7 @@ while ~strcmpi(add_char,'n')
         LeftInds = xx.OctConsider < 0;
         RealCorrRate = xx.fityAll;
         RealCorrRate(LeftInds) = 1 - RealCorrRate(LeftInds); % convert the rightward fraction into correct rate
-        NearBoundarySounds = abs(xx.OctConsider) < 1;
+        NearBoundarySounds = abs(xx.OctConsider) < 0.999;
         NearBoundCorr = mean(RealCorrRate(NearBoundarySounds));
         SumSessionOctave{m} = xx.OctConsider(NearBoundarySounds);
         SumSessionPerf{m} = RealCorrRate(NearBoundarySounds);
@@ -79,7 +79,7 @@ set(gca,'ytick',[0 0.5 1]);
 ylim([0 1.1]);
 title('RF Neuron compare with behavior');
 set(gca,'FontSize',20);
-[h,p] = ttest(SumBehavCorrMean,SumSessionMean);
+[h,p] = ttest(SumBehavCorrMean,SumSessionMean);  % vartest2 for equal variance test
 text(1.5,0.9,sprintf('p = %.4f',p),'HorizontalAlignment','center','FontSize',14);
 saveas(h_RFAll,'RF and behavior compare plot2');
 saveas(h_RFAll,'RF and behavior compare plot2','png');
