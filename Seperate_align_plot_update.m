@@ -448,7 +448,7 @@ else
         end
     end
     DeleteVName=who('Current*');
-    for n=1:length(DeleteVName);
+    for n=1:length(DeleteVName)
         clearvars(DeleteVName{n});
     end
     xtick=[0 frame_range(1) sum(frame_range)];

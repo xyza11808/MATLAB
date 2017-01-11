@@ -30,7 +30,7 @@ if isplot
     ylabel('Response');
     title({'Linear regression result';sprintf('R-Squr = %.3f, Slope = %.3f',Rsqr,CoefValue)});
     legend([h1,h2],{'Real Data','Fit Data'},'Location','southeast');
-    set(gca,'FontSize',20);
+    set(gca,'FontSize',18);
 end
 if nargout > 0
     varargout{1} = tb1;

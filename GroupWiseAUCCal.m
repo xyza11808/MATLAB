@@ -23,13 +23,13 @@ end
 
 %##########################################################
 % for passive data analysis
-% fprintf('Please select the currect stimulus inds that will used for summarized analysis.\n');
-% disp((cSessionStim(:))');
-% StimInds = input('Inds Seperated by , :\n','s');
-% StimIndsNum = str2num(StimInds); %#ok<ST2NM>
+fprintf('Please select the currect stimulus inds that will used for summarized analysis.\n');
+disp((cSessionStim(:))');
+StimInds = input('Inds Seperated by , :\n','s');
+StimIndsNum = str2num(StimInds); %#ok<ST2NM>
 % ##############################################################
-% for taskdata analysis
-StimIndsNum = 1 : length(cSessionStim);
+% % for taskdata analysis
+% StimIndsNum = 1 : length(cSessionStim);
 % #############################################################
 
 cSessionStim = cSessionStim(StimIndsNum);

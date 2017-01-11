@@ -4,28 +4,6 @@ function varargout = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,F
 % RawDataAll can be any kind of aligned data set, and the AlignFrame should
 % be the correponded aligned frame position
 
-% p = inputParser;
-% defaultTimeLen = 1.5;
-% defaultIsshuffle = 0;
-% defaultIsmodelload = 0;
-% defaultIspartialROI = 0;
-% defaultTroutcome = 1;
-% defaultisDataOutput = 0;
-% addRequired(p,'RawDataAll',@isnumeric);
-% addRequired(p,'StimAll',@isnumeric);
-% addRequired(p,'TrialResult',@isnumeric);
-% addRequired(p,'AlignFrame',@isnumeric);
-% addRequired(p,'FrameRate',@isnumeric);
-% addParameter(p,'TimeLen',defaultTimeLen);
-% addParameter(p,'isShuffle',defaultIsshuffle);
-% addParameter(p,'isLoadModel',defaultIsmodelload);
-% addParameter(p,'isPartialROI',defaultIspartialROI);
-% addParameter(p,'TrOutcomeOp',defaultTroutcome);
-% addParameter(p,'isDataOutput',defaultisDataOutput);
-% p.KeepUnmatched = true;
-% parse(p,RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin{:});
-
-%Time scale selection, default is 1.5 after aligned frame
 if ~isempty(varargin{1})
     TimeLength=varargin{1};
 else

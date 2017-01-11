@@ -25,6 +25,7 @@ defaultisDataOutput = 0;
 defaultisErrorCal = 0;
 defaultisDisLogiFit = 0;
 defaultisWeightsave = 0;
+defaultisTrModulate = [];
 addRequired(p,'RawDataAll',@isnumeric);
 addRequired(p,'StimAll',@isnumeric);
 addRequired(p,'TrialResult',@isnumeric);
@@ -39,6 +40,7 @@ addParameter(p,'isDataOutput',defaultisDataOutput);
 addParameter(p,'isErCal',defaultisErrorCal);
 addParameter(p,'isDisLogisFit',defaultisDisLogiFit);
 addParameter(p,'isWeightsave',defaultisWeightsave);
+addParameter(p,'isModulate',defaultisTrModulate);
 p.KeepUnmatched = true;
 parse(p,RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin{:});
 
@@ -51,6 +53,7 @@ isDataOutput = p.Results.isDataOutput;
 isErrorCal = p.Results.isErCal;
 isDisLogFit = p.Results.isDisLogisFit;
 isWeightDisp = p.Results.isWeightsave;
+IsModulationTrs = p.Results.isModulate;
 
 isPartialROI = 0;
 if ~sum(strcmpi(p.UsingDefaults,'isPartialROI'))

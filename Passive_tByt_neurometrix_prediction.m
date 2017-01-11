@@ -1,21 +1,21 @@
 % scripts for passive data trial-by-Trial trial choice decoding
 Boundary = 16000;
 PassSounds = unique(SelectSArray);
-presumedTrialTypes = SelectSArray > Boundary;
+presumedTrialTypes = double(SelectSArray > Boundary);
 
 %%
 TimeScale = 1.5;
 if length(TimeScale) == 1
-    FrameScale = sort([(start_frame+1),(start_frame + round(TimeScale*frame_rate))]);
+    FrameScale = sort([(frame_rate+1),(frame_rate + round(TimeScale*frame_rate))]);
 elseif length(TimeScale) == 2
-    FrameScale = sort([(start_frame + round(TimeScale(1)*frame_rate)),(start_frame + round(TimeScale(2)*frame_rate))]);
+    FrameScale = sort([(frame_rate + round(TimeScale(1)*frame_rate)),(frame_rate + round(TimeScale(2)*frame_rate))]);
 end
 RespData = max(SelectData(:,:,FrameScale(1):FrameScale(2)),[],3);
 
 %%
 [nTrs,nROI] = size(RespData);
 FoldsRange = 10:25;
-foldLen = length(foldsRange);
+foldLen = length(FoldsRange);
 IterPredChoice = zeros(foldLen,nTrs);
 for nIter = 1 : foldLen
     cflods = FoldsRange(nIter);
@@ -43,7 +43,7 @@ if ~isdir('./Pass_pesudoChoice_pred/')
 end
 cd('./Pass_pesudoChoice_pred/');
 
-TrialTypeMatrix = repmat((TrialTypes(:))',foldLen,1);
+TrialTypeMatrix = repmat((presumedTrialTypes(:))',foldLen,1);
 PredOutcomes = IterPredChoice == TrialTypeMatrix;
 PredStimPerf = zeros(length(PassSounds),foldLen);
 for nmnm = 1 : length(PassSounds)

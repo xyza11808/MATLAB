@@ -49,7 +49,7 @@ cd('./Session_Sum_plot/');
 
 if isplot
     h_colorall = figure;
-    imagesc(DataNor(SortRowInds,:));
+    imagesc(DataNor(SortRowInds,:),[-2 2]);
     line([alignF,alignF],[0.5,nFrames+0.5],'color',[.8 .8 .8],'LineWidth',1.8);
     colorbar;
     xlabel('Time (s)');

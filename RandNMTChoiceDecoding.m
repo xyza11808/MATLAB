@@ -34,10 +34,17 @@ if nargin > 8
     end
 end
 
-TrialUseTypeOp = 0;
+isModelLoad = 0;
 if nargin > 9
     if ~isempty(varargin{5})
-        TrialUseTypeOp = varargin{5};
+        isModelLoad = varargin{5};
+    end
+end
+
+TrialUseTypeOp = 0;
+if nargin > 10
+    if ~isempty(varargin{6})
+        TrialUseTypeOp = varargin{6};
     end
 end
 
@@ -54,6 +61,22 @@ switch TrialUseTypeOp
     otherwise
         error('Error trial outcomme type selection choice.');
 end
+
+if isModelLoad
+    [fn,fp,fi] = uigetfile('Clfsave.mat','Please select your former classification model');
+    if fi
+        xx = load(fullfile(fp,fn));
+        Exmodel = xx.mdl;
+        if isfield(xx,'coeffT')
+            CoeffT = load(xx.coeffT);
+            ispcaDR = 1;
+        end
+    else
+        fprintf('Skip file selection, using customized classification model.\n');
+        isModelLoad = 0;
+    end
+end
+    
 %%
 RawDataAll = RawDataAll(:,ROIindsSelect,:);
 DataSize=size(RawDataAll);
@@ -98,6 +121,41 @@ end
 ConsideringData=max(CorrTrialData(:,:,FrameScale(1):FrameScale(2)),[],3);
 nROI = size(ConsideringData,2);
 % T8TData = max(ConsideringData,[],3);  % trial by ROI matrix, will be project by one projection vector
+
+%%
+if ispcaDR
+    if ~isdir('./NeuroM_test_pca/')
+        mkdir('./NeuroM_test_pca/');
+    end
+    cd('./NeuroM_test_pca/');
+else
+    if ~isdir('./NeuroM_test/')
+        mkdir('./NeuroM_test/');
+    end
+    cd('./NeuroM_test/');
+end
+    
+if isPartialROI
+    if ~isdir(sprintf('./Partial_%.2fROI/',ROIFraction*100))
+        mkdir(sprintf('./Partial_%.2fROI/',ROIFraction*100));
+    end
+    cd(sprintf('./Partial_%.2fROI/',ROIFraction*100));
+end
+
+if length(TimeLength) == 1
+    if ~isdir(sprintf('./AfterTimeLength-%dms/',TimeLength*1000))
+        mkdir(sprintf('./AfterTimeLength-%dms/',TimeLength*1000));
+    end
+    cd(sprintf('./AfterTimeLength-%dms/',TimeLength*1000));
+else
+%     StartTime = min(TimeLength);
+%     TimeScale = max(TimeLength) - min(TimeLength);
+    
+    if ~isdir(sprintf('./AfterTimeLength-%dms%dmsDur/',StartTime*1000,TimeScale*1000))
+        mkdir(sprintf('./AfterTimeLength-%dms%dmsDur/',StartTime*1000,TimeScale*1000));
+    end
+    cd(sprintf('./AfterTimeLength-%dms%dmsDur/',StartTime*1000,TimeScale*1000));
+end
 
 %%  
 if isShuffle
@@ -148,20 +206,35 @@ for nfreqs = 1 : length(Freqtypes)
     AllFreqData(nfreqs,:) = mean(cFreqData);
 end
 
-if ispcaDR
-    [coeffT,scoreT,~,~,explainedT,~]=pca(AllFreqData);
-    save PCAsave.mat coeffT scoreT explainedT -v7.3
-    fprintf('First three components explains %.2f of total variance.\n',sum(explainedT(1:3)));
-    StimSumScore = scoreT(:,1:3);
-    
-    MeanChoiceDataMeanSub = MeanChoiceData - repmat(mean(MeanChoiceData),size(MeanChoiceData,1),1);
-    TrainingScoreAll = MeanChoiceDataMeanSub * coeffT;
-    TrainingScore = TrainingScoreAll(:,1:3);
-else
-    TrainingScore = MeanChoiceData;
-    StimSumScore = AllFreqData;
-end
+if ~isModelLoad
+    if ispcaDR
+        [coeffT,scoreT,~,~,explainedT,~]=pca(AllFreqData);
+        save PCAsave.mat coeffT scoreT explainedT -v7.3
+        fprintf('First three components explains %.2f of total variance.\n',sum(explainedT(1:3)));
+        StimSumScore = scoreT(:,1:3);
 
+        MeanChoiceDataMeanSub = MeanChoiceData - repmat(mean(MeanChoiceData),size(MeanChoiceData,1),1);
+        TrainingScoreAll = MeanChoiceDataMeanSub * coeffT;
+        TrainingScore = TrainingScoreAll(:,1:3);
+    else
+        TrainingScore = MeanChoiceData;
+        StimSumScore = AllFreqData;
+    end
+else
+    if exist('CoeffT','vars')
+        AllFreqDataMeanSub = AllFreqData - repmat(mean(AllFreqData),size(AllFreqData,1),1);
+        scoreT = AllFreqDataMeanSub * CoeffT;
+        StimSumScore = scoreT(:,1:3);
+        
+        MeanChoiceDataMeanSub = MeanChoiceData - repmat(mean(MeanChoiceData),size(MeanChoiceData,1),1);
+        TrainingScoreAll = MeanChoiceDataMeanSub * CoeffT;
+        TrainingScore = TrainingScoreAll(:,1:3);
+    else    % using all information for classification
+        TrainingScore = MeanChoiceData;
+        StimSumScore = AllFreqData;
+    end
+end
+        
 %%
 % loading behavior data
 [filename,filepath,~]=uigetfile('boundary_result.mat','Select your random plot fit result');
@@ -178,12 +251,20 @@ rescaleA=min(realy);
 
 %%
 % training the classifier
-mdl = fitcsvm(TrainingScore,Choicelabel);
+if isModelLoad
+    mdl = Exmodel;
+    CTrainingPred = predict(mdl,TrainingScore);
+    OverCorrRate = mean(CTrainingPred(:) == Choicelabel(:));
+    fprintf('the correct rate for current training session is %.2f.\n',OverCorrRate*100);
+    save ExternalModelCorr.mat OverCorrRate -v7.3
+else
+    mdl = fitcsvm(TrainingScore,Choicelabel);
+    CVmodel = crossval(mdl,'k',20);
+    TrainErro = kfoldLoss(CVmodel,'mode','individual');
+    fprintf('Model Crossval error lost is %.4f.\n',mean(TrainErro));
+end
 [~,TestPredScore] = predict(mdl,StimSumScore);
 difscore = TestPredScore(:,2) - TestPredScore(:,1);
-CVmodel = crossval(mdl,'k',20);
-TrainErro = kfoldLoss(CVmodel,'mode','individual');
-fprintf('Model Crossval error lost is %.4f.\n',mean(TrainErro));
 %
 if max(difscore) > 2*abs(min(difscore))
     fityAll=(rescaleB-rescaleA)*((difscore-min(difscore))./(abs(min(difscore))-min(difscore)))+rescaleA; 
@@ -198,41 +279,11 @@ else
     NorScaleValue = [min(difscore),max(difscore)];
 end
 
-%%
 if ispcaDR
-    if ~isdir('./NeuroM_test_pca/')
-        mkdir('./NeuroM_test_pca/');
-    end
-    cd('./NeuroM_test_pca/');
+    save Clfsave.mat TrainingScore Choicelabel StimSumScore NorScaleValue fityAll TestPredScore mdl NorScaleValue coeffT -v7.3
 else
-    if ~isdir('./NeuroM_test/')
-        mkdir('./NeuroM_test/');
-    end
-    cd('./NeuroM_test/');
+    save Clfsave.mat TrainingScore Choicelabel StimSumScore NorScaleValue fityAll TestPredScore mdl NorScaleValue -v7.3
 end
-    
-if isPartialROI
-    if ~isdir(sprintf('./Partial_%.2fROI/',ROIFraction*100))
-        mkdir(sprintf('./Partial_%.2fROI/',ROIFraction*100));
-    end
-    cd(sprintf('./Partial_%.2fROI/',ROIFraction*100));
-end
-
-if length(TimeLength) == 1
-    if ~isdir(sprintf('./AfterTimeLength-%dms/',TimeLength*1000))
-        mkdir(sprintf('./AfterTimeLength-%dms/',TimeLength*1000));
-    end
-    cd(sprintf('./AfterTimeLength-%dms/',TimeLength*1000));
-else
-%     StartTime = min(TimeLength);
-%     TimeScale = max(TimeLength) - min(TimeLength);
-    
-    if ~isdir(sprintf('./AfterTimeLength-%dms%dmsDur/',StartTime*1000,TimeScale*1000))
-        mkdir(sprintf('./AfterTimeLength-%dms%dmsDur/',StartTime*1000,TimeScale*1000));
-    end
-    cd(sprintf('./AfterTimeLength-%dms%dmsDur/',StartTime*1000,TimeScale*1000));
-end
-save Clfsave.mat TrainingScore Choicelabel StimSumScore NorScaleValue fityAll TestPredScore -v7.3
 %%
 % plot current results
 modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));

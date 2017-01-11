@@ -157,7 +157,7 @@ trial_outcome(miss_tiral) = 2;
 OnsetStruct=struct('StimOnset',behavResults.Time_stimOnset,'StimDuration',300);
 
 [FLickT,FRewardLickT,FlickInds]=FirstLickTime(lick_time_struct,behavResults.Action_choice,trial_outcome,OnsetStruct,behavResults.Time_answer);
-
+%  BehavLickPlot(behavResults,behavSettings,[])
 
 % FLickFrame=floor((double(FLickT)/1000)*frame_rate);
 
@@ -682,8 +682,9 @@ elseif str2double(continue_char)==2
     
     SessionSumColorplot(data_aligned,start_frame,trial_outcome,frame_rate,[],1);
     Partitioned_neurometric_prediction 
-    save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
     Data_pcTrace_script
+    save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
+    
     
     %%
     LRAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
@@ -723,14 +724,15 @@ elseif str2double(continue_char)==2
 %          behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
 %          frame_rate,onset_time(NormalTrialInds));
     SignalCorr2afc(data_aligned(NormalTrialInds,:,:),trial_outcome(NormalTrialInds),behavResults.Stim_toneFreq(NormalTrialInds),start_frame,frame_rate,1);
-    popuROIpairCorr(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate,[],'Max');
+%     popuROIpairCorr(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate,[],'Max');
    %%
     % class define session and class based analysis
-    DataAnaObj = DataAnalysisSum(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate,1);
-    if RandomSession
-        DataAnaObj.PairedAUCCal(1.5);
-    end
+    DataAnaObj = DataAnalysisSum(data_aligned,behavResults.Stim_toneFreq,start_frame,frame_rate,1);  % smooth_data
+%     if RandomSession
+%         DataAnaObj.PairedAUCCal(1.5);
+%     end
     DataAnaObj.popuZscoredCorr(1.5,'Mean');
+    DataAnaObj.popuSignalCorr(1.5,'Mean');
     %%
     FlickAnaFun(data,FLickT,FlickInds,TrialTypes,trial_outcome,frame_rate,1.5);
 %      ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,1.5,'Stim_time_Align');
@@ -752,19 +754,25 @@ elseif str2double(continue_char)==2
           if isempty(radom_inds)
                 radom_inds = pure_tone_inds;
           end
+          if ~exist('AUCDataAS','var')
+              AUCDataAS = ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,1.5,'Stim_time_Align');
+               save AUCClassData.mat AUCDataAS -v7.3
+          end
           TbyTAllROIclassInputParse(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,...
-              'isDataOutput',0,'isErCal',1,'TimeLen',1,'TrOutcomeOp',1,'isWeightsave',1);
+              'isWeightsave',1);
           FracTbyTPlot(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,AUCDataAS,...
               1.5,1,1);
           
           MultiTimeWinClass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
 %           FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame,[],1);
           if RandomSession
-            RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
+%             RandNMTChoiceDecoding(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5,[],1);
+%             RandNMTChoiceDecoding(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5);
+%             RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
             multiCClass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5);
             FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame);         
           end
-          %%
+          %
           if ~isdir('./EM_spike_analysis/')
               mkdir('./EM_spike_analysis/');
           end
@@ -772,7 +780,8 @@ elseif str2double(continue_char)==2
           if ~exist('nnspike','var')
              nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
           end
-           TbyTAllROIclass(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
+           TbyTAllROIclassInputParse(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,...
+               'isDataOutput',0,'isErCal',1,'TimeLen',1,'TrOutcomeOp',1,'isWeightsave',1);
            FracTbyTPlot(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,AUCDataAS,...
               1.5,1,1);
            MultiTimeWinClass(nnspike(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1,0.1);

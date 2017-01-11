@@ -197,7 +197,40 @@ saveas(hstack,'Sensory choice perference plot','png');
 save SensoyChoicePrefer.mat LeftstackFrac RightstackFrac LeftErroPeakMean LeftCorrPeakMean RightCorrPeakMean RightErroPeakMean -v7.3
 
 close(hstack);
-% ylabel('')
+
+%%
+% calcuate the choice vs sensory decision boundary
+
+% ######## calculate the left trials
+v_left = LeftErroPeakMean;
+switch sign(v_left)
+    case 1
+        LeftFactor = 'choice';
+        LeftExtanded = v_left/RightCorrPeakMean;
+    case -1
+        LeftFactor = 'sensory';
+        LeftExtanded = v_left/LeftCorrPeakMean;
+    case 0
+        LeftFactor = 'none';
+        LeftExtanded = 0;
+end
+
+% ######## calculate the right trials
+v_right = RightErroPeakMean;
+switch sign(v_right)
+    case 1
+        RightFactor = 'sensory';
+        RightExtanded = v_right/RightCorrPeakMean;
+    case -1
+        RightFactor = 'choice';
+        RightExtanded = v_right/LeftCorrPeakMean;
+    case 0
+        RightFactor = 'none';
+        RightExtanded = 0;
+end
+
+save ErrorFactorexplain.mat LeftFactor LeftExtanded RightFactor RightExtanded -v7.3
+
 %%
 cd ..;
 %%

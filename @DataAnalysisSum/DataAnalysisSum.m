@@ -47,7 +47,7 @@ classdef DataAnalysisSum
         end
         %         DataPreProcessing(this.TimeWin,this.RespCalFun);
         
-        % population correlation coefficience calculation
+        % population noise correlation coefficience calculation
         function popuZscoredCorr(this,varargin)
             TimeWind = this.TimeWin;
             if nargin > 1
@@ -105,30 +105,98 @@ classdef DataAnalysisSum
                 zNormData(k:(k+nTrials-1),:) = ZscoredData;
                 k = k + nTrials;
             end
-            ROIcorrlation = corrcoef(zNormData);
+            [ROIcorrlation,NCp] = corrcoef(zNormData);
             MatrixmaskRaw = ones(size(ROIcorrlation));
             Matrixmask = logical(triu(MatrixmaskRaw,1));
             PairedROIcorr = ROIcorrlation(Matrixmask);
+            PairedNCpvalue = NCp(Matrixmask);
             
-            if ~isdir('./Popu_Corrcoef_save/')
-                mkdir('./Popu_Corrcoef_save/');
+            if ~isdir('./Popu_Corrcoef_save_NOS/')
+                mkdir('./Popu_Corrcoef_save_NOS/');
             end
-            cd('./Popu_Corrcoef_save/');
-
+            cd('./Popu_Corrcoef_save_NOS/');
+            
+            [Count,Center] = hist(PairedROIcorr,30);
+            SigInds = PairedNCpvalue < 0.05;
+            [CountSig,CenterSig] = hist(PairedROIcorr(SigInds),30);
+            
             h_PairedCorr = figure('position',[200 200 800 600]);
-            hist(PairedROIcorr,20);
+            hold on
+            bar(Center,Count/sum(Count),'k');
+            alpha(0.3);
+            bar(CenterSig,CountSig/sum(Count),'k');
+            
             xlabel('Coef value');
-            ylabel('Cell Count');
+            ylabel('Pair Fraction');
             title(sprintf('Mean Corrcoef value = %.4f',mean(PairedROIcorr)));
             set(gca,'FontSize',20);
             saveas(h_PairedCorr,sprintf('Population %s zscored %s corrcoef distribution',ZSmethod,RespCallFunction));
             saveas(h_PairedCorr,sprintf('Population %s zscored %s corrcoef distribution',ZSmethod,RespCallFunction),'png');
             close(h_PairedCorr);
 
-            save(sprintf('ROI%s_coefSave%s.mat',ZSmethod,RespCallFunction), 'PairedROIcorr', '-v7.3');
+            save(sprintf('ROI%s_coefSave%s.mat',ZSmethod,RespCallFunction), 'PairedROIcorr','PairedNCpvalue', '-v7.3');
             cd ..;
         end
         
+        % function to calculate the signal correlation of neuron pairs
+        function popuSignalCorr(this,varargin)
+            TimeWind = this.TimeWin;
+            if nargin > 1
+                if ~isempty(varargin{1})
+                    TimeWind = varargin{1};
+                end
+            end
+            
+            RespCallFunction = this.RespCalFun;
+            if nargin > 2
+                if ~isempty(varargin{2})
+                    RespCallFunction = varargin{2};
+                end
+            end
+            this = this.DataPreProcessing(TimeWind,RespCallFunction);
+            StimAll = this.TrialStims;
+            RespDataMatrix = this.RespMatData; % nTrials-by-nROI matrix
+            
+            StimTypes = unique(StimAll);
+            nStims = length(StimTypes);
+            ROIStimRespMatrix = zeros(nStims,size(RespDataMatrix,2));
+            for nmnm = 1 : nStims
+                cStims = StimTypes(nmnm);
+                cStimInds = StimAll == cStims;
+                ROIStimRespMatrix(nmnm,:) = mean(RespDataMatrix(cStimInds,:));
+            end
+            
+            % calculate the signal correlation
+            [PopuSignalCorr,SCp] = corrcoef(ROIStimRespMatrix);
+            MatrixmaskRaw = ones(size(PopuSignalCorr));
+            Matrixmask = logical(triu(MatrixmaskRaw,1));
+            PairedROISigcorr = PopuSignalCorr(Matrixmask);
+            PairedSCpvalue = SCp(Matrixmask);
+            
+            if ~isdir('./Popu_signalCorr_Plot/')
+                mkdir('./Popu_signalCorr_Plot/');
+            end
+            cd('./Popu_signalCorr_Plot/');
+            
+            [SCCount,SCCenter] = hist(PairedROISigcorr,30);
+            SCSigInds = PairedSCpvalue < 0.05;
+            [SCCountSig,SCCenterSig] = hist(PairedROISigcorr(SCSigInds),30);
+            h_signalCorr = figure('position',[200 200 800 600]);
+            hold on
+            bar(SCCenter,SCCount/sum(SCCount),'k');
+            alpha(0.3);
+            bar(SCCenterSig,SCCountSig/sum(SCCount),'k');
+            xlabel('Coef value');
+            ylabel('Pair Fraction');
+            title(sprintf('Mean Corrcoef value = %.4f',mean(PairedROISigcorr)));
+            set(gca,'FontSize',20);
+            saveas(h_signalCorr,'Signal_correlation_of_current_session');
+            saveas(h_signalCorr,'Signal_correlation_of_current_session','png');
+            close(h_signalCorr);
+            
+            save SignalCorrSave.mat PairedROISigcorr PairedSCpvalue -v7.3
+            cd ..;
+        end
         % Paired stimulus ROC analysis
         function varargout = PairedAUCCal(this,varargin)
             TimeWind = this.TimeWin;

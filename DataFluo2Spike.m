@@ -15,7 +15,7 @@ for nROI = 1 : nROIs
     end
     ROIstd(nROI) = cStd;
     P.sig = cStd;
-    for nTr = 1 : nTrials
+    parfor nTr = 1 : nTrials
         nTrace = cROIdata(nTr,:);
         nsTrace = smooth(nTrace,11,'rloess');
 %         nsTrace = zscore(nsTrace);

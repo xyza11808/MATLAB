@@ -62,7 +62,7 @@ CorrTrialStim=StimAll(CorrectInds);
 CorrTrialData=RawDataAll(CorrectInds,:,:);
 CorrStimType=unique(CorrTrialStim);
 CorrTrialTypes = CorrTrialStim > CorrStimType(length(CorrStimType)/2);
-CorrTrialResults = CorrTrialTypes(CorrectInds);
+CorrTrialResults = double(CorrTrialTypes);
 if ifErrorChoiceCorrect
     ErrorInds = CorrTrialResults == 0;
     CorrTrialResults(ErrorInds) = 1 - CorrTrialResults(ErrorInds);   % real behav choice used for training tag
