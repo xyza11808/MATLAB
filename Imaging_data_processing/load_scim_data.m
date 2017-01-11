@@ -27,13 +27,21 @@ if isempty(varargin) || isempty(varargin{1})
 else
     frame_inds = varargin{1}(1): varargin{1}(2);
 end
+
+offset_to_mode_flag = 0;
 if length(varargin)>1
-    % Whether offset the loaded image data to its mode
-    offset_to_mode_flag = varargin{2};
-else
-    offset_to_mode_flag = 0;
+    if ~isempty(varargin{2})
+        % Whether offset the loaded image data to its mode
+        offset_to_mode_flag = varargin{2};
+    end
 end
-       
+% whetehr loading the imaging data
+IsDataLoad = 1;
+if nargin > 3
+    if ~isempty(varargin{3})
+        IsDataLoad = varargin{3};
+    end
+end
 
 if strncmp('state',headerString,5) 
     fileVersion = 3;
@@ -43,26 +51,30 @@ else
     header = assignments2StructOrObj(headerString);
 end
 
-%Extracts header info required by scim_openTif()
-hdr = extractHeaderData(header,fileVersion);
+if IsDataLoad
+    %Extracts header info required by scim_openTif()
+    hdr = extractHeaderData(header,fileVersion);
 
-%VI120910A: Detect/handle header-only operation (don't read data)
-if nargout <=1 % && ~forceOutput 
-    return;
-end
+    % %VI120910A: Detect/handle header-only operation (don't read data)
+    % if nargout <=1 % && ~forceOutput 
+    %     return;
+    % end
 
-hTif = Tiff(filename,'r');
+    hTif = Tiff(filename,'r');
 
-im = zeros(hdr.numLines, hdr.numPixels, length(frame_inds), 'int16');
-for i = 1:length(frame_inds)
-    hTif.setDirectory(frame_inds(i));
-    im(:,:,i) = hTif.read();
-end
+    im = zeros(hdr.numLines, hdr.numPixels, length(frame_inds), 'int16');
+    for i = 1:length(frame_inds)
+        hTif.setDirectory(frame_inds(i));
+        im(:,:,i) = hTif.read();
+    end
 
-if offset_to_mode_flag == 1
-    % offset to mode, then remove negative values
-    im = im - mode(im(:));
-    im(im<0) = 0;
+    if offset_to_mode_flag == 1
+        % offset to mode, then remove negative values
+        im = im - mode(im(:));
+        im(im<0) = 0;
+    end
+else
+    im = [];
 end
 end
 %==============================================================================================================
