@@ -728,9 +728,9 @@ elseif str2double(continue_char)==2
    %%
     % class define session and class based analysis
     DataAnaObj = DataAnalysisSum(data_aligned,behavResults.Stim_toneFreq,start_frame,frame_rate,1);  % smooth_data
-%     if RandomSession
-%         DataAnaObj.PairedAUCCal(1.5);
-%     end
+    if RandomSession
+        DataAnaObj.PairedAUCCal(1.5);
+    end
     DataAnaObj.popuZscoredCorr(1.5,'Mean');
     DataAnaObj.popuSignalCorr(1.5,'Mean');
     %%

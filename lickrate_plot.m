@@ -1,4 +1,4 @@
-function lickrate_plot(lick_time,bins,frameTime)
+function lickRate = lickrate_plot(lick_time,bins,frameTime)
 %this function will be used for lick rate calculation and plot
 
 % bins=100;
@@ -7,5 +7,5 @@ function lickrate_plot(lick_time,bins,frameTime)
 lickRaterange=1/bins:frameTime/bins:frameTime;
 bincounts=histc(lick_time,lickRaterange);
 lickRate=bincounts/(frameTime/bins);
-figure;
-plot(lickRaterange,smooth(lickRate));
+% figure;
+% plot(lickRaterange,lickRate);

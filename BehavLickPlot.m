@@ -12,6 +12,13 @@ RespDelay=BehavSetting.responseDelay;
 isProbTrial=behavStruct.Trial_isProbeTrial;
 TrialFreq=behavStruct.Stim_toneFreq;
 FreqTypes=unique(TrialFreq);
+if length(FreqTypes) == 2
+    PlotTypes = double(TrialTypes(:));
+elseif length(FreqTypes) >= 6
+    PlotTypes = double(TrialFreq(:));
+else
+    PlotTypes = double(TrialFreq(:));
+end
 OnsetTimeDiff=double(TrialStimOnT-min(TrialStimOnT));  %for stim on time alignment
 AlignedTime=min(TrialStimOnT);
 StimOffTime=AlignedTime+300;
@@ -24,8 +31,30 @@ trial_outcome = zeros(length(corr_trial_inds),1);
 trial_outcome(corr_trial_inds) = 1;
 trial_outcome(Error_trial_inds) = 0;
 trial_outcome(miss_tiral) = 2;
+%%
+if ~isdir('./LickRate_plot/')
+    mkdir('./LickRate_plot/');
+end
+cd('./LickRate_plot/');
 
-[lick_time_struct,Lick_bias_side]=beha_lickTime_data(behavStruct,LickEndT); %returned data in ms form
+%%
+[lick_time_struct,Lick_bias_side] = beha_lickTime_data(behavStruct,LickEndT); %returned data in ms form
+[AllLeftLickRate,AllRightLickRate] = LickT2lickRate(lick_time_struct,200,LickEndT);
+LeftLickRateArray = cell2mat(AllLeftLickRate);
+RightLickRateArray = cell2mat(AllRightLickRate);
+TrialStimOnBinNum = ceil(double(TrialStimOnT)/((LickEndT*1000)/200));
+minTrBinNum = min(TrialStimOnBinNum);  % the aligned bin
+BinLength = (200 - max(TrialStimOnBinNum) - 1);
+AlignedBinDataL = zeros(length(TrialStimOnBinNum),BinLength);
+AlignedBinDataR = zeros(length(TrialStimOnBinNum),BinLength);
+for ntr = 1 : length(TrialStimOnBinNum)
+    AlignedBinDataL(ntr,:) = LeftLickRateArray(ntr,(TrialStimOnBinNum(ntr)):(TrialStimOnBinNum(ntr)+BinLength-1));
+    AlignedBinDataR(ntr,:) = RightLickRateArray(ntr,(TrialStimOnBinNum(ntr)):(TrialStimOnBinNum(ntr)+BinLength-1));
+end
+BinTimepoints = (1:BinLength) * (LickEndT/200);
+%%
+save LickRateDatSave.mat AlignedBinDataL AlignedBinDataR minTrBinNum trial_outcome PlotTypes BinTimepoints -v7.3
+AlignedLickRplot(AlignedBinDataL,AlignedBinDataR,minTrBinNum,double(trial_outcome(:)),PlotTypes,BinTimepoints);
 
 if ~sum(isProbTrial)  %if there are no prob trials
     if length(FreqTypes)==2 % one paired stimulus 2afc task
@@ -455,4 +484,4 @@ else
         %figure 3: Non prob trials: erro opto trials vs erro non-opto
     end
 end
-
+cd ..;

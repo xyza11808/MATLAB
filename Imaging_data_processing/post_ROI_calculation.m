@@ -188,9 +188,9 @@ if strcmpi(type,'RF')
     SessionBoundary = FreqArray(length(FreqArray)/2);
     TrialTypes = SelectSArray > SessionBoundary;
     DataAnaObj = DataAnalysisSum(SelectData,SelectSArray,frame_rate,frame_rate,1);
-%     DataAnaObj.PairedAUCCal(1.5,'Max');
-    DataAnaObj.popuZscoredCorr(1.5,'Mean');
-    DataAnaObj.popuSignalCorr(1.5,'Mean');
+    DataAnaObj.PairedAUCCal(1.5,'Max');
+%     DataAnaObj.popuZscoredCorr(1.5,'Mean');
+%     DataAnaObj.popuSignalCorr(1.5,'Mean');
     %%
     
     TimeCourseStrcSP = TimeCorseROC(SelectData,TrialTypes,frame_rate,frame_rate,[],2,0); 

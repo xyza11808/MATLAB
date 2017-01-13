@@ -4,10 +4,11 @@ function varargout = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,F
 % RawDataAll can be any kind of aligned data set, and the AlignFrame should
 % be the correponded aligned frame position
 
-if ~isempty(varargin{1})
-    TimeLength=varargin{1};
-else
-    TimeLength=1.5;
+TimeLength=1.5;
+if nargin > 5
+    if ~isempty(varargin{1})
+        TimeLength=varargin{1};
+    end
 end
 
 % label shuffling option

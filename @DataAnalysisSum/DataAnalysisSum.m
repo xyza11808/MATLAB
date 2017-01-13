@@ -223,12 +223,14 @@ classdef DataAnalysisSum
             %%
             k = 1;
            for nStimNeg = 1 : StimNumber
-               for nStimPos = (nStimNeg+1) : StimNumber     
-                    for nROI = 1 : nROIs
-                        nROIData = this.RespMatData(:,nROI);
+               for nStimPos = (nStimNeg+1) : StimNumber
+                   RespDatas = this.RespMatData;
+                   StimsAll = this.TrialStims;
+                    parfor nROI = 1 : nROIs
+                        nROIData = RespDatas(:,nROI);
                         
-                        nStimNegInds = this.TrialStims == StimulusTypes(nStimNeg);
-                        nStimPosInds = this.TrialStims == StimulusTypes(nStimPos);
+                        nStimNegInds = StimsAll == StimulusTypes(nStimNeg);
+                        nStimPosInds = StimsAll == StimulusTypes(nStimPos);
                         NegInputData = [nROIData(nStimNegInds),zeros(length(nROIData(nStimNegInds)),1)];
                         PosInputData = [nROIData(nStimPosInds),ones(length(nROIData(nStimPosInds)),1)];
                         [ROCSummary,LabelMeanS]=rocOnlineFoff([NegInputData;PosInputData]);
@@ -263,6 +265,7 @@ classdef DataAnalysisSum
                 close(h);
             end
             save StimPairedAUC.mat StimulusTypes nROIpairedAUC nROIpairedAUCIsRev ROIwisedAUC -v7.3
+            GroupWiseAUCCal(nROIpairedAUC,nROIpairedAUCIsRev,ROIwisedAUC,StimulusTypes);
             cd ..;
             
             if nargout > 0

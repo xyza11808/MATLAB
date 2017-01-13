@@ -1,14 +1,14 @@
 % for task session analysis
-TaskPathfileFullpath = 'E:\DataToGo\data_for_xu\Task_NoiseCorrelation_summary\Noise_correlation_Multisession_path_new.txt';
+TaskPathfileFullpath = 'E:\DataToGo\data_for_xu\Summarized_pairedAUC_analysis\note3\Session_Data_path_save.txt';
 fid = fopen(TaskPathfileFullpath);
 kk = 1;
 ErrorPath = {};
 tline = fgetl(fid);
 while ischar(tline)
     cline = tline;
-    if ~isempty(strfind(cline,'ROIModified_coefSaveMean'))
-        PairedAUCpath = strrep(cline,'Popu_Corrcoef_save\ROIModified_coefSaveMean.mat;','ROI_pairedWiseAUC_plot\StimPairedAUC.mat');
-        cSessionPath = strrep(cline,'Popu_Corrcoef_save\ROIModified_coefSaveMean.mat;','ROI_pairedWiseAUC_plot');
+    if ~isempty(strfind(cline,'DiffMeanAUC.mat'))
+        PairedAUCpath = strrep(cline,'DisTance_based_AUC\DiffMeanAUC.mat;','StimPairedAUC.mat');
+        cSessionPath = strrep(cline,'\DisTance_based_AUC\DiffMeanAUC.mat;','\');
         try
             xx = load(PairedAUCpath);
             cd(cSessionPath);
@@ -49,16 +49,16 @@ fclose(f);
 
 %%
 % for passive session analysis
-PassPathfileFullpath = 'E:\DataToGo\data_for_xu\passive_noiseCorf_summry\Noise_correlation_Multisession_path_new.txt';
+PassPathfileFullpath = 'E:\DataToGo\data_for_xu\Summarized_pairedAUC_analysis_Pass\note3\Session_Data_path_save.txt';
 fid = fopen(PassPathfileFullpath);
 kk = 1;
 ErrorPath = {};
 tline = fgetl(fid);
 while ischar(tline)
     cline = tline;
-    if ~isempty(strfind(cline,'ROIModified_coefSaveMean'))
-        PairedAUCpath = strrep(cline,'Popu_Corrcoef_save\ROIModified_coefSaveMean.mat;','ROI_pairedWiseAUC_plot\StimPairedAUC.mat');
-        cSessionPath = strrep(cline,'Popu_Corrcoef_save\ROIModified_coefSaveMean.mat;','ROI_pairedWiseAUC_plot');
+    if ~isempty(strfind(cline,'DiffMeanAUC.mat'))
+        PairedAUCpath = strrep(cline,'DisTance_based_AUC\DiffMeanAUC.mat;','StimPairedAUC.mat');
+        cSessionPath = strrep(cline,'\DisTance_based_AUC\DiffMeanAUC.mat;','\');
         try
             xx = load(PairedAUCpath);
             cd(cSessionPath);

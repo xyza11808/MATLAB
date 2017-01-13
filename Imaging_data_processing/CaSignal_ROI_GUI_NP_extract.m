@@ -146,7 +146,7 @@ CaSignal.OpenWithImagJ = 1;
 CaSignal.IsTrialExcluded = [];
 CaSignal.ROIdefineTr = [];
 fprintf('Matlab Two-photon imaging data analysis GUI.\n');
-fprintf('           Version :  2.02.15             \n');
+fprintf('           Version :  2.03.01             \n');
 % Update handles structure
 guidata(hObject, handles);
 
@@ -1363,6 +1363,7 @@ for TrialNo = Start_trial:End_trial
 %     handles = get_exp_info(hObject, eventdata, handles);
 end
 ROIinfoUsed = CaSignal.ROIinfoBack;
+TempCaTrials_local = CaTrials_local(1);
 
 CPUCores=str2num(getenv('NUMBER_OF_PROCESSORS')); %#ok<ST2NM>
 poolobj = gcp('nocreate');
@@ -1371,24 +1372,24 @@ if isempty(poolobj)
 %     poolobj = gcp('nocreate');
 end
 
-%##########################################################################
-% initialize catrials for each trials
-ftime = tic;
-parfor TrialNo = Start_trial:End_trial
-    fname = filenames{TrialNo};
-     [~,header] = load_scim_data(fname,[],[],0);
-    if (nTrials < TrialNo || isempty( CaTrials_local(TrialNo).FileName))
-            trial_init = init_CaTrial(filenames{TrialNo},TrialNo,header);
-            CaTrials_local(TrialNo) = trial_init;
-            CaTrials_local(TrialNo).nROIs = nTROIs;
-    %         disp('Initial of Casignal Struct.\n');
-    end
-end
-t = toc(ftime);
-fprintf('Header reading ends up in %.4f.\n',t);
-%##########################################################################
-
 try
+    %##########################################################################
+    % initialize catrials for each trials
+    ftime = tic;
+    parfor TrialNo = Start_trial:End_trial
+        fname = filenames{TrialNo};
+         [~,header] = load_scim_data(fname,[],[],0);
+        if (nTrials < TrialNo || isempty( CaTrials_local(TrialNo).FileName))
+                trial_init = init_CaTrial(filenames{TrialNo},TrialNo,header);
+                CaTrials_local(TrialNo) = trial_init;
+                CaTrials_local(TrialNo).nROIs = nTROIs;
+        %         disp('Initial of Casignal Struct.\n');
+        end
+    end
+    t = toc(ftime);
+    fprintf('Header reading ends up in %.4f.\n',t);
+    %##########################################################################
+    
     PopuMeanSave = cell((End_trial - Start_trial + 1),1);
     PopuMaxSave = cell((End_trial - Start_trial + 1),1);
     parfor TrialNo = Start_trial:End_trial
@@ -1436,12 +1437,13 @@ try
     %     set(handles.CurrentImageFilenameText,'String',fname);
     %     set(handles.nROIsText,'String',int2str(length(ROIinfo{TrialNo}.ROIpos)));
     end
-catch
+catch ME
     %%
     if ~isdir('./TempDataSaving/')
         mkdir('./TempDataSaving/');
     end
     BlockNum = 50;
+    
     TrBlockInds = Start_trial:BlockNum:End_trial;
     if TrBlockInds(end) < End_trial
         TrBlockInds = [TrBlockInds,End_trial];
@@ -1455,25 +1457,39 @@ catch
         else
             BlockEnd = TrBlockInds(nB+1) - 1;
         end
-        TempPopuMeanSave = cell(BlockStart-BlockEnd+1);
-        TempPopuMaxSave = cell(BlockStart-BlockEnd+1);
+        TempPopuMeanSave = cell(BlockStart-BlockEnd+1,1);
+        TempPopuMaxSave = cell(BlockStart-BlockEnd+1,1);
         DataSaveStrc = struct('Dff',[],'Fraw',[],'RingF',[],'SegNPdata',[],'ROINPLabel',[]);
         BlockBase = BlockStart - 1;
+        isTrInit = zeros((BlockEnd - BlockStart + 1),1);
+        for nxnx = 1 : (BlockEnd - BlockStart + 1)
+            TempCaTrials_local(nxnx) = CaTrials_local(1);
+        end
+%         TempCaTrials_local = 
         parfor TrialNo = 1 : (BlockEnd - BlockStart + 1)
-             fname = filenames{TrialNo+BlockBase};
+            nRealTrNo = TrialNo+BlockBase;
+             fname = filenames{nRealTrNo};
             if ~exist(fname,'file')
                 [fname, pathname] = uigetfile('*.tif', 'Select Image Data file');
                 cd(pathname);
             end;
             msg_str1 = sprintf('Batch analyzing %d of total %d trials with %d ROIs...', ...
-                TrialNo, End_trial-Start_trial+1, nTROIs);  
+                nRealTrNo, End_trial-Start_trial+1, nTROIs);  
         %     disp(['Batch analyzing ' num2str(TrialNo) ' of total ' num2str(End_trial-Start_trial+1) ' trials...']);
             disp(msg_str1);
-            [im, ~] = load_scim_data(fname);
+             [im, header] = load_scim_data(fname);
             if isempty(im)
                 disp(['Empty image data for trial  ' num2str(TrialNo) '...']);
                 continue;
             end
+            if (nTrials < nRealTrNo || isempty(TempCaTrials_local(TrialNo).FileName))
+                    trial_init = init_CaTrial(filenames{nRealTrNo},nRealTrNo,header);
+                    TempCaTrials_local(TrialNo) = trial_init;
+                    TempCaTrials_local(TrialNo).nROIs = nTROIs;
+                    isTrInit(TrialNo) = 1;
+            %         disp('Initial of Casignal Struct.\n');
+            end
+           
             [mean_im,MAxDelta] = FigMeanMaxFrame(im);
             TempPopuMeanSave{TrialNo} = mean_im;
             TempPopuMaxSave{TrialNo} = MAxDelta;
@@ -1494,8 +1510,9 @@ catch
             DataSaveStrc(TrialNo).ROINPLabel = Labels;
         end
          cd('./TempDataSaving/');
-        save(sprintf('TempSaveData%d.mat',nB),'TempPopuMeanSave','TempPopuMaxSave','DataSaveStrc','BlockStart','BlockEnd','-v7.3');
-        clear TempPopuMeanSave TempPopuMaxSave DataSaveStrc im F fRing dff;
+        save(sprintf('TempSaveData%d.mat',nB),'TempPopuMeanSave','TempPopuMaxSave','DataSaveStrc','BlockStart',...
+            'TempCaTrials_local','BlockEnd','isTrInit','-v7.3');
+        clear TempPopuMeanSave TempPopuMaxSave DataSaveStrc im F fRing dff TempCaTrials_local isTrInit;
         cd ..;
     end
     %%
@@ -1508,10 +1525,14 @@ catch
         xx = load(BlockFname);
         cBlockStart = xx.BlockStart;
         cBlockEnd = xx.BlockEnd;
+        BlockIndsAll = cBlockStart:cBlockEnd;
+        TempBlockInds = (BlockIndsAll - cBlockStart) + 1;
+        CaTrials_local((BlockIndsAll(logical(xx.isTrInit)))) = xx.TempCaTrials_local(TempBlockInds(logical(xx.isTrInit)));
         k = 1;
         for nTrs = cBlockStart:cBlockEnd
             PopuMeanSave{nTrs} = xx.TempPopuMeanSave{k};
             PopuMaxSave{nTrs} = xx.TempPopuMaxSave{k};
+%             CaTrials_local(nTrs) = xx.TempCaTrials_local(k);
             CaTrials_local(nTrs).dff = xx.DataSaveStrc(k).Dff;
             CaTrials_local(nTrs).f_raw = xx.DataSaveStrc(k).Fraw;
             CaTrials_local(nTrs).RingF = xx.DataSaveStrc(k).RingF;
@@ -1520,9 +1541,10 @@ catch
             k = k + 1;
         end
     end
+    cd ..;
     %%
 end
-cd ..;
+
 %###################################################################################################
 % delete(poolobj);
 CaSignal.CaTrials = CaTrials_local;
@@ -1530,7 +1552,9 @@ PopuProjData = struct('MeanFrame',PopuMeanSave,'MaxFrame',PopuMaxSave);
 CaSignal.PopuFrameProj = PopuProjData;
 
 SaveResultsButton_Callback(hObject, eventdata, handles);
-rmdir('./TempDataSaving/','s');
+if isdir('./TempDataSaving/')
+    rmdir('./TempDataSaving/','s');
+end
 disp(['Batch analysis completed for ' CaSignal.CaTrials(1).FileName_prefix]);
 set(handles.msgBox, 'String', ['Batch analysis completed for ' CaSignal.CaTrials(1).FileName_prefix]);
 % delete(gcp('nocreate'));
