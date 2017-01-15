@@ -17,7 +17,6 @@ if ~exist(filename,'file')
     error('''%s'' is not a recognized flag or filename. Aborting.',filename);
 end
 
-
 info=imfinfo(filename);
 numImages = length(info);
 headerString = info(1).ImageDescription;
@@ -175,6 +174,9 @@ for c = 1:numel(rows)
     
     % replace top-level name with 'obj'
     [~, rmn] = strtok(row,'.');
+    if isempty(rmn)
+        continue;
+    end
     row = ['s' rmn];
     
     % deal with nonscalar nested structs/objs

@@ -2,6 +2,7 @@
 Testdata = smooth_data;
 sfData = permute(Testdata,[2,3,1]);
 Data2Matrix = reshape(sfData,size(sfData,1),[]);
+%%
 xticks = 0:frame_rate:size(Testdata,3);
 xticklabels = xticks/frame_rate;
 xTimes = (1:size(Testdata,3))/frame_rate;
@@ -139,7 +140,7 @@ set(gca,'FontSize',20);
 saveas(hsf,'LR selection index plot');
 saveas(hsf,'LR selection index plot','png');
 close(hsf);
-save MeanPlotData.mat xTimes Leftmean Rightmean cLRIndexSumNor LeftErrorInds RightErroInds LeftCorrInds RightCorrInds -v7.3
+save MeanPlotData.mat xTimes Leftmean Rightmean cLRIndexSumNor cLRIndexSum LeftErrorInds RightErroInds LeftCorrInds RightCorrInds -v7.3
 
 %%
 % calculate the error and correct trials mean index trace

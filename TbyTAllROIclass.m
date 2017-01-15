@@ -52,7 +52,9 @@ if nargin > 10
         isDataOutput = varargin{6};
     end
 end
-
+if nargout > 0
+    isDataOutput = 1;
+end
 % Time scale to frame scale
 %
 if length(TimeLength) == 1
@@ -304,14 +306,19 @@ if ~isDataOutput
         cd ..;
     end
 else
-%     ProbLoss(logical(isBadRegression)) = [];
-    varargout{1} = TestLoss;
-    varargout{2} = [];
-%     varargout{2} = ProbLoss;
-    if isShuffle
-%         SUFProbLoss(logical(SUFisBadRegression)) = [];
+    if nargout == 1
+        varargout{1} = TestLoss;
+    elseif nargout == 2
+        varargout{1} = TestLoss;
+        varargout{2} = SUFTestLoss;
+    elseif nargout == 4
+    %     ProbLoss(logical(isBadRegression)) = [];
+        varargout{1} = TestLoss;
+        varargout{2} = [];
+    %     varargout{2} = ProbLoss;
+    %         SUFProbLoss(logical(SUFisBadRegression)) = [];
         varargout{3} = SUFTestLoss;
         varargout{4} = [];
-%         varargout{4} = SUFProbLoss;
+    %         varargout{4} = SUFProbLoss;
     end
 end

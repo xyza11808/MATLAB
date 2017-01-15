@@ -169,22 +169,27 @@ function CaTrial = init_CaTrial(filename, TrialNo, header)
 CaTrial.DataPath = pwd;
 CaTrial.FileName = filename;
 CaTrial.FileName_prefix = filename(1:end-7);
-
 CaTrial.TrialNo = TrialNo;
-if isfield(header, 'acq')
-    CaTrial.DaqInfo = header;
-    CaTrial.nFrames = header.acq.numberOfFrames;
-    CaTrial.FrameTime = header.acq.msPerLine*header.acq.linesPerFrame;
-elseif isfield(header, 'SI4')
-    CaTrial.DaqInfo = header.SI4;
-    CaTrial.nFrames = header.SI4.acqNumFrames;
-    CaTrial.FrameTime = header.SI4.scanFramePeriod;
+if ~isempty(header)
+    if isfield(header, 'acq')
+        CaTrial.DaqInfo = header;
+        CaTrial.nFrames = header.acq.numberOfFrames;
+        CaTrial.FrameTime = header.acq.msPerLine*header.acq.linesPerFrame;
+    elseif isfield(header, 'SI4')
+        CaTrial.DaqInfo = header.SI4;
+        CaTrial.nFrames = header.SI4.acqNumFrames;
+        CaTrial.FrameTime = header.SI4.scanFramePeriod;
+    else
+        CaTrial.nFrames = header.n_frame;
+        CaTrial.FrameTime = [];
+    end
+    if CaTrial.FrameTime < 1 % some earlier version of ScanImage use sec as unit for msPerLine
+        CaTrial.FrameTime = CaTrial.FrameTime*1000;
+    end
 else
-    CaTrial.nFrames = header.n_frame;
+    CaTrial.DaqInfo = [];
+    CaTrial.nFrames = [];
     CaTrial.FrameTime = [];
-end
-if CaTrial.FrameTime < 1 % some earlier version of ScanImage use sec as unit for msPerLine
-    CaTrial.FrameTime = CaTrial.FrameTime*1000;
 end
 CaTrial.nROIs = 0;
 CaTrial.BGmask = []; % Logical matrix for background ROI
@@ -1374,7 +1379,7 @@ end
 
 try
     %##########################################################################
-    % initialize catrials for each trials
+    %% initialize catrials for each trials
     ftime = tic;
     parfor TrialNo = Start_trial:End_trial
         fname = filenames{TrialNo};
@@ -1389,7 +1394,7 @@ try
     t = toc(ftime);
     fprintf('Header reading ends up in %.4f.\n',t);
     %##########################################################################
-    
+    %%
     PopuMeanSave = cell((End_trial - Start_trial + 1),1);
     PopuMaxSave = cell((End_trial - Start_trial + 1),1);
     parfor TrialNo = Start_trial:End_trial
@@ -1438,6 +1443,7 @@ try
     %     set(handles.nROIsText,'String',int2str(length(ROIinfo{TrialNo}.ROIpos)));
     end
 catch ME
+    fprintf('Cannot parallel all trials becaused of the error:\n%s\n.',ME.message);
     %%
     if ~isdir('./TempDataSaving/')
         mkdir('./TempDataSaving/');

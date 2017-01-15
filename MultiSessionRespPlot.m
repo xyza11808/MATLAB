@@ -19,6 +19,8 @@ while ~strcmpi(add_char,'n')
     add_char = input('Do you want to add with more session data?\n','s');
     m = m + 1;
 end
+
+%%
 m = m - 1;
 
 fp = uigetdir(pwd,'Please select a session to save your current data');
@@ -30,7 +32,7 @@ for nbnb = 1 : m
     fprintf(f,FormatStr,datapath{nbnb});
 end
 fclose(f);
-save SessionDataSum.mat DataSum -v7.3
+save SessionDataSum.mat DataSum AlignFrame FrameDis -v7.3
 
 %%
 FrameDisAll = min(FrameDis);
@@ -44,7 +46,8 @@ end
 [~,SortInds] = sort(MaxInds);
 %%
 h_all = figure('position',[300 200 1000 800]);
-imagesc(DataAllSum(SortInds,:));
+imagesc(DataAllSum(SortInds,:),[-2 2]);
+colormap hot
 line([FrameDisAll(1)+1 FrameDisAll(1)+1],[0.5,size(DataAllSum,1)+0.5],'Color',[.8 .8 .8],'LineWidth',2);
 h = colorbar;
 set(get(h,'Title'),'String','z-score')

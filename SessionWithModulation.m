@@ -1,31 +1,76 @@
 function SessionWithModulation(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,Trialmodulation,varargin)
 % this function is specifically used for analysis sessions with interleved
 % modulation trials(e.g. opto trials)
-
-if isempty(Trialmodulation)
-    fprintf('No modulation index being input, considering as a pure control session.\n');
-    TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin{:});
+isSessionBstrap = 0;
+if nargin > 6
+    if ~isempty(varargin{1})
+        isSessionBstrap = varargin{1};
+    end
+end
+if ~isSessionBstrap
+    BootStrapIter = 1;
+    BootStrapRatio = 1;
 else
-    if ~islogical(Trialmodulation)
-        Trialmodulation = logical(Trialmodulation); % modulation trials if logical true
+    BootStrapIter = 10;
+    BootStrapRatio = 0.9;
+    if nargin > 7
+        InputPara = varargin{2};
+        BootStrapIter = InputPara(1);
+        BootStrapRatio = InputPara(2);
     end
-    
-    % opto trials result
-    if ~isdir('./Opto_trials/')
-        mkdir('./Opto_trials/');
+end
+nTrs = length(StimAll);
+
+for nboot = 1 : BootStrapIter
+    if isempty(Trialmodulation)
+        if nboot == 1
+            BootResults = cell(BootStrapIter,1);
+        end
+        fprintf('No modulation index being input, considering as a pure control session.\n');
+        RandInds = CusRandSample(nTrs,round(nTrs*BootStrapRatio));
+        TestLoss = TbyTAllROIclass(RawDataAll(RandInds,:,:),StimAll(RandInds),TrialResult(RandInds),AlignFrame,FrameRate,varargin{:});
+        BootResults{nboot} = TestLoss;
+    else
+        if nboot == 1
+            optoBootResult = cell(BootStrapIter,1);
+            ContBootResult = cell(BootStrapIter,1);
+        end
+        
+        if ~islogical(Trialmodulation)
+            Trialmodulation = logical(Trialmodulation); % modulation trials if logical true
+        end
+        RandInds = CusRandSample(double(Trialmodulation),round(nTrs*BootStrapRatio));
+        
+        BstrapInds = Trialmodulation(RandInds);
+        optoRawData = RawDataAll(RandInds,:,:);
+        optoStimAll = StimAll(RandInds);
+        optoResult = TrialResult(RandInds);
+        % opto trials result
+%         if ~isdir('./Opto_trials/')
+%             mkdir('./Opto_trials/');
+%         end
+%         cd('./Opto_trials/');
+        
+        optoLoss = TbyTAllROIclass(optoRawData(BstrapInds,:,:),optoStimAll(BstrapInds),optoResult(BstrapInds),AlignFrame,...
+            FrameRate,varargin{:});
+        optoBootResult{nboot} = optoLoss;
+%         cd ..;
+
+%         % control Trials result
+%         if ~isdir('./Control_trials/')
+%             mkdir('./Control_trials/');
+%         end
+%         cd('./Control_trials/');
+        
+        ContLoss = TbyTAllROIclass(optoRawData(~BstrapInds,:,:),optoStimAll(~BstrapInds),optoResult(~BstrapInds),AlignFrame,...
+            FrameRate,varargin{:});
+        ContBootResult{nboot} = ContLoss;
+%         cd ..;
+        save ContModuSessionSave.mat optoBootResult ContBootResult -v7.3
     end
-    cd('./Opto_trials/');
-    TbyTAllROIclass(RawDataAll(Trialmodulation,:,:),StimAll(Trialmodulation),TrialResult(Trialmodulation),AlignFrame,...
-        FrameRate,varargin{:});
-    cd ..;
-    
-    % control Trials result
-    if ~isdir('./Control_trials/')
-        mkdir('./Control_trials/');
-    end
-    cd('./Control_trials/');
-    TbyTAllROIclass(RawDataAll(~Trialmodulation,:,:),StimAll(~Trialmodulation),TrialResult(~Trialmodulation),AlignFrame,...
-        FrameRate,varargin{:});
-    cd ..;
-    
+end
+if isempty(Trialmodulation)
+    save SessionResultSave.mat BootResults BootStrapIter BootStrapRatio -v7.3
+else
+    save ContModuSessionSave.mat optoBootResult ContBootResult BootStrapIter BootStrapRatio -v7.3
 end
