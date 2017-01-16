@@ -32,23 +32,25 @@ if ~isdir('./DimRed_Resplot/')
 end
 cd('./DimRed_Resplot/');
 
-save FactorAnaData.mat FSDataNorm trial_outcome behavResults LeftCorrInds LeftErrorInds RightCorrInds RightErroInds -v7.3
+save FactorAnaData.mat FSDataNorm trial_outcome behavResults LeftCorrInds LeftErrorInds RightCorrInds RightErroInds xTimes StartTime frame_rate -v7.3
 
+%%
 h_meanLine = figure('position',[200 200 1000 800]);
 hold on
-plot3(LeftMeanTrace(1,:),LeftMeanTrace(2,:),LeftMeanTrace(3,:),'b','LineWidth',1.6);
-plot3(RightMeanTrace(1,:),RightMeanTrace(2,:),RightMeanTrace(3,:),'r','LineWidth',1.6);
+h1 = plot3(LeftMeanTrace(1,:),LeftMeanTrace(2,:),LeftMeanTrace(3,:),'b','LineWidth',1.6);
+h2 = plot3(RightMeanTrace(1,:),RightMeanTrace(2,:),RightMeanTrace(3,:),'r','LineWidth',1.6);
 scatter3(LeftMeanTrace(1,start_frame),LeftMeanTrace(2,start_frame),LeftMeanTrace(3,start_frame),50,'o',...
     'Markeredgecolor','m','MarkerFaceColor','g','LineWidth',1.6)
 scatter3(RightMeanTrace(1,start_frame),RightMeanTrace(2,start_frame),RightMeanTrace(3,start_frame),50,'o',...
     'Markeredgecolor','m','MarkerFaceColor','g','LineWidth',1.6)
-% plot3(LeftErroMean(1,:),LeftErroMean(2,:),LeftErroMean(3,:),'b','LineWidth',1.6,'LineStyle','--');
-% plot3(RightErroMean(1,:),RightErroMean(2,:),RightErroMean(3,:),'r','LineWidth',1.6,'LineStyle','--');
-
+h3 = plot3(LeftErroMean(1,:),LeftErroMean(2,:),LeftErroMean(3,:),'Color',[.3 .3 .3],'LineWidth',1.6);  %,'LineStyle','--'
+h4 = plot3(RightErroMean(1,:),RightErroMean(2,:),RightErroMean(3,:),'Color',[.7 .7 .7],'LineWidth',1.6); %,'LineStyle','--'
+set(gca,'FontSize',20);
+legend([h1,h2,h3,h4],{'Left Corr','Right Corr','Left Error','Right Error'},'FontSize',12);
 xlabel('x1');
 ylabel('x2');
 zlabel('x3');
-set(gca,'FontSize',20);
+%%
 
 
 % Distance calculation
@@ -140,7 +142,8 @@ set(gca,'FontSize',20);
 saveas(hsf,'LR selection index plot');
 saveas(hsf,'LR selection index plot','png');
 close(hsf);
-save MeanPlotData.mat xTimes Leftmean Rightmean cLRIndexSumNor cLRIndexSum LeftErrorInds RightErroInds LeftCorrInds RightCorrInds -v7.3
+save MeanPlotData.mat xTimes Leftmean Rightmean cLRIndexSumNor cLRIndexSum LeftErrorInds RightErroInds ...
+    LeftCorrInds RightCorrInds start_frame frame_rate -v7.3
 
 %%
 % calculate the error and correct trials mean index trace

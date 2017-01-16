@@ -33,7 +33,7 @@ end
 %%
 m = m - 1;
 SavePath = uigetdir('Please select a data path for current data save');
-f = open('Opto_control_clfaccuracy_path.txt','w');
+f = fopen('Opto_control_clfaccuracy_path.txt','w');
 fprintf(f,'Data path for control trials data:\r\n');
 fFormat = '%s;\r\n';
 for nmnm = 1 : m

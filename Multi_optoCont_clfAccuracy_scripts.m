@@ -15,7 +15,7 @@ while ~strcmpi(addchar,'n')
         xx = load(DataPath{m});
         DataSum{m} = xx;
         cOptoMeans = cellfun(@mean,xx.optoBootResult);
-        cContMean = cell(@mean,xx.ContBootResult);
+        cContMean = cellfun(@mean,xx.ContBootResult);
         optoMean = [optoMean;(1-cOptoMeans(:))];
         contMean = [contMean;(1-cContMean(:))];
         
@@ -44,7 +44,7 @@ scatter(contMean,optoMean,40,'ro','LineWidth',1.6);
 xlims = get(gca,'xlim');
 ylims = get(gca,'ylim');
 clims = [min([xlims,ylims]),max([xlims,ylims])];
-line(xlims,xlims,'Color',[.7 .7 .7],'LineWidth',1.8,'LineStyle','--');
+line(clims,clims,'Color',[.7 .7 .7],'LineWidth',1.8,'LineStyle','--');
 set(gca,'xlim',clims,'ylim',clims);
 title('Multi session compare plot');
 xlabel('Control Accuracy');

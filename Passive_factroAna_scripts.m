@@ -28,7 +28,7 @@ if ~isdir('./DimRed_Resplot/')
 end
 cd('./DimRed_Resplot/');
 
-save FactorAnaData.mat FSDataNorm trial_outcome LeftCorrInds RightCorrInds SelectSArray ManulBoundary -v7.3
+save FactorAnaData.mat FSDataNorm trial_outcome LeftCorrInds RightCorrInds SelectSArray ManulBoundary xTimes StartTime frame_rate -v7.3
 
 h_meanLine = figure('position',[200 200 1000 800]);
 hold on
@@ -136,7 +136,7 @@ set(gca,'FontSize',20);
 saveas(hsf,'LR selection index plot');
 saveas(hsf,'LR selection index plot','png');
 close(hsf);
-save MeanPlotData.mat xTimes Leftmean Rightmean cLRIndexSumNor LeftCorrInds RightCorrInds cLRIndexSum -v7.3
+save MeanPlotData.mat xTimes Leftmean Rightmean cLRIndexSumNor LeftCorrInds RightCorrInds cLRIndexSum start_frame frame_rate -v7.3
 
 %%
 cd ..;

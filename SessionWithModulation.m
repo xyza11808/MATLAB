@@ -19,6 +19,11 @@ else
         BootStrapRatio = InputPara(2);
     end
 end
+if nargin > 8
+    paraInputs = varargin{3:end};
+else
+    paraInputs = {};
+end
 nTrs = length(StimAll);
 
 for nboot = 1 : BootStrapIter
@@ -52,7 +57,7 @@ for nboot = 1 : BootStrapIter
 %         cd('./Opto_trials/');
         
         optoLoss = TbyTAllROIclass(optoRawData(BstrapInds,:,:),optoStimAll(BstrapInds),optoResult(BstrapInds),AlignFrame,...
-            FrameRate,varargin{:});
+            FrameRate,paraInputs{:});
         optoBootResult{nboot} = optoLoss;
 %         cd ..;
 
@@ -63,7 +68,7 @@ for nboot = 1 : BootStrapIter
 %         cd('./Control_trials/');
         
         ContLoss = TbyTAllROIclass(optoRawData(~BstrapInds,:,:),optoStimAll(~BstrapInds),optoResult(~BstrapInds),AlignFrame,...
-            FrameRate,varargin{:});
+            FrameRate,paraInputs{:});
         ContBootResult{nboot} = ContLoss;
 %         cd ..;
         save ContModuSessionSave.mat optoBootResult ContBootResult -v7.3

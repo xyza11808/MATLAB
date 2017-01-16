@@ -188,6 +188,7 @@ if strcmpi(type,'RF')
     SessionBoundary = FreqArray(length(FreqArray)/2);
     TrialTypes = SelectSArray > SessionBoundary;
     Passive_factroAna_scripts
+
     DataAnaObj = DataAnalysisSum(SelectData,SelectSArray,frame_rate,frame_rate,1);
     DataAnaObj.PairedAUCCal(1.5,'Max');
 %     DataAnaObj.popuZscoredCorr(1.5,'Mean');

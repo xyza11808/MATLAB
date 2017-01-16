@@ -681,8 +681,8 @@ elseif str2double(continue_char)==2
     end
     
     SessionSumColorplot(data_aligned,start_frame,trial_outcome,frame_rate,[],1);
-    Data_pcTrace_script
-    Partitioned_neurometric_prediction 
+%     Data_pcTrace_script
+%     Partitioned_neurometric_prediction 
     save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
     
     

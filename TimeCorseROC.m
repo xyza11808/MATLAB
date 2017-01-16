@@ -22,7 +22,7 @@ PlotDesp = PlotDespStr{CUplot+1};
 
 FrameBin=round((TimeBins/1000)*FrameRate);
 TimeBins = (FrameBin / FrameRate)*1000;
-fprintf('Real Timebin value is %.4f.\n',TimeBins);
+fprintf('Real Timebin value is %.4fms.\n',TimeBins);
 DatSize=size(AlignedData);
 if isplot
     if ~isdir('./TimeFunROC_Plot/')
@@ -126,8 +126,9 @@ else
     clearvars TempROIData LeftPoints RightPoints LeftDataFORroc RightDataFORroc
 end
 
-PXtick=FrameBin:FrameBin:(DatSize(3));
-AlignTime=alignpoint/FrameRate;
+PXtick = FrameBin:FrameBin:(DatSize(3));
+AlignTime = alignpoint/FrameRate;
+AlignBin = alignpoint/FrameBin;
 % PXtick(1)=[];
 PXtickTime=PXtick/FrameRate;
 PXtickAfter = PXtick;
@@ -341,17 +342,27 @@ close(hLR);
 end
 %%
 if isplot
+    
     DataForPlot = BINNEDROCResultLR';
     [~,Inds] = sort(LRRand);
     SmoothData = zeros(size(DataForPlot));
     for nnn = 1 : length(Inds)
         SmoothData(:,nnn) = smooth(DataForPlot(:,nnn));
     end
+    %%
+    [xx,zz] = meshgrid(0:3:size(SmoothData,2),0.3:0.1:0.7);
+    yy = AlignBin*ones(size(xx));
+    c(:,:,1) = 0.6*ones(size(xx));
+    c(:,:,2) = 0.6*ones(size(xx));
+    c(:,:,3) = 0.6*ones(size(xx));
+    
     h_surf = figure;
+    hold on;
     surf(SmoothData(:,Inds),'LineStyle','none','Facecolor','interp');
     colormap jet
+    surf(xx,yy,zz,c,'facealpha',0.6,'FaceColor','interp','LineStyle','none');
     set(gca,'clim',[0.5 1]);
-    set(gca,'xdir','reverse','xtick',1:49:DatSize(2));
+    set(gca,'xdir','reverse','xtick',1:floor(DatSize(2)/3):DatSize(2));
     ylim([-10 BinLength+10]);
     xlabel('ROIs');
     ylabel('Time (s)');
@@ -376,6 +387,8 @@ if isplot
     ylabel('ROI count','FontSize',20)
     title('ROC peak time distribution')
     set(gca,'FontSize',20);
+    
+    %%
     saveas(h_PeakDis,'ROC peak time distribution');
     saveas(h_PeakDis,'ROC peak time distribution','png');
     close(h_PeakDis);
