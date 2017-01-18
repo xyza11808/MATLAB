@@ -1,5 +1,5 @@
 % reshape data
-Testdata = smooth_data;
+Testdata = FactorDataSmooth;
 sfData = permute(Testdata,[2,3,1]);
 Data2Matrix = reshape(sfData,size(sfData,1),[]);
 %%
@@ -27,10 +27,10 @@ LeftErroMean = squeeze(mean(FSDataNorm(LeftErrorInds,:,:)));
 RightErroMean = squeeze(mean(FSDataNorm(RightErroInds,:,:)));
 
 %%
-if ~isdir('./DimRed_Resplot/')
-    mkdir('./DimRed_Resplot/');
+if ~isdir('./DimRed_Resplot_smooth/')
+    mkdir('./DimRed_Resplot_smooth/');
 end
-cd('./DimRed_Resplot/');
+cd('./DimRed_Resplot_smooth/');
 
 save FactorAnaData.mat FSDataNorm trial_outcome behavResults LeftCorrInds LeftErrorInds RightCorrInds RightErroInds xTimes StartTime frame_rate -v7.3
 

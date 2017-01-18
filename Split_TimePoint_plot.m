@@ -110,7 +110,7 @@ if isempty(trial_stim_freq)
         sort_frame_left=frame_point_left(I_left,:);
         sort_frame_right=frame_point_right(I_right,:);
         
-        Valid_struct=sum([isempty(lick_frame_inds(1).Action_LeftLick_frame),isempty(lick_frame_inds(1).Action_RightLick_frame)]);
+        Valid_struct=sum([isempty(lick_frame_inds(2).Action_LeftLick_frame),isempty(lick_frame_inds(2).Action_RightLick_frame)]);
         if Valid_struct~=2
             left_lick_time=lick_frame_inds(left_inds);
             right_lick_time=lick_frame_inds(right_inds);
@@ -224,7 +224,7 @@ if isempty(trial_stim_freq)
         sort_frame_left=frame_point_left(I_left_reward,:);
         sort_frame_right=frame_point_right(I_right_reward,:);
         
-        Valid_struct=sum([isempty(lick_frame_inds(1).Action_LeftLick_frame),isempty(lick_frame_inds(1).Action_RightLick_frame)]);
+        Valid_struct=sum([isempty(lick_frame_inds(2).Action_LeftLick_frame),isempty(lick_frame_inds(2).Action_RightLick_frame)]);
         if Valid_struct~=2
             left_lick_time=lick_frame_inds(left_inds);
             right_lick_time=lick_frame_inds(right_inds);
@@ -337,7 +337,7 @@ if isempty(trial_stim_freq)
         sort_frame_left=frame_point_left(I_left_Flick,:);
         sort_frame_right=frame_point_right(I_right_Flick,:);
         
-        Valid_struct=sum([isempty(lick_frame_inds(1).Action_LeftLick_frame),isempty(lick_frame_inds(1).Action_RightLick_frame)]);
+        Valid_struct=sum([isempty(lick_frame_inds(2).Action_LeftLick_frame),isempty(lick_frame_inds(2).Action_RightLick_frame)]);
         if Valid_struct~=2
             left_lick_time=lick_frame_inds(left_inds);
             right_lick_time=lick_frame_inds(right_inds);
@@ -466,11 +466,11 @@ else
         Single_ROI_data=squeeze(raw_data(:,k,:));
         clims=[];
         clims(1)=max(min(Single_ROI_data(:)),0);
-        clims(2)=min(max(Single_ROI_data(:)),300);
+        clims(2)=min(max(Single_ROI_data(:)),150);
         
         
         stim_type=unique(trial_stim_freq);
-        Valid_struct=sum([isempty(lick_frame_inds(1).Action_LeftLick_frame),isempty(lick_frame_inds(1).Action_RightLick_frame)]);
+        Valid_struct=sum([isempty(lick_frame_inds(2).Action_LeftLick_frame),isempty(lick_frame_inds(2).Action_RightLick_frame)]);
         
         h_rand=figure('color','w','position',[150 60 1600 1000]);
         set(gcf,'RendererMode','manual')
@@ -487,6 +487,7 @@ else
             
             subplot((length(stim_type)/2),2,2*n-1);
             imagesc(single_freq_data(I,:),clims);
+            colormap jet
             set(gca,'xtick',xtick,'xticklabel',xTick_lable);
             set(gca,'ytick',[]);
             ylabel('ROI response');
@@ -504,8 +505,8 @@ else
                     lick_time_SingleFreq=lick_frame_inds(single_freq_data_inds);
                     right_lick_frame=lick_time_SingleFreq(q).Action_RightLick_frame;
                     left_lick_frame=lick_time_SingleFreq(q).Action_LeftLick_frame;
-                    plot(right_lick_frame,repmat(q,1,length(right_lick_frame)) ,'o','MarkerSize',2.4,'MarkerFaceColor','r','MarkerEdgeColor','r','LineWidth',0.01);
-                    plot(left_lick_frame,repmat(q,1,length(left_lick_frame)) ,'o','MarkerSize',2.4,'MarkerFaceColor','g','MarkerEdgeColor','g','LineWidth',0.01);
+                    plot(right_lick_frame,repmat(q,1,length(right_lick_frame)) ,'o','MarkerSize',1.8,'MarkerFaceColor','r','MarkerEdgeColor','r','LineWidth',0.01);
+                    plot(left_lick_frame,repmat(q,1,length(left_lick_frame)) ,'o','MarkerSize',1.8,'MarkerFaceColor','g','MarkerEdgeColor','g','LineWidth',0.01);
                
 %                     scatter(right_lick_frame,repmat(q,1,length(right_lick_frame)),2.4,'MarkerFaceColor','r','MarkerEdgeColor','r','LineWidth',0.01);
 %                     scatter(left_lick_frame,repmat(q,1,length(left_lick_frame)),2.4,'MarkerFaceColor','g','MarkerEdgeColor','g','LineWidth',0.01);
@@ -521,6 +522,7 @@ else
             
             subplot((length(stim_type)/2),2,2*n);
             imagesc(single_freq_data(I,:),clims);
+            colormap jet
             gcaposition = get(gca,'position');
             set(gca,'xtick',xtick,'xticklabel',xTick_lable);
             set(gca,'ytick',[]);
@@ -546,8 +548,8 @@ else
                     lick_time_SingleFreq=lick_frame_inds(single_freq_data_inds);
                     right_lick_frame=lick_time_SingleFreq(q).Action_RightLick_frame;
                     left_lick_frame=lick_time_SingleFreq(q).Action_LeftLick_frame;
-                    plot(right_lick_frame,repmat(q,1,length(right_lick_frame)) ,'o','MarkerSize',2.4,'MarkerFaceColor','r','MarkerEdgeColor','r','LineWidth',0.01);
-                    plot(left_lick_frame,repmat(q,1,length(left_lick_frame)) ,'o','MarkerSize',2.4,'MarkerFaceColor','g','MarkerEdgeColor','g','LineWidth',0.01);
+                    plot(right_lick_frame,repmat(q,1,length(right_lick_frame)) ,'o','MarkerSize',1.8,'MarkerFaceColor','r','MarkerEdgeColor','r','LineWidth',0.01);
+                    plot(left_lick_frame,repmat(q,1,length(left_lick_frame)) ,'o','MarkerSize',1.8,'MarkerFaceColor','g','MarkerEdgeColor','g','LineWidth',0.01);
                 
 %                     scatter(right_lick_frame,repmat(q,1,length(right_lick_frame)),2.4,'MarkerFaceColor','r','MarkerEdgeColor','r','LineWidth',0.01);
 %                     scatter(left_lick_frame,repmat(q,1,length(left_lick_frame)),2.4,'MarkerFaceColor','g','MarkerEdgeColor','g','LineWidth',0.01);
@@ -556,6 +558,7 @@ else
         end
         suptitle(['ROI', num2str(k) ' sorted by stim onset']);
         saveas(h_rand,sprintf('%s%s_ROI_stim_sort%d.png',StimDirStr,description,k));
+        saveas(h_rand,sprintf('%s%s_ROI_stim_sort%d',StimDirStr,description,k));
 %         saveas(h_rand,[description '_ROI_stim_sort' num2str(k) '.png'],'png');
         close;
     end
@@ -575,7 +578,7 @@ else
         set(gcf,'RendererMode','manual')
         set(gcf,'Renderer','OpenGL')
         stim_type=unique(trial_stim_freq);
-        Valid_struct=sum([isempty(lick_frame_inds(1).Action_LeftLick_frame),isempty(lick_frame_inds(1).Action_RightLick_frame)]);
+        Valid_struct=sum([isempty(lick_frame_inds(2).Action_LeftLick_frame),isempty(lick_frame_inds(2).Action_RightLick_frame)]);
         %         sub_plot_size=length(stim_type);
         for n=1:(length(stim_type)/2)
             single_freq_data_inds=trial_stim_freq==stim_type(n);
@@ -584,6 +587,7 @@ else
             [single_freq_onset_sorted,I]=sortrows(single_freq_onset,2);
             subplot((length(stim_type)/2),2,2*n-1);
             imagesc(single_freq_data(I,:),clims);
+            colormap jet
             set(gca,'xtick',xtick,'xticklabel',xTick_lable);
             set(gca,'ytick',[]);
             ylabel('ROI response');
@@ -601,8 +605,8 @@ else
                     lick_time_SingleFreq=lick_frame_inds(single_freq_data_inds);
                     right_lick_frame=lick_time_SingleFreq(q).Action_RightLick_frame;
                     left_lick_frame=lick_time_SingleFreq(q).Action_LeftLick_frame;
-                    plot(right_lick_frame,repmat(q,1,length(right_lick_frame)) ,'o','MarkerSize',2.4,'MarkerFaceColor','r','MarkerEdgeColor','r','LineWidth',0.01);
-                    plot(left_lick_frame,repmat(q,1,length(left_lick_frame)) ,'o','MarkerSize',2.4,'MarkerFaceColor','g','MarkerEdgeColor','g','LineWidth',0.01);
+                    plot(right_lick_frame,repmat(q,1,length(right_lick_frame)) ,'o','MarkerSize',1.8,'MarkerFaceColor','r','MarkerEdgeColor','r','LineWidth',0.01);
+                    plot(left_lick_frame,repmat(q,1,length(left_lick_frame)) ,'o','MarkerSize',1.8,'MarkerFaceColor','g','MarkerEdgeColor','g','LineWidth',0.01);
                 
 %                     scatter(right_lick_frame,repmat(q,1,length(right_lick_frame)),2.4,'MarkerFaceColor','r','MarkerEdgeColor','r','LineWidth',0.01);
 %                     scatter(left_lick_frame,repmat(q,1,length(left_lick_frame)),2.4,'MarkerFaceColor','g','MarkerEdgeColor','g','LineWidth',0.01);
@@ -615,6 +619,7 @@ else
             [single_freq_onset_sorted,I]=sortrows(single_freq_onset,2);
             subplot((length(stim_type)/2),2,2*n);
             imagesc(single_freq_data(I,:),clims);
+            colormap jet
             gcaposition = get(gca,'position');
             set(gca,'xtick',xtick,'xticklabel',xTick_lable);
             set(gca,'ytick',[]);
@@ -640,8 +645,8 @@ else
                     lick_time_SingleFreq=lick_frame_inds(single_freq_data_inds);
                     right_lick_frame=lick_time_SingleFreq(q).Action_RightLick_frame;
                     left_lick_frame=lick_time_SingleFreq(q).Action_LeftLick_frame;
-                    plot(right_lick_frame,repmat(q,1,length(right_lick_frame)) ,'o','MarkerSize',2.4,'MarkerFaceColor','r','MarkerEdgeColor','r','LineWidth',0.01);
-                    plot(left_lick_frame,repmat(q,1,length(left_lick_frame)) ,'o','MarkerSize',2.4,'MarkerFaceColor','g','MarkerEdgeColor','g','LineWidth',0.01);
+                    plot(right_lick_frame,repmat(q,1,length(right_lick_frame)) ,'o','MarkerSize',1.8,'MarkerFaceColor','r','MarkerEdgeColor','r','LineWidth',0.01);
+                    plot(left_lick_frame,repmat(q,1,length(left_lick_frame)) ,'o','MarkerSize',1.8,'MarkerFaceColor','g','MarkerEdgeColor','g','LineWidth',0.01);
                 
 %                     scatter(right_lick_frame,repmat(q,1,length(right_lick_frame)),2.4,'MarkerFaceColor','r','MarkerEdgeColor','r','LineWidth',0.01);
 %                     scatter(left_lick_frame,repmat(q,1,length(left_lick_frame)),2.4,'MarkerFaceColor','g','MarkerEdgeColor','g','LineWidth',0.01);
@@ -650,6 +655,7 @@ else
         end
         suptitle(['ROI', num2str(k) ' sorted by reward onset']);
         saveas(h_rand,sprintf('%s%s_ROI_reward_sort%d.png',RewardDirStr,description,k));
+        saveas(h_rand,sprintf('%s%s_ROI_reward_sort%d',RewardDirStr,description,k));
 %         saveas(h_rand,[description '_ROI_reward-sort' num2str(k) '.png'],'png');
         close;
     end

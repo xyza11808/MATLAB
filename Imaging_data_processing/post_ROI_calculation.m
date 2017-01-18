@@ -247,12 +247,12 @@ if strcmpi(type,'RF')
     %      ROI_CF=in_site_freTuning(sound_Stim,type,'fit');
     cd ..;
     
-    %%
-    if ~IsFullyDived
+    %
+%     if ~IsFullyDived
         % if the total trial number can not be fully divided by freq and
         % intensity product, using extra plot
         UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);
-    end
+%     end
     %%
     %#########################################################################
     %start of mode percent change plot

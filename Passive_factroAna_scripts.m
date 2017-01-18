@@ -1,4 +1,12 @@
-Testdata = SelectData;
+SmoothDatas = zeros(size(SelectData));
+[nTrs,nROIs,~] = size(SelectData);
+parfor ntr = 1 : nTrs
+    for nROI = 1 : nROIs
+        SmoothDatas(ntr,nROI,:) = smooth(SelectData(ntr,nROI,:),30);
+    end
+end
+%%
+Testdata = SmoothDatas;
 sfData = permute(Testdata,[2,3,1]);
 Data2Matrix = reshape(sfData,size(sfData,1),[]);
 start_frame = frame_rate;

@@ -30,8 +30,8 @@ for ntrials = 1 : AllTrials
 end
 [AnsSortedF,AnsSortedInds] = sort(RewardFAfAdjusted);
 AnsSortedData = AlignedDataSet(AnsSortedInds,:,:);
-TrialTypes = TrialType(AnsSortedF);
-OmitInds = OmitInds(AnsSortedF);
+TrialTypes = TrialType(AnsSortedInds);
+OmitInds = OmitInds(AnsSortedInds);
 
 %%
 % Inds arrangements for all Plot types

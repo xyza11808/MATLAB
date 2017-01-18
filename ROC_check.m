@@ -77,7 +77,7 @@ ROCShuffleAll=zeros(500,SizeData(2));
 ROIDiffmd=zeros(1,SizeData(2));
 ROIDiffmn=zeros(1,SizeData(2));
 % % ROIDiffMax=zeros(1,SizeData(2));
-MaxInput = max(SelectData,[],3);
+MaxInput = squeeze(mean(SelectData,3));
 
 for n=1:SizeData(2)
     CurrentData=squeeze(MaxInput(:,n));

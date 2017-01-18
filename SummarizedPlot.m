@@ -369,6 +369,7 @@ switch SessionDesp
             close(h_RandTone2afc);
         end
     case 'RewardOmit'
+        %%
         % Reward omit 2afc session, figure subplot(3,3)
         % if v-shape plot exists, plot it at the last subplot
         nROIs = SessionData.nROI;
@@ -434,7 +435,7 @@ switch SessionDesp
             patch([AlignT AlignT+0.3 AlignT+0.3 AlignT],[yaxis(3) yaxis(3) yaxis(4) yaxis(4)],1,...
                 'facecolor',[.1 .8 .1],'Edgecolor','none','facealpha',0.3);
             ylim([yaxis(3) yaxis(4)]);
-            xlim([0 xt(end)]);
+            xlim([0 ts(end)]);
             xlabel('Time (s)');
             ylabel('Mean \DeltaF/F_0 (%)');
             title(sprintf('TimeWin AUC = %.4f',SessionData.ROIauc(ROInumber)));
@@ -581,6 +582,7 @@ switch SessionDesp
             saveas(h_ROmit2afc,sprintf('ROI%d summarized plot ROmit',ROInumber),'png');
             close(h_ROmit2afc);
         end
+        %%
     otherwise
         fprintf('Error input Session type, quit current function.\n');
         return;

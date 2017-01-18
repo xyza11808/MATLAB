@@ -423,6 +423,7 @@ if ~isempty(radom_inds_correct)
 %     Seperate_align_plot_update(rand_trial_data,rand_trial_type',[random_stim_onset',rand_reward_time',rand_first_lick'],frame_rate,session_date');
     %###############################################################################################
 %     Split_TimePoint_plot(rand_trial_data,rand_trial_type',frame_lick_inds,[random_stim_onset',rand_reward_time',rand_first_lick'],frame_rate,session_date',random_stim_freq);
+    Split_TimePoint_plot(rand_trial_data,rand_trial_type',frame_lick_inds,[random_stim_onset',rand_reward_time'],frame_rate,session_date',random_stim_freq);
     %###############################################################################################
 
 %     length_vary_alignment(rand_trial_data,[rand_trial_type',rand_action_choice',random_type_stim'],[random_stim_onset',rand_reward_type'],1,frame_rate,[session_date','_compressed_align']);
@@ -658,12 +659,14 @@ elseif str2double(continue_char)==2
     smooth_data=zeros(size_data(1),size_data(2),framelength);
     smooth_zs_data=zeros(size_data(1),size_data(2),framelength);
     smoothNorData=zeros(size_data(1),size_data(2),framelength);
+    FactorDataSmooth = zeros(size_data(1),size_data(2),framelength);
 %     smoothSpikes = zeros(size_data(1),size_data(2),framelength);
     NumROIs=size_data(2);
     parfor n=1:size_data(1)
         for m=1:NumROIs
 %             smooth_data(n,m,:)=smooth(data_aligned(n,m,:),7,'sgolay',5); %using Savitzky¨CGolay filter to do the data smooth
             smooth_data(n,m,:)=smooth(data_aligned(n,m,:),5);
+            FactorDataSmooth(n,m,:) = smooth(data_aligned(n,m,:),30);  %data set specifically used for factor analysis
             smooth_zs_data(n,m,:)=smooth(zscore_data_aligned(n,m,:));
             smoothNorData(n,m,:)=smooth(NorDataAligned(n,m,:));
 %             smoothSpikes(n,m,:) = smooth(SpikeAlign(n,m,:),3);
@@ -707,11 +710,11 @@ elseif str2double(continue_char)==2
      end
      ROIAUCcolorp(TimeCourseStrc,start_frame/frame_rate);
      %
-     nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
-     TimeCourseStrcSP = TimeCorseROC(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);  
-%      AUCDataASSP = ROC_check(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align',0,1.5);
-     
-     ROIAUCcolorp(TimeCourseStrcSP,start_frame/frame_rate,[],'Spike train');
+%      nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
+%      TimeCourseStrcSP = TimeCorseROC(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);  
+% %      AUCDataASSP = ROC_check(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align',0,1.5);
+%      
+%      ROIAUCcolorp(TimeCourseStrcSP,start_frame/frame_rate,[],'Spike train');
      %
      script_for_summarizedPlot;  % call a script for data preparation and call summarized plot function
      
