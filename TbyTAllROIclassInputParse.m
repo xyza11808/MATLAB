@@ -326,8 +326,6 @@ parfor nTimes = 1 : nIters
             if isOUTITern
                 isBadRegression(nTimes) = 1;
             end
-        else
-            isDisLogFit = 0;
         end
     end
     %     fprintf('Test Data error rate is %.3f.\n',TestDataLoss);
@@ -391,8 +389,6 @@ if isShuffle
                 if isOUTITern
                     SUFisBadRegression(nTimes) = 1;
                 end
-            else
-                isDisLogFit = 0;
             end
         end
     %     fprintf('Test Data error rate is %.3f.\n',TestDataLoss);
