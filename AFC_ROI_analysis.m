@@ -423,7 +423,7 @@ if ~isempty(radom_inds_correct)
 %     Seperate_align_plot_update(rand_trial_data,rand_trial_type',[random_stim_onset',rand_reward_time',rand_first_lick'],frame_rate,session_date');
     %###############################################################################################
 %     Split_TimePoint_plot(rand_trial_data,rand_trial_type',frame_lick_inds,[random_stim_onset',rand_reward_time',rand_first_lick'],frame_rate,session_date',random_stim_freq);
-    Split_TimePoint_plot(rand_trial_data,rand_trial_type',frame_lick_inds,[random_stim_onset',rand_reward_time'],frame_rate,session_date',random_stim_freq);
+%     Split_TimePoint_plot(rand_trial_data,rand_trial_type',frame_lick_inds,[random_stim_onset',rand_reward_time'],frame_rate,session_date',random_stim_freq);
     %###############################################################################################
 
 %     length_vary_alignment(rand_trial_data,[rand_trial_type',rand_action_choice',random_type_stim'],[random_stim_onset',rand_reward_type'],1,frame_rate,[session_date','_compressed_align']);

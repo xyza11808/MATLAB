@@ -84,6 +84,10 @@ DataSize=size(RawDataAll);
 CorrTrialStim=StimAll(CorrectInds);
 CorrTrialData=RawDataAll(CorrectInds,:,:);
 CorrStimType=unique(CorrTrialStim);
+if mod(length(CorrStimType),2)
+    error('Number of stimulus types must be a even number.\n');
+end
+nPairs = length(CorrStimType)/2;
 CorrTrialTypes = CorrTrialStim > CorrStimType(length(CorrStimType)/2);
 % GivenTrialType = CorrTrialTypes;
 CorrTrialResults = TrialResult(CorrectInds);
@@ -244,7 +248,7 @@ Octavex=log2(double(CorrStimType)/min(double(CorrStimType)));
 Octavexfit=Octavex;
 % OctaveTest=Octavex;
 realy=boundary_result.StimCorr;
-realy(1:3)=1-realy(1:3);
+realy(1:nPairs)=1-realy(1:nPairs);
 Curve_x=linspace(min(Octavex),max(Octavex),500);
 rescaleB=max(realy);
 rescaleA=min(realy);

@@ -1,6 +1,7 @@
 % scripts for tbyt choice decoding analysis result, summarized result
 
 addchar = 'y';
+
 datasum = {};
 DataRealPerf = [];
 DataPredPerf = [];
@@ -89,12 +90,21 @@ saveas(h_RFAll,'Task and behavior compare plot2','png');
 %%
 % loading trial by trial presiction result
 addchar = 'y';
-DataSum = {};
-SessionStimulus = {};
-SessionTrialTYpes = {};
-SessionAnmChoiceall = {};
-SessionPredChoiceAll = {};
-m = 1;
+ifoldLoad = 0;
+OldDataLoad = input('Would you like to load former summarization data?\n','s');
+if ~strcmpi(OldDataLoad,'n')
+    [fn,fp,fi] = uigetfile('SingleTrChoicSave.mat','Please select your fomer analysis data');
+    ifoldLoad = 1;
+    load(fullfile(fp,fn));
+    m = length(DataSum)+1;
+else
+    DataSum = {};
+    SessionStimulus = {};
+    SessionTrialTYpes = {};
+    SessionAnmChoiceall = {};
+    SessionPredChoiceAll = {};
+    m = 1;
+end
 
 while ~strcmpi(addchar,'n')
     [fn,fp,fi] = uigetfile('AnmChoicePredSave.mat','Please select your analysis data set');
@@ -102,6 +112,16 @@ while ~strcmpi(addchar,'n')
         DataPath = fullfile(fp,fn);
         xx = load(DataPath);
         DataSum{m} = xx;
+        if mod(length(unique(xx.Stimlulus)),2)
+            stimTypes = unique(xx.Stimlulus);
+            BoundStim = stimTypes(ceil(length(stimTypes)/2));
+            BoundTrInds = xx.Stimlulus == BoundStim;
+            
+            xx.Stimlulus(BoundTrInds) = [];
+            xx.TrialTypes(BoundTrInds) = [];
+            xx.UsingAnmChoice(BoundTrInds) = [];
+            xx.IterPredChoice(BoundTrInds) = [];
+        end
         SessionStimulus{m} = xx.Stimlulus;
         SessionTrialTYpes{m} = xx.TrialTypes;
         SessionAnmChoiceall{m} = xx.UsingAnmChoice;

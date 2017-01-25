@@ -112,10 +112,10 @@ TrialTypes = double(behavResults.Trial_Type(UsingTrInds));
 %%
 %%
 % repeats of same partition fold, using 100 times of repeats
-if ~isdir('./Test_anmChoice_pred/')
-    mkdir('./Test_anmChoice_pred/');
+if ~isdir('./Test_anmChoice_predNew/')
+    mkdir('./Test_anmChoice_predNew/');
 end
-cd('./Test_anmChoice_pred/');
+cd('./Test_anmChoice_predNew/');
 
 nTrs = size(UsingRespData,1);
 nROI = size(UsingRespData,2);

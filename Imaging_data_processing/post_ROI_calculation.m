@@ -242,12 +242,14 @@ if strcmpi(type,'RF')
     end
     cd('./v_shape_plot/');
     %     in_site_freTuning(sound_array,type,CaTrials,'simple_fit');
-    in_site_freTuning_update(f_percent_change,sound_array,export_filename_raw,frame_rate,'simple_fit',CaTrials);
+%     in_site_freTuning_update(f_percent_change,sound_array,export_filename_raw,frame_rate,'simple_fit',CaTrials);
+    [~,VSDataStrc] = in_site_freTuning_update(f_percent_change,sound_array,export_filename_raw,frame_rate,'simple_fit',CaTrials,0);
+    save vShapeData.mat VSDataStrc -v7.3
 %     in_site_freTuning(sound_array,type,CaTrials,'simple_fit',triger_inds);
     %      ROI_CF=in_site_freTuning(sound_Stim,type,'fit');
     cd ..;
     
-    %
+    %%
 %     if ~IsFullyDived
         % if the total trial number can not be fully divided by freq and
         % intensity product, using extra plot

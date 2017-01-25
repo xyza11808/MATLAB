@@ -31,7 +31,8 @@ DB_type=sort(DB_type,'descend');
 
 %%
 %mean response generation
-time_scale=input('please input the lower and upper value of the mean calculate time scale.\n','s');
+% time_scale=input('please input the lower and upper value of the mean calculate time scale.\n','s');
+time_scale = [];
 if isempty(time_scale)
     time_scale=[1,2];
 else
@@ -187,7 +188,7 @@ for i=1:data_size(2)
             cf(i) = min(fit_curve);
             
         end
-    elseif (strcmpi(fit_option,'no-fit')||isempty(fit_option));
+    elseif (strcmpi(fit_option,'no-fit')||isempty(fit_option))
         disp('avoiding non-linear fit analysis.\n');
         if isplot
             hold off;
@@ -285,7 +286,7 @@ for i=1:data_size(2)
         cd ..;
     end
 end
-save tuning_data.mat c_save label -v7.3
+save tuning_data.mat c_save label freq_type -v7.3
 % c_save
 disp('Critical tuning frequency for all ROIs calculation done!\n');
 

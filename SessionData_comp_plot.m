@@ -43,18 +43,18 @@ save ScatterPlotData.mat  BehavResult ModelResult tbAll RsqurAll CoefAll -v7.3
 StimType = [8000;10565;13929;18379;24251;32000];
 h_colorPlot = figure;
 hold on;
-FreqNum = size(BehavResult,2);
+FreqNum = size(BehavResultAll,2);
 ColorMap = jet(FreqNum);
-for nn = 1 : size(BehavResult,1)
-    scatter(BehavResult(nn,:),ModelResult(nn,:),50,ColorMap,'o','filled','LineWidth',1.6);
+for nn = 1 : size(BehavResultAll,1)
+    scatter(BehavResultAll(nn,:),FitResultAll(nn,:),50,ColorMap,'o','filled','LineWidth',1.6);
 end
 set(gca,'xtick',0:0.2:1,'ytick',0:0.2:1);
 colormap(ColorMap);
 h = colorbar('southoutside');
 set(h,'ytick',(1/FreqNum:1/FreqNum:1)-(0.5/FreqNum),'yticklabel',cellstr(num2str(StimType/1000,'%.2f')),...
     'Ticklength',0);
-[mdl,CoefValue,Rsqur,~] = lmFunCalPlot(BehavResult(:),ModelResult(:),0);
-FitPlotx = linspace(min(BehavResult(:)),max(ModelResult(:)),500);
+[mdl,CoefValue,Rsqur,~] = lmFunCalPlot(BehavResultAll(:),FitResultAll(:),0);
+FitPlotx = linspace(min(BehavResultAll(:)),max(FitResultAll(:)),500);
 FitPloty = predict(mdl,FitPlotx');
 plot(FitPlotx,FitPloty,'k','LineWidth',1.8);
 xlim([0 1]);ylim([0 1]);
