@@ -379,7 +379,7 @@ for n = 1:fileNum
         plot(curve_x,curve_y,'color','k','LineWidth',1.8);
         hold off;
         ylim([0 1]);
-        set(gca,'xtick',0:2/(length(octave_dist)-1):2);
+        set(gca,'xtick',octave_dist);
         set(gca,'xticklabel',cellstr(num2str(xtick_label(:),'%.1f')));
         xlabel('Frequency(kHz)');
         ylabel('Rightward choice');

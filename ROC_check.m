@@ -20,22 +20,22 @@ if nargin>4
     if length(varargin) > 1
         if ~isempty(varargin{2})
             ProcessDesp=varargin{2};
-            if isplot
+%             if isplot
                 if ~isdir(['./',ProcessDesp,'/'])
                     mkdir(['./',ProcessDesp,'/']);
                 end
                 cd(['./',ProcessDesp,'/']);
-            end
+%             end
         end
     end
 end
 
-if isplot
+% if isplot
     if ~isdir('./ROC_Left2Right_result/')
         mkdir('./ROC_Left2Right_result/');
     end
     cd('./ROC_Left2Right_result/');
-end
+% end
 
 if length(TimeLength) == 1
     FrameScale = sort([(alignpoint+1),floor(alignpoint+FrameRate*TimeLength)]);
@@ -181,9 +181,9 @@ if isplot
     saveas(h_popu_correl,'PopuSort_ROC_corr_resp.png');
     saveas(h_popu_correl,'PopuSort_ROC_corr_resp');
     close(h_popu_correl);
-    
+end
     save ROC_score.mat ROCarea RespFraction ROIDiffmd ROIDiffmn ROCRevert ROCShufflearea ROCRevertShff -v7.3
-    
+
     %%
     %left trials response compared with baseline levels
 %     SelectData=AlignedData(:,:,(alignpoint:floor(alignpoint+FrameRate*TimeLength)));
@@ -247,6 +247,8 @@ if isplot
 %         saveas(gcf,sprintf('./Right_resp2base_roc/ROC_resultR_ROI%d.fig',n));
 %         close(gcf);
     end
+    
+if isplot 
     c=linspace(1,10,length(LeftBase2RespRoc));
     hROC_sum=figure;
     subplot(1,2,1)
@@ -313,10 +315,11 @@ if isplot
     saveas(hROC_respCorr,'Amp_value_correlation_with_ROC_value.png');
     saveas(hROC_respCorr,'Amp_value_correlation_with_ROC_value.fig');
     close(hROC_respCorr);
-    
+end
+
     save LeftRightROC_result.mat LeftBase2RespRoc RightBase2RespRoc ...
         ShuffleLeftRoc ShuffleRightRoc RightBase2RespMaxAmp RightBase2RespMNDiff LeftBase2RespMaxAmp LeftBase2RespMNDiff -v7.3
-    
+if isplot
     % plot Selection index, which is calculated by 2*(AUC - 0.5), we will
     % get a result as: better Left selectivity, result close to -1, and
     % better right selectivity gets a result close to 1
@@ -338,10 +341,10 @@ if isplot
     saveas(h_Sindex,'Population selection index plot','fig');
     saveas(h_Sindex,'Population selection index plot','epsc');
     close(h_Sindex);
-    
-    cd ..;
-    cd ..;
 end
+    cd ..;
+    cd ..;
+
 if nargout > 0
     varargout(1) = {ROCareaABS};
 end

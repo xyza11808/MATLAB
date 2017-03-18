@@ -36,7 +36,11 @@ end
  m = m - 1;
 saveDir = uigetdir(pwd,'Please select a path to save summarized ROC data');
 cd(saveDir);
-save ROCSummary.mat ROCValueAll ROCfpathAll ROCshuffleAll ROCSigFrac ROIRealIndex ROIDiffmean ROCIsRevert -v7.3
+MultiSessThres = mean(ROCshuffleAll);
+SigAUCValueInds = ROCValueAll > MultiSessThres;
+ROIRightwardAUC = ROIRealIndex;
+save ROCSummaryNew.mat ROCValueAll ROIRightwardAUC ROCIsRevert ROIDiffmean MultiSessThres SigAUCValueInds -v7.3
+save ROCSummary.mat ROCValueAll ROCfpathAll ROCshuffleAll ROCSigFrac ROIRightwardAUC ROIDiffmean ROCIsRevert MultiSessThres SigAUCValueInds -v7.3
 fileID = fopen('ROCsummary_datapath.txt','w+');
 fprintf(fileID,'%s\r\n','ROC analysis data path used for summary:');
 for nn = 1 : m
@@ -59,29 +63,31 @@ text(1.05,mean(ROCSigFrac)+0.02,sprintf(['Sig.Frac. = %.2f',char(177),'%.2f'],me
 xlim([0.5,1.5]);
 set(gca,'xtick',1,'xticklabel','SigFrac.');
 
-saveas(h_SIgF,'Population SigAUC distribution','png');
-saveas(h_SIgF,'Population SigAUC distribution','fig');
-% saveas(h_SIgF,'Population SigAUC distribution','epsc');
-close(h_SIgF);
+% saveas(h_SIgF,'Population SigAUC distribution','png');
+% saveas(h_SIgF,'Population SigAUC distribution','fig');
+% % saveas(h_SIgF,'Population SigAUC distribution','epsc');
+% close(h_SIgF);
 
 %%
-ROIindexV = (ROIRealIndex - 0.5) * 2;
+ROIindexV = (ROIRightwardAUC - 0.5) * 2;
 [Count,Center] = hist(ROIindexV,20);
-SigAUCValue = ROCValueAll > mean(ROCshuffleAll);
-[CountSig,CenterSig] = hist(ROIindexV(SigAUCValue),20);
+[CountSig,CenterSig] = hist(ROIindexV(SigAUCValueInds),20);
 
 h_hist = figure('position',[430 300 1100 800],'PaperPositionMode','auto');
 hold on
-bar(Center,(Count/numel(ROIindexV)),'r');
-alpha(0.3);
-bar(CenterSig,(CountSig/numel(ROIindexV)),'r');
-xlabel('Index value');
+bh1 = bar(Center,(Count/numel(ROIindexV)),'Facecolor',[.7 .7 .7],'EdgeColor','none');
+% alpha(0.3);
+bh2 = bar(CenterSig,(CountSig/numel(ROIindexV)),'k','EdgeColor','none');
+yscales = get(gca,'ylim');
+set(gca,'xtick',[-1 0 1],'xticklabel',{'Left','','Right'},'ytick',[0 yscales(2)]);
+xlabel('Selective Index');
 ylabel('Cell Fraction');
-title('Population Selection index');
-set(gca,'FontSize',20);
+title({'Population Selection index',sprintf('n = %d',length(ROIindexV))});
+set(gca,'FontSize',18);
+legend([bh1,bh2],{'All selection index','Sig. selection index'},'FontSize',14);
 saveas(h_hist,'Population selection index plot','png');
 saveas(h_hist,'Population selection index plot','fig');
-% saveas(h_hist,'Population selection index plot','epsc');
+saveas(h_hist,'Population selection index plot','epsc');
 
 %%
 % plot the ROI response value v.s. ROI ROC value
@@ -97,19 +103,19 @@ ROCABS(OutlierInds) = [];
 hrespAUC = figure('position',[300 200 1000 800]);
 hold on;
 scatter(SortDiffMean,ROCABS(SortInds),45,linspace(1,10,length(SortDiffMean)),'LineWidth',2);
-[~,CoefEstimate,Rsqur,~,PredData] = lmFunCalPlot(cDiffMean,ROCABS,0);
+[tbl,PredData] = lmFunCalPlot(cDiffMean,ROCABS,0);
 plot(PredData{1},PredData{2},'color','k','LineStyle','--');
 axis square
 colormap cool
-title({sprintf('mean response value slop = %.3f, Rsqur = %.3f',CoefEstimate(2),Rsqur),...
+title({sprintf('mean response value slop = %.3f, Rsqur = %.3f',tbl.Rsquared.Adjusted),...
     sprintf('Coef = %0.2f, p=%.2e',hmn(1,2),pmn(1,2))});
 xlabel('\DeltaF/F_0(%)');
 set(gca,'FontSize',20);
-saveas(hrespAUC,'summary plot result of ROI response with AUC value');
-saveas(hrespAUC,'summary plot result of ROI response with AUC value','png');
-% close(hrespAUC);
+% saveas(hrespAUC,'summary plot result of ROI response with AUC value');
+% saveas(hrespAUC,'summary plot result of ROI response with AUC value','png');
+% % close(hrespAUC);
 
-save RespAUCCorrelation.mat ROCValueAll ROCIsRevert ROIDiffmean -v7.3
+% save RespAUCCorrelation.mat ROCValueAll ROCIsRevert ROIDiffmean -v7.3
 
 %%
 % Overall ROI AUC sorted scatter plot

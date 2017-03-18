@@ -91,4 +91,4 @@ for nmnm = 1 : m
     fprintf(f,fFormat,PassDataPath{nmnm});
 end
 fclose(f);
-save dataSum.mat TaskdataSum PassdataSum -v7.3
+save dataSum.mat TaskdataSum PassdataSum TaskDataPath PassDataPath -v7.3

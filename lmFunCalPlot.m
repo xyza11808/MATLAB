@@ -12,8 +12,8 @@ if length(x) ~= length(y)
 end
 
 tb1 = fitlm(x,y);
-fprintf('Model fit result.\n');
-disp(tb1.Coefficients);
+% fprintf('Model fit result.\n');
+% disp(tb1.Coefficients);
 InterValue = tb1.Coefficients.Estimate(1);
 CoefValue = tb1.Coefficients.Estimate(2);
 Rsqr = tb1.Rsquared.Adjusted;
@@ -29,22 +29,26 @@ if isplot
     xlabel('predictor variables');
     ylabel('Response');
     title({'Linear regression result';sprintf('R-Squr = %.3f, Slope = %.3f',Rsqr,CoefValue)});
-    legend([h1,h2],{'Real Data','Fit Data'},'Location','southeast');
+    legend([h1,h2],{'Real Data','Fit Data'});  %,'Location','southeast'
     set(gca,'FontSize',18);
 end
 if nargout > 0
     varargout{1} = tb1;
-    varargout{2} = [InterValue,CoefValue];
-    varargout{3} = Rsqr;
-    varargout{4} = Coeffiall;
+%     varargout{2} = [InterValue,CoefValue];
+%     varargout{3} = Rsqr;
+%     varargout{4} = Coeffiall;
     if isplot
-        varargout{5} = h_data;
+        varargout{2} = h_data;
+    else
+        if nargout == 2
+            varargout{2} = {Fitx,PredValue};
+        end
     end
-    if nargout > 4
+    if nargout > 2
         if isplot
-            varargout{6} = {Fitx,PredValue};
+            varargout{3} = {Fitx,PredValue};
         else
-            varargout{5} = {Fitx,PredValue};
+            varargout{2} = {Fitx,PredValue};
         end
     end
 end

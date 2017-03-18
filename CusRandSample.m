@@ -16,6 +16,9 @@ else
     Classvalue = unique(n);
     ClassNum = length(Classvalue);
     ClassFracNum = zeros(ClassNum,2);
+    if k < 1  % if k is input as fraction, convert into real number of sampling
+        k = ceil(length(n)*k);
+    end
     for nclass = 1 : ClassNum
         ClassFracNum(nclass,:) = [mean(n == Classvalue(nclass)),sum(n == Classvalue(nclass))];
     end

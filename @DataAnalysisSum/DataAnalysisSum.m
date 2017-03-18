@@ -96,6 +96,8 @@ classdef DataAnalysisSum
                             ROIextraMAD = 1.253*mad(cStimTrData(:,ZerosMADInds));
                             ROIstdEstimate(:,ZerosMADInds) = repmat(ROIextraMAD,nTrials,1);
                         end
+                        zerosInds = ROIstdEstimate == 0;
+                        ROIstdEstimate(zerosInds) = 1;
                         ZscoredData = (cStimTrData - repmat(ROImean,nTrials,1)) ./ ROIstdEstimate;
                     case 'normal'
                         ZscoredData = zscore(cStimTrData);
@@ -107,7 +109,7 @@ classdef DataAnalysisSum
             end
             [ROIcorrlation,NCp] = corrcoef(zNormData);
             MatrixmaskRaw = ones(size(ROIcorrlation));
-            Matrixmask = logical(triu(MatrixmaskRaw,1));
+            Matrixmask = logical(tril(MatrixmaskRaw,-1));
             PairedROIcorr = ROIcorrlation(Matrixmask);
             PairedNCpvalue = NCp(Matrixmask);
             
@@ -115,6 +117,16 @@ classdef DataAnalysisSum
                 mkdir('./Popu_Corrcoef_save_NOS/');
             end
             cd('./Popu_Corrcoef_save_NOS/');
+            
+            if length(TimeWind) == 1
+                folderStr = sprintf('TimeScale %d_%dms noise correlation',0,TimeWind*1000);
+            elseif length(TimeWind) == 2
+                folderStr = sprintf('TimeScale %d_%dms noise correlation',TimeWind(1)*1000,TimeWind(2)*1000);
+            end
+            if ~isdir(folderStr)
+                mkdir(folderStr);
+            end
+            cd(folderStr);
             
             [Count,Center] = hist(PairedROIcorr,30);
             SigInds = PairedNCpvalue < 0.05;
@@ -136,6 +148,7 @@ classdef DataAnalysisSum
 
             save(sprintf('ROI%s_coefSave%s.mat',ZSmethod,RespCallFunction), 'PairedROIcorr','PairedNCpvalue', '-v7.3');
             cd ..;
+            cd ..;
         end
         
         % function to calculate the signal correlation of neuron pairs
@@ -153,23 +166,128 @@ classdef DataAnalysisSum
                     RespCallFunction = varargin{2};
                 end
             end
+            
+            IsBoostrap = 0;
+            if nargin > 3
+                if ~isempty(varargin{3})
+                    IsBoostrap = varargin{3};
+                end
+            end
+            
+            IsStdCorrect = 1;
+            if nargin > 4
+                if ~isempty(varargin{4})
+                    IsStdCorrect = varargin{4};
+                end
+            end
+            
             this = this.DataPreProcessing(TimeWind,RespCallFunction);
             StimAll = this.TrialStims;
             RespDataMatrix = this.RespMatData; % nTrials-by-nROI matrix
-            
             StimTypes = unique(StimAll);
             nStims = length(StimTypes);
-            ROIStimRespMatrix = zeros(nStims,size(RespDataMatrix,2));
-            for nmnm = 1 : nStims
-                cStims = StimTypes(nmnm);
-                cStimInds = StimAll == cStims;
-                ROIStimRespMatrix(nmnm,:) = mean(RespDataMatrix(cStimInds,:));
+            nROIs = size(RespDataMatrix,2);
+            ROIStimRespMatrix = zeros(nStims,nROIs);
+            if IsStdCorrect
+                ROIstdss = this.RawDataStd(this.SmoothData,'mad');
             end
             
-            % calculate the signal correlation
-            [PopuSignalCorr,SCp] = corrcoef(ROIStimRespMatrix);
+            if IsBoostrap
+                %
+                nIters = 1000;
+                BootStimRespMatrix = zeros(nIters,nROIs,nROIs); % data matrix for corrcoef value storage
+                BootStimRespValue = zeros(nIters,nStims,nROIs);
+                PopuStd = mean(ROIstdss);  % using the population mean for data transfer load saving
+                parfor nIt = 1 : nIters
+                    RandInds = CusRandSample(StimAll,0.8);
+                    IterStims = StimAll(RandInds);
+                    IterData = RespDataMatrix(RandInds,:); %#ok<PFBNS>
+                    BootStimRespData = zeros(nStims,nROIs);
+                    for nxnx = 1 : nStims
+                        cStim = StimTypes(nxnx); %#ok<PFBNS>
+                        cStimInds = IterStims == cStim;
+                        BootStimRespData(nxnx,:) = mean(IterData(cStimInds,:));
+                    end
+                    if IsStdCorrect
+                        RespDataVector = reshape(BootStimRespData,[],1);
+                        LowRespVectorInds = RespDataVector < PopuStd;
+                        LowRespData = RespDataVector(LowRespVectorInds);
+                        ShufLowRespData = Vshuffle(LowRespData);
+                        NewShufRespData = RespDataVector;
+                        NewShufRespData(LowRespVectorInds) = ShufLowRespData;
+                        NewShufRespData = reshape(NewShufRespData,nStims,nROIs);
+                        BootStimRespData = NewShufRespData;
+%                         % ######################
+%                         % another method is to use random Assignment of a
+%                         % gaussian distribution data set to replace old
+%                         % data
+%                         RespDataVector = reshape(BootStimRespData,[],1);
+%                         LowRespVectorInds = RespDataVector < PopuStd;
+%                         RandLowRespValue = ((rand(sum(LowRespVectorInds),1) - 0.5)*2)*PopuStd;
+%                         NewRandAssData = RespDataVector;
+%                         NewRandAssData(LowRespVectorInds) = RandLowRespValue;
+%                         BootStimRespData = NewRandAssData;
+%                         % #######################
+                    end
+                    BootStimRespValue(nIt,:,:) = BootStimRespData;
+                    IterSigCorr = corrcoef(BootStimRespData);
+                    BootStimRespMatrix(nIt,:,:) = IterSigCorr;
+                end
+                %
+                BootMeanSignalCoef = squeeze(mean(BootStimRespMatrix));
+                PopuSignalCorr = BootMeanSignalCoef;
+                SCp = ones(size(PopuSignalCorr));
+            else
+                %
+                for nmnm = 1 : nStims
+                    cStims = StimTypes(nmnm);
+                    cStimInds = StimAll == cStims;
+                    ROIStimRespMatrix(nmnm,:) = mean(RespDataMatrix(cStimInds,:));
+                end
+                ROIlowRespInds = zeros(size(ROIStimRespMatrix));
+                if IsStdCorrect
+                   for  nnrr = 1 : nROIs
+                       ROIlowRespInds(:,nnrr) = double(ROIStimRespMatrix(:,nnrr) < ROIstdss(nnrr));
+                   end
+                end
+                
+                nmShufCoef = zeros(100,nROIs,nROIs);
+                SCpShuf = zeros(100,nROIs,nROIs);
+                for nmnm = 1 : 100
+                    ROIlowRespInds = logical(ROIlowRespInds(:));
+                    VectorData = reshape(ROIStimRespMatrix,[],1);
+                    LowRespData = VectorData(ROIlowRespInds);
+                    ShufLowRespdata = Vshuffle(LowRespData);
+                    NewShufDataMatrix = VectorData;
+                    NewShufDataMatrix(ROIlowRespInds) = ShufLowRespdata;
+                    NewShufDataMatrix = reshape(NewShufDataMatrix,nStims,nROIs);
+                    ROIStimRespMatrix = NewShufDataMatrix;
+                    %%
+    %                 % ######################
+    %                 % another method is to use random Assignment of a
+    %                 % gaussian distribution data set to replace old
+    %                 % data
+    %                 RespDataVector = reshape(ROIStimRespMatrix,[],1);
+    %                 LowRespVectorInds =  logical(ROIlowRespInds(:));
+    %                 PopuStd = mean(ROIstdss);
+    %                 RandLowRespValue = ((rand(sum(LowRespVectorInds),1) - 0.5)*2)*PopuStd;
+    %                 NewRandAssData = RespDataVector;
+    %                 NewRandAssData(LowRespVectorInds) = RandLowRespValue;
+    %                 NewRandAssData = reshape(NewRandAssData,nStims,nROIs);
+    %                 ROIStimRespMatrix = NewRandAssData;
+    %                 % #######################
+
+                    % calculate the signal correlation
+                    [PopuSignalCorr,SCp] = corrcoef(ROIStimRespMatrix);
+                    nmShufCoef(nmnm,:,:) = PopuSignalCorr;
+                    SCpShuf(nmnm,:,:) = SCp;
+                end
+                PopuSignalCorr = squeeze(mean(nmShufCoef));
+                SCp = squeeze(mean(SCpShuf));
+            end
+            
             MatrixmaskRaw = ones(size(PopuSignalCorr));
-            Matrixmask = logical(triu(MatrixmaskRaw,1));
+            Matrixmask = logical(tril(MatrixmaskRaw,-1));
             PairedROISigcorr = PopuSignalCorr(Matrixmask);
             PairedSCpvalue = SCp(Matrixmask);
             
@@ -180,21 +298,35 @@ classdef DataAnalysisSum
             
             [SCCount,SCCenter] = hist(PairedROISigcorr,30);
             SCSigInds = PairedSCpvalue < 0.05;
-            [SCCountSig,SCCenterSig] = hist(PairedROISigcorr(SCSigInds),30);
+            PairedSigCoef = PairedROISigcorr(SCSigInds);
+            if ~isempty(PairedSigCoef)
+                [SCCountSig,SCCenterSig] = hist(PairedSigCoef,30);
+            end
             h_signalCorr = figure('position',[200 200 800 600]);
             hold on
             bar(SCCenter,SCCount/sum(SCCount),'k');
             alpha(0.3);
-            bar(SCCenterSig,SCCountSig/sum(SCCount),'k');
+             if ~isempty(PairedSigCoef)
+                bar(SCCenterSig,SCCountSig/sum(SCCount),'k');
+             end
             xlabel('Coef value');
             ylabel('Pair Fraction');
             title(sprintf('Mean Corrcoef value = %.4f',mean(PairedROISigcorr)));
             set(gca,'FontSize',20);
-            saveas(h_signalCorr,'Signal_correlation_of_current_session');
-            saveas(h_signalCorr,'Signal_correlation_of_current_session','png');
+            if IsBoostrap
+                saveas(h_signalCorr,'Signal_correlation_of_current_session_Boot');
+                saveas(h_signalCorr,'Signal_correlation_of_current_session_Boot','png');
+            else
+                saveas(h_signalCorr,'Signal_correlation_of_current_session');
+                saveas(h_signalCorr,'Signal_correlation_of_current_session','png');
+            end
             close(h_signalCorr);
             
-            save SignalCorrSave.mat PairedROISigcorr PairedSCpvalue -v7.3
+            if ~IsBoostrap
+                save SignalCorrSave.mat PairedROISigcorr PairedSCpvalue ROIStimRespMatrix -v7.3
+            else
+                save SignalCorrSaveBoot.mat PairedROISigcorr PairedSCpvalue BootStimRespMatrix BootStimRespValue -v7.3
+            end
             cd ..;
         end
         % Paired stimulus ROC analysis
@@ -368,6 +500,27 @@ classdef DataAnalysisSum
                     MatrixAUC(MatrixAUC == 0) = 0.5;  % set the diag value into chance level
                     ROIwisedAUC(nnn,:,:) = MatrixAUC;
                 end
+        end
+        function ROIstds = RawDataStd(this,RawData,Method)
+            nROIs = size(RawData,2);
+            ROIstds = zeros(nROIs,1);
+            for nr = 1 : nROIs
+                cROIdata = reshape(squeeze(RawData(:,nr,:))',[],1); % vector format
+                switch Method
+                    case {'Std','std','STD'}
+                        ROIstds(nr) = std(cROIdata);
+                    case {'Mad','mad','MAD'}
+                        ROIstds(nr) = mad(cROIdata,1)*1.4826;
+                    case {'MadMean','madmean','MADMEAN'}
+                        ROIstds(nr) = mad(cROIdata)*1.253;
+                    otherwise
+                        error('Unknown method, please check your input.');
+                end
+                if ROIstds(nr) < 1
+                    ROIstds(nr) = 1; % for spike data correction
+                end
+            end
+                
         end
         function this = ClfParaParser(this,varargin)
             % this function is specifically used for parsing of

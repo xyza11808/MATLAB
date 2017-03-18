@@ -1,5 +1,7 @@
 %%
 %load deltaf/f data save file
+clear 
+clc
 [fn,fpath,~] = uigetfile('DiffFluoResult.mat','Select your normalized calcium trace saving file.');
 x=load(fullfile(fpath,fn));
 cd(fpath);
@@ -108,8 +110,8 @@ set(gca,'fontSize',20)
 %%
 %example ROI plot for 2AFC task
 %example ROI plot, trial type indicated by stim on line
-ExampROIinds = [7,10,20,24,38,65,87,93,97,72];
-% ExampleTrials = 1:3:size_data(1);  %trial number choosed to plot
+ExampROIinds = [30,33,43,56,85,98];
+ExampleTrials = 1:40;  %trial number choosed to plot
 TrialNum = length(ExampleTrials);
 DataToPlot = data_aligned(ExampleTrials,ExampROIinds,:);
 TrialTypeP = TrialType(ExampleTrials);

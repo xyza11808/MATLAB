@@ -177,10 +177,11 @@ if BaselineSubE
     end
     return;
 end
+
+CorrePreOnsetData=cell(1,TrialNum);
 if isfield(CaTrials(1),'RingF') && IsNeuropilExtract == 1
     FCorrectData=zeros(TrialNum,ROINum,TrialLen);
     NPSubFactors = zeros(ROINum,1);
-    CorrePreOnsetData=cell(1,TrialNum);
 %     for n=1:ROINum
 %         CROIdata=squeeze(RawData(:,n,:));
 %         CRingdata=squeeze(RawRingData(:,n,:));
@@ -246,11 +247,11 @@ else
     CorrePreOnsetData=PreOnsetData;
 end
 
-
-%######################################
-%ROI threshold calculation
-ROIThres=std(baselineDataAll');
-save ROIStd.mat ROIThres -v7.3
+% 
+% %######################################
+% %ROI threshold calculation
+% ROIThres=std(baselineDataAll');
+% save ROIStd.mat ROIThres -v7.3
 
 if strcmpi(SessionType,'rf')
     FBaseline = mean(FCorrectData(:,:,1:FrameRate),3);
@@ -420,6 +421,7 @@ switch MethodChoice
 
     case 4
         % 8th percentile baseline substraction
+        % using all data mode for calculate the f baseline
         SubRawData=zeros(size(FCorrectData));
         for n=1:size(FCorrectData,2)
             TempData=squeeze(FCorrectData(:,n,:));
@@ -441,7 +443,33 @@ switch MethodChoice
             close(h);
         end
         save SubBaseData.mat FCorrectData SubRawData -v7.3
-
+    
+    case 5
+        %
+        SubRawData=zeros(size(FCorrectData));
+        for n=1:size(FCorrectData,2)
+            TempData=squeeze(FCorrectData(:,n,:));
+            [SubTempData,~]=BLSubStract(TempData',8,FrameRate*15);
+            SubRawData(:,n,:)=SubTempData';
+        end
+        %
+        BaseSubPreOnsetData = cell(1,TrialNum);
+        for nTrs = 1 : TrialNum
+            BaseSubPreOnsetData{nTrs} = squeeze(SubRawData(nTrs,:,1:TrialOnsetTime(nTrs)));
+        end
+        AllBasePreOnsetData = cell2mat(BaseSubPreOnsetData);
+        %
+        ROIf0 = zeros(size(FCorrectData,2),1);
+        for nROI = 1 : size(FCorrectData,2)
+            cROIpreData = AllBasePreOnsetData(nROI,:);
+            [cCount,cCenters] = hist(cROIpreData,40);
+            [~,inds] = max(cCount);
+            ROIf0(nROI) = cCenters(inds);
+            
+            FChangeData(:,nROI,:) = (SubRawData(:,nROI,:) - ROIf0(nROI))./ROIf0(nROI)*100;
+        end
+        
+        %%
     otherwise
         disp('Error input option, quit analysis.\n');
 end

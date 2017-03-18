@@ -7,6 +7,10 @@
 %function fir1 and fir2 can be used as lowband-pass filter or highbang-pass
 %filter
 
+% dunction xcorr can be used to calculate the aurocorrelation function for
+% given spike train as well as two similar but phase-lagged signal
+% correlations, details see the function documentation
+
 % eval('string') can be used to make the valus of an variable to be the name
 %of a new variable
 
@@ -103,7 +107,7 @@
 %distribution
 % using function tiedrank, e.g.
 %################
-% y=tiedrand(X);
+% y=tiedrank(X);
 % z=ceil((GroupNumber*y)/length(X));
 % % z contains labels have the same length as X, and each element corresponded with element in X, so that this 
 % % vector can be used to do some group calculations to X
@@ -118,6 +122,9 @@
 % this will return a matrix y, which is the same size as x, but set all
 % negtive values in x into 0
 
+% plot multiple lines, and set different lines into different linewidth
+% hh = plot(rand(2,5));
+% set(hh,{'LineWidth'},{1,1.2,1.3,1.4,2.5}');
 
 %% %%%%% ##################################################################
 %extract data from fig file

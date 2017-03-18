@@ -188,11 +188,13 @@ if strcmpi(type,'RF')
     SessionBoundary = FreqArray(length(FreqArray)/2);
     TrialTypes = SelectSArray > SessionBoundary;
     Passive_factroAna_scripts
-
+%%
     DataAnaObj = DataAnalysisSum(SelectData,SelectSArray,frame_rate,frame_rate,1);
-    DataAnaObj.PairedAUCCal(1.5,'Max');
-%     DataAnaObj.popuZscoredCorr(1.5,'Mean');
-%     DataAnaObj.popuSignalCorr(1.5,'Mean');
+%     DataAnaObj.PairedAUCCal(1.5,'Max');
+    DataAnaObj.popuZscoredCorr(1.5,'Mean'); % first response peak response noise correlation
+    DataAnaObj.popuZscoredCorr([1.5,3],'Mean'); % second response preak noise correlation
+    DataAnaObj.popuSignalCorr(1,'Mean',1);  % bootstrap method signal correlation
+    DataAnaObj.popuSignalCorr(1,'Mean'); % normal method of signal correlation
     %%
     
     TimeCourseStrcSP = TimeCorseROC(SelectData,TrialTypes,frame_rate,frame_rate,[],2,0); 
@@ -253,7 +255,8 @@ if strcmpi(type,'RF')
 %     if ~IsFullyDived
         % if the total trial number can not be fully divided by freq and
         % intensity product, using extra plot
-        UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);
+        UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);  % performing color plot
+        UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate,[],0); % not performing color plot
 %     end
     %%
     %#########################################################################
@@ -670,26 +673,16 @@ if strcmpi(type,'RF')
     %%
 elseif strcmpi(type,'2AFC')
     BaselineMethod = 2;
-    if BaselineMethod == 3
-        if ~isdir('./Type3_f0_calculation/')
-            mkdir('./Type3_f0_calculation/');
-        end
-        cd('./Type3_f0_calculation/');
-        [f_raw_trials,f_percent_change,exclude_inds,IsBaselineE]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,3,type,ROIinfo,TrExcludedInds);
-        if IsBaselineE
-            fprintf('Please select your choice again without using the same background substraction method.\n');
-            [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,3,type,ROIinfo,TrExcludedInds);
-        end
-    elseif BaselineMethod == 2
-        if ~isdir('./Type2_f0_calculation/')
-            mkdir('./Type2_f0_calculation/');
-        end
-        cd('./Type2_f0_calculation/');
-        [f_raw_trials,f_percent_change,exclude_inds,IsBaselineE]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,2,type,ROIinfo,TrExcludedInds);
-        if IsBaselineE
-            fprintf('Please select your choice again without using the same background substraction method.\n');
-            [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,2,type,ROIinfo,TrExcludedInds);
-        end
+    fprintf('calculate deltaF/F using method%d.\n',BaselineMethod);
+    NewFoldName = sprintf('Type%d_f0_calculation',BaselineMethod);
+    if ~isdir(NewFoldName)
+        mkdir(NewFoldName);
+    end
+    cd(NewFoldName);
+    [f_raw_trials,f_percent_change,exclude_inds,IsBaselineE]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,BaselineMethod,type,ROIinfo,TrExcludedInds);
+    if IsBaselineE
+        fprintf('Please select your choice again without using the same background substraction method.\n');
+        [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,behavResults,behavSettings,BaselineMethod,type,ROIinfo,TrExcludedInds);
     end
 %     save RawMatricData.mat f_raw_trials f_percent_change -v7.3
 %     cd('.\plot_save\');

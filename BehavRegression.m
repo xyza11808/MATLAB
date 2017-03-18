@@ -88,7 +88,7 @@ end
 if DataParaStrc.Modu
     TrialModulation = behavResult.isModu;
     DataForAll = [DataForAll,TrialModulation(:)];
-    DataParaStrs = {DataParaStrs{:},'LastTrEffect'};
+    DataParaStrs = {DataParaStrs{:},'ModuLation'};
 end
 fprintf('Parameters used for regression:\n');
 disp(DataParaStrs);

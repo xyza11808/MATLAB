@@ -683,11 +683,15 @@ elseif str2double(continue_char)==2
         SigROIinds = FreqRespOnsetHist(data_aligned,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
     end
     
-    SessionSumColorplot(data_aligned,start_frame,trial_outcome,frame_rate,[],1);
+    if ~exist('EstimateSPsave.mat','file')
+        nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
+         save EstimateSPsave.mat data_aligned nnspike behavResults start_frame frame_rate -v7.3
+    end
+    MultiTimes = {[0,0.3],[0,0.5],[0,0.8],[0,1],[0,1.3],[0,1.5]};
+    SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1,MultiTimes);
 %     Data_pcTrace_script
 %     Partitioned_neurometric_prediction 
     save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
-    
     
     %%
     LRAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
@@ -710,7 +714,7 @@ elseif str2double(continue_char)==2
      end
      ROIAUCcolorp(TimeCourseStrc,start_frame/frame_rate);
      %
-%      nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
+     
 %      TimeCourseStrcSP = TimeCorseROC(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);  
 % %      AUCDataASSP = ROC_check(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align',0,1.5);
 %      
@@ -731,11 +735,27 @@ elseif str2double(continue_char)==2
    %%
     % class define session and class based analysis
     DataAnaObj = DataAnalysisSum(data_aligned,behavResults.Stim_toneFreq,start_frame,frame_rate,1);  % smooth_data
-    if RandomSession
-        DataAnaObj.PairedAUCCal(1.5);
-    end
+%     if RandomSession
+%         DataAnaObj.PairedAUCCal(1.5);
+%     end
     DataAnaObj.popuZscoredCorr(1.5,'Mean');
-    DataAnaObj.popuSignalCorr(1.5,'Mean');
+    DataAnaObj.popuSignalCorr(1,'Mean',1);  % boot-strap signal correlation
+    DataAnaObj.popuSignalCorr(1,'Mean');  % normal methods
+    
+    %%
+    if ~isdir('./SpikeData/')
+        mkdir('./SpikeData/');
+    end
+    cd('./SpikeData/');
+    % spike data correlation calculation
+    DataAnaObjSP = DataAnalysisSum(nnspike,behavResults.Stim_toneFreq,start_frame,frame_rate,1);  % smooth_data
+%     if RandomSession
+%         DataAnaObj.PairedAUCCal(1.5);
+%     end
+    DataAnaObjSP.popuZscoredCorr(1.5,'Mean');
+    DataAnaObjSP.popuSignalCorr(1,'Mean',1);  % boot-strap signal correlation
+    DataAnaObjSP.popuSignalCorr(1,'Mean');  % normal methods
+    cd ..;
     %%
     FlickAnaFun(data,FLickT,FlickInds,TrialTypes,trial_outcome,frame_rate,1.5);
 %      ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,1.5,'Stim_time_Align');
@@ -761,11 +781,11 @@ elseif str2double(continue_char)==2
               AUCDataAS = ROC_check(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,1.5,'Stim_time_Align');
                save AUCClassData.mat AUCDataAS -v7.3
           end
-          TbyTAllROIclassInputParse(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,...
-              'isWeightsave',1);
+%           TbyTAllROIclassInputParse(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,...
+%               'isWeightsave',1);
           FracTbyTPlot(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,AUCDataAS,...
               1.5,1,1);
-          
+          %%
           MultiTimeWinClass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
 %           FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame,[],1);
           if RandomSession

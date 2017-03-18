@@ -1,5 +1,8 @@
 % input data structure
 % CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate NormalTrialInds
+clear
+clc
+
  [fn,fp,fi] = uigetfile('CSessionData.mat','Please select your ROI response summary plot');
  if ~fi
      return;
@@ -132,6 +135,10 @@ saveas(h,sprintf('ROI%d example plot of task and passive diff',nROI),'png');
 save(sprintf('ROI%d example plot.mat',nROI),'cROITaskData','cROIPassiveData','v7.3');
 
 %%
+if ~isdir('./Example_ROI_Compplots/')
+    mkdir('./Example_ROI_Compplots/');
+end
+cd('./Example_ROI_Compplots/');
 % plot of the mean trace for plot
  nROI = 98;  % selct ROI to be plotted and compared
 %  nNumOfTr = 4;
@@ -159,7 +166,7 @@ save(sprintf('ROI%d example plot.mat',nROI),'cROITaskData','cROIPassiveData','v7
       cROIPassDataMean{nmnm} = cPassiveDataMean;
       cROIPassDataSem{nmnm} = cPassiveDataSem;
  end
- %%
+ %
  % plot the mean and sem shadow line plot
  TaskDataSetMean = cell2mat(cROITaskDataMean);
  TaskDataSetSem = cell2mat(cROITaskDataSem);
@@ -198,12 +205,12 @@ save(sprintf('ROI%d example plot.mat',nROI),'cROITaskData','cROIPassiveData','v7
               'facealpha',0.7);
      
      plot((TotaldataMatrix(nnnn,:)+yBase),'k','LineWidth',2);
-     yUpThres(k) = yBase + 100;
+     yUpThres(k) = yBase + 30;
      k = k + 1;
      yBase = yBase + EqualGapSpace;
  end
+  yCenter = yUpThres;
  xCenter = (-2)*ones(length(yCenter),1)*csFrate;
- yCenter = yUpThres;
  centerStr = cellstr(num2str(Freqtypes(:)/1000,'%.2fkHz'));
  ylims = get(gca,'ylim');
  line([csAlignF csAlignF],[(ylims(1) - 50),(ylims(2) + 50)],'color',[.8 .8 .8],'LineWidth',1.8);
@@ -224,10 +231,12 @@ subTitlexPos = [csAlignF+(csFrate*2.5),PassiveStartF+(PassiveFrate*2)];
 text(subTitlexPos,[yBase+40 yBase+40],{'Task','Passive'},'Color','r','FontSize',18);
 title(sprintf('Example ROI%d plot---Task vs passive',nROI));
 set(gca,'fontSize',20);
+%%
 % add text for each frequency gruop
 saveas(h,sprintf('ROI%d example mean plot of task and passive diff',nROI));
 saveas(h,sprintf('ROI%d example mean plot of task and passive diff',nROI),'png');
-% close(h);
+close(h);
 DataStrc = struct('TaskDataMean',TaskDataSetMean,'TaskdataSEM',TaskDataSetSem,'PassDataMean',RFDataSetMean,'PassDataSEM',RFDataSetSem,...
     'TaskFrate',csFrate,'PassFrate',PassiveFrate,'TaskAlignF',csAlignF);
 save(sprintf('ROI%d example mean plot.mat',nROI),'DataStrc','-v7.3');
+cd ..;

@@ -50,11 +50,12 @@ CorrData(OutLierinds,:,:)=[];
 DataSize=size(CorrData);
 
 RewardGetTime(OutLierinds)=[];
-MinRewardT=min(RewardGetTime);
-MaxRewardT=max(RewardGetTime);
-AlignAfterT=(TraceTime*1000)-MaxRewardT;
-BeforeFrameLength=floor((MinRewardT/1000)*FrameRate)-1;
-AfterFrameLength=floor((AlignAfterT/1000)*FrameRate)-1;
+RewardFInds = round((RewardGetTime/1000)*FrameRate);
+MinRewardF=min(RewardFInds);
+MaxRewardF=max(RewardFInds);
+AlignAfterF=size(Data,3)-MaxRewardF;
+BeforeFrameLength = MinRewardF - 1;
+AfterFrameLength = AlignAfterF - 1;
 RewardGetFrame=floor((RewardGetTime/1000)*FrameRate);
 
 AlignData=zeros(DataSize(1),DataSize(2),BeforeFrameLength+AfterFrameLength);
