@@ -107,7 +107,7 @@ else
 end
 
 while ~strcmpi(addchar,'n')
-    [fn,fp,fi] = uigetfile('AnmChoicePredSave.mat','Please select your analysis data set');
+    [fn,fp,fi] = uigetfile('AnmChoicePredSaveNew.mat','Please select your analysis data set');
     if fi
         DataPath = fullfile(fp,fn);
         xx = load(DataPath);
@@ -120,7 +120,7 @@ while ~strcmpi(addchar,'n')
             xx.Stimlulus(BoundTrInds) = [];
             xx.TrialTypes(BoundTrInds) = [];
             xx.UsingAnmChoice(BoundTrInds) = [];
-            xx.IterPredChoice(BoundTrInds) = [];
+            xx.IterPredChoice(:,BoundTrInds) = [];
         end
         SessionStimulus{m} = xx.Stimlulus;
         SessionTrialTYpes{m} = xx.TrialTypes;
@@ -132,11 +132,85 @@ while ~strcmpi(addchar,'n')
 end
 m = m - 1;
 save SingleTrChoicSave.mat DataSum SessionStimulus SessionTrialTYpes SessionAnmChoiceall SessionPredChoiceAll -v7.3
+%%
+% m = m - 1;
+% DataSvaePath = uigetdir('Please select a path to save current data');
+% cd(DataSvaePath);
+% % save SummaryDataSave.mat datasum Dataoctave DataRealPerf DataPredPerf meanRealPerf meanPredPerf -v7.3
+% f = fopen('New_neurometric_save_path.txt','w+');
+% fprintf(f,'New neurometric analysis summary path:\r\n');
+% FormatStr = '%s;\r\n';
+% for nbnb = 1 : m
+%     fprintf(f,FormatStr,DataPath{nbnb});
+% end
+% fclose(f);
+
 
 %%
 [StimWiseData,StimAll] = cellfun(@(x,y,z,a) ChoiceCorrelationAna(x,y,z,a),SessionStimulus,SessionTrialTYpes,...
     SessionAnmChoiceall,SessionPredChoiceAll,'UniformOutput',false);
 save StimWisedData.mat StimWiseData StimAll -v7.3
+
+%% calculate the prediction accuracy for each stimulus type for each session
+nSess = length(StimWiseData);
+nRepts = size(StimWiseData{1},1);
+StimNum = size(StimWiseData{1},2);
+nRepInds = round([0.25,0.5,0.75,1]*nRepts);
+SessionReStimAccuracy = zeros(nSess,nRepts,6);
+for nbnn = 1 : nSess
+%     cSessionStim = StimAll{nbnn};
+    cSessionData = StimWiseData{nbnn};
+%     nRepeats = size(cSessionData,1);
+    for nrepeat = 1 : nRepts
+        CRepeatData = cSessionData(nrepeat,:);
+        StimNum = length(CRepeatData);
+        if mod(StimNum,2) ==1
+            BoundStimInds = ceil(StimNum/2);
+            CRepeatData(BoundStimInds) = [];
+            StimNum = length(CRepeatData);
+        end
+        for nStim = 1 : StimNum
+            cStimRepeatdata = CRepeatData{nStim};
+            cStimPredAccuracy = mean(cStimRepeatdata(:,1) == cStimRepeatdata(:,2));
+            SessionReStimAccuracy(nbnn,nrepeat,nStim) = cStimPredAccuracy;
+        end
+    end
+    hf = figure;
+    cSessionAccuracy = squeeze(SessionReStimAccuracy(nbnn,:,:));
+    imagesc(cSessionAccuracy,[0.5 1]);
+    box off
+    set(gca,'ytick',nRepInds);
+    set(gca,'TickLength',[0 0]);
+    xlabel('# stimulus');
+    ylabel('# Repeats');
+    title(sprintf('nSession = %d',nbnn));
+    hcbar = colorbar;
+    set(hcbar,'ytick',[0.5 0.75 1]);
+    saveas(hf,sprintf('Session%d prediction accuracy plot',nbnn));
+    saveas(hf,sprintf('Session%d prediction accuracy plot',nbnn),'pdf');
+    saveas(hf,sprintf('Session%d prediction accuracy plot',nbnn),'png');
+    close(hf);
+end
+
+%% plot the mean accuracy for each session
+SessionMeanStimAccu = squeeze(mean(SessionReStimAccuracy,2));
+MeanStimAccu = mean(SessionMeanStimAccu);
+SEMStimAccu = std(SessionMeanStimAccu)./sqrt(size(SessionMeanStimAccu,1));
+hlinef = figure;
+hold on;
+errorbar(1:length(MeanStimAccu),MeanStimAccu,SEMStimAccu,'k-o','linewidth',2);
+for nsess = 1 : length(MeanStimAccu)
+    scatter(nsess*ones(nSess,1)-0.2,SessionMeanStimAccu(:,nsess),50,'ko','LineWidth',1.4);
+end
+set(gca,'xtick',1 : length(MeanStimAccu));
+xlabel('Stimulus');
+ylabel('Mean Accuracy');
+title('Trial choice prediction accuracy');
+set(gca,'FontSize',16)
+saveas(hlinef,'Across session mean accuracy for stimulus');
+saveas(hlinef,'Across session mean accuracy for stimulus','png');
+saveas(hlinef,'Across session mean accuracy for stimulus','pdf');
+close(hlinef);
 
 %%
 % calculating the correlation, using one cell as as example

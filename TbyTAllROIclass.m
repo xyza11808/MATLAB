@@ -216,8 +216,8 @@ parfor nTimes = 1 : nIters
 %     end
 % %     fprintf('Test Data error rate is %.3f.\n',TestDataLoss);
 end
-MinTestLoss = min(TestLoss);
-fprintf('Min Test Data error rate is %.3f.\n',MinTestLoss);
+MnTestLoss = mean(TestLoss);
+fprintf('Min Test Data error rate is %.3f.\n',MnTestLoss);
 
 if isShuffle
     % ####################################################
@@ -310,15 +310,24 @@ else
         varargout{1} = TestLoss;
     elseif nargout == 2
         varargout{1} = TestLoss;
-        varargout{2} = SUFTestLoss;
+        if isShuffle
+            varargout{2} = SUFTestLoss;
+        else
+            varargout{2} = [];
+        end
     elseif nargout == 4
     %     ProbLoss(logical(isBadRegression)) = [];
         varargout{1} = TestLoss;
         varargout{2} = [];
     %     varargout{2} = ProbLoss;
     %         SUFProbLoss(logical(SUFisBadRegression)) = [];
-        varargout{3} = SUFTestLoss;
-        varargout{4} = [];
+        if isShuffle
+            varargout{3} = SUFTestLoss;
+            varargout{4} = [];
+        else
+            varargout{3} = [];
+            varargout{4} = [];
+        end
     %         varargout{4} = SUFProbLoss;
     end
 end

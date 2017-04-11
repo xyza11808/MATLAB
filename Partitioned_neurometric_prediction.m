@@ -149,6 +149,9 @@ TrialTypeMatrix = repmat(TrialTypes,foldLen,1);
 PredOutcomes = IterPredChoice == TrialTypeMatrix;
 StimTypes = unique(Stimlulus);
 GroupNum = length(StimTypes)/2;
+if mod(GroupNum,2)
+    warning('Current session may contains boundary sounds, please check the following analysis result.');
+end
 RealStimPerf = zeros(length(StimTypes),1);
 PredStimPerf = zeros(length(StimTypes),foldLen);
 for nmnm = 1 : length(StimTypes)
@@ -173,7 +176,7 @@ set(gca,'fontSize',20)
 saveas(h,'TbyT Pred animal choice correct rate');
 saveas(h,'TbyT Pred animal choice correct rate','png');
 close(h);
-
+%%
 TrialOutcomes = double(UsingAnmChoice == TrialTypes);
 StimTypes = unique(Stimlulus);
 NumStim = length(StimTypes);

@@ -365,7 +365,7 @@ VectorCoeff = CVsvmmodel.Beta;
 BiasValue = CVsvmmodel.Bias;
 xScales = get(gca,'xlim');
 yScales = get(gca,'ylim');
-Step = min([diff(yScales),diff(xScales)])/100;
+Step = min([diff(yScales),diff(xScales)])/50;
 [x,y] = meshgrid(xScales(1):Step:xScales(2),yScales(1):Step:yScales(2));
 z = -1 * (BiasValue + x * VectorCoeff(1) + y * VectorCoeff(2)) / VectorCoeff(3);
 surf(x,y,z,'LineStyle','none','FaceColor','c','FaceAlpha',0.4);  %,'Facecolor','interp'
@@ -455,8 +455,9 @@ save TestDataSet.mat CVScoreTypeTest1 CVScoreTypeTest2 ErrorRateTest -v7.3
 h_3dplane = figure('position',[420 100 1150 950]);
 hold on;
 PointScores = scoreT(:,1:3);
-scatter3(PointScores(1:3,1),PointScores(1:3,2),PointScores(1:3,3),120,'p','MarkerEdgeColor','b','LineWidth',3);
-scatter3(PointScores(4:6,1),PointScores(4:6,2),PointScores(4:6,3),120,'p','MarkerEdgeColor','r','LineWidth',3);
+scatter3(PointScores(1:3,1),PointScores(1:3,2),PointScores(1:3,3),50,'p','MarkerEdgeColor','b','LineWidth',1);
+scatter3(PointScores(4:6,1),PointScores(4:6,2),PointScores(4:6,3),50,'p','MarkerEdgeColor','r','LineWidth',1);
+text(PointScores(:,1),PointScores(:,2),PointScores(:,3),cellstr(num2str(double(CorrStimType(:)))));
 % extract coefficients from svm model
 % VectorCoeff = CVsvmmodel.Beta; % calculation exists at early line
 % BiasValue = CVsvmmodel.Bias; % calculation exists at early line
@@ -469,9 +470,9 @@ for nPoints = 1 : size(PointScores,1)
     ProjectPoints(nPoints,2) = PointScores(nPoints,2) - t_factor * VectorCoeff(2);
     ProjectPoints(nPoints,3) = PointScores(nPoints,3) - t_factor * VectorCoeff(3);
     LinePoints = [PointScores(nPoints,:);ProjectPoints(nPoints,:)];
-    line(LinePoints(:,1),LinePoints(:,2),LinePoints(:,3),'color','k','LineStyle','--','LineWidth',3);
+    line(LinePoints(:,1),LinePoints(:,2),LinePoints(:,3),'color','k','LineWidth',1.6);  %'LineStyle','--'
 end
-scatter3(ProjectPoints(:,1),ProjectPoints(:,2),ProjectPoints(:,3),100,'o','MarkerEdgeColor','m','LineWidth',3);
+scatter3(ProjectPoints(:,1),ProjectPoints(:,2),ProjectPoints(:,3),60,'o','MarkerEdgeColor','m','LineWidth',1.6);
 %
 xScales = get(gca,'xlim');
 yScales = get(gca,'ylim');
@@ -482,7 +483,10 @@ alpha(0.4)
 xlabel('PC1');
 ylabel('PC2');
 zlabel('PC3');
+set(gca,'FontSize',18);
+%%
 saveas(h_3dplane,'Points to classification plane plot');
+saveas(h_3dplane,'Points to classification plane plot','pdf');
 close(h_3dplane);
 
 %%

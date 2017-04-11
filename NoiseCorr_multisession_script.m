@@ -143,3 +143,19 @@ saveas(h_comp,'Compared Plot for task and passive noise correlation');
 saveas(h_comp,'Compared Plot for task and passive noise correlation','png');
 close(h_comp);
 save PassTaskCompSave.mat TaskNCvalue PassNCvalue TaskSigCorrDataAll PassSigCorrDataAll -v7.3
+
+%%
+% example session noise correlation coefficient value compared with paired
+% distance, for session b27a03_2016042602
+hf = figure;
+hold on
+scatter(ROIRealDis',NCDataAll,10,'MarkerEdgeColor','none','MarkerFaceColor',[.7 .7 .7]);
+errorbar(BinCenter(1:7),NewNCBinMeanSem(:,1),NewNCBinMeanSem(:,2),'k','linewidth',1.4);
+[tbl,fitdata] = lmFunCalPlot(ROIRealDis',NCDataAll,0);
+plot(fitdata{1},fitdata{2},'r','linewidth',1.4,'LineStyle','--');
+xlabel('Distance (um)');
+ylabel('Correlation coefficient');
+set(gca,'FontSize',16);
+saveas(hf,'NC coefficient vs paired distance correlation plot');
+saveas(hf,'NC coefficient vs paired distance correlation plot','png');
+saveas(hf,'NC coefficient vs paired distance correlation plot','pdf');

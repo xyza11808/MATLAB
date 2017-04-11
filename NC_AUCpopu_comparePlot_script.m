@@ -83,7 +83,7 @@ cd('./Group_NC_cumulativePlot/');
 saveas(h_all,'Different Popu Noise correlation distribution');
 saveas(h_all,'Different Popu Noise correlation distribution','png');
 close(h_all);
-save RespGroupNCData.mat LeftSigROIAUCIndex RightSigROIAUCIndex LeftROINCVector RightROINCvector betLRNoiseCorrVector -v7.3
+save RespGroupNCData.mat LeftSigROIAUCIndex RightSigROIAUCIndex LeftROINCVector RightROINCvector betLRNoiseCorrVector NCDataStrc -v7.3
 cd ..;
 % clear
 
@@ -155,3 +155,25 @@ text(-0.8,0.7,sprintf('Mean L2RPopu NC = %.3f, nPairs = %d',mean(BetLRROINCall),
 saveas(h_all,'Summarized Groupwise NC cumulative plot');
 saveas(h_all,'Summarized Groupwise NC cumulative plot','png');
 % closoe(h_all);
+
+%% merge same and between group data noise correlation coefficient distribution
+WinthinGrNC = [LeftROINCall;RightROINCall];
+BetGrNC = BetLRROINCall;
+[WithinFuny,WithinFunx] = ecdf(WinthinGrNC);
+[BetFuny,BetFunx] = ecdf(BetGrNC);
+p = ranksum(WinthinGrNC,BetGrNC);
+
+h = figure;
+hold on
+hl1 = plot(WithinFunx,WithinFuny,'b','LineWidth',3);
+hl2 = plot(BetFunx,BetFuny,'m','LineWidth',3);
+set(gca,'xlim',[-1 1],'xtick',[-1 0 1],'ytick',[0,0.5,1]);
+xlabel('Noise correlation coefficient');
+ylabel('Cumulative fraction');
+title({'Comparesion of between and within group NC',sprintf('BetNC mean = %.3f, WinNC = %.3f',mean(BetGrNC),mean(WinthinGrNC))});
+set(gca,'FontSize',16);
+text(0.7,0.3,sprintf('p = %.2e',p),'FontSize',12);
+legend([hl1,hl2],{'WithinGR NC','BetGr NC'},'FontSize',12,'location','Northwest');
+saveas(h,'Cumulative distribution of BetGr and WinGr NC');
+saveas(h,'Cumulative distribution of BetGr and WinGr NC','png');
+saveas(h,'Cumulative distribution of BetGr and WinGr NC','pdf');

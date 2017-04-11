@@ -32,7 +32,8 @@ RespData = NonMissRawData(:,:,(FrameScale(1)+1):FrameScale(2));
 SumDataSet = squeeze(max(RespData,[],3));
 TrChoice = double(NonMissTrChoice);
 TrStimFreq = double(NonMissFreqs);
-
+FreqTypes = unique(TrStimFreq);
+disp(FreqTypes);
 %%
 % load passive dataset
 [Passfn,Passfp,Passfi] = uigetfile('rfSelectDataSet.mat','Please select your passive saving data');

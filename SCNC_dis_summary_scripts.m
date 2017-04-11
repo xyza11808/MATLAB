@@ -43,8 +43,8 @@ fclose(fids);
 save SummarydataSave.mat DataSum BinCenters SCBinMeanSEMAll NCBinMeanSEMAll Datapath -v7.3
 
 %%
-nSession = m;
-% nSession = length(DataSum);
+% nSession = m;
+nSession = length(DataSum);
 binNumber = cellfun(@length,BinCenters);
 UseBinNum = min(binNumber);
 [BincenterUse,NCdatauseall,SCdatauseAll] = cellfun(@(x,y,z) MinBinnumberDataExtrac(x,y,z,UseBinNum),...
@@ -72,14 +72,68 @@ SCdatauseSem = std(SCdatauseMatrix)/sqrt(size(SCdatauseMatrix,1));
 
 lc1 = errorbar(cBinCenter,NCdatauseMean,NCdatauseSem,'-o','Color','k','MarkerFaceColor','k','LineWidth',2);
 lc2 = errorbar(cBinCenter,SCdatauseMean,SCdatauseSem,'-o','Color','r','MarkerFaceColor','r','LineWidth',2);
+[NCcorr,NCp] = corrcoef(cBinCenter,NCdatauseMean);
+[SCcorr,SCp] = corrcoef(cBinCenter,SCdatauseMean);
 
 xlabel('Pair Distance (um)');
 ylabel('Correlation Value');
-title({'Cross Session coefValue V.S. Paired distance',sprintf('Session Num = %d',nSession)});
+title({sprintf('NCcorr = %.3f, SCcorr = %.3f',NCcorr(1,2),SCcorr(1,2)),sprintf('Session Num = %d',nSession)});
 set(gca,'FontSize',16);
+xscales = get(gca,'xlim');
+yscales = get(gca,'ylim');
+text(xscales(2)*0.9,yscales(2)*0.7,sprintf('NCcorr p = %.3e',NCp(1,2)));
+text(xscales(2)*0.9,yscales(2)*0.6,sprintf('SCcorr p = %.3e',SCp(1,2)));
 legend([lc1,lc2],{'NC Data','SC Data'},'FontSize',14);
-% saveas(hsum,'NCSC coef vs PairedDis summary plot');
-% saveas(hsum,'NCSC coef vs PairedDis summary plot','png');
+saveas(hsum,'NCSC coef vs PairedDis summary plot');
+saveas(hsum,'NCSC coef vs PairedDis summary plot','png');
+% close(hsum);
+
+%% only plot the noise correlation
+% nSession = m;
+nSession = length(DataSum);
+binNumber = cellfun(@length,BinCenters);
+UseBinNum = min(binNumber);
+[BincenterUse,NCdatauseall,SCdatauseAll] = cellfun(@(x,y,z) MinBinnumberDataExtrac(x,y,z,UseBinNum),...
+    BinCenters,NCBinMeanSEMAll,SCBinMeanSEMAll,'UniformOutput',false);
+DiffStep = 3;
+hsum = figure('position',[300 200 1000 700]);
+hold on;
+for nS = 1 : nSession
+    cBinCenter = BincenterUse{nS};
+    cNCData = NCdatauseall{nS};
+    nSCData = SCdatauseAll{nS};
+    scatter(cBinCenter-3,cNCData(:,1),50,'ko','MarkerEdgeColor','k','LineWidth',1.6);
+%     scatter(cBinCenter+3,nSCData(:,1),50,'ro','MarkerEdgeColor','r','LineWidth',1.6);
+end
+NCdataMeanall = cellfun(@(x) x(:,1),NCdatauseall,'UniformOutput',false);
+SCdataMeanAll = cellfun(@(x) x(:,1),SCdatauseAll,'UniformOutput',false);
+NCdatauseMatrix = (cell2mat(NCdataMeanall))';
+SCdatauseMatrix = (cell2mat(SCdataMeanAll))';
+
+NCdatauseMean = mean(NCdatauseMatrix);
+NCdatauseSem = std(NCdatauseMatrix)/sqrt(size(NCdatauseMatrix,1));
+
+SCdatauseMean = mean(SCdatauseMatrix);
+SCdatauseSem = std(SCdatauseMatrix)/sqrt(size(SCdatauseMatrix,1));
+
+lc = errorbar(cBinCenter,NCdatauseMean,NCdatauseSem,'-o','Color','k','MarkerFaceColor','k','LineWidth',2);
+% lc2 = errorbar(cBinCenter,SCdatauseMean,SCdatauseSem,'-o','Color','r','MarkerFaceColor','r','LineWidth',2);
+[NCcorr,NCp] = corrcoef(cBinCenter,NCdatauseMean);
+% [SCcorr,SCp] = corrcoef(cBinCenter,SCdatauseMean);
+
+xlabel('Pair Distance (um)');
+ylabel('Correlation Value');
+% title({sprintf('NCcorr = %.3f, SCcorr = %.3f',NCcorr(1,2),SCcorr(1,2)),sprintf('Session Num = %d',nSession)});
+title({sprintf('NCcorr = %.3f',NCcorr(1,2)),sprintf('Session Num = %d',nSession)});
+set(gca,'FontSize',16);
+xscales = get(gca,'xlim');
+yscales = get(gca,'ylim');
+text(xscales(2)*0.9,yscales(2)*0.7,sprintf('NCcorr p = %.3e',NCp(1,2)));
+% text(xscales(2)*0.9,yscales(2)*0.6,sprintf('SCcorr p = %.3e',SCp(1,2)));
+legend(lc,{'NC Data'},'FontSize',14);
+saveas(hsum,'NC coef vs PairedDis summary plot');
+saveas(hsum,'NC coef vs PairedDis summary plot','pdf');
+saveas(hsum,'NC coef vs PairedDis summary plot','png');
 % close(hsum);
 
 %%

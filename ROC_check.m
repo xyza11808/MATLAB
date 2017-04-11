@@ -147,11 +147,12 @@ if isplot
     [hmn,pmn]=corrcoef(ROIDiffmnS,ROCareaABS(ROIDiffmnI));
     scatter(ROIDiffmnS,ROCareaABS(ROIDiffmnI),45,linspace(1,10,length(ROCarea)),'LineWidth',2);
     colormap cool
-    [~,CoefEstimate,Rsqur,~,PredData] = lmFunCalPlot(ROIDiffmn,ROCareaABS,0);
+    [tbl,PredData] = lmFunCalPlot(ROIDiffmn,ROCareaABS,0);
     plot(PredData{1},PredData{2},'color','k','LineStyle','--');
     axis square
 %     colormap cool
-    title({sprintf('mean response value slop = %.3f, Rsqur = %.3f',CoefEstimate(2),Rsqur),sprintf('Coef = %0.2f, p=%.2e',hmn(1,2),pmn(1,2))});
+    title({sprintf('mean response value slop = %.3f, Rsqur = %.3f',tbl.Coefficients.Estimate(2),tbl.Rsquared.Adjusted),...
+        sprintf('Coef = %0.2f, p=%.2e',hmn(1,2),pmn(1,2))});
     ylabel('AUC');
     xlabel('\DeltaF/F_0(%)');
     set(gca,'FontSize',20);
@@ -161,11 +162,12 @@ if isplot
     [ROIDiffmdS,ROIDiffmdI]=sort(ROIDiffmd);
     [hmd,pmd]=corrcoef(ROIDiffmdS,ROCareaABS(ROIDiffmdI));
     scatter(ROIDiffmdS,ROCareaABS(ROIDiffmdI),45,linspace(1,10,length(ROCarea)),'LineWidth',2);
-     [~,CoefEstimate,Rsqur,~,PredData] = lmFunCalPlot(ROIDiffmd,ROCareaABS,0);
+     [tbl,PredData] = lmFunCalPlot(ROIDiffmd,ROCareaABS,0);
     plot(PredData{1},PredData{2},'color','k','LineStyle','--');
     axis square
     colormap cool
-    title({sprintf('median response value slop = %.3f, Rsqur = %.3f',CoefEstimate(2),Rsqur),sprintf('Coef = %0.2f, p=%.2e',hmd(1,2),pmd(1,2))});
+    title({sprintf('median response value slop = %.3f, Rsqur = %.3f',tbl.Coefficients.Estimate(2),tbl.Rsquared.Adjusted),...
+        sprintf('Coef = %0.2f, p=%.2e',hmd(1,2),pmd(1,2))});
     xlabel('\DeltaF/F_0(%)');
     set(gca,'FontSize',20);
     
@@ -182,6 +184,7 @@ if isplot
     saveas(h_popu_correl,'PopuSort_ROC_corr_resp');
     close(h_popu_correl);
 end
+%%
     save ROC_score.mat ROCarea RespFraction ROIDiffmd ROIDiffmn ROCRevert ROCShufflearea ROCRevertShff -v7.3
 
     %%

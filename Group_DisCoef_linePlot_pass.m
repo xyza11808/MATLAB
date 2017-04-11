@@ -59,7 +59,7 @@ LRDisSCMtx = PairedSCMtx(LeftROIindex,RightROIindex);
 LRDisVector = LRDisMtx(:);
 LRNCVector = LRDisNCMtx(:);
 LRSCVector = LRDisSCMtx(:);
-
+save PassNCDisGrWiseSave.mat PassDataStrc LeftROIindex RightROIindex 
 %% organized into distance binned data format
 DisMaxRange = max([max(LeftDisVector),max(RightDisVector),max(LRDisVector)]);
 DisBinRange = 0:50:DisMaxRange;

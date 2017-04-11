@@ -39,7 +39,7 @@ for nn = 1 : length(MultiTScale)
         end
     end
     TimeWinValue{nn} = TimeWin;
-    [AllTloss,~] = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,...
+    AllTloss = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,...
         TimeWin,[],[],[],trOutcome,1);
 %     TrWinClassPerf(nn) = MinTloss;
     TrWinClassPerfAll(nn,:) = AllTloss;
