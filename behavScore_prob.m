@@ -5,11 +5,13 @@ if nargin==0
     filepath=uigetdir(pwd,'Select your behavior data analysis result');
     cd(filepath);
     batch_plot=1;
+    IsIgnoringPerf = 0;
     %     load(filename);
 elseif nargin == 1
     filepath = varargin{1};
     cd(filepath);
     batch_plot=1;
+    IsIgnoringPerf = 0;
 else
     behavResults=varargin{1};
     behavSettings=varargin{2};

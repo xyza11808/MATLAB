@@ -1,4 +1,4 @@
-function rand_plot(varargin)
+function varargout = rand_plot(varargin)
 %plot of the random puretone behavior data and then performing a logistic
 %fit using bootstrp function
 if nargin<1
@@ -418,3 +418,6 @@ end
 % mat_file_name=[fn(1:end-4),'_boundary_result.mat'];
 save boundary_result.mat boundary_result -v7.3
 cd(FilePath);
+if nargout > 0
+    varargout{1} = boundary_result;
+end
