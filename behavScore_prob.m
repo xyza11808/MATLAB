@@ -185,6 +185,7 @@ else
     
     %defining trial types for further analysis
     StimFreq=unique(behavResults.Stim_toneFreq);
+    SessionType = 'Undefined';
     if length(StimFreq)==2
         SessionType='puretone';
     elseif length(StimFreq) > 2

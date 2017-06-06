@@ -45,10 +45,12 @@ if iscell(behavResults.Action_lickTimeLeft(1))
             if sum(left_lickTime_double<behavResults.Time_stimOnset(n)) < sum(right_lickTime_double<behavResults.Time_stimOnset(n))
                  Lick_bias_side(n)=1;
             elseif sum(left_lickTime_double<behavResults.Time_stimOnset(n)) == sum(right_lickTime_double<behavResults.Time_stimOnset(n))
-                if min(left_lickTime_double) < min(right_lickTime_double)
-                    Lick_bias_side(n)=0; 
-                else
-                    Lick_bias_side(n)=1;
+                if sum(left_lickTime_double<behavResults.Time_stimOnset(n)) ~= 0
+                    if min(left_lickTime_double) < min(right_lickTime_double)
+                        Lick_bias_side(n)=0; 
+                    else
+                        Lick_bias_side(n)=1;
+                    end
                 end
             else
                 Lick_bias_side(n)=0;
@@ -92,10 +94,12 @@ else
             if sum(left_lickTime_double<behavResults.Time_stimOnset(n)) < sum(right_lickTime_double<behavResults.Time_stimOnset(n))
                  Lick_bias_side(n)=1;
             elseif sum(left_lickTime_double<behavResults.Time_stimOnset(n)) == sum(right_lickTime_double<behavResults.Time_stimOnset(n))
-                if min(left_lickTime_double) < min(right_lickTime_double)
-                    Lick_bias_side(n)=0; 
-                else
-                    Lick_bias_side(n)=1;
+                if sum(left_lickTime_double<behavResults.Time_stimOnset(n)) ~= 0
+                    if min(left_lickTime_double) < min(right_lickTime_double)
+                        Lick_bias_side(n)=0; 
+                    else
+                        Lick_bias_side(n)=1;
+                    end
                 end
             else
                 Lick_bias_side(n)=0;

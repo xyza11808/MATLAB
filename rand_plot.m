@@ -65,6 +65,18 @@ for n = 1:fileNum
             end
         end
     end
+    if min(behavResults.Stim_toneFreq) == 0
+        InvalidValueInds = behavResults.Stim_toneFreq == 0;
+        behavResults.Action_choice(InvalidValueInds) = [];
+        behavResults.Time_reward(InvalidValueInds) = [];
+        behavResults.Trial_Type(InvalidValueInds) = [];
+        behavResults.Stim_toneFreq(InvalidValueInds) = [];
+        if iscell(behavResults.Stim_Type(1))
+            behavResults.Stim_Type(InvalidValueInds) = [];
+        else
+            behavResults.Stim_Type(InvalidValueInds,:) = [];
+        end
+    end
         
     AnimalActionC = behavResults.Action_choice;
     MissTrialsInds = AnimalActionC == 2;
@@ -327,13 +339,14 @@ for n = 1:fileNum
             continue;
         end
         octave_sum=log2(double(max(behavResults.Stim_toneFreq))/double(min(behavResults.Stim_toneFreq)));
-        octave_dist=log2(double(max(behavResults.Stim_toneFreq))./double(stim_types));
-        octave_dist=octave_sum-octave_dist;
+%         octave_dist=log2(double(max(behavResults.Stim_toneFreq))./double(stim_types));
+%         octave_dist=octave_sum-octave_dist;
+        octave_dist = log2(double(stim_types)/double(min(stim_types)));
         xtick_label=(2.^octave_dist)*double(min(behavResults.Stim_toneFreq));
         xtick_label=xtick_label/1000;
         %trans into rightword percent
         %     reward_type(1:length(behavSettings.randompureTone_left(1,:)))=1-reward_type(1:length(behavSettings.randompureTone_left(1,:)));
-        reward_type(1:length(stim_types)/2)=1-reward_type(1:length(stim_types)/2);
+        reward_type(1:floor(length(stim_types)/2))=1-reward_type(1:floor(length(stim_types)/2));
         h3=figure;
         scatter(octave_dist,reward_type,30,'MarkerEdgeColor','k','LineWidth',1.5);
         text(octave_dist,reward_type,cellstr(num2str(TypeNumber(:),'n=%d')),'Fontsize',15,'color','b');

@@ -113,17 +113,17 @@ while ~strcmpi(addchar,'n')
 end
 
 %%
-m = m - 1;
+% m = m - 1;
 SaveDirs = uigetdir(pwd,'Please select the data save path for summarized data');
 cd(SaveDirs);
-fid = fopen('Adjust_NC_session_data_path.txt','w');
+fid = fopen('Temp_path.txt','w');
 fprintf(fid,'The session path for all used sessions:\r\n');
 fForm = '%s;\r\n';
 for njhu = 1 : m
     fprintf(fid,fForm,DataPath{njhu});
 end
 fclose(fid);
-save AdjustNCGrSave.mat DataPath DataSum BetGrNCall WinGrNCall -v7.3
+% save AdjustNCGrSave.mat DataPath DataSum BetGrNCall WinGrNCall -v7.3
 
 %% plots of all summarized data set
 BetGrNCdata = BetGrNCall;
@@ -183,7 +183,7 @@ catch
     PassNCdataWin = [cell2mat(PassNCdataStrc.PassNCGroupDataLeft);cell2mat(PassNCdataStrc.PassNCGroupDataRight)];
 end
 
-%%
+%%  ranksum test
 MeanNCData = [mean(TaskNCdataBet),mean(TaskNCdataWin),mean(PassNCdataBet),mean(PassNCdataWin)];
 hBarPlot = figure('position',[500 300 980 800]);
 hold on
@@ -210,3 +210,53 @@ text(3.5,-0.02,'Passive','FontSize',14,'HorizontalAlignment','center');
 saveas(hhf,'Task Passive compare bar plot');
 saveas(hhf,'Task Passive compare bar plot','png');
 saveas(hhf,'Task Passive compare bar plot','pdf'); % saved in pdf and then will be able to open in illustrator directlly
+
+%% ttest
+MeanNCData = [mean(TaskNCdataBet),mean(TaskNCdataWin),mean(PassNCdataBet),mean(PassNCdataWin)];
+hBarPlot = figure('position',[500 300 980 800]);
+hold on
+hTaskNCBet = bar(1,mean(TaskNCdataBet),0.3,'FaceColor',[.7 .7 .7],'EdgeColor','none');
+hTaskNCWin = bar(2,mean(TaskNCdataWin),0.3,'FaceColor',[.2 .2 .2],'EdgeColor','none');
+hPassNCBet = bar(3,mean(PassNCdataBet),0.3,'FaceColor',[.7 .7 .7],'EdgeColor','none');
+hPassNCWin = bar(4,mean(PassNCdataWin),0.3,'FaceColor',[.2 .2 .2],'EdgeColor','none');
+[~,p_TaskBet_PassBet] = ttest2(TaskNCdataBet,PassNCdataBet);
+[~,p_TaskBet_TaskWin] = ttest2(TaskNCdataBet,TaskNCdataWin);
+[~,p_TaskWin_PassWin] = ttest2(TaskNCdataWin,PassNCdataWin);
+[~,p_PassBet_PassWin] = ttest2(PassNCdataBet,PassNCdataWin);
+hhf = GroupSigIndication([1,3],[mean(TaskNCdataBet),mean(PassNCdataBet)],p_TaskBet_PassBet,hBarPlot,[],mean(TaskNCdataWin));
+hhf = GroupSigIndication([1,2],[mean(TaskNCdataBet),mean(TaskNCdataWin)],p_TaskBet_TaskWin,hhf,1.2);
+hhf = GroupSigIndication([2,4],[mean(TaskNCdataWin),mean(PassNCdataWin)],p_TaskWin_PassWin,hhf,1.25);
+hhf = GroupSigIndication([3,4],[mean(PassNCdataBet),mean(PassNCdataWin)],p_PassBet_PassWin,hhf,1.4);
+text([1,2,3,4],MeanNCData*1.01,cellstr(num2str(MeanNCData(:),'%.3f')),'HorizontalAlignment','center','FontSize',16);
+set(gca,'xtick',[1,2,3,4],'xticklabel',{'Bet','Win','Bet','Win'});
+yscales = get(gca,'ylim');
+set(gca,'ytick',yscales(1):0.1:yscales(2));
+ylabel({'Mean';'Noise correlation coeficient value'});
+set(gca,'FontSize',18);
+text(1.5,-0.02,'Task','FontSize',14,'HorizontalAlignment','center');
+text(3.5,-0.02,'Passive','FontSize',14,'HorizontalAlignment','center');
+saveas(hhf,'Task Passive compare bar plot');
+saveas(hhf,'Task Passive compare bar plot','png');
+saveas(hhf,'Task Passive compare bar plot','pdf'); % saved in pdf and then will be able to open in illustrator directlly
+save TestPvalue.mat p_TaskBet_PassBet p_TaskBet_TaskWin p_TaskWin_PassWin p_PassBet_PassWin -v7.3
+
+%% plot all four group data together
+[PassNCBety,PassNCBetx] = ecdf(PassNCdataBet);
+[PassNCWiny,PassNCWinx] = ecdf(PassNCdataWin);
+[TaskNCBety,TaskNCBetx] = ecdf(TaskNCdataBet);
+[TaskNCWiny,TaskNCWinx] = ecdf(TaskNCdataWin);
+
+hhh = figure;
+hold on
+hl1 = plot(PassNCBetx,PassNCBety,'Color','k','LineWidth',1.8);
+hl2 = plot(PassNCWinx,PassNCWiny,'Color',[.7 .7 .7],'LineWidth',1.8);
+hl3 = plot(TaskNCBetx,TaskNCBety,'Color','b','LineWidth',1.8);
+hl4 = plot(TaskNCWinx,TaskNCWiny,'Color','r','LineWidth',1.8);
+set(gca,'xlim',[-1 1],'xtick',[-1,0,1],'ytick',[0 0.5 1]);
+xlabel('Noise correlation');
+ylabel('Cumulative fraction');
+set(gca,'FontSize',18);
+legend([hl1,hl2,hl3,hl4],{'PassBet','PassWin','TaskBet','TaskWin'},'FontSize',12);
+saveas(hhh,'Four Group NC data plot save');
+saveas(hhh,'Four Group NC data plot save','png');
+saveas(hhh,'Four Group NC data plot save','pdf');

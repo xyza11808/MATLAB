@@ -197,8 +197,8 @@ if strcmpi(type,'RF')
     DataAnaObj.popuSignalCorr(1,'Mean'); % normal method of signal correlation
     %%
     
-    TimeCourseStrcSP = TimeCorseROC(SelectData,TrialTypes,frame_rate,frame_rate,[],2,0); 
-     ROIAUCcolorp(TimeCourseStrcSP,1);
+%     TimeCourseStrcSP = TimeCorseROC(SelectData,TrialTypes,frame_rate,frame_rate,[],2,0); 
+%      ROIAUCcolorp(TimeCourseStrcSP,1);
     
      %parameter struc
     V.Ncells = 1;
@@ -211,10 +211,17 @@ if strcmpi(type,'RF')
          mkdir('./SpikeData_analysis/');
      end
      cd('./SpikeData_analysis/');
+     save EsSpikeSave.mat nnspike SelectSArray frame_rate -v7.3
+     %
+     DataSPObj = DataAnalysisSum(nnspike,SelectSArray,frame_rate,frame_rate,1);
+     DataSPObj.popuZscoredCorr(0.5,'Mean'); % first response peak response noise correlation
+     DataSPObj.popuSignalCorr(1,'Mean'); % normal method of signal correlation
+     
+     %%
      TimeCourseStrcSipke = TimeCorseROC(nnspike,TrialTypes,frame_rate,frame_rate,[],2,0); 
      ROIAUCcolorp(TimeCourseStrcSipke,1);
      MultiTimeWinClass(nnspike,SelectSArray,PassOutcome,frame_rate,frame_rate,1,0.1);
-     save EsSpikeSave.mat nnspike SelectSArray frame_rate -v7.3
+     
      cd ..;
      
      %%

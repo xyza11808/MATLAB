@@ -33,7 +33,7 @@ function varargout = CaSignal_ROI_GUI_NP_extract(varargin)
 
 % Edit the above text to modify the response to help CaSignal_ROI_GUI_NP_extract
 
-% Last Modified by GUIDE v2.5 25-Nov-2016 21:45:21
+% Last Modified by GUIDE v2.5 28-May-2017 16:29:25
 
 % Begin initialization code - DO NOT EDIT
 
@@ -94,7 +94,7 @@ set(handles.CurrentImageFilenameText, 'String', 'Current Image Filename');
     % ROI section
 set(handles.nROIsText, 'String', '0');
 set(handles.CurrentROINoEdit, 'String', '1');
-set(handles.ROITypeMenu, 'Value', 1);
+set(handles.ROITypeMenu, 'Value', 9);
     % Analysis mode
 set(handles.AnalysisModeDeltaFF, 'Value', 1);
 set(handles.AnalysisModeBGsub, 'Value', 0);
@@ -105,6 +105,9 @@ set(handles.CurrentFrameNoEdit,'String',1);
 set(handles.setTargetMaxDelta,'Value',0);
 set(handles.setTargetCurrentFrame,'Value',0);
 set(handles.setTargetMean,'Value',0);
+set(handles.NewROITag,'Value',1);
+set(handles.OldROITag,'Value',0);
+set(handles.MissROITag,'Value',0);
 set(handles.ROI_draw_freehand, 'Value',1);
 set(handles.ROI_draw_poly, 'Value',0);
 
@@ -145,8 +148,9 @@ CaSignal.EmptyROIsImport = [];
 CaSignal.OpenWithImagJ = 1;
 CaSignal.IsTrialExcluded = [];
 CaSignal.ROIdefineTr = [];
+CaSignal.ROIStateIndicate = [];
 fprintf('Matlab Two-photon imaging data analysis GUI.\n');
-fprintf('           Version :  2.03.01             \n');
+fprintf('           Version :  2.03.05             \n');
 % Update handles structure
 guidata(hObject, handles);
 
@@ -214,6 +218,7 @@ CaTrial.SoloTrialNo = [];
 CaTrial.SoloStartTrialNo = [];
 CaTrial.SoloEndTrialNo = [];
 CaTrial.behavTrial = [];
+CaTrial.ROIstateIndic = [];
 % CaTrial.ROIType = '';
 
 % --- Executes on button press in open_image_file_button.
@@ -265,7 +270,10 @@ set(handles.msgBox, 'String', ['Loaded file ' filename]);
 TrialNo = find(strcmp(filename, CaSignal.data_file_names));
 set(handles.CurrentTrialNo,'String', int2str(TrialNo));
 CaSignal.CurrentTrialNo = TrialNo;
-
+if CaSignal.CurrentTrialNo == 1 && isempty(CaSignal.ROIStateIndicate)
+    CaSignal.ROIStateIndicate(1,:) = [1,0,0];
+end
+    
 info = imfinfo(filename);
 CaSignal.ImInfo = info;
 
@@ -692,7 +700,7 @@ if ~CaSignal.IsDoubleSetROI
     nROIs = str2num(get(handles.nROIsText, 'String'));
     nROIs = nROIs + 1;
     set(handles.nROIsText, 'String', num2str(nROIs));
-
+    CaSignal.ROIStateIndicate(nROIs,:) = [1,0,0]; %New, Old, Miss
     CurrentROINo = get(handles.CurrentROINoEdit,'String');
     % if strcmp(CurrentROINo, '0')
     %     set(handles.CurrentROINoEdit,'String', '1');
@@ -823,6 +831,17 @@ else
     ROIType_str = str_menu{get(handles.ROITypeMenu,'Value')};
     CaSignal.ROIinfo(TrialNo).ROItype{CurrentROINo} = ROIType_str;
 end
+TotalROIs = str2num(get(handles.nROIsText, 'String'));
+if CurrentROINo < TotalROIs
+    cROIstateIndex = CaSignal.ROIStateIndicate(CurrentROINo,:);
+    set(handles.NewROITag,'Value',cROIstateIndex(1));
+    set(handles.OldROITag,'Value',cROIstateIndex(2));
+    set(handles.MissROITag,'Value',cROIstateIndex(3));
+else
+    set(handles.NewROITag,'Value',1);
+    set(handles.OldROITag,'Value',0);
+    set(handles.MissROITag,'Value',0);
+end
 % axes(handles.Image_disp_axes);
 update_ROI_plot(handles);
 handles = update_projection_images(handles);
@@ -856,6 +875,17 @@ if length(CaSignal.ROIinfo(TrialNo).ROItype)>= CurrentROINo
 else
     CaSignal.ROIinfo(TrialNo).ROItype{CurrentROINo} = str_menu{get(handles.ROITypeMenu,'Value')};
 end
+TotalROIs = str2num(get(handles.nROIsText, 'String'));
+if CurrentROINo < TotalROIs
+    cROIstateIndex = CaSignal.ROIStateIndicate(CurrentROINo,:);
+    set(handles.NewROITag,'Value',cROIstateIndex(1));
+    set(handles.OldROITag,'Value',cROIstateIndex(2));
+    set(handles.MissROITag,'Value',cROIstateIndex(3));
+else
+    set(handles.NewROITag,'Value',1);
+    set(handles.OldROITag,'Value',0);
+    set(handles.MissROITag,'Value',0);
+end
 update_ROI_plot(handles);
 handles = update_projection_images(handles);
 guidata(hObject, handles);
@@ -874,7 +904,19 @@ if get(handles.Go_to_ROI_def_trial_check_button, 'Value') == 1
     filename = CaSignal.data_file_names{ROI_def_trialNo};
     if exist(filename,'file')
         open_image_file_button_Callback(hObject, eventdata, handles, filename);
+        
     end
+end
+TotalROIs = str2num(get(handles.nROIsText, 'String'));
+if CurrentROINo < TotalROIs
+    cROIstateIndex = CaSignal.ROIStateIndicate(CurrentROINo,:);
+    set(handles.NewROITag,'Value',cROIstateIndex(1));
+    set(handles.OldROITag,'Value',cROIstateIndex(2));
+    set(handles.MissROITag,'Value',cROIstateIndex(3));
+else
+    set(handles.NewROITag,'Value',1);
+    set(handles.OldROITag,'Value',0);
+    set(handles.MissROITag,'Value',0);
 end
 update_ROI_plot(handles);
 guidata(hObject, handles);
@@ -960,6 +1002,10 @@ while finish_drawing == 0
             return
     end
 end
+CaSignal.ROIStateIndicate(CurrentROINo,:) = [1,0,0];
+set(handles.NewROITag,'Value',1);
+set(handles.OldROITag,'Value',0);
+set(handles.MissROITag,'Value',0);
 CaSignal.ROIdefineTr = CurrentROINo;
 CaSignal.ROIinfo(TrialNo).ROIpos{CurrentROINo} = pos;
 CaSignal.ROIinfo(TrialNo).ROImask{CurrentROINo} = BW;
@@ -1142,6 +1188,11 @@ CaSignal.EmptyROIsImport = emptyROIs;
 %         CaSignal.ROIinfo(TrialNo) = CaSignal.ROIinfo{TrialNo_load};
 %     endcas
 nROIs = length(CaSignal.ROIinfo(TrialNo).ROIpos);
+CaSignal.ROIStateIndicate = [zeros(nROIs,1),ones(nROIs,1),zeros(nROIs,1)];
+CurrentROINo = str2double(get(handles.CurrentROINoEdit,'String'));
+set(handles.NewROITag,'Value',CaSignal.ROIStateIndicate(CurrentROINo,1));
+set(handles.OldROITag,'Value',CaSignal.ROIStateIndicate(CurrentROINo,2));
+set(handles.MissROITag,'Value',CaSignal.ROIStateIndicate(CurrentROINo,3));
 CaSignal.CaTrials(TrialNo).nROIs = nROIs;
 set(handles.nROIsText, 'String', num2str(nROIs));
 update_ROI_plot(handles);
@@ -1355,6 +1406,7 @@ CaSignal.ROIinfo(1).Ringmask = AdjustROImaskR;
 CaSignal.ROIinfoBack(1).LabelNPmask = LabelNPmask;
 ROIinfo_local(1).LabelNPmask = LabelNPmask;
 CaSignal.ROIinfo(1).LabelNPmask = LabelNPmask;
+TotalStateIndic = CaSignal.ROIStateIndicate;
 %###########################################################################
     % Make sure the ROIinfo of the first trial of the batch is up to date
 for TrialNo = Start_trial:End_trial
@@ -1363,6 +1415,7 @@ for TrialNo = Start_trial:End_trial
         CaSignal.ROIinfo(TrialNo) = CaSignal.ROIinfoBack;
         ROIinfo_local(TrialNo)=ROIinfo_local(1);
        CaTrials_local(TrialNo).nROIs = CaTrials_local(1).nROIs;
+       CaTrials_local(TrialNo).ROIstateIndic = TotalStateIndic;
 %        disp(['Trial Number ' num2str(TrialNo) ' and number of ROIs is' num2str(CaTrials_local(TrialNo).nROIs)]);
     end
 %     handles = get_exp_info(hObject, eventdata, handles);
@@ -1381,13 +1434,14 @@ try
     %##########################################################################
     %% initialize catrials for each trials
     ftime = tic;
-    parfor TrialNo = Start_trial:End_trial
+    parfor TrialNo = Start_trial:End_trial    %%%%%%%%%%%%%%%%%% parfor
         fname = filenames{TrialNo};
          [~,header] = load_scim_data(fname,[],[],0);
         if (nTrials < TrialNo || isempty( CaTrials_local(TrialNo).FileName))
                 trial_init = init_CaTrial(filenames{TrialNo},TrialNo,header);
                 CaTrials_local(TrialNo) = trial_init;
                 CaTrials_local(TrialNo).nROIs = nTROIs;
+                CaTrials_local(TrialNo).ROIstateIndic = TotalStateIndic;
         %         disp('Initial of Casignal Struct.\n');
         end
     end
@@ -1397,7 +1451,7 @@ try
     %%
     PopuMeanSave = cell((End_trial - Start_trial + 1),1);
     PopuMaxSave = cell((End_trial - Start_trial + 1),1);
-    parfor TrialNo = Start_trial:End_trial
+    parfor TrialNo = Start_trial:End_trial   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   parfor
         fname = filenames{TrialNo};
         if ~exist(fname,'file')
             [fname, pathname] = uigetfile('*.tif', 'Select Image Data file');
@@ -1472,7 +1526,7 @@ catch ME
             TempCaTrials_local(nxnx) = CaTrials_local(1);
         end
 %         TempCaTrials_local = 
-        parfor TrialNo = 1 : (BlockEnd - BlockStart + 1)
+        parfor TrialNo = 1 : (BlockEnd - BlockStart + 1)    %%%%%%%%%%%%%%%%%%%%%%%% parfor
             nRealTrNo = TrialNo+BlockBase;
              fname = filenames{nRealTrNo};
             if ~exist(fname,'file')
@@ -1492,6 +1546,7 @@ catch ME
                     trial_init = init_CaTrial(filenames{nRealTrNo},nRealTrNo,header);
                     TempCaTrials_local(TrialNo) = trial_init;
                     TempCaTrials_local(TrialNo).nROIs = nTROIs;
+                    TempCaTrials_local(TrialNo).ROIstateIndic = TotalStateIndic;
                     isTrInit(TrialNo) = 1;
             %         disp('Initial of Casignal Struct.\n');
             end
@@ -1641,6 +1696,7 @@ SavedCaTrials.FrameTime=CaTrials(1).FrameTime;
 SavedCaTrials.nROIs=CaTrials(1).nROIs;
 SavedCaTrials.ROIinfo=CaTrials(1).ROIinfo;
 SavedCaTrials.ROIinfoBack=CaTrials(1).ROIinfoBack;
+SavedCaTrials.ROIstateIndic = CaSignal.ROIStateIndicate;
 
 RawData=zeros(length(CaTrials),CaTrials(1).nROIs,CaTrials(1).nFrames);
 ringData=zeros(length(CaTrials),CaTrials(1).nROIs,CaTrials(1).nFrames);
@@ -3187,3 +3243,86 @@ switch eventdata.Key   %'uparrow','downarrow','leftarrow','rightarrow'.
     otherwise
         fprintf('Key pressed without response.\n');
 end
+
+
+
+
+% --- Executes on button press in NewROITag.
+function NewROITag_Callback(hObject, eventdata, handles)
+global CaSignal
+% hObject    handle to NewROITag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+cTagValue = get(hObject,'Value');
+% Hint: get(hObject,'Value') returns toggle state of NewROITag
+if cTagValue
+    set(handles.OldROITag,'Value',0);
+    set(handles.MissROITag,'Value',0);
+else
+    if ~(get(handles.OldROITag,'Value') || get(handles.MissROITag,'Value'))
+        warning('No Valide ROI state indicator, using default value');
+        set(handles.NewROITag,'Value',1);
+    end
+end
+CurrentROINo = str2double(get(handles.CurrentROINoEdit, 'String'));
+CaSignal.ROIStateIndicate(CurrentROINo,:) = [get(handles.NewROITag,'Value'),...
+    get(handles.OldROITag,'Value'),get(handles.MissROITag,'Value')];
+
+
+% --- Executes on button press in OldROITag.
+function OldROITag_Callback(hObject, eventdata, handles)
+global CaSignal
+% hObject    handle to OldROITag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+if get(hObject,'Value')
+    set(handles.NewROITag,'Value',0);
+    set(handles.MissROITag,'Value',0);
+else
+    if get(handles.NewROITag,'Value')
+        set(handles.NewROITag,'Value',1);
+    end
+end
+% Hint: get(hObject,'Value') returns toggle state of OldROITag
+CurrentROINo = str2double(get(handles.CurrentROINoEdit, 'String'));
+CaSignal.ROIStateIndicate(CurrentROINo,:) = [get(handles.NewROITag,'Value'),...
+    get(handles.OldROITag,'Value'),get(handles.MissROITag,'Value')];
+
+
+
+% --- Executes on button press in MissROITag.
+function MissROITag_Callback(hObject, eventdata, handles)
+global CaSignal
+% hObject    handle to MissROITag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Hint: get(hObject,'Value') returns toggle state of MissROITag
+if get(hObject,'Value')
+    set(handles.NewROITag,'Value',0);
+    set(handles.OldROITag,'Value',0);
+else
+    if get(handles.NewROITag,'Value')
+        set(handles.NewROITag,'Value',1);
+    end
+end
+CurrentROINo = str2double(get(handles.CurrentROINoEdit, 'String'));
+CaSignal.ROIStateIndicate(CurrentROINo,:) = [get(handles.NewROITag,'Value'),...
+    get(handles.OldROITag,'Value'),get(handles.MissROITag,'Value')];
+
+
+% --- Executes on button press in ROI_draw_freehand.
+function ROI_draw_freehand_Callback(hObject, eventdata, handles)
+% hObject    handle to ROI_draw_freehand (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of ROI_draw_freehand
+
+
+% --- Executes on button press in ROI_draw_poly.
+function ROI_draw_poly_Callback(hObject, eventdata, handles)
+% hObject    handle to ROI_draw_poly (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of ROI_draw_poly

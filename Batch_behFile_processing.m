@@ -1,5 +1,5 @@
 
-GrandPath = 'E:\DataToGo\myData\behavior';
+GrandPath = 'H:\data\behavior\2p_data\behaviro_data\batch40';
 xpath = genpath(GrandPath);
 nameSplit = strsplit(xpath,';');
 DirLength = length(nameSplit);
@@ -9,6 +9,8 @@ nProbPath = 1;
 RandomPTSession = {};
 NorPTsession = {};
 ProbSession = {};
+ErrorFname = {};
+ErrorNum = 0;
 
 for n = 1 : DirLength
     cPATH = nameSplit{n};
@@ -24,19 +26,25 @@ for n = 1 : DirLength
     cd(cPATH);
     for nfile = 1 : matFileLength
         cfilename = matlist(nfile).name;
-        xxxx = load(cfilename);
-        [~,SessionType] = behavScore_prob(xxxx.behavResults,xxxx.behavSettings,cfilename,0);
-        if strcmpi(SessionType,'RandompuretoneProb') || strcmpi(SessionType,'Randompuretone')
-            fprintf('Random puretone session exists, plot session data.\n');
-            rand_plot(xxxx.behavResults,3,cfilename);
-            RandomPTSession(nRandomPurePath) = {fullfile(cPATH,cfilename)};
-            nRandomPurePath = nRandomPurePath + 1;
-        elseif strcmpi(SessionType,'prob')
-            ProbSession(nProbPath) = {fullfile(cPATH,cfilename)};
-            nProbPath = nProbPath + 1;
-        elseif strcmpi(SessionType,'puretone')
-            NorPTsession(nNormalPTPath) = {fullfile(cPATH,cfilename)};
-            nNormalPTPath = nNormalPTPath + 1;
+        try
+            xxxx = load(cfilename);
+            [~,SessionType] = behavScore_prob(xxxx.behavResults,xxxx.behavSettings,cfilename,0);
+            if strcmpi(SessionType,'RandompuretoneProb') || strcmpi(SessionType,'Randompuretone')
+                fprintf('Random puretone session exists, plot session data.\n');
+                rand_plot(xxxx.behavResults,3,cfilename);
+                RandomPTSession(nRandomPurePath) = {fullfile(cPATH,cfilename)};
+                nRandomPurePath = nRandomPurePath + 1;
+            elseif strcmpi(SessionType,'prob')
+                ProbSession(nProbPath) = {fullfile(cPATH,cfilename)};
+                nProbPath = nProbPath + 1;
+            elseif strcmpi(SessionType,'puretone')
+                NorPTsession(nNormalPTPath) = {fullfile(cPATH,cfilename)};
+                nNormalPTPath = nNormalPTPath + 1;
+            end
+        catch ME
+            ErrorNum = ErrorNum + 1;
+            cfPath = fullfile(cPATH,cfilename);
+            ErrorFname{ErrorNum} = cfPath;
         end
     end
     if status

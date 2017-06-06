@@ -1,11 +1,8 @@
-function SessionWithModulation(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,Trialmodulation,isNeuDecor,varargin)
+function SessionWithModulationNeuDecor(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,Trialmodulation,varargin)
 % this function is specifically used for analysis sessions with interleved
 % modulation trials(e.g. opto trials)
-if nargin < 7
-    isNeuDecor = 0;
-end
 isSessionBstrap = 0;
-if nargin > 7
+if nargin > 6
     if ~isempty(varargin{1})
         isSessionBstrap = varargin{1};
     end
@@ -16,13 +13,13 @@ if ~isSessionBstrap
 else
     BootStrapIter = 10;
     BootStrapRatio = 0.9;
-    if nargin > 8
+    if nargin > 7
         InputPara = varargin{2};
         BootStrapIter = InputPara(1);
         BootStrapRatio = InputPara(2);
     end
 end
-if nargin > 9
+if nargin > 8
     paraInputs = varargin{3:end};
 else
     paraInputs = {};
@@ -36,7 +33,7 @@ for nboot = 1 : BootStrapIter
         end
         fprintf('No modulation index being input, considering as a pure control session.\n');
         RandInds = CusRandSample(nTrs,round(nTrs*BootStrapRatio));
-        TestLoss = TbyTAllROIclass(RawDataAll(RandInds,:,:),StimAll(RandInds),TrialResult(RandInds),AlignFrame,FrameRate,varargin{:});
+        TestLoss = TbyTAllROIclassNeuDecor(RawDataAll(RandInds,:,:),StimAll(RandInds),TrialResult(RandInds),AlignFrame,FrameRate,varargin{:});
         BootResults{nboot} = TestLoss;
     else
         if nboot == 1
@@ -61,7 +58,7 @@ for nboot = 1 : BootStrapIter
         OptoDataAll = optoRawData(BstrapInds,:,:);
         OptoFreqAll = optoStimAll(BstrapInds);
                 
-        optoLoss = TbyTAllROIclass(OptoDataAll,OptoFreqAll,optoResult(BstrapInds),AlignFrame,...
+        optoLoss = TbyTAllROIclassNeuDecor(OptoDataAll,OptoFreqAll,optoResult(BstrapInds),AlignFrame,...
             FrameRate,paraInputs{:});
         optoBootResult{nboot} = optoLoss;
 %         cd ..;
@@ -73,7 +70,7 @@ for nboot = 1 : BootStrapIter
 %         cd('./Control_trials/');
         ContDataAll = optoRawData(~BstrapInds,:,:);
         ContFreqAll = optoStimAll(~BstrapInds);
-        ContLoss = TbyTAllROIclass(ContDataAll,ContFreqAll,optoResult(~BstrapInds),AlignFrame,...
+        ContLoss = TbyTAllROIclassNeuDecor(ContDataAll,ContFreqAll,optoResult(~BstrapInds),AlignFrame,...
             FrameRate,paraInputs{:});
         ContBootResult{nboot} = ContLoss;
 %         cd ..;

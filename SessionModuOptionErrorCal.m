@@ -1,6 +1,10 @@
 function SessionModuOptionErrorCal(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,Trialmodulation,varargin)
 % this function is specifically used for analysis sessions with interleved
 % modulation trials(e.g. opto trials)
+if ~isdir('./PopuClassification_save/')
+    mkdir('./PopuClassification_save/');
+end
+cd('./PopuClassification_save/');
 
 if isempty(Trialmodulation)
     fprintf('No modulation index being input, considering as a pure control session.\n');
@@ -29,3 +33,5 @@ else
     cd ..;
     
 end
+
+cd ..;

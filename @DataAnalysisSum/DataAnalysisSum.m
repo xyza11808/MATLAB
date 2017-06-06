@@ -71,6 +71,13 @@ classdef DataAnalysisSum
             end
             this = this.DataPreProcessing(TimeWind,RespCallFunction);
             
+            NeuronDecor = 0;
+            if nargin > 4
+                if ~isempty(varargin{4})
+                    NeuronDecor = varargin{4};
+                end
+            end
+            
             cTrStimsall = this.TrialStims;
             cSessiondata = this.RespMatData;
             
@@ -85,6 +92,15 @@ classdef DataAnalysisSum
                 nTrials = sum(cStimTrInds);
                 cStimTrData = cSessiondata(cStimTrInds,:);   %nTrials-by-nROI matrix
                 
+                if NeuronDecor
+                    cDataShuf = zeros(size(cStimTrData));
+                    for nnn = 1 : size(cStimTrData,2)
+                        cStimDatashuf = cStimTrData(:,nnn);
+                        cDataShuf(:,nnn) = Vshuffle(cStimDatashuf);
+                    end
+                    cStimTrData = cDataShuf;
+                end
+                        
                 switch ZSmethod
                     case 'Modified'
                         % normalization using modified z-score
@@ -117,7 +133,12 @@ classdef DataAnalysisSum
                 mkdir('./Popu_Corrcoef_save_NOS/');
             end
             cd('./Popu_Corrcoef_save_NOS/');
-            
+            if NeuronDecor
+                if ~isdir('./Nuro_decorr_Corr/')
+                    mkdir('./Nuro_decorr_Corr/');
+                end
+                cd('./Nuro_decorr_Corr/');
+            end
             if length(TimeWind) == 1
                 folderStr = sprintf('TimeScale %d_%dms noise correlation',0,TimeWind*1000);
             elseif length(TimeWind) == 2
@@ -149,6 +170,9 @@ classdef DataAnalysisSum
             save(sprintf('ROI%s_coefSave%s.mat',ZSmethod,RespCallFunction), 'PairedROIcorr','PairedNCpvalue', '-v7.3');
             cd ..;
             cd ..;
+            if NeuronDecor
+                cd ..;
+            end
         end
         
         % function to calculate the signal correlation of neuron pairs

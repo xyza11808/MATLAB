@@ -1,4 +1,3 @@
-
 function [varargout]=wave_analysis(mx,f_signal,time,FileName,varargin)
 %%wave analysis function
 %contains original signal plot, fft analysis plot and spectrom plot

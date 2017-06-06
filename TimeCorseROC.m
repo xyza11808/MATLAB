@@ -33,8 +33,22 @@ end
 
 LeftTrialInds=Trial_Type==0;
 RIghtTrialInds=Trial_Type==1;
-%considering 2s time after stim onset
-BinLength=floor((DatSize(3))/FrameBin);  %bin length
+% BeforeBinNum = floor(alignpoint/FrameBin);
+BeforeBinInds = alignpoint:-FrameBin:1;
+if BeforeBinInds(end) ~= 1
+    BeforeBinInds(end) = 1; % including the last few frames into the same frame bin, but not one single bin along
+end
+BeforeBinInds = fliplr(BeforeBinInds);
+BeforeBinNum = length(BeforeBinInds)-1; % bin inds number minus 1
+AfterBinInds = (alignpoint+1):FrameBin:DatSize(3);
+if AfterBinInds(end) ~= DatSize(3)
+    AfterBinInds(end) = DatSize(3); % set the remain frames into the last framebin, do not given extra bin number
+end
+AfterBinNum = length(AfterBinInds)-1;
+BinLength = BeforeBinNum + AfterBinNum;
+BinIndsAll = [BeforeBinInds,AfterBinInds(2:end)]; % at the alignpoint the after bin inds should started with alignpoint+1
+
+% BinLength=floor((DatSize(3))/FrameBin);  %bin length
 % BaseBInLength=floor(alignpoint/FrameBin);
 BINNEDROCResultLR=zeros(DatSize(2),BinLength);
 % % BINNEDROCResultLB=zeros(DatSize(2),BinLength+BaseBInLength);
@@ -53,8 +67,9 @@ if ~CUplot
         %     BasePoints=TempROIData(:,1:alignpoint);
         %     BaseDataFORroc=[BasePoints(:),2*ones(numel(BasePoints),1)];
         for BINNum=1:BinLength
-            LeftPoints=TempROIData(LeftTrialInds,1:BINNum*FrameBin);
-            RightPoints=TempROIData(RIghtTrialInds,1:BINNum*FrameBin);
+            cEndInds = BinIndsAll(BINNum);
+            LeftPoints=TempROIData(LeftTrialInds,1:cEndInds);
+            RightPoints=TempROIData(RIghtTrialInds,1:cEndInds);
             LeftPointsMax = max(LeftPoints,[],2);
             RightPointsMax = max(RightPoints,[],2);
             % LeftPoints=TempROIData(LeftTrialInds,1:(BINNum*FrameBin);
@@ -100,8 +115,14 @@ else
     parfor ROInum=1:DatSize(2)
         TempROIData=squeeze(AlignedData(:,ROInum,:));
         for BINNum=1:BinLength
-            LeftPoints=TempROIData(LeftTrialInds,(((BINNum-1)*FrameBin)+1):(BINNum*FrameBin));
-            RightPoints=TempROIData(RIghtTrialInds,(((BINNum-1)*FrameBin)+1):(BINNum*FrameBin));
+            cEndInds = BinIndsAll(BINNum+1);
+            if BINNum == (BeforeBinNum+1)
+                cStartInds = BinIndsAll(BINNum)+1;
+            else
+                cStartInds = BinIndsAll(BINNum);
+            end
+            LeftPoints=TempROIData(LeftTrialInds,cStartInds:cEndInds);
+            RightPoints=TempROIData(RIghtTrialInds,cStartInds:cEndInds);
              LeftPointsMax = max(LeftPoints,[],2);
             RightPointsMax = max(RightPoints,[],2);
             if length(unique(LeftPointsMax)) < 20 || length(unique(RightPointsMax)) < 20
@@ -125,20 +146,22 @@ else
     end
     clearvars TempROIData LeftPoints RightPoints LeftDataFORroc RightDataFORroc
 end
-
-PXtick = FrameBin:FrameBin:(DatSize(3));
+PXtick = ((BinIndsAll(1:end-1)+BinIndsAll(2:end))/2);
+% PXtick = FrameBin:FrameBin:(DatSize(3));
 AlignTime = alignpoint/FrameRate;
-AlignBin = alignpoint/FrameBin;
+% AlignBin = alignpoint/FrameBin;
+AlignBin = BeforeBinNum+0.5;
 % PXtick(1)=[];
 PXtickTime=PXtick/FrameRate;
 PXtickAfter = PXtick;
+%%
 if isplot
     FolderName = sprintf('./LR_ROC_timeFun%s/',PlotDesp);
     if ~isdir(FolderName)
         mkdir(FolderName);
     end
     cd(FolderName);
-%%
+%
     for ROInum=1:DatSize(2)
         hROI=figure;
         plot(PXtickTime,BINNEDROCResultLR(ROInum,:),'r-o','LineWidth',2);
@@ -286,9 +309,10 @@ end
 % saveas(hPopu,'Popu timeBINroc RB plot.fig');
 % close(hPopu);
 % cd ..
+%%
 LRRand=max(BINNEDROCResultLR,[],2);
 if isplot
-%%
+
 %3d plot in 2d space
 FolderName2 = sprintf('./LR_ROC_timeFun%s/',PlotDesp);
 if ~isdir(FolderName2)
@@ -372,10 +396,17 @@ if isplot
     set(gca,'ztick',[0.3 0.7 1]);
     grid off; box off;
     view(113.7,63.6);
-    hBar = colorbar;
+%     hax = gca;
+%     axisPos = get(hax,'position');
+    hBar = colorbar('southoutside');
+    CBpos = get(hBar,'position');
+    set(hBar,'position',[CBpos(1) 0.85 CBpos(3) 0.03]);
+%     set(hax,'position',axisPos);
     set(hBar,'Ticks',[0.5,0.8,1]);
+    %
     saveas(h_surf,'Popu 3dplot AUC surf.png');
     saveas(h_surf,'Popu 3dplot AUC surf.fig');
+    saveas(h_surf,'Popu 3dplot AUC surf','pdf');
     close(h_surf);
 
     [~,MaxIndsSmooth] = max(SmoothData);

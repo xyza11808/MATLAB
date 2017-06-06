@@ -61,8 +61,9 @@ else
 end
 
 
-MegOnTime=20;   %this part should be modified according to the real data
-sessionType=1;  %this part should be modified according to the real data
+MegOnTime=4;   %this part should be modified according to the real data
+MagDurTime = 2;
+% sessionType=2;  %this part should be modified according to the real data
 MegOnFrame=MegOnTime*FrameRate;
 time_scale=1;  %[2,5,10]
 % time_scale=1;
@@ -76,7 +77,7 @@ StimOnFrame=StimOnTime*FrameRate;
 if StimOnFrame == 0
     StimOnFrame=1;
 end
-StimOffTime=StimOnTime+2;  %or user defined time
+StimOffTime=StimOnTime+MagDurTime;  %or user defined time
 StimOffframe=round(StimOffTime*FrameRate);
 % StimOffframe=FrameNum;
 if StimOffframe~=FrameNum
@@ -89,18 +90,22 @@ end
 
 %Stim parameters
 stimType={'Sine','Square'};
-stimIndex=2;
-if stimIndex==1
+StimAmp = 8; % mT
+stimIndex=3;
+
+if stimIndex == 1
+    % singe wave
     StimT=0.1; %Hz
-    StimAmp=0; %mT
+%     StimAmp=0; %mT
     StimOnTime=1:(StimOffframe-StimOnFrame);
     StimOnData=StimAmp*sin(2*pi*StimT*(StimOnTime/FrameRate));
     if size(StimOnData,1)~=1
         StimOnData=StimOnData';
     end
     StimData=[zeros(1,StimOnFrame),StimOnData,zeros(1,FrameNum-StimOffframe)];
-elseif stimIndex==2
-    StimAmp=16; %mT
+elseif stimIndex == 2
+    % constant square
+%     StimAmp=16; %mT
     StimOnTime=1:(StimOffframe-StimOnFrame);
     StimOnData=StimAmp*ones(1,StimOffframe-StimOnFrame);
     if size(StimOnData,1)~=1
@@ -111,6 +116,23 @@ elseif stimIndex==2
 %     if length(StimData)>FrameNum
 %         StimData(1001:end)=[];
 %     end
+elseif stimIndex == 3
+    % changed square wave
+    StimPeriod = 0.5; %Hz
+    PeriodTime = 1/StimPeriod;
+    MagDurF = round(MagDurTime*FrameRate);
+    PeriodF = round(PeriodTime*FrameRate);
+    TimeSign = [ones(1,ceil(PeriodF/2)),(-1)*ones(1,(PeriodF - ceil(PeriodF/2)))];
+    if MagDurTime <= PeriodTime
+        RealTimeSignF = TimeSign(1 : MagDurF);
+    else
+        FullPeriodNum = floor(MagDurF/PeriodF);
+        FullPeriodSign = repmat(TimeSign,1,FullPeriodNum);
+        LeftLength = MagDurF - (PeriodF*FullPeriodNum);
+        AllPeriodSign = [FullPeriodSign,TimeSign(1:LeftLength)];
+        RealTimeSignF = AllPeriodSign;
+    end
+    StimData = StimAmp * [zeros(1,StimOnFrame),RealTimeSignF,zeros(1,FrameNum-StimOffframe)];
 end
 
 %%
@@ -130,8 +152,15 @@ for n=1:nROIs
     tempData=double(squeeze(AllDataRaw(:,n,:)));
     h=figure;
     subplot(2,1,1);
+    hold on
     imagesc(tempData);
     set(gca,'xtick',TimeTick,'xticklabel',TimeTicklabel);
+    yscales = get(gca,'ylim');
+    xscales = get(gca,'xlim');
+    line([StimOnFrame,StimOnFrame],[0.5 TrialNum+0.5],'Color',[.7 .7 .7],'LineWidth',2);
+    line([StimOffframe,StimOffframe],[0.5 TrialNum+0.5],'Color',[1 0 1],'LineWidth',2);
+    ylim([0.5 TrialNum+0.5]);
+    xlim([0 size(tempData,2)]);
     colorbar;
     
     subplot(2,1,2);
@@ -447,6 +476,10 @@ for n=1:nROIs
     imagesc(SingleROIData,[0 300]);  %,[0 min(400,max(SingleROIData(:)))]
     set(gca,'xtick',TimeTick,'xticklabel',TimeTicklabel);
     ylabel('# Trials');
+    line([StimOnFrame,StimOnFrame],[0.5 TrialNum+0.5],'Color',[.7 .7 .7],'LineWidth',2);
+    line([StimOffframe,StimOffframe],[0.5 TrialNum+0.5],'Color',[1 0 1],'LineWidth',2);
+    ylim([0.5 TrialNum+0.5]);
+    xlim([0 size(tempData,2)]);
     colorbar;
 %     plot(SingleROIData','color',[.8 .8 .8],'LineWidth',0.5);
     MeanROITrace=mean(SingleROIData);

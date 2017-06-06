@@ -333,8 +333,8 @@ end
 % if isBadModelCV
 %     clearvars TrainModelLoss
 % end
-MinTestLoss = min(TestLoss);
-fprintf('Min Test Data error rate is %.3f.\n',MinTestLoss);
+MinTestLoss = mean(TestLoss);
+fprintf('Mean Test Data error rate is %.3f.\n',MinTestLoss);
 
 if isShuffle
     % ####################################################

@@ -47,7 +47,7 @@ end
 plot_data_inds=struct('left_trials_inds',[],'right_trials_inds',[],'left_trials_bingo_inds',[],'right_trials_bingo_inds',[],...
     'left_trials_oops_inds',[],'right_trials_oops_inds',[],'left_stim_tone',[],'right_stim_tone',[],...
     'left_trials_miss_inds',[],'right_trials_miss_inds',[],'left_stim_tone_prob',[],'right_stim_tone_prob',[]);
-isProbAsRandTone = 0;
+isProbAsRandTone = 1;
 % global settings end
 % %%################################################################################################
 % ##################################################################################################
@@ -117,13 +117,18 @@ if ~isempty(exclude_inds)
     behavResults.Trial_Num(exclude_inds)=[];
     behavResults.Trial_isProbeTrial(exclude_inds)=[];
     behavResults.Trial_isOptoProbeTrial(exclude_inds)=[];
-    behavResults.ManWater_choice(exclude_inds)=[];
+    if isfield(behavResults,'ManWater_choice')
+        behavResults.ManWater_choice(exclude_inds)=[];
+    end
 %     behavResults.Time_optoStimOffTime(exclude_inds)=[];
     
     behavResults.Trial_isOptoTraingTrial(exclude_inds)=[];
     behavResults.Time_optoStimOnset(exclude_inds)=[];
-    
-     behavResults.Stim_Type(exclude_inds,:)=[];
+    if iscell(behavResults.Stim_Type(1))
+        behavResults.Stim_Type(exclude_inds) = [];
+    else
+        behavResults.Stim_Type(exclude_inds,:)=[];
+    end
     if max(behavResults.Trial_isProbeTrial)
         behavResults.Trial_isProbeTrial(exclude_inds)=[];
     end
@@ -460,6 +465,7 @@ if ~isempty(pure_tone_inds)
     m=1:length(PT_type_stim);
     PT_trial_data(m,:,:)=data(pure_tone_corr_inds(m),:,:);
     PT_ZS_data=TrialSelfZS_data(pure_tone_corr_inds,:,:);
+   
 %     %##############################################################################################
 % % %     Seperate_align_plot(PT_trial_data,PT_trial_type',[PT_stim_onset',PT_reward_time'],frame_rate,session_date');
 %     
@@ -624,6 +630,7 @@ if str2double(continue_char)==1
     
 elseif str2double(continue_char)==2
     %%
+    % AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT);
     SessionData.nROI = size_data(2);
     SessionData.FrameRate = frame_rate;
     %performing stimulus onset alignment
@@ -692,7 +699,8 @@ elseif str2double(continue_char)==2
 %     Data_pcTrace_script
 %     Partitioned_neurometric_prediction 
     save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
-    
+    TrParaAll = [TrialTypes(:),trial_outcome(:),double(behavResults.Stim_toneFreq(:)),double(behavResults.Action_choice(:))];
+    TimeCourseChoiceDecod(smooth_data,TrParaAll,start_frame,frame_rate);
     %%
     LRAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
          behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
@@ -716,12 +724,18 @@ elseif str2double(continue_char)==2
      %
      
 %      TimeCourseStrcSP = TimeCorseROC(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);  
-% %      AUCDataASSP = ROC_check(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_Align',0,1.5);
+     AUCDataASSP = ROC_check(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_AlignSP',0,1.5);
 %      
-%      ROIAUCcolorp(TimeCourseStrcSP,start_frame/frame_rate,[],'Spike train');
+     ROIAUCcolorp(TimeCourseStrcSP,start_frame/frame_rate,[],'Spike train');
      %
      script_for_summarizedPlot;  % call a script for data preparation and call summarized plot function
      
+     %%
+%      % for opto and control trial compared computation
+%      ModuInds = double(behavResults.Trial_isOpto);
+%      save OptoContDataSave.mat ModuInds data_aligned smooth_data TrialTypes NormalTrialInds trial_outcome start_frame frame_rate -v7.3
+% %      OptoControlAUCCal(data_aligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),ModuInds,trial_outcome,start_frame,frame_rate);
+% %      SessionModuOptionErrorCal(smooth_data(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),trial_outcome,start_frame,frame_rate,ModuInds);
     %%
 %     ActiveCellGene(data,behavResults,trial_outcome,frame_rate,1.5);
     CallFunCompPlot(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),frame_rate,start_frame,1.5);  % need rf data as function input

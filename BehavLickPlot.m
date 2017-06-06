@@ -57,7 +57,7 @@ save LickRateDatSave.mat AlignedBinDataL AlignedBinDataR minTrBinNum trial_outco
 AlignedLickRplot(AlignedBinDataL,AlignedBinDataR,minTrBinNum,double(trial_outcome(:)),PlotTypes,BinTimepoints);
 
 if ~sum(isProbTrial)  %if there are no prob trials
-    if length(FreqTypes)==2 % one paired stimulus 2afc task
+    if length(FreqTypes)==2 % single-pair stimulus 2afc task
         %         TypeDesp={'Left','Right'};
         %         LickSideDes={'LickTimeLeft','LickTimeRight'};
         CorrLeftInds = TrialTypes ==0 & trial_outcome' == 1;
@@ -79,19 +79,21 @@ if ~sum(isProbTrial)  %if there are no prob trials
             TRLT(TRLT<0)=[];
             scatter(TLLT,ones(length(TLLT),1)*n,15,'o','MarkerEdgeColor','k','MarkerFaceColor','b');
             scatter(TRLT,ones(length(TRLT),1)*n,15,'o','MarkerEdgeColor','k','MarkerFaceColor','r');
-            if CorrBiasSide(n)
+            if CorrBiasSide(n) == 1
                 line([LickEndT*1000 LickEndT*1000],[n-0.3 n+0.3],'LineWidth',2,'Color','r');
-            else
+            elseif CorrBiasSide(n) == 0
                 line([LickEndT*1000 LickEndT*1000],[n-0.3 n+0.3],'LineWidth',2,'Color','b');
+            else
+                line([LickEndT*1000 LickEndT*1000],[n-0.3 n+0.3],'LineWidth',2,'Color',[.5 .5 .5]);
             end
         end
         
         axisscale=axis(gca);
         patch([AlignedTime,StimOffTime,StimOffTime,AlignedTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-            'facecolor','g','edgecolor','none','facealpha',0.4);  % Stim plot
+            'facecolor','g','edgecolor','none','facealpha',0.6);  % Stim plot
         if double(RespDelay(1))
             patch([StimOffTime,RespDelayOffTime,RespDelayOffTime,StimOffTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.4);
+                'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6);
         end
         title('Correct Left Trials');
         xlabel('Time (ms)');
@@ -111,18 +113,20 @@ if ~sum(isProbTrial)  %if there are no prob trials
             TRLT(TRLT<0)=[];
             scatter(TLLT,ones(length(TLLT),1)*n,15,'o','MarkerEdgeColor','k','MarkerFaceColor','b');
             scatter(TRLT,ones(length(TRLT),1)*n,15,'o','MarkerEdgeColor','k','MarkerFaceColor','r');
-            if CorrBiasSide(n)
+            if CorrBiasSide(n) == 1
                 line([LickEndT*1000 LickEndT*1000],[n-0.3 n+0.3],'LineWidth',2,'Color','r');
-            else
+            elseif CorrBiasSide(n) == 0
                 line([LickEndT*1000 LickEndT*1000],[n-0.3 n+0.3],'LineWidth',2,'Color','b');
+            else
+                line([LickEndT*1000 LickEndT*1000],[n-0.3 n+0.3],'LineWidth',2,'Color',[.5 .5 .5]);
             end
         end
         axisscale=axis(gca);
         patch([AlignedTime,StimOffTime,StimOffTime,AlignedTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-            'facecolor','g','edgecolor','none','facealpha',0.4);  % Stim plot
+            'facecolor','g','edgecolor','none','facealpha',0.6);  % Stim plot
         if double(RespDelay(1))
             patch([StimOffTime,RespDelayOffTime,RespDelayOffTime,StimOffTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.4);
+                'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6); %response delay plot
         end
         title('Correct Right Trials');
         xlabel('Time (ms)');
@@ -141,18 +145,20 @@ if ~sum(isProbTrial)  %if there are no prob trials
             TRLT(TRLT<0)=[];
             scatter(TLLT,ones(length(TLLT),1)*n,15,'o','MarkerEdgeColor','k','MarkerFaceColor','b');
             scatter(TRLT,ones(length(TRLT),1)*n,15,'o','MarkerEdgeColor','k','MarkerFaceColor','r');
-            if ErroBiasSide(n)
+            if ErroBiasSide(n) == 1
                 line([LickEndT*1000 LickEndT*1000],[n-0.3 n+0.3],'LineWidth',2,'Color','r');
-            else
+            elseif ErroBiasSide(n) == 0
                 line([LickEndT*1000 LickEndT*1000],[n-0.3 n+0.3],'LineWidth',2,'Color','b');
+            else
+                line([LickEndT*1000 LickEndT*1000],[n-0.3 n+0.3],'LineWidth',2,'Color',[.5 .5 .5]);
             end
         end
         axisscale=axis(gca);
         patch([AlignedTime,StimOffTime,StimOffTime,AlignedTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-            'facecolor','g','edgecolor','none','facealpha',0.4);  % Stim plot
+            'facecolor','g','edgecolor','none','facealpha',0.6);  % Stim plot
         if double(RespDelay(1))
             patch([StimOffTime,RespDelayOffTime,RespDelayOffTime,StimOffTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.4);
+                'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6);
         end
         title('Error Left Trials');
         xlabel('Time (ms)');
@@ -171,18 +177,20 @@ if ~sum(isProbTrial)  %if there are no prob trials
             TRLT(TRLT<0)=[];
             scatter(TLLT,ones(length(TLLT),1)*n,15,'o','MarkerEdgeColor','k','MarkerFaceColor','b');
             scatter(TRLT,ones(length(TRLT),1)*n,15,'o','MarkerEdgeColor','k','MarkerFaceColor','r');
-            if ErroBiasSide(n)
+            if ErroBiasSide(n) == 1
                 line([LickEndT*1000 LickEndT*1000],[n-0.3 n+0.3],'LineWidth',2,'Color','r');
-            else
+            elseif ErroBiasSide(n) == 0
                 line([LickEndT*1000 LickEndT*1000],[n-0.3 n+0.3],'LineWidth',2,'Color','b');
+            else
+                line([LickEndT*1000 LickEndT*1000],[n-0.3 n+0.3],'LineWidth',2,'Color',[.5 .5 .5]);
             end
         end
         axisscale=axis(gca);
         patch([AlignedTime,StimOffTime,StimOffTime,AlignedTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-            'facecolor','g','edgecolor','none','facealpha',0.4);  % Stim plot
+            'facecolor','g','edgecolor','none','facealpha',0.6);  % Stim plot
         if double(RespDelay(1))
             patch([StimOffTime,RespDelayOffTime,RespDelayOffTime,StimOffTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.4);
+                'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6);
         end
         title('Error Right Trials');
         xlabel('Time (ms)');
@@ -212,18 +220,20 @@ if ~sum(isProbTrial)  %if there are no prob trials
                 TRLT(TRLT<0)=[];
                 scatter(TLLT,ones(length(TLLT),1)*m,15,'o','MarkerEdgeColor','k','MarkerFaceColor','b');
                 scatter(TRLT,ones(length(TRLT),1)*m,15,'o','MarkerEdgeColor','k','MarkerFaceColor','r');
-                if CorrBiasSide(m)
+                if CorrBiasSide(m) == 1
                     line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','r');
-                else
+                elseif CorrBiasSide(m) == 0
                     line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','b');
+                else
+                    line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','k');
                 end
             end
             axisscale=axis(gca);
             patch([AlignedTime,StimOffTime,StimOffTime,AlignedTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                'facecolor','g','edgecolor','none','facealpha',0.2);  % Stim plot
+                'facecolor','g','edgecolor','none','facealpha',0.6);  % Stim plot
             if double(RespDelay(1))
                 patch([StimOffTime,RespDelayOffTime,RespDelayOffTime,StimOffTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                    'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.2);
+                    'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6);
             end
             title(sprintf('Freq-%d Corr',CurrentFreq));
             xlabel('Time (ms)');
@@ -241,18 +251,20 @@ if ~sum(isProbTrial)  %if there are no prob trials
                 TRLT(TRLT<0)=[];
                 scatter(TLLT,ones(length(TLLT),1)*m,15,'o','MarkerEdgeColor','k','MarkerFaceColor','b');
                 scatter(TRLT,ones(length(TRLT),1)*m,15,'o','MarkerEdgeColor','k','MarkerFaceColor','r');
-                if ErroBiasSide(m)
+                if ErroBiasSide(m) == 1
                     line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','r');
-                else
+                elseif ErroBiasSide(m) == 0
                     line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','b');
+                else
+                    line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','k');
                 end
             end
             axisscale=axis(gca);
             patch([AlignedTime,StimOffTime,StimOffTime,AlignedTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                'facecolor','g','edgecolor','none','facealpha',0.4);  % Stim plot
+                'facecolor','g','edgecolor','none','facealpha',0.6);  % Stim plot
             if double(RespDelay(1))
                 patch([StimOffTime,RespDelayOffTime,RespDelayOffTime,StimOffTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                    'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.4);
+                    'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6);
             end
             title(sprintf('Freq-%d Erro',CurrentFreq));
             xlabel('Time (ms)');
@@ -300,18 +312,20 @@ else
                 TRLT(TRLT<0)=[];
                 scatter(TLLT,ones(length(TLLT),1)*m,15,'o','MarkerEdgeColor','k','MarkerFaceColor','b');
                 scatter(TRLT,ones(length(TRLT),1)*m,15,'o','MarkerEdgeColor','k','MarkerFaceColor','r');
-                if CorrBiasSide(m)
+                if CorrBiasSide(m) == 1
                     line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','r');
-                else
+                elseif CorrBiasSide(m) == 0
                     line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','b');
+                else
+                    line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color',[.5 .5 .5]);
                 end
             end
             axisscale=axis(gca);
             patch([AlignedTime,StimOffTime,StimOffTime,AlignedTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                'facecolor','g','edgecolor','none','facealpha',0.2);  % Stim plot
+                'facecolor','g','edgecolor','none','facealpha',0.5);  % Stim plot
             if double(RespDelay(1))
                 patch([StimOffTime,RespDelayOffTime,RespDelayOffTime,StimOffTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                    'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.2);
+                    'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.5);
             end
             title(sprintf('Freq-%d Corr',conTrolFreqType(n)));
             xlabel('Time (ms)');
@@ -329,18 +343,20 @@ else
                 TRLT(TRLT<0)=[];
                 scatter(TLLT,ones(length(TLLT),1)*m,15,'o','MarkerEdgeColor','k','MarkerFaceColor','b');
                 scatter(TRLT,ones(length(TRLT),1)*m,15,'o','MarkerEdgeColor','k','MarkerFaceColor','r');
-                if ErroBiasSide(m)
+                if ErroBiasSide(m) == 1
                     line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','r');
-                else
+                elseif ErroBiasSide(m) == 0
                     line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','b');
+                else
+                    line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color',[.5 .5 .5]);
                 end
             end
             axisscale=axis(gca);
             patch([AlignedTime,StimOffTime,StimOffTime,AlignedTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                'facecolor','g','edgecolor','none','facealpha',0.2);  % Stim plot
+                'facecolor','g','edgecolor','none','facealpha',0.5);  % Stim plot
             if double(RespDelay(1))
                 patch([StimOffTime,RespDelayOffTime,RespDelayOffTime,StimOffTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                    'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.2);
+                    'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.5);
             end
             title(sprintf('Freq-%d Erro',conTrolFreqType(n)));
             xlabel('Time (ms)');
@@ -370,18 +386,20 @@ else
                 TRLT(TRLT<0)=[];
                 scatter(TLLT,ones(length(TLLT),1)*m,15,'o','MarkerEdgeColor','k','MarkerFaceColor','b');
                 scatter(TRLT,ones(length(TRLT),1)*m,15,'o','MarkerEdgeColor','k','MarkerFaceColor','r');
-                if CorrBiasSide(m)
+                if CorrBiasSide(m) == 1
                     line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','r');
-                else
+                elseif CorrBiasSide(m) == 0
                     line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','b');
+                else
+                    line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color',[.5 .5 .5]);
                 end
             end
             axisscale=axis(gca);
             patch([AlignedTime,StimOffTime,StimOffTime,AlignedTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                'facecolor','g','edgecolor','none','facealpha',0.2);  % Stim plot
+                'facecolor','g','edgecolor','none','facealpha',0.5);  % Stim plot
             if double(RespDelay(1))
                 patch([StimOffTime,RespDelayOffTime,RespDelayOffTime,StimOffTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                    'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.2);
+                    'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.5);
             end
             title(sprintf('Freq-%d Corr',ProbFreqType(n)));
             xlabel('Time (ms)');
@@ -399,18 +417,20 @@ else
                 TRLT(TRLT<0)=[];
                 scatter(TLLT,ones(length(TLLT),1)*m,15,'o','MarkerEdgeColor','k','MarkerFaceColor','b');
                 scatter(TRLT,ones(length(TRLT),1)*m,15,'o','MarkerEdgeColor','k','MarkerFaceColor','r');
-                if ErroBiasSide(m)
+                if ErroBiasSide(m) == 1
                     line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','r');
-                else
+                elseif ErroBiasSide(m) == 0
                     line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','b');
+                else
+                    line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color',[.5 .5 .5]);
                 end
             end
             axisscale=axis(gca);
             patch([AlignedTime,StimOffTime,StimOffTime,AlignedTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                'facecolor','g','edgecolor','none','facealpha',0.2);  % Stim plot
+                'facecolor','g','edgecolor','none','facealpha',0.5);  % Stim plot
             if double(RespDelay(1))
                 patch([StimOffTime,RespDelayOffTime,RespDelayOffTime,StimOffTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                    'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.2);
+                    'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.5);
             end
             title(sprintf('Freq-%d Erro',ProbFreqType(n)));
             xlabel('Time (ms)');
@@ -458,18 +478,20 @@ else
                 TRLT(TRLT<0)=[];
                 scatter(TLLT,ones(length(TLLT),1)*m,15,'o','MarkerEdgeColor','k','MarkerFaceColor','b');
                 scatter(TRLT,ones(length(TRLT),1)*m,15,'o','MarkerEdgeColor','k','MarkerFaceColor','r');
-                if CDataBias(m)
+                if CDataBias(m) == 1
                     line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','r');
-                else
+                elseif CDataBias(m) == 0
                     line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color','b');
+                else
+                    line([LickEndT*1000 LickEndT*1000],[m-0.3 m+0.3],'LineWidth',2,'Color',[.5 .5 .5]);
                 end
             end
             axisscale=axis(gca);
             patch([AlignedTime,StimOffTime,StimOffTime,AlignedTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                'facecolor','g','edgecolor','none','facealpha',0.2);  % Stim plot
+                'facecolor','g','edgecolor','none','facealpha',0.5);  % Stim plot
             if double(RespDelay(1))
                 patch([StimOffTime,RespDelayOffTime,RespDelayOffTime,StimOffTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
-                    'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.2);
+                    'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.5);
             end
             title(sprintf('Freq-%d Erro',ProbFreqType(n)));
             xlabel('Time (ms)');

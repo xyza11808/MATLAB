@@ -1,9 +1,11 @@
 [fn1,fp1,~] = uigetfile('*.mat','Please select your first part session results');
 sess1Strc = load(fullfile(fp1,fn1));
+cd(fp1);
 
 [fn2,fp2,~] = uigetfile('*.mat','Please select your first part session results');
 sess2Strc = load(fullfile(fp2,fn2));
-cd(fp2);
+fnfixed = fn1(1:end-8);
+
 %%
 sess1BoundRest = rand_plot(sess1Strc.behavResults,3,fn1);
 sess2BoundRest = rand_plot(sess2Strc.behavResults,3,fn2);
@@ -50,7 +52,14 @@ text([sess1BoundOcta,sess2BoundOcta],[0.9,0.8],{num2str(sess1BoundOcta,'%.3f'),.
 set(gca,'ytick',[0 0.5 1],'FontSize',16);
 title('Session boundary shifting');
 %%
-saveas(h_sum,'Session boundary shift plot');
-saveas(h_sum,'Session boundary shift plot','png');
-saveas(h_sum,'Session boundary shift plot','pdf');
+if ~isdir('./Bound_shift_plots/')
+    mkdir('./Bound_shift_plots/');
+end
+cd('./Bound_shift_plots/');
+
+saveas(h_sum,sprintf('%s session boundary shift plot',fnfixed));
+saveas(h_sum,sprintf('%s session boundary shift plot',fnfixed),'png');
+saveas(h_sum,sprintf('%s session boundary shift plot',fnfixed),'pdf');
 close(h_sum);
+
+cd ..;

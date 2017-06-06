@@ -1,5 +1,5 @@
 function demo_for_phaseshift
-sr=10000; 
+sr=10000; % sample rate
 dt=1/sr;
 len=0.01; 
 t=0:dt:(len-dt); 
@@ -10,7 +10,7 @@ N = length(t);
 sig=sin(2*pi*f*t); 
 
 %Define a phase shift in rads
-p=-pi/4; 
+p=-pi; 
 num_samp = round((sr/f)*(p/(2*pi))); 
 
 %Get the FFT of the signal 
@@ -27,7 +27,7 @@ newsig=(ifft(spec));
 
 %plot the signals 
 figure;
-plot(t,sig);
+plot(t,sig,'k');
 hold on; 
-plot(t,newsig,'g');
+plot(t,newsig,'r');
 

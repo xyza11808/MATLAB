@@ -1,5 +1,5 @@
 % for task session analysis
-TaskPathfileFullpath = 'E:\DataToGo\data_for_xu\Summarized_pairedAUC_analysis\note3\Session_Data_path_save.txt';
+TaskPathfileFullpath = 'E:\DataToGo\data_for_xu\Summarized_pairedAUC_analysis\Paired_AUCanalysis_path.txt';
 fid = fopen(TaskPathfileFullpath);
 kk = 1;
 ErrorPath = {};
@@ -49,7 +49,7 @@ fclose(f);
 
 %%
 % for passive session analysis
-PassPathfileFullpath = 'E:\DataToGo\data_for_xu\Summarized_pairedAUC_analysis_Pass\note3\Session_Data_path_save.txt';
+PassPathfileFullpath = 'E:\DataToGo\data_for_xu\Summarized_pairedAUC_analysis_Pass\note2\Paired_AUCanalysis_path.txt';
 fid = fopen(PassPathfileFullpath);
 kk = 1;
 ErrorPath = {};

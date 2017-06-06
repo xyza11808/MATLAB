@@ -1,10 +1,14 @@
 % scripts for summarized paired auc analysis
+clear
+clc
 
 addchar = 'y';
 DataSum = {};
 DataPath = {};
 BetGrAUCAll = [];
 WhnGrAUCAll = [];
+BetGrAUCROIAll = [];
+WhnGrAUCROIAll = [];
 MatrixAUCSave = {};
 m = 1;
 
@@ -16,6 +20,8 @@ while ~strcmpi(addchar,'n')
         DataSum{m} = xx;
         cBetGeAUC = mean(xx.SumBetGrAUC,2);
         cWhnGrAUC = mean(xx.SumWhnGrAUC,2);
+        BetGrAUCROIAll = [BetGrAUCROIAll,xx.SumBetGrAUC];
+        WhnGrAUCROIAll = [WhnGrAUCROIAll,xx.SumWhnGrAUC];
         try 
             BetGrAUCAll = [BetGrAUCAll,cBetGeAUC];
             WhnGrAUCAll = [WhnGrAUCAll,cWhnGrAUC];
@@ -40,7 +46,7 @@ for nmnm = 1 : m
     fprintf(fid,fformat,DataPath{nmnm});
 end
 fclose(fid);
-save cDataSetSave.mat DataPath DataSum BetGrAUCAll WhnGrAUCAll MatrixAUCSave -v7.3
+save cDataSetSave.mat DataPath DataSum BetGrAUCAll WhnGrAUCAll MatrixAUCSave BetGrAUCROIAll WhnGrAUCROIAll -v7.3
 
 %%
 h_sumPlot = figure('position',[100 100 800 700]);
@@ -54,7 +60,7 @@ set(gca,'FontSize',18);
 legend([hl1,hl2],{'BetGrAUC','WinGrAUC'},'FontSize',10);
 saveas(h2,'Summarized_DisTance_wised_auc');
 saveas(h2,'Summarized_DisTance_wised_auc','png');
-% close(h2);
+close(h2);
 
 %%
 [SumROIdisAUC,SumROIdisAUCMean] = cellfun(@(x) Matrix2DifBasedAUC(x),MatrixAUCSave,'UniformOutput',false);

@@ -28,7 +28,13 @@ if ~ishandle(hf)
     bar(x,y,0.3,'FaceColor',[.2 .2 .2],'EdgeColor','none');
     set(gca,'xtick',x,'xticklabel',{'Group1','Group2'});
 else
-    figure(hf);
+    if isa(hf,'matlab.ui.Figure')
+        figure(hf);
+    elseif isa(hf,'matlab.graphics.axis.Axes')
+        axes(hf);
+    else
+        error('Invalid input handle');
+    end
 end
 
 if p > 0.05
