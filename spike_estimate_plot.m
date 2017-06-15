@@ -118,6 +118,13 @@ saveas(hsingleTrace,sprintf('Trace example sum plots'),'pdf');
 saveas(hsingleTrace,sprintf('Trace example sum plots'),'png');
 close(hsingleTrace);
 %%  plot the colorplot for each frequency and corresponded spike raster, also corresponded mean trace
+
+% correct trials data extraction
+CorrDataInds = true(length(trial_outcome),1);
+CorrFData = data_aligned; %(CorrDataInds,:,:);
+CorrSData = nnspike; %(CorrDataInds,:,:);
+% CorrFreq = double(behavResults.Stim_toneFreq(CorrDataInds));
+
 freqtypes = unique(CorrFreq);
 nFrame = size(CorrFData,3);
 nfreq = length(freqtypes);
@@ -168,7 +175,7 @@ for nf = 1 : nfreq
     saveas(hfff,sprintf('Freq%d_plotsave',cFreq),'png');
     close(hfff);
 end
-
+cd ..;
 %%
 figure('position',[430 330 1030 750]);
 hold on;
@@ -220,55 +227,226 @@ set(gca,'FontSize',20)
 % 
 
 %%
-% if ~isdir('./Spike_estimate_plot/')
-%     mkdir('./Spike_estimate_plot/');
-% end
-% cd('./Spike_estimate_plot/');
-% 
-% nF = size(data_aligned,3);
-% xticks = 0:frame_rate:nF;
-% Ticklabels = xticks/frame_rate;
-% 
-% for nROI = 1 : 102
-% % nROI = 10;
-% % Tr = 2;
-% % FFTrace = squeeze(data_aligned(Tr,nROI,:));
-% % SpikeTrain = squeeze(nnspike(Tr,nROI,:));
-% % figure('position',[430 100 1150 1000]);
-% % subplot(2,1,1);
-% % plot(FFTrace);
-% % 
-% % subplot(2,1,2);
-% % stem(SpikeTrain);
-% 
-% close all;
-% cROIFFColor = squeeze(data_aligned(:,nROI,:));
-% cROISPColor = squeeze(nnspike(:,nROI,:));
-% figure('position',[250 350 1500 700]);
-% 
-% subplot(1,2,1)
-% imagesc(cROIFFColor,[0 min(300,max(cROIFFColor(:)))]);
-% set(gca,'xtick',xticks,'xticklabel',Ticklabels);
-% xlabel('Time (s)');
-% ylabel('# Trials');
-% set(gca,'FontSize',20)
-% colorbar;
-% 
-% 
-% subplot(1,2,2)
-% imagesc(cROISPColor,[5 20]);
-% set(gca,'xtick',xticks,'xticklabel',Ticklabels);
-% set(gca,'xtick',xticks,'xticklabel',Ticklabels);
-% xlabel('Time (s)');
-% ylabel('# Trials');
-% set(gca,'FontSize',20)
-% colorbar;
-% 
-% suptitle(sprintf('ROI%d Fluo trace and estimated spike',nROI));
-% saveas(gcf,sprintf('ROI%d spike plot',nROI));
-% saveas(gcf,sprintf('ROI%d spike plot',nROI),'png');
-% 
-% 
-% end
-% cd ..;
-% 
+[fn,fp,fi] = uigetfile('*.txt','Please select your text file that contains the data file path for multisession data savage');
+%
+if fi
+    fpath = fullfile(fp,fn);
+    ff = fopen(fpath);
+    tline = fgetl(ff);
+    while ischar(tline)
+        if isempty(strfind(tline,'NO_Correction\mode_f_change'))
+            tline = fgetl(ff);
+            continue;
+        end
+        cd(tline);
+        load('EstimateSPsave.mat');
+        
+        if ~isdir('./Spike_estimate_plot/')
+            mkdir('./Spike_estimate_plot/');
+        end
+        cd('./Spike_estimate_plot/');
+
+        nF = size(data_aligned,3);
+        xticks = 0:frame_rate:nF;
+        Ticklabels = xticks/frame_rate;
+        AllFreq = double(behavResults.Stim_toneFreq);
+        [~,TrSortInds] = sort(AllFreq);
+        %
+        for nROI = 1 : size(data_aligned,2)
+        % nROI = 10;
+        % Tr = 2;
+        % FFTrace = squeeze(data_aligned(Tr,nROI,:));
+        % SpikeTrain = squeeze(nnspike(Tr,nROI,:));
+        % figure('position',[430 100 1150 1000]);
+        % subplot(2,1,1);
+        % plot(FFTrace);
+        % 
+        % subplot(2,1,2);
+        % stem(SpikeTrain);
+
+        cROIFFColor = squeeze(data_aligned(:,nROI,:));
+        cROISPColor = squeeze(nnspike(:,nROI,:));
+        hhhhf = figure('position',[250 150 1600 900]);
+
+        subplot(1,2,1)
+        imagesc(cROIFFColor(TrSortInds,:),[0 min(300,max(cROIFFColor(:)))]);
+        set(gca,'xtick',xticks,'xticklabel',Ticklabels);
+        xlabel('Time (s)');
+        ylabel('# Trials');
+        set(gca,'FontSize',20)
+        colorbar;
+
+
+        subplot(1,2,2)
+        imagesc(cROISPColor(TrSortInds,:),[5 20]);
+        set(gca,'xtick',xticks,'xticklabel',Ticklabels);
+        set(gca,'xtick',xticks,'xticklabel',Ticklabels);
+        xlabel('Time (s)');
+        ylabel('# Trials');
+        set(gca,'FontSize',20)
+        colorbar;
+
+        suptitle(sprintf('ROI%d Fluo trace and estimated spike',nROI));
+        saveas(hhhhf,sprintf('ROI%d spike plot',nROI));
+        saveas(hhhhf,sprintf('ROI%d spike plot',nROI),'png');
+        close(hhhhf);
+
+        end
+        %
+        cd ..;
+        tline = fgetl(ff);
+    end
+end
+
+%% write all figures into one ppt file
+pptname = 'FluoSPColor_plotComp.pptx';
+pptSaveDir = uigetdir(pwd,'Please select the data path used for saving ppt files');
+pptFullfile = fullfile(pptSaveDir,pptname);
+ fpath = fullfile(fp,fn);
+    ff = fopen(fpath);
+    tline = fgetl(ff);
+    while ischar(tline)
+        if isempty(strfind(tline,'NO_Correction\mode_f_change'))
+            tline = fgetl(ff);
+            continue;
+        end
+        
+        FigureSavePath = [tline,'/Spike_estimate_plot/'];
+        cd(FigureSavePath);
+        if ~exist(pptFullfile,'file')
+            NewFileExport = 1;
+        else
+            NewFileExport = 0;
+        end
+        if NewFileExport
+            exportToPPTX('new','Dimensions',[16,9],'Author','XinYu','Comments','Export of tunning curve plot data');
+        else
+            exportToPPTX('open',pptFullfile);
+        end
+        figurefiles = dir('ROI* spike plot.png');
+        nfiles = length(figurefiles);
+        for cf = 1 : nfiles
+            exportToPPTX('addslide');
+             cfname = figurefiles(cf).name;
+             cfFigure = imread(cfname);
+%              exportToPPTX('addtext',cfname(1:end-4),'Position',[5 0.5 6 1],'FontSize',30);
+             exportToPPTX('addnote',pwd);
+             exportToPPTX('addpicture',cfFigure,'Position',[0 0 16 9]);
+        end
+        saveName = exportToPPTX('saveandclose',pptFullfile);
+        tline = fgetl(ff);
+    end
+
+    %%
+[fn,fp,fi] = uigetfile('*.txt','Please select your text file that contains the data file path for multisession data savage');
+%
+if fi
+    fpath = fullfile(fp,fn);
+    ff = fopen(fpath);
+    tline = fgetl(ff);
+    while ischar(tline)
+        if isempty(strfind(tline,'NO_Correction'))
+            tline = fgetl(ff);
+            continue;
+        end
+        
+        foldePath = [tline,'\SpikeData_analysis'];
+        cd(foldePath);
+        load('EsSpikeSave.mat');
+        
+        if ~isdir('./Spike_estimate_plot/')
+            mkdir('./Spike_estimate_plot/');
+        end
+        cd('./Spike_estimate_plot/');
+%
+        nF = size(SelectData,3);
+        xticks = 0:frame_rate:nF;
+        Ticklabels = xticks/frame_rate;
+        AllFreq = double(SelectSArray);
+        [~,TrSortInds] = sort(AllFreq);
+        %
+        for nROI = 1 : size(SelectData,2)
+        % nROI = 10;
+        % Tr = 2;
+        % FFTrace = squeeze(data_aligned(Tr,nROI,:));
+        % SpikeTrain = squeeze(nnspike(Tr,nROI,:));
+        % figure('position',[430 100 1150 1000]);
+        % subplot(2,1,1);
+        % plot(FFTrace);
+        % 
+        % subplot(2,1,2);
+        % stem(SpikeTrain);
+
+        cROIFFColor = squeeze(SelectData(:,nROI,:));
+        cROISPColor = squeeze(nnspike(:,nROI,:));
+        hhhhf = figure('position',[250 150 1600 900]);
+
+        subplot(1,2,1)
+        imagesc(cROIFFColor(TrSortInds,:),[0 min(300,max(cROIFFColor(:)))]);
+        set(gca,'xtick',xticks,'xticklabel',Ticklabels);
+        xlabel('Time (s)');
+        ylabel('# Trials');
+        set(gca,'FontSize',20)
+        colorbar;
+
+
+        subplot(1,2,2)
+        imagesc(cROISPColor(TrSortInds,:),[5 20]);
+        set(gca,'xtick',xticks,'xticklabel',Ticklabels);
+        set(gca,'xtick',xticks,'xticklabel',Ticklabels);
+        xlabel('Time (s)');
+        ylabel('# Trials');
+        set(gca,'FontSize',20)
+        colorbar;
+
+        suptitle(sprintf('ROI%d Fluo trace and estimated spike',nROI));
+        saveas(hhhhf,sprintf('ROI%d spike plot',nROI));
+        saveas(hhhhf,sprintf('ROI%d spike plot',nROI),'png');
+        close(hhhhf);
+
+        end
+        %
+        cd ..;
+        tline = fgetl(ff);
+        clear SelectData SelectInds SelectSArray nnspike
+    end
+end
+
+%% write all figures into one ppt file
+pptname = 'FluoSPColor_plotCompPass.pptx';
+pptSaveDir = uigetdir(pwd,'Please select the data path used for saving ppt files');
+pptFullfile = fullfile(pptSaveDir,pptname);
+ fpath = fullfile(fp,fn);
+    ff = fopen(fpath);
+    tline = fgetl(ff);
+    while ischar(tline)
+        if isempty(strfind(tline,'NO_Correction'))
+            tline = fgetl(ff);
+            continue;
+        end
+        
+        FigureSavePath = [tline,'\SpikeData_analysis\Spike_estimate_plot'];
+        cd(FigureSavePath);
+        if ~exist(pptFullfile,'file')
+            NewFileExport = 1;
+        else
+            NewFileExport = 0;
+        end
+        if NewFileExport
+            exportToPPTX('new','Dimensions',[16,9],'Author','XinYu','Comments','Export of Fluo2spikecolor plot data');
+        else
+            exportToPPTX('open',pptFullfile);
+        end
+        figurefiles = dir('ROI* spike plot.png');
+        nfiles = length(figurefiles);
+        for cf = 1 : nfiles
+            exportToPPTX('addslide');
+             cfname = figurefiles(cf).name;
+             cfFigure = imread(cfname);
+%              exportToPPTX('addtext',cfname(1:end-4),'Position',[5 0.5 6 1],'FontSize',30);
+             exportToPPTX('addnote',pwd);
+             exportToPPTX('addpicture',cfFigure,'Position',[0 0 16 9]);
+        end
+        saveName = exportToPPTX('saveandclose',pptFullfile);
+        tline = fgetl(ff);
+    end

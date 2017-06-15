@@ -1,4 +1,4 @@
-function varargout=RandNMTChoiceDecoding(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin)
+function varargout=RandNMTChoiceDecoding(RawDataAll,BehavStrc,TrialResult,AlignFrame,FrameRate,varargin)
 %this function will be used to process the random data profile and try to
 %create a neurometric function to compare with psychometric function
 %RawDataAll should be aligned data
@@ -48,16 +48,16 @@ if nargin > 10
     end
 end
 
-ifErrorChoiceCorrect = 0;
+% ifErrorChoiceCorrect = 0;
 switch TrialUseTypeOp
     case 0
         CorrectInds=TrialResult ~= 2;
-        ifErrorChoiceCorrect = 1;
+%         ifErrorChoiceCorrect = 1;
     case 1
         CorrectInds=TrialResult == 1;
     case 2
         CorrectInds=true(1,length(TrialResult));
-        ifErrorChoiceCorrect = 1;
+%         ifErrorChoiceCorrect = 1;
     otherwise
         error('Error trial outcomme type selection choice.');
 end
@@ -81,21 +81,23 @@ end
 RawDataAll = RawDataAll(:,ROIindsSelect,:);
 DataSize=size(RawDataAll);
 
+StimAll = BehavStrc.Stim_toneFreq;
+ChoiceAll = BehavStrc.Action_choice;
 CorrTrialStim=StimAll(CorrectInds);
 CorrTrialData=RawDataAll(CorrectInds,:,:);
 CorrStimType=unique(CorrTrialStim);
 if mod(length(CorrStimType),2)
-    error('Number of stimulus types must be a even number.\n');
+    warning('Number of stimulus types isn''t an even number.\n');
 end
-nPairs = length(CorrStimType)/2;
-CorrTrialTypes = CorrTrialStim > CorrStimType(length(CorrStimType)/2);
+nPairs = floor(length(CorrStimType)/2);
+% CorrTrialTypes = CorrTrialStim > CorrStimType(length(CorrStimType)/2);
 % GivenTrialType = CorrTrialTypes;
-CorrTrialResults = TrialResult(CorrectInds);
-AnmTrChoice = double(CorrTrialTypes);
-if ifErrorChoiceCorrect
-    ErrorInds = CorrTrialResults == 0;
-    AnmTrChoice(ErrorInds) = 1 - AnmTrChoice(ErrorInds);   % real animal choice used for training tag
-end
+% CorrTrialResults = TrialResult(CorrectInds);
+AnmTrChoice = double(ChoiceAll(CorrectInds));
+% if ifErrorChoiceCorrect
+%     ErrorInds = CorrTrialResults == 0;
+%     AnmTrChoice(ErrorInds) = 1 - AnmTrChoice(ErrorInds);   % real animal choice used for training tag
+% end
 %
 if length(TimeLength) == 1
     FrameScale = sort([AlignFrame,AlignFrame+floor(TimeLength*FrameRate)]);

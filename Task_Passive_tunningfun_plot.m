@@ -40,7 +40,10 @@ FreqTypes = unique(TaskTrFreq);
 FreqNum = length(FreqTypes);
 
 NonMissTunningFun = zeros(FreqNum,nROIs);
+NonMissTunningFunSEM = zeros(FreqNum,nROIs);
 CorrTunningFun = zeros(FreqNum,nROIs);
+CorrTunningFunSEM = zeros(FreqNum,nROIs);
+
 for nTFreq = 1 : FreqNum
     cfreq = FreqTypes(nTFreq);
     % non-miss data
@@ -48,14 +51,16 @@ for nTFreq = 1 : FreqNum
     cFreqDataNM = NonMissData(cfreqInds,:);
     MeanROIResp = mean(cFreqDataNM);
     NonMissTunningFun(nTFreq,:) = MeanROIResp;
+    NonMissTunningFunSEM(nTFreq,:) = std(cFreqDataNM)/sqrt(size(cFreqDataNM,1));
     
     %correct data
     cfreqInds = CorrTrFreqs == cfreq;
     cFreqDataCorr = CorrTrData(cfreqInds,:);
     CorrTunningFun(nTFreq,:) = mean(cFreqDataCorr);
+    CorrTunningFunSEM(nTFreq,:) = std(cFreqDataCorr)/sqrt(size(cFreqDataCorr,1));
 end
 
-%% passive data extaction
+% passive data extaction
 PassiveData = PassDataStrc.SelectData;
 nPassROI = size(PassiveData,2);
 if nPassROI > nROIs
@@ -69,10 +74,12 @@ PassFreqTypes = unique(PassDataStrc.SelectSArray);
 nPassFreq = length(PassFreqTypes);
 
 PassTunningfun = zeros(nPassFreq,nPassROI);
+PassTunningfunSEM = zeros(nPassFreq,nPassROI);
 for nnfreq = 1 : nPassFreq
     cPasFreq = PassFreqTypes(nnfreq);
     cFreqInds = PassDataStrc.SelectSArray == cPasFreq;
     PassTunningfun(nnfreq,:) = mean(PassRespData(cFreqInds,:));
+    PassTunningfunSEM(nnfreq,:) = std(PassRespData(cFreqInds,:))/size(PassRespData(cFreqInds,:),1);
 end
 
 BoundFreq = 16000;
@@ -83,7 +90,8 @@ if ~isdir('./Tunning_fun_plot/')
 end
 cd('./Tunning_fun_plot/');
 
-save TunningDataSave.mat NonMissTunningFun CorrTunningFun PassTunningfun TaskFreqOctave PassFreqOctave BoundFreq -v7.3
+save TunningDataSave.mat NonMissTunningFun CorrTunningFun PassTunningfun TaskFreqOctave ...
+    PassFreqOctave BoundFreq NonMissTunningFunSEM CorrTunningFunSEM PassTunningfunSEM -v7.3
 %%
 for cROI = 1 : nROIs
     h = figure;
@@ -91,9 +99,9 @@ for cROI = 1 : nROIs
     cROItaskNM = NonMissTunningFun(:,cROI);
     cROItaskCorr = CorrTunningFun(:,cROI);
     cROIpass = PassTunningfun(:,cROI);
-    l1 = plot(TaskFreqOctave,cROItaskNM,'c-o','LineWidth',1.6);
-    l2 = plot(TaskFreqOctave,cROItaskCorr,'r-o','LineWidth',1.6);
-    l3 = plot(PassFreqOctave,cROIpass,'k-o','LineWidth',1.6);
+    l1 = errorbar(TaskFreqOctave,cROItaskNM,NonMissTunningFunSEM(:,cROI),'c-o','LineWidth',1.6);
+    l2 = errorbar(TaskFreqOctave,cROItaskCorr,CorrTunningFunSEM(:,cROI),'r-o','LineWidth',1.6);
+    l3 = errorbar(PassFreqOctave,cROIpass,PassTunningfunSEM(:,cROI),'k-o','LineWidth',1.6);
     xlabel('Octave From Boundary');
     ylabel('Mean \DeltaF/F');
     title(sprintf('ROI%d Tunning',cROI));
@@ -105,7 +113,7 @@ for cROI = 1 : nROIs
 end
 
 %% calculated the difference between task and passive and normalized to plot together
-if TaskFreqOctave == PassFreqOctave
+if (length(TaskFreqOctave) == length(PassFreqOctave)) && (TaskFreqOctave(:) == PassFreqOctave(:))
     TunDifNorData = (CorrTunningFun - PassTunningfun)./repmat(max(CorrTunningFun),length(TaskFreqOctave),1);
     InterpPassData = PassTunningfun;
 else
@@ -127,7 +135,7 @@ else
 end
 save TaskPassDifSave.mat CorrTunningFun InterpPassData TaskFreqOctave -v7.3
 
-%% sort the sequence
+% sort the sequence
 [~,ROIsortInds] = sort(sum(TunDifNorData));
 hf = figure;
 imagesc(TunDifNorData(:,ROIsortInds)');

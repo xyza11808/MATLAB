@@ -995,7 +995,7 @@ while finish_drawing == 0
             delete(h_roi);
             h_roi = feval(DrawROI); 
             finish_drawing = 0;
-        case'Cancel',
+        case'Cancel'
             delete(h_roi); 
             finish_drawing = 1;
 %             ROI_updated_flag = 0;
@@ -1644,7 +1644,20 @@ FileName_prefix = CaSignal.CaTrials(TrialNo).FileName_prefix;
 % Now we are in data file path. Since analysis results are saved in a separate
 % folder, we need to find that folder in order to laod or save analysis
 % results. If that folder does not exist, a new folder will be created.
-
+cd(CaSignal.data_path);
+cd ..;
+if exist('BadAlignF.mat','file')
+    BADAlignFStrc = load('BadAlignF.mat');
+    isFileBadAlign = cellfun(@isempty,BADAlignFStrc.BadAlignFrame);
+    BadAlignFile = BADAlignFStrc.BadAlignFrame(~isFileBadAlign);
+    nfiles = length(BadAlignFile);
+    nBadInds = zeros(nfiles,1);
+    for nfff = 1 : nfiles
+        cfilename = BadAlignFile{nfff};
+        nBadInds(nfff) = str2num(cfilename(end-6:end-4));
+    end
+    CaSignal.IsTrialExcluded(nBadInds) = true;
+end
 % CaSignal.results_path = strrep(datapath,[filesep 'data'],[filesep 'results']);
 if get(handles.autosaving,'Value')
     CaSignal.results_path=[CaSignal.data_path,filesep,'result_save'];

@@ -77,7 +77,7 @@ if isempty(poolobj)
 end
 % total_time_GPU=zeros(1,length(datafiles));
 total_time_CPU = zeros(1,length(datafiles));
-FrameIsBadAlign = zeros(1,length(datafiles));
+FrameIsBadAlign = cell(1,length(datafiles));
 parfor i = 1:length(datafiles)
 %   for i = 1:length(datafiles)
     %%
@@ -161,7 +161,7 @@ parfor i = 1:length(datafiles)
     if max(abs((shift(1,:)))>15) || max(abs((shift(2,:)))>15)       
         fprintf('the shift in this trial is over 20 pixes do rigistration again using itself as target\n');
         match=abs((shift(1,:)))<20 & abs(shift(2,:))<20;
-        FrameIsBadAlign(i) = 1;
+        FrameIsBadAlign{i} = a;
         im_tg_temp=mean(aa(:,:,match),3);   % change here for the target frame
         funct=tic;
         [im_dft_reg,shift] = dft_reg(im_s, im_tg_temp); 

@@ -183,9 +183,9 @@ if strcmpi(type,'RF')
     SelectData = f_percent_change(SelectInds,:,:);
     SelectSArray = sound_array(SelectInds,1);
     PassOutcome = ones(length(SelectSArray),1);
-    save rfSelectDataSet.mat SelectData SelectSArray frame_rate -v7.3
+    save rfSelectDataSet.mat SelectData SelectSArray frame_rate SelectInds -v7.3
     SoundFreqs = double(sound_array(:,1) > 16000);
-    SessionBoundary = FreqArray(length(FreqArray)/2);
+    SessionBoundary = FreqArray(ceil(length(FreqArray)/2));
     TrialTypes = SelectSArray > SessionBoundary;
     Passive_factroAna_scripts
 %%
@@ -193,8 +193,8 @@ if strcmpi(type,'RF')
 %     DataAnaObj.PairedAUCCal(1.5,'Max');
     DataAnaObj.popuZscoredCorr(1.5,'Mean'); % first response peak response noise correlation
     DataAnaObj.popuZscoredCorr([1.5,3],'Mean'); % second response preak noise correlation
-    DataAnaObj.popuSignalCorr(1,'Mean',1);  % bootstrap method signal correlation
-    DataAnaObj.popuSignalCorr(1,'Mean'); % normal method of signal correlation
+%     DataAnaObj.popuSignalCorr(1,'Mean',1);  % bootstrap method signal correlation
+%     DataAnaObj.popuSignalCorr(1,'Mean'); % normal method of signal correlation
     %%
     
 %     TimeCourseStrcSP = TimeCorseROC(SelectData,TrialTypes,frame_rate,frame_rate,[],2,0); 
@@ -202,6 +202,7 @@ if strcmpi(type,'RF')
     
      %parameter struc
     V.Ncells = 1;
+    
     V.T = size(f_percent_change,3);
     V.Npixels = 1;
     V.dt = 1/frame_rate;
@@ -211,8 +212,8 @@ if strcmpi(type,'RF')
          mkdir('./SpikeData_analysis/');
      end
      cd('./SpikeData_analysis/');
-     save EsSpikeSave.mat nnspike SelectSArray frame_rate -v7.3
-     %
+     save EsSpikeSave.mat nnspike SelectSArray frame_rate SelectInds SelectData -v7.3
+     %%
      DataSPObj = DataAnalysisSum(nnspike,SelectSArray,frame_rate,frame_rate,1);
      DataSPObj.popuZscoredCorr(0.5,'Mean'); % first response peak response noise correlation
      DataSPObj.popuSignalCorr(1,'Mean'); % normal method of signal correlation
@@ -263,7 +264,7 @@ if strcmpi(type,'RF')
         % if the total trial number can not be fully divided by freq and
         % intensity product, using extra plot
         UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);  % performing color plot
-        UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate,[],0); % not performing color plot
+%         UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate,[],0); % not performing color plot
 %     end
     %%
     %#########################################################################

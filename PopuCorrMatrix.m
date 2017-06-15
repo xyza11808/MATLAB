@@ -63,7 +63,7 @@ if ~isdir('./Popu_CorrelationMatrix_plot/')
     mkdir('./Popu_CorrelationMatrix_plot/');
 end
 cd('./Popu_CorrelationMatrix_plot/');
-
+%%
     if nTrialType == 2
         hMatrixcoef = figure('position',[360,120,1100,920],'Paperpositionmode','auto');
     elseif nTrialType >= 6
@@ -79,7 +79,7 @@ cd('./Popu_CorrelationMatrix_plot/');
         xlabel('# Trials');
         ylabel('ROI pairs');
         if nTrialType == 2
-            title(TypeStr{cType+1});
+            title(TypeStr{cTypeValue+1});
         else
             title(sprintf('%d Hz',cTypeValue));
         end

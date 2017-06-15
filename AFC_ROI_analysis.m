@@ -413,7 +413,7 @@ if ~isempty(radom_inds_correct)
     rand_trial_data=zeros(length(random_type_stim),size_data(2),size_data(3));
 %     m=1:length(random_type_stim);
     rand_trial_data=data(radom_inds_correct,:,:);
-    if isProbAsRandTone
+    if isProbAsRandTone || mod(length(unique(behavResults.Stim_toneFreq)),2)
         rand_plot(behavResults,3,[],1);
     else
         rand_plot(behavResults,3);
@@ -630,7 +630,7 @@ if str2double(continue_char)==1
     
 elseif str2double(continue_char)==2
     %%
-    % AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT);
+    AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT);
     SessionData.nROI = size_data(2);
     SessionData.FrameRate = frame_rate;
     %performing stimulus onset alignment
@@ -694,13 +694,14 @@ elseif str2double(continue_char)==2
         nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
          save EstimateSPsave.mat data_aligned nnspike behavResults start_frame frame_rate -v7.3
     end
-    MultiTimes = {[0,0.3],[0,0.5],[0,0.8],[0,1],[0,1.3],[0,1.5]};
-    SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1,MultiTimes);
+%     MultiTimes = {[0,0.3],[0,0.5],[0,0.8],[0,1],[0,1.3],[0,1.5]};
+%     SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1,MultiTimes);
+    SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1);
 %     Data_pcTrace_script
 %     Partitioned_neurometric_prediction 
     save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
-    TrParaAll = [TrialTypes(:),trial_outcome(:),double(behavResults.Stim_toneFreq(:)),double(behavResults.Action_choice(:))];
-    TimeCourseChoiceDecod(smooth_data,TrParaAll,start_frame,frame_rate);
+%     TrParaAll = [TrialTypes(:),trial_outcome(:),double(behavResults.Stim_toneFreq(:)),double(behavResults.Action_choice(:))];
+%     TimeCourseChoiceDecod(smooth_data,TrParaAll,start_frame,frame_rate);
     %%
     LRAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
          behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
@@ -722,8 +723,8 @@ elseif str2double(continue_char)==2
      end
      ROIAUCcolorp(TimeCourseStrc,start_frame/frame_rate);
      %
-     
-%      TimeCourseStrcSP = TimeCorseROC(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);  
+     nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
+     TimeCourseStrcSP = TimeCorseROC(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);  
      AUCDataASSP = ROC_check(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_AlignSP',0,1.5);
 %      
      ROIAUCcolorp(TimeCourseStrcSP,start_frame/frame_rate,[],'Spike train');
@@ -757,10 +758,10 @@ elseif str2double(continue_char)==2
     DataAnaObj.popuSignalCorr(1,'Mean');  % normal methods
     
     %%
-    if ~isdir('./SpikeData/')
-        mkdir('./SpikeData/');
+    if ~isdir('./spikeData/')
+        mkdir('./spikeData/');
     end
-    cd('./SpikeData/');
+    cd('./spikeData/');
     % spike data correlation calculation
     DataAnaObjSP = DataAnalysisSum(nnspike,behavResults.Stim_toneFreq,start_frame,frame_rate,1);  % smooth_data
 %     if RandomSession
@@ -776,9 +777,10 @@ elseif str2double(continue_char)==2
 %     TimeCorseROC(data_aligned,TrialTypes(NormalTrialInds),start_frame,frame_rate);  %cumulated ROC plot
      Left_right_pca_dis(smooth_data,behavResults,session_name,frame_rate,start_frame,[],[],data,2);
 %     FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame);
-      if RandomSession
+      %
+     if RandomSession
 %           ShuffleNeuroMTest(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
-          FlickAnaFun(data,FLickT,FlickInds,double(behavResults.Stim_toneFreq(NormalTrialInds)),trial_outcome,frame_rate,1.5);
+%           FlickAnaFun(data,FLickT,FlickInds,double(behavResults.Stim_toneFreq(NormalTrialInds)),trial_outcome,frame_rate,1.5);
           RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
           RandNeuroMTPerfcorr(smooth_data,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate,1.5);
           NBC_for2afc(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate,1.5,TrialTypes); %naive bayes
@@ -803,8 +805,8 @@ elseif str2double(continue_char)==2
           MultiTimeWinClass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
 %           FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame,[],1);
           if RandomSession
-            RandNMTChoiceDecoding(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5,[],1);
-            RandNMTChoiceDecoding(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5);
+            RandNMTChoiceDecoding(smooth_data(radom_inds,:,:),behavResults,trial_outcome(radom_inds),start_frame,frame_rate,1.5,[],1);
+            RandNMTChoiceDecoding(smooth_data(radom_inds,:,:),behavResults,trial_outcome(radom_inds),start_frame,frame_rate,1.5);
 %             RandNeuroMTestCrossV(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1);
             multiCClass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5);
             FreqRespCallFun(data_aligned(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),2,{1},frame_rate,start_frame);         

@@ -163,13 +163,23 @@ saveas(hmeanf,'Mean Normalized Resp plot','pdf')
 close(hmeanf);
 cd ..;
 %%
-figure
-imagesc(CorrTunningFun)
-set(gca,'clim',[0 350])
-title('Task Corr')
-figure
-imagesc(PassTunningfun,[0 350])
-title('Passive')
-figure
-imagesc(NonMissTunningFun,[0 350])
-title('Task Non-miss')
+% shape the direction of preferred response side
+GrSize = floor(FreqNum/2);
+PreferSideTunning = zeros(FreqNum,nROIs);
+RevertInds = zeros(nROIs,1);
+for cROI = 1 : size(CorrTunningFun,2)
+    cROItun = CorrTunningFun(:,cROI);
+    if mean(cROItun(1:GrSize)) > mean(cROItun(end-GrSize+1:end))
+        PreferSideTunning(:,cROI) = fliplr(cROItun);
+        RevertInds(cROI) = 1;
+    else
+        PreferSideTunning(:,cROI) = cROItun;
+    end
+end
+%% normalized the firing rate
+ROImeanResp = repmat(mean(PreferSideTunning),FreqNum,1);
+ROImeanRespSub = ROImeanResp;
+ROImeanRespSub(ROImeanRespSub == 0) = 1;
+NormalRespSub = PreferSideTunning./ROImeanRespSub;
+figure;
+plot(mean(NormalRespSub,2))
