@@ -50,6 +50,48 @@ legend([h1,h2,h3,h4],{'Left Corr','Right Corr','Left Error','Right Error'},'Font
 xlabel('x1');
 ylabel('x2');
 zlabel('x3');
+xscales = get(gca,'xlim');
+yscales = get(gca,'ylim');
+zscales = get(gca,'zlim');
+[a,b] = view;
+%%
+%
+v = VideoWriter('StateSpace_traj.avi','Uncompressed AVI');
+v.FrameRate=30;
+open(v)
+h_Anima = figure('position',[200 200 1000 800]);
+hold on
+% AnimFram(length(1:2:size(LeftMeanTrace,2))) = struct('cdata',[],'colormap',[]);
+for nFrame = 1:2:size(LeftMeanTrace,2)
+    hold on;
+    h1 = plot3(LeftMeanTrace(1,1:nFrame),LeftMeanTrace(2,1:nFrame),LeftMeanTrace(3,1:nFrame),'b','LineWidth',1.6);
+    h2 = plot3(RightMeanTrace(1,1:nFrame),RightMeanTrace(2,1:nFrame),RightMeanTrace(3,1:nFrame),'r','LineWidth',1.6);
+    if nFrame >= start_frame
+        scatter3(LeftMeanTrace(1,start_frame),LeftMeanTrace(2,start_frame),LeftMeanTrace(3,start_frame),50,'o',...
+            'Markeredgecolor','m','MarkerFaceColor','g','LineWidth',1.6);
+        scatter3(RightMeanTrace(1,start_frame),RightMeanTrace(2,start_frame),RightMeanTrace(3,start_frame),50,'o',...
+            'Markeredgecolor','m','MarkerFaceColor','g','LineWidth',1.6);
+    end
+%     h3 = plot3(LeftErroMean(1,:),LeftErroMean(2,:),LeftErroMean(3,:),'Color',[.3 .3 .3],'LineWidth',1.6);  %,'LineStyle','--'
+%     h4 = plot3(RightErroMean(1,:),RightErroMean(2,:),RightErroMean(3,:),'Color',[.7 .7 .7],'LineWidth',1.6); %,'LineStyle','--'
+    set(gca,'FontSize',20);
+%     legend([h1,h2,h3,h4],{'Left Corr','Right Corr','Left Error','Right Error'},'FontSize',12);
+%     legend([h1 h2],'Left Corr','Right Corr');
+    xlabel('x1');
+    ylabel('x2');
+    zlabel('x3');
+    set(gca,'xlim',xscales,'ylim',yscales,'zlim',zscales);
+    view([a,b]);
+    drawnow
+    F = getframe(h_Anima);
+    writeVideo(v,F);
+    clf;
+%     close(h_Anima);
+end
+
+% v.Quality = 100;
+close(v);
+
 %%
 
 

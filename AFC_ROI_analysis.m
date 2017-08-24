@@ -50,11 +50,6 @@ plot_data_inds=struct('left_trials_inds',[],'right_trials_inds',[],'left_trials_
 isProbAsRandTone = 1;
 % global settings end
 % %%################################################################################################
-% ##################################################################################################
-
-
-
-
 
 SessionDesp = 'Twotone2afc';
 size_data=size(data);
@@ -129,19 +124,19 @@ if ~isempty(exclude_inds)
     else
         behavResults.Stim_Type(exclude_inds,:)=[];
     end
-    if max(behavResults.Trial_isProbeTrial)
-        behavResults.Trial_isProbeTrial(exclude_inds)=[];
-    end
+%     if max(behavResults.Trial_isProbeTrial)
+%         behavResults.Trial_isProbeTrial(exclude_inds)=[];
+%     end
     if isfield(behavResults,'Setted_TimeOnset')
         behavResults.Setted_TimeOnset(exclude_inds)=[];
     end
     if field_count==2
         lick_time_struct(exclude_inds)=[];
         Lick_bias_side(exclude_inds)=[];
-%         behavResults.Action_lickTimeRight(exclude_inds)=[];
-%         behavResults.Action_lickTimeLeft(exclude_inds)=[];
-%         behavResults.Action_numLickLeft(exclude_inds)=[];
-%         behavResults.Action_numLickRight(exclude_inds)=[];
+        behavResults.Action_lickTimeRight(exclude_inds,:)=[];
+        behavResults.Action_lickTimeLeft(exclude_inds,:)=[];
+        behavResults.Action_numLickLeft(exclude_inds)=[];
+        behavResults.Action_numLickRight(exclude_inds)=[];
     end
     if isfield(behavResults,'isRewardIgnore') && isfield(behavResults,'isActiveReward')
         behavResults.isRewardIgnore(exclude_inds)=[];
@@ -150,6 +145,8 @@ if ~isempty(exclude_inds)
      if isfield(behavResults,'Trial_isRandRGiven')
          behavResults.Trial_isRandRGiven(exclude_inds)=[];
      end
+%      data(exclude_inds,:,:) = [];
+%      size_data=size(data);
 end
 
 corr_trial_inds = behavResults.Action_choice == behavResults.Trial_Type;
@@ -381,7 +378,12 @@ end
 
 % save SpikeResult.mat nSpikes ROIstd V -v7.3
 %%
-frame_lick_inds=struct('Action_LeftLick_frame',[],'Action_RightLick_frame',[]);
+frame_lick_inds = struct('Action_LeftLick_frame',[],'Action_RightLick_frame',[]);
+frame_lickAllTrials = struct('Action_LeftLick_frame',[],'Action_RightLick_frame',[]);
+for nTr = 1:size_data(1)
+     frame_lickAllTrials(nTr).Action_LeftLick_frame=((double(lick_time_struct(nTr).LickTimeLeft)/1000)*frame_rate);
+     frame_lickAllTrials(nTr).Action_RightLick_frame=((double(lick_time_struct(nTr).LickTimeRight)/1000)*frame_rate);
+end
     %%
     %check whether random trial exists, and do post analysis if there are
     %some
@@ -405,8 +407,8 @@ if ~isempty(radom_inds_correct)
     if field_count==2
         rand_lick_time=lick_time_struct(radom_inds_correct);
         for n=1:length(rand_lick_time)
-            frame_lick_inds(n).Action_LeftLick_frame=floor((double(rand_lick_time(n).LickTimeLeft)/1000)*frame_rate);
-            frame_lick_inds(n).Action_RightLick_frame=floor((double(rand_lick_time(n).LickTimeRight)/1000)*frame_rate);
+            frame_lick_inds(n).Action_LeftLick_frame=((double(rand_lick_time(n).LickTimeLeft)/1000)*frame_rate);
+            frame_lick_inds(n).Action_RightLick_frame=((double(rand_lick_time(n).LickTimeRight)/1000)*frame_rate);
         end
     end
     
@@ -456,8 +458,8 @@ if ~isempty(pure_tone_inds)
     if field_count==2
         PT_lick_time=lick_time_struct(pure_tone_corr_inds);
         for n=1:length(PT_lick_time)
-            frame_lick_inds(n).Action_LeftLick_frame=floor((double(PT_lick_time(n).LickTimeLeft)/1000)*frame_rate);
-            frame_lick_inds(n).Action_RightLick_frame=floor((double(PT_lick_time(n).LickTimeRight)/1000)*frame_rate);
+            frame_lick_inds(n).Action_LeftLick_frame=((double(PT_lick_time(n).LickTimeLeft)/1000)*frame_rate);
+            frame_lick_inds(n).Action_RightLick_frame=((double(PT_lick_time(n).LickTimeRight)/1000)*frame_rate);
         end
     end
     
@@ -630,7 +632,7 @@ if str2double(continue_char)==1
     
 elseif str2double(continue_char)==2
     %%
-    AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT);
+    
     SessionData.nROI = size_data(2);
     SessionData.FrameRate = frame_rate;
     %performing stimulus onset alignment
@@ -690,19 +692,33 @@ elseif str2double(continue_char)==2
         SigROIinds = FreqRespOnsetHist(data_aligned,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
     end
     
-    if ~exist('EstimateSPsave.mat','file')
-        nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
+    if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
+         nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
          save EstimateSPsave.mat data_aligned nnspike behavResults start_frame frame_rate -v7.3
+    else
+        load('EstimateSPsave.mat');
     end
 %     MultiTimes = {[0,0.3],[0,0.5],[0,0.8],[0,1],[0,1.3],[0,1.5]};
 %     SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1,MultiTimes);
-    SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1);
+%     SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1);
 %     Data_pcTrace_script
 %     Partitioned_neurometric_prediction 
-    save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
+    save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate FRewardLickT NormalTrialInds frame_lickAllTrials data -v7.3
 %     TrParaAll = [TrialTypes(:),trial_outcome(:),double(behavResults.Stim_toneFreq(:)),double(behavResults.Action_choice(:))];
 %     TimeCourseChoiceDecod(smooth_data,TrParaAll,start_frame,frame_rate);
     %%
+    AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials); % plot lick frames
+    AnsTimeAlignPlot(data_aligned,behavResults,1,frame_rate,trial_outcome,1); % answer time alignment, with figure plot
+    %
+    if ~isdir('SpikeDataSave')
+        mkdir('SpikeDataSave');
+    end
+    cd('SpikeDataSave');
+    
+    AlignedSortPlotAll(nnspike,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials); % plot lick frames
+    cd ..;
+
+%%     RandNMTChoiceDecoding(smooth_data(radom_inds,:,:),behavResults,trial_outcome(radom_inds),start_frame,frame_rate,1.5);
     LRAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
          behavResults.Time_answer(NormalTrialInds),align_time_point,TrialTypes(NormalTrialInds),...
          frame_rate,onset_time(NormalTrialInds),0);
@@ -722,15 +738,25 @@ elseif str2double(continue_char)==2
              behavResults.Action_choice(NormalTrialInds),1.5,start_frame,frame_rate,16000,0);
      end
      ROIAUCcolorp(TimeCourseStrc,start_frame/frame_rate);
-     %
-     nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
-     TimeCourseStrcSP = TimeCorseROC(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2,0);  
-     AUCDataASSP = ROC_check(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],'Stim_time_AlignSP',0,1.5);
+     
+     if ~exist('nnspike','var')
+         nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
+         save EstimateSPsave.mat data_aligned nnspike trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
+     end
+      
+      if ~isdir('./EM_spike_analysis/')
+          mkdir('./EM_spike_analysis/');
+      end
+      cd('./EM_spike_analysis/');
+      
+%      nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
+     TimeCourseStrcSP = TimeCorseROC(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2);  
+     AUCDataASSP = ROC_check(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,0.5,'Stim_time_AlignSP');
 %      
      ROIAUCcolorp(TimeCourseStrcSP,start_frame/frame_rate,[],'Spike train');
-     %
-     script_for_summarizedPlot;  % call a script for data preparation and call summarized plot function
+     cd ..;
      
+     script_for_summarizedPlot;  % call a script for data preparation and call summarized plot function
      %%
 %      % for opto and control trial compared computation
 %      ModuInds = double(behavResults.Trial_isOpto);

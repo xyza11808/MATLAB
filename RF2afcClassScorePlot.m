@@ -47,6 +47,7 @@ FracMaxAUCV = xxxx.MaxAUCvalue;
 SUFVlassScore = xxxx.SUFFracclfPerfAll;
 TaskPerfMean = 1 - mean(ClassScore,2);
 SUFTaskPerfMean = 1 - mean(SUFVlassScore,2);
+
 TaskPerfsemU = TaskPerfMean + std(ClassScore,[],2)/sqrt(size(ClassScore,1));
 TaskPerfsemL = TaskPerfMean - std(ClassScore,[],2)/sqrt(size(ClassScore,1));
 SUFTaskPerfsemU = SUFTaskPerfMean + std(SUFVlassScore,[],2)/sqrt(size(SUFVlassScore,1));

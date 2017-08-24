@@ -140,8 +140,8 @@ else
                 if LMMean
                     dataBIN = 1 - dataBIN;
                 end
-                BINNEDROCResultLR(ROInum,BINNum)=dataBIN;
             end
+            BINNEDROCResultLR(ROInum,BINNum)=dataBIN;
         end
     end
     clearvars TempROIData LeftPoints RightPoints LeftDataFORroc RightDataFORroc

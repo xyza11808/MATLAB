@@ -34,10 +34,22 @@ end
 switch TrUsage
     case 0
         TrIndsUsed = TrOutcome ~= 2;
+        if ~isdir('./Single_ROI_neurometric/')
+            mkdir('./Single_ROI_neurometric/');
+        end
+        cd('./Single_ROI_neurometric/');
     case 1
         TrIndsUsed = TrOutcome == 1;
+        if ~isdir('./Single_ROI_neurometric_corr/')
+            mkdir('./Single_ROI_neurometric_corr/');
+        end
+        cd('./Single_ROI_neurometric_corr/');
     case 2
         TrIndsUsed = true(length(TrOutcome),1);
+        if ~isdir('./Single_ROI_neurometric_all/')
+            mkdir('./Single_ROI_neurometric_all/');
+        end
+        cd('./Single_ROI_neurometric_all/');
     otherwise
         warning('Unrecognized trial type usage input, using default value for calculation');
         TrIndsUsed = TrOutcome ~= 2;
@@ -94,6 +106,12 @@ for cROI = 1 : size(RespData,2)
         ROIpairedAUcValue(cROI,end-nPair+1) = ROCSummary;
     end
 end
+
+if ~isdir('./Single_ROI_neurometric_corr/')
+    mkdir('./Single_ROI_neurometric_corr/');
+end
+cd('./Single_ROI_neurometric_corr/');
+    
 save ROIpairedAUCsave.mat ROIpairedAUcValue ROIpairedAUcIsrevert -v7.3
 
 %%
@@ -101,7 +119,7 @@ freqOctave = log2(CoupleTones/16000);
 for nROI = 1 : size(ROIpairedAUcValue)
     hf = figure;
     plot(freqOctave,ROIpairedAUcValue(nROI,:),'k-o','linewidth',1.5);
-    set(gca,'xtick',cellstr(num2str(freqOctave(:),'%.1f')),'ytick',[0 0.5 1]);
+    set(gca,'xtick',freqOctave,'xticklabel',cellstr(num2str(freqOctave(:),'%.1f')),'ytick',[0 0.5 1]);
     xlabel('Octaves');
     ylabel('AUC values');
     title(sprintf('ROI%d AUC plot',nROI));
@@ -111,4 +129,4 @@ for nROI = 1 : size(ROIpairedAUcValue)
     close(hf);
 end
 
-        
+cd ..;

@@ -47,10 +47,10 @@ else
     titleStr='Active type';
 end
 % ytick_colorlabel=ytick_colorlabel./1000;
-
+%%
 h=figure('position',[200 90 1400 1000],'PaperPositionMode','auto');
 ax1=axes;
-h_backf=imagesc(GroundFigure,[0 300]);
+h_backf=imagesc(GroundFigure,[0 150]);
 Cpos=get(ax1,'position');
 view(2);
 ax2=axes;
@@ -67,7 +67,7 @@ else
     facemapcolor=jet;
 end
 colormap(ax2,facemapcolor);
-alpha(h_frontf,0.4);
+% alpha(h_frontf,0.4);
 set([ax1,ax2],'position',Cpos);
 cb2=colorbar(ax2);
 CBPosition=get(cb2,'position');
@@ -76,7 +76,7 @@ set(get(cb2,'title'),'string',titleStr,'fontSize',10);
 set(cb2,'ytick',ytick_colorlabel,'yTicklabel',ytickcolorlabel);
 title('Combined colormap plot','fontSize',16);
 axis off
-
+%%
 if nargin>3
     FileDesp=varargin{2};
 else
@@ -88,4 +88,5 @@ else
 end
 saveas(h,sprintf('%s_Insite_plot',FileDesp));
 saveas(h,sprintf('%s_Insite_plot',FileDesp),'png');
+saveas(h,sprintf('%s_Insite_plot',FileDesp),'pdf');
 close(h);

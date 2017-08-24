@@ -284,12 +284,13 @@ else
 end
 CaSignal.ImageArray = im;
 CaSignal.imSize = size(im);
-PreTrFNum = str2num(get(handles.cTrFNumDisp,'String'));
-if ~isempty(PreTrFNum)
-    if PreTrFNum ~= size(im,3)
-        warndlg(sprintf('Current trial frame number(%d) is different from former trial(%d)',size(im,3),PreTrFNum),'Frame number non-match');
-    end
+AcqFrameNum = header.SI4.acqNumFrames;
+if AcqFrameNum ~= size(im,3)
+    fprintf('Current trial frame number(%d) is different from required trial(%d).\n',size(im,3),AcqFrameNum);
+    CaSignal.IsTrialExcluded(TrialNo) = true;
+    set(handles.ExcludeCTr,'value',1);
 end
+
 set(handles.cTrFNumDisp,'String',num2str(size(im,3)));
 if ~isempty(CaSignal.CaTrials)
     if length(CaSignal.CaTrials)<TrialNo || isempty(CaSignal.CaTrials(TrialNo).FileName)
@@ -528,6 +529,7 @@ function h_roi_plots = plot_ROIs(handles)
 global CaSignal % ROIinfo ICA_ROIs
 CurrentROINo = str2double(get(handles.CurrentROINoEdit,'String'));
 TrialNo = str2double(get(handles.CurrentTrialNo,'String'));
+ROIstateAll = CaSignal.ROIStateIndicate;
 h_roi_plots = [];
 roi_pos = {};
 %     if get(handles.ICA_ROI_anal, 'Value') == 1 && isfield(ICA_ROIs, 'ROIpos');
@@ -541,6 +543,7 @@ if length(CaSignal.ROIinfo) >= TrialNo
     roi_pos = CaSignal.ROIinfo(TrialNo).ROIpos;
 end
 for i = 1:length(roi_pos) % num ROIs
+    cROIstate = ROIstateAll(i,:);
     if i == CurrentROINo
         lw = 2;
         fsize = 18;
@@ -553,7 +556,13 @@ for i = 1:length(roi_pos) % num ROIs
         %                     & ishandle(CaSignal.ROIplot(i))
         %                 delete(CaSignal.ROIplot(i));
         %             end
-        h_roi_plots(i) = line(roi_pos{i}(:,1),roi_pos{i}(:,2), 'Color', [0.8 0 0], 'LineWidth', lw);
+        if cROIstate(1) % new ROI plots
+            h_roi_plots(i) = line(roi_pos{i}(:,1),roi_pos{i}(:,2), 'Color', [0.8 0 0], 'LineWidth', lw);
+        elseif cROIstate(2)
+            h_roi_plots(i) = line(roi_pos{i}(:,1),roi_pos{i}(:,2), 'Color', 'g', 'LineWidth', lw);
+        elseif cROIstate(3)
+            h_roi_plots(i) = line(roi_pos{i}(:,1),roi_pos{i}(:,2), 'Color', [1 0 1], 'LineWidth', lw);
+        end
         text(median(roi_pos{i}(:,1)), median(roi_pos{i}(:,2)), num2str(i),'Color','c','FontSize',fsize);
         set(h_roi_plots(i), 'LineWidth', lw);
     end
@@ -1144,6 +1153,24 @@ emptyROIs=[];
 if isfield(ROIinfo,'Ringmask') && isfield(ROIinfo,'LabelNPmask')
     CaSignal.ROIinfo(TrialNo) = ROIinfo;
     CaSignal.ROIinfoBack(1) = ROIinfo;
+    if sum(cellfun(@isempty,CaSignal.ROIinfoBack.Ringmask))
+        nROIs=length(ROIinfo.ROImask);
+         FrameSize=CaSignal.imSize(1:2);
+         
+        for nnROI = 1 : nROIs
+            BW=ROIinfo.ROImask{nnROI};
+            pos=ROIinfo.ROIpos{nnROI};
+            CenterXY=mean(pos);
+            if nnROI == 1
+                ROIsum = false(FrameSize);
+            end
+            [RingMask,ROIsum]= RingShapeMask(FrameSize,CenterXY,pos,[],ROIsum,BW);
+            ROIinfo.Ringmask{nnROI}=RingMask;
+        end
+    end
+    %
+    CaSignal.ROIinfo(TrialNo) = ROIinfo;
+    CaSignal.ROIinfoBack(1) = ROIinfo;
 else
     nROIs=length(ROIinfo.ROImask);
     ROIinfo.LabelNPmask={};
@@ -1197,7 +1224,6 @@ CaSignal.CaTrials(TrialNo).nROIs = nROIs;
 set(handles.nROIsText, 'String', num2str(nROIs));
 update_ROI_plot(handles);
 handles = update_projection_images(handles);
-
 
 
 function import_ROIinfo_from_trial_CreateFcn(hObject, eventdata, handles)
@@ -1327,7 +1353,7 @@ emptyROIs=[];
 for n=1:numberROIs
     ALLROImaskR=CaSignal.ROIinfoBack(1).Ringmask;
     ALLROImask = CaSignal.ROIinfoBack(1).ROImask;
-    if isempty(ALLROImaskR{n}) || isempty(ALLROImask{n})
+    if isempty(ALLROImaskR{n}) && isempty(ALLROImask{n})
         emptyROIs=[emptyROIs n];
     end
 end
@@ -1530,8 +1556,7 @@ catch ME
             nRealTrNo = TrialNo+BlockBase;
              fname = filenames{nRealTrNo};
             if ~exist(fname,'file')
-                [fname, pathname] = uigetfile('*.tif', 'Select Image Data file');
-                cd(pathname);
+                error('File not exists.');
             end;
             msg_str1 = sprintf('Batch analyzing %d of total %d trials with %d ROIs...', ...
                 nRealTrNo, End_trial-Start_trial+1, nTROIs);  
@@ -1641,24 +1666,30 @@ FileName_prefix = CaSignal.CaTrials(TrialNo).FileName_prefix;
 % CaSignal.CaTrials = CaSignal.CaTrials;
 % ROIinfo = ROIinfo;
 
-% Now we are in data file path. Since analysis results are saved in a separate
+%% Now we are in data file path. Since analysis results are saved in a separate
 % folder, we need to find that folder in order to laod or save analysis
 % results. If that folder does not exist, a new folder will be created.
 cd(CaSignal.data_path);
 cd ..;
 if exist('BadAlignF.mat','file')
     BADAlignFStrc = load('BadAlignF.mat');
-    isFileBadAlign = cellfun(@isempty,BADAlignFStrc.BadAlignFrame);
-    BadAlignFile = BADAlignFStrc.BadAlignFrame(~isFileBadAlign);
-    nfiles = length(BadAlignFile);
-    nBadInds = zeros(nfiles,1);
-    for nfff = 1 : nfiles
-        cfilename = BadAlignFile{nfff};
-        nBadInds(nfff) = str2num(cfilename(end-6:end-4));
+    if iscell(BADAlignFStrc.BadAlignFrame)
+        isFileBadAlign = cellfun(@isempty,BADAlignFStrc.BadAlignFrame);
+        BadAlignFile = BADAlignFStrc.BadAlignFrame(~isFileBadAlign);
+        nfiles = length(BadAlignFile);
+        nBadInds = zeros(nfiles,1);
+        for nfff = 1 : nfiles
+            cfilename = BadAlignFile{nfff};
+            nBadInds(nfff) = str2num(cfilename(end-6:end-4));
+        end
+    else
+        nBadInds = BADAlignFStrc.BadAlignFrame > 0;
     end
+    
     CaSignal.IsTrialExcluded(nBadInds) = true;
 end
-% CaSignal.results_path = strrep(datapath,[filesep 'data'],[filesep 'results']);
+cd(CaSignal.data_path);
+%% CaSignal.results_path = strrep(datapath,[filesep 'data'],[filesep 'results']);
 if get(handles.autosaving,'Value')
     CaSignal.results_path=[CaSignal.data_path,filesep,'result_save'];
     if ~isdir([CaSignal.data_path,filesep,'result_save'])
@@ -1737,7 +1768,8 @@ try
     %simplified data storage
     save(CaSignal.SIMsave_fname,'SavedCaTrials','-v7.3');
     save(CaSignal.ROIinfoback_fname, 'ROIinfoBU','-v7.3');
-catch
+catch ME
+    fprintf('Following Error occurs:\n%s;\n',ME.message);
     nFrame = CaSignal.nFrames;
     nFramesAll = zeros(length(CaTrials),1);
     for nTrial = 1 : length(CaTrials)
@@ -1882,6 +1914,13 @@ else
         open_image_file_button_Callback(hObject, eventdata, handles,filename);
      end
 end
+cTrNum = CaSignal.CurrentTrialNo;
+if CaSignal.IsTrialExcluded(cTrNum)
+    set(handles.ExcludeCTr,'value',1);
+else
+    set(handles.ExcludeCTr,'value',0);
+end
+
 
 function NextTrialButton_Callback(hObject, eventdata, handles)
 global CaSignal % ROIinfo ICA_ROIs

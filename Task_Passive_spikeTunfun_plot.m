@@ -31,7 +31,7 @@ TaskData = TaskDataStrc.nnspike;
 nROIs = size(TaskData,2);
 DataRespWinT = 0.5; % using only 500ms time window for sensory response
 DataRespWinF = round(DataRespWinT*TaskDataStrc.frame_rate);
-TaskDataResp = max(TaskData(:,:,(TaskDataStrc.start_frame+1):(TaskDataStrc.start_frame+DataRespWinF)),[],3);
+TaskDataResp = mean(TaskData(:,:,(TaskDataStrc.start_frame+1):(TaskDataStrc.start_frame+DataRespWinF)),3);
 NonMissTrInds = TaskOutcome ~= 2;
 CorrectInds = TaskOutcome == 1;
 
@@ -88,10 +88,10 @@ end
 BoundFreq = 16000;
 TaskFreqOctave = log2(FreqTypes/BoundFreq);
 PassFreqOctave = log2(PassFreqTypes/BoundFreq);
-if ~isdir('./Spike_Tunfun_plot/')
-    mkdir('./Spike_Tunfun_plot/');
+if ~isdir('./Spike_Tunfun_plotmean/')
+    mkdir('./Spike_Tunfun_plotmean/');
 end
-cd('./Spike_Tunfun_plot/');
+cd('./Spike_Tunfun_plotmean/');
 
 save TunningDataSave.mat NonMissTunningFun CorrTunningFun PassTunningfun ...
     PassTunningfunSEM NonMissTunningFunSEM CorrTunningFunSEM TaskFreqOctave PassFreqOctave BoundFreq -v7.3
@@ -116,70 +116,70 @@ for cROI = 1 : nROIs
     close(h);
 end
 
-%% calculated the difference between task and passive and normalized to plot together
-if length(TaskFreqOctave) == length(PassFreqOctave)
-    TunDifNorData = (CorrTunningFun - PassTunningfun)./repmat(max(CorrTunningFun),length(TaskFreqOctave),1);
-    InterpPassData = PassTunningfun;
-else
-    InerpXpoint = linspace(min(PassFreqOctave),max(PassFreqOctave),500);
-    InterpPassDataAll = zeros(500,nROIs);
-    for ncROI = 1 : nROIs
-        cROIpassData = PassTunningfun(:,ncROI);
-        InterpData = interp1(PassFreqOctave,cROIpassData,InerpXpoint,'spline');
-        InterpPassDataAll(:,ncROI) = InterpData;
-    end
-        
-    InterpPassData = zeros(length(TaskFreqOctave),nROIs);
-    for nTaskFreq = 1 : length(TaskFreqOctave)
-        cTaskFreq = TaskFreqOctave(nTaskFreq);
-        [~,ClrInterpInds] = min(abs(InerpXpoint - cTaskFreq));
-        InterpPassData(nTaskFreq,:) = InterpPassDataAll(ClrInterpInds,:);
-    end
-    TunDifNorData = (CorrTunningFun - InterpPassData)./repmat(max(CorrTunningFun),length(TaskFreqOctave),1);
-end
-save TaskPassDifSave.mat CorrTunningFun InterpPassData TaskFreqOctave -v7.3
-
-%% sort the sequence
-[~,ROIsortInds] = sort(sum(TunDifNorData));
-hf = figure;
-imagesc(TunDifNorData(:,ROIsortInds)');
-colorbar
-saveas(hf,'Sorted Tunning dif colorplot');
-saveas(hf,'Sorted Tunning dif colorplot','png');
-saveas(hf,'Sorted Tunning dif colorplot','pdf');
-close(hf);
-
-CorrNorTunningFunAll = CorrTunningFun./repmat(max(CorrTunningFun),length(TaskFreqOctave),1);
-PassNorTunFunAll = PassTunningfun./repmat(max(PassTunningfun),length(PassFreqOctave),1);
-hmeanf = figure;
-hold on
-plot(TaskFreqOctave,mean(CorrNorTunningFunAll,2),'r-o','Linewidth',1.5);
-plot(PassFreqOctave,mean(PassNorTunFunAll,2),'k-o','Linewidth',1.5);
-xlabel('Octave from Boundary');
-ylabel('Nor. \DeltaF/F');
-saveas(hmeanf,'Mean Normalized Resp plot')
-saveas(hmeanf,'Mean Normalized Resp plot','png')
-saveas(hmeanf,'Mean Normalized Resp plot','pdf')
-close(hmeanf);
-cd ..;
-%%
-% shape the direction of preferred response side
-GrSize = floor(FreqNum/2);
-PreferSideTunning = zeros(FreqNum,nROIs);
-RevertInds = zeros(nROIs,1);
-for cROI = 1 : size(CorrTunningFun,2)
-    cROItun = CorrTunningFun(:,cROI);
-    if mean(cROItun(1:GrSize)) > mean(cROItun(end-GrSize+1:end))
-        PreferSideTunning(:,cROI) = fliplr(cROItun);
-        RevertInds(cROI) = 1;
-    else
-        PreferSideTunning(:,cROI) = cROItun;
-    end
-end
-%% normalized the firing rate
-ROImeanResp = repmat(mean(PreferSideTunning),FreqNum,1);
-ROImeanRespSub = ROImeanResp;
-ROImeanRespSub(ROImeanRespSub == 0) = 1;
-NormalRespSub = PreferSideTunning./ROImeanRespSub;
-figure;
-plot(mean(NormalRespSub,2))
+% %% calculated the difference between task and passive and normalized to plot together
+% if length(TaskFreqOctave) == length(PassFreqOctave)
+%     TunDifNorData = (CorrTunningFun - PassTunningfun)./repmat(max(CorrTunningFun),length(TaskFreqOctave),1);
+%     InterpPassData = PassTunningfun;
+% else
+%     InerpXpoint = linspace(min(PassFreqOctave),max(PassFreqOctave),500);
+%     InterpPassDataAll = zeros(500,nROIs);
+%     for ncROI = 1 : nROIs
+%         cROIpassData = PassTunningfun(:,ncROI);
+%         InterpData = interp1(PassFreqOctave,cROIpassData,InerpXpoint,'spline');
+%         InterpPassDataAll(:,ncROI) = InterpData;
+%     end
+%         
+%     InterpPassData = zeros(length(TaskFreqOctave),nROIs);
+%     for nTaskFreq = 1 : length(TaskFreqOctave)
+%         cTaskFreq = TaskFreqOctave(nTaskFreq);
+%         [~,ClrInterpInds] = min(abs(InerpXpoint - cTaskFreq));
+%         InterpPassData(nTaskFreq,:) = InterpPassDataAll(ClrInterpInds,:);
+%     end
+%     TunDifNorData = (CorrTunningFun - InterpPassData)./repmat(max(CorrTunningFun),length(TaskFreqOctave),1);
+% end
+% save TaskPassDifSave.mat CorrTunningFun InterpPassData TaskFreqOctave -v7.3
+% 
+% %% sort the sequence
+% [~,ROIsortInds] = sort(sum(TunDifNorData));
+% hf = figure;
+% imagesc(TunDifNorData(:,ROIsortInds)');
+% colorbar
+% saveas(hf,'Sorted Tunning dif colorplot');
+% saveas(hf,'Sorted Tunning dif colorplot','png');
+% saveas(hf,'Sorted Tunning dif colorplot','pdf');
+% close(hf);
+% 
+% CorrNorTunningFunAll = CorrTunningFun./repmat(max(CorrTunningFun),length(TaskFreqOctave),1);
+% PassNorTunFunAll = PassTunningfun./repmat(max(PassTunningfun),length(PassFreqOctave),1);
+% hmeanf = figure;
+% hold on
+% plot(TaskFreqOctave,mean(CorrNorTunningFunAll,2),'r-o','Linewidth',1.5);
+% plot(PassFreqOctave,mean(PassNorTunFunAll,2),'k-o','Linewidth',1.5);
+% xlabel('Octave from Boundary');
+% ylabel('Nor. \DeltaF/F');
+% saveas(hmeanf,'Mean Normalized Resp plot')
+% saveas(hmeanf,'Mean Normalized Resp plot','png')
+% saveas(hmeanf,'Mean Normalized Resp plot','pdf')
+% close(hmeanf);
+% cd ..;
+% %%
+% % shape the direction of preferred response side
+% GrSize = floor(FreqNum/2);
+% PreferSideTunning = zeros(FreqNum,nROIs);
+% RevertInds = zeros(nROIs,1);
+% for cROI = 1 : size(CorrTunningFun,2)
+%     cROItun = CorrTunningFun(:,cROI);
+%     if mean(cROItun(1:GrSize)) > mean(cROItun(end-GrSize+1:end))
+%         PreferSideTunning(:,cROI) = fliplr(cROItun);
+%         RevertInds(cROI) = 1;
+%     else
+%         PreferSideTunning(:,cROI) = cROItun;
+%     end
+% end
+% %% normalized the firing rate
+% ROImeanResp = repmat(mean(PreferSideTunning),FreqNum,1);
+% ROImeanRespSub = ROImeanResp;
+% ROImeanRespSub(ROImeanRespSub == 0) = 1;
+% NormalRespSub = PreferSideTunning./ROImeanRespSub;
+% figure;
+% plot(mean(NormalRespSub,2))

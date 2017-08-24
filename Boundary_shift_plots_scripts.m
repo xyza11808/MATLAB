@@ -1,3 +1,6 @@
+clear
+clc
+
 [fn1,fp1,~] = uigetfile('*.mat','Please select your first part session results');
 sess1Strc = load(fullfile(fp1,fn1));
 cd(fp1);
@@ -6,11 +9,11 @@ cd(fp1);
 sess2Strc = load(fullfile(fp2,fn2));
 fnfixed = fn1(1:end-8);
 
-%%
+%
 sess1BoundRest = rand_plot(sess1Strc.behavResults,3,fn1);
 sess2BoundRest = rand_plot(sess2Strc.behavResults,3,fn2);
 
-%%
+%
 sess1StimsAll = double(sess1BoundRest.StimType);
 sess1PerfAll = sess1BoundRest.StimCorr;
 sess2StimsAll = double(sess2BoundRest.StimType);
@@ -37,7 +40,7 @@ sess2fitx = linspace(min(sess2Octave),max(sess2Octave),500);
 sess1fity = modelfun(sess1b,sess1fitx);
 sess2fity = modelfun(sess2b,sess2fitx);
 
-%%
+%
 h_sum = figure;
 hold on;
 plot(sess1Octave,sess1RightProb,'ro','Markersize',14);
@@ -51,7 +54,7 @@ text([sess1BoundOcta,sess2BoundOcta],[0.9,0.8],{num2str(sess1BoundOcta,'%.3f'),.
     num2str(sess2BoundOcta,'%.3f')},'FontSize',12);
 set(gca,'ytick',[0 0.5 1],'FontSize',16);
 title('Session boundary shifting');
-%%
+%
 if ~isdir('./Bound_shift_plots/')
     mkdir('./Bound_shift_plots/');
 end

@@ -8,6 +8,7 @@ function SummarizedPlot(varargin)
 % All data contains in a structure form.
 
 [SessionDesp,SessionData] = deal(varargin{:});
+save SumReaultSave.mat SessionData -v7.3
 if strcmpi(SessionDesp,'Twotone2afc')
     fprintf('Session is a normal two tone 2afc session.\n');
 elseif strcmpi(SessionDesp,'RandomPuretone')
@@ -108,31 +109,32 @@ switch SessionDesp
             set(gca,'FontSize',20);
             
             % plot the mean trace aligned to answer onset time
-            
-            subplot(3,2,6)
-            hold on;
-            LeftAnsMean = squeeze(SessionData.AnsLRMeanTrace(ROInumber,1,:));
-            LeftAnsSem = squeeze(SessionData.AnsLRMeanTrace(ROInumber,2,:));
-            RightAnsMean = squeeze(SessionData.AnsLRMeanTrace(ROInumber,3,:));
-            RightAnsSem = squeeze(SessionData.AnsLRMeanTrace(ROInumber,4,:));
-            xt = (1:length(LeftAnsMean))/SessionData.FrameRate;
-            pxt = [xt,fliplr(xt)];
-            LeftPData = [(LeftAnsMean'+LeftAnsSem') fliplr(LeftAnsMean'-LeftAnsSem')];
-            RightPData = [(RightAnsMean'+RightAnsSem') fliplr(RightAnsMean'-RightAnsSem')];
-            patch(pxt,LeftPData,1,'FaceColor',[.8 .8 .8],'EdgeColor','none','Facealpha',0.8);
-            patch(pxt,RightPData,1,'FaceColor',[.8 .8 .8],'EdgeColor','none','Facealpha',0.8);
-            line1 = plot(xt,LeftAnsMean,'b','LineWidth',1.8);
-            line2 = plot(xt,RightAnsMean,'r','LineWidth',1.8);
-            yaxis = axis;
-            line([SessionData.AnsAlignF SessionData.AnsAlignF]/SessionData.FrameRate,[yaxis(3) yaxis(4)],'Color',[.8 .8 .8],'LineWidth',1.8);
-            ylim([yaxis(3) yaxis(4)]);
-            xlim([0 xt(end)]);
-            xlabel('Time (s)');
-            ylabel('Mean \DeltaF/F_0 (%)');
-            title('Ans Aligned mean trace');
-            set(gca,'FontSize',18);
-            legend([line1,line2],{'Left corr','Right corr'},'FontSize',12);
-            text(SessionData.AnsAlignF, yaxis(4)*0.85, 'AnswerT','HorizontalAlignment','Right','FontSize',10,'Color','k');
+            if ~isempty(SessionData.AnsAlignF)
+                subplot(3,2,6)
+                hold on;
+                LeftAnsMean = squeeze(SessionData.AnsLRMeanTrace(ROInumber,1,:));
+                LeftAnsSem = squeeze(SessionData.AnsLRMeanTrace(ROInumber,2,:));
+                RightAnsMean = squeeze(SessionData.AnsLRMeanTrace(ROInumber,3,:));
+                RightAnsSem = squeeze(SessionData.AnsLRMeanTrace(ROInumber,4,:));
+                xt = (1:length(LeftAnsMean))/SessionData.FrameRate;
+                pxt = [xt,fliplr(xt)];
+                LeftPData = [(LeftAnsMean'+LeftAnsSem') fliplr(LeftAnsMean'-LeftAnsSem')];
+                RightPData = [(RightAnsMean'+RightAnsSem') fliplr(RightAnsMean'-RightAnsSem')];
+                patch(pxt,LeftPData,1,'FaceColor',[.8 .8 .8],'EdgeColor','none','Facealpha',0.8);
+                patch(pxt,RightPData,1,'FaceColor',[.8 .8 .8],'EdgeColor','none','Facealpha',0.8);
+                line1 = plot(xt,LeftAnsMean,'b','LineWidth',1.8);
+                line2 = plot(xt,RightAnsMean,'r','LineWidth',1.8);
+                yaxis = axis;
+                line([SessionData.AnsAlignF SessionData.AnsAlignF]/SessionData.FrameRate,[yaxis(3) yaxis(4)],'Color',[.8 .8 .8],'LineWidth',1.8);
+                ylim([yaxis(3) yaxis(4)]);
+                xlim([0 xt(end)]);
+                xlabel('Time (s)');
+                ylabel('Mean \DeltaF/F_0 (%)');
+                title('Ans Aligned mean trace');
+                set(gca,'FontSize',18);
+                legend([line1,line2],{'Left corr','Right corr'},'FontSize',12);
+                text(SessionData.AnsAlignF, yaxis(4)*0.85, 'AnswerT','HorizontalAlignment','Right','FontSize',10,'Color','k');
+            end
             
             if isfield(SessionData,'VShapeData')
                 cROIVshapeData = SessionData.VShapeData;
@@ -328,11 +330,14 @@ switch SessionDesp
             FreqStr = double(SessionData.Frequency)/1000;
             LineDataColor = jet(FreqNum);
             LegendStr = cell(1,FreqNum);
+            Plothandles = zeros(FreqNum,1);
             for nn = 1 : FreqNum
-                plot(xt,RespData(nn,:),'color',LineDataColor(nn,:),'LineWidth',1.5);
+                hl = plot(xt,RespData(nn,:),'color',LineDataColor(nn,:),'LineWidth',1.5);
+                Plothandles(nn) = hl;
                 LegendStr{nn} = sprintf('%.2f kHz',FreqStr(nn));
             end
-            legend(LegendStr,'FontSize',4);
+            legend(Plothandles,LegendStr);
+            legend('FontSize',5);
             yaxis = axis;
             patch([AlignT AlignT+0.3 AlignT+0.3 AlignT],[yaxis(3) yaxis(3) yaxis(4) yaxis(4)],1,'FaceColor','g',...
                 'EdgeColor','None','FaceAlpha',0.7);
@@ -587,4 +592,4 @@ switch SessionDesp
         fprintf('Error input Session type, quit current function.\n');
         return;
 end
-save SumReaultSave.mat SessionData -v7.3
+

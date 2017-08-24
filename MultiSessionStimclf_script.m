@@ -40,7 +40,7 @@ while ~strcmpi(add_char,'n')
 end
 m = m - 1;
 
-fp = uigetdir(pwd,'Please select a session to save your current data');
+fp = uigetdir(pwd,'Please select a path to save your current data');
 cd(fp);
 f = fopen('Session_resp_path.txt','w');
 fprintf(f,'Sessions path for response summary plot:\r\n');

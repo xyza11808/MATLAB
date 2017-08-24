@@ -4,7 +4,8 @@ function multi_channel_split(varargin)
 if nargin < 1
     [~,filepath,fi]=uigetfile({'*.tif; *.tiff'},'Select Two Photon Imaging Files with multichannels');
     if fi==0
-        error('Error file selected, quitting...');
+        warning('Error file selected, quitting...');
+        return;
     else
          cd(filepath);
     %     [~,im_header]=load_scim_data(file);
@@ -43,7 +44,7 @@ parfor m=1:length(files)
             continue;
         else
             for num=1:channel_num
-                if ~isdir(['./channel' num2str(num)]);
+                if ~isdir(['./channel' num2str(num)])
                      mkdir(['./channel' num2str(num)]);
                 end
             end

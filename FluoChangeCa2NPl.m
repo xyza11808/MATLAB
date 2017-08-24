@@ -345,6 +345,7 @@ switch MethodChoice
                 FChangeData(m,n,:) = ((FCorrectData(m,n,:) - FBaseline(m,n))/FBaseline(m,n))*100;
             end
         end
+        save ROIf0save.mat FBaseline -v7.3
     case 3
         BlockSize=30;
         BlockNum=ceil(TrialNum/BlockSize);

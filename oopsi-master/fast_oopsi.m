@@ -1,4 +1,4 @@
-function [n_best P_best V C]=fast_oopsi(F,V,P)
+function [n_best P_best V C]=fast_oopsi(F,V,P,varargin)
 % this function solves the following optimization problem:
 % (*) n_best = argmax_{n >= 0} P(n | F)
 % which is a MAP estimate for the most likely spike train given the
@@ -71,7 +71,9 @@ function [n_best P_best V C]=fast_oopsi(F,V,P)
 if any(isnan(F));
     error('nan in your data')
 end
-
+if ~isempty(varargin{1})
+    P.sig = varargin{1};
+end
 %% initialize algorithm Variables
 starttime   = cputime;
 siz         = size(F);      if siz(2)==1, F=F'; siz=size(F); end

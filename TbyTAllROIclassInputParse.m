@@ -239,7 +239,7 @@ BaseTraingInds = false(length(UsingStim),1);
 
 % using given data to train the TbyT model
 % Training ten times and save  all options
-nIters = 1000;
+nIters = 200;
 % if ~isDataOutput
 % %     TrainModel = cell(1000,1);
 %     TrainModelLoss = zeros(nIters,1);
@@ -286,6 +286,10 @@ parfor nTimes = 1 : nIters
             ErrorDataLoss = sum(abs(ErroChoice(:) - ErrorPred(:)))/length(ErroChoice);
             ErroLoss(nTimes) = ErrorDataLoss;
         elseif TrOutcomeOp == 0 % all non-missing trials being used for training
+            ErrorData = [];
+            ErroChoice = [];
+%             fprintf('Test ErrorData exists.\n');
+%             fprintf('Test ErrorChoice exists.\n');
             TestIndsOutcome = UsingTrialResult(TestInds);
             CorrTestInds = TestIndsOutcome == 1;
             TestCorrDataLoss = sum(abs(ModelPred(CorrTestInds) - TestTypes(CorrTestInds)))/sum(CorrTestInds);
@@ -467,9 +471,9 @@ else
     end
     if isErrorCal
         if isShuffle
-            varargout{5} = TestErroDataLoss;
+            varargout{5} = ErroLoss;
         else
-            varargout{3} = TestErroDataLoss;
+            varargout{3} = ErroLoss;
         end
     end
 end

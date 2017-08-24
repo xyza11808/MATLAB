@@ -48,7 +48,7 @@ classdef DataAnalysisSum
         %         DataPreProcessing(this.TimeWin,this.RespCalFun);
         
         % population noise correlation coefficience calculation
-        function popuZscoredCorr(this,varargin)
+        function varargout = popuZscoredCorr(this,varargin)
             TimeWind = this.TimeWin;
             if nargin > 1
                 if ~isempty(varargin{1})
@@ -75,6 +75,12 @@ classdef DataAnalysisSum
             if nargin > 4
                 if ~isempty(varargin{4})
                     NeuronDecor = varargin{4};
+                end
+            end
+            isfilesave = 1;
+            if nargin > 5
+                if ~isempty(varargin{5})
+                    isfilesave = varargin{5};
                 end
             end
             
@@ -128,50 +134,56 @@ classdef DataAnalysisSum
             Matrixmask = logical(tril(MatrixmaskRaw,-1));
             PairedROIcorr = ROIcorrlation(Matrixmask);
             PairedNCpvalue = NCp(Matrixmask);
-            
-            if ~isdir('./Popu_Corrcoef_save_NOS/')
-                mkdir('./Popu_Corrcoef_save_NOS/');
-            end
-            cd('./Popu_Corrcoef_save_NOS/');
-            if NeuronDecor
-                if ~isdir('./Nuro_decorr_Corr/')
-                    mkdir('./Nuro_decorr_Corr/');
+            if isfilesave
+                if ~isdir('./Popu_Corrcoef_save_NOS/')
+                    mkdir('./Popu_Corrcoef_save_NOS/');
                 end
-                cd('./Nuro_decorr_Corr/');
-            end
-            if length(TimeWind) == 1
-                folderStr = sprintf('TimeScale %d_%dms noise correlation',0,TimeWind*1000);
-            elseif length(TimeWind) == 2
-                folderStr = sprintf('TimeScale %d_%dms noise correlation',TimeWind(1)*1000,TimeWind(2)*1000);
-            end
-            if ~isdir(folderStr)
-                mkdir(folderStr);
-            end
-            cd(folderStr);
-            
-            [Count,Center] = hist(PairedROIcorr,30);
-            SigInds = PairedNCpvalue < 0.05;
-            [CountSig,CenterSig] = hist(PairedROIcorr(SigInds),30);
-            
-            h_PairedCorr = figure('position',[200 200 800 600]);
-            hold on
-            bar(Center,Count/sum(Count),'k');
-            alpha(0.3);
-            bar(CenterSig,CountSig/sum(Count),'k');
-            
-            xlabel('Coef value');
-            ylabel('Pair Fraction');
-            title(sprintf('Mean Corrcoef value = %.4f',mean(PairedROIcorr)));
-            set(gca,'FontSize',20);
-            saveas(h_PairedCorr,sprintf('Population %s zscored %s corrcoef distribution',ZSmethod,RespCallFunction));
-            saveas(h_PairedCorr,sprintf('Population %s zscored %s corrcoef distribution',ZSmethod,RespCallFunction),'png');
-            close(h_PairedCorr);
+                cd('./Popu_Corrcoef_save_NOS/');
+                if NeuronDecor
+                    if ~isdir('./Nuro_decorr_Corr/')
+                        mkdir('./Nuro_decorr_Corr/');
+                    end
+                    cd('./Nuro_decorr_Corr/');
+                end
 
-            save(sprintf('ROI%s_coefSave%s.mat',ZSmethod,RespCallFunction), 'PairedROIcorr','PairedNCpvalue', '-v7.3');
-            cd ..;
-            cd ..;
-            if NeuronDecor
+                if length(TimeWind) == 1
+                    folderStr = sprintf('TimeScale %d_%dms noise correlation',0,TimeWind*1000);
+                elseif length(TimeWind) == 2
+                    folderStr = sprintf('TimeScale %d_%dms noise correlation',TimeWind(1)*1000,TimeWind(2)*1000);
+                end
+                if ~isdir(folderStr)
+                    mkdir(folderStr);
+                end
+                cd(folderStr);
+            
+            
+                [Count,Center] = hist(PairedROIcorr,30);
+                SigInds = PairedNCpvalue < 0.05;
+                [CountSig,CenterSig] = hist(PairedROIcorr(SigInds),30);
+
+                h_PairedCorr = figure('position',[200 200 800 600]);
+                hold on
+                bar(Center,Count/sum(Count),'k');
+                alpha(0.3);
+                bar(CenterSig,CountSig/sum(Count),'k');
+
+                xlabel('Coef value');
+                ylabel('Pair Fraction');
+                title(sprintf('Mean Corrcoef value = %.4f',mean(PairedROIcorr)));
+                set(gca,'FontSize',20);
+                saveas(h_PairedCorr,sprintf('Population %s zscored %s corrcoef distribution',ZSmethod,RespCallFunction));
+                saveas(h_PairedCorr,sprintf('Population %s zscored %s corrcoef distribution',ZSmethod,RespCallFunction),'png');
+                close(h_PairedCorr);
+
+                save(sprintf('ROI%s_coefSave%s.mat',ZSmethod,RespCallFunction), 'PairedROIcorr','PairedNCpvalue', '-v7.3');
                 cd ..;
+                cd ..;
+                if NeuronDecor
+                    cd ..;
+                end
+            end
+            if nargout > 0
+                varargout{1} = ROIcorrlation;
             end
         end
         

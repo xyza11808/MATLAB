@@ -336,7 +336,7 @@ else
             ErroectLickT=ControlLickT(CurrentErroInds);
             ErroLickDif=ControlTimedif(CurrentErroInds);
             ErroBiasSide=ControlBias(CurrentErroInds);
-            for m=1:length(CorrectLickT)
+            for m=1:length(ErroectLickT)
                 TLLT=ErroectLickT(m).LickTimeLeft-ErroLickDif(m);
                 TRLT=ErroectLickT(m).LickTimeRight-ErroLickDif(m);
                 TLLT(TLLT<0)=[];
@@ -362,12 +362,11 @@ else
             xlabel('Time (ms)');
             ylabel('# Trials');
             
-            suptitle('Control Trial lick Time');
-            saveas(fConTrol,'Raster_plot_Prob2AFC_ControlLick_plot.png');
-            saveas(fConTrol,'Raster_plot_Prob2AFC_ControlLick_plot.fig');
-            close(fConTrol);
         end
-        
+        suptitle('Control Trial lick Time');
+        saveas(fConTrol,'Raster_plot_Prob2AFC_ControlLick_plot.png');
+        saveas(fConTrol,'Raster_plot_Prob2AFC_ControlLick_plot.fig');
+        close(fConTrol);
         %prob Trials plot
         fProb=figure('position',[220 40 1500 900],'PaperPositionMode','auto');
         for n=1:length(ProbFreqType)
@@ -436,11 +435,11 @@ else
             xlabel('Time (ms)');
             ylabel('# Trials');
             
-            suptitle('Control Trial lick Time');
-            saveas(fProb,'Raster_plot_Prob2AFC_ProbLick_plot.png');
-            saveas(fProb,'Raster_plot_Prob2AFC_ProbLick_plot.fig');
-            close(fProb);
         end
+        suptitle('Prob Trials lick Time');
+        saveas(fProb,'Raster_plot_Prob2AFC_ProbLick_plot.png');
+        saveas(fProb,'Raster_plot_Prob2AFC_ProbLick_plot.fig');
+        close(fProb);
     else
         %plot control opto trials and prob opto trials
         %this can be modulated into two different modulations and compare

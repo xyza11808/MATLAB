@@ -9,10 +9,14 @@ else
 end
 
 RawData = OrderData(:,1);
+if sum(isnan(RawData))
+    return;
+end
 Labels = OrderData(:,2);
 AllROCresult = zeros(nIteration,1);
 ReverseLabel = zeros(nIteration,1);
 if isParallel
+    
     parfor NumIter = 1:nIteration
         Svector=Vshuffle(Labels);
         [ROCout,LabelMeanS]=rocFoffBstrap([RawData,Svector]);

@@ -1,7 +1,10 @@
 
-GrandPath = 'H:\data\behavior\2p_data\behaviro_data\batch40';
+GrandPath = 'H:\data\behavior\2p_data\behaviro_data\batch43';
 xpath = genpath(GrandPath);
 nameSplit = strsplit(xpath,';');
+if isempty(nameSplit{end})
+    nameSplit(end) = [];
+end
 DirLength = length(nameSplit);
 nRandomPurePath = 1;
 nNormalPTPath = 1;

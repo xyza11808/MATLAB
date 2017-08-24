@@ -15,12 +15,12 @@ end
 %%
 %load ROI analysis result
 disp(['please input the ',type,' ROIs analysis result file path.\n']);
-[filename,filepath,Findex]=uigetfile('*.mat','Select your 2p analysis storage data','MultiSelect','on');
+[filename,SessPath,Findex]=uigetfile('*.mat','Select your 2p analysis storage data','MultiSelect','on');
 if ~Findex
     disp('Quit analysis...\n');
     return;
 end
-cd(filepath);
+cd(SessPath);
 % files=dir('*.mat');
 for i=1:length(filename)
     RealFileName=filename{i};
@@ -96,6 +96,9 @@ else
         error('wrong file path for behavior result!');
     end
     load(filefullpath2);
+    if ~(strcmpi(file_path2,pwd) || strcmpi(file_path2(1:end-1),pwd)) % exclude the last \ character
+        copyfile(filefullpath2,pwd);
+    end
     if exist('behavResults','var') && exist('behavSettings','var')
         [UserChoice,sessiontype]=behavScore_prob(behavResults,behavSettings,fn2,1);  %plot the animal behavior trace for select session
     elseif exist('SessionResults','var') && exist('SessionSettings','var')
@@ -114,26 +117,27 @@ else
 end
 
 
-%######################################################################
-%exclude ROIs with significantly uneven fo distribution
-excluded_ROIs = input('please inut the ROIs needed to be excluded.Seperated by '',''\n','s');
-exclude_Rois=strrep(excluded_ROIs,' ',',');
-exclude_RoIs = str2num(exclude_Rois);
-if ~isempty(exclude_RoIs)
-    f_percent_change(:,exclude_RoIs,:)=[];
-    f_baseline_change(:,exclude_RoIs,:)=[];
-    save exslude_ROInds.mat exclude_RoIs -v7.3;
-    ROI_position_stru=ROIinfo(1);
-    ROI_position_stru.ROImask(exclude_RoIs)=[];
-    ROI_position_stru.ROIpos(exclude_RoIs)=[];
-    ROI_position_stru.ROItype(exclude_RoIs)=[];
-    ROI_position_stru.ROI_def_trialNo(exclude_RoIs)=[];
-    save New_ROIinfos.mat ROI_position_stru -v7.3;
-end
-
+% %######################################################################
+% %exclude ROIs with significantly uneven fo distribution
+% excluded_ROIs = input('please inut the ROIs needed to be excluded.Seperated by '',''\n','s');
+% exclude_Rois=strrep(excluded_ROIs,' ',',');
+% exclude_RoIs = str2num(exclude_Rois);
+% if ~isempty(exclude_RoIs)
+%     f_percent_change(:,exclude_RoIs,:)=[];
+%     f_baseline_change(:,exclude_RoIs,:)=[];
+%     save exslude_ROInds.mat exclude_RoIs -v7.3;
+%     ROI_position_stru=ROIinfo(1);
+%     ROI_position_stru.ROImask(exclude_RoIs)=[];
+%     ROI_position_stru.ROIpos(exclude_RoIs)=[];
+%     ROI_position_stru.ROItype(exclude_RoIs)=[];
+%     ROI_position_stru.ROI_def_trialNo(exclude_RoIs)=[];
+%     save New_ROIinfos.mat ROI_position_stru -v7.3;
+% end
+% 
 
 %plot the percent result
 %temp_f_percent=zeros(size_raw_trials(1),size_raw_trials(3));
+SessfilePath = pwd;
 if isdir('./plot_save/')==0
     mkdir('./plot_save/');
 end
@@ -154,10 +158,16 @@ if strcmpi(type,'RF')
 %     end
     disp('please input the RF stimulus file position.\n');
     [fn,fn_path]=uigetfile('*.*');
+    if ~(strcmpi(fn_path,SessfilePath) || strcmpi(fn_path(1:end-1),SessfilePath)) % exclude the last \ character
+        copyfile(fullfile(fn_path,fn),SessfilePath);
+    end
     sound_array=textread([fn_path,'/',fn]);
     sound_array(exclude_inds,:)=[];
     size_raw_trials=size(f_raw_trials);
-    ROI_insite_label(ROIinfo(1));
+    if exist(fullfile(SessPath,'SessionFrameProj.mat'),'file')
+        Image2P_ROIlabeling_Infun
+    end
+%     ROI_insite_label(ROIinfo(1));
     %     in_site_freTuning(sound_array,type,CaTrials,'simple_fit');
     %this should be two columns num, the first column contains frequency and
     %the second contains corresponded intensity
@@ -213,11 +223,12 @@ if strcmpi(type,'RF')
      end
      cd('./SpikeData_analysis/');
      save EsSpikeSave.mat nnspike SelectSArray frame_rate SelectInds SelectData -v7.3
-     %%
+     %
      DataSPObj = DataAnalysisSum(nnspike,SelectSArray,frame_rate,frame_rate,1);
      DataSPObj.popuZscoredCorr(0.5,'Mean'); % first response peak response noise correlation
      DataSPObj.popuSignalCorr(1,'Mean'); % normal method of signal correlation
-     
+     cd ..
+%      UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);  % performing color plot
      %%
      TimeCourseStrcSipke = TimeCorseROC(nnspike,TrialTypes,frame_rate,frame_rate,[],2,0); 
      ROIAUCcolorp(TimeCourseStrcSipke,1);
@@ -227,6 +238,8 @@ if strcmpi(type,'RF')
      
      %%
      ROC_check(f_percent_change,SoundFreqs,frame_rate,frame_rate,1.5,'Stim_time_Align');
+      ROC_check(SelectData,SelectSArray>16000,frame_rate,frame_rate,1.5,'Stim_time_Align_select');
+      %%
      RF2afcClassScorePlot(SelectData,SelectSArray,16000,frame_rate,frame_rate,1.5,1);
      FreqRespCallFun(SelectData,SelectSArray,ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate);
      MultiTimeWinClass(SelectData,SelectSArray,PassOutcome,frame_rate,frame_rate,1,0.1);
@@ -680,8 +693,16 @@ if strcmpi(type,'RF')
    
     %%
 elseif strcmpi(type,'2AFC')
-    BaselineMethod = 2;
-    fprintf('calculate deltaF/F using method%d.\n',BaselineMethod);
+    if exist(fullfile(SessPath,'SessionFrameProj.mat'),'file')
+        Image2P_ROIlabeling_Infun;
+    end
+    fprintf(['Please select the f0 calculation method.\n 1 for mode f0 calculation.\n 2 for pure baseline calculation.\n 3 for block wise calculation.\n',...
+        ' 4 for 8th substraction.\n 5 for mode after baseline correction.\n']);
+    MethodChoice=input('Please select your choice.\n','s');
+    BaselineMethod=str2double(MethodChoice);
+    if isnan(BaselineMethod)
+        BaselineMethod = [];
+    end
     NewFoldName = sprintf('Type%d_f0_calculation',BaselineMethod);
     if ~isdir(NewFoldName)
         mkdir(NewFoldName);
@@ -714,12 +735,12 @@ elseif strcmpi(type,'2AFC')
     if choice==1
         cWorkingPath = pwd;
         fprintf('Loading RF ROI analysis files...\n');
-        [filename,filepath,Findex]=uigetfile('*.mat','Select your 2p analysis storage data','MultiSelect','on');
+        [filename,SessPath,Findex]=uigetfile('*.mat','Select your 2p analysis storage data','MultiSelect','on');
         if ~Findex
             disp('Quit analysis...\n');
             return;
         end
-        cd(filepath);
+        cd(SessPath);
         % files=dir('*.mat');
         for i=1:length(filename)
             RealFileName=filename{i};

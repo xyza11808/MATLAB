@@ -72,7 +72,7 @@ else
 end
 
 % isGPUcalculation=gpuDeviceCount;
-isGPUcalculation=0;
+isGPUcalculation=1;
 if isGPUcalculation
     total_time_GPU=zeros(1,length(datafiles));
 else
