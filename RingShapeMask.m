@@ -13,9 +13,9 @@ end
 if isempty(ROISummask)
     ROISummask=false(FrameSize);
 end
-
-imageSizeX = FrameSize(1);
-imageSizeY = FrameSize(2);
+%
+imageSizeX = FrameSize(2);
+imageSizeY = FrameSize(1);
 [columnsInImage,rowsInImage] = meshgrid(1:imageSizeX, 1:imageSizeY);
 % Next create the circle in the image.
 centerX = CenterXY(1);
@@ -38,7 +38,7 @@ UpdateSumMask=ROISummask;  %old mask sum
 UpdateSumMask=UpdateSumMask+ROImask;
 OverlapInds=find(UpdateSumMask>1);
 UpdateSumMask(OverlapInds)=1; %#ok<*FNDSB> %set overlap inds to 1, double matrix
-
+%
 CurrentRingSumMask=UpdateSumMask+circlePixels; %add new ring shape mask to ROI sum mask
 RingROIOPInds=find(CurrentRingSumMask>1);  %find RIng inds overlapped with All ROI mask
 circlePixels(RingROIOPInds)=0;  %delete overlap inds in ring shape mask, kepp ROI mask
