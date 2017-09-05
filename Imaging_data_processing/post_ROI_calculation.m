@@ -76,7 +76,7 @@ end
 frame_rate=floor(1000/CaTrials(1).FrameTime);
 nROIs=CaTrials(1).nROIs;
 nFrames=CaTrials(1).nFrames;
-
+TimeLen = ceil(nFrames/frame_rate);
 % ROI_frame_size=size(CaTrials(1).f_raw);
 result_size=[trial_num,nROIs,nFrames];  % this should be a three elements vector indicates the length of three dimensions
 %this place should be modified
@@ -107,7 +107,7 @@ else
     else
        UserChoice = 1;
     end
-        
+    BehavLickPlot(behavResults,behavSettings,TimeLen);
     if UserChoice
         return;
     end

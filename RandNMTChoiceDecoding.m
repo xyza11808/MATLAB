@@ -325,6 +325,8 @@ end
 close(h_compPlot);
 
 save NMDataSummry.mat Octavexfit realy fityAll -v7.3
+
+EasyTrain_boundTest_sciprts
 %%
 cd ..;
 cd ..;

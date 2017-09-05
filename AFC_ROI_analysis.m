@@ -39,7 +39,10 @@ end
 if length(varargin) >= 7
     VShapeData = varargin{7};
 end
-
+% IsDataTrSub = 0;
+% if isempty(exclude_inds)
+%     IsDataTrSub = 1;
+% end
 % %%################################################################################################
 % ##################################################################################################
 % global settings section
@@ -93,13 +96,14 @@ save ROICenters.mat center_ROI EmptyROIs -v7.3
         imaging_time=(double(size_data(3))/frame_rate);
         [lick_time_struct,Lick_bias_side]=beha_lickTime_data(behavResults,imaging_time); %this function is used for converting lick time strings into arrays and save in a struct
     end
-    for n=1:size_data(1)
-        temp_data=squeeze(data(n,:,:));
-        nan_test=isnan(temp_data);
-        if sum(nan_test(:))~=0
-            exclude_inds=[exclude_inds n];
-        end
-    end
+% in case of empty ROI exists, no longer needed
+%     for n=1:size_data(1) 
+%         temp_data=squeeze(data(n,:,:));
+%         nan_test=isnan(temp_data);
+%         if sum(nan_test(:))~=0
+%             exclude_inds=[exclude_inds n];
+%         end
+%     end
 %     data(exclude_inds,:,:);
 if ~isempty(exclude_inds)
     behavResults.Trial_Type(exclude_inds)=[];
@@ -336,45 +340,45 @@ if max(behavResults.Trial_isProbeTrial)
 end
 
 %################################################################################################
-%population zscore calculation and for further alignment plot
-zscore_data=zeros(size_data);
-TrialSelfZS_data=zeros(size_data);
-%################################################################################################
-%population normalized data for further analysis
-NorData=zeros(size_data);
-% nSpikes = zeros(size_data);
-ROIstd=zeros(1,size_data(2));
-
+% %population zscore calculation and for further alignment plot
+% zscore_data=zeros(size_data);
+% TrialSelfZS_data=zeros(size_data);
+% %################################################################################################
+% %population normalized data for further analysis
+% NorData=zeros(size_data);
+% % nSpikes = zeros(size_data);
+% ROIstd=zeros(1,size_data(2));
+% 
 %parameter struc
 V.Ncells = 1;
 V.T = size_data(3);
 V.Npixels = 1;
 V.dt = 1/frame_rate;
 P.lam = 10;
-
-for n=1:size_data(2)
-    temp_data=squeeze(data(:,n,:));
-    SingleTrialMean=mean(temp_data,2);
-    SingleTrialMeanMatrix=repmat(SingleTrialMean,1,size_data(3));
-    mean_temp=mean(temp_data(:));
-    std_temp=mad(reshape(temp_data',[],1));
-    ROIstd(n)=1.4826*std_temp;
-    zscore_data(:,n,:)=(temp_data-mean_temp)/ROIstd(n);
-    TrialSelfZS_data(:,n,:)=(temp_data-SingleTrialMeanMatrix)/ROIstd(n);
-    
-    NorBase=max(smooth(temp_data(:)));
-    NorData(:,n,:)=temp_data/NorBase;
-    
-%     P.sig = ROIstd(n);
-%     parfor nt = 1 : size_data(1)
-%         cTrace = temp_data(nt,:);
-%         cTrace(1:5) = mean(cTrace(1:5));
-%          [n_best,~,~,~]=fast_oopsi(cTrace,V,P);
-%          n_best(1:6) = 0;
-%          n_best = n_best / V.dt;
-%          nSpikes(nt,n,:) = n_best;
-%     end
-end
+% 
+% for n=1:size_data(2)
+%     temp_data=squeeze(data(:,n,:));
+%     SingleTrialMean=mean(temp_data,2);
+%     SingleTrialMeanMatrix=repmat(SingleTrialMean,1,size_data(3));
+%     mean_temp=mean(temp_data(:));
+%     std_temp=mad(reshape(temp_data',[],1));
+%     ROIstd(n)=1.4826*std_temp;
+%     zscore_data(:,n,:)=(temp_data-mean_temp)/ROIstd(n);
+%     TrialSelfZS_data(:,n,:)=(temp_data-SingleTrialMeanMatrix)/ROIstd(n);
+%     
+%     NorBase=max(smooth(temp_data(:)));
+%     NorData(:,n,:)=temp_data/NorBase;
+%     
+% %     P.sig = ROIstd(n);
+% %     parfor nt = 1 : size_data(1)
+% %         cTrace = temp_data(nt,:);
+% %         cTrace(1:5) = mean(cTrace(1:5));
+% %          [n_best,~,~,~]=fast_oopsi(cTrace,V,P);
+% %          n_best(1:6) = 0;
+% %          n_best = n_best / V.dt;
+% %          nSpikes(nt,n,:) = n_best;
+% %     end
+% end
 
 % save SpikeResult.mat nSpikes ROIstd V -v7.3
 %%
@@ -646,13 +650,13 @@ elseif str2double(continue_char)==2
     start_frame=floor((double(align_time_point)/1000)*frame_rate);
     
     data_aligned=zeros(size_data(1),size_data(2),framelength);
-    zscore_data_aligned=zeros(size_data(1),size_data(2),framelength);
-    NorDataAligned=zeros(size_data(1),size_data(2),framelength);
+%     zscore_data_aligned=zeros(size_data(1),size_data(2),framelength);
+%     NorDataAligned=zeros(size_data(1),size_data(2),framelength);
 %     SpikeAlign = zeros(size_data(1),size_data(2),framelength);
     for i=1:size_data(1)
         data_aligned(i,:,1:framelength)=data(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
-        zscore_data_aligned(i,:,1:framelength)=zscore_data(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
-        NorDataAligned(i,:,1:framelength)=NorData(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
+%         zscore_data_aligned(i,:,1:framelength)=zscore_data(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
+%         NorDataAligned(i,:,1:framelength)=NorData(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
 %         SpikeAlign(i,:,:) = nSpikes(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
     end
     TrialTypes=behavResults.Trial_Type;
@@ -666,8 +670,8 @@ elseif str2double(continue_char)==2
 %     clearvars GPUdata GPUTrialType GPUStartFrame GPUFR
 %%
     smooth_data=zeros(size_data(1),size_data(2),framelength);
-    smooth_zs_data=zeros(size_data(1),size_data(2),framelength);
-    smoothNorData=zeros(size_data(1),size_data(2),framelength);
+%     smooth_zs_data=zeros(size_data(1),size_data(2),framelength);
+%     smoothNorData=zeros(size_data(1),size_data(2),framelength);
     FactorDataSmooth = zeros(size_data(1),size_data(2),framelength);
 %     smoothSpikes = zeros(size_data(1),size_data(2),framelength);
     NumROIs=size_data(2);
@@ -676,8 +680,8 @@ elseif str2double(continue_char)==2
 %             smooth_data(n,m,:)=smooth(data_aligned(n,m,:),7,'sgolay',5); %using Savitzky¨CGolay filter to do the data smooth
             smooth_data(n,m,:)=smooth(data_aligned(n,m,:),5);
             FactorDataSmooth(n,m,:) = smooth(data_aligned(n,m,:),30);  %data set specifically used for factor analysis
-            smooth_zs_data(n,m,:)=smooth(zscore_data_aligned(n,m,:));
-            smoothNorData(n,m,:)=smooth(NorDataAligned(n,m,:));
+%             smooth_zs_data(n,m,:)=smooth(zscore_data_aligned(n,m,:));
+%             smoothNorData(n,m,:)=smooth(NorDataAligned(n,m,:));
 %             smoothSpikes(n,m,:) = smooth(SpikeAlign(n,m,:),3);
 %             smooth_zs_data(n,m,:)=smooth(zscore_data_aligned(n,m,:),7,'sgolay',5);
         end
@@ -691,7 +695,7 @@ elseif str2double(continue_char)==2
     if RandomSession
         SigROIinds = FreqRespOnsetHist(data_aligned,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
     end
-    
+    %%
     if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
          nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
          save EstimateSPsave.mat data_aligned nnspike behavResults start_frame frame_rate -v7.3
@@ -738,7 +742,8 @@ elseif str2double(continue_char)==2
              behavResults.Action_choice(NormalTrialInds),1.5,start_frame,frame_rate,16000,0);
      end
      ROIAUCcolorp(TimeCourseStrc,start_frame/frame_rate);
-     
+     script_for_summarizedPlot;
+     %%
      if ~exist('nnspike','var')
          nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
          save EstimateSPsave.mat data_aligned nnspike trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
@@ -756,7 +761,7 @@ elseif str2double(continue_char)==2
      ROIAUCcolorp(TimeCourseStrcSP,start_frame/frame_rate,[],'Spike train');
      cd ..;
      
-     script_for_summarizedPlot;  % call a script for data preparation and call summarized plot function
+%      script_for_summarizedPlot;  % call a script for data preparation and call summarized plot function
      %%
 %      % for opto and control trial compared computation
 %      ModuInds = double(behavResults.Trial_isOpto);

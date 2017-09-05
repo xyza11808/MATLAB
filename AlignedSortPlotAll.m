@@ -192,7 +192,7 @@ for nROI = 1 : ROInum
         clim(2) = 200;
     end
     %%
-    hROI = figure('position',[100 100 1500 980]);
+    hROI = figure('position',[100 100 1500 980],'PaperPositionMode','auto');
     for nFreq = 1 : NumFreq
         cFreqInds = TrStimFreq == FreqTypes(nFreq);
         cFreqOut = TrOutcome(cFreqInds);

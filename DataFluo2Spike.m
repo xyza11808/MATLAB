@@ -1,7 +1,12 @@
 function nSpikes = DataFluo2Spike(DataAligned,V,P,varargin)
 % This function is used for fast oopsi method to estimate spike count, and
 % output the estimated spike count for further analysis
-
+IsNegValueCheck = 0;
+if nargin > 3
+    if ~isempty(varargin{1})
+        IsNegValueCheck = varargin{1};
+    end
+end
 [nTrials,nROIs,nF] = size(DataAligned);
 nSpikes = zeros(nTrials,nROIs,nF);
 ROIstd = zeros(nROIs,1);
@@ -13,10 +18,13 @@ for nROI = 1 : nROIs
 end
 V.T = length(cROITrace);
 P.lam = 20;
-ppm = ParforProgMon('ParPool progress', nROIs, 10, 500, 100);
+% ppm = ParforProgMon('ParPool progress', nROIs, 10, 500, 100);
 parfor nROI = 1 : nROIs
     cROIdata = squeeze(DataAligned(:,nROI,:));
     cROITrace = reshape(cROIdata',[],1); 
+    if IsNegValueCheck
+        cROITrace = cROITrace - min(cROITrace); % make all values non-negtive value
+    end
     cStd = mad(cROITrace,1)*1.4826;
     if isnan(cStd)
         error('Input data cannot contains nan value.');
@@ -30,7 +38,7 @@ parfor nROI = 1 : nROIs
     cROIFRMtx(:,1:2) = 0;
     cROIFRMtx = cROIFRMtx/V.dt;
     nSpikes(:,nROI,:) = cROIFRMtx;
-    ppm.increment();
+%     ppm.increment();
 end
 
 

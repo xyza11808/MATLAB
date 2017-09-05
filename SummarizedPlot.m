@@ -172,10 +172,19 @@ switch SessionDesp
         % random puretone plots, subplot(3,4)
         % if frequency tuning data exists, plot it out instead of
         % time-course ROC
+        % if boundary frequency exists, plot the mean trace instead of
+        %% choice prob plot at last subaxis
         nROIs = SessionData.nROI;
+        isBoundFreq = 0;
         FreqNum = length(SessionData.Frequency);
         Columns = (FreqNum/2)+1;
+        if mod(FreqNum,2)
+            warning('odds number of frequency type exists.');
+            isBoundFreq = 1;
+            Columns = floor(Columns);
+        end
         for ROInumber = 1 : nROIs
+            %
             h_RandTone2afc = figure('position',[40,100,1800,920],'paperpositionmode','auto');
 
             imagextick = 0:SessionData.FrameRate:size(SessionData.LeftAlignData,3); % Data with a three dimensional form, ROI by Trials by Frames
@@ -252,15 +261,27 @@ switch SessionDesp
                 AnsFrameAll = SessionData.AllAnsFrame; % two dimensional cell, each contains one vector of ans frames
     %             cLims = SessionData.clims;
     %             SessionData.AlignFrame
+                if isBoundFreq
+                    AllFreqs = double(unique(SessionData.Frequency));
+                    FreqNum = length(SessionData.Frequency) - 1;
+                    GroupFreqNum = FreqNum/2;
+                    BoundFreq = AllFreqs(GroupFreqNum+1);
+                    fprintf('Current session with boundary frequency %dHz.\n',BoundFreq);
+                end
+                    
             end
             for nfreq = 1 : FreqNum
                 if nfreq <= FreqNum/2
                     subplot(3,Columns,nfreq+1);
+                    cFreqInds = nfreq;
                 else
                     subplot(3,Columns,nfreq+2);
+                    if isBoundFreq
+                        cFreqInds = nfreq+1;
+                    end
                 end
-                cfreqData = FreqDataAll{nfreq,ROInumber};
-                cfreqAns = AnsFrameAll{nfreq};
+                cfreqData = FreqDataAll{cFreqInds,ROInumber};
+                cfreqAns = AnsFrameAll{cFreqInds};
                 imagesc(cfreqData,SessionData.clims(ROInumber,:));
                 xlim([0.5 size(cfreqData,2)+0.5]);
                 ylim([0.5 size(cfreqData,1)+0.5]);
@@ -336,8 +357,9 @@ switch SessionDesp
                 Plothandles(nn) = hl;
                 LegendStr{nn} = sprintf('%.2f kHz',FreqStr(nn));
             end
-            legend(Plothandles,LegendStr);
-            legend('FontSize',5);
+            legend(Plothandles,LegendStr,'FontSize',5,'Location','northwest');
+            legend boxoff
+%             legend('FontSize',5);
             yaxis = axis;
             patch([AlignT AlignT+0.3 AlignT+0.3 AlignT],[yaxis(3) yaxis(3) yaxis(4) yaxis(4)],1,'FaceColor','g',...
                 'EdgeColor','None','FaceAlpha',0.7);
@@ -348,23 +370,91 @@ switch SessionDesp
             set(gca,'FontSize',10);
             
             % plot the last piece
-            subplot(3,Columns,4+Columns*2)
-            hold on;
-            cellfreq = double(SessionData.Frequency)/1000;
-            if isfield(SessionData,'ChoiceProbData')
-                DataStoreCell = SessionData.ChoiceProbData;
-                FreqTypeTrialNum = SessionData.TypeNumber;
-                for nfreq = 1 : FreqNum
-                    CorrRandx = ones(FreqTypeTrialNum(ROInumber,nfreq,1),1)*(nfreq-0.2);
-                    ErroRandx = ones(FreqTypeTrialNum(ROInumber,nfreq,2),1)*(nfreq+0.2);
-                    scatter(CorrRandx,DataStoreCell{ROInumber,nfreq,1}{:},50,'ro','filled');
-                    scatter(ErroRandx,DataStoreCell{ROInumber,nfreq,2}{:},50,'bo','filled');
+             subplot(3,Columns,4+Columns*2)
+             hold on;
+             if ~isBoundFreq
+                
+                cellfreq = double(SessionData.Frequency)/1000;
+                if isfield(SessionData,'ChoiceProbData')
+                    DataStoreCell = SessionData.ChoiceProbData;
+                    FreqTypeTrialNum = SessionData.TypeNumber;
+                    for nfreq = 1 : FreqNum
+                        CorrRandx = ones(FreqTypeTrialNum(ROInumber,nfreq,1),1)*(nfreq-0.2);
+                        ErroRandx = ones(FreqTypeTrialNum(ROInumber,nfreq,2),1)*(nfreq+0.2);
+                        scatter(CorrRandx,DataStoreCell{ROInumber,nfreq,1}{:},50,'ro','filled');
+                        scatter(ErroRandx,DataStoreCell{ROInumber,nfreq,2}{:},50,'bo','filled');
+                    end
                 end
-            end
-            set(gca,'xtick',1:FreqNum,'xticklabel',cellstr(num2str(cellfreq(:),'%.1f')));
-            xlabel('Frequency (kHz)');
-            ylabel('\DeltaF/F_0');
-            title('Choice Prob Plot');
+                set(gca,'xtick',1:FreqNum,'xticklabel',cellstr(num2str(cellfreq(:),'%.1f')));
+                xlabel('Frequency (kHz)');
+                ylabel('\DeltaF/F_0');
+                title('Choice Prob Plot');
+             else
+                 % left for choice compare plot mean
+                 if ROInumber == 1
+                     BoundFreqInds = SessionData.BehavData.Stim_toneFreq == BoundFreq;
+                     BoundFreqAction = double(SessionData.BehavData.Action_choice(BoundFreqInds));
+                     BoundFreqData = SessionData.RadDataAll(BoundFreqInds,:,:); % aligned data all, extract the boundary frequency trials data
+                     BoundMissInds = BoundFreqAction == 2;
+                     if sum(BoundMissInds)
+                         BoundFreqAction(BoundMissInds) = [];
+                         BoundFreqData(BoundMissInds,:,:) = [];
+                     end
+                     nChoice = unique(BoundFreqAction);
+                     choiceStr = {'Left','Right'};
+                 end
+                 %
+                 if length(nChoice) == 1
+                     fprintf('Only one choice for boundary frequency trials, plot color plot');
+                     cData = squeeze(BoundFreqData(:,ROInumber,:));
+                     imagesc(cData,SessionData.clims(ROInumber,:));
+                     xlim([0.5 size(cData,2)+0.5]);
+                     ylim([0.5 size(cData,1)+0.5]);
+                     xticks = 0:SessionData.FrameRate:size(cfreqData,2);
+                     xticklabel = xticks/SessionData.FrameRate;
+                     line([SessionData.AlignFrame SessionData.AlignFrame],[0.5 size(cData,1)+0.5],'color',[.8 .8 .8],'LineWidth',1.6);
+                     set(gca,'xtick',xticks,'xticklabel',xticklabel);
+                     xlabel('Time(s)');
+                     ylabel('# Trials');
+                     title(sprintf('%d Hz,%s',BoundFreq,choiceStr{nChoice+1}));
+                     set(gca,'FontSize',20);
+                 else
+                     % plot the mean trace for different choice
+                     cData = squeeze(BoundFreqData(:,ROInumber,:));
+                     Color = {'b','r'};
+                     LegendHandl = [];
+                     for CChoice = 0 : length(nChoice) - 1
+%                          CChoice = CChoice - 1;
+                         CChoiceInds = BoundFreqAction == nChoice(CChoice+1);
+                         CChoiceData = squeeze(cData(CChoiceInds,:));
+                         if size(CChoiceData,1) <= 2
+                             MeanC = CChoiceData;
+                             SEMC = zeros(size(MeanC));
+                         else
+                             MeanC = mean(CChoiceData);
+                             SEMC = std(CChoiceData)/sqrt(size(CChoiceData,1));
+                         end
+                         ts = (1 : length(MeanC))/SessionData.FrameRate;
+                         xp = [ts,fliplr(ts)];
+                         yp = [MeanC+SEMC,fliplr(MeanC-SEMC)];
+                         patch(xp,yp,1,'facecolor',[.7 .7 .7],'edgecolor','none','facealpha',0.6);
+                         chl = plot(ts,MeanC,'Color',Color{CChoice+1},'linewidth',1.5);
+                         LegendHandl = [LegendHandl,chl];
+                     end
+                     legend(LegendHandl,choiceStr,'FontSize',8,'Location','northwest');
+                     legend boxoff
+                     AlignT = SessionData.AlignFrame/SessionData.FrameRate;
+                     xlim([0 max(ts)]);
+                     yaxis = axis;
+                     patch([AlignT AlignT+0.3 AlignT+0.3 AlignT],[yaxis(3) yaxis(3) yaxis(4) yaxis(4)],1,...
+                         'facecolor',[.1 .8 .1],'Edgecolor','none','facealpha',0.3);
+                     
+                     xlabel('Time (s)');
+                     ylabel('Mean \DeltaF/F_0');
+                     title(sprintf('BoundFreq = %.1fKhz',BoundFreq/1000));
+                     set(gca,'FontSize',10);
+                 end
+             end
             
             annotation('textbox',[0.44,0.685,0.3,0.3],'String',sprintf('ROI%d summary plot',ROInumber),'FitBoxToText','on','EdgeColor',...
                 'none','FontSize',20);
@@ -373,6 +463,7 @@ switch SessionDesp
             saveas(h_RandTone2afc,sprintf('Random puretone Summarized plot ROI%d',ROInumber),'png');
             close(h_RandTone2afc);
         end
+        %%
     case 'RewardOmit'
         %%
         % Reward omit 2afc session, figure subplot(3,3)

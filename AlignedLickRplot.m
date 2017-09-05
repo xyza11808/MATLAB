@@ -57,8 +57,8 @@ for nStim = 1 : nStims
     
     hax1 = subplot(2,nStims,nStim);
     hold on
-    hl1 = plot(TimePointsUse,mean(cCorrLickRateL),'Color','b','LineWidth',1.5);
-    hl2 = plot(TimePointsUse,mean(cCorrLickRateR),'Color','r','LineWidth',1.5);
+    hl1 = plot(TimePointsUse,smooth(mean(cCorrLickRateL)),'Color','b','LineWidth',1.5);
+    hl2 = plot(TimePointsUse,smooth(mean(cCorrLickRateR)),'Color','r','LineWidth',1.5);
     yScales = get(gca,'ylim');
     xscales = get(gca,'xlim');
     line([StimOnBin,StimOnBin],yScales,'Color',[.7 .7 .7],'LineWidth',1.6,'LineStyle','--');
@@ -80,8 +80,8 @@ for nStim = 1 : nStims
     
     hax2 = subplot(2,nStims,nStim+nStims);
     hold on
-    hl3 = plot(TimePointsUse,mean(cErroLickRateL),'Color','b','LineWidth',1.6);
-    hl4 = plot(TimePointsUse,mean(cErroLickRateR),'Color','r','LineWidth',1.6);
+    hl3 = plot(TimePointsUse,smooth(mean(cErroLickRateL)),'Color','b','LineWidth',1.6);
+    hl4 = plot(TimePointsUse,smooth(mean(cErroLickRateR)),'Color','r','LineWidth',1.6);
     yScales = get(gca,'ylim');
     xscales = get(gca,'xlim');
     line([StimOnBin,StimOnBin],yScales,'Color',[.7 .7 .7],'LineWidth',1.6,'LineStyle','--');

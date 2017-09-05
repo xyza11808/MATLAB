@@ -122,45 +122,45 @@ saveas(hhf,'CD scatter plot save All','pdf');
 saveas(hhf,'CD scatter plot save All','png');
 close(hhf);
 %%
-% calculate the BCD and WCD
-GrNum = size(NorFreqResp,1)/2;
-GrNorRespData = zeros(2,GrNum,size(NorFreqResp,2));
-GrNorRespData(1,:,:) = NorFreqResp(1:GrNum,:);
-GrNorRespData(2,:,:) = NorFreqResp((GrNum+1):end,:); 
-ROI_CI_sum = zeros(nROIs,1);
-ROIDratio = zeros(nROIs,1);
-CDvalues = zeros(nROIs,2);
-%
-for cROI = 1 : nROIs
-    %
-    LeftGrData = squeeze(GrNorRespData(1,:,cROI));
-    RightGrData = squeeze(GrNorRespData(2,:,cROI));
-%     LeftGeMtx = repmat(LeftGrData,GrNum,1);
-%     RightGeMtx = repmat(RightGrData',1,GrNum);
-    LRGrDiff = abs(fliplr(RightGrData) - LeftGrData);
-    LeftGrDiff = repmat(LeftGrData,GrNum,1) - repmat(LeftGrData',1,GrNum);
-    LeftGrDiffVec = abs(LeftGrDiff(logical(triu(ones(size(LeftGrDiff)),1))));
-    RightGrDiff = repmat(RightGrData,GrNum,1) - repmat(RightGrData',1,GrNum);
-    RightGrDiffVec = abs(RightGrDiff(logical(triu(ones(size(RightGrDiff)),1))));
-    
-    cROIBCD = mean(LRGrDiff);
-    cROIWCD = mean([LeftGrDiffVec;RightGrDiffVec]);
-    cROI_CI = (cROIBCD - cROIWCD)/(cROIBCD + cROIWCD);
-    ROIDratio(cROI) = cROIBCD/cROIWCD;
-    ROI_CI_sum(cROI) = cROI_CI;
-    CDvalues(cROI,:) = [cROIBCD,cROIWCD];
-end
-figure;
-subplot(1,2,1)
-plot(sort(ROI_CI_sum),'ro')
-subplot(1,2,2)
-hist(ROIDratio,20)
-title(sprintf('Mean Ratio = %.2f',mean(ROIDratio)));
-
-figure;
-scatter(CDvalues(:,1),CDvalues(:,2),'ro')
-line([0 max(CDvalues(:))],[0 max(CDvalues(:))],'Color',[.7 .7 .7],'linestyle','--','linewidth',1.6)
-text(CDvalues(:,1),CDvalues(:,2),cellstr(num2str((1:nROIs)')));
+% % calculate the BCD and WCD
+% GrNum = size(NorFreqResp,1)/2;
+% GrNorRespData = zeros(2,GrNum,size(NorFreqResp,2));
+% GrNorRespData(1,:,:) = NorFreqResp(1:GrNum,:);
+% GrNorRespData(2,:,:) = NorFreqResp((GrNum+1):end,:); 
+% ROI_CI_sum = zeros(nROIs,1);
+% ROIDratio = zeros(nROIs,1);
+% CDvalues = zeros(nROIs,2);
+% %
+% for cROI = 1 : nROIs
+%     %
+%     LeftGrData = squeeze(GrNorRespData(1,:,cROI));
+%     RightGrData = squeeze(GrNorRespData(2,:,cROI));
+% %     LeftGeMtx = repmat(LeftGrData,GrNum,1);
+% %     RightGeMtx = repmat(RightGrData',1,GrNum);
+%     LRGrDiff = abs(fliplr(RightGrData) - LeftGrData);
+%     LeftGrDiff = repmat(LeftGrData,GrNum,1) - repmat(LeftGrData',1,GrNum);
+%     LeftGrDiffVec = abs(LeftGrDiff(logical(triu(ones(size(LeftGrDiff)),1))));
+%     RightGrDiff = repmat(RightGrData,GrNum,1) - repmat(RightGrData',1,GrNum);
+%     RightGrDiffVec = abs(RightGrDiff(logical(triu(ones(size(RightGrDiff)),1))));
+%     
+%     cROIBCD = mean(LRGrDiff);
+%     cROIWCD = mean([LeftGrDiffVec;RightGrDiffVec]);
+%     cROI_CI = (cROIBCD - cROIWCD)/(cROIBCD + cROIWCD);
+%     ROIDratio(cROI) = cROIBCD/cROIWCD;
+%     ROI_CI_sum(cROI) = cROI_CI;
+%     CDvalues(cROI,:) = [cROIBCD,cROIWCD];
+% end
+% figure;
+% subplot(1,2,1)
+% plot(sort(ROI_CI_sum),'ro')
+% subplot(1,2,2)
+% hist(ROIDratio,20)
+% title(sprintf('Mean Ratio = %.2f',mean(ROIDratio)));
+% 
+% figure;
+% scatter(CDvalues(:,1),CDvalues(:,2),'ro')
+% line([0 max(CDvalues(:))],[0 max(CDvalues(:))],'Color',[.7 .7 .7],'linestyle','--','linewidth',1.6)
+% text(CDvalues(:,1),CDvalues(:,2),cellstr(num2str((1:nROIs)')));
 
 % %%
 % clear
@@ -190,3 +190,52 @@ text(CDvalues(:,1),CDvalues(:,2),cellstr(num2str((1:nROIs)')));
 %     Resp_CI_script;
 %     tline = fgetl(fid);
 % end
+% %%%%%############################################################################################################
+% Example Tuning position data saved at E:\DataToGo\data_for_xu\AllTrialPlot_save\TunPosWCDBCDV
+% 
+% %% Tuning position affects CD value
+%     Tun32KResp = sROIMeanResp; % raw tunning at 32K position
+%     Tun24KResp = [sROIMeanResp(1:4),sROIMeanResp(end),sROIMeanResp(end-1)];
+%     Tun18KResp = [sROIMeanResp(1:3),sROIMeanResp(end:-1:end-2)];
+%     Tun8KResp = fliplr(sROIMeanResp);
+%     Tun10KResp = fliplr(Tun24KResp);
+%     Tun14KResp = fliplr(Tun18KResp);
+%     NewTun18KResp = [Tun14KResp(1),Tun14KResp(4),Tun14KResp(3),Tun14KResp(2),Tun14KResp(end-1:end)];
+% %     LeftGrData = squeeze(GrNorRespData(1,:,cROI));
+% %     RightGrData = squeeze(GrNorRespData(2,:,cROI));
+%     GrNum = 3;
+%     TunRespData = NewTun18KResp;
+%     
+%     LeftGrData = TunRespData(1:GrNum);
+%     RightGrData = TunRespData(GrNum+1:end);
+%     LeftGeMtx = repmat(LeftGrData,GrNum,1);
+%     LeftGeMtxInds = repmat(1:GrNum,GrNum,1);
+%     RightGeMtx = repmat(RightGrData',1,GrNum);
+%     RightGeMtxInds = repmat((1:GrNum)'+GrNum,1,GrNum);
+%     LRGrDiff = abs(LeftGeMtx - RightGeMtx);
+%     LRGrDiffInds = abs(LeftGeMtxInds - RightGeMtxInds);
+%     
+%     LeftGrDiff = abs(repmat(LeftGrData,GrNum,1) - repmat(LeftGrData',1,GrNum));
+%     LeftGrDiffInds = repmat(1:GrNum,GrNum,1) - repmat((1:GrNum)',1,GrNum);
+% %     LeftGrDiffVec = abs(LeftGrDiff(logical(triu(ones(size(LeftGrDiff)),1))));
+%     RightGrDiff = abs(repmat(RightGrData,GrNum,1) - repmat(RightGrData',1,GrNum));
+%     RightGrDiffInds = LeftGrDiffInds;
+% %     RightGrDiffVec = abs(RightGrDiff(logical(triu(ones(size(RightGrDiff)),1))));
+%     %
+%     ConsdMaxStimDiff = GrNum - 1;
+%     DisDiffVData = zeros(ConsdMaxStimDiff,2);
+%     % calculate WCD
+%     for cStimDiff = 1 : ConsdMaxStimDiff
+%         cDisDiffVBet = mean(LRGrDiff(LRGrDiffInds == cStimDiff));
+%         cDisDiffVWin = mean([LeftGrDiff(LeftGrDiffInds == cStimDiff);RightGrDiff(LeftGrDiffInds == cStimDiff)]);
+%         DisDiffVData(cStimDiff,:) = [cDisDiffVBet,cDisDiffVWin];
+%     end
+%     %
+%     cROICD = mean(DisDiffVData);
+%     figure;
+%     plot(TunRespData,'r-o');
+%     title({'New18kHz Tun Resp',sprintf('BCD = %.3f, WCD = %.3f',cROICD(1),cROICD(2))});
+%     ylabel('\DeltaF/F_0 (%)');
+%     xlabel('Octaves');
+%     set(gca,'FontSize',18);
+%     

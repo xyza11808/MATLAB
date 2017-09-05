@@ -53,7 +53,7 @@ for nROI = 1 : nROIs
         colorbar('westoutside');
         set(Coloraxis,'position',cAxisPos);
         patch([StimOnF,StimOffF,StimOffF,StimOnF],[0.5 0.5 (nTrials+0.5) (nTrials+0.5)],1,'FaceColor','g','EdgeColor','none','facealpha',0.4);
-        set(gca,'FontSize',16);
+        set(gca,'FontSize',14);
     end
     
     for nDBType = 1 : numDB
@@ -76,7 +76,7 @@ for nROI = 1 : nROIs
             ylabel('Frequency');
             patch([StimOnF,StimOffF,StimOffF,StimOnF],[0.5 0.5 (nTrials+0.5) (nTrials+0.5)],1,'FaceColor','g','EdgeColor','none','facealpha',0.4);
 %             if nDBType == 1
-                title(sprintf('%d dB',DBtypes(nDBType)),'FontSize',18);
+                title(sprintf('%d dB',DBtypes(nDBType)),'FontSize',14);
 %             end
             %
             MeanTraceCell = cellfun(@mean,cDBdatacell,'UniformOutput',false);
@@ -103,9 +103,9 @@ for nROI = 1 : nROIs
                 legend('boxoff');
             end
             ylabel({'\DeltaF/F_0 (%)',sprintf('DB = %d',DBtypes(nDBType))});
-            set(gca,'FontSize',12);
+            set(gca,'FontSize',8);
             if nDBType == 1
-                title('MeanTrace','FontSize',18);
+                title('MeanTrace','FontSize',14);
             end
             %
         end

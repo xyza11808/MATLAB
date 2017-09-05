@@ -1,4 +1,6 @@
-
+SessionData.RadDataAll = data_aligned;
+SessionData.BehavData = behavResults;
+%%
 if strcmpi(SessionDesp,'Twotone2afc')
     %%
     % for normal two tone 2afc plot
