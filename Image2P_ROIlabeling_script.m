@@ -7,7 +7,19 @@ if ~fi
     return;
 end
 load(fullfile(fp,'SessionFrameProj.mat'));
-
+IsROIStatePlot = 0;
+try
+    SessDataStrc = dir([fp, filesep 'CaTrials*.mat']);
+    DataStrc = load(SessDataStrc.name);
+    if isfield(DataStrc.SavedCaTrials,'ROIstateIndic')
+        ROIstate = DataStrc.SavedCaTrials.ROIstateIndic;
+        IsROIStatePlot = 1;
+        ROIstateColorStr = {'r','g','m'};
+    end
+catch ME
+    warning('Unable to load ROI state data.\n');
+end
+    
 nTrs = length(FrameProjSave);
 FrameSize = size(FrameProjSave(1).MeanFrame);
 MeanFrameAll = zeros([nTrs,FrameSize]);
@@ -34,7 +46,12 @@ nROIs = length(ROIdata.ROIinfoBU.ROIpos);
 AllROIpos = ROIdata.ROIinfoBU.ROIpos;
 for cROI = 1 : nROIs
     cROIpos = AllROIpos{cROI};
-    line(cROIpos(:,1),cROIpos(:,2),'color','r','linewidth',1.4);
+    if IsROIStatePlot
+        cROIstate = ROIstate(cROI,:);
+        line(cROIpos(:,1),cROIpos(:,2),'color',ROIstateColorStr{logical(cROIstate)},'linewidth',1.4);
+    else
+        line(cROIpos(:,1),cROIpos(:,2),'color','r','linewidth',1.4);
+    end
     CenterPos = mean(cROIpos);
     text(CenterPos(1),CenterPos(2),num2str(cROI),'color','g','FontSize',12);
 end

@@ -71,8 +71,10 @@ function [n_best P_best V C]=fast_oopsi(F,V,P,varargin)
 if any(isnan(F));
     error('nan in your data')
 end
-if ~isempty(varargin{1})
-    P.sig = varargin{1};
+if nargin > 3
+    if ~isempty(varargin{1})
+        P.sig = varargin{1};
+    end
 end
 %% initialize algorithm Variables
 starttime   = cputime;
@@ -141,7 +143,7 @@ if ~isfield(P,'gam'),   P.gam   = (1-V.dt/1)*ones(V.Ncells,1);  end
 if ~isfield(P,'lam'),   P.lam   = 10*ones(V.Ncells,1);          end
 if ~isfield(P,'a'),     P.a     = median(F,2);                  end
 
-if ~isfield(P,'b'),
+if ~isfield(P,'b')
     if V.Npixels==1, P.b = quantile(F,0.15);
     else P.b=median(F,2);
     end
@@ -211,7 +213,7 @@ while conv == 0
         V.post  = posts(1:i);
         conv    = 1;
     end
-    sound(3*sin(linspace(0,90*pi,2000)))        % play sound to indicate iteration is over
+%     sound(3*sin(linspace(0,90*pi,2000)))        % play sound to indicate iteration is over
 end
 
 V.fast_time = cputime-starttime;                % time to run code

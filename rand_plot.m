@@ -35,9 +35,11 @@ else
 end
 
 boundary_result=struct('SessionName',[],'FitParam',[],'Boundary',[],'LeftCorr',[],'RightCorr',[],'StimType',[],...
-    'StimCorr',[],'Coefficients',[],'P_value',[],'FitValue',[],'Typenumbers',[]);
+    'StimCorr',[],'Coefficients',[],'P_value',[],'FitValue',[],'Typenumbers',[],'gof',[]);
 if SelfPlot
-    choice=input('please select the logistic analysis method.\n1 for non-linear regression.\n2 for linear regression analysis.\n3 for fit_logistic analysis.\n');
+    choice=input(['please select the logistic analysis method.\n1 for non-linear regression.\n',...
+        '2 for linear regression analysis.\n3 for fit_logistic analysis.\n',...
+        '4 for new logistic fitting method.\n']);
 end
 for n = 1:fileNum
     if SelfPlot
@@ -410,6 +412,56 @@ for n = 1:fileNum
         internal_boundary=solve(modelfun(b,x)==0.5,x);
         boundary_result(n).FitValue=Qreg;
 %         cd(FilePath);
+    elseif choice == 4
+        % using new fitting method
+        reward_type=zeros(1,length(stim_types));
+        TypeNumber=zeros(1,length(stim_types));
+        for i=1:length(stim_types)
+            type_inds= behavResults.Stim_toneFreq==stim_types(i);
+            TypeNumber(i) = sum(type_inds);
+            reward_type(i)=mean(rewarded(type_inds));
+        end
+         boundary_result(n).Typenumbers = TypeNumber;
+        boundary_result(n).StimType=stim_types;
+        boundary_result(n).StimCorr=reward_type;
+        if(mean(reward_type)<0.5)
+            continue;
+        end
+        octave_sum=log2(double(max(behavResults.Stim_toneFreq))/double(min(behavResults.Stim_toneFreq)));
+        octave_dist = log2(double(stim_types)/double(min(stim_types)));
+        reward_type(1:floor(length(stim_types)/2))=1-reward_type(1:floor(length(stim_types)/2));
+        h4=figure;
+        scatter(octave_dist,reward_type,30,'MarkerEdgeColor','k','LineWidth',1.5);
+        text(octave_dist,reward_type,cellstr(num2str(TypeNumber(:),'n=%d')),'Fontsize',15,'color','b');
+        hold on;
+        % for parameters: g,l,u,v
+        UL = [0.5, 0.5, max(octave_dist), 100];
+        SP = [reward_type(1),1 - reward_type(end)-reward_type(1), mean(octave_dist), 1];
+        LM = [0, 0, min(octave_dist), 0];
+        ParaBoundLim = ([UL;SP;LM]);
+        fit_ReNew = FitPsycheCurveWH_nx(octave_dist, reward_type, ParaBoundLim);
+        %
+        plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'color','k','LineWidth',1.8);
+        hold off;
+        ylim([0 1]);
+        set(gca,'xtick',octave_dist);
+        Freqs = double(behavResults.Stim_toneFreq);
+        set(gca,'xticklabel',cellstr(num2str(Freqs(:)/1000,'%.1f')));
+        xlabel('Frequency(kHz)');
+        ylabel('Rightward choice');
+        if exist('fn','var')
+            saveas(h4,[fn(1:end-4),'_fit plot'],'png');
+            saveas(h4,[fn(1:end-4),'_fit plot'],'fig');
+        else
+            saveas(h4,'Behav_fit plot','png');
+            saveas(h4,'Behav_fit plot','fig');
+        end
+        close;
+        [~,BoundInds] = min(abs(fit_ReNew.curve(:,2) - 0.5));
+        internal_boundary = fit_ReNew.curve(BoundInds,1);
+        boundary_result(n).FitValue = fit_ReNew.ffit;
+        boundary_result(n).gof = fit_ReNew.gof;
+        b = coeffvalues(fit_ReNew.ffit);
     end
     
     

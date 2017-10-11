@@ -127,7 +127,7 @@ if V.smc_iter_max > 0
         P.beta  = ab(2);                                        % fluorescence offset
         P.zeta  = (mad(F-ab'*C1,1)*1.4785)^2;
         P.gamma = P.zeta/5;                                     % signal dependent noise
-        P.k = V.spikegen.EFGinv(0.01, P, V);
+        P.k = log(-log(1-sum(nnorm)/V.T)/V.dt);
 
     end
     [smc.E smc.P smc.V] = smc_oopsi(F,V,P);
@@ -186,7 +186,7 @@ if V.plot
     if isfield(V,'true_n'), V.n=V.true_n; end
     if isfield(V,'n'), spt=find(V.n); end
 
-    % plot fluorescence data
+    %% plot fluorescence data
     i=1; h(i)=subplot(nrows,1,i); hold on
     plot(tvec_o,z1(F(tvec_o)),'-k','LineWidth',lw);
     ylab=ylabel([{'Fluorescence'}],'Interpreter',inter,'FontSize',fs);
@@ -195,7 +195,7 @@ if V.plot
     set(gca,'XTick',xticks,'XTickLabel',[])
     axis([xlims 0 1.1])
 
-    % plot fast-oopsi output
+    %% plot fast-oopsi output
     if V.fast_iter_max>0
         i=i+1; h(i)=subplot(nrows,1,i); hold on,
         n_fast=fast.n/max(fast.n);
@@ -213,7 +213,7 @@ if V.plot
         box off
     end
 
-    % plot smc-oopsi output
+    %% plot smc-oopsi output
     if V.smc_iter_max>0
         i=i+1; h(i)=subplot(nrows,1,i); hold on,
         spts=find(smc.E.nbar>1e-3);

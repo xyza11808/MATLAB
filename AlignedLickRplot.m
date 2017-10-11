@@ -36,7 +36,7 @@ AbsTrialTypes = unique(TrialTypes);
 nStims = length(AbsTrialTypes);
 if nStims == 2
     fprintf('Two-tone 2afc session.\n');
-    h_plots = figure('position',[350 390 1050 650],'boader','ti');
+    h_plots = figure('position',[350 390 1050 650]);
     StimStr = {'Left','Right'};
 elseif nStims >= 6
     fprintf('Random pure tone session.\n');
@@ -64,14 +64,16 @@ for nStim = 1 : nStims
     line([StimOnBin,StimOnBin],yScales,'Color',[.7 .7 .7],'LineWidth',1.6,'LineStyle','--');
     ylim(yScales);
     xlabel('Time(s)');
-    ylabel('LickRates');
+    if nStim == 1
+        ylabel('Corr LickRates');
+    end
     set(gca,'FontSize',14);
     text(xscales(2)*0.7,yScales(2)*0.8,sprintf('nTr = %d',sum(cCorrStim)),'color','k','FontSize',11);
     legend([hl1,hl2],{'Left lickRate','Right lickRate'},'FontSize',6);
     if cStim < 1
-        title(sprintf('Corr %s lickrate',StimStr{cStim+1}));
+        title(sprintf('%s',StimStr{cStim+1}));
     else
-        title(sprintf('Corr %s lickrate',StimStr{nStim}));
+        title(sprintf('%s',StimStr{nStim}));
     end
     
     cErroStim = TrialTypes == cStim & trial_outcome == 0;
@@ -87,13 +89,15 @@ for nStim = 1 : nStims
     line([StimOnBin,StimOnBin],yScales,'Color',[.7 .7 .7],'LineWidth',1.6,'LineStyle','--');
     ylim(yScales);
     xlabel('Time(s)');
-    ylabel('LickRates');
+    if nStim == 1
+        ylabel('Error LickRates');
+    end
     set(gca,'FontSize',14);
     text(xscales(2)*0.7,yScales(2)*0.8,sprintf('nTr = %d',sum(cErroStim)),'color','k','FontSize',11);
     if cStim < 1
-        title(sprintf('Erro %s lickrate',StimStr{cStim+1}));
+        title(sprintf('%s',StimStr{cStim+1}));
     else
-        title(sprintf('Erro %s lickrate',StimStr{nStim}));
+        title(sprintf('%s',StimStr{nStim}));
     end
 end
 saveas(h_plots,'Stim Types lick rate plots');

@@ -80,6 +80,13 @@ for nROI = 1 : nROIs
 %             end
             %
             MeanTraceCell = cellfun(@mean,cDBdatacell,'UniformOutput',false);
+            nElements = cellfun(@numel,MeanTraceCell);
+            if length(unique(nElements)) > 1
+                EleTypes = unique(nElements);
+                LessIndsType = nElements == EleTypes(1);
+                MeanTraceCell(LessIndsType) = cDBdatacell(LessIndsType);
+            end
+            %
             MeanTraceMtx = cell2mat(MeanTraceCell);
             nFrequency = length(yticklabels);
             LineColors = jet(nFrequency);

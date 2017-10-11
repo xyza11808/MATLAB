@@ -26,7 +26,7 @@
             SN = cell(ceil(d/Nb),1);
             PSDX = cell(ceil(d/Nb),1);
             if ~split_data
-                for ind = 1:ceil(d/Nb); 
+                for ind = 1:ceil(d/Nb)
                     xdft = fft(Y((ind-1)*Nb+1:min(ind*Nb,d),:),[],2); 
                     xdft = xdft(:,1: floor(N/2)+1); % FN: floor added.
                     psdx = (1/(Fs*N)) * abs(xdft).^2;

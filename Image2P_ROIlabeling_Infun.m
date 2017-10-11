@@ -8,7 +8,13 @@ cd(SessPath);
 %     return;
 % end
 load(fullfile(SessPath,'SessionFrameProj.mat'));
-
+IsROIStatePlot = 0;
+if isfield(CaTrials,'ROIstateIndic')
+    ROIstate = CaTrials.ROIstateIndic;
+    IsROIStatePlot = 1;
+    ROIstateColorStr = {'r','g','m'};
+end
+    
 nTrs = length(FrameProjSave);
 FrameSize = size(FrameProjSave(1).MeanFrame);
 MeanFrameAll = zeros([nTrs,FrameSize]);
@@ -35,7 +41,12 @@ nROIs = length(ROIinfo(1).ROIpos);
 AllROIpos = ROIinfo(1).ROIpos;
 for cROI = 1 : nROIs
     cROIpos = AllROIpos{cROI};
-    line(cROIpos(:,1),cROIpos(:,2),'color','r','linewidth',1.4);
+    if IsROIStatePlot
+        cROIstate = ROIstate(cROI,:);
+        line(cROIpos(:,1),cROIpos(:,2),'color',ROIstateColorStr{logical(cROIstate)},'linewidth',1.4);
+    else
+        line(cROIpos(:,1),cROIpos(:,2),'color','r','linewidth',1.4);
+    end
     CenterPos = mean(cROIpos);
     text(CenterPos(1),CenterPos(2),num2str(cROI),'color','g','FontSize',12);
 end

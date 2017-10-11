@@ -15,6 +15,14 @@ if nargin > 5
         IsTrIndsInput = 1;
     end
 end
+IsROIstatePlot = 0;
+if nargin > 6
+    if ~isempty(varargin{3})
+        IsROIstatePlot = 1;
+        ROIstate = varargin{3};
+    end
+end
+
 AlignLickFStrc = LickTimeStrc;
 [AllTrNum,ROInum,FrameNum] = size(RawData);
 TrStimOnset = double(BehavStrc.Time_stimOnset);
@@ -50,6 +58,12 @@ elseif NumFreq == 6 || NumFreq == 8
 elseif mod(NumFreq,2) == 1 && NumFreq > 1
     fprintf('Boundary Tone session with %d frequencies.\n',NumFreq);
     SessionDesp = 'BoundTone';
+    BoundFreq = FreqTypes(ceil(NumFreq/2));
+    LeftBoundFreqInds = TrStimFreq(:) == BoundFreq & TrChoice(:) == 0 & TrOutcome(:) ~= 2;
+    RBoundFreqInds = TrStimFreq(:) == BoundFreq & TrChoice(:) == 1 & TrOutcome(:) ~= 2;
+    TrOutcome(LeftBoundFreqInds) = 1;
+    TrOutcome(RBoundFreqInds) = 0;
+    RewardTime(LeftBoundFreqInds) = TrAnsTime(LeftBoundFreqInds);
 else
     warning('Unknowing session type, current session have %d tones.\n');
     disp(FreqTypes);
@@ -178,7 +192,7 @@ if ~isdir('./All BehavType Colorplot/')
     mkdir('./All BehavType Colorplot/');
 end
 cd('./All BehavType Colorplot/');
-
+%%
 for nROI = 1 : ROInum
     cROIdata = squeeze(AlignData(:,nROI,:));
     climMax = prctile(cROIdata(:),70);
@@ -191,7 +205,7 @@ for nROI = 1 : ROInum
     if clim(2) > 400
         clim(2) = 200;
     end
-    %%
+    %
     hROI = figure('position',[100 100 1500 980],'PaperPositionMode','auto');
     for nFreq = 1 : NumFreq
         cFreqInds = TrStimFreq == FreqTypes(nFreq);
@@ -201,34 +215,35 @@ for nROI = 1 : ROInum
         AxCorr = subplot(6,NumFreq,[nFreq,nFreq+NumFreq]);
         hold on;
         CorrTrData = cFreqData(cFreqOut == 1,:);
-        CorrTrAnsSortInds = AnsFIndsSort{nFreq,2};
-        CorrTrAnsEventFPlot = FreqTypeEventF{nFreq,1};
-        CorrTrReEventFPlot = FreqTypeEventF{nFreq,2};
-        imagesc(CorrTrData(CorrTrAnsSortInds,:),clim);
-        plot(CorrTrAnsEventFPlot(:,1),CorrTrAnsEventFPlot(:,2),'Color',[1 0 1],'LineWidth',1.8);
-        plot(CorrTrReEventFPlot(:,1),CorrTrReEventFPlot(:,2),'Color','g','LineWidth',1.8);
-        line([AlignedFrame AlignedFrame],[0.5 size(CorrTrData,1)+0.5],'Color',[.7 .7 .7],'LineWidth',2);
-        line([SoundOffFrame SoundOffFrame],[0.5 size(CorrTrData,1)+0.5],'Color',[.7 .7 .7],'LineWidth',2,'linestyle','--');
-        nfLeftCorrLick = AlignLickStrc{nFreq,1};
-        nfRightCorrLick = AlignLickStrc{nFreq,2};
-        plot(nfLeftCorrLick(1,:),nfLeftCorrLick(2,:),'ro','MarkerFaceColor','r','MarkerSize',2);
-        plot(nfRightCorrLick(1,:),nfRightCorrLick(2,:),'go','MarkerFaceColor','g','MarkerSize',2);
-        
-        set(gca,'yDir','reverse','ylim',[0.5 size(CorrTrData,1)+0.5],'xlim',[0 size(CorrTrData,2)]);
-        if nFreq == NumFreq
-            AxsPos = get(AxCorr,'position');
-            hbar = colorbar;
-            set(AxCorr,'position',AxsPos);
-            barPos = get(hbar,'position');
-            set(hbar,'position',[barPos(1),barPos(2),barPos(3)*0.3,barPos(4)]);
+        if ~isempty(CorrTrData)
+            CorrTrAnsSortInds = AnsFIndsSort{nFreq,2};
+            CorrTrAnsEventFPlot = FreqTypeEventF{nFreq,1};
+            CorrTrReEventFPlot = FreqTypeEventF{nFreq,2};
+            imagesc(CorrTrData(CorrTrAnsSortInds,:),clim);
+            plot(CorrTrAnsEventFPlot(:,1),CorrTrAnsEventFPlot(:,2),'Color',[1 0 1],'LineWidth',1.8);
+            plot(CorrTrReEventFPlot(:,1),CorrTrReEventFPlot(:,2),'Color','g','LineWidth',1.8);
+            line([AlignedFrame AlignedFrame],[0.5 size(CorrTrData,1)+0.5],'Color',[.7 .7 .7],'LineWidth',2);
+            line([SoundOffFrame SoundOffFrame],[0.5 size(CorrTrData,1)+0.5],'Color',[.7 .7 .7],'LineWidth',2,'linestyle','--');
+            nfLeftCorrLick = AlignLickStrc{nFreq,1};
+            nfRightCorrLick = AlignLickStrc{nFreq,2};
+            plot(nfLeftCorrLick(1,:),nfLeftCorrLick(2,:),'ro','MarkerFaceColor','r','MarkerSize',2);
+            plot(nfRightCorrLick(1,:),nfRightCorrLick(2,:),'go','MarkerFaceColor','g','MarkerSize',2);
+
+            set(gca,'yDir','reverse','ylim',[0.5 size(CorrTrData,1)+0.5],'xlim',[0 size(CorrTrData,2)]);
+            if nFreq == NumFreq
+                AxsPos = get(AxCorr,'position');
+                hbar = colorbar;
+                set(AxCorr,'position',AxsPos);
+                barPos = get(hbar,'position');
+                set(hbar,'position',[barPos(1),barPos(2),barPos(3)*0.3,barPos(4)]);
+            end
+            if nFreq == 1
+                ylabel('Correct Trials','Color','r');
+            end
+            set(gca,'xtick',AlignXtick,'xticklabel',AlignxtickLabel);
+            title(sprintf('Freq = %d',FreqTypes(nFreq)));
+            set(gca,'FontSize',12);
         end
-%         xlabel('Time (s)');
-        if nFreq == 1
-            ylabel('Correct Trials','Color','r');
-        end
-        set(gca,'xtick',AlignXtick,'xticklabel',AlignxtickLabel);
-        title(sprintf('Freq = %d',FreqTypes(nFreq)));
-        set(gca,'FontSize',12);
         
         % error data plot
         AxErro = subplot(6,NumFreq,[nFreq+NumFreq*2,nFreq+NumFreq*3]);
@@ -329,9 +344,16 @@ for nROI = 1 : ROInum
 %             end    
         end
     end
-    annotation('textbox',[0.49,0.685,0.3,0.3],'String',['ROI' num2str(nROI)],'FitBoxToText','on','EdgeColor',...
-               'none','FontSize',20);
-           %%
+    if ~IsROIstatePlot
+        annotation('textbox',[0.49,0.685,0.3,0.3],'String',['ROI' num2str(nROI)],'FitBoxToText','on','EdgeColor',...
+                   'none','FontSize',20);
+    else
+        ColorStr = {'r','g','m'};
+        cROIstate = logical(ROIstate(nROI,:));
+        annotation('textbox',[0.49,0.685,0.3,0.3],'String',['ROI' num2str(nROI)],'FitBoxToText','on','EdgeColor',...
+                   'none','FontSize',20,'Color',ColorStr{cROIstate});
+    end
+           %
     saveas(hROI,sprintf('ROI%d all behavType color plot',nROI));
     saveas(hROI,sprintf('ROI%d all behavType color plot',nROI),'png');
     close(hROI);

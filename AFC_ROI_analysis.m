@@ -420,9 +420,9 @@ if ~isempty(radom_inds_correct)
 %     m=1:length(random_type_stim);
     rand_trial_data=data(radom_inds_correct,:,:);
     if isProbAsRandTone || mod(length(unique(behavResults.Stim_toneFreq)),2)
-        rand_plot(behavResults,3,[],1);
+        rand_plot(behavResults,4,[],1);
     else
-        rand_plot(behavResults,3);
+        rand_plot(behavResults,4);
     end
     RandomSession=1;
     SessionDesp = 'RandomPuretone';
@@ -470,7 +470,7 @@ if ~isempty(pure_tone_inds)
     PT_trial_data=zeros(length(PT_type_stim),size_data(2),size_data(3));
     m=1:length(PT_type_stim);
     PT_trial_data(m,:,:)=data(pure_tone_corr_inds(m),:,:);
-    PT_ZS_data=TrialSelfZS_data(pure_tone_corr_inds,:,:);
+%     PT_ZS_data=TrialSelfZS_data(pure_tone_corr_inds,:,:);
    
 %     %##############################################################################################
 % % %     Seperate_align_plot(PT_trial_data,PT_trial_type',[PT_stim_onset',PT_reward_time'],frame_rate,session_date');
@@ -696,6 +696,13 @@ elseif str2double(continue_char)==2
         SigROIinds = FreqRespOnsetHist(data_aligned,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
     end
     %%
+    if isfield(CaTrials_signal,'ROIstateIndic');
+        ROIstate = CaTrials_signal.ROIstateIndic;
+    else
+        ROIstate = [];
+    end
+    save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate FRewardLickT NormalTrialInds frame_lickAllTrials data ROIstate -v7.3
+    %%
     if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
          nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
          save EstimateSPsave.mat data_aligned nnspike behavResults start_frame frame_rate -v7.3
@@ -707,11 +714,15 @@ elseif str2double(continue_char)==2
 %     SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1);
 %     Data_pcTrace_script
 %     Partitioned_neurometric_prediction 
-    save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate FRewardLickT NormalTrialInds frame_lickAllTrials data -v7.3
+    
 %     TrParaAll = [TrialTypes(:),trial_outcome(:),double(behavResults.Stim_toneFreq(:)),double(behavResults.Action_choice(:))];
 %     TimeCourseChoiceDecod(smooth_data,TrParaAll,start_frame,frame_rate);
-    %%
-    AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials); % plot lick frames
+    %
+    if isfield(CaTrials_signal,'ROIstateIndic')
+        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials,[],ROIstate); % plot lick frames
+    else
+        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials);
+    end
     AnsTimeAlignPlot(data_aligned,behavResults,1,frame_rate,trial_outcome,1); % answer time alignment, with figure plot
     %
     if ~isdir('SpikeDataSave')
@@ -744,10 +755,10 @@ elseif str2double(continue_char)==2
      ROIAUCcolorp(TimeCourseStrc,start_frame/frame_rate);
      script_for_summarizedPlot;
      %%
-     if ~exist('nnspike','var')
-         nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
-         save EstimateSPsave.mat data_aligned nnspike trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
-     end
+%      if ~exist('nnspike','var')
+%          nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
+%          save EstimateSPsave.mat data_aligned nnspike trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
+%      end
       
       if ~isdir('./EM_spike_analysis/')
           mkdir('./EM_spike_analysis/');
@@ -785,7 +796,7 @@ elseif str2double(continue_char)==2
 %         DataAnaObj.PairedAUCCal(1.5);
 %     end
     DataAnaObj.popuZscoredCorr(1.5,'Mean');
-    DataAnaObj.popuSignalCorr(1,'Mean',1);  % boot-strap signal correlation
+%     DataAnaObj.popuSignalCorr(1,'Mean',1);  % boot-strap signal correlation
     DataAnaObj.popuSignalCorr(1,'Mean');  % normal methods
     
     %%

@@ -10,6 +10,9 @@ end
 cd(fp);
 load(fullfile(fp,'SessionFrameProj.mat'));
 load(fn);
+if ~exist('ROIinfoBU','var')
+    ROIinfoBU = ROIinfo(1);
+end
 %% generate the maxdelta figure
 nTrs = length(FrameProjSave);
 FrameSize = size(FrameProjSave(1).MeanFrame);
@@ -138,4 +141,10 @@ for cf = 1 : length(MorphFiles)
     saveas(hhf,sprintf('%s Merged figure save',ROIstrs{1}),'png');
     close(hhf);
 end
+
+%% ########################################################
+% % % % %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% batch for all analysis
 

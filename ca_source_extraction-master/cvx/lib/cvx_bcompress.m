@@ -1,5 +1,5 @@
 function [ xR, x ] = cvx_bcompress( x, mode, num_sorted )
-error( nargchk( 1, 3, nargin ) ); %#ok
+narginchk( 1, 3 ); %#ok
 if nargin < 3 || isempty( num_sorted ),
     num_sorted = 0;
 end

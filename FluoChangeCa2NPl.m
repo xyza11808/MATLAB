@@ -463,7 +463,7 @@ switch MethodChoice
         ROIf0 = zeros(size(FCorrectData,2),1);
         for nROI = 1 : size(FCorrectData,2)
             cROIpreData = AllBasePreOnsetData(nROI,:);
-            [cCount,cCenters] = hist(cROIpreData,40);
+            [cCount,cCenters] = hist(cROIpreData,100);
             [~,inds] = max(cCount);
             ROIf0(nROI) = cCenters(inds);
             

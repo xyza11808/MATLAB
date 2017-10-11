@@ -25,6 +25,13 @@ NMOutcome = Troutcome(NonMissInds);
 NMChoice = double(BehavStrc.Action_choice(NonMissInds));
 FreqTypes = unique(NMStimFreq);
 NumFreq = length(FreqTypes);
+if mod(NumFreq,2)  % change the correct-right plots into left-right panel plots
+    BoundFreq = FreqTypes(ceil(NumFreq/2));
+    LeftBoundInds = NMStimFreq(:) == BoundFreq & NMChoice(:) == 0;
+    RBoundInds = NMStimFreq(:) == BoundFreq & NMChoice(:) == 1;
+    NMOutcome(LeftBoundInds) = 1;
+    NMOutcome(RBoundInds) = 0;
+end
 
 MinAnsF = min(NMAnsframe);
 AlignDiff = NMAnsframe - MinAnsF;
@@ -82,7 +89,7 @@ if isPlot
             MeanCorr = mean(CorrData);
             CorrAx = subplot(3,NumFreq,nf);
             imagesc(CorrData,clim);
-            line([MinAnsF MinAnsF],[0.5,size(CorrData,1)+0.5],'color',[.7 .7 .7],'linewidth',1.2);
+            line([MinAnsF MinAnsF],[0.5,size(CorrData,1)+0.5],'color','m','linewidth',1.2);
             set(gca,'xlim',[0.5,size(CorrData,2)+0.5],'ylim',[0.5,size(CorrData,1)+0.5]);
             title(sprintf('Freq = %d',FreqTypes(nf)));
             set(gca,'xtick',xticks,'xticklabel',xticklabels,'FontSize',14);
@@ -104,7 +111,7 @@ if isPlot
              MeanErro = mean(ErroData);
             if ~isempty(ErroData)
                 imagesc(ErroData,clim);
-                line([MinAnsF MinAnsF],[0.5,size(ErroData,1)+0.5],'color',[.7 .7 .7],'linewidth',1.2);
+                line([MinAnsF MinAnsF],[0.5,size(ErroData,1)+0.5],'color','m','linewidth',1.2);
                 set(gca,'xlim',[0.5,size(ErroData,2)+0.5],'ylim',[0.5,size(ErroData,1)+0.5]);
         %         title(sprintf('Freq = %d',FreqTypes(nf)));
                 set(gca,'xtick',xticks,'xticklabel',xticklabels,'FontSize',14);
@@ -125,7 +132,7 @@ if isPlot
             plot(MeanCorr,'r','Linewidth',1.2);
             plot(MeanErro,'b','Linewidth',1.2);
             yscales = get(MeanTrAx,'ylim');
-            line([MinAnsF MinAnsF],yscales,'color',[.7 .7 .7],'linewidth',1.2);
+            line([MinAnsF MinAnsF],yscales,'color',[.4 .4 .4],'linewidth',1.2);
             set(gca,'xlim',[1,size(ErroData,2)],'ylim',yscales);
             set(gca,'xtick',xticks,'xticklabel',xticklabels,'FontSize',14);
             xlabel('Time (s)');

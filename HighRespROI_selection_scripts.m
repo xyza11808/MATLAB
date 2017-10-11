@@ -74,17 +74,19 @@ while ischar(tline)
     
     CategDataPath = fullfile(SessPath,'CDInds_calculation_CorrErro\NewROIindsSave.mat');
     CategDataStrc = load(CategDataPath);
+    ROIStateStrs = CategDataStrc.ROItypeStr;
+    ROItypeStates = CategDataStrc.ROItypestate;
 %     CategDataIndex = CategDataStrc
     
-    SigRespROIs = double(ROIfreqMeanResp > 80); % high response level ROI inds
+%     SigRespROIs = double(ROIfreqMeanResp > 80); % high response level ROI inds
     if ~isdir('HighResp ROIs')
         mkdir('HighResp ROIs');
     end
     % cd('HighResp ROIs');
     TargetPath = fullfile(SessPath,'HighResp ROIs');
 
-    HighRespROIs = sum(SigRespROIs,2);
-    SelectROIinds = find(HighRespROIs);
+%     HighRespROIs = sum(SigRespROIs,2);
+    SelectROIinds = CategDataStrc.SelectROIinds;
     if ~isempty(SelectROIinds)
         for SelectROIs = 1 : length(SelectROIinds);
             cROIrespfile = [SessPath,'\All BehavType Colorplot\',sprintf('ROI%d all behavType color plot',SelectROIinds(SelectROIs))];
@@ -103,6 +105,9 @@ while ischar(tline)
                 CategDataStrc.ROIindsAll(SelectROIinds(SelectROIs)),...
                 CategDataStrc.ROIindexMaxSum(SelectROIinds(SelectROIs)),...
                 CategDataStrc.CategIndsMaxS(SelectROIinds(SelectROIs))),'Position',[9 0 4 1],'FontSize',20);
+            cROIstate = ROItypeStates(SelectROIs,:);
+            exportToPPTX('addtext',sprintf('ROI=%d, Type = %s',cROIstate(1),ROIStateStrs{cROIstate(2)}),...
+                'Position',[13 0 3 2],'FontSize',20);
             exportToPPTX('addnote',pwd);
             exportToPPTX('addpicture',figureID,'Position',[4 1 12 8]);
             exportToPPTX('addpicture',MeanRespID,'Position',[0 4 4 3.2]);

@@ -1,8 +1,20 @@
-DataSavePath = uigetdir('Please select your current data save path');
-cd(DataSavePath);
+% DataSavePath = uigetdir('Please select your current data save path');
+% cd(DataSavePath);
 
+
+clear
+clc
+[fn,fp,fi] = uigetfile('*.txt','Please select the factor analysis data path');
+if ~fi
+    return;
+end
 %%
-addchar = 'y';
+fpath = fullfile(fp,fn);
+fid = fopen(fpath);
+tline = fgetl(fid);
+
+%
+% addchar = 'y';
 TaskFactorData = {};
 PassFactorData = {};
 TaskTime = {};
@@ -16,12 +28,16 @@ LRIndexSum = {};
 TaskFrate = [];
 TaskAlignF = [];
 m = 1;
-while ~strcmpi(addchar,'n')
+while ischar(tline)
+    if isempty(strfind(tline,'NO_Correction\mode_f_change'))
+        tline = fgetl(fid);
+        continue;
+    end
+    TaskPath = fullfile(tline,'DimRed_Resplot_smooth','FactorAnaData.mat');
     %
     isBoundaryToneexits = 0;
-    [fn,fp,~] = uigetfile('FactorAnaData.mat','Please select your task factor analysis saved data');
-    TaskPath = fullfile(fp,fn);
-%     TaskPath = 'M:\batch\batch32\20160815\anm03\test02\im_data_reg_cpu\result_save\plot_save\Type2_f0_calculation\NO_Correction\mode_f_change\DimRed_Resplot\FactorAnaData.mat';
+%     [fn,fp,~] = uigetfile('FactorAnaData.mat','Please select your task factor analysis saved data');
+%     TaskPath = fullfile(fp,fn);
     TaskData = load(TaskPath);
     TaskTimeDataStrs = strrep(TaskPath,'FactorAnaData.mat','MeanPlotData.mat');
 %     TaskExtraData = load(TaskTimeDataStrs);
@@ -59,7 +75,7 @@ while ~strcmpi(addchar,'n')
     end
     
     if isBoundaryToneexits
-        h_bound = figure('position',[200 200 1000 800]);
+        h_bound = figure('position',[200 200 1000 800],'Paperpositionmode','auto');
         subplot(1,2,1)
         cToneInds = Stimtones(:) == BoundaryTone & Actions(:) == 0;
         cToneIndex = LRindex(cToneInds,:);
@@ -94,7 +110,7 @@ while ~strcmpi(addchar,'n')
         close(h_bound);
     end
     % all correct trials selection index plots
-    h_corr = figure('position',[100 80 1750 1000]);
+    h_corr = figure('position',[100 80 1750 1000],'Paperpositionmode','auto');
     for n = 1 : ToneNum
         cTone = Tones(n);
         cToneInds = Stimtones(:) == cTone & TaskData.trial_outcome(:) == 1;
@@ -117,7 +133,7 @@ while ~strcmpi(addchar,'n')
     saveas(h_corr,sprintf('Session%d all correct trials selection index plot',m),'png');
     close(h_corr);
     % all error trials selection index plot
-    h_erro = figure('position',[100 80 1750 1000]);
+    h_erro = figure('position',[100 80 1750 1000],'Paperpositionmode','auto');
     for n = 1 : ToneNum
         cTone = Tones(n);
         cToneInds = Stimtones(:) == cTone & TaskData.trial_outcome(:) == 0;
@@ -141,7 +157,7 @@ while ~strcmpi(addchar,'n')
     close(h_erro);
     
     % all correct trials Normalized selection index plots
-    h_corrNor = figure('position',[100 80 1750 1000]);
+    h_corrNor = figure('position',[100 80 1750 1000],'Paperpositionmode','auto');
     for n = 1 : ToneNum
         cTone = Tones(n);
         cToneInds = Stimtones(:) == cTone & TaskData.trial_outcome(:) == 1;
@@ -164,7 +180,7 @@ while ~strcmpi(addchar,'n')
     saveas(h_corrNor,sprintf('Session%d all correct trials Norselection index plot',m),'png');
     close(h_corrNor);
     % all error trials normalized selection index plot
-    h_erroNor = figure('position',[100 80 1750 1000]);
+    h_erroNor = figure('position',[100 80 1750 1000],'Paperpositionmode','auto');
     for n = 1 : ToneNum
         cTone = Tones(n);
         cToneInds = Stimtones(:) == cTone & TaskData.trial_outcome(:) == 0;
@@ -187,57 +203,59 @@ while ~strcmpi(addchar,'n')
     saveas(h_erroNor,sprintf('Session%d all error trials Norselection index plot',m),'png');
     close(h_erroNor);
     
-    %
-    [fn,fp,~] = uigetfile('FactorAnaData.mat','Please select your passive factro analysis saved data');
-    PassPath = fullfile(fp,fn);
-%     PassPath = 'M:\batch\batch32\20160815\anm03\test02rf\im_data_reg_cpu\result_save\plot_save\NO_Correction\DimRed_Resplot\FactorAnaData.mat';
-    PassData = load(PassPath);
-    PassTimeStrs = strrep(PassPath,'FactorAnaData.mat','MeanPlotData.mat');
-    PassStartF = load(PassTimeStrs,'start_frame');
-    PassxTimes = load(PassTimeStrs,TimeStrings{:});
-    PassxTimes.AlignedF = PassStartF.start_frame;
-    DataAll = PassData.FSDataNorm;
-    PLeftCorrData = DataAll(PassData.LeftCorrInds,:,:);
-    PRightCorrData = DataAll(PassData.RightCorrInds,:,:);
-    PLeftCorrMean = squeeze(mean(PLeftCorrData));
-    PRightCorrMean = squeeze(mean(PRightCorrData));
-    PassFactorData{m} = PassData;
-    PassTime{m} = PassxTimes;
-    %
-    AlignFbeforeS = min([TaskStartF.start_frame,PassStartF.start_frame]);
-    TaskmoveInds = TaskStartF.start_frame - AlignFbeforeS;
-    PassmoveInds = PassStartF.start_frame - AlignFbeforeS;
-    TaskAlignxtimes = TaskxTimes.xTimes((TaskmoveInds+1):end);
-    PassAlignxtimes = PassxTimes.xTimes((TaskmoveInds+1):end);
-    AlineTime = AlignFbeforeS/TaskxTimes.frame_rate;
-    TLRDis = sqrt(sum((TLeftCorrMean - TRightCorrMean).^2));
-    PLRDis = sqrt(sum((PLeftCorrMean - PRightCorrMean).^2));
-    PlotTLRDis = TLRDis((TaskmoveInds+1):end);
-    PlotPLRDis = PLRDis((TaskmoveInds+1):end);
-    PLotsTLRDis{m} = PlotTLRDis;
-    PlotsPLRDis{m} = PlotPLRDis;
-    
-    %
-    h = figure;
-    hold on;
-    l1 = plot(TaskAlignxtimes,PlotTLRDis,'k','LineWidth',1.6);
-    l2 = plot(PassAlignxtimes,PlotPLRDis,'r','LineWidth',1.6);
-    yscales = get(gca,'ylim');
-    line([AlineTime,AlineTime],yscales,'Color',[.7 .7 .7],'LineWidth',1.8,'LineStyle','--');
-    set(gca,'ylim',yscales);
-    xlabel('Time(s)');
-    ylabel('Mean trace difference')
-    set(gca,'FontSize',18);
-    legend([l1,l2],{'Task Mean Distance','Pass Mean Distance'},'FontSize',12);
-    saveas(h,sprintf('Session%d factor space distance compare plot',m));
-    saveas(h,sprintf('Session%d factor space distance compare plot',m),'png');
-    close(h);
-    %
-    addchar = input('Would you like to add another session data?\n','s');
+%     %
+%     [fn,fp,~] = uigetfile('FactorAnaData.mat','Please select your passive factro analysis saved data');
+%     PassPath = fullfile(fp,fn);
+% %     PassPath = 'M:\batch\batch32\20160815\anm03\test02rf\im_data_reg_cpu\result_save\plot_save\NO_Correction\DimRed_Resplot\FactorAnaData.mat';
+%     PassData = load(PassPath);
+%     PassTimeStrs = strrep(PassPath,'FactorAnaData.mat','MeanPlotData.mat');
+%     PassStartF = load(PassTimeStrs,'start_frame');
+%     PassxTimes = load(PassTimeStrs,TimeStrings{:});
+%     PassxTimes.AlignedF = PassStartF.start_frame;
+%     DataAll = PassData.FSDataNorm;
+%     PLeftCorrData = DataAll(PassData.LeftCorrInds,:,:);
+%     PRightCorrData = DataAll(PassData.RightCorrInds,:,:);
+%     PLeftCorrMean = squeeze(mean(PLeftCorrData));
+%     PRightCorrMean = squeeze(mean(PRightCorrData));
+%     PassFactorData{m} = PassData;
+%     PassTime{m} = PassxTimes;
+%     %
+%     AlignFbeforeS = min([TaskStartF.start_frame,PassStartF.start_frame]);
+%     TaskmoveInds = TaskStartF.start_frame - AlignFbeforeS;
+%     PassmoveInds = PassStartF.start_frame - AlignFbeforeS;
+%     TaskAlignxtimes = TaskxTimes.xTimes((TaskmoveInds+1):end);
+%     PassAlignxtimes = PassxTimes.xTimes((TaskmoveInds+1):end);
+%     AlineTime = AlignFbeforeS/TaskxTimes.frame_rate;
+%     TLRDis = sqrt(sum((TLeftCorrMean - TRightCorrMean).^2));
+%     PLRDis = sqrt(sum((PLeftCorrMean - PRightCorrMean).^2));
+%     PlotTLRDis = TLRDis((TaskmoveInds+1):end);
+%     PlotPLRDis = PLRDis((TaskmoveInds+1):end);
+%     PLotsTLRDis{m} = PlotTLRDis;
+%     PlotsPLRDis{m} = PlotPLRDis;
+%     
+%     %
+%     h = figure;
+%     hold on;
+%     l1 = plot(TaskAlignxtimes,PlotTLRDis,'k','LineWidth',1.6);
+%     l2 = plot(PassAlignxtimes,PlotPLRDis,'r','LineWidth',1.6);
+%     yscales = get(gca,'ylim');
+%     line([AlineTime,AlineTime],yscales,'Color',[.7 .7 .7],'LineWidth',1.8,'LineStyle','--');
+%     set(gca,'ylim',yscales);
+%     xlabel('Time(s)');
+%     ylabel('Mean trace difference')
+%     set(gca,'FontSize',18);
+%     legend([l1,l2],{'Task Mean Distance','Pass Mean Distance'},'FontSize',12);
+%     saveas(h,sprintf('Session%d factor space distance compare plot',m));
+%     saveas(h,sprintf('Session%d factor space distance compare plot',m),'png');
+%     close(h);
+%     %
+%     addchar = input('Would you like to add another session data?\n','s');
     m = m + 1;
+    tline = fgetl(fid);
 end
 
-save FactorAnaDataSave.mat TaskFactorData TaskTime PassFactorData PassTime PLotsTLRDis PlotsPLRDis -v7.3
+save FactorAnaDataSave.mat TaskFactorData TaskTime PLotsTLRDis PlotsPLRDis -v7.3
+% save FactorAnaDataSave.mat TaskFactorData TaskTime PassFactorData PassTime PLotsTLRDis PlotsPLRDis -v7.3
 save LRIndexsumSave.mat TaskTones TaskOutcomes ActionChoice LRIndexSum TaskFrate TaskAlignF -v7.3
 %%
 m = m - 1;

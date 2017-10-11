@@ -90,8 +90,8 @@ while ischar(tline)
         Max2Values = SortResp(end-(nGrNum-1):end-1);
         MaxValue = SortResp(end);
         Min3Values = SortResp(1:nGrNum);
-        Max3Inds = abs(diff(RawInds(end-(nGrNum-1):end)));
-        Max3CategInds = abs(diff(SortCategInds(end-(nGrNum-1):end)));
+        Max3Inds = abs(diff(sort(RawInds(end-(nGrNum-1):end))));
+        Max3CategInds = abs(diff(sort(SortCategInds(end-(nGrNum-1):end))));
         ROIindsAll(cROI) = (MaxValue - mean(Max2Values))/((MaxValue - mean(Min3Values)) + max(Min3Values) - min(Min3Values));
         ROIindexMaxSum(cROI) = sum(Max3Inds);
         CategIndsMaxS(cROI) = sum(Max3CategInds);
@@ -101,6 +101,45 @@ while ischar(tline)
     SigRespROIs = double(ROIfreqMeanResp > 40);
     HighRespROIs = sum(SigRespROIs,2);
     SelectROIinds = find(HighRespROIs);
+    nSelectROIs = length(SelectROIinds);
+    ROItypeStr = {'Tuning ROI','Bound Tuning','Categorical','Multi Tuning','NoSig Tuning','Mixed Info'};
+    ROItypestate = zeros(nSelectROIs,3); % the first column is the ROI number, second column is the ROI type
+    % ROI type indication: 1,Tuning ROI; 2, Boundary tuning ROI; 3,
+    % categorical ROIs; 4, Mixed Tuning ROI; 5, No Sig. Tuning; 6, Mixed
+    % info. of category and tuning
+    for CsROI = 1 : nSelectROIs
+        cROIinds = SelectROIinds(CsROI);
+        cROIindex = ROIindsAll(cROIinds);
+        if cROIindex >= 0.6
+            if ROIindexMaxSum(cROIinds) == 2 && CategIndsMaxS(cROIinds) == 1
+                ROItypestate(CsROI,:) = [cROIinds,2,cROIindex];
+            else
+                ROItypestate(CsROI,:) = [cROIinds,1,cROIindex]; % tuning ROI type
+            end
+        elseif cROIindex <= 0.4
+            if ROIindexMaxSum(cROIinds) == 2 && CategIndsMaxS(cROIinds) == 0
+                ROItypestate(CsROI,:) = [cROIinds,3,cROIindex];
+            elseif ROIindexMaxSum(cROIinds) == 2 && CategIndsMaxS(cROIinds) ~= 0
+                ROItypestate(CsROI,:) = [cROIinds,2,cROIindex];
+            else
+                ROItypestate(CsROI,:) = [cROIinds,4,cROIindex];
+            end
+        elseif cROIindex > 0.4 && cROIindex < 0.6
+            if ROIindexMaxSum(cROIinds) == 2 && CategIndsMaxS(cROIinds) == 0
+                ROItypestate(CsROI,:) = [cROIinds,6,cROIindex];
+            elseif ROIindexMaxSum(cROIinds) == 2 && CategIndsMaxS(cROIinds) == 1
+                ROItypestate(CsROI,:) = [cROIinds,2,cROIindex];
+            elseif ROIindexMaxSum(cROIinds) > 2 && CategIndsMaxS(cROIinds) > 0
+                ROItypestate(CsROI,:) = [cROIinds,4,cROIindex];
+            end
+        else
+            if ROIindexMaxSum(cROIinds) == 2 && CategIndsMaxS(cROIinds) == 1
+                ROItypestate(CsROI,:) = [cROIinds,2,cROIindex];
+            else
+                ROItypestate(CsROI,:) = [cROIinds,5,cROIindex];
+            end
+        end
+    end
     SelectROIMaxSum = ROIindexMaxSum(SelectROIinds);
     SelectCategROIinds = SelectROIMaxSum == 2;
     % SeqSelectROIs = find(HighRespROIs > 0 & ROIindexMaxSum == 2);
@@ -150,7 +189,7 @@ while ischar(tline)
         close(h_ROI);
     end
         %
-    save NewROIindsSave.mat ROIindsAll ROIindexMaxSum SelectROIinds CategIndsMaxS UsedFreqMeanResp -v7.3
+    save NewROIindsSave.mat ROIindsAll ROIindexMaxSum SelectROIinds CategIndsMaxS UsedFreqMeanResp ROItypestate ROItypeStr -v7.3
 
     tline = fgetl(fid);
 end

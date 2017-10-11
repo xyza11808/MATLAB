@@ -107,7 +107,21 @@ else
     else
        UserChoice = 1;
     end
-    BehavLickPlot(behavResults,behavSettings,TimeLen);
+    if min(behavResults.Time_stimOnset) < 100
+        BugStimOnInds = (behavResults.Time_stimOnset) < 100;
+        if isfield(behavResults,'Setted_TimeOnset')
+            behavResults.Time_stimOnset(BugStimOnInds) = behavResults.Setted_TimeOnset(BugStimOnInds)+1;
+        else
+            error('Behavior data have bad stimulus onset time records, please check the raw data.\n');
+        end
+    end
+    cpath = pwd;
+    try
+        BehavLickPlot(behavResults,behavSettings,TimeLen);
+    catch 
+        warning('Unable to plot the lick rate for now');
+        cd(cpath);
+    end
     if UserChoice
         return;
     end
@@ -202,7 +216,7 @@ if strcmpi(type,'RF')
     DataAnaObj = DataAnalysisSum(SelectData,SelectSArray,frame_rate,frame_rate,1);
 %     DataAnaObj.PairedAUCCal(1.5,'Max');
     DataAnaObj.popuZscoredCorr(1.5,'Mean'); % first response peak response noise correlation
-    DataAnaObj.popuZscoredCorr([1.5,3],'Mean'); % second response preak noise correlation
+%     DataAnaObj.popuZscoredCorr([1.5,3],'Mean'); % second response preak noise correlation
 %     DataAnaObj.popuSignalCorr(1,'Mean',1);  % bootstrap method signal correlation
 %     DataAnaObj.popuSignalCorr(1,'Mean'); % normal method of signal correlation
     %%

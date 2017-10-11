@@ -149,6 +149,7 @@ CaSignal.OpenWithImagJ = 1;
 CaSignal.IsTrialExcluded = [];
 CaSignal.ROIdefineTr = [];
 CaSignal.ROIStateIndicate = [];
+CaSignal.ROIInfoPath = '';
 fprintf('Matlab Two-photon imaging data analysis GUI.\n');
 fprintf('           Version :  2.03.05             \n');
 % Update handles structure
@@ -219,6 +220,7 @@ CaTrial.SoloStartTrialNo = [];
 CaTrial.SoloEndTrialNo = [];
 CaTrial.behavTrial = [];
 CaTrial.ROIstateIndic = [];
+CaTrial.ImportROIpath = '';
 % CaTrial.ROIType = '';
 
 % --- Executes on button press in open_image_file_button.
@@ -1117,6 +1119,7 @@ switch choice
     case 'Yes'
         [fn, pth] = uigetfile('*.mat');
         r = load([pth filesep fn]);
+        CaSignal.ROIInfoPath = fullfile(pth,fn);
         if isfield(r,'ROIinfo')
             ROIinfo = r.ROIinfo(1);
         elseif isfield(r,'ROIinfoBU')
@@ -1725,6 +1728,7 @@ for i = 1:length(CaSignal.CaTrials)
     if length(CaSignal.ROIinfo) >= i
         CaSignal.CaTrials(i).ROIinfo = CaSignal.ROIinfo(i);
         CaSignal.CaTrials(i).ROIinfoBack = CaSignal.ROIinfoBack(1);
+        CaSignal.CaTrials(i).ImportROIpath = CaSignal.ROIInfoPath;
     end
 end
 CaTrials = CaSignal.CaTrials;
@@ -1741,7 +1745,7 @@ SavedCaTrials.nROIs=CaTrials(1).nROIs;
 SavedCaTrials.ROIinfo=CaTrials(1).ROIinfo;
 SavedCaTrials.ROIinfoBack=CaTrials(1).ROIinfoBack;
 SavedCaTrials.ROIstateIndic = CaSignal.ROIStateIndicate;
-
+SavedCaTrials.ImportROIpath = CaSignal.ROIInfoPath;
 RawData=zeros(length(CaTrials),CaTrials(1).nROIs,CaTrials(1).nFrames);
 ringData=zeros(length(CaTrials),CaTrials(1).nROIs,CaTrials(1).nFrames);
 if isfield(CaSignal,'SegNumber')

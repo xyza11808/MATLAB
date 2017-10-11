@@ -21,13 +21,14 @@ if ~isempty(opt)
         patchPlot=1;
     end
 end
-
+mean_trace = (mean_trace(:))';
+se_trace = (se_trace(:))';
 uE =  mean_trace + se_trace;
 lE =  mean_trace - se_trace;
 yP=[lE,fliplr(uE)];
 xP=[ts,fliplr(ts)];
 patchColor = [.8 .8 .8];
-faceAlpha = 0.9;
+faceAlpha = 0.6;
 
 figure(h_fig);
 hold on;
@@ -38,7 +39,7 @@ yaxis = axis();
 if ~isempty(opt) && patchPlot
     H.eventPatch = patch([t_eventOn, t_eventOn, t_eventOff, t_eventOff],...
         [yaxis(3), yaxis(4), yaxis(4),yaxis(3)],...
-        [.1 .8 .1],'Edgecolor','none', 'facealpha',0.3);
+        [.1 .8 .1],'Edgecolor','none', 'facealpha',0.8);
 elseif isfield(opt,'isPatchPlot')
     H.eventPatch = line([t_eventOn t_eventOn],[yaxis(3) yaxis(4)],'LineWidth',2.5,'color',[.8 .8 .8]);
 end
