@@ -149,7 +149,7 @@ CaSignal.pathName=[];
 CaSignal.ROINPlabel = [];
 CaSignal.IsROIUpdated = []; % value will be 1 if ROI was newly added or modified from loaded file
 fprintf('Matlab Two-photon imaging data analysis GUI.\n');
-fprintf('           Version :  2.03.05             \n');
+fprintf('           Version :  2.03.10             \n');
 % Update handles structure
 guidata(hObject, handles);
 
