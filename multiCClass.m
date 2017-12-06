@@ -192,8 +192,9 @@ for nStimtype = 1 : length(StimTypesAll)
     for npairType = (nStimtype+1) : length(StimTypesAll)
         cPositive = StimTrUsing == StimTypesAll(nStimtype);
         cNegtive = StimTrUsing == StimTypesAll(npairType);
+        StimTrUsing = StimTrUsing(:);
         DataSetAll = [DataUsing(cPositive,:);DataUsing(cNegtive,:)];
-        StimSetAll = StimTrUsing(logical(cPositive+cNegtive));
+        StimSetAll = [StimTrUsing(cPositive);StimTrUsing(cNegtive)];
         ROIabs = PairedStimROC(DataSetAll,StimSetAll);
         PairedROCAll(m,:) = ROIabs;
         mdl = fitcsvm(DataSetAll,StimSetAll(:));
@@ -219,19 +220,21 @@ save pairROCresult.mat PairedROCAll StimTypesAll -v7.3
 StimIndex = 1 : length(StimTypesAll);
 StimForStr = double(StimTypesAll)/1000;
 TypeErro = mean(Class82CVErro,2);
-matrixData = squareform(TypeErro);
+matrixData = 1 - squareform(TypeErro);
+BoundaryData = diag(0.5*ones(length(StimIndex),1));
+matrixData = matrixData - BoundaryData;  % set boundary values to 0.5
 if isPlot
     h_mt = figure('position',[720 240 1000 680]);
-    imagesc(StimIndex,StimIndex,matrixData)
+    imagesc(StimIndex,StimIndex,matrixData,[0.5 1])
     set(gca,'xtick',StimIndex,'xticklabel',cellstr(num2str(StimForStr(:),'%.2f')),...
         'ytick',StimIndex,'yticklabel',cellstr(num2str(StimForStr(:),'%.2f')));
     xlabel('Stim Types (kHz)');
     ylabel('Stim Types (kHz)');
-    title('Type by type classification error rate');
+    title('Type by type classification correct rate');
     set(gca,'FontSize',20)
     colorbar;
-    saveas(h_mt,'Multi class classification error rate');
-    saveas(h_mt,'Multi class classification error rate','png');
+    saveas(h_mt,'Multi class classification correct rate');
+    saveas(h_mt,'Multi class classification correct rate','png');
     close(h_mt);
 end
 save PairedClassResult.mat matrixData StimTypesAll -v7.3

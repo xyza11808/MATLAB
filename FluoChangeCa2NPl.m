@@ -92,7 +92,28 @@ else
 end
 
 ROINum=CaTrials(1).nROIs;
-TrialLen=CaTrials(1).nFrames;
+if iscell(CaTrials(1).f_raw)
+   TrDataNumVec =  cellfun(@(x) size(x,2),CaTrials(1).f_raw);
+   TrialLen = max(TrDataNumVec);
+   IsContiAcq = 1;
+   CellData = CaTrials(1).f_raw;
+   LastFrames = 49; % last 50 frames
+   TestROI = 1;
+   for cTr = 1 : TrialNum
+       cTestData = CellData{cTr}(TestROI,end-LastFrames:end);
+%        DataDiff = diff(cTestData);
+       if mean(cTestData(end-4:end)) < 20
+           CellData(cTr) = {CellData{cTr}(:,1:end-10)};
+           fprintf('Tr Number %d re-used.\n',cTr);
+       end
+   end
+   CaTrials(1).f_raw = CellData; 
+   TrDataNumVec =  cellfun(@(x) size(x,2),CaTrials(1).f_raw);
+else
+    IsContiAcq = 0;
+    TrialLen=CaTrials(1).nFrames;
+    
+end
 FrameRate=floor(1000/CaTrials(1).FrameTime);
 
 ROImasks=ROIinfo(1).ROImask;
@@ -148,7 +169,8 @@ else
     if isfield(CaTrials(1),'RingF')
         RawRingData=CaTrials.RingF;
     end
-        RawData=CaTrials.f_raw;
+    if ~iscell(CaTrials.f_raw)
+        RawData = CaTrials.f_raw;
         for n=1:TrialNum
             PreOnsetData{n}=squeeze(RawData(n,:,1:TrialOnsetTime(n)));
             baselineDataAll=[baselineDataAll PreOnsetData{n}];
@@ -158,6 +180,22 @@ else
                 baselineDataRing=[baselineDataRing PreOnsetRingF{n}];
             end
         end
+    else
+        %%
+        for n=1:TrialNum
+            cRawData = CaTrials.f_raw{n};
+            RawData(n,:,1:TrDataNumVec(n)) = cRawData;
+            PreOnsetData{n}=squeeze(cRawData(:,1:TrialOnsetTime(n)));
+            baselineDataAll=[baselineDataAll PreOnsetData{n}];
+            FBaseline(n,:)=mean(squeeze(cRawData(:,1:TrialOnsetTime(n))),2);
+            if isfield(CaTrials(1),'RingF')
+                cRawRingData =  CaTrials.RingF{n};
+                PreOnsetRingF{n}=squeeze(cRawRingData(:,1:TrialOnsetTime(n)));
+                baselineDataRing=[baselineDataRing PreOnsetRingF{n}];
+            end
+        end
+        %%
+    end
 end
 
 RingFbase=zeros(ROINum,1);
@@ -275,9 +313,17 @@ if ~isempty(exclude_trials)
         TrialNum=length(CaTrials);
         FChangeData=zeros(TrialNum,ROINum,TrialLen);
     else
-        CaTrials.f_raw(exclude_trials,:,:)=[];
+        if ~iscell(CaTrials.f_raw)
+            CaTrials.f_raw(exclude_trials,:,:)=[];
+        else
+            CaTrials.f_raw(exclude_trials) = [];
+             TrDataNumVec(exclude_trials) = [];
+            TrialLen = max(TrDataNumVec);
+        end
         RawData(exclude_trials,:,:) = [];
+        RawData = RawData(:,:,1:TrialLen);  % correct the maxium trial frame length
         FCorrectData(exclude_trials,:,:) = [];
+        FCorrectData = FCorrectData(:,:,1:TrialLen); % correct the maxium trial frame length
         PreOnsetData(exclude_trials) = [];
         CorrePreOnsetData(exclude_trials) = [];
         FBaseline(exclude_trials,:) = [];
@@ -302,6 +348,7 @@ end
 
 switch MethodChoice
     case 1
+        % havent correct for continues recording method
         ModeF0=zeros(ROINum,1);
         if ~isdir('./Mode_f0_all/')
             mkdir('./Mode_f0_all/');
@@ -343,6 +390,9 @@ switch MethodChoice
         for n=1:ROINum
             for m=1:TrialNum
                 FChangeData(m,n,:) = ((FCorrectData(m,n,:) - FBaseline(m,n))/FBaseline(m,n))*100;
+                if IsContiAcq
+                    FChangeData(m,n,TrDataNumVec(m)+1:end) = 0;
+                end
             end
         end
         save ROIf0save.mat FBaseline -v7.3
@@ -400,7 +450,9 @@ switch MethodChoice
                 LowerInds=((n-1)*BlockSize+1);
                 upperInds=min(n*BlockSize,TrialNum);
                 FChangeData(LowerInds:upperInds,k,:) = (FCorrectData(LowerInds:upperInds,k,:) - BlockWiseF0(n,k))/BlockWiseF0(n,k)*100;
-
+                if IsContiAcq
+                    FChangeData(LowerInds:upperInds,k,(TrDataNumVec(m)+1):end) = 0;
+                end
             end
 %             h=figure;
 %             subplot(2,1,1)
@@ -426,7 +478,11 @@ switch MethodChoice
         SubRawData=zeros(size(FCorrectData));
         for n=1:size(FCorrectData,2)
             TempData=squeeze(FCorrectData(:,n,:));
-            [SubTempData,~]=BLSubStract(TempData',8,FrameRate*15);
+            if IsContiAcq
+                [SubTempData,~]=BLSubStract(TempData',8,FrameRate*20,TrDataNumVec);
+            else
+                [SubTempData,~]=BLSubStract(TempData',8,FrameRate*20);
+            end
             SubRawData(:,n,:)=SubTempData;
             [ncounts,ncenters]=hist(SubTempData(:),100);
             [~,I]=max(ncounts);
@@ -450,36 +506,66 @@ switch MethodChoice
         SubRawData=zeros(size(FCorrectData));
         for n=1:size(FCorrectData,2)
             TempData=squeeze(FCorrectData(:,n,:));
-            [SubTempData,~]=BLSubStract(TempData',8,FrameRate*15);
+            if IsContiAcq
+                [SubTempData,~]=BLSubStract(TempData',8,FrameRate*20,TrDataNumVec);
+            else
+                [SubTempData,~]=BLSubStract(TempData',8,FrameRate*20);
+            end
             SubRawData(:,n,:)=SubTempData';
         end
-        %
+        %%
         BaseSubPreOnsetData = cell(1,TrialNum);
         for nTrs = 1 : TrialNum
             BaseSubPreOnsetData{nTrs} = squeeze(SubRawData(nTrs,:,1:TrialOnsetTime(nTrs)));
         end
         AllBasePreOnsetData = cell2mat(BaseSubPreOnsetData);
-        %
+        %%
         ROIf0 = zeros(size(FCorrectData,2),1);
         for nROI = 1 : size(FCorrectData,2)
             cROIpreData = AllBasePreOnsetData(nROI,:);
             [cCount,cCenters] = hist(cROIpreData,100);
             [~,inds] = max(cCount);
             ROIf0(nROI) = cCenters(inds);
-            
-            FChangeData(:,nROI,:) = (SubRawData(:,nROI,:) - ROIf0(nROI))./ROIf0(nROI)*100;
+            if ~IsContiAcq
+                FChangeData(:,nROI,:) = (SubRawData(:,nROI,:) - ROIf0(nROI))./ROIf0(nROI)*100;
+            else
+                for cTr = 1 : TrialNum
+                    FChangeData(cTr,nROI,1:TrDataNumVec(cTr)) = (SubRawData(cTr,nROI,1:TrDataNumVec(cTr)) - ROIf0(nROI))./ROIf0(nROI)*100;
+                end
+            end
         end
         
         %%
     otherwise
         disp('Error input option, quit analysis.\n');
 end
+if IsContiAcq
+    CellFchangeData = cell(length(TrDataNumVec),1);
+    BaseDEFCellAll = cell(length(TrDataNumVec),1);
+    for cTr = 1 : length(TrDataNumVec)
+        CellFchangeData{cTr} = squeeze(FChangeData(cTr,:,1:TrDataNumVec(cTr)));
+        BaseDEFCellAll{cTr} = squeeze(FChangeData(cTr,:,1:TrialOnsetTime(cTr)));
+    end
+     FChangeData = CellFchangeData;
+     
+%      nTrs = length(TrDataNumVec);
+else
+    nTrs = size(FChangeData,1);
+    BaseDEFCellAll = cell(nTrs,1);
+    %%
+    for cTr = 1 : nTrs
+        BaseDEFCellAll{cTr} = squeeze(FChangeData(cTr,:,1:TrialOnsetTime(cTr)));
+    end
+end
+BaseDEFAll = cell2mat(BaseDEFCellAll');
+% baselineDataAll was raw data
+% calculate deltaF/F baseline, named BaseDEFAll
 
 if isfield(CaTrials(1),'RingF') && IsNeuropilExtract
-    save DiffFluoResult.mat behavResults behavSettings RawData FChangeData baselineDataAll -v7.3
+    save DiffFluoResult.mat behavResults behavSettings RawData FChangeData baselineDataAll BaseDEFAll -v7.3
 else
     save DiffFluoResult.mat behavResults behavSettings RawData FChangeData ...
-        baselineDataAll RawRingData -v7.3
+        baselineDataAll RawRingData BaseDEFAll -v7.3
 end
 
 if nargout==1

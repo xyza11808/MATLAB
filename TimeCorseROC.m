@@ -70,8 +70,12 @@ if ~CUplot
             cEndInds = BinIndsAll(BINNum);
             LeftPoints=TempROIData(LeftTrialInds,1:cEndInds);
             RightPoints=TempROIData(RIghtTrialInds,1:cEndInds);
-            LeftPointsMax = max(LeftPoints,[],2);
-            RightPointsMax = max(RightPoints,[],2);
+            LeftPointsMax = max(LeftPoints,[],2,'omitnan');
+            RightPointsMax = max(RightPoints,[],2,'omitnan');
+            if isnan(LeftPointsMax) || isnan(RightPointsMax)
+                fprintf('Only nan data exists.');
+                break;
+            end
             % LeftPoints=TempROIData(LeftTrialInds,1:(BINNum*FrameBin);
             % RightPoints=TempROIData(RIghtTrialInds,1:(BINNum*FrameBin));
             
@@ -123,8 +127,12 @@ else
             end
             LeftPoints=TempROIData(LeftTrialInds,cStartInds:cEndInds);
             RightPoints=TempROIData(RIghtTrialInds,cStartInds:cEndInds);
-             LeftPointsMax = max(LeftPoints,[],2);
-            RightPointsMax = max(RightPoints,[],2);
+             LeftPointsMax = max(LeftPoints,[],2,'omitnan');
+            RightPointsMax = max(RightPoints,[],2,'omitnan');
+            if sum(isnan(LeftPointsMax)) || sum(isnan(RightPointsMax))
+                fprintf('Only nan data exists.\n');
+                break;
+            end
             if length(unique(LeftPointsMax)) < 20 || length(unique(RightPointsMax)) < 20
                 fprintf('Too few data points for calculation, set to chance level.\n');
                 dataBIN = 0.5;
@@ -146,6 +154,16 @@ else
     end
     clearvars TempROIData LeftPoints RightPoints LeftDataFORroc RightDataFORroc
 end
+MinROIAUC = min(BINNEDROCResultLR);
+nanIndsCol = double(MinROIAUC < 1e-6);
+nanIndsDiff = diff([nanIndsCol(1),nanIndsCol]);
+nanIndsStart = find(nanIndsDiff,1,'last');
+if ~isempty(nanIndsStart)
+    BINNEDROCResultLR(:,nanIndsStart:end) = [];
+    BinIndsAll(nanIndsStart+1:end) = [];
+    BinLength = size(BINNEDROCResultLR,2);
+end
+%%
 PXtick = ((BinIndsAll(1:end-1)+BinIndsAll(2:end))/2);
 % PXtick = FrameBin:FrameBin:(DatSize(3));
 AlignTime = alignpoint/FrameRate;

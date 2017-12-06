@@ -64,13 +64,13 @@ for nROI = 1 : nROIs
     cROIData = squeeze(SelectData(:,nROI,:));
     clims=[];
     clims(1)=max(min(cROIData(:)),0);
-    clims(2)=max(cROIData(:));
+    clims(2)=prctile(cROIData(:),85);
     if clims(2)>(10*median(cROIData(:)))
         clims(2) = (clims(2)+median(cROIData(:)))/3;
     end
-    if clims(2) > 500
-        clims(2) = 400;
-    end
+%     if clims(2) > 500
+%         clims(2) = 400;
+%     end
     climAll(nROI,:) = clims;
     if ~israndomSession
         cLeftData = cROIData(LeftInds,:);

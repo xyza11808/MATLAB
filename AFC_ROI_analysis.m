@@ -54,8 +54,21 @@ isProbAsRandTone = 1;
 % global settings end
 % %%################################################################################################
 
+DataRaw = data;
 SessionDesp = 'Twotone2afc';
-size_data=size(data);
+if ~iscell(data)
+    size_data=size(data);
+else 
+    FrameInds = cellfun(@(x) size(x,2),data);
+    size_data = [length(data),size(data{1},1),max(FrameInds)];
+    UsedFrame = ceil(prctile(FrameInds,80));
+    DataAll = zeros(size_data);
+    for cTr = 1 : size_data(1)
+        DataAll(cTr,:,:) = [data{cTr},nan(size_data(2),size_data(3)-FrameInds(cTr))];
+    end
+    data = DataAll(:,:,1:UsedFrame);
+    size_data = size(data);
+end
 frame_rate=floor(1000/CaTrials_signal(1).FrameTime);
 session_name=CaTrials_signal(1).FileName_prefix(:);
 ROI_info=CaTrials_signal(1).ROIinfo;
@@ -355,7 +368,27 @@ V.T = size_data(3);
 V.Npixels = 1;
 V.dt = 1/frame_rate;
 P.lam = 10;
-% 
+nTau = 1.8;
+P.gam = 1 - V.dt/nTau; 
+if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
+     nnspike = DataFluo2Spike(DataRaw,V,P); % estimated spike
+else
+    load('EstimateSPsave.mat');
+end
+%%
+if iscell(nnspike)
+    SPsizeData = [length(nnspike),size(nnspike{1},1),max(FrameInds)];
+    SPDataAll = zeros(SPsizeData);
+    for cTr = 1 : length(nnspike)
+        SPDataAll(cTr,:,:) = [nnspike{cTr},nan(SPsizeData(2),SPsizeData(3) - FrameInds(cTr))];
+    end
+    UsedSPData = SPDataAll(:,:,1:UsedFrame);
+    SPsizeDataNew = size(UsedSPData);
+else
+    UsedSPData = nnspike;
+    SPsizeDataNew = size(UsedSPData);
+end
+    
 % for n=1:size_data(2)
 %     temp_data=squeeze(data(:,n,:));
 %     SingleTrialMean=mean(temp_data,2);
@@ -649,12 +682,14 @@ elseif str2double(continue_char)==2
     alignment_frames(alignment_frames<1)=1;
     start_frame=floor((double(align_time_point)/1000)*frame_rate);
     
-    data_aligned=zeros(size_data(1),size_data(2),framelength);
+    data_aligned = zeros(size_data(1),size_data(2),framelength);
+    SpikeAligned = zeros(size_data(1),size_data(2),framelength);
 %     zscore_data_aligned=zeros(size_data(1),size_data(2),framelength);
 %     NorDataAligned=zeros(size_data(1),size_data(2),framelength);
 %     SpikeAlign = zeros(size_data(1),size_data(2),framelength);
     for i=1:size_data(1)
-        data_aligned(i,:,1:framelength)=data(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
+        data_aligned(i,:,:)=data(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
+        SpikeAligned(i,:,:)=UsedSPData(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
 %         zscore_data_aligned(i,:,1:framelength)=zscore_data(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
 %         NorDataAligned(i,:,1:framelength)=NorData(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
 %         SpikeAlign(i,:,:) = nSpikes(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
@@ -696,19 +731,20 @@ elseif str2double(continue_char)==2
         SigROIinds = FreqRespOnsetHist(data_aligned,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
     end
     %%
-    if isfield(CaTrials_signal,'ROIstateIndic');
+    if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
+         save EstimateSPsave.mat nnspike SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
+    else
+        load('EstimateSPsave.mat');
+    end
+    %
+    if isfield(CaTrials_signal,'ROIstateIndic')
         ROIstate = CaTrials_signal.ROIstateIndic;
     else
         ROIstate = [];
     end
     save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate FRewardLickT NormalTrialInds frame_lickAllTrials data ROIstate -v7.3
     %%
-    if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
-         nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
-         save EstimateSPsave.mat data_aligned nnspike behavResults start_frame frame_rate -v7.3
-    else
-        load('EstimateSPsave.mat');
-    end
+    
 %     MultiTimes = {[0,0.3],[0,0.5],[0,0.8],[0,1],[0,1.3],[0,1.5]};
 %     SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1,MultiTimes);
 %     SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1);
@@ -730,7 +766,7 @@ elseif str2double(continue_char)==2
     end
     cd('SpikeDataSave');
     
-    AlignedSortPlotAll(nnspike,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials); % plot lick frames
+    AlignedSortPlotAll(SpikeAligned,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials); % plot lick frames
     cd ..;
 
 %%     RandNMTChoiceDecoding(smooth_data(radom_inds,:,:),behavResults,trial_outcome(radom_inds),start_frame,frame_rate,1.5);
@@ -766,8 +802,8 @@ elseif str2double(continue_char)==2
       cd('./EM_spike_analysis/');
       
 %      nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
-     TimeCourseStrcSP = TimeCorseROC(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2);  
-     AUCDataASSP = ROC_check(nnspike(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,0.5,'Stim_time_AlignSP');
+     TimeCourseStrcSP = TimeCorseROC(SpikeAligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2);  
+     AUCDataASSP = ROC_check(SpikeAligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,0.5,'Stim_time_AlignSP');
 %      
      ROIAUCcolorp(TimeCourseStrcSP,start_frame/frame_rate,[],'Spike train');
      cd ..;

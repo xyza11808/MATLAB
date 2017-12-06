@@ -84,6 +84,7 @@ end
 
 BoundFreq = 16000;
 TaskFreqOctave = log2(FreqTypes/BoundFreq);
+TaskFreqStrs = cellstr(num2str(FreqTypes(:)/1000,'%.1f'));
 PassFreqOctave = log2(PassFreqTypes/BoundFreq);
 if ~isdir('./Tunning_fun_plot/')
     mkdir('./Tunning_fun_plot/');
@@ -102,6 +103,7 @@ for cROI = 1 : nROIs
     l1 = errorbar(TaskFreqOctave,cROItaskNM,NonMissTunningFunSEM(:,cROI),'c-o','LineWidth',1.6);
     l2 = errorbar(TaskFreqOctave,cROItaskCorr,CorrTunningFunSEM(:,cROI),'r-o','LineWidth',1.6);
     l3 = errorbar(PassFreqOctave,cROIpass,PassTunningfunSEM(:,cROI),'k-o','LineWidth',1.6);
+    set(gca,'xtick',TaskFreqOctave,'xticklabel',TaskFreqStrs);
     xlabel('Octave From Boundary');
     ylabel('Mean \DeltaF/F');
     title(sprintf('ROI%d Tunning',cROI));

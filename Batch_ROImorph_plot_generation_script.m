@@ -20,16 +20,18 @@ ErrorPathMessage = {};
 for np = 1 : DirLength
     cPATH = nameSplit{np};
     try
-    if isempty(strfind(cPATH,'NO_Correction\Uneven_colorPlot')) || isempty(strfind(cPATH,'rf'))
+%     if isempty(strfind(cPATH,'NO_Correction\Uneven_colorPlot')) || isempty(strfind(cPATH,'rf'))
+    if ~strcmpi(cPATH(end-10:end),'result_save')  % have GUI analysis results 
         continue; % no target mat file at current path
     else
-        if ~isempty(strfind(cPATH,'Uneven_colorPlot\Uneven_colorPlot'))
+        if ~isempty(strfind(cPATH,'Uneven_colorPlot\Uneven_colorPlot')) %#ok<*STREMP>
             continue; % in case of a multiple-path during debugging process
         end
         %
-        SessRawDataInds = strfind(cPATH,'\result_save\plot_save');
-        cROIinfoPath = [cPATH(1:SessRawDataInds-1) filesep 'result_save'];  % path without '\'
+%         SessRawDataInds = strfind(cPATH,'\result_save\plot_save');
+%         cROIinfoPath = [cPATH(1:SessRawDataInds-1) filesep 'result_save'];  % path without '\'
 %         cROIinfoPath = [cROIinfoPath filesep 'result_save'];
+        cROIinfoPath = cPATH;
         ROIinfoStrc = dir([cROIinfoPath filesep 'ROIinfo*.mat']);
         FrameProjStrc = dir([cROIinfoPath filesep 'SessionFrameProj.mat']);
         if isempty(ROIinfoStrc) || isempty(FrameProjStrc)
@@ -41,13 +43,13 @@ for np = 1 : DirLength
                 continue;
             end
         end
-                
-        if isdir([cROIinfoPath filesep 'ROI_merge_figure']) && exist([cROIinfoPath filesep 'ROI_morph_plot' filesep 'MorphDataAll.mat'],'file') > 0
+        % in case there was an empty folder during code debugging process        
+        if isdir([cROIinfoPath filesep 'ROI_morph_plot']) && exist([cROIinfoPath filesep 'ROI_morph_plot' filesep 'MorphDataAll.mat'],'file') > 0
             nTargetPath = nTargetPath + 1;
             TargetPath{nTargetPath} = [cROIinfoPath filesep 'ROI_morph_plot'];
             continue; % plots already exists, joint to the final path used directly
         end 
-        clearvars ROIinfoBU ROIinfo FrameProjSave
+        clearvars ROIinfoBU ROIinfo FrameProjSave % clear last loop data
         load([cROIinfoPath filesep ROIinfoStrc.name]);
         load([cROIinfoPath filesep FrameProjStrc.name]);
         
@@ -149,40 +151,40 @@ for np = 1 : DirLength
         save MorphDataAll.mat ROIMorphData -v7.3
         cd ..;
         %
-        ROImorphPath = [cROIinfoPath filesep 'ROI_morph_plot'];%uigetdir(pwd,'Please select the ROI morph plot path');
-        ROIrespPath = cPATH;%uigetdir(pwd,'Please select the ROI response plot path');
-        MorphFiles = dir([ROImorphPath,'\ROI* morph plot save.png']);
-        RespFiles = dir([ROIrespPath,'\ROI* passive resp plot.png']);
-        if length(MorphFiles) ~= length(RespFiles)
-            error('unequal number of ROI plots');
-        end
-        %
-        SavePath = strrep(ROImorphPath,'ROI_morph_plot','ROI_merge_figure');
-        if ~isdir(SavePath)
-            mkdir(SavePath);
-        end
-        cd(SavePath);
-        for cf = 1 : length(MorphFiles)
-            %
-            morphfn = MorphFiles(cf).name;
-            Respfn = RespFiles(cf).name;
-            morphfid = imread([ROImorphPath,'\',morphfn]);
-            Respfid = imread([ROIrespPath,'\',Respfn]);
-
-            hhf = figure('position',[100 120 1700 950]);
-            subplot(3,4,1)
-            imshow(morphfid);
-            axis off
-
-            subplot(3,4,[2,3,4,6,7,8,10,11,12])
-            imshow(Respfid);
-            axis off
-
-            ROIstrs = strsplit(morphfn,' ');
-            saveas(hhf,sprintf('%s Merged figure save',ROIstrs{1}));
-            saveas(hhf,sprintf('%s Merged figure save',ROIstrs{1}),'png');
-            close(hhf);
-        end
+% %         ROImorphPath = [cROIinfoPath filesep 'ROI_morph_plot'];  %uigetdir(pwd,'Please select the ROI morph plot path');
+% %         ROIrespPath = cPATH;  %uigetdir(pwd,'Please select the ROI response plot path');
+% %         MorphFiles = dir([ROImorphPath,'\ROI* morph plot save.png']);
+% %         RespFiles = dir([ROIrespPath,'\ROI* passive resp plot.png']);
+% %         if length(MorphFiles) ~= length(RespFiles)
+% %             error('unequal number of ROI plots');
+% %         end
+% %         %
+% %         SavePath = strrep(ROImorphPath,'ROI_morph_plot','ROI_merge_figure');
+% %         if ~isdir(SavePath)
+% %             mkdir(SavePath);
+% %         end
+% %         cd(SavePath);
+% %         for cf = 1 : length(MorphFiles)
+% %             %
+% %             morphfn = MorphFiles(cf).name;
+% %             Respfn = RespFiles(cf).name;
+% %             morphfid = imread([ROImorphPath,'\',morphfn]);
+% %             Respfid = imread([ROIrespPath,'\',Respfn]);
+% % 
+% %             hhf = figure('position',[100 120 1700 950]);
+% %             subplot(3,4,1)
+% %             imshow(morphfid);
+% %             axis off
+% % 
+% %             subplot(3,4,[2,3,4,6,7,8,10,11,12])
+% %             imshow(Respfid);
+% %             axis off
+% % 
+% %             ROIstrs = strsplit(morphfn,' ');
+% %             saveas(hhf,sprintf('%s Merged figure save',ROIstrs{1}));
+% %             saveas(hhf,sprintf('%s Merged figure save',ROIstrs{1}),'png');
+% %             close(hhf);
+% %         end
         nTargetPath = nTargetPath + 1;
         TargetPath{nTargetPath} = [cROIinfoPath filesep 'ROI_merge_figure'];
         %

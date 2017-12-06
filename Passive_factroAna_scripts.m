@@ -81,7 +81,7 @@ for ntr = 1 : length(trial_outcome)
     cTrTrace = squeeze(FSDataNorm(ntr,:,:));
     cTrLeftDis = sqrt(sum((cTrTrace - LeftMeanTrace).^2));   % LeftMeanTrace
     cRightDis = sqrt(sum((cTrTrace - RightMeanTrace).^2));  % RightMeanTrace
-    cTrLRIndex = (cTrLeftDis - cRightDis)/sum(cTrLeftDis + cRightDis);
+    cTrLRIndex = (cTrLeftDis - cRightDis)./(cTrLeftDis + cRightDis);
     cLRIndexSum(ntr,:) = cTrLRIndex;
 end
 cLRIndexSumNor = cLRIndexSum./max(abs(cLRIndexSum(:)));

@@ -34,23 +34,51 @@ FrameRate = round(header.SI4.scanFrameRate);
 cd(fp);
 AllFiles = dir('*.tif');
 nfiles = length(AllFiles);
- nROIs = length(ROImaskCell);
-ROIdata = zeros(nfiles,nROInum,nFrame);
-parfor nf = 1 : nfiles
-    cfilename = AllFiles(nf).name;
-    [im,h] = load_scim_data(cfilename);
+nROIs = length(ROImaskCell);
+try
+    ROIdata = zeros(nfiles,nROInum,nFrame);
+    parfor nf = 1 : nfiles
+        cfilename = AllFiles(nf).name;
+        [im,h] = load_scim_data(cfilename);
 
-    cFileData = zeros(nROInum,nFrame);
-    for cROI = 1 : nROIs
-        cROImask = ROImaskCell{cROI};
-        FileMask = repmat(cROImask,1,1,nFrame);
-        cROIpixelnum = sum(sum(cROImask));
-        ROI_im_data = double(reshape(im(FileMask),cROIpixelnum,[]));
-        cFileData(cROI,:) = mean(ROI_im_data);
+        cFileData = zeros(nROInum,nFrame);
+        for cROI = 1 : nROIs
+            cROImask = ROImaskCell{cROI};
+            FileMask = repmat(cROImask,1,1,nFrame);
+            cROIpixelnum = sum(sum(cROImask));
+            ROI_im_data = double(reshape(im(FileMask),cROIpixelnum,[]));
+            cFileData(cROI,:) = mean(ROI_im_data);
+        end
+        ROIdata(nf,:,:) = cFileData;
     end
-    ROIdata(nf,:,:) = cFileData;
+    save SegROIdata.mat ROIdata ROImaskCell -v7.3
+catch ME
+    fprintf('Error message:\n%s\n',ME.message);
+    nfframes = zeros(length(nfiles),1);
+    for nf = 1 : nfiles
+        fname = AllFiles(nf).name;
+        iminfo = imfinfo(fname);
+        nfframes(nf) = length(iminfo);
+    end
+    nFrames = min(nfframes);
+    ROIdata = zeros(nfiles,nROInum,nFrames);
+    parfor nf = 1 : nfiles
+        cfilename = AllFiles(nf).name;
+        [im,h] = load_scim_data(cfilename);
+        im = double(im(:,:,1:nFrames));
+        cFileData = zeros(nROInum,nFrames);
+        for cROI = 1 : nROIs
+            cROImask = ROImaskCell{cROI};
+            FileMask = repmat(cROImask,1,1,nFrames);
+            cROIpixelnum = sum(sum(cROImask));
+            ROI_im_data = double(reshape(im(FileMask),cROIpixelnum,[]));
+            cFileData(cROI,:) = mean(ROI_im_data);
+        end
+        ROIdata(nf,:,:) = cFileData;
+    end
+    save SegROIdata.mat ROIdata ROImaskCell -v7.3
 end
-save SegROIdata.mat ROIdata ROImaskCell -v7.3
+    
 %%
 FrawData = zeros(size(ROIdata)); % swltf/F data set
 for n = 1 : nROIs
@@ -106,3 +134,4 @@ saveas(hhf,'Segmental ROI response to sound labeling','png');
 saveas(hhf,'Segmental ROI response to sound labeling','pdf');
 save ROIindex.mat ROIinds -v7.3
 cd ..;
+close(hhf);

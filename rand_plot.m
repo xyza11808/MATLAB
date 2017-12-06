@@ -114,6 +114,7 @@ for n = 1:fileNum
     ylabel('Outcomes');
     set(gca,'FontSize',20);
     title('Session animal response plot')
+    set(gca,'FontSize',20);
     if exist('fn','var')
         saveas(h_points,[fn(1:end-4),'_Behav_plot']);
         saveas(h_points,[fn(1:end-4),'_Behav_plot'],'png');
@@ -133,6 +134,7 @@ for n = 1:fileNum
     hold off;
     title_name='Behavior\_plot';
     title(title_name);
+    set(gca,'FontSize',20);
     if exist('fn','var')
         saveas(gcf,[fn(1:end-4),'_correct_rate.png'],'png');
         saveas(gcf,[fn(1:end-4),'_correct_rate.png']);
@@ -142,6 +144,7 @@ for n = 1:fileNum
         saveas(gcf,'Behavior_correct_rate.png');
         boundary_result(n).SessionName='';
     end
+    
     close;
     
     boundary_result(n).LeftCorr=mean(rewarded(inds_leftTrials));
@@ -223,6 +226,7 @@ for n = 1:fileNum
             boundary_result(n).P_value=mdl.Coefficients.pValue;
             
         end
+        
         close;
         h3=figure;
         scatter(octave_dist,reward_type,30,'MarkerEdgeColor','r','MarkerFaceColor','y');
@@ -242,13 +246,14 @@ for n = 1:fileNum
         set(gcf,'xticklabel',sprintf('%.1f|',xtick_label));
         xlabel('Frequency(kHz)');
         ylabel('Rightward choice');
-        
+        set(gca,'FontSize',20);
         hold off;
         if exist('fn','var')
             saveas(h3,[fn(1:end-4),'_fit plot.png'],'png');
         else
             saveas(h3,['Behav_fit plot.png'],'png');
         end
+        
         close;
         syms x
         internal_boundary=solve(modelfun(b,x)==0.5,x);
@@ -315,7 +320,7 @@ for n = 1:fileNum
         set(gcf,'xticklabel',sprintf('%.1f|',xtick_label));
         xlabel('Frequency(kHz)');
         ylabel('Rightward choice');
-        
+        set(gca,'FontSize',20);
         if exist('fn','var')
             saveas(h3,[fn(1:end-4),'_fit plot.png'],'png');
         else
@@ -398,7 +403,7 @@ for n = 1:fileNum
         set(gca,'xticklabel',cellstr(num2str(xtick_label(:),'%.1f')));
         xlabel('Frequency(kHz)');
         ylabel('Rightward choice');
-        
+        set(gca,'FontSize',20);
         if exist('fn','var')
             saveas(h3,[fn(1:end-4),'_fit plot'],'png');
             saveas(h3,[fn(1:end-4),'_fit plot'],'fig');
@@ -406,6 +411,7 @@ for n = 1:fileNum
             saveas(h3,'Behav_fit plot','png');
             saveas(h3,'Behav_fit plot','fig');
         end
+        
         close;
         syms x
 %         internal_boundary=solve(modelfun(ParAll,x)==0.5,x);
@@ -430,9 +436,10 @@ for n = 1:fileNum
         octave_sum=log2(double(max(behavResults.Stim_toneFreq))/double(min(behavResults.Stim_toneFreq)));
         octave_dist = log2(double(stim_types)/double(min(stim_types)));
         reward_type(1:floor(length(stim_types)/2))=1-reward_type(1:floor(length(stim_types)/2));
+        %%
         h4=figure;
-        scatter(octave_dist,reward_type,30,'MarkerEdgeColor','k','LineWidth',1.5);
-        text(octave_dist,reward_type,cellstr(num2str(TypeNumber(:),'n=%d')),'Fontsize',15,'color','b');
+        scatter(octave_dist,reward_type,50,'MarkerEdgeColor','k','LineWidth',3);
+        text(octave_dist+0.01,reward_type-0.02,cellstr(num2str(TypeNumber(:),'n=%d')),'Fontsize',16,'color','b');
         hold on;
         % for parameters: g,l,u,v
         UL = [0.5, 0.5, max(octave_dist), 100];
@@ -441,14 +448,16 @@ for n = 1:fileNum
         ParaBoundLim = ([UL;SP;LM]);
         fit_ReNew = FitPsycheCurveWH_nx(octave_dist, reward_type, ParaBoundLim);
         %
-        plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'color','k','LineWidth',1.8);
+        plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'color','k','LineWidth',2.4);
         hold off;
         ylim([0 1]);
         set(gca,'xtick',octave_dist);
-        Freqs = double(behavResults.Stim_toneFreq);
+        Freqs = double(unique(behavResults.Stim_toneFreq));
         set(gca,'xticklabel',cellstr(num2str(Freqs(:)/1000,'%.1f')));
         xlabel('Frequency(kHz)');
         ylabel('Rightward choice');
+        set(gca,'FontSize',16);
+        %%
         if exist('fn','var')
             saveas(h4,[fn(1:end-4),'_fit plot'],'png');
             saveas(h4,[fn(1:end-4),'_fit plot'],'fig');

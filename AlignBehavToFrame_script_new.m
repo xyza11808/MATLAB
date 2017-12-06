@@ -176,18 +176,30 @@ RawData = SavedCaTrials.f_raw;
 [~,DeltaF_F,exclude_inds]=FluoChangeCa2NPl(SavedCaTrials,behavResults,behavSettings,5,'2afc',ROIinfoBU,[]);
 %% spike convertion
 %parameter struc
-V.Ncells = 1;
-V.T = FrameNum;
-V.Npixels = 1;
-V.dt = FrameTime/1000;
-P.lam = 10;
-P.gam = 1 - V.dt/5; % tau = 5s, peak decay time
-ROIstd = std(baselineDataAll,[],2);
-nnspike = DataFluo2Spike(DeltaF_F,V,P,[],ROIstd); % estimated spike
-nnspike(nnspike < 0.001) = 0; 
-nnspike = nnspike + 0.001;
-save newSpikeSave.mat nnspike DeltaF_F TrTaskParaAll -v7.3
-% %%
+TauDiffSPdata = cell(10,1);
+TauSpikeCoef = cell(10,1);
+TauDiffSPdataNS = cell(10,1);
+ROIstd = std(BaseDEFAll,[],2);
+%%
+for nTau = 1 : 10
+    %%
+    V.Ncells = 1;
+    V.T = FrameNum;
+    V.Npixels = 1;
+    V.dt = FrameTime/1000;
+    P.lam = 10;
+    P.gam = 1 - V.dt/nTau; %
+    %%
+    [nnspike,nnCoef,nnspikeNS] = DataFluo2Spike(DeltaF_F,V,P,[],ROIstd); % estimated spike
+    TauDiffSPdata{nTau} = nnspike;
+    TauSpikeCoef{nTau} = nnCoef;
+    TauDiffSPdataNS{nTau} = nnspikeNS;
+end
+save DiffTauSPdata.mat TauDiffSPdata -v7.3
+%
+save newSpikeSave.mat DeltaF_F TrTaskParaAll TauSpikeCoef TauDiffSPdataNS -v7.3
+% save newSpikeSave.mat nnspike DeltaF_F TrTaskParaAll TauSpikeCoef TauDiffSPdataNS -v7.3
+%% %%
 % ROImd = cell(size(nnspike,2),1);
 % for cROI = 1 : size(nnspike,2)
 %     %
@@ -241,7 +253,7 @@ CVindsAll = cell(nROIs,1);
 CVPredData = cell(nROIs,nIters);
 %%
 parfor croi = 1 : nROIs
-    %
+    %%
     cRdata = squeeze(nnspike(:,croi,:));
     cRdata = cRdata';
     cc = cvpartition(nTrs,'kFold',10);
@@ -249,7 +261,7 @@ parfor croi = 1 : nROIs
     options = glmnetSet;
     options.alpha = 0.9;
     options.nlambda = 110;
-    %
+    %%
     for citer = 1 : nfolds
         %%
         TrainIndsLogi = cc.training(citer);
@@ -263,9 +275,10 @@ parfor croi = 1 : nROIs
         cvmdfit = cvglmnet(TrainParaData,TrainData,'poisson',options);
         cvmdCoef  = cvglmnetCoef(cvmdfit,'lambda_1se');
         ROImdCoef{croi,citer} = cvmdCoef;
-        PredTestData = cvglmnetPredict(cvmdfit,TestParaData,[],'poisson');
+        PredTestData = cvglmnetPredict(cvmdfit,TestParaData,[],'response',false);
+        %%
         CVPredData{croi,citer} = PredTestData;  % cvPredDataRe = reshape(cvPredData,500,[]);
-        %% figure;imagesc(cvPredDataRe');
+        % figure;imagesc(cvPredDataRe');
         
         [coef,cop] = corrcoef(PredTestData,TestData);
         PredCoef(croi,citer) = coef(1,2);

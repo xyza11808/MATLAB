@@ -72,7 +72,7 @@ if isPlot
     nROIs = size(AnsAlignData,2);
     for cROI = 1 : nROIs
         cROIdata = squeeze(AnsAlignData(:,cROI,:));
-        clim = [0 prctile(cROIdata(:),80)];
+        clim = [0 prctile(cROIdata(:),85)];
         if clim(2) < 0
             clim(2) = 10;
         end

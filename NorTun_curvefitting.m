@@ -5,12 +5,13 @@ clc
 fpath = fullfile(fp,fn);
 ff = fopen(fpath);
 tline = fgetl(ff);
+%%
 while ischar(tline)
     if isempty(strfind(tline,'NO_Correction\mode_f_change'))
         tline = fgetl(ff);
         continue;
     else
-        SpikeDataPath = [tline,'\Spike_Tunfun_plotNewmean'];
+        SpikeDataPath = [tline,'\Tunning_fun_plot'];
         cd(SpikeDataPath);
         load('TunningDataSave.mat');
         
@@ -29,12 +30,12 @@ while ischar(tline)
         for ROInum = 1 : nROIs
             % ROInum = 1;
             cROITunData = CorrTunningFun(:,ROInum);
-            if max(cROITunData) < 1
+            if max(cROITunData) < 10
                 fprintf('ROI%d shows no significant response.\n',ROInum);
                 ROIisResponsive(ROInum) = 0;
                 continue;
             end
-            NorTundata = cROITunData(:)/mean(cROITunData);
+            NorTundata = cROITunData(:);%/mean(cROITunData);
             OctaveData = TaskFreqOctave(:);
 
             % using logistic fitting of current data
@@ -47,9 +48,9 @@ while ischar(tline)
             LogCoefFit{ROInum} = bCurvefit;
             
             % using gaussian fitting of current data
-            modelfunc = @(c,x) c(1)*exp((-1)*((x - c(2)).^2)./(2*(c(3)^2)));
+            modelfunc = @(c,x) c(1)*exp((-1)*((x - c(2)).^2)./(2*(c(3)^2)))+c(4);
             [AmpV,AmpInds] = max(NorTundata);
-            c0 = [AmpV,OctaveData(AmpInds),0.4];  % 0.4 is the octave step
+            c0 = [AmpV,OctaveData(AmpInds),0.4,min(NorTundata)];  % 0.4 is the octave step
             [cFit,~,~,~,cMSE,~] = nlinfit(OctaveData,NorTundata,modelfunc,c0,opts);
             GauFitMSE(ROInum) = cMSE;
             GauCoefFit{ROInum} = cFit;

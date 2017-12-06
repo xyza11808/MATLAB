@@ -75,8 +75,14 @@ end
 
 frame_rate=floor(1000/CaTrials(1).FrameTime);
 nROIs=CaTrials(1).nROIs;
-nFrames=CaTrials(1).nFrames;
-TimeLen = ceil(nFrames/frame_rate);
+if ~iscell(CaTrials(1).f_raw)
+    nFrames=CaTrials(1).nFrames;
+    TimeLen = ceil(nFrames/frame_rate);
+else
+    nTrFrames = cellfun(@(x) size(x,2),CaTrials(1).f_raw);
+    nFrames = prctile(nTrFrames,95);
+    TimeLen = ceil(nFrames/frame_rate);
+end
 % ROI_frame_size=size(CaTrials(1).f_raw);
 result_size=[trial_num,nROIs,nFrames];  % this should be a three elements vector indicates the length of three dimensions
 %this place should be modified
@@ -159,6 +165,16 @@ cd('./plot_save/');
 
 if strcmpi(type,'RF')
     [f_raw_trials,f_percent_change,exclude_inds]=FluoChangeCa2NPl(CaTrials,[],[],2,type,ROIinfo,TrExcludedInds);
+    if iscell(f_percent_change)  % if continued-acquisition session
+        FrameLen = cellfun(@(x) size(x,2),f_percent_change);
+        UsedLen = min(FrameLen);
+        CutData = zeros(length(FrameLen),size(f_percent_change{1},1),UsedLen);
+        for cTr = 1 : length(FrameLen)
+            CutData(cTr,:,:) = f_percent_change{cTr}(:,1:UsedLen);
+        end
+        f_percent_change = CutData;
+        result_size = size(CutData);
+    end
     NoiseRFStd=NoiseExtraction(f_percent_change);
     save ROINoise.mat NoiseRFStd -v7.3
 %     %ROI response towards given sounds
@@ -177,7 +193,7 @@ if strcmpi(type,'RF')
     end
     sound_array=textread([fn_path,'/',fn]);
     sound_array(exclude_inds,:)=[];
-    size_raw_trials=size(f_raw_trials);
+    size_raw_trials=size(f_percent_change);
     if exist(fullfile(SessPath,'SessionFrameProj.mat'),'file')
         Image2P_ROIlabeling_Infun
     end
@@ -207,7 +223,7 @@ if strcmpi(type,'RF')
     SelectData = f_percent_change(SelectInds,:,:);
     SelectSArray = sound_array(SelectInds,1);
     PassOutcome = ones(length(SelectSArray),1);
-    save rfSelectDataSet.mat SelectData SelectSArray frame_rate SelectInds -v7.3
+    save rfSelectDataSet.mat SelectData SelectSArray frame_rate SelectInds f_percent_change sound_array -v7.3
     SoundFreqs = double(sound_array(:,1) > 16000);
     SessionBoundary = FreqArray(ceil(length(FreqArray)/2));
     TrialTypes = SelectSArray > SessionBoundary;
@@ -231,6 +247,7 @@ if strcmpi(type,'RF')
     V.Npixels = 1;
     V.dt = 1/frame_rate;
     P.lam = 10;
+    P.gam = 1 - V.dt/3; % Tau = 3, decay time for calcium event 
      nnspike = DataFluo2Spike(SelectData,V,P); % estimated spike
      if ~isdir('./SpikeData_analysis/')
          mkdir('./SpikeData_analysis/');
@@ -291,6 +308,7 @@ if strcmpi(type,'RF')
         % if the total trial number can not be fully divided by freq and
         % intensity product, using extra plot
         UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);  % performing color plot
+        PassRespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);
 %         UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate,[],0); % not performing color plot
 %     end
     %%

@@ -68,12 +68,17 @@ function [n_best P_best V C]=fast_oopsi(F,V,P,varargin)
 
 %% check data
 
-if any(isnan(F));
+if any(isnan(F))
     error('nan in your data')
 end
 if nargin > 3
     if ~isempty(varargin{1})
         P.sig = varargin{1};
+    end
+end
+if nargin > 4
+    if ~isempty(varargin{2})
+        P.b = varargin{2};
     end
 end
 %% initialize algorithm Variables

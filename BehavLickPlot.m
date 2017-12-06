@@ -5,7 +5,9 @@ function BehavLickPlot(behavStruct,BehavSetting,LickEndT,varargin)
 if isempty(LickEndT)
     LickEndT=10;
 end
-
+if LickEndT > 10
+    LickEndT = 9;
+end
 TrialTypes=behavStruct.Trial_Type;
 TrialStimOnT=behavStruct.Time_stimOnset;
 RespDelay=BehavSetting.responseDelay;
