@@ -114,7 +114,7 @@ set(handles.IsConAcqCheck, 'Value',0);
 
 CaSignal.CaTrials = struct([]);
 CaSignal.ROIinfo = struct('ROImask',{}, 'ROIpos',{}, 'ROItype',{},'BGpos',[],...
-        'BGmask', [], 'ROI_def_trialNo',[], 'Method','','Ringmask',[],'LabelNPmask',{});
+        'BGmask', [], 'ROI_def_trialNo',[], 'Method','','Ringmask',[],'LabelNPmask',{},'ROIdefinePath',{},'SourcePath',{});
 CaSignal.ROIinfoBack = CaSignal.ROIinfo;
 % CaSignal.ICA_ROIs = struct('ROImask',{}, 'ROIpos',{}, 'ROItype',{},'Method','ICA');
 CaSignal.ImageArray = [];
@@ -153,8 +153,9 @@ CaSignal.ROIStateIndicate = [];
 CaSignal.ROIInfoPath = '';
 CaSignal.ContAcqCheck = 0;
 CaSignal.IsAutozoom = 0;
+CaSignal.IsROIUpdated = []; % value will be 1 if ROI was newly added or modified from loaded file
 fprintf('Matlab Two-photon imaging data analysis GUI.\n');
-fprintf('           Version :  2.03.05             \n');
+fprintf('           Version :  2.03.10             \n');
 % Update handles structure
 guidata(hObject, handles);
 
@@ -211,7 +212,7 @@ CaTrial.SegNPData = [];
 CaTrial.RegTargetFrNo = [];
 % CaTrial.ROIinfo = struct('ROImask',{}, 'ROIpos',{}, 'ROItype',{},'Method','');
 CaTrial.ROIinfo = struct('ROImask',{}, 'ROIpos',{}, 'ROItype',{},'BGpos',[],...
-        'BGmask', [], 'ROI_def_trialNo',[], 'Method','','Ringmask',[],'LabelNPmask',[]);
+        'BGmask', [], 'ROI_def_trialNo',[], 'Method','','Ringmask',[],'LabelNPmask',[],'ROIdefinePath',{},'SourcePath',{});
 CaTrial.ROIinfoBack = CaTrial.ROIinfo ;
 CaTrial.SoloDataPath = '';
 CaTrial.SoloFileName = '';
@@ -1061,6 +1062,7 @@ CaSignal.ROIinfoBack(1).ROI_def_trialNo(CurrentROINo) = TrialNo;
 % CaSignal.ROIinfoBack(1).nROIs = length(CaSignal.ROIinfoBack(1).ROIpos);
 CaSignal.IsDoubleSetROI = 0;
 CaSignal.IsMultiSet = 0;
+CaSignal.IsROIUpdated(CurrentROINo) = 1;
 
 set(handles.import_ROIinfo_from_trial, 'String', num2str(TrialNo));
 % 
@@ -1137,12 +1139,13 @@ switch choice
             ROIinfo = r.ROIinfoBU;
         end
         CaSignal.IsROIinfoLoad = 1;
+        LoadPath = pth;
     case 'No'
         return
     otherwise
         fprintf('Quit ROIinfo loading processing.\n');
 end
-import_ROIinfo(ROIinfo, handles);
+import_ROIinfo(ROIinfo, handles, LoadPath);
 
 
 function import_ROIinfo_from_trial_Callback(hObject, eventdata, handles)
@@ -1157,14 +1160,24 @@ else
     warning('No ROIs specified!');
 end
 
-function import_ROIinfo(ROIinfo, handles,hObject,eventdata)
+function import_ROIinfo(ROIinfo, handles, varargin)
 % update the ROIs of the current trial with the input "ROIinfo".
 global CaSignal % ROIinfo ICA_ROIs
+if isempty(varargin)
+    InputPath = '';
+else
+    InputPath = varargin{1};
+end
 TrialNo = str2double(get(handles.CurrentTrialNo,'String'));
 
 FileName_prefix = CaSignal.CaTrials(TrialNo).FileName_prefix;
 emptyROIs=[];
 if isfield(ROIinfo,'Ringmask') && isfield(ROIinfo,'LabelNPmask')
+    if ~isfield(ROIinfo,'ROIdefinePath')
+        ROInumbers = length(ROIinfo.Ringmask);
+        ROIinfo.SourcePath = {InputPath};
+        ROIinfo.ROIdefinePath = repmat({'Source=1#'},ROInumbers,1);
+    end
     CaSignal.ROIinfo(TrialNo) = ROIinfo;
     CaSignal.ROIinfoBack(1) = ROIinfo;
     if sum(cellfun(@isempty,CaSignal.ROIinfoBack.Ringmask))
@@ -1208,6 +1221,11 @@ else
 %         ROIinfo.LabelNPmask{n}=
     end
     CaSignal.ROIsummask=ROIsum;
+    if ~isfield(ROIinfo,'ROIdefinePath')
+        ROInumbers = length(ROIinfo.Ringmask);
+        ROIinfo.SourcePath = {InputPath};
+        ROIinfo.ROIdefinePath = repmat({'Source=1#'},ROInumbers,1);
+    end
     CaSignal.ROIinfo = ROIinfo;
     CaSignal.ROIinfoBack = ROIinfo;
 end
@@ -1390,6 +1408,44 @@ nTrials = length(CaSignal.CaTrials);
 CaTrials_local = CaSignal.CaTrials;
 ROIinfo_local = CaSignal.ROIinfoBack;
 ROIpos = CaSignal.ROIinfoBack(1).ROIpos;
+
+% ################################################################
+% update ROI defined information, upated 20171206
+if sum(CaSignal.IsROIUpdated)
+    cPath = CaSignal.data_path;
+    AllROIState = zeros(nTROIs,1);
+    if length(CaSignal.IsROIUpdated) > nTROIs
+        error('matrix dimension disagree');
+    end
+    AllROIState(1:length(CaSignal.IsROIUpdated)) = CaSignal.IsROIUpdated;
+    ModiROIs = find(AllROIState);
+    nModiROIs = length(ModiROIs);
+    UpperPath = UpperDataPathGene(ROIinfo_local.SourcePath);
+    IscpathExist = strcmpi(UpperPath,cPath);
+    if sum(IscpathExist)
+        cPathIndex = find(IscpathExist);
+    else
+        cPathIndex = length(IscpathExist)+1;
+        ROIinfo_local.SourcePath{cPathIndex} = cPath;
+    end
+    for cModiROI = 1 : nModiROIs
+        cROI = ModiROIs(cModiROI);
+        if cROI > length(ROIinfo_local.ROIdefinePath)  % newly added ROIs
+            ROIinfo_local.ROIdefinePath{cROI} = sprintf('Source=%d#',cPathIndex);
+        else
+            ExistStr = ROIinfo_local.ROIdefinePath{cROI};
+            if isempty(strfind(ExistStr,sprintf('Update=%d#',cPathIndex))) % if it already at the end, skip update defination string
+                if ~strcmpi(ExistStr,sprintf('Source=%d#',cPathIndex)) % loaded same session ROI after calculation, but re-do ROI drawing
+                    NewStr = sprintf('%sUpdate=%d#',strrep(ExistStr,'Update','modi'),cPathIndex);
+                    ROIinfo_local.ROIdefinePath{cROI} = NewStr;
+                end
+            end
+        end
+    end
+end
+% end here
+% ###############################################################
+
 %#####################################
 %recheck whether Ring back is overlapped with any ROI
 ALLROImaskR=CaSignal.ROIinfoBack(1).Ringmask;
@@ -1447,6 +1503,7 @@ CaSignal.ROIinfoBack(1).LabelNPmask = LabelNPmask;
 ROIinfo_local(1).LabelNPmask = LabelNPmask;
 CaSignal.ROIinfo(1).LabelNPmask = LabelNPmask;
 TotalStateIndic = CaSignal.ROIStateIndicate;
+CaSignal.ROIinfoBack = ROIinfo_local;
 %###########################################################################
     % Make sure the ROIinfo of the first trial of the batch is up to date
 for TrialNo = Start_trial:End_trial

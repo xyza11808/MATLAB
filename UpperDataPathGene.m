@@ -8,6 +8,9 @@ if ~iscell(DataPath)
     else
         UpperPath = DataPath(1:SlashInds(end)-1);
     end
+    if isempty(strfind(UpperPath,'im_data_reg'))
+        UpperPath = DataPath;
+    end
 else
     cellNum = length(DataPath);
     UpperPath = cell(cellNum,1);
@@ -16,9 +19,13 @@ else
         SlashInds = strfind(cPath,filesep);
 %         SlashInds = SlashIndsCell{:};
         if SlashInds(end) == length(cPath)
-            UpperPath{cCell} = cPath(1:SlashInds(end-1)-1); % excluded the last slash character
+            UpperPathUsed = cPath(1:SlashInds(end-1)-1); % excluded the last slash character
         else
-            UpperPath{cCell} = cPath(1:SlashInds(end-1));
+            UpperPathUsed = cPath(1:SlashInds(end)-1);
         end
+        if isempty(strfind(UpperPathUsed,'im_data_reg'))
+            UpperPathUsed = cPath;
+        end
+        UpperPath{cCell} = UpperPathUsed;
     end
 end

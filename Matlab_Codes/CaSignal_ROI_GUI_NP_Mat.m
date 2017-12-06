@@ -1461,7 +1461,7 @@ if isempty(CaSignal.ROIsummask) || CaSignal.IsROIinfoLoad
     CaSignal.ROIsummask=SumROI;
 end
 FrameSize=CaSignal.imSize(1:2);
-[LabelNPmask,Labels]=SegNPGeneration_CRM_170228(FrameSize,ROIpos,ALLROImask);
+[LabelNPmask,Labels]=SegNPGeneration(FrameSize,ROIpos,ALLROImask);
 CaSignal.SegNumber = length(LabelNPmask);
 CaSignal.ROINPlabel=Labels;
 % % CaSignal.ROIinfoBack(1).Ringmask(EmptyROIs)=[];
