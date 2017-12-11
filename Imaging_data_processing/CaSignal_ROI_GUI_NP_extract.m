@@ -1408,7 +1408,9 @@ nTrials = length(CaSignal.CaTrials);
 CaTrials_local = CaSignal.CaTrials;
 ROIinfo_local = CaSignal.ROIinfoBack;
 ROIpos = CaSignal.ROIinfoBack(1).ROIpos;
-
+if isempty(ROIinfo_local.SourcePath)
+    ROIinfo_local.SourcePath = CaSignal.data_path;
+end
 % ################################################################
 % update ROI defined information, upated 20171206
 if sum(CaSignal.IsROIUpdated)

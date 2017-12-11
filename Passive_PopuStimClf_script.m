@@ -3,6 +3,7 @@
 if ~fi
     return;
 end
+[Taskfn,Taskfp,~] = uigetfile('*.txt','Please select task data saving path');
 %%
 fPath = fullfile(fp,fn);
 fid = fopen(fPath);
@@ -30,68 +31,10 @@ while ischar(tline)
     tline = fgetl(fid);
 end
 
-%%
-m = 1;
-if ~fi
-    return;
-else
-    fpath = fullfile(fp,fn);
-    ff = fopen(fpath);
-    tline = fgetl(ff);
-    while ischar(tline)
-        if isempty(strfind(tline,'plot_save\NO_Correction'))
-            tline = fgetl(ff);
-            continue;
-        else
-            if m == 1
-                %
-                PPTname = input('Please input the name for current PPT file:\n','s');
-                if isempty(strfind(PPTname,'.ppt'))
-                    PPTname = [PPTname,'.pptx'];
-                end
-                pptSavePath = uigetdir(pwd,'Please select the path used for ppt file savege');
-                %
-            end
-                cFluoDataPath = fullfile(tline,'NeuroM_MC_TbyT\AfterTimeLength-1500ms');
-%                 cSPDataPath = [tline,'\Spike_Tunfun_plot'];
-%                 cd(cFluoDataPath);
-                filePattern = 'Multi class classification error rate.png';
-                Anminfo = SessInfoExtraction(tline);
-                pptFullfile = fullfile(pptSavePath,PPTname);
-                if ~exist(pptFullfile,'file')
-                    NewFileExport = 1;
-                else
-                    NewFileExport = 0;
-                end
-                if NewFileExport
-                    exportToPPTX('new','Dimensions',[16,9],'Author','XinYu','Comments','Export of tunning curve plot data');
-                else
-                    exportToPPTX('open',pptFullfile);
-                end
-                
-                exportToPPTX('addslide');
-                cPNGfullfile = fullfile(cFluoDataPath,filePattern);
-                FluoFigure = imread(cPNGfullfile);
-                exportToPPTX('addtext','Classification correct rate','Position',[5 1 6 2],'FontSize',24);
-                exportToPPTX('addnote',cFluoDataPath);
-                exportToPPTX('addpicture',cPNGfullfile,'Position',[2 2 8 5.44]);
-                exportToPPTX('addtext',sprintf('Batch:%s \r\nAnm: %s\r\nDate: %s\r\nField: %s',...
-                        Anminfo.BatchNum,Anminfo.AnimalNum,Anminfo.SessionDate,Anminfo.TestNum),...
-                        'Position',[12 3 3 3],'FontSize',22);
-%                 exportToPPTX('addpicture',SpikeFigure,'Position',[8 2 8 6]);
-        end
-         m = m + 1;
-         saveName = exportToPPTX('saveandclose',pptFullfile);
-         tline = fgetl(ff);
-    end
-    fprintf('Current figures saved in file:\n%s\n',saveName);
-    cd(pptSavePath);
-end
 
-%%
-clear
-clc
-[Taskfn,Taskfp,~] = uigetfile('*.txt','Please select task data saving path');
+clearvars -except Taskfn Taskfp
+
+% [Taskfn,Taskfp,~] = uigetfile('*.txt','Please select task data saving path');
 
 fpath = fullfile(Taskfp,Taskfn);
 fid = fopen(fpath);
@@ -117,4 +60,80 @@ while ischar(tline)
     multiCClass(smooth_data(radom_inds,:,:),behavResults.Stim_toneFreq(radom_inds),trial_outcome(radom_inds),start_frame,frame_rate,1.5);
     
     tline = fgetl(fid);
+end
+%%
+m = 1;
+if ~fi
+    return;
+else
+    Passfpath = fullfile(fp,fn);
+    ff = fopen(Passfpath);
+    tline = fgetl(ff);
+    
+    TaskfPath = fullfile(Taskfp,Taskfn);
+    Taskff = fopen(TaskfPath);
+    Taskline = fgetl(Taskff);
+    
+    while ischar(tline)
+        if isempty(strfind(tline,'plot_save\NO_Correction'))
+            tline = fgetl(ff);
+            Taskline = fgetl(Taskff);
+            continue;
+        else
+            if m == 1
+                %
+                PPTname = input('Please input the name for current PPT file:\n','s');
+                if isempty(strfind(PPTname,'.ppt'))
+                    PPTname = [PPTname,'.pptx'];
+                end
+                pptSavePath = uigetdir(pwd,'Please select the path used for ppt file savege');
+                %
+            end
+                cFluoDataPath = fullfile(Taskline,'NeuroM_MC_TbyT\AfterTimeLength-1500ms');
+                cPassDataPath = fullfile(tline,'NeuroM_MC_TbyT\AfterTimeLength-1000ms');
+                BehavfilePath = fullfile(Taskline,'RandP_data_plots\Behav_fit plot.png');
+                BehavData = load(fullfile(Taskline,'RandP_data_plots','boundary_result.mat'));
+                BehavBoundary = round((2^BehavData.boundary_result.Boundary)*8000);
+%                 cSPDataPath = [tline,'\Spike_Tunfun_plot'];
+%                 cd(cFluoDataPath);
+                filePattern = 'Multi class classification correct rate.png';
+                Anminfo = SessInfoExtraction(Taskline);
+                pptFullfile = fullfile(pptSavePath,PPTname);
+                if ~exist(pptFullfile,'file')
+                    NewFileExport = 1;
+                else
+                    NewFileExport = 0;
+                end
+                if NewFileExport
+                    exportToPPTX('new','Dimensions',[16,9],'Author','XinYu','Comments','Export of tunning curve plot data');
+                else
+                    exportToPPTX('open',pptFullfile);
+                end
+                
+                exportToPPTX('addslide');
+                cPNGfullfile = fullfile(cFluoDataPath,filePattern);
+                cPassPNGfile = fullfile(cPassDataPath,filePattern);
+                FluoFigure = imread(cPNGfullfile);
+                PassPNGfile = imread(cPassPNGfile);
+                BehavPNGfile = imread(BehavfilePath);
+                exportToPPTX('addtext','Classification correct rate','Position',[4.5 1 6 1],'FontSize',24);
+                exportToPPTX('addnote',cFluoDataPath);
+                exportToPPTX('addpicture',cPNGfullfile,'Position',[0.5 2 6 4.08]);
+                exportToPPTX('addtext','Task','Position',[3 6.5 2 1.5],'FontSize',22);
+                exportToPPTX('addpicture',PassPNGfile,'Position',[6 2 6 4.08]);
+                exportToPPTX('addtext','Passive','Position',[8 6.5 2 1.5],'FontSize',22);
+                exportToPPTX('addpicture',BehavPNGfile,'Position',[12 3 2.5 1.9]);
+                exportToPPTX('addtext',sprintf('Boundary = %dHz',BehavBoundary),'Position',[12 5.4 4 2],'FontSize',22);
+                exportToPPTX('addtext',sprintf('Batch:%s \r\nAnm: %s\r\nDate: %s\r\nField: %s',...
+                        Anminfo.BatchNum,Anminfo.AnimalNum,Anminfo.SessionDate,Anminfo.TestNum),...
+                        'Position',[12 0.5 3 3],'FontSize',22);
+%                 exportToPPTX('addpicture',SpikeFigure,'Position',[8 2 8 6]);
+        end
+         m = m + 1;
+         saveName = exportToPPTX('saveandclose',pptFullfile);
+         tline = fgetl(ff);
+         Taskline = fgetl(Taskff);
+    end
+    fprintf('Current figures saved in file:\n%s\n',saveName);
+    cd(pptSavePath);
 end

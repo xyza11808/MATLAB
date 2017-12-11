@@ -1397,8 +1397,11 @@ nTROIs = CaSignal.CaTrials(1).nROIs;
 nTrials = length(CaSignal.CaTrials);
 
 CaTrials_local = CaSignal.CaTrials;
-ROIinfo_local = CaSignal.ROIinfo;
+ROIinfo_local = CaSignal.ROIinfoBack;
 ROIpos = CaSignal.ROIinfo(1).ROIpos;
+if isempty(ROIinfo_local.SourcePath)
+    ROIinfo_local.SourcePath = CaSignal.data_path;
+end
 % ################################################################
 % update ROI defined information, upated 20171206
 if sum(CaSignal.IsROIUpdated)
@@ -1493,6 +1496,7 @@ CaSignal.ROIinfo(1).Ringmask = AdjustROImaskR;
 CaSignal.ROIinfoBack(1).LabelNPmask = LabelNPmask;
 ROIinfo_local(1).LabelNPmask = LabelNPmask;
 CaSignal.ROIinfo(1).LabelNPmask = LabelNPmask;
+CaSignal.ROIinfoBack = ROIinfo_local;
 %###########################################################################
     % Make sure the ROIinfo of the first trial of the batch is up to date
 for TrialNo = Start_trial:End_trial

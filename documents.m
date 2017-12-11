@@ -184,6 +184,17 @@
 % annotation(figure1,'line',[0.228571428571429 0.508928571428571],...
 %     [0.953761904761905 0.954761904761905],'Color',[0 1 0],'LineWidth',2);
 
+% #########################################################################
+% add a line to the colorbar
+% figure;
+% level = 0.9;
+% h_colorbar = colorbar;
+% h_axes = axes('position', h_colorbar.Position, 'ylim', h_colorbar.Limits, 'color', 'none', 'visible','off');
+% line(h_axes.XLim, level*[1 1], 'color', 'k', 'parent', h_axes,'LineWidth',4);
+
+% while return the reletive object position, remember to add the original
+% axis position
+
 
 %%
 %this section used to be used for all trials plot in AFC_ROI_analysis
