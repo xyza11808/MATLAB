@@ -1,12 +1,13 @@
 %finding the target image for alignment
-cd('F:\batch\batch49\20171118\anm05\test01');
-[im, ~] = load_scim_data('b49a05_test01_2x_rf_150um_20171118_050.tif');
-colormap gray;
-selectframe=im(:,:,1:15);
-imagesc(mean(selectframe,3),[0 40]);
+cd('F:\batch\batch49\20171124\anm02\test02');
+[im, ~] = load_scim_data('b49a02_test02_2x_2afc_180um)29171124_120.tif');
+
+selectframe=im(:,:,1:30);
+figure;
+imagesc(mean(selectframe,3),[0 300]);
 im_reg_target = mean(selectframe,3);
 figure(gcf);
-
+colormap gray;
 %%
 clc
 dir_imreg_src = pwd;
@@ -25,16 +26,16 @@ end
 % save TargetImage.mat im_reg_target
 %
 % % 
-% dir_imreg_src = 'O:\batch40\20170611\anm01\test02';
-% cd(dir_imreg_src);
-% dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
-% BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
-% isFileBadAlign = cellfun(@isempty,BadAlignFrame);
-% if sum(~isFileBadAlign)
-%     save BadAlignF.mat BadAlignFrame -v7.3
-% end
+dir_imreg_src = 'F:\batch\batch49\20171124\anm02\test02rf';
+cd(dir_imreg_src);
+dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
+BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
+isFileBadAlign = cellfun(@isempty,BadAlignFrame);
+if sum(~isFileBadAlign)
+    save BadAlignF.mat BadAlignFrame -v7.3
+end
 %
-% dir_imreg_src = 'R:\batch\batch46\20171029\anm04\test01rf';
+% dir_imreg_src = 'O:\batch40\20170611\anm02\testallrf';
 % cd(dir_imreg_src);
 % dir_imreg_dest = [['F',dir_imreg_src(2:end)] filesep 'im_data_reg_cpu'];
 % BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);

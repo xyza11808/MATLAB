@@ -125,6 +125,7 @@ for cROI = 1 : nROIs
     saveas(hmean,sprintf('ROI%d Mean Trace plot save',cROI),'png');
     close(hmean);
 end
+cd ..;
 % % start plotting, seperated into two figures, color plot and mean trace plot
 % for cROI = 1 : nROIs
 %     cROIdata = squeeze(PassData(:,cROI,:));

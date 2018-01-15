@@ -743,7 +743,7 @@ elseif str2double(continue_char)==2
         ROIstate = [];
     end
     save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate FRewardLickT NormalTrialInds frame_lickAllTrials data ROIstate -v7.3
-    %%
+    %
     
 %     MultiTimes = {[0,0.3],[0,0.5],[0,0.8],[0,1],[0,1.3],[0,1.5]};
 %     SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1,MultiTimes);
@@ -753,7 +753,7 @@ elseif str2double(continue_char)==2
     
 %     TrParaAll = [TrialTypes(:),trial_outcome(:),double(behavResults.Stim_toneFreq(:)),double(behavResults.Action_choice(:))];
 %     TimeCourseChoiceDecod(smooth_data,TrParaAll,start_frame,frame_rate);
-    %
+    %%
     if isfield(CaTrials_signal,'ROIstateIndic')
         AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials,[],ROIstate); % plot lick frames
     else
@@ -766,7 +766,7 @@ elseif str2double(continue_char)==2
     end
     cd('SpikeDataSave');
     
-    AlignedSortPlotAll(SpikeAligned,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials); % plot lick frames
+%     AlignedSortPlotAll(SpikeAligned,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials); % plot lick frames
     cd ..;
 
 %%     RandNMTChoiceDecoding(smooth_data(radom_inds,:,:),behavResults,trial_outcome(radom_inds),start_frame,frame_rate,1.5);
@@ -796,17 +796,17 @@ elseif str2double(continue_char)==2
 %          save EstimateSPsave.mat data_aligned nnspike trial_outcome behavResults start_frame frame_rate NormalTrialInds -v7.3
 %      end
       
-      if ~isdir('./EM_spike_analysis/')
-          mkdir('./EM_spike_analysis/');
-      end
-      cd('./EM_spike_analysis/');
-      
-%      nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
-     TimeCourseStrcSP = TimeCorseROC(SpikeAligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2);  
-     AUCDataASSP = ROC_check(SpikeAligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,0.5,'Stim_time_AlignSP');
-%      
-     ROIAUCcolorp(TimeCourseStrcSP,start_frame/frame_rate,[],'Spike train');
-     cd ..;
+%       if ~isdir('./EM_spike_analysis/')
+%           mkdir('./EM_spike_analysis/');
+%       end
+%       cd('./EM_spike_analysis/');
+%       
+% %      nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
+%      TimeCourseStrcSP = TimeCorseROC(SpikeAligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,[],2);  
+%      AUCDataASSP = ROC_check(SpikeAligned(NormalTrialInds,:,:),TrialTypes(NormalTrialInds),start_frame,frame_rate,0.5,'Stim_time_AlignSP');
+% %      
+%      ROIAUCcolorp(TimeCourseStrcSP,start_frame/frame_rate,[],'Spike train');
+%      cd ..;
      
 %      script_for_summarizedPlot;  % call a script for data preparation and call summarized plot function
      %%

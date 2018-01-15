@@ -2,14 +2,19 @@
 clear
 clc
 
+[fn,fp,fi] = uigetfile('*.txt','Please select the file contains all session paths to be analysized');
+% if ~fi
+%     return;
+% end
 [Pfn,Pfp,Pfi] = uigetfile('*.txt','Please select the file contains all session paths to be analysized');
-if ~Pfi
-    return;
-end
+% if ~Pfi
+%     return;
+% end
+%%
 ErrorSessPath = {};
 ErrorSessNum = 0;
 ErrorSessMessage = {};
-ffullpath = fullfile(Pfp,Pfn);
+ffullpath = fullfile(fp,fn);
 %
 ffid = fopen(ffullpath);
 tline = fgetl(ffid);
@@ -42,10 +47,16 @@ while ischar(tline)
 %              nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
 %              save EstimateSPsave.mat data_aligned nnspike behavResults start_frame frame_rate -v7.3
 %         end
-        if exist('ROIstate','var')
-            AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials,[],ROIstate); % plot lick frames
-        else
-            AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials);
+        try
+            if exist('ROIstate','var')
+                AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials,[],ROIstate); % plot lick frames
+            else
+                AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials);
+            end
+        catch ME
+            ErrorSessNum = ErrorSessNum + 1;
+            ErrorSessPath{ErrorSessNum} = pwd;
+            ErrorSessMessage{ErrorSessNum} = ME;
         end
 %         try
 %             AnsTimeAlignPlot(data_aligned,behavResults,1,frame_rate,trial_outcome,1); 
@@ -78,18 +89,13 @@ while ischar(tline)
     tline = fgetl(ffid);
 end
 
-%%
+%
 % batch scripts for spike data convertion
-clear
-clc
+clearvars -except Pfn Pfp Pfi fn fp fi
 
-[Pfn,Pfp,Pfi] = uigetfile('*.txt','Please select the file contains all session paths to be analysized');
-if ~Pfi
-    return;
-end
-ErrorSessPath = {};
-ErrorSessNum = 0;
-ErrorSessMessage = {};
+ErrorSessPathP = {};
+ErrorSessNumP = 0;
+ErrorSessMessageP = {};
 ffullpath = fullfile(Pfp,Pfn);
 %
 ffid = fopen(ffullpath);
@@ -105,8 +111,8 @@ while ischar(tline)
     cd(cPath);
     
     if ~exist('rfSelectDataSet.mat','file')
-        ErrorSessNum = ErrorSessNum + 1;
-        ErrorSessPath{ErrorSessNum} = pwd;
+        ErrorSessNumP = ErrorSessNumP + 1;
+        ErrorSessPathP{ErrorSessNumP} = pwd;
     else
         clearvars f_percent_change
         load('rfSelectDataSet.mat');
@@ -123,7 +129,13 @@ while ischar(tline)
 %              nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike
 %              save EstimateSPsave.mat data_aligned nnspike behavResults start_frame frame_rate -v7.3
 %         end
-         PassRespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);  % performing color plot
+        try
+            PassRespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);  % performing color plot
+        catch ME
+            ErrorSessNumP = ErrorSessNumP + 1;
+            ErrorSessPathP{ErrorSessNumP} = pwd;
+            ErrorSessMessageP{ErrorSessNumP} = ME;
+        end
 %         try
 %             AnsTimeAlignPlot(data_aligned,behavResults,1,frame_rate,trial_outcome,1); 
 %             LRAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...
@@ -154,6 +166,13 @@ while ischar(tline)
     end
     tline = fgetl(ffid);
 end
+%
+clearvars -except Pfn Pfp Pfi fn fp fi
+TaskPathfn = fn;
+TaskPathfp = fp;
+PassPathfn = Pfn;
+PassPathfp = Pfp;
+Batch_taskPass_tuningPlot_script
 
 %%
 % batch scripts for factor analysis data plot

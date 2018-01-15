@@ -21,6 +21,12 @@ if nargin > 5
         UppreYthres = varargin{2};
     end
 end
+MarkSize = 9;
+if nargin > 6
+    if ~isempty(varargin{3})
+        MarkSize = varargin{3};
+    end
+end
 
 if ~ishandle(hf)
     hf = figure;
@@ -36,59 +42,60 @@ else
         error('Invalid input handle');
     end
 end
-
+TextUppSacle = 0.05;
+StarLineWidth = 1;
 if p > 0.05
     Plotx = x;
     Ploty = max(y)*yScaleFactor;
-    PlotyTickLen = max(y)*0.01;
+%     PlotyTickLen = max(y)*0.01;
     if Ploty < UppreYthres
-        Ploty = UppreYthres + 0.05 * max(y);
+        Ploty = UppreYthres + TextUppSacle * max(y);
     end
     plot(Plotx,[Ploty,Ploty],'k','LineWidth',2);
-    plot([Plotx(1),Plotx(1)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
-    plot([Plotx(2),Plotx(2)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
+%     plot([Plotx(1),Plotx(1)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
+%     plot([Plotx(2),Plotx(2)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
     StarPosx = mean(x);
-    StarPosy = Ploty + max(y)*0.05;
-    text(StarPosx,StarPosy,'N.S.');
+    StarPosy = Ploty + max(y)*TextUppSacle;
+    text(StarPosx,StarPosy,'N.S.','HorizontalAlignment','center');
 elseif p > 0.01
     Plotx = x;
     Ploty = max(y)*yScaleFactor;
-    PlotyTickLen = max(y)*0.01;
+%     PlotyTickLen = max(y)*0.01;
     if Ploty < UppreYthres
-        Ploty = UppreYthres + 0.05 * max(y);
+        Ploty = UppreYthres + TextUppSacle * max(y);
     end
     plot(Plotx,[Ploty,Ploty],'k','LineWidth',2);
-    plot([Plotx(1),Plotx(1)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
-    plot([Plotx(2),Plotx(2)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
+%     plot([Plotx(1),Plotx(1)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
+%     plot([Plotx(2),Plotx(2)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
     StarPosx = mean(x);
-    StarPosy = Ploty + max(y)*0.05;
-    plot(StarPosx,StarPosy,'k*','MarkerSize',9);
+    StarPosy = Ploty + max(y)*TextUppSacle;
+    plot(StarPosx,StarPosy,'k*','MarkerSize',MarkSize,'Linewidth',StarLineWidth);
 elseif p > 0.001
     Plotx = x;
     Ploty = max(y)*yScaleFactor;
-    PlotyTickLen = max(y)*0.01;
+%     PlotyTickLen = max(y)*0.01;
     if Ploty < UppreYthres
-        Ploty = UppreYthres + 0.05 * max(y);
+        Ploty = UppreYthres + TextUppSacle * max(y);
     end
     plot(Plotx,[Ploty,Ploty],'k','LineWidth',2);
-    plot([Plotx(1),Plotx(1)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
-    plot([Plotx(2),Plotx(2)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
+%     plot([Plotx(1),Plotx(1)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
+%     plot([Plotx(2),Plotx(2)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
     InterspaceInds = linspace(x(1),x(2),8);
 %     StarPosy = max(y)*yScaleFactor;
-    StarPosy = Ploty + max(y)*0.05;
-    plot(InterspaceInds([4,5]),[StarPosy StarPosy],'k*','MarkerSize',9);
+    StarPosy = Ploty + max(y)*TextUppSacle;
+    plot(InterspaceInds([4,5]),[StarPosy StarPosy],'k*','MarkerSize',MarkSize,'Linewidth',StarLineWidth);
 else
     Plotx = x;
     Ploty = max(y)*yScaleFactor;
-    PlotyTickLen = max(y)*0.01;
+%     PlotyTickLen = max(y)*0.01;
     if Ploty < UppreYthres
-        Ploty = UppreYthres + 0.05 * max(y);
+        Ploty = UppreYthres + TextUppSacle * max(y);
     end
     plot(Plotx,[Ploty,Ploty],'k','LineWidth',2);
-    plot([Plotx(1),Plotx(1)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
-    plot([Plotx(2),Plotx(2)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
+%     plot([Plotx(1),Plotx(1)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
+%     plot([Plotx(2),Plotx(2)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
     InterspaceInds = linspace(x(1),x(2),9);
 %     StarPosy = max(y)*yScaleFactor;
-    StarPosy = Ploty + max(y)*0.05;
-    plot(InterspaceInds([4,5,6]),[StarPosy StarPosy StarPosy],'k*','MarkerSize',9);
+    StarPosy = Ploty + max(y)*TextUppSacle;
+    plot(InterspaceInds([4,5,6]),[StarPosy StarPosy StarPosy],'k*','MarkerSize',MarkSize,'Linewidth',StarLineWidth);
 end

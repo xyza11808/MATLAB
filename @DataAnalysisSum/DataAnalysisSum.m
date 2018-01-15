@@ -515,7 +515,7 @@ classdef DataAnalysisSum
             
             switch RespCalFun
                 case 'Mean'
-                    RespMatrix = mean(this.SmoothData(:,:,FrameScale(1):FrameScale(2)),3);
+                    RespMatrix = mean(this.(:,:,FrameScale(1):FrameScale(2)),3);
                     RespMatrix = squeeze(RespMatrix);
                 case 'Max'
                     RespMatrix = max(this.SmoothData(:,:,FrameScale(1):FrameScale(2)),[],3);

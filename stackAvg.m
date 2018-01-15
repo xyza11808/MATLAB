@@ -9,7 +9,6 @@ else
     cd(filepath);
     disp(['loading file' filename '...\n']);
     [imdata,imheader]=load_scim_data(filename);
-    
 end
 
 framesize=size(imdata);

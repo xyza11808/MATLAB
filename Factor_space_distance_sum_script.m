@@ -9,6 +9,7 @@ if ~fi
     return;
 end
 %%
+clearvars -except fn fp
 fpath = fullfile(fp,fn);
 fid = fopen(fpath);
 tline = fgetl(fid);
@@ -33,8 +34,10 @@ while ischar(tline)
         tline = fgetl(fid);
         continue;
     end
+    %%
     TaskPath = fullfile(tline,'DimRed_Resplot_smooth','FactorAnaData.mat');
-    %
+    cd(fullfile(tline,'DimRed_Resplot_smooth'));
+    
     isBoundaryToneexits = 0;
 %     [fn,fp,~] = uigetfile('FactorAnaData.mat','Please select your task factor analysis saved data');
 %     TaskPath = fullfile(fp,fn);
@@ -52,14 +55,16 @@ while ischar(tline)
     TRightCorrMean = squeeze(mean(TRightCorrData));
     TaskFactorData{m} = TaskData;
     TaskTime{m} = TaskxTimes;
-    %Task stimulus session plots
+    %% Task stimulus session plots
     Stimtones = double(TaskData.behavResults.Stim_toneFreq);
     Actions = double(TaskData.behavResults.Action_choice);
     LRindex = TaskxTimes.cLRIndexSum;
     LRindexNor = TaskxTimes.cLRIndexSumNor;
     xticksF = 0:TaskxTimes.frame_rate:size(LRindex,2);
+    xsTime = (1:size(LRindex,2))/TaskxTimes.frame_rate;
+    xTickTime = xticksF/TaskxTimes.frame_rate;
     xticklabels = xticksF/(TaskxTimes.frame_rate);
-    Tones = unique(Stimtones);
+    Tones = double(unique(Stimtones));
     ToneNum = length(Tones);
     TaskTones{m} = Stimtones(:);
     TaskOutcomes{m} = TaskData.trial_outcome(:);
@@ -75,7 +80,7 @@ while ischar(tline)
     end
     
     if isBoundaryToneexits
-        h_bound = figure('position',[200 200 1000 800],'Paperpositionmode','auto');
+        h_bound = figure('position',[200 200 800 540],'Paperpositionmode','auto');
         subplot(1,2,1)
         cToneInds = Stimtones(:) == BoundaryTone & Actions(:) == 0;
         cToneIndex = LRindex(cToneInds,:);
@@ -103,14 +108,14 @@ while ischar(tline)
         ylabel('Selection index');
         xlabel('Times(s)');
         title(sprintf('Tone = %d kHz, right trials',BoundaryTone));
-        annotation('textbox',[0.3,0.68,0.3,0.3],'String',sprintf('session%d plots Boundary tine plots',m),'FitBoxToText','on','EdgeColor',...
-                'none','FontSize',18);
-        saveas(h_bound,sprintf('Session%d boundary index plots',m));
-        saveas(h_bound,sprintf('Session%d boundary index plots',m),'png');
+        annotation('textbox',[0.3,0.68,0.3,0.3],'String',sprintf('session plots Boundary tine plots'),'FitBoxToText','on','EdgeColor',...
+                'none','FontSize',14,'Color','r');
+        saveas(h_bound,sprintf('Session boundary index plots'));
+        saveas(h_bound,sprintf('Session boundary index plots'),'png');
         close(h_bound);
     end
     % all correct trials selection index plots
-    h_corr = figure('position',[100 80 1750 1000],'Paperpositionmode','auto');
+    h_corr = figure('position',[100 80 850 540],'Paperpositionmode','auto');
     for n = 1 : ToneNum
         cTone = Tones(n);
         cToneInds = Stimtones(:) == cTone & TaskData.trial_outcome(:) == 1;
@@ -127,13 +132,13 @@ while ischar(tline)
         xlabel('Times(s)');
         title(sprintf('Tone = %d kHz',cTone));
     end
-    annotation('textbox',[0.42,0.68,0.3,0.3],'String',sprintf('session%d plots All corrects trials',m),'FitBoxToText','on','EdgeColor',...
-                'none','FontSize',18);
-    saveas(h_corr,sprintf('Session%d all correct trials selection index plot',m));
-    saveas(h_corr,sprintf('Session%d all correct trials selection index plot',m),'png');
+    annotation('textbox',[0.02,0.25,0.3,0.3],'String',sprintf('All corrects trials'),'FitBoxToText','on','EdgeColor',...
+                'none','FontSize',14,'Color','r');
+    saveas(h_corr,sprintf('Session all correct trials selection index plot'));
+    saveas(h_corr,sprintf('Session all correct trials selection index plot'),'png');
     close(h_corr);
     % all error trials selection index plot
-    h_erro = figure('position',[100 80 1750 1000],'Paperpositionmode','auto');
+    h_erro = figure('position',[100 80 850 540],'Paperpositionmode','auto');
     for n = 1 : ToneNum
         cTone = Tones(n);
         cToneInds = Stimtones(:) == cTone & TaskData.trial_outcome(:) == 0;
@@ -149,59 +154,79 @@ while ischar(tline)
         ylabel('Selection index');
         xlabel('Times(s)');
         title(sprintf('Tone = %d kHz',cTone));
+        set(gca,'FontSize',14);
     end
-    annotation('textbox',[0.42,0.68,0.3,0.3],'String',sprintf('session%d plots All error trials',m),'FitBoxToText','on','EdgeColor',...
-                'none','FontSize',18);
-    saveas(h_erro,sprintf('Session%d all error trials selection index plot',m));
-    saveas(h_erro,sprintf('Session%d all error trials selection index plot',m),'png');
+    annotation('textbox',[0.02,0.25,0.3,0.3],'String',sprintf('All error trials'),'FitBoxToText','on','EdgeColor',...
+                'none','FontSize',14,'Color','r');
+            %
+    saveas(h_erro,sprintf('Session all error trials selection index plot'));
+    saveas(h_erro,sprintf('Session all error trials selection index plot'),'png');
     close(h_erro);
     
-    % all correct trials Normalized selection index plots
-    h_corrNor = figure('position',[100 80 1750 1000],'Paperpositionmode','auto');
-    for n = 1 : ToneNum
-        cTone = Tones(n);
-        cToneInds = Stimtones(:) == cTone & TaskData.trial_outcome(:) == 1;
-        cToneIndex = LRindexNor(cToneInds,:);
-        subplot(2,ToneNum/2,n);
-        hold on;
-        plot(cToneIndex','color',[.7 .7 .7]);
-        plot(mean(cToneIndex),'k','LineWidth',3);
-        set(gca,'xtick',xticksF,'xticklabel',xticklabels);
-        yscales = get(gca,'ylim');
-        line([TaskStartF.start_frame TaskStartF.start_frame],yscales,'Color',[.7 .7 .7],'LineWidth',1.8,'LineStyle','--');
-        ylim(yscales);
-        ylabel('Nor. Selection index');
-        xlabel('Times(s)');
-        title(sprintf('Tone = %d kHz',cTone));
+    % plot all Stimulus types selection index together, with
+    % shade indicates SEM
+    Opt.t_eventOn = TaskStartF.start_frame/TaskxTimes.frame_rate;
+    Opt.eventDur = 0.3;
+    eventOff = Opt.t_eventOn + Opt.eventDur;
+    CMap = [(linspace(0,1,ToneNum))',zeros(ToneNum,1)+0.1,(linspace(1,0,ToneNum))'];
+    Opt.isPatchPlot = 0;
+    lineMemoStrs = cellstr(num2str(Tones(:)/1000,'%.1fKHz'));
+     
+    lineobj = [];
+    hhf = figure('position',[100 100 850 640]);
+    hold on
+    for nf = 1 : ToneNum
+        cFreqs = Tones(nf);
+        cFreqData = LRindex(NMTones==cFreqs,:);  % correct trials,  & NMOutcomes == 1
+        
     end
-    annotation('textbox',[0.42,0.68,0.3,0.3],'String',sprintf('session%d plots All corrects trials',m),'FitBoxToText','on','EdgeColor',...
-                'none','FontSize',18);
-    saveas(h_corrNor,sprintf('Session%d all correct trials Norselection index plot',m));
-    saveas(h_corrNor,sprintf('Session%d all correct trials Norselection index plot',m),'png');
-    close(h_corrNor);
-    % all error trials normalized selection index plot
-    h_erroNor = figure('position',[100 80 1750 1000],'Paperpositionmode','auto');
-    for n = 1 : ToneNum
-        cTone = Tones(n);
-        cToneInds = Stimtones(:) == cTone & TaskData.trial_outcome(:) == 0;
-        cToneIndex = LRindexNor(cToneInds,:);
-        subplot(2,ToneNum/2,n);
-        hold on;
-        plot(cToneIndex','color',[.7 .7 .7]);
-        plot(mean(cToneIndex),'k','LineWidth',3);
-        set(gca,'xtick',xticksF,'xticklabel',xticklabels);
-        yscales = get(gca,'ylim');
-        line([TaskStartF.start_frame TaskStartF.start_frame],yscales,'Color',[.7 .7 .7],'LineWidth',1.8,'LineStyle','--');
-        ylim(yscales);
-        ylabel('Nor. Selection index');
-        xlabel('Times(s)');
-        title(sprintf('Tone = %d kHz',cTone));
-    end
-    annotation('textbox',[0.42,0.68,0.3,0.3],'String',sprintf('session%d plots All error trials',m),'FitBoxToText','on','EdgeColor',...
-                'none','FontSize',18);
-    saveas(h_erroNor,sprintf('Session%d all error trials Norselection index plot',m));
-    saveas(h_erroNor,sprintf('Session%d all error trials Norselection index plot',m),'png');
-    close(h_erroNor);
+    
+%     % all correct trials Normalized selection index plots
+%     h_corrNor = figure('position',[100 80 1750 1000],'Paperpositionmode','auto');
+%     for n = 1 : ToneNum
+%         cTone = Tones(n);
+%         cToneInds = Stimtones(:) == cTone & TaskData.trial_outcome(:) == 1;
+%         cToneIndex = LRindexNor(cToneInds,:);
+%         subplot(2,ToneNum/2,n);
+%         hold on;
+%         plot(cToneIndex','color',[.7 .7 .7]);
+%         plot(mean(cToneIndex),'k','LineWidth',3);
+%         set(gca,'xtick',xticksF,'xticklabel',xticklabels);
+%         yscales = get(gca,'ylim');
+%         line([TaskStartF.start_frame TaskStartF.start_frame],yscales,'Color',[.7 .7 .7],'LineWidth',1.8,'LineStyle','--');
+%         ylim(yscales);
+%         ylabel('Nor. Selection index');
+%         xlabel('Times(s)');
+%         title(sprintf('Tone = %d kHz',cTone));
+%     end
+%     annotation('textbox',[0.42,0.68,0.3,0.3],'String',sprintf('session%d plots All corrects trials',m),'FitBoxToText','on','EdgeColor',...
+%                 'none','FontSize',18);
+%     saveas(h_corrNor,sprintf('Session%d all correct trials Norselection index plot',m));
+%     saveas(h_corrNor,sprintf('Session%d all correct trials Norselection index plot',m),'png');
+%     close(h_corrNor);
+%     % all error trials normalized selection index plot
+%     h_erroNor = figure('position',[100 80 1750 1000],'Paperpositionmode','auto');
+%     for n = 1 : ToneNum
+%         cTone = Tones(n);
+%         cToneInds = Stimtones(:) == cTone & TaskData.trial_outcome(:) == 0;
+%         cToneIndex = LRindexNor(cToneInds,:);
+%         subplot(2,ToneNum/2,n);
+%         hold on;
+%         plot(cToneIndex','color',[.7 .7 .7]);
+%         plot(mean(cToneIndex),'k','LineWidth',3);
+%         set(gca,'xtick',xticksF,'xticklabel',xticklabels);
+%         yscales = get(gca,'ylim');
+%         line([TaskStartF.start_frame TaskStartF.start_frame],yscales,'Color',[.7 .7 .7],'LineWidth',1.8,'LineStyle','--');
+%         ylim(yscales);
+%         ylabel('Nor. Selection index');
+%         xlabel('Times(s)');
+%         title(sprintf('Tone = %d kHz',cTone));
+%     end
+%     annotation('textbox',[0.42,0.68,0.3,0.3],'String',sprintf('session%d plots All error trials',m),'FitBoxToText','on','EdgeColor',...
+%                 'none','FontSize',18);
+%     saveas(h_erroNor,sprintf('Session%d all error trials Norselection index plot',m));
+%     saveas(h_erroNor,sprintf('Session%d all error trials Norselection index plot',m),'png');
+%     close(h_erroNor);
     
 %     %
 %     [fn,fp,~] = uigetfile('FactorAnaData.mat','Please select your passive factro analysis saved data');
@@ -253,10 +278,79 @@ while ischar(tline)
     m = m + 1;
     tline = fgetl(fid);
 end
-
+%%
 save FactorAnaDataSave.mat TaskFactorData TaskTime PLotsTLRDis PlotsPLRDis -v7.3
 % save FactorAnaDataSave.mat TaskFactorData TaskTime PassFactorData PassTime PLotsTLRDis PlotsPLRDis -v7.3
 save LRIndexsumSave.mat TaskTones TaskOutcomes ActionChoice LRIndexSum TaskFrate TaskAlignF -v7.3
+%% summarize session figs into one ppt file
+clearvars -except fn fp
+m = 1;
+nSession = 1;
+
+fpath = fullfile(fp,fn);
+ff = fopen(fpath);
+tline = fgetl(ff);
+
+while ischar(tline)
+    if isempty(strfind(tline,'NO_Correction\mode_f_change')) %#ok<*STREMP>
+        tline = fgetl(ff);
+
+        continue;
+    else
+        %
+        if m == 1
+            %
+%                 PPTname = input('Please input the name for current PPT file:\n','s');
+            PPTname = 'Session_FAPeak_BehavPlot';
+            if isempty(strfind(PPTname,'.ppt'))
+                PPTname = [PPTname,'.pptx'];
+            end
+%                 pptSavePath = uigetdir(pwd,'Please select the path used for ppt file savege');
+            pptSavePath = 'E:\DataToGo\data_for_xu\Factor_new_smooth\New_correct_factorAna\SessionSummary';
+            %
+        end
+            Anminfo = SessInfoExtraction(tline);
+            cTunDataPath = [tline,filesep,'DimRed_Resplot_smooth'];
+            AllCorrectPlotfile = fullfile(cTunDataPath,'Session all correct trials selection index plot.png');
+            AllErrorPlotfile = fullfile(cTunDataPath,'Session all error trials selection index plot.png');
+            FABehavFile = fullfile(cTunDataPath,'Factor and behavior compare plot.png');
+            
+            pptFullfile = fullfile(pptSavePath,PPTname);
+            if ~exist(pptFullfile,'file')
+                NewFileExport = 1;
+            else
+                NewFileExport = 0;
+            end
+            if NewFileExport
+                exportToPPTX('new','Dimensions',[16,9],'Author','XinYu','Comments','Export of tunning curve plot data');
+            else
+                exportToPPTX('open',pptFullfile);
+            end
+
+            exportToPPTX('addslide');
+            exportToPPTX('addtext',sprintf('Session%d',nSession),'Position',[7.5 0 2 1],'FontSize',24);
+            exportToPPTX('addnote',tline);
+            exportToPPTX('addpicture',imread(AllCorrectPlotfile),'Position',[0 0 7.08 4.5]);
+            exportToPPTX('addpicture',imread(AllErrorPlotfile),'Position',[0 4.5 7.08 4.5]);
+            exportToPPTX('addpicture',imread(FABehavFile),'Position',[7.5 1 4.38 3.5]);
+%                 exportToPPTX('addpicture',TaskRespMapIM,'Position',[6 0.2 5 4.19]);
+%                 exportToPPTX('addtext','Task','Position',[11 2 1 2],'FontSize',22);
+%                 exportToPPTX('addpicture',PassRespMapIM,'Position',[6 4.5 5 4.19]);
+%                 exportToPPTX('addtext','Passive','Position',[11 5.5 3 2],'FontSize',22);
+%                 exportToPPTX('addpicture',BoundDiffIM,'Position',[12 4.5 4 3.35]);
+% %                     exportToPPTX('addpicture',PassMeanFig,'Position',[12.8 0.8 3 3]);
+            exportToPPTX('addtext',sprintf('Batch:%s \r\nAnm: %s\r\nDate: %s\r\nField: %s',...
+                Anminfo.BatchNum,Anminfo.AnimalNum,Anminfo.SessionDate,Anminfo.TestNum),...
+                'Position',[12 1.5 3 3],'FontSize',22);
+    end
+     m = m + 1;
+     nSession = nSession + 1;
+     saveName = exportToPPTX('saveandclose',pptFullfile);
+     tline = fgetl(ff);
+end
+fprintf('Current figures saved in file:\n%s\n',saveName);
+cd(pptSavePath);
+
 %%
 m = m - 1;
 frame_rate = TaskxTimes.frame_rate;

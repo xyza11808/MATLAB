@@ -1,4 +1,5 @@
-
+clear
+clc
 [fn,fp,fi] = uigetfile('*.txt','Please select the passive session data path');
 if ~fi
     return;
@@ -14,6 +15,7 @@ while ischar(tline)
         tline = fgetl(fid);
         continue;
     end
+    %%
     cd(tline);
     clearvars SelectSArray SelectData frame_rate
     load('rfSelectDataSet.mat');
@@ -27,14 +29,14 @@ while ischar(tline)
     PseudoTroutcome = ones(length(SelectSArray),1);
     
     multiCClass(SelectData,SelectSArray,PseudoTroutcome,frame_rate,frame_rate,1);
-    
+    %%
     tline = fgetl(fid);
 end
 
 
-clearvars -except Taskfn Taskfp
+clearvars -except Taskfn Taskfp fn fp
 
-% [Taskfn,Taskfp,~] = uigetfile('*.txt','Please select task data saving path');
+%% [Taskfn,Taskfp,~] = uigetfile('*.txt','Please select task data saving path');
 
 fpath = fullfile(Taskfp,Taskfn);
 fid = fopen(fpath);

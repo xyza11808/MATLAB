@@ -1409,7 +1409,15 @@ CaTrials_local = CaSignal.CaTrials;
 ROIinfo_local = CaSignal.ROIinfoBack;
 ROIpos = CaSignal.ROIinfoBack(1).ROIpos;
 if isempty(ROIinfo_local.SourcePath)
-    ROIinfo_local.SourcePath = CaSignal.data_path;
+    ROIinfo_local.SourcePath = {CaSignal.data_path};
+else
+    if ~iscell(ROIinfo_local.SourcePath)
+        ROIinfo_local.SourcePath = {ROIinfo_local.SourcePath};
+    else
+        if ~ischar(ROIinfo_local.SourcePath{1})
+            ROIinfo_local.SourcePath = ROIinfo_local.SourcePath{:};
+        end
+    end
 end
 % ################################################################
 % update ROI defined information, upated 20171206

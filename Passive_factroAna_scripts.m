@@ -1,8 +1,15 @@
-SmoothDatas = zeros(size(SelectData));
-[nTrs,nROIs,~] = size(SelectData);
+UsedAlignData = SelectData;
+IsPartialROI = 0;
+if exist('UsedROIInds','var') && ~isempty(UsedROIInds)
+    UsedAlignData = SelectData(:,UsedROIInds,:);
+    IsPartialROI = 1;
+end 
+
+SmoothDatas = zeros(size(UsedAlignData));
+[nTrs,nROIs,~] = size(UsedAlignData);
 parfor ntr = 1 : nTrs
     for nROI = 1 : nROIs
-        SmoothDatas(ntr,nROI,:) = smooth(SelectData(ntr,nROI,:),30);
+        SmoothDatas(ntr,nROI,:) = smooth(UsedAlignData(ntr,nROI,:),30);
     end
 end
 %%

@@ -129,14 +129,14 @@ else
     for cTr = 1 : nTrials
         cTrData = TraceSpikeData(:,k:(k+nFrameInds(cTr)-1));
         SpikeData{cTr} = cTrData;
-        k = k+nFrameInds(cTr);
-        
+
         % #############################################################
         cTrData = TraceSpikeDataNS(:,k:(k+nFrameInds(cTr)-1));
         SpikeDataNS{cTr} = cTrData;
+        k = k+nFrameInds(cTr);
     end
 end
-
+%%
 if nargout == 1
     varargout{1} = SpikeData;
 elseif nargout == 2

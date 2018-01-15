@@ -1,11 +1,11 @@
 % batched tuning curve task and passive compare
-clear
-clc
-[TaskPathfn,TaskPathfp,TaskPathfi] = uigetfile('*.txt','Please select the Task session path save file');
-[PassPathfn,PassPathfp,PassPathfi] = uigetfile('*.txt','Please select the corresponded passive session path save file');
-if ~TaskPathfi || ~PassPathfi
-    return;
-end
+% clear
+% clc
+% [TaskPathfn,TaskPathfp,TaskPathfi] = uigetfile('*.txt','Please select the Task session path save file');
+% [PassPathfn,PassPathfp,PassPathfi] = uigetfile('*.txt','Please select the corresponded passive session path save file');
+% if ~TaskPathfi || ~PassPathfi
+%     return;
+% end
 %%
 TaskPathf = fullfile(TaskPathfp,TaskPathfn);
 PassPathf = fullfile(PassPathfp,PassPathfn);
@@ -26,6 +26,7 @@ while ischar(Tasktline) && ischar(Passtline)
     end
     %%
     try
+        %%
         TaskDataStrc = load(fullfile(Tasktline,'CSessionData.mat'));
         PassDataStrc = load(fullfile(Passtline,'rfSelectDataSet.mat'));
         BehavDataPath = fullfile(Tasktline,'RandP_data_plots','boundary_result.mat');
@@ -118,7 +119,8 @@ while ischar(Tasktline) && ischar(Passtline)
             PassFreqOctave BoundFreq NonMissTunningFunSEM CorrTunningFunSEM PassTunningfunSEM -v7.3
         %
         for cROI = 1 : nROIs
-            %
+            %%
+            PlotInds = abs(PassFreqOctave) < 1.01;
             h = figure('position',[220 300 550 420]);
             hold on;
             cROItaskNM = NonMissTunningFun(:,cROI);
@@ -126,7 +128,7 @@ while ischar(Tasktline) && ischar(Passtline)
             cROIpass = PassTunningfun(:,cROI);
             l1 = errorbar(TaskFreqOctave,cROItaskNM,NonMissTunningFunSEM(:,cROI),'c-o','LineWidth',1.6);
             l2 = errorbar(TaskFreqOctave,cROItaskCorr,CorrTunningFunSEM(:,cROI),'r-o','LineWidth',1.6);
-            l3 = errorbar(PassFreqOctave,cROIpass,PassTunningfunSEM(:,cROI),'k-o','LineWidth',1.6);
+            l3 = errorbar(PassFreqOctave(PlotInds),cROIpass(PlotInds),PassTunningfunSEM(PlotInds,cROI),'k-o','LineWidth',1.6);
             xlabel('Frequency (kHz)');
             ylabel('Mean \DeltaF/F (%)');
             title(sprintf('ROI%d Tunning, Session%d',cROI,SessionNum));
@@ -151,7 +153,7 @@ while ischar(Tasktline) && ischar(Passtline)
             end
             Arrowy = [0.85 0.85];
             a = annotation('textarrow',Arrowx,Arrowy,'String',{'Behav';'Bound'},'Color','m','FontSize',14);
-            %
+            %%
             saveas(h,sprintf('ROI%d Tunning curve comparison plot',cROI));
             saveas(h,sprintf('ROI%d Tunning curve comparison plot',cROI),'png');
             close(h);

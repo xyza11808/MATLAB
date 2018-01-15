@@ -195,6 +195,47 @@
 % while return the reletive object position, remember to add the original
 % axis position
 
+% ##############################################################################
+% % calculate the mutual information, simple example
+% IndsFrac = [20 40 60 70 80 90 95 99];
+% InfoAllSave = zeros(1 , length(IndsFrac));
+% x = double(rand(100,1) > 0.5);
+% for IndsIndex = 1 : length(IndsFrac)
+%     cIndsFrac = IndsFrac(IndsIndex);
+%     cInds = randsample(100,IndsFrac(IndsIndex));
+%     y = double(rand(100,1) > 0.5);
+%     y(cInds) = x(cInds);
+%     
+%     xTypes = unique(x);
+%     yTypes = unique(y);
+%     xTypeProb = zeros(length(xTypes),1);
+%     yTypeProb = zeros(length(yTypes),1);
+%     Joint_p = zeros(length(xTypes),length(yTypes));
+%     InfoAll = zeros(length(xTypes),length(yTypes));
+%     for cx = 1 : length(xTypes)
+%         xTypeProb(cx) = mean(x == xTypes(cx));
+%         for cy = 1 : length(yTypes)
+%             if cx == 1
+%                yTypeProb(cy) = mean(y == yTypes(cy));
+%             end
+%             Joint_p(cx,cy) = mean(x == xTypes(cx) & y == yTypes(cy));
+%             InfoAll(cx,cy) = Joint_p(cx,cy)*log2(Joint_p(cx,cy)/(xTypeProb(cx)*yTypeProb(cy)));
+%         end
+%     end
+%     InfoAllSave(IndsIndex) = sum(InfoAll(:));
+% end
+% ##############################################################################
+
+% ##############################################################################
+% calculate customized function derivative function and then calculate
+% corresponded value
+%     F=@(g,l,u,v,x) g+(1-g-l)*0.5*(1+erf((x-u)/sqrt(2*v^2)));
+%     fit_ReNew = FitPsycheCurveWH_nx(cSessOcts, cSessChoice, ParaBoundLim);
+%     syms x
+%     ff = F(fit_ReNew.ffit.g,fit_ReNew.ffit.l,fit_ReNew.ffit.u,fit_ReNew.ffit.v,x);
+%     fslope = diff(ff,x);
+%     DerivData = double(subs(fslope,fit_ReNew.curve(:,1))); % calculate the derivative function and convert into double value
+% ##############################################################################
 
 %%
 %this section used to be used for all trials plot in AFC_ROI_analysis

@@ -102,9 +102,15 @@ if iscell(CaTrials(1).f_raw)
    for cTr = 1 : TrialNum
        cTestData = CellData{cTr}(TestROI,end-LastFrames:end);
 %        DataDiff = diff(cTestData);
-       if mean(cTestData(end-4:end)) < 20
+       if mean(cTestData(end-4:end)) < 20 && mean(cTestData(end-4:end)) < mean(cTestData(1:5))/3
            CellData(cTr) = {CellData{cTr}(:,1:end-10)};
            fprintf('Tr Number %d re-used.\n',cTr);
+           if ~isempty(exclude_inds)
+               IsTrWIthin = exclude_inds == cTr;
+               if sum(IsTrWIthin)
+                   exclude_inds(IsTrWIthin) = [];
+               end
+           end
        end
    end
    CaTrials(1).f_raw = CellData; 
@@ -479,9 +485,9 @@ switch MethodChoice
         for n=1:size(FCorrectData,2)
             TempData=squeeze(FCorrectData(:,n,:));
             if IsContiAcq
-                [SubTempData,~]=BLSubStract(TempData',8,FrameRate*20,TrDataNumVec);
+                [SubTempData,~]=BLSubStract(TempData',8,FrameRate*30,TrDataNumVec);
             else
-                [SubTempData,~]=BLSubStract(TempData',8,FrameRate*20);
+                [SubTempData,~]=BLSubStract(TempData',8,FrameRate*30);
             end
             SubRawData(:,n,:)=SubTempData;
             [ncounts,ncenters]=hist(SubTempData(:),100);
@@ -507,9 +513,9 @@ switch MethodChoice
         for n=1:size(FCorrectData,2)
             TempData=squeeze(FCorrectData(:,n,:));
             if IsContiAcq
-                [SubTempData,~]=BLSubStract(TempData',8,FrameRate*20,TrDataNumVec);
+                [SubTempData,~]=BLSubStract(TempData',8,FrameRate*30,TrDataNumVec);
             else
-                [SubTempData,~]=BLSubStract(TempData',8,FrameRate*20);
+                [SubTempData,~]=BLSubStract(TempData',8,FrameRate*30);
             end
             SubRawData(:,n,:)=SubTempData';
         end

@@ -1,0 +1,76 @@
+% ------------------------------------------------------------------------
+% Copyright (C) 2008-2009
+% Bruce Bassett Yabebal Fantaye  Renee Hlozek  Jacques Kotze
+%
+%
+%
+% This file is part of Fisher4Cast.
+%
+% Fisher4Cast is free software: you can redistribute it and/or modify
+% it under the terms of the Berkeley Software Distribution (BSD) license.
+%
+% Fisher4Cast is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% BSD license for more details.
+% ------------------------------------------------------------------------
+###########################################################################
+BAO_H_DA_errors in the context of the Blake et al. fitting formaulae
+###########################################################################
+
+If the results produced from the use of this extension of Fisher4Cast 
+have been used in a publication, we kindly request that its use and the 
+authors of Fisher4Cast and this extension are acknowledged, as well as the 
+authors of (astro-ph/0510239).
+
+* EXT_FF_Blake_etal2005_Main.m
+    The main code EXT_FF_Blake_etal2005_Main.m requires an input 
+    structure with (at least) the vectors of redshifts at which the Hubble
+    parameter, H, and the angular diameter distance, d_A, are to be 
+    evaluated to be specified. The vectors of redshifts for H, d_A are 
+    given as row vectors. If no input is given, these are set in an example 
+    default structure, EXT_FF_Blake_etal2005_Input.m. The other 
+    inputs in the structure are the survey type (photometric versus 
+    spectroscopic, the redshift types (ie the redshifts are the edges of 
+    bins or the central points in a bin) the increment in redshift and the 
+    Input structure. 
+
+
+* EXT_FF_Blake_etal2005_setsurvey.m
+    If not set by hand in the inputs to EXT_FF_Blake_etal2005_Main.m, the 
+    type of survey under consideration (specified by the area, number 
+    density in the bins and bias etc) are set in setsurvey.m. This example 
+    code gives the types of entries expected by the error module.
+
+* EXT_FF_Blake_etal2005_cummean.m
+    This computes the mean (central) redshift of the bins in the case of 
+    the edge configuration 
+ 
+* EXT_FF_Blake_etal2005_calculate_error.m
+    This file computes the volume of the bins in H, d_A and calculates 
+    the error on H, d_A by calling the fitting formulae of Blake et al.
+    2005. 
+    It uses:
+
+* EXT_FF_Blake_etal2005_com_volume.m 
+    This computes the volume between two redshift points.
+          
+* EXT_FF_Blake_etal2005_fitting_formula.m
+    This code computes the error on the oscillation scale in either the 
+    parallel or perpendicular directions.The coefficients in the fitting 
+    formulae are given by:
+
+* EXT_FF_Blake_etal2005_photo_params.m 
+    This structure encodes the coefficients in the fitting formulae of 
+    Blake et al. (2005) for a photometric survey.
+
+* EXT_FF_Blake_etal2005_spectro_params.m
+    This structure encodes the coefficients in the fitting formulae of 
+    Blake et al. (2005) for a spectroscopic survey.
+
+* EXT_FF_Blake_etal2005_Example_Surveys.m
+    This code computes the errors on H, d_A for various tests and future 
+    experiments. They are computed for various survey specifications and 
+    input vectors.
+
+

@@ -13,6 +13,7 @@ while ischar(tline)
         tline = fgetl(fid);
         continue;
     end
+    %
     if ~isempty(strfind(tline,'All BehavType Colorplot'))
         SessPath = strrep(tline,'\All BehavType Colorplot','\');
     else
@@ -29,10 +30,11 @@ while ischar(tline)
     NMTrChoice = TrChoice(~MissInds);
     NMoutcome = trial_outcome(~MissInds);
     NMOctaves = log2(NMTrStim/16000);
-    NMData = data_aligned(~MissInds,:,:);
-    % calculate the p value for each ROI and each frame bin
-    nROIs = size(data_aligned,2);
-    nFrames = size(data_aligned,3);
+    NMData = smooth_data(~MissInds,:,:);
+    NMSPdata = SpikeAligned(~MissInds,:,:);
+    %% calculate the p value for each ROI and each frame bin
+    nROIs = size(smooth_data,2);
+    nFrames = size(smooth_data,3);
     pValueMatrix = zeros(nROIs,nFrames,3);
     parfor cROI = 1 : nROIs
         cROIdata = squeeze(NMData(:,cROI,:));
@@ -42,8 +44,22 @@ while ischar(tline)
             pValueMatrix(cROI,nF,:) = p;
         end
     end
-
-    %
+    
+    % calculate using the spike data
+    pValueSPMtx = zeros(nROIs,nFrames,3);
+    parfor cROI = 1 : nROIs
+        cSPdata = squeeze(NMSPdata(:,cROI,:));
+        Non_ZeroInds = cSPdata > 1e-6;
+        Thres = prctile(cSPdata(Non_ZeroInds),10); % large above ten percent values
+        cBinaryData = double(cSPdata > Thres);
+        for nF = 1 : nFrames
+            cFrameData = cBinaryData(:,nF);
+            p = anovan(cFrameData,{NMOctaves(:),NMTrChoice(:),NMoutcome(:)},'display','off');
+            pValueSPMtx(cROI,nF,:) = p;
+        end
+    end
+    
+    %%
     xticks = 0:frame_rate:nFrames;
     xticklabels = xticks/frame_rate;
     CoefSigMatrix = double(pValueMatrix < 0.01);
@@ -64,7 +80,7 @@ while ischar(tline)
         saveas(hf,sprintf('ROI%d coef sigPlot',cROI),'png');
         close(hf);
     end
-    save ROIcoefPmatrix.mat pValueMatrix CoefSigMatrix start_frame frame_rate -v7.3
+    save ROIcoefPmatrix.mat pValueMatrix CoefSigMatrix start_frame frame_rate pValueSPMtx -v7.3
     %
     tline = fgetl(fid);
 end

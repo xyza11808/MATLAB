@@ -298,7 +298,7 @@ if strcmpi(type,'RF')
     %     in_site_freTuning(sound_array,type,CaTrials,'simple_fit');
 %     in_site_freTuning_update(f_percent_change,sound_array,export_filename_raw,frame_rate,'simple_fit',CaTrials);
     [~,VSDataStrc] = in_site_freTuning_update(f_percent_change,sound_array,export_filename_raw,frame_rate,'simple_fit',CaTrials,0);
-    save vShapeData.mat VSDataStrc -v7.3
+   
 %     in_site_freTuning(sound_array,type,CaTrials,'simple_fit',triger_inds);
     %      ROI_CF=in_site_freTuning(sound_Stim,type,'fit');
     cd ..;
@@ -307,6 +307,9 @@ if strcmpi(type,'RF')
 %     if ~IsFullyDived
         % if the total trial number can not be fully divided by freq and
         % intensity product, using extra plot
+        RFTunData = NewVshapePlot(f_percent_change,sound_array,frame_rate,frame_rate);
+        save RFtunDataSave.mat RFTunData -v7.3
+        %
         UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);  % performing color plot
         PassRespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);
 %         UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate,[],0); % not performing color plot

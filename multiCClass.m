@@ -25,7 +25,7 @@ if nargin > 7
     if ~isempty(varargin{3})
         ROIindsSelect = varargin{3};
         isPartialROI = 1;
-        ROIFraction = sum(ROIindsSelect)/length(ROIindsSelect)*100;
+        ROIFraction = sum(ROIindsSelect)/length(ROIindsSelect);
     end
 end
 
@@ -95,10 +95,11 @@ DataSelect = RawDataAll(TrialInds,ROIindsSelect,FrameScale(1):FrameScale(2));
 DataUsing = max(DataSelect,[],3);
 StimTrUsing = StimAll(TrialInds);
 AllStimTypes = unique(StimTrUsing);
-if mod(length(AllStimTypes),2)
-    fprintf('Input trial stimlus should have even number of frequency types.');
-    return;
-end
+% if mod(length(AllStimTypes),2)
+%     fprintf('Input trial stimlus should have even number of frequency types.');
+%     return;
+% end
+%%
 if isPlot
     if ~isShuffle
         if ~isdir('./NeuroM_MC_TbyT/')
@@ -113,10 +114,10 @@ if isPlot
     end
 
     if isPartialROI
-        if ~isdir(sprintf('./Partial_%.2fROI/',ROIFraction*100))
-            mkdir(sprintf('./Partial_%.2fROI/',ROIFraction*100));
+        if ~isdir(sprintf('./Partial_%dROI/',ROIFraction*100))
+            mkdir(sprintf('./Partial_%dfROI/',ROIFraction*100));
         end
-        cd(sprintf('./Partial_%.2fROI/',ROIFraction*100));
+        cd(sprintf('./Partial_%dROI/',ROIFraction*100));
     end
     
     if length(TimeLength) == 1
@@ -239,12 +240,22 @@ if isPlot
 end
 save PairedClassResult.mat matrixData StimTypesAll -v7.3
 %%
-% calculate the classification error compared with stimlus distance
+% calculate the classification error compared with stimlus distance.
 TempMatrixData = matrixData;
+SimTypesBack = StimTypesAll;
+if mod(length(StimTypesAll),2)
+    BoundFreqInds = ceil(length(StimTypesAll)/2);
+    StimTypesAll(BoundFreqInds) = [];
+    TempMatrixData(BoundFreqInds,:) = [];
+    TempMatrixData(:,BoundFreqInds) = [];
+    BackMtxData = TempMatrixData;
+else
+    BackMtxData = matrixData;
+end
 ClassNum = length(StimTypesAll)/2;
 OvatveStep = log2(double(StimTypesAll(2))/double(StimTypesAll(1)));
-TempMatrixData(1:ClassNum,(ClassNum+1):end) =  matrixData((ClassNum+1):end,(ClassNum+1):end);
-TempMatrixData((ClassNum+1):end,(ClassNum+1):end) = matrixData(1:ClassNum,(ClassNum+1):end);  % upper class are all within class error, bottom data are all between class data
+TempMatrixData(1:ClassNum,(ClassNum+1):end) =  BackMtxData((ClassNum+1):end,(ClassNum+1):end);
+TempMatrixData((ClassNum+1):end,(ClassNum+1):end) = BackMtxData(1:ClassNum,(ClassNum+1):end);  % upper class are all within class error, bottom data are all between class data
 WinClassDis = WithinCmask(ClassNum);
 BetClassDis = BetCmask(ClassNum);
 WithinClassMask = WinClassDis > 0;

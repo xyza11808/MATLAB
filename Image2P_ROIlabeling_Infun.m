@@ -37,8 +37,12 @@ colormap gray
 % cd(fp);
 % fpath = fullfile(fp,fn);
 % ROIdata = load(fpath);
-nROIs = length(ROIinfo(1).ROIpos);
-AllROIpos = ROIinfo(1).ROIpos;
+% nROIs = length(ROIinfo(1).ROIpos);
+% AllROIpos = ROIinfo(1).ROIpos;
+%%
+UsedROIs = 1:length(ROIinfo(1).ROIpos);
+nROIs = length(UsedROIs);
+AllROIpos = ROIinfo(1).ROIpos(UsedROIs);
 for cROI = 1 : nROIs
     cROIpos = AllROIpos{cROI};
     if IsROIStatePlot
@@ -48,9 +52,9 @@ for cROI = 1 : nROIs
         line(cROIpos(:,1),cROIpos(:,2),'color','r','linewidth',1.4);
     end
     CenterPos = mean(cROIpos);
-    text(CenterPos(1),CenterPos(2),num2str(cROI),'color','g','FontSize',12);
+    text(CenterPos(1),CenterPos(2),num2str(UsedROIs(cROI)),'color','g','FontSize',12);
 end
-% RespROIinds = input('Please select the ROI responsive ROI inds:\n','s');
+%% RespROIinds = input('Please select the ROI responsive ROI inds:\n','s');
 % REspROIindex = str2num(RespROIinds);
 % for cROI = 1 : length(REspROIindex)
 %     cROIpos = AllROIpos{REspROIindex(cROI)};

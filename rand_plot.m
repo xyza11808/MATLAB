@@ -13,9 +13,9 @@ if nargin<1
     %mkdir('./session_data_plots');
     files = dir('*.mat');
     fileNum=length(files);
-    isProbAsPuretone = 0;
+    isProbAsPuretone = 1;
 else
-    isProbAsPuretone = 0;
+    isProbAsPuretone = 1;
     SelfPlot=0;
     behavResults=varargin{1};
     choice=varargin{2};
@@ -35,7 +35,7 @@ else
 end
 
 boundary_result=struct('SessionName',[],'FitParam',[],'Boundary',[],'LeftCorr',[],'RightCorr',[],'StimType',[],...
-    'StimCorr',[],'Coefficients',[],'P_value',[],'FitValue',[],'Typenumbers',[],'gof',[]);
+    'StimCorr',[],'Coefficients',[],'P_value',[],'FitValue',[],'Typenumbers',[],'gof',[],'SessBehavAll',[],'FitModelAll',{},'SlopeCurve',{});
 if SelfPlot
     choice=input(['please select the logistic analysis method.\n1 for non-linear regression.\n',...
         '2 for linear regression analysis.\n3 for fit_logistic analysis.\n',...
@@ -84,6 +84,7 @@ for n = 1:fileNum
     MissTrialsInds = AnimalActionC == 2;
     CorrectInds = behavResults.Time_reward ~= 0;
     ErrorTrials = behavResults.Time_reward == 0;
+    
     %  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % excluded all miss trials from analysis
     behavResults.Trial_Type(MissTrialsInds) = [];
@@ -94,6 +95,9 @@ for n = 1:fileNum
     else
         behavResults.Stim_Type(MissTrialsInds,:) = [];
     end
+    behavResults.Action_choice(MissTrialsInds) = [];
+    SessBehavDatas = [behavResults.Stim_toneFreq(:),behavResults.Trial_Type(:),behavResults.Action_choice(:),...
+        behavResults.Time_reward(:)];
     %  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     trialInds = 1:length(behavResults.Trial_Type);
@@ -156,7 +160,8 @@ for n = 1:fileNum
     %      rand_right_type(inds_right==0)=[];
     %      rand_left_type(inds_left==0)=[];
     
-    stim_types=unique(behavResults.Stim_toneFreq);
+    stim_types=double(unique(behavResults.Stim_toneFreq));
+    GrNum = floor(length(stim_types)/2); % in case boundary tone exists
     if iscell(behavResults.Stim_Type(1))
         FirstTrType = behavResults.Stim_Type(1);
     else
@@ -169,17 +174,19 @@ for n = 1:fileNum
         continue;
     elseif choice==1
         %     stim_types=[behavSettings.randompureTone_left(1,:) behavSettings.randompureTone_right(1,:)];
-        reward_type = zeros(1,length(stim_types));
+        Type_choiceR = zeros(1,length(stim_types));
         TypeNumber = zeros(1,length(stim_types));
         for i=1:length(stim_types)
             type_inds = behavResults.Stim_toneFreq==stim_types(i);
             TypeNumber(i) = sum(type_inds);
-            reward_type(i)=mean(rewarded(type_inds));
+            Type_choiceR(i)=mean(behavResults.Action_choice(type_inds)); % right choice prob
         end
         boundary_result(n).Typenumbers = TypeNumber;
         boundary_result(n).StimType=stim_types;
-        boundary_result(n).StimCorr=reward_type;
-        if(mean(reward_type)<0.5)
+        boundary_result(n).StimCorr=Type_choiceR;
+        boundary_result(n).StimCorr(1:GrNum) = 1 - boundary_result(n).StimCorr(1:GrNum);
+        boundary_result(n).SessBehavAll = SessBehavDatas;
+        if(mean( boundary_result(n).StimCorr)<0.5)
             continue;
         end
         octave_sum=log2(double(max(behavResults.Stim_toneFreq))/double(min(behavResults.Stim_toneFreq)));
@@ -188,10 +195,10 @@ for n = 1:fileNum
         xtick_label=(2.^octave_dist)*min(behavResults.Stim_toneFreq);
         xtick_label=xtick_label/1000;
         %trans into rightword percent
-        %     reward_type(1:length(behavSettings.randompureTone_left(1,:)))=1-reward_type(1:length(behavSettings.randompureTone_left(1,:)));
-        reward_type(1:length(stim_types)/2)=1-reward_type(1:length(stim_types)/2);
+        %     Type_choiceR(1:length(behavSettings.randompureTone_left(1,:)))=1-Type_choiceR(1:length(behavSettings.randompureTone_left(1,:)));
+%         Type_choiceR(1:length(stim_types)/2)=1-Type_choiceR(1:length(stim_types)/2);
         %     modelfun=@()
-        %     b=glmfit(octave_dist,reward_type,'binomial','link','logit');
+        %     b=glmfit(octave_dist,Type_choiceR,'binomial','link','logit');
         %      there should use fitnlm maybe
         % [yfit,f_low,f_high]=glmval(b,octave_dist,'logit');
         
@@ -200,7 +207,7 @@ for n = 1:fileNum
         %similar trajectory with previous result.
         modelfun=@(b,x)(1./(1+exp(-b(1).*x-b(2))));
         b0=[-1,1];
-        mdl=fitnlm(octave_dist,reward_type,modelfun,b0);
+        mdl=fitnlm(octave_dist,Type_choiceR,modelfun,b0);
         
         figure;
         plotDiagnostics(mdl,'cookd');
@@ -213,7 +220,7 @@ for n = 1:fileNum
         %     ci = nlparci(ahat,r,'covar',cov)
         fit_plot_x=linspace(min(octave_dist),max(octave_dist),200);
         if ~isempty(outer_points)
-            mdl1 = fitnlm(octave_dist,reward_type,modelfun,b0,'Exclude',outer_points);
+            mdl1 = fitnlm(octave_dist,Type_choiceR,modelfun,b0,'Exclude',outer_points);
             [resp_pred,resp_ci]=predict(mdl1,fit_plot_x');
             b=mdl1.Coefficients.Estimate;
             boundary_result(n).Coefficients=mdl1.Coefficients;
@@ -229,12 +236,12 @@ for n = 1:fileNum
         
         close;
         h3=figure;
-        scatter(octave_dist,reward_type,30,'MarkerEdgeColor','r','MarkerFaceColor','y');
-        text(octave_dist,reward_type,cellstr(num2str(TypeNumber(:)),'n=%d'),'Fontsize',15,'color','b');
+        scatter(octave_dist,Type_choiceR,30,'MarkerEdgeColor','r','MarkerFaceColor','y');
+        text(octave_dist,Type_choiceR,cellstr(num2str(TypeNumber(:)),'n=%d'),'Fontsize',15,'color','b');
         hold on;
         plot(fit_plot_x,resp_pred,'-','color','r');
         axis([0 2 0 1]);
-        %     plot(octave_dist,reward_type,'o');
+        %     plot(octave_dist,Type_choiceR,'o');
         for i=1:length(octave_dist)
             %         scatter([octave_dist(i),octave_dist(i)],[f_low(i),f_high(i)],'o','color','r','fill');
             line([octave_dist(i),octave_dist(i)],[resp_ci(i,1)+resp_pred,resp_ci(i,2)+resp_pred]);
@@ -249,9 +256,9 @@ for n = 1:fileNum
         set(gca,'FontSize',20);
         hold off;
         if exist('fn','var')
-            saveas(h3,[fn(1:end-4),'_fit plot.png'],'png');
+            saveas(h3,[fn(1:end-4),'_fit plot'],'png');
         else
-            saveas(h3,['Behav_fit plot.png'],'png');
+            saveas(h3,'Behav_fit plot.png');
         end
         
         close;
@@ -262,17 +269,20 @@ for n = 1:fileNum
     elseif choice==2
         %use the function of log(p/(1-p))=beta(1)*x+beta(2) for linear
         %regression analysis, but not with a nonlinear regression analysis
-        reward_type=zeros(1,length(stim_types));
+        Type_choiceR=zeros(1,length(stim_types));
         TypeNumber = zeros(1,length(stim_types));
         for i=1:length(stim_types)
             type_inds= behavResults.Stim_toneFreq==stim_types(i);
             TypeNumber(i) = sum(type_inds);
-            reward_type(i)=mean(rewarded(type_inds));
+            Type_choiceR(i)=mean(behavResults.Action_choice(type_inds));
         end
+        
         boundary_result(n).Typenumbers = TypeNumber;
         boundary_result(n).StimType=stim_types;
-        boundary_result(n).StimCorr=reward_type;
-        if(mean(reward_type)<0.5)
+        boundary_result(n).StimCorr=Type_choiceR;
+        boundary_result(n).StimCorr(1:GrNum) = 1 - boundary_result(n).StimCorr(1:GrNum);
+        boundary_result(n).SessBehavAll = SessBehavDatas;
+        if(mean(boundary_result(n).StimCorr)<0.5)
             continue;
         end
         octave_sum=log2(double(max(behavResults.Stim_toneFreq))/double(min(behavResults.Stim_toneFreq)));
@@ -281,11 +291,11 @@ for n = 1:fileNum
         xtick_label=(2.^octave_dist)*min(behavResults.Stim_toneFreq);
         xtick_label=xtick_label/1000;
         %trans into rightword percent
-        %     reward_type(1:length(behavSettings.randompureTone_left(1,:)))=1-reward_type(1:length(behavSettings.randompureTone_left(1,:)));
-        reward_type(1:length(stim_types)/2)=1-reward_type(1:length(stim_types)/2);
-        %         reward_left=reward_type(1:length(stim_types)/2);
+        %     Type_choiceR(1:length(behavSettings.randompureTone_left(1,:)))=1-Type_choiceR(1:length(behavSettings.randompureTone_left(1,:)));
+%         Type_choiceR(1:length(stim_types)/2)=1-Type_choiceR(1:length(stim_types)/2);
+        %         reward_left=Type_choiceR(1:length(stim_types)/2);
         %         octave_left=octave_dist(1:length(stim_types)/2);
-        %         reward_right=reward_type(length(stim_types)/2+1:end);
+        %         reward_right=Type_choiceR(length(stim_types)/2+1:end);
         %         octave_right=octave_dist(length(stim_types)/2+1:end);
         %
         %         %exclude bad performance data point
@@ -296,7 +306,7 @@ for n = 1:fileNum
         %         reward_right(inds_right)=[];
         %         octave_right(inds_right)=[];
         %         octave_dist_sort=[octave_left,octave_right];
-        %         reward_type_sort=[1-reward_left,reward_right];
+        %         Type_choiceR_sort=[1-reward_left,reward_right];
         %
         %         if length(octave_dist_sort)<4
         %             fitable=0;
@@ -305,14 +315,14 @@ for n = 1:fileNum
         %             continue;
         %         else
         %
-        linear_fit_rate=log(reward_type./(1-reward_type));
+        linear_fit_rate=log(Type_choiceR./(1-Type_choiceR));
         b=polyfit(octave_dist,linear_fit_rate,1);
         modelfun=@(beta,x)(1./(1+exp(-beta(2)-beta(1).*x)));
         %         step=(max(octave_dist)-min(octave_dist))/200;
         line_space=linspace(min(octave_dist),max(octave_dist),200);
         fit_data=modelfun(b,line_space);
-        plot(octave_dist,reward_type,'o',line_space,fit_data,'color','k');
-        text(octave_dist,reward_type,cellstr(num2str(TypeNumber(:)),'n=%d'),'Fontsize',15,'color','b');
+        plot(octave_dist,Type_choiceR,'o',line_space,fit_data,'color','k');
+        text(octave_dist,Type_choiceR,cellstr(num2str(TypeNumber(:)),'n=%d'),'Fontsize',15,'color','b');
         title([fn(1:end-4),'randompuretone']);
 %         axis([0 2 0 1]);
         ylim([0 1]);
@@ -322,60 +332,66 @@ for n = 1:fileNum
         ylabel('Rightward choice');
         set(gca,'FontSize',20);
         if exist('fn','var')
-            saveas(h3,[fn(1:end-4),'_fit plot.png'],'png');
+            saveas(h3,[fn(1:end-4),'_fit plot'],'png');
         else
-            saveas(h3,['Behav_fit plot.png'],'png');
+            saveas(h3,'Behav_fit plot','png');
         end
-        close;
+        close(h3);
+        RTrNext_ChoiceBias_script
         syms x
         internal_boundary=solve(modelfun(b,x)==0.5,x);
 %         cd(FilePath);
     elseif choice==3
         %for fit_logistic regression analysis
-        reward_type=zeros(1,length(stim_types));
+        Type_choiceR=zeros(1,length(stim_types));
         TypeNumber=zeros(1,length(stim_types));
         for i=1:length(stim_types)
             type_inds= behavResults.Stim_toneFreq==stim_types(i);
             TypeNumber(i) = sum(type_inds);
-            reward_type(i)=mean(rewarded(type_inds));
+            Type_choiceR(i)=mean(behavResults.Action_choice(type_inds));
         end
-         boundary_result(n).Typenumbers = TypeNumber;
+        boundary_result(n).Typenumbers = TypeNumber;
         boundary_result(n).StimType=stim_types;
-        boundary_result(n).StimCorr=reward_type;
-        if(mean(reward_type)<0.5)
+        boundary_result(n).StimCorr=Type_choiceR;
+        boundary_result(n).StimCorr(1:GrNum) = 1 - boundary_result(n).StimCorr(1:GrNum);
+        boundary_result(n).SessBehavAll = SessBehavDatas;
+        if(mean(boundary_result(n).StimCorr)<0.5)
             continue;
         end
         octave_sum=log2(double(max(behavResults.Stim_toneFreq))/double(min(behavResults.Stim_toneFreq)));
+        OctavesAll = log2(double(behavResults.Stim_toneFreq)/double(min(stim_types)));
+        TrChoice = double(behavResults.Action_choice);
 %         octave_dist=log2(double(max(behavResults.Stim_toneFreq))./double(stim_types));
 %         octave_dist=octave_sum-octave_dist;
         octave_dist = log2(double(stim_types)/double(min(stim_types)));
         xtick_label=(2.^octave_dist)*double(min(behavResults.Stim_toneFreq));
         xtick_label=xtick_label/1000;
         %trans into rightword percent
-        %     reward_type(1:length(behavSettings.randompureTone_left(1,:)))=1-reward_type(1:length(behavSettings.randompureTone_left(1,:)));
-        reward_type(1:floor(length(stim_types)/2))=1-reward_type(1:floor(length(stim_types)/2));
+        %     Type_choiceR(1:length(behavSettings.randompureTone_left(1,:)))=1-Type_choiceR(1:length(behavSettings.randompureTone_left(1,:)));
+%         Type_choiceR(1:floor(length(stim_types)/2))=1-Type_choiceR(1:floor(length(stim_types)/2));
         h3=figure;
-        scatter(octave_dist,reward_type,30,'MarkerEdgeColor','k','LineWidth',1.5);
-        text(octave_dist,reward_type,cellstr(num2str(TypeNumber(:),'n=%d')),'Fontsize',15,'color','b');
+        scatter(octave_dist,Type_choiceR,30,'MarkerEdgeColor','k','LineWidth',1.5);
+        text(octave_dist,Type_choiceR,cellstr(num2str(TypeNumber(:),'n=%d')),'Fontsize',15,'color','b');
         hold on;
 %       % inds exclusion for plot
 %         inds_exclude=input('please select the trial inds that should be excluded from analysis.\n','s');
 %         if ~isempty(inds_exclude)
 %             inds_exclude=str2num(inds_exclude);
 %             octave_dist_exclude=octave_dist(inds_exclude);
-%             reward_type_exclude=reward_type(inds_exclude);
+%             Type_choiceR_exclude=Type_choiceR(inds_exclude);
 %             octave_dist(inds_exclude)=[];
-%             reward_type(inds_exclude)=[];
-%             scatter(octave_dist_exclude,reward_type_exclude,100,'x','MarkerEdgeColor','b');
+%             Type_choiceR(inds_exclude)=[];
+%             scatter(octave_dist_exclude,Type_choiceR_exclude,100,'x','MarkerEdgeColor','b');
 %         end
         
-        [Qreg,b]=fit_logistic(octave_dist,reward_type);
+        [Qreg,b]=fit_logistic(octave_dist,Type_choiceR);
+        [QregAll,bAll] = fit_logistic(OctavesAll,TrChoice);
 %         parobj=gcp('nocreate');
 %         if isempty(parobj)
 %             parpool('local',8);
 %         end
 %         options = statset('UseParallel',true);
-%         [bootstat_control, ~] = bootstrp(500, @(x, y) fit_logistic_psych_con(x, y,0), octave_dist, reward_type,'Options',options);
+%         [bootstat_control, ~] = bootstrp(500, @(x, y) fit_logistic_psych_con(x, y,0), octave_dist, Type_choiceR,'Options',options);
 %         gof = [bootstat_control.gof];
 %         rmse = [gof.rmse];
 %         sse = [gof.sse];
@@ -391,12 +407,21 @@ for n = 1:fileNum
 %         ParAll=[a1,b1,c1];
         
         modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));
-        curve_x=linspace(min(octave_dist),max(octave_dist),500);
-        curve_y=modelfun(b,curve_x);
+        curve_x = linspace(min(octave_dist),max(octave_dist),500);
         
-        %         plot(octave_dist,reward_type,'o');
+        OctStep = mean(diff(curve_x(:,1)));
+        BehavDerivateCurve = diff(fit_ReNew.curve(:,2));
+        BehavDerivateCurve = [BehavDerivateCurve(1);BehavDerivateCurve]/OctStep;
+        
+        curve_y=modelfun(b,curve_x);
+        curve_Allfity = modelfun(bAll,curve_x);
+        BehavDerivateCurve = diff(curve_y(:,2));
+        BehavDerivateCurve = [BehavDerivateCurve(1);BehavDerivateCurve]/OctStep;
+        
+        %         plot(octave_dist,Type_choiceR,'o');
 %         h3=figure;
         plot(curve_x,curve_y,'color','k','LineWidth',1.8);
+        plot(curve_x,curve_Allfity,'color','r','LineWidth',1.8);
         hold off;
         ylim([0 1]);
         set(gca,'xtick',octave_dist);
@@ -404,6 +429,7 @@ for n = 1:fileNum
         xlabel('Frequency(kHz)');
         ylabel('Rightward choice');
         set(gca,'FontSize',20);
+        %
         if exist('fn','var')
             saveas(h3,[fn(1:end-4),'_fit plot'],'png');
             saveas(h3,[fn(1:end-4),'_fit plot'],'fig');
@@ -412,43 +438,55 @@ for n = 1:fileNum
             saveas(h3,'Behav_fit plot','fig');
         end
         
-        close;
+        close(h3);
+        RTrNext_ChoiceBias_script;
         syms x
 %         internal_boundary=solve(modelfun(ParAll,x)==0.5,x);
         internal_boundary=solve(modelfun(b,x)==0.5,x);
         boundary_result(n).FitValue=Qreg;
+        boundary_result(n).FitModelAll = {bAll,b};
+        boundary_result(n).SlopeCurve = BehavDerivateCurve;
 %         cd(FilePath);
     elseif choice == 4
         % using new fitting method
-        reward_type=zeros(1,length(stim_types));
+        Type_choiceR=zeros(1,length(stim_types));
         TypeNumber=zeros(1,length(stim_types));
         for i=1:length(stim_types)
             type_inds= behavResults.Stim_toneFreq==stim_types(i);
             TypeNumber(i) = sum(type_inds);
-            reward_type(i)=mean(rewarded(type_inds));
+            Type_choiceR(i)=mean(behavResults.Action_choice(type_inds));
         end
          boundary_result(n).Typenumbers = TypeNumber;
         boundary_result(n).StimType=stim_types;
-        boundary_result(n).StimCorr=reward_type;
-        if(mean(reward_type)<0.5)
+        boundary_result(n).StimCorr=Type_choiceR;
+        boundary_result(n).StimCorr(1:GrNum) = 1 - boundary_result(n).StimCorr(1:GrNum);
+        boundary_result(n).SessBehavAll = SessBehavDatas;
+        if(mean(boundary_result(n).StimCorr)<0.5)
             continue;
         end
         octave_sum=log2(double(max(behavResults.Stim_toneFreq))/double(min(behavResults.Stim_toneFreq)));
         octave_dist = log2(double(stim_types)/double(min(stim_types)));
-        reward_type(1:floor(length(stim_types)/2))=1-reward_type(1:floor(length(stim_types)/2));
-        %%
+        OctavesAll = log2(double(behavResults.Stim_toneFreq)/double(min(stim_types)));
+        TrChoice = double(behavResults.Action_choice);
+%         Type_choiceR(1:floor(length(stim_types)/2))=1-Type_choiceR(1:floor(length(stim_types)/2));
+        %
         h4=figure;
-        scatter(octave_dist,reward_type,50,'MarkerEdgeColor','k','LineWidth',3);
-        text(octave_dist+0.01,reward_type-0.02,cellstr(num2str(TypeNumber(:),'n=%d')),'Fontsize',16,'color','b');
+        scatter(octave_dist,Type_choiceR,50,'MarkerEdgeColor','k','LineWidth',3);
+        text(octave_dist+0.01,Type_choiceR-0.02,cellstr(num2str(TypeNumber(:),'n=%d')),'Fontsize',16,'color','b');
         hold on;
         % for parameters: g,l,u,v
         UL = [0.5, 0.5, max(octave_dist), 100];
-        SP = [reward_type(1),1 - reward_type(end)-reward_type(1), mean(octave_dist), 1];
+        SP = [Type_choiceR(1),1 - Type_choiceR(end)-Type_choiceR(1), mean(octave_dist), 1];
         LM = [0, 0, min(octave_dist), 0];
         ParaBoundLim = ([UL;SP;LM]);
-        fit_ReNew = FitPsycheCurveWH_nx(octave_dist, reward_type, ParaBoundLim);
+        fit_ReNew = FitPsycheCurveWH_nx(octave_dist, Type_choiceR, ParaBoundLim);
+        fit_ReNewAll = FitPsycheCurveWH_nx(OctavesAll, TrChoice, ParaBoundLim);
+        OctStep = mean(diff(fit_ReNew.curve(:,1)));
+        BehavDerivateCurve = diff(fit_ReNew.curve(:,2));
+        BehavDerivateCurve = [BehavDerivateCurve(1);BehavDerivateCurve]/OctStep;
         %
         plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'color','k','LineWidth',2.4);
+        plot(fit_ReNewAll.curve(:,1),fit_ReNewAll.curve(:,2),'color','r','LineWidth',2.4);
         hold off;
         ylim([0 1]);
         set(gca,'xtick',octave_dist);
@@ -457,7 +495,7 @@ for n = 1:fileNum
         xlabel('Frequency(kHz)');
         ylabel('Rightward choice');
         set(gca,'FontSize',16);
-        %%
+        %
         if exist('fn','var')
             saveas(h4,[fn(1:end-4),'_fit plot'],'png');
             saveas(h4,[fn(1:end-4),'_fit plot'],'fig');
@@ -465,14 +503,17 @@ for n = 1:fileNum
             saveas(h4,'Behav_fit plot','png');
             saveas(h4,'Behav_fit plot','fig');
         end
-        close;
+        %
+        close(h4);
         [~,BoundInds] = min(abs(fit_ReNew.curve(:,2) - 0.5));
         internal_boundary = fit_ReNew.curve(BoundInds,1);
         boundary_result(n).FitValue = fit_ReNew.ffit;
         boundary_result(n).gof = fit_ReNew.gof;
         b = coeffvalues(fit_ReNew.ffit);
+        boundary_result(n).FitModelAll = {{fit_ReNew,fit_ReNewAll}};
+        boundary_result(n).SlopeCurve = BehavDerivateCurve;
     end
-    
+    RTrNext_ChoiceBias_script;
     
     % cd(FilePath);
     

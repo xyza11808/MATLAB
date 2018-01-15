@@ -9,6 +9,10 @@ clearvars -except fn fp
 fpath = fullfile(fp,fn);
 fid = fopen(fpath);
 tline = fgetl(fid);
+CusMap = blue2red_2(32,0.8);
+PreferRandDisSum = {};
+m = 1;
+
 while ischar(tline)
     if isempty(strfind(tline,'NO_Correction\mode_f_change'))
         tline = fgetl(fid);
@@ -29,6 +33,10 @@ while ischar(tline)
     else
         error('No ROI information file detected, please check current session path.');
     end
+    ROIcenter = ROI_insite_label(ROIinfoData,0);
+    ROIdistance = pdist(ROIcenter);
+    DisMatrix = squareform(ROIdistance);
+    
     BehavBoundfile = load(fullfile(tline,'RandP_data_plots','boundary_result.mat'));
     BehavBoundData = BehavBoundfile.boundary_result.Boundary - 1;
     BehavCorr = BehavBoundfile.boundary_result.StimCorr;
@@ -88,17 +96,32 @@ while ischar(tline)
     for cROI = 1 : nROIs
         MaxIndsOctave(cROI) = UsedOctave(maxInds(cROI));
     end
+    modeFreqInds = MaxIndsOctave == mode(MaxIndsOctave);
+    [PassClusterInterMean,PassRandMean,hhf] =  Within2BetOrRandRatio(DisMatrix,modeFreqInds,'Rand');
+    saveas(hhf,'Passive Rand_vs_intermodeROIs distance ratio distribution');
+    saveas(hhf,'Passive Rand_vs_intermodeROIs distance ratio distribution','png');
+    close(hhf);
+    PreferRandDisSum{m,1} = PassClusterInterMean;
+    PreferRandDisSum{m,2} = PassRandMean;
+    %
     AllMaxIndsOctaves = MaxIndsOctave;
     PassFreqStrs = cellstr(num2str(BoundFreq*(2.^UsedOctave(:))/1000,'%.1f'));
     BoundFreqIndex = find(UsedOctave > BehavBoundData,1,'first');
     WithBoundyTick = [UsedOctave(1:BoundFreqIndex-1);BehavBoundData;UsedOctave(BoundFreqIndex:end)];
     WithBoundyTickLabel = [PassFreqStrs(1:BoundFreqIndex-1);'BehavBound';PassFreqStrs(BoundFreqIndex:end)];
-    
-    PercentileNum = 100 - [0.1,0.25,0.5,0.75,1]*100;
+%     NonRespROIInds = (MaxAmp < 20);
+    PercentileNum = 0;
+    %
     for cPrc = 1 : length(PercentileNum)
+        %
         cPrcvalue = PercentileNum(cPrc);
+        %
         PrcThres = prctile(MaxAmp,cPrcvalue);
         cROIinds = MaxAmp >= PrcThres; 
+%         GrayNonRespROIs = cROIinds & NonRespROIInds;
+%         ColorRespROIs = cROIinds & ~NonRespROIInds;
+        
+        % plot the responsive ROIs with color indicates tuning octave
         AllMasks = ROIinfoData.ROImask(cROIinds);
         MaxIndsOctave = AllMaxIndsOctaves(cROIinds);
         nROIs = length(AllMasks);
@@ -114,59 +137,83 @@ while ischar(tline)
             SumROImask = double(TempSumMask > 0);
             SumROIcolormask = SumROIcolormask + cROINewMask * MaxIndsOctave(cROI);
         end
+        
         %
-        hColor = figure('position',[50 100 530 450]);
+        hColor = figure('position',[3000 100 530 450]);
+        ha = axes;
 %         axis square
-        h_im = imagesc(SumROIcolormask,[min(UsedOctave),max(UsedOctave)]);
+        h_im = imagesc(SumROIcolormask,[-1 1]);
         set(h_im,'AlphaData',SumROImask>0);
         set(gca,'box','off');
         axis off
         hBar = colorbar('westoutside');
-        set(hBar,'position',get(hBar,'position').*[0.7 1 0.5 0.6]+[0 0.2 0 0],'TickLength',0);
-        set(hBar,'ytick',UsedOctave,'yticklabel',PassFreqStrs);
+        set(hBar,'position',get(hBar,'position').*[0.7 1 0.5 0.6]+[0.1 0.2 0 0],'TickLength',0);
+        set(hBar,'ytick',[-1 1],'yticklabel',{'8','32'});
         title(hBar,'kHz')
-        title(sprintf('Prc%d map',cPrcvalue));
+%         title(sprintf('Prc%d map',cPrcvalue));
         h_axes = axes('position', hBar.Position, 'ylim', hBar.Limits, 'color', 'none', 'visible','off');
         hl = line(h_axes.XLim, BehavBoundData*[1 1], 'color', 'k', 'parent', h_axes,'LineWidth',4);
         ModeTunedOctaves = mode(MaxIndsOctave);
-        h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'g', 'parent', h_axes,'LineWidth',4);
+        h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'r', 'parent', h_axes,'LineWidth',4);
         % boundary line position
         LineStartPositionB = [hBar.Position(1),(BehavBoundData-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
         % mode line position
         LineStartPositionM = [hBar.Position(1),(ModeTunedOctaves-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
-        
+        BoundArrowx = [LineStartPositionB(1)-0.06,LineStartPositionB(1)];
+        BoundArrowy = [LineStartPositionB(2),LineStartPositionB(2)];
+        ModeArrowx = [LineStartPositionM(1)-0.06,LineStartPositionM(1)];
+        ModeArrowy = [LineStartPositionM(2),LineStartPositionM(2)];
         if ModeTunedOctaves < BehavBoundData
-            BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
-            BoundArrowy = [LineStartPositionB(2)+0.1,LineStartPositionB(2)];
-            if BoundArrowy(1)> 1
-                BoundArrowy(1) = 1;
-            end
-            ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
-            ModeArrowy = [LineStartPositionM(2)-0.1,LineStartPositionM(2)];
-            if ModeArrowy(1) < 0
-                ModeArrowy(1) = 0;
-            end
-            annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
-            annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
+            TextBoundDim = [LineStartPositionB(1)-0.18 LineStartPositionB(2)-0.05 0.2 0.1];
+            TextModeDim = [LineStartPositionM(1)-0.18 LineStartPositionM(2)-0.05 0.2 0.1];
+            annotation('arrow',BoundArrowx,BoundArrowy,'Color','k','Linewidth',2);
+            annotation('arrow',ModeArrowx,ModeArrowy,'Color','r','Linewidth',2);
+            annotation('textbox',TextBoundDim,'String',{'Behavior';'Boundary'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+%             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
+%             BoundArrowy = [LineStartPositionB(2)+0.1,LineStartPositionB(2)];
+%             if BoundArrowy(1)> 1
+%                 BoundArrowy(1) = 1;
+%             end
+%             ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
+%             ModeArrowy = [LineStartPositionM(2)-0.1,LineStartPositionM(2)];
+%             if ModeArrowy(1) < 0
+%                 ModeArrowy(1) = 0;
+%             end
+%             annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
+%             annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
         else
-            BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
-            BoundArrowy = [LineStartPositionB(2)-0.1,LineStartPositionB(2)];
-            if BoundArrowy(1) < 0
-                BoundArrowy(1) = 0;
-            end
-            ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
-            ModeArrowy = [LineStartPositionM(2)+0.1,LineStartPositionM(2)];
-            if ModeArrowy(1) > 1
-                ModeArrowy(1) = 1;
-            end
-            annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
-            annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
+            TextBoundDim = [LineStartPositionB(1)-0.18 LineStartPositionB(2)-0.05 0.2 0.1];
+            TextModeDim = [LineStartPositionM(1)-0.18 LineStartPositionM(2)-0.05 0.2 0.1];
+            annotation('arrow',BoundArrowx,BoundArrowy,'Color','k','Linewidth',2);
+            annotation('arrow',ModeArrowx,ModeArrowy,'Color','r','Linewidth',2);
+            annotation('textbox',TextBoundDim,'String',{'Behavior';'Boundary'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+%             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
+%             BoundArrowy = [LineStartPositionB(2)-0.1,LineStartPositionB(2)];
+%             if BoundArrowy(1) < 0
+%                 BoundArrowy(1) = 0;
+%             end
+%             ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
+%             ModeArrowy = [LineStartPositionM(2)+0.1,LineStartPositionM(2)];
+%             if ModeArrowy(1) > 1
+%                 ModeArrowy(1) = 1;
+%             end
+%             annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
+%             annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
         end
+        set(ha,'position',get(ha,'position')+[0.1 0 0 0])
+        colormap(CusMap);
 %
         saveas(hColor,sprintf('Passive top Prc%d colormap save',100-cPrcvalue));
         saveas(hColor,sprintf('Passive top Prc%d colormap save',100-cPrcvalue),'png');
         close(hColor);
     end
+    %
     PassROITunedOctave = AllMaxIndsOctaves;
     PassOctaves = UsedOctave;
     Octaves = unique(AllMaxIndsOctaves);
@@ -176,10 +223,10 @@ while ischar(tline)
     end
 
     %
-    % extract passive session maxium responsive frequency index
+    % extract task session maxium responsive frequency index
     % UsedOctaveInds = ~(abs(PassFreqOctave) > 1);
-    UsedOctave = TaskFreqOctave;
-    UsedOctave = UsedOctave(:);
+    UsedOctave = TaskFreqOctave(:);
+%     UsedOctave = UsedOctave(:);
     UsedOctaveData = CorrTunningFun;
     nROIs = size(UsedOctaveData,2);
     [MaxAmp,maxInds] = max(UsedOctaveData);
@@ -187,13 +234,24 @@ while ischar(tline)
     for cROI = 1 : nROIs
         MaxIndsOctave(cROI) = UsedOctave(maxInds(cROI));
     end
+    modeFreqInds = MaxIndsOctave == mode(MaxIndsOctave);
+    [TaskClusterInterMean,TaskRandMean,hhf] =  Within2BetOrRandRatio(DisMatrix,modeFreqInds,'Rand');
+    saveas(hhf,'Task Rand_vs_intermodeROIs distance ratio distribution');
+    saveas(hhf,'Task Rand_vs_intermodeROIs distance ratio distribution','png');
+    close(hhf);
+    
+    PreferRandDisSum{m,3} = TaskClusterInterMean;
+    PreferRandDisSum{m,4} = TaskRandMean;
+    
     AllMaxIndsOctaves = MaxIndsOctave;
     TaskFreqStrs = cellstr(num2str(BoundFreq*(2.^UsedOctave(:))/1000,'%.1f'));
     BoundFreqIndex = find(UsedOctave > BehavBoundData,1,'first');
     WithBoundyTick = [UsedOctave(1:BoundFreqIndex-1);BehavBoundData;UsedOctave(BoundFreqIndex:end)];
     WithBoundyTickLabel = [TaskFreqStrs(1:BoundFreqIndex-1);'BehavBound';TaskFreqStrs(BoundFreqIndex:end)];
-    PercentileNum = 100 - [0.1,0.25,0.5,0.75,1]*100;
+    PercentileNum = 0;
+    %
     for cPrc = 1 : length(PercentileNum)
+        %
         cPrcvalue = PercentileNum(cPrc);
         PrcThres = prctile(MaxAmp,cPrcvalue);
         cROIinds = MaxAmp >= PrcThres; 
@@ -214,52 +272,75 @@ while ischar(tline)
         end
         %
         hColor = figure('position',[600 300 530 450]);
-        axis square
-        h_im = imagesc(SumROIcolormask,[min(UsedOctave),max(UsedOctave)]);
+         ha = axes;
+%         axis square
+        h_im = imagesc(SumROIcolormask,[-1 1]);
         set(h_im,'AlphaData',SumROImask>0);
         set(gca,'box','off');
         axis off
         hBar = colorbar('westoutside');
-        set(hBar,'position',get(hBar,'position').*[0.7 1 0.5 0.6]+[0 0.2 0 0]);
-        set(hBar,'ytick',UsedOctave,'yticklabel',TaskFreqStrs,'FontSize',10);
+        set(hBar,'position',get(hBar,'position').*[0.7 1 0.5 0.6]+[0.1 0.2 0 0]);
+        set(hBar,'ytick',[-1 1],'yticklabel',{'8','32'});
         title(hBar,'kHz')
-        title(sprintf('Prc%d map',cPrcvalue));
+%         title(sprintf('Prc%d map',cPrcvalue));
          h_axes = axes('position', hBar.Position, 'ylim', hBar.Limits, 'color', 'none', 'visible','off');
         hl = line(h_axes.XLim, BehavBoundData*[1 1], 'color', 'k', 'parent', h_axes,'LineWidth',4);
         ModeTunedOctaves = mode(MaxIndsOctave);
-        h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'g', 'parent', h_axes,'LineWidth',4);
+        h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'r', 'parent', h_axes,'LineWidth',4);
         % boundary line position
         LineStartPositionB = [hBar.Position(1),(BehavBoundData-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
         % mode line position
         LineStartPositionM = [hBar.Position(1),(ModeTunedOctaves-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
         
+        BoundArrowx = [LineStartPositionB(1)-0.06,LineStartPositionB(1)];
+        BoundArrowy = [LineStartPositionB(2),LineStartPositionB(2)];
+        ModeArrowx = [LineStartPositionM(1)-0.06,LineStartPositionM(1)];
+        ModeArrowy = [LineStartPositionM(2),LineStartPositionM(2)];
         if ModeTunedOctaves < BehavBoundData
-            BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
-            BoundArrowy = [LineStartPositionB(2)+0.1,LineStartPositionB(2)];
-            ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
-            ModeArrowy = [LineStartPositionM(2)-0.1,LineStartPositionM(2)];
-            if BoundArrowy(1) > 1
-                BoundArrowy(1) = 1;
-            end
-            if ModeArrowy(1) < 0
-                ModeArrowy(1) = 0;
-            end
-            annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
-            annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
+            TextBoundDim = [LineStartPositionB(1)-0.18 LineStartPositionB(2)-0.05 0.2 0.1];
+            TextModeDim = [LineStartPositionM(1)-0.18 LineStartPositionM(2)-0.05 0.2 0.1];
+            annotation('arrow',BoundArrowx,BoundArrowy,'Color','k','Linewidth',2);
+            annotation('arrow',ModeArrowx,ModeArrowy,'Color','r','Linewidth',2);
+            annotation('textbox',TextBoundDim,'String',{'Behavior';'Boundary'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+%             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
+%             BoundArrowy = [LineStartPositionB(2)+0.1,LineStartPositionB(2)];
+%             if BoundArrowy(1)> 1
+%                 BoundArrowy(1) = 1;
+%             end
+%             ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
+%             ModeArrowy = [LineStartPositionM(2)-0.1,LineStartPositionM(2)];
+%             if ModeArrowy(1) < 0
+%                 ModeArrowy(1) = 0;
+%             end
+%             annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
+%             annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
         else
-            BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
-            BoundArrowy = [LineStartPositionB(2)-0.1,LineStartPositionB(2)];
-            ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
-            ModeArrowy = [LineStartPositionM(2)+0.1,LineStartPositionM(2)];
-            if BoundArrowy(1) < 0
-                BoundArrowy(1) = 0;
-            end
-            if ModeArrowy(1) > 1
-                ModeArrowy(1) = 1;
-            end
-            annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
-            annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
+            TextBoundDim = [LineStartPositionB(1)-0.18 LineStartPositionB(2)-0.05 0.2 0.1];
+            TextModeDim = [LineStartPositionM(1)-0.18 LineStartPositionM(2)-0.05 0.2 0.1];
+            annotation('arrow',BoundArrowx,BoundArrowy,'Color','k','Linewidth',2);
+            annotation('arrow',ModeArrowx,ModeArrowy,'Color','r','Linewidth',2);
+            annotation('textbox',TextBoundDim,'String',{'Behavior';'Boundary'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+%             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
+%             BoundArrowy = [LineStartPositionB(2)-0.1,LineStartPositionB(2)];
+%             if BoundArrowy(1) < 0
+%                 BoundArrowy(1) = 0;
+%             end
+%             ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
+%             ModeArrowy = [LineStartPositionM(2)+0.1,LineStartPositionM(2)];
+%             if ModeArrowy(1) > 1
+%                 ModeArrowy(1) = 1;
+%             end
+%             annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
+%             annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
         end
+        set(ha,'position',get(ha,'position')+[0.1 0 0 0])
+        colormap(CusMap)
 %
         saveas(hColor,sprintf('Task top Prc%d colormap save',100-cPrcvalue));
         saveas(hColor,sprintf('Task top Prc%d colormap save',100-cPrcvalue),'png');
@@ -323,29 +404,33 @@ while ischar(tline)
 
     % plot the tuning peak distribution with uncertainty curve
     TaskFreqStrs = num2str((2.^TaskOctaves(:))*BoundFreq/1000,'%.1f');
-    hf = figure('position',[600 300 400 300]);
-    yyaxis left
+    hf = figure('position',[3000 300 400 300]);
+%     yyaxis left
     hold on
-    ll1 = plot(PassOctaves,PassOctaveTypeNum,'k-*','linewidth',1.8,'MarkerSize',10);
-    ll2 = plot(TaskOctaves,TaskOctaveTypeNum,'r-o','linewidth',1.8,'MarkerSize',10);
+%     ll1 = plot(PassOctaves,PassOctaveTypeNum,'k-*','linewidth',1.8,'MarkerSize',10);
+%     ll2 = plot(TaskOctaves,TaskOctaveTypeNum,'r-o','linewidth',1.8,'MarkerSize',10);
+    bb1 = bar(PassOctaves-0.08,PassOctaveTypeNum,0.4,'EdgeColor','none','FaceColor',[.7 .7 .7]);
+    bb2 = bar(TaskOctaves+0.08,TaskOctaveTypeNum,0.4,'EdgeColor','none','FaceColor',[1 .7 .2]);
     ylabel('Cell Count');
 
-    yyaxis right
-    ll3 = plot(TaskOctaves,Uncertainty,'m-o','linewidth',1.8,'MarkerSize',10);
-    set(gca,'xtick',TaskOctaves,'xticklabel',TaskFreqStrs);
+%     yyaxis right
+%     ll3 = plot(TaskOctaves,Uncertainty,'m-o','linewidth',1.8,'MarkerSize',10);
+%     set(gca,'xtick',TaskOctaves,'xticklabel',TaskFreqStrs);
     yscales = get(gca,'ylim');
     line([BehavBoundData BehavBoundData],yscales,'linewidth',2.1,'Color',BoundaryColor,'Linestyle','--');
-    text(BehavBoundData,yscales(1)+diff(yscales*0.1),'BehavBound','Color','g','FontSize',10,'HorizontalAlignment','center');
-    set(gca,'ylim',yscales);
-    ylabel('Uncertainty level');
+    text(BehavBoundData,yscales(1)+diff(yscales*0.95),'BehavBound','Color','g','FontSize',10,'HorizontalAlignment','center');
+    set(gca,'ylim',yscales,'xlim',[-1.5 1.5]);
+%     ylabel('Uncertainty level');
     xlabel('Frequency (kHz)');
 
     title('Tuned Inds vs uncertainty');
     set(gca,'FontSize',16);
     if BehavBoundData < 0
-        legend([ll1,ll2,ll3],{'Passive','Task','Uncertainty'},'Location','Northeast','FontSize',8);
+%         legend([ll1,ll2,ll3],{'Passive','Task','Uncertainty'},'Location','Northeast','FontSize',8);
+        legend([bb1,bb2],{'Passive','Task'},'Location','Northeast','FontSize',8);
     else
-        legend([ll1,ll2,ll3],{'Passive','Task','Uncertainty'},'Location','Northwest','FontSize',8);
+%         legend([ll1,ll2,ll3],{'Passive','Task','Uncertainty'},'Location','Northwest','FontSize',8);
+        legend([bb1,bb2],{'Passive','Task'},'Location','Northwest','FontSize',8);
     end
     legend('boxoff');
     %
@@ -391,11 +476,14 @@ while ischar(tline)
     saveas(hf,'Bound2Behav diff compare scatter plot');
     saveas(hf,'Bound2Behav diff compare scatter plot','png');
     close(hf);
+    
+    save PreferVsRandDisMeanSave.mat TaskClusterInterMean TaskRandMean PassClusterInterMean PassRandMean -v7.3
     %
-    tline = fgetl(fid);
+    tline = fgetl(fid); 
+    m = m + 1;
 end
 
-%
+%%
 clearvars -except fn fp
 m = 1;
 nSession = 1;
@@ -414,7 +502,7 @@ nSession = 1;
             if m == 1
                 %
 %                 PPTname = input('Please input the name for current PPT file:\n','s');
-                PPTname = 'testuncertaintySave';
+                PPTname = 'testuncertaintySave_All_newCP';
                 if isempty(strfind(PPTname,'.ppt'))
                     PPTname = [PPTname,'.pptx'];
                 end
@@ -428,7 +516,8 @@ nSession = 1;
                 TaskRespMap = fullfile(cTunDataPath,'Task top Prc100 colormap save.png');
                 PassRespMap = fullfile(cTunDataPath,'Passive top Prc100 colormap save.png');
                 BoundDifffig = fullfile(cTunDataPath,'Bound2Behav diff compare scatter plot.png');
-                
+                PassRandInterRatio = fullfile(cTunDataPath,'Passive Rand_vs_intermodeROIs distance ratio distribution.png');
+                TaskRandInterRatio = fullfile(cTunDataPath,'Task Rand_vs_intermodeROIs distance ratio distribution.png');
                 pptFullfile = fullfile(pptSavePath,PPTname);
                 if ~exist(pptFullfile,'file')
                     NewFileExport = 1;
@@ -452,18 +541,23 @@ nSession = 1;
                     
                     % Anminfo
                     exportToPPTX('addtext',sprintf('Session%d',nSession),'Position',[2 0 2 1],'FontSize',24);
-                    exportToPPTX('addnote',pwd);
+                    exportToPPTX('addnote',tline);
                     exportToPPTX('addpicture',BehavPlotf,'Position',[0.3 1 5 3.75]);
                     exportToPPTX('addpicture',UncertaintyIm,'Position',[0.3 5 5 3.75]);
-                    exportToPPTX('addpicture',TaskRespMapIM,'Position',[6 0.2 5 4.19]);
-                    exportToPPTX('addtext','Task','Position',[10.5 2 1 2],'FontSize',22);
-                    exportToPPTX('addpicture',PassRespMapIM,'Position',[6 4.5 5 4.19]);
-                    exportToPPTX('addtext','Passive','Position',[10.5 5.5 3 2],'FontSize',22);
-                    exportToPPTX('addpicture',BoundDiffIM,'Position',[12 4.5 4 3.35]);
+                    exportToPPTX('addpicture',TaskRespMapIM,'Position',[6 0.2 4.2 3.5]);
+                    exportToPPTX('addtext','Task','Position',[10.5 2 1 1],'FontSize',22,'Color','r');
+                    exportToPPTX('addpicture',PassRespMapIM,'Position',[6 4 4.2 3.5]);
+                    exportToPPTX('addtext','Passive','Position',[10.5 5.5 2 1],'FontSize',22);
+                    exportToPPTX('addpicture',BoundDiffIM,'Position',[12.3 0 3 2.52]);
+                    exportToPPTX('addpicture',imread(TaskRandInterRatio),'Position',[12.2 2.8 3.5 2.52]);
+                    exportToPPTX('addtext','Task','Position',[13.5 5.35 1 0.6],'FontSize',20,'Color','r');
+                    exportToPPTX('addpicture',imread(PassRandInterRatio),'Position',[12.2 5.9 3.5 2.52]);
+                    exportToPPTX('addtext','Passive','Position',[13.5 8.4 2 0.6],'FontSize',20);
+                    
 %                     exportToPPTX('addpicture',PassMeanFig,'Position',[12.8 0.8 3 3]);
-                    exportToPPTX('addtext',sprintf('Batch:%s \r\nAnm: %s\r\nDate: %s\r\nField: %s',...
+                    exportToPPTX('addtext',sprintf('Batch:%s Anm: %s\r\nDate: %s Field: %s',...
                         Anminfo.BatchNum,Anminfo.AnimalNum,Anminfo.SessionDate,Anminfo.TestNum),...
-                        'Position',[12 1 3 2.5],'FontSize',22);
+                        'Position',[6 7.3 5 1.5],'FontSize',22);
         end
          m = m + 1;
          nSession = nSession + 1;
@@ -553,52 +647,74 @@ while ischar(tline)
         end
         %
         hColor = figure('position',[600 300 530 450]);
-        axis square
-        h_im = imagesc(SumROIcolormask,[min(UsedOctave),max(UsedOctave)]);
+        ha = axes;
+%         axis square
+        h_im = imagesc(SumROIcolormask,[-1 1]);
         set(h_im,'AlphaData',SumROImask>0);
         set(gca,'box','off');
         axis off
         hBar = colorbar('westoutside');
-        set(hBar,'position',get(hBar,'position').*[0.8 1 0.5 1]);
-        set(hBar,'ytick',WithBoundyTick,'yticklabel',WithBoundyTickLabel);
+        set(hBar,'position',get(hBar,'position').*[0.7 1 0.5 0.6]+[0.1 0.2 0 0]);
+        set(hBar,'ytick',UsedOctave([1,end]),'yticklabel',PassFreqStrs([1,end]));
         title(hBar,'kHz')
         title(sprintf('Prc%d map',cPrcvalue));
          h_axes = axes('position', hBar.Position, 'ylim', hBar.Limits, 'color', 'none', 'visible','off');
         hl = line(h_axes.XLim, BehavBoundData*[1 1], 'color', 'k', 'parent', h_axes,'LineWidth',4);
         ModeTunedOctaves = mode(MaxIndsOctave);
-        h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'g', 'parent', h_axes,'LineWidth',4);
+        h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'r', 'parent', h_axes,'LineWidth',4);
         % boundary line position
         LineStartPositionB = [hBar.Position(1),(BehavBoundData-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
         % mode line position
         LineStartPositionM = [hBar.Position(1),(ModeTunedOctaves-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
         
+        BoundArrowx = [LineStartPositionB(1)-0.06,LineStartPositionB(1)];
+        BoundArrowy = [LineStartPositionB(2),LineStartPositionB(2)];
+        ModeArrowx = [LineStartPositionM(1)-0.06,LineStartPositionM(1)];
+        ModeArrowy = [LineStartPositionM(2),LineStartPositionM(2)];
         if ModeTunedOctaves < BehavBoundData
-            BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
-            BoundArrowy = [LineStartPositionB(2)+0.1,LineStartPositionB(2)];
-            ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
-            ModeArrowy = [LineStartPositionM(2)-0.1,LineStartPositionM(2)];
-            if BoundArrowy(1) > 1
-                BoundArrowy(1) = 1;
-            end
-            if ModeArrowy(1) < 0
-                ModeArrowy(1) = 0;
-            end
-            annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
-            annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
+            TextBoundDim = [LineStartPositionB(1)-0.18 LineStartPositionB(2)-0.05 0.2 0.1];
+            TextModeDim = [LineStartPositionM(1)-0.18 LineStartPositionM(2)-0.05 0.2 0.1];
+            annotation('arrow',BoundArrowx,BoundArrowy,'Color','k','Linewidth',2);
+            annotation('arrow',ModeArrowx,ModeArrowy,'Color','r','Linewidth',2);
+            annotation('textbox',TextBoundDim,'String',{'Behavior';'Boundary'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+%             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
+%             BoundArrowy = [LineStartPositionB(2)+0.1,LineStartPositionB(2)];
+%             if BoundArrowy(1)> 1
+%                 BoundArrowy(1) = 1;
+%             end
+%             ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
+%             ModeArrowy = [LineStartPositionM(2)-0.1,LineStartPositionM(2)];
+%             if ModeArrowy(1) < 0
+%                 ModeArrowy(1) = 0;
+%             end
+%             annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
+%             annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
         else
-            BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
-            BoundArrowy = [LineStartPositionB(2)-0.1,LineStartPositionB(2)];
-            ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
-            ModeArrowy = [LineStartPositionM(2)+0.1,LineStartPositionM(2)];
-            if BoundArrowy(1) < 0
-                BoundArrowy(1) = 0;
-            end
-            if ModeArrowy(1) > 1
-                ModeArrowy(1) = 1;
-            end
-            annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
-            annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
+            TextBoundDim = [LineStartPositionB(1)-0.18 LineStartPositionB(2)-0.05 0.2 0.1];
+            TextModeDim = [LineStartPositionM(1)-0.18 LineStartPositionM(2)-0.05 0.2 0.1];
+            annotation('arrow',BoundArrowx,BoundArrowy,'Color','k','Linewidth',2);
+            annotation('arrow',ModeArrowx,ModeArrowy,'Color','r','Linewidth',2);
+            annotation('textbox',TextBoundDim,'String',{'Behavior';'Boundary'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+%             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
+%             BoundArrowy = [LineStartPositionB(2)-0.1,LineStartPositionB(2)];
+%             if BoundArrowy(1) < 0
+%                 BoundArrowy(1) = 0;
+%             end
+%             ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
+%             ModeArrowy = [LineStartPositionM(2)+0.1,LineStartPositionM(2)];
+%             if ModeArrowy(1) > 1
+%                 ModeArrowy(1) = 1;
+%             end
+%             annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
+%             annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
         end
+        set(ha,'position',get(ha,'position')+[0.1 0 0 0]);
 
         saveas(hColor,sprintf('Passive top Prc%d colormap save',100-cPrcvalue));
         saveas(hColor,sprintf('Passive top Prc%d colormap save',100-cPrcvalue),'png');
@@ -652,52 +768,75 @@ while ischar(tline)
         end
         %
         hColor = figure('position',[600 300 530 450]);
+        ha = axes;
 %         axis square
-        h_im = imagesc(SumROIcolormask,[min(UsedOctave),max(UsedOctave)]);
+        h_im = imagesc(SumROIcolormask,[-1,1]);
+       
         set(h_im,'AlphaData',SumROImask>0);
         set(gca,'box','off');
         axis off
         hBar = colorbar('westoutside');
-        set(hBar,'position',get(hBar,'position').*[0.8 1 0.5 1]);
-        set(hBar,'ytick',WithBoundyTick,'yticklabel',WithBoundyTickLabel,'FontSize',10);
+        set(hBar,'position',get(hBar,'position').*[0.7 1 0.5 0.6]+[0.1 0.2 0 0]);
+        set(hBar,'ytick',UsedOctave([1,end]),'yticklabel',TaskFreqStrs([1,end]),'FontSize',10);
         title(hBar,'kHz')
         title(sprintf('Prc%d map',cPrcvalue));
          h_axes = axes('position', hBar.Position, 'ylim', hBar.Limits, 'color', 'none', 'visible','off');
         hl = line(h_axes.XLim, BehavBoundData*[1 1], 'color', 'k', 'parent', h_axes,'LineWidth',4);
         ModeTunedOctaves = mode(MaxIndsOctave);
-        h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'g', 'parent', h_axes,'LineWidth',4);
+        h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'r', 'parent', h_axes,'LineWidth',4);
         % boundary line position
         LineStartPositionB = [hBar.Position(1),(BehavBoundData-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
         % mode line position
         LineStartPositionM = [hBar.Position(1),(ModeTunedOctaves-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
         
+        BoundArrowx = [LineStartPositionB(1)-0.06,LineStartPositionB(1)];
+        BoundArrowy = [LineStartPositionB(2),LineStartPositionB(2)];
+        ModeArrowx = [LineStartPositionM(1)-0.06,LineStartPositionM(1)];
+        ModeArrowy = [LineStartPositionM(2),LineStartPositionM(2)];
         if ModeTunedOctaves < BehavBoundData
-            BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
-            BoundArrowy = [LineStartPositionB(2)+0.1,LineStartPositionB(2)];
-            ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
-            ModeArrowy = [LineStartPositionM(2)-0.1,LineStartPositionM(2)];
-            if BoundArrowy(1) > 1
-                BoundArrowy(1) = 1;
-            end
-            if ModeArrowy(1) < 0
-                ModeArrowy(1) = 0;
-            end
-            annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
-            annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
+            TextBoundDim = [LineStartPositionB(1)-0.18 LineStartPositionB(2)-0.05 0.2 0.1];
+            TextModeDim = [LineStartPositionM(1)-0.18 LineStartPositionM(2)-0.05 0.2 0.1];
+            annotation('arrow',BoundArrowx,BoundArrowy,'Color','k','Linewidth',2);
+            annotation('arrow',ModeArrowx,ModeArrowy,'Color','r','Linewidth',2);
+            annotation('textbox',TextBoundDim,'String',{'Behavior';'Boundary'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+%             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
+%             BoundArrowy = [LineStartPositionB(2)+0.1,LineStartPositionB(2)];
+%             if BoundArrowy(1)> 1
+%                 BoundArrowy(1) = 1;
+%             end
+%             ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
+%             ModeArrowy = [LineStartPositionM(2)-0.1,LineStartPositionM(2)];
+%             if ModeArrowy(1) < 0
+%                 ModeArrowy(1) = 0;
+%             end
+%             annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
+%             annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
         else
-            BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
-            BoundArrowy = [LineStartPositionB(2)-0.1,LineStartPositionB(2)];
-            ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
-            ModeArrowy = [LineStartPositionM(2)+0.1,LineStartPositionM(2)];
-            if BoundArrowy(1) < 0
-                BoundArrowy(1) = 0;
-            end
-            if ModeArrowy(1) > 1
-                ModeArrowy(1) = 1;
-            end
-            annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
-            annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
+            TextBoundDim = [LineStartPositionB(1)-0.18 LineStartPositionB(2)-0.05 0.2 0.1];
+            TextModeDim = [LineStartPositionM(1)-0.18 LineStartPositionM(2)-0.05 0.2 0.1];
+            annotation('arrow',BoundArrowx,BoundArrowy,'Color','k','Linewidth',2);
+            annotation('arrow',ModeArrowx,ModeArrowy,'Color','r','Linewidth',2);
+            annotation('textbox',TextBoundDim,'String',{'Behavior';'Boundary'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+%             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
+%             BoundArrowy = [LineStartPositionB(2)-0.1,LineStartPositionB(2)];
+%             if BoundArrowy(1) < 0
+%                 BoundArrowy(1) = 0;
+%             end
+%             ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
+%             ModeArrowy = [LineStartPositionM(2)+0.1,LineStartPositionM(2)];
+%             if ModeArrowy(1) > 1
+%                 ModeArrowy(1) = 1;
+%             end
+%             annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
+%             annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
         end
+        set(ha,'position',get(ha,'position')+[0.1 0 0 0])
 %
         saveas(hColor,sprintf('Task top Prc%d colormap save',100-cPrcvalue));
         saveas(hColor,sprintf('Task top Prc%d colormap save',100-cPrcvalue),'png');
@@ -833,7 +972,7 @@ while ischar(tline)
     tline = fgetl(fid);
 end
 
-%%
+%
 clearvars -except fn fp
 m = 1;
 nSession = 1;
@@ -891,7 +1030,7 @@ nSession = 1;
                     
                     % Anminfo
                     exportToPPTX('addtext',sprintf('Session%d',nSession),'Position',[2 0 2 1],'FontSize',24);
-                    exportToPPTX('addnote',pwd);
+                    exportToPPTX('addnote',tline);
                     exportToPPTX('addpicture',BehavPlotf,'Position',[0.3 1 5 3.75]);
                     exportToPPTX('addpicture',UncertaintyIm,'Position',[0.3 5 5 3.75]);
                     exportToPPTX('addpicture',TaskRespMapIM,'Position',[6 0.2 5 4.19]);
@@ -911,3 +1050,142 @@ nSession = 1;
     end
     fprintf('Current figures saved in file:\n%s\n',saveName);
     cd(pptSavePath);
+
+%%
+clearvars -except fn fp
+%%
+ROI_info = ROIinfoBU;
+ROIcenter = ROI_insite_label(ROI_info,0);
+ROIdistance = pdist(ROIcenter);
+DisMatrix = squareform(ROIdistance);
+
+%%
+% cModeOct = mode(MaxIndsOctave);
+% ModeInds = MaxIndsOctave == cModeOct;
+% PreferedOctDisMtx = DisMatrix(ModeInds,ModeInds);
+% PreferedOctDisVec = PreferedOctDisMtx(logical(tril(ones(size(PreferedOctDisMtx)),-1)));
+% InterMean = mean(PreferedOctDisVec);
+% nIters = 1000;
+% RandMean = zeros(nIters,1);
+% DeviateScale = zeros(nIters,1);
+% parfor n = 1 : nIters
+%     RandInds = randsample(length(MaxIndsOctave),sum(ModeInds));
+%     RandIndsDisMtx = DisMatrix(RandInds,RandInds);
+%     RandIndsDisVec = RandIndsDisMtx(logical(tril(ones(size(RandIndsDisMtx)),-1)));
+%     RandMean(n) = mean(RandIndsDisVec);
+%     DeviateScale(n) = sqrt(sum((MaxIndsOctave(RandInds) - cModeOct).^2)/sum(ModeInds));
+% end
+%
+% DisRatio = RandMean/InterMean;
+% [~,p] = ttest(DisRatio,1);
+% [RatioCount,RatioCent] = hist(DisRatio,min(DisRatio):0.01:max(DisRatio));
+% hhf = figure('position',[100,200,450,380]);
+% plot(RatioCent,RatioCount/nIters,'k','linewidth',2);
+% yscales = get(gca,'ylim');
+% line([1,1],yscales,'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
+% line([mean(DisRatio),mean(DisRatio)],yscales,'Color','r','linewidth',1.6,'linestyle','--');
+% xlabel('Rand/Inter Distance ratio');
+% ylabel('Fraction');
+% title(sprintf('p = %.3e',p));
+% ylim(yscales);
+% set(gca,'FontSize',16);
+% text(mean(DisRatio),yscales(2)*0.2+yscales(1)*0.8,{'Mean=';sprintf('%.3f',mean(DisRatio))},...
+%     'FontSize',10,'Color','b','HorizontalAlignment','center');
+% saveas(hhf,'Prefered frequency within distance with random distance ratio');
+% saveas(hhf,'Prefered frequency within distance with random distance ratio','png');
+% close(hhf);
+
+%%
+clear
+clc
+[fn,fp,fi] = uigetfile('*.txt','Please select the session path savage file');
+if ~fi
+    return;
+end
+%
+clearvars -except fn fp
+fpath = fullfile(fp,fn);
+fid = fopen(fpath);
+tline = fgetl(fid);
+nSess = 1;
+TaskClusterMean = [];
+TaskRandMean = [];
+PassClusterMean = [];
+PassRandMean = [];
+
+while ischar(tline)
+    if isempty(strfind(tline,'NO_Correction\mode_f_change'))
+        tline = fgetl(fid);
+        continue;
+    end
+    
+    % load distance data across session
+    cDataPath = fullfile(tline,'Tunning_fun_plot_New1s','Tuned freq graycolormap plot');
+    cData = load(fullfile(cDataPath,'PreferVsRandDisMeanSave.mat'));
+    TaskClusterMean(nSess) = cData.TaskClusterInterMean;
+    TaskRandMean(nSess) = mean(cData.TaskRandMean);
+    PassClusterMean(nSess) = cData.PassClusterInterMean;
+    PassRandMean(nSess) = mean(cData.PassRandMean);
+    
+    tline = fgetl(fid);
+    nSess = nSess + 1;
+end
+
+%
+TaskRatio = TaskRandMean./TaskClusterMean;
+PassRatio = PassRandMean./PassClusterMean;
+[~,p] = ttest(TaskRatio,PassRatio);
+hhf = figure('position',[3000 200 320 260]);
+hold on
+plot(ones(length(TaskRatio),1),TaskRatio,'*','Color',[.7 .7 .7],'MarkerSize',8);
+plot(ones(length(PassRatio),1)*2,PassRatio,'*','Color',[.7 .7 .7],'MarkerSize',8);
+errorbar([1,2],[mean(TaskRatio),mean(PassRatio)],[std(TaskRatio)/sqrt(numel(TaskRatio)),std(PassRatio)/sqrt(numel(PassRatio))],...
+    'ko','linewidth',2);
+set(gca,'xtick',[1 2],'xticklabel',{'Task','Pass'},'xlim',[0.5 2.5]);
+line([0.5,2.5],[1 1],'Color','m','linewidth',1.4,'linestyle','--');
+ylabel('Rand/Winthin');
+set(gca,'FontSize',18)
+% plot(TaskRatio,PassRatio,'ko','MarkerSize',12,'linewidth',2);
+% TickScales = [get(gca,'xlim');get(gca,'ylim')];
+% CommonScales = [min(TickScales(:,1)),max(TickScales(:,2))];
+% set(gca,'xlim',CommonScales,'ylim',CommonScales);
+% line(CommonScales,CommonScales,'Color',[.7 .7 .7],'Linewidth',1.6,'linestyle','--');
+% line([1 1],[0 1],'Color',[.7 .7 .7],'Linewidth',1.6,'linestyle','--');
+% line([0 1],[1 1],'Color',[.7 .7 .7],'Linewidth',1.6,'linestyle','--');
+% xlabel('Task Ratio');
+% ylabel('Passive Ratio');
+% set(gca,'FontSize',18);
+% set(gca,'ytick',get(gca,'xtick'));
+% title(sprintf('p = %.3e, n = %d',p,length(TaskRatio)));
+% text(0.8*CommonScales(2),)
+
+%%
+CusMap = ([linspace(0,1,100);zeros(1,100);linspace(1,0,100)])';
+colormap(CusMap)
+
+%% plot the distance ratio plots, summary for task ans passive
+PassClustAvgDis = cell2mat(PreferRandDisSum(:,1));
+PassRandAvgDis = cellfun(@mean,PreferRandDisSum(:,2));
+TaskClusAvgDis = cell2mat(PreferRandDisSum(:,3));
+TaskRandAvgDis = cellfun(@mean,PreferRandDisSum(:,4));
+
+PassRatio = PassRandAvgDis./PassClustAvgDis;
+TaskRatio = TaskRandAvgDis./TaskClusAvgDis;
+hf = figure('position',[2200 100 380 310]);
+plot(PassRatio,TaskRatio,'ko','MarkerSize',8,'Linewidth',2.4);
+AxisLim = [get(gca,'xlim'),get(gca,'ylim')];
+UsedMaxLim = [min(AxisLim),max(AxisLim)];
+set(gca,'xlim',UsedMaxLim,'ylim',UsedMaxLim);
+line(UsedMaxLim,UsedMaxLim,'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
+line([1,1],[0 1],'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
+line([0 1],[1,1],'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
+[~,Pass_2_base] = ttest(PassRatio,1);
+[~,Task_2_base] = ttest(TaskRatio,1);
+[~,Task_2_Pass] = ttest(TaskRatio,PassRatio);
+set(gca,'box','off');
+text(0.94,1.45,sprintf('p2b = %.3e',Pass_2_base),'Color','m');
+text(0.94,1.4,sprintf('t2b = %.3e',Task_2_base),'Color','m');
+text(0.94,1.35,sprintf('t2p = %.3e',Task_2_Pass),'Color','m');
+saveas(hf,'Dis_ratio distribution plot save');
+saveas(hf,'Dis_ratio distribution plot save','png');
+saveas(hf,'Dis_ratio distribution plot save','pdf');

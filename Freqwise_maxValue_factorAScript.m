@@ -69,7 +69,7 @@ LM = [0, 0, min(octave_dist), 0];
 ParaBoundLim = ([UL;SP;LM]);
 ParaBoundLimFA = ([UL;SP_FA;LM]);
 fit_ReNew = FitPsycheCurveWH_nx(octave_dist, reward_type, ParaBoundLim);
-fit_ReNew_FA = FitPsycheCurveWH_nx(octave_dist, NorFreqIndex, ParaBoundLim);
+fit_ReNew_FA = FitPsycheCurveWH_nx(octave_dist, NorFreqIndex, ParaBoundLimFA);
 hf = figure('position',[560 500 500 400]);
 hold on
 plot(octave_dist,reward_type,'ro','MarkerSize',12,'linewidth',1.8);
@@ -87,4 +87,92 @@ set(gca,'FontSize',20);
 saveas(hf,'Factor and behavior compare plot');
 saveas(hf,'Factor and behavior compare plot','png');
 close(hf);
-%
+%%
+% summarize all figures into one ppt file
+clear
+clc
+[fn,fp,fi] = uigetfile('*.txt','Please select the session path savage file');
+if ~fi
+    return;
+end
+% clearvars -except fn fp
+m = 1;
+nSession = 1;
+
+fpath = fullfile(fp,fn);
+ff = fopen(fpath);
+tline = fgetl(ff);
+
+while ischar(tline)
+    if isempty(strfind(tline,'NO_Correction\mode_f_change')) %#ok<*STREMP>
+        tline = fgetl(ff);
+        continue;
+    else
+        %
+        if m == 1
+            %
+%                 PPTname = input('Please input the name for current PPT file:\n','s');
+            PPTname = 'Freqwise_FA_SelectionIndex';
+            if isempty(strfind(PPTname,'.ppt'))
+                PPTname = [PPTname,'.pptx'];
+            end
+%                 pptSavePath = uigetdir(pwd,'Please select the path used for ppt file savege');
+            pptSavePath = 'E:\DataToGo\data_for_xu\Factor_new_smooth\New_correct_factorAna\SessionSummary';
+            %
+        end
+            Anminfo = SessInfoExtraction(tline);
+            cTunDataPath = [tline,filesep,'Tunning_fun_plot_New1s',filesep,'Uncertainty_plot'];
+            UncertaintyResp = fullfile(cTunDataPath,'ROI response against Distance level plot.png');
+            UncertaintyModu = fullfile(cTunDataPath,'Distance against moduindex plot.png');
+            RespCompareFile = fullfile(cTunDataPath,'BoundDis response compare plot all.png');
+            if exist(UncertaintyModu,'file')
+                IsModeLoad = 1;
+            else
+                IsModeLoad = 0;
+            end
+            pptFullfile = fullfile(pptSavePath,PPTname);
+            if ~exist(pptFullfile,'file')
+                NewFileExport = 1;
+            else
+                NewFileExport = 0;
+            end
+            if NewFileExport
+                exportToPPTX('new','Dimensions',[16,9],'Author','XinYu','Comments','Export of tunning curve plot data');
+            else
+                exportToPPTX('open',pptFullfile);
+            end
+            %
+            cBehavPlotPath = fullfile(tline,filesep,'Tunning_fun_plot_New1s',filesep,...
+                'Tuned freq colormap plot',filesep,'Behavior and uncertainty curve plot.png');
+            BehavPlotf = imread(cBehavPlotPath);
+            exportToPPTX('addslide');
+
+            UncertaintyRespIm = imread(UncertaintyResp);
+%             UncertaintyModuIM = imread(UncertaintyModu);
+
+            % Anminfo
+            exportToPPTX('addtext',sprintf('Session%d',nSession),'Position',[2 0 2 1],'FontSize',24);
+            exportToPPTX('addnote',tline);
+            exportToPPTX('addpicture',UncertaintyRespIm,'Position',[0.1 1.5 8.05 6]);
+            if IsModeLoad
+                exportToPPTX('addpicture',imread(UncertaintyModu),'Position',[9.5 1 3.8 3]);
+            end
+            exportToPPTX('addpicture',imread(RespCompareFile),'Position',[9.5 4 5.68 4.5]);
+%                 exportToPPTX('addpicture',TaskRespMapIM,'Position',[6 0.2 5 4.19]);
+%                 exportToPPTX('addtext','Task','Position',[11 2 1 2],'FontSize',22);
+%                 exportToPPTX('addpicture',PassRespMapIM,'Position',[6 4.5 5 4.19]);
+%                 exportToPPTX('addtext','Passive','Position',[11 5.5 3 2],'FontSize',22);
+%                 exportToPPTX('addpicture',BoundDiffIM,'Position',[12 4.5 4 3.35]);
+% %                     exportToPPTX('addpicture',PassMeanFig,'Position',[12.8 0.8 3 3]);
+            exportToPPTX('addtext',sprintf('Batch:%s \r\nAnm: %s\r\nDate: %s\r\nField: %s',...
+                Anminfo.BatchNum,Anminfo.AnimalNum,Anminfo.SessionDate,Anminfo.TestNum),...
+                'Position',[14 0.5 2 3],'FontSize',22);
+    end
+     m = m + 1;
+     nSession = nSession + 1;
+     saveName = exportToPPTX('saveandclose',pptFullfile);
+     tline = fgetl(ff);
+end
+fprintf('Current figures saved in file:\n%s\n',saveName);
+cd(pptSavePath);
+
