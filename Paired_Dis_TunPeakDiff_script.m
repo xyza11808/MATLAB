@@ -93,8 +93,8 @@ save PairedDisTunDifSum.mat SessDataDisTunAll -v7.3
 ROIdisAll = cell2mat(SessDataDisTunAll(1:end-2,1));
 PassTunDis = cell2mat(SessDataDisTunAll(1:end-2,2));
 TaskTunDis = cell2mat(SessDataDisTunAll(1:end-2,3));
-lmFunCalPlot(TaskTunDis,ROIdisAll)
-lmFunCalPlot(PassTunDis,ROIdisAll)
+% lmFunCalPlot(TaskTunDis,ROIdisAll)
+% lmFunCalPlot(PassTunDis,ROIdisAll)
 
 %% Task Bin Data
 Step = 0.1;
@@ -158,4 +158,43 @@ legend([ll1,ll2],{sprintf('Taskp=%.3e',TaskMdl.Coefficients.pValue(2)),...
 saveas(hhf,'TunDiff vs PairedDis correlation plot');
 saveas(hhf,'TunDiff vs PairedDis correlation plot','png');
 saveas(hhf,'TunDiff vs PairedDis correlation plot','pdf');
+
+%%
+[TaskMdl,TaskFitData] = lmFunCalPlot(TaskTunDis,ROIdisAll,0);
+[PassMdl,PassFitData] = lmFunCalPlot(PassTunDis,ROIdisAll,0);
+[PassCoef,~] = corrcoef(PassTunDis,ROIdisAll);
+[TaskCoef,~] = corrcoef(TaskTunDis,ROIdisAll);
+
+hhf = figure('position',[100 100 380 300]);
+hold on
+el2 = plot(PassTunDis,ROIdisAll,'.','linewidth',1.4,'Color',[.8 .8 .8],'MarkerSize',3);
+ll2 = plot(PassFitData(:,1),PassFitData(:,2),'Color',[.3 .3 .3],'linewidth',1.8);
+plot(PassFitData(:,1),PassFitData(:,[3,4]),'Color',[.6 .6 .6],'linewidth',1.5,'linestyle','--');
+set(gca,'xtick',[0 1 2],'xlim',[-0.1 2.1]);
+xlabel('\DeltaBF');
+ylabel(' Paired Distance');
+title(sprintf('Pass Coef= %.3f',PassCoef(1,2)));
+set(gca,'FontSize',12);
+legend(ll2,{sprintf('Passp=%.3e',PassMdl.Coefficients.pValue(2))},'FontSize',8,'Box','off');
+% saveas(hhf,'Passive TunDiff and PairedDis correlation plot');
+% saveas(hhf,'Passive TunDiff and PairedDis correlation plot','png');
+saveas(hhf,'Passive TunDiff and PairedDis correlation plot','pdf');
+print(hhf,'-painters','Passive TunDiff and PairedDis correlation plot','-dpdf')
+
+hhf = figure('position',[100 100 380 300]);
+hold on
+el1 = plot(TaskTunDis,ROIdisAll,'.','linewidth',1.4,'Color',[.8 .8 .8],'MarkerSize',3);
+ll1 = plot(TaskFitData(:,1),TaskFitData(:,2),'Color',[1 0.5 0.1],'linewidth',1.8);
+plot(TaskFitData(:,1),TaskFitData(:,[3,4]),'Color',[1 0.6 0.2],'linewidth',1.5,'linestyle','--');
+set(gca,'xtick',[0 1 2],'xlim',[-0.1 2.1]);
+xlabel('\DeltaBF');
+ylabel(' Paired Distance');
+title(sprintf('TaskCoef = %.3f',TaskCoef(1,2)));
+set(gca,'FontSize',12);
+legend(ll1,{sprintf('Taskp=%.3e',TaskMdl.Coefficients.pValue(2))},'FontSize',8,'Box','off');
+
+% saveas(hhf,'Task TunDiff and PairedDis correlation plot');
+% saveas(hhf,'Task TunDiff and PairedDis correlation plot','png');
+saveas(hhf,'Task TunDiff and PairedDis correlation plot','pdf');
+print(hhf,'-painters','Task TunDiff and PairedDis correlation plot','-dpdf')
 

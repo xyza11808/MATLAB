@@ -44,7 +44,7 @@ while ischar(tline)
         IsTunedROI = zeros(nROIs,1);
         LogResidueAll = cell(nROIs,1);
         GauResidueAll = cell(nROIs,1);
-        %%
+        %
         for ROInum = 1 : nROIs
             % ROInum = 1;
             cROITunData = CorrTunningFun(:,ROInum);

@@ -40,8 +40,8 @@ end
 % figure plot option 
 isPlot = 1;
 if nargin > 9
-    if ~isempty(varargin{6})
-        isPlot = varargin{6};
+    if ~isempty(varargin{5})
+        isPlot = varargin{5};
     end
 end
 
@@ -145,47 +145,47 @@ Lfun = kfoldLoss(cvtbl,'mode','individual');
 fprintf('Mean Cross validation error is %.4f.\n',mean(Lfun));
 
 %%
-% using half-half random sample for partion, and repeat for multiple times
-TrLen = length(StimTrUsing);
-PredictAll = cell(1000,1);
-IsAllStimExist = false(1000,1);  % reversed logical for calculation convenience
-parfor nnn = 1:1000
-    TrainInds = false(TrLen,1);
-    TrainIndex = randsample(TrLen,round(TrLen*0.8));
-    TrainInds(TrainIndex) = true;
-    TestInds = ~TrainInds;
-    tblPar = fitcecoc(DataUsing(TrainInds,:),StimTrUsing(TrainInds),'Coding','onevsone','Learners',t,'Prior','uniform');
-    TestResult = predict(tblPar,DataUsing(TestInds,:));
-    TestRealStim = StimTrUsing(TestInds);
-    PredResult = [TestResult,TestRealStim(:)];
-    PredictAll{nnn} = PredResult;
-    if length(unique(TestRealStim)) ~= length(AllStimTypes)
-        IsAllStimExist(nnn) = true;
-    end
-end
-PredictAll(IsAllStimExist) = [];
-[MeanErroAllC,stimErroAllC,classErroAllC] = cellfun(@(x) PredErrorCal(x),PredictAll,'UniformOutput',false); % the first mean is total error, the second mean is trial type error
-MeanErroAll = cell2mat(MeanErroAllC);
-stimErroAll = cell2mat(stimErroAllC);
-classErroAll = cell2mat(classErroAllC);
-save StimPredResult.mat MeanErroAll stimErroAll classErroAll Lfun -v7.3
-h_ecoc = figure;
-scatter(MeanErroAll(:,1),MeanErroAll(:,2),40,'ro');
-xlabel('Between Stimlus error');
-ylabel('Between class error');
-title('Class error scatter plot');
-xlims = get(gca,'xlim');
-set(gca,'ylim',xlims,'FontSize',20);
-line(xlims,xlims,'Color',[.8 .8 .8],'LineWidth',1.8,'Linestyle','--');
-saveas(h_ecoc,'BetStim error vs BetTrType error scatter plot');
-saveas(h_ecoc,'BetStim error vs BetTrType error scatter plot','png');
-close(h_ecoc);
+% % using half-half random sample for partion, and repeat for multiple times
+% TrLen = length(StimTrUsing);
+% PredictAll = cell(1000,1);
+% IsAllStimExist = false(1000,1);  % reversed logical for calculation convenience
+% parfor nnn = 1:1000
+%     TrainInds = false(TrLen,1);
+%     TrainIndex = randsample(TrLen,round(TrLen*0.8));
+%     TrainInds(TrainIndex) = true;
+%     TestInds = ~TrainInds;
+%     tblPar = fitcecoc(DataUsing(TrainInds,:),StimTrUsing(TrainInds),'Coding','onevsone','Learners',t,'Prior','uniform');
+%     TestResult = predict(tblPar,DataUsing(TestInds,:));
+%     TestRealStim = StimTrUsing(TestInds);
+%     PredResult = [TestResult,TestRealStim(:)];
+%     PredictAll{nnn} = PredResult;
+%     if length(unique(TestRealStim)) ~= length(AllStimTypes)
+%         IsAllStimExist(nnn) = true;
+%     end
+% end
+% PredictAll(IsAllStimExist) = [];
+% [MeanErroAllC,stimErroAllC,classErroAllC] = cellfun(@(x) PredErrorCal(x),PredictAll,'UniformOutput',false); % the first mean is total error, the second mean is trial type error
+% MeanErroAll = cell2mat(MeanErroAllC);
+% stimErroAll = cell2mat(stimErroAllC);
+% classErroAll = cell2mat(classErroAllC);
+% save StimPredResult.mat MeanErroAll stimErroAll classErroAll Lfun -v7.3
+% h_ecoc = figure;
+% scatter(MeanErroAll(:,1),MeanErroAll(:,2),40,'ro');
+% xlabel('Between Stimlus error');
+% ylabel('Between class error');
+% title('Class error scatter plot');
+% xlims = get(gca,'xlim');
+% set(gca,'ylim',xlims,'FontSize',20);
+% line(xlims,xlims,'Color',[.8 .8 .8],'LineWidth',1.8,'Linestyle','--');
+% saveas(h_ecoc,'BetStim error vs BetTrType error scatter plot');
+% saveas(h_ecoc,'BetStim error vs BetTrType error scatter plot','png');
+% close(h_ecoc);
 
 %%
 % separated one vs one binary classification
 StimTypesAll = unique(StimTrUsing);
 ClassNum = length(StimTypesAll)*(length(StimTypesAll) - 1)/2;
-DataAllCVerro = zeros(ClassNum,10);
+% DataAllCVerro = zeros(ClassNum,10);
 Class82CVErro = zeros(ClassNum,100);
 PairedROCAll = zeros(ClassNum,size(DataUsing,2));
 m = 1;
@@ -196,11 +196,11 @@ for nStimtype = 1 : length(StimTypesAll)
         StimTrUsing = StimTrUsing(:);
         DataSetAll = [DataUsing(cPositive,:);DataUsing(cNegtive,:)];
         StimSetAll = [StimTrUsing(cPositive);StimTrUsing(cNegtive)];
-        ROIabs = PairedStimROC(DataSetAll,StimSetAll);
-        PairedROCAll(m,:) = ROIabs;
-        mdl = fitcsvm(DataSetAll,StimSetAll(:));
-        CVerror = kfoldLoss(crossval(mdl),'mode','individual');
-        DataAllCVerro(m,:) = CVerror;
+%         ROIabs = PairedStimROC(DataSetAll,StimSetAll);
+%         PairedROCAll(m,:) = ROIabs;
+%         mdl = fitcsvm(DataSetAll,StimSetAll(:));
+%         CVerror = kfoldLoss(crossval(mdl),'mode','individual');
+%         DataAllCVerro(m,:) = CVerror;
         parfor nIters = 1 : 100
             TrainInds = false(length(StimSetAll),1);
             RandInds = randsample(length(StimSetAll),round(0.8*length(StimSetAll)));
@@ -216,7 +216,7 @@ for nStimtype = 1 : length(StimTypesAll)
     end
 end
 % StimIndex = 1 : length(StimTypesAll);
-save pairROCresult.mat PairedROCAll StimTypesAll -v7.3
+% save pairROCresult.mat PairedROCAll StimTypesAll -v7.3
 %%
 StimIndex = 1 : length(StimTypesAll);
 StimForStr = double(StimTypesAll)/1000;
@@ -238,7 +238,7 @@ if isPlot
     saveas(h_mt,'Multi class classification correct rate','png');
     close(h_mt);
 end
-save PairedClassResult.mat matrixData StimTypesAll -v7.3
+save PairedClassResult.mat matrixData StimTypesAll Class82CVErro -v7.3
 %%
 % calculate the classification error compared with stimlus distance.
 TempMatrixData = matrixData;
@@ -299,18 +299,21 @@ if isPlot
     if isPartialROI
         cd ..;
     end
-    
-    if nargout > 0
-        OutData.BCCD = BetweenClassCorrData;
-        OutData.LCCD = LeftClassCorrData;
-        OutData.RCCD = RightClassCorrData;
-        OutData.OvatveStep = OvatveStep;
-        OutData.BCCDM = BetweenClassCorrDataM;
-        OutData.LCCDM = LeftClassCorrDataM;
-        OutData.RCCDM = RightClassCorrDataM;
-        varargout{1} = OutData;
-    end
 end
+if nargout > 0
+    OutData.ClfMtx = matrixData;
+    OutData.StimsAll = StimTypesAll;
+    OutData.ClfError = Class82CVErro;
+    OutData.BCCD = BetweenClassCorrData;
+    OutData.LCCD = LeftClassCorrData;
+    OutData.RCCD = RightClassCorrData;
+    OutData.OvatveStep = OvatveStep;
+    OutData.BCCDM = BetweenClassCorrDataM;
+    OutData.LCCDM = LeftClassCorrDataM;
+    OutData.RCCDM = RightClassCorrDataM;
+    varargout{1} = OutData;
+end
+
 
 function WithinClass = WithinCmask(ClassSize)
 % input the number of components within any class, return within class mask
