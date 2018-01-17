@@ -1,4 +1,4 @@
-function [SubSDataMtx,f0Serial,f0,SubFchangeMtx]=BLSubStract(varargin)
+function [SubSDataMtx,f0Serial]=BLSubStract(varargin)
 %this function is tried to correct baseline shifting by substracting some
 %value for each data points according to is neighboring data points
 %distribution
@@ -68,6 +68,9 @@ if ~IsContiAcq
     if Isreshape
         SubSDataMtx=reshape(SubSData,SourceSize(1),SourceSize(2));
         SubFchangeMtx=reshape(SubFchange,SourceSize(1),SourceSize(2));
+    else
+        SubSDataMtx=SubSData;
+        SubFchangeMtx=SubFchange;
     end
 else
     %

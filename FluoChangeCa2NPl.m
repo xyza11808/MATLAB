@@ -36,8 +36,10 @@ else
 end
 
 if isempty(behavResults) || isempty(behavSettings)
-    MethodChoice=2;
-    SessionType='rf';
+    if isempty(MethodChoice)
+        MethodChoice=2;
+        SessionType='rf';
+    end
 end
 
 choice=questdlg('Would you want to do neuropil correction?','Choice Selection','Ring NP','SegMental NP','No','No');
@@ -96,29 +98,9 @@ if iscell(CaTrials(1).f_raw)
    TrDataNumVec =  cellfun(@(x) size(x,2),CaTrials(1).f_raw);
    TrialLen = max(TrDataNumVec);
    IsContiAcq = 1;
-   CellData = CaTrials(1).f_raw;
-   LastFrames = 49; % last 50 frames
-   TestROI = 1;
-   for cTr = 1 : TrialNum
-       cTestData = CellData{cTr}(TestROI,end-LastFrames:end);
-%        DataDiff = diff(cTestData);
-       if mean(cTestData(end-4:end)) < 20 && mean(cTestData(end-4:end)) < mean(cTestData(1:5))/3
-           CellData(cTr) = {CellData{cTr}(:,1:end-10)};
-           fprintf('Tr Number %d re-used.\n',cTr);
-           if ~isempty(exclude_inds)
-               IsTrWIthin = exclude_inds == cTr;
-               if sum(IsTrWIthin)
-                   exclude_inds(IsTrWIthin) = [];
-               end
-           end
-       end
-   end
-   CaTrials(1).f_raw = CellData; 
-   TrDataNumVec =  cellfun(@(x) size(x,2),CaTrials(1).f_raw);
 else
     IsContiAcq = 0;
     TrialLen=CaTrials(1).nFrames;
-    
 end
 FrameRate=floor(1000/CaTrials(1).FrameTime);
 
@@ -144,7 +126,7 @@ if strcmpi(SessionType,'2afc')
     TrialOnsetTime=floor((double(behavResults.Time_stimOnset)/1000)*FrameRate);
     TrialAnswerTime=floor((double(behavResults.Time_answer)/1000)*FrameRate);
     TrialRewardTime=floor((double(behavResults.Time_reward)/1000)*FrameRate);
-elseif strcmpi(SessionType,'rf')
+else
     TrialOnsetTime=ones(1,TrialNum)*FrameRate;
 end
 
@@ -190,6 +172,12 @@ else
         %%
         for n=1:TrialNum
             cRawData = CaTrials.f_raw{n};
+            cRawEndData = cRawData(:,end-5:end);
+            if mean(cRawEndData(:)) < 20
+                warning('Empty frames exists at trial %d',n);
+                cRawData(:,end-9:end) = [];
+                TrDataNumVec(n) = TrDataNumVec(n) - 10;
+            end
             RawData(n,:,1:TrDataNumVec(n)) = cRawData;
             PreOnsetData{n}=squeeze(cRawData(:,1:TrialOnsetTime(n)));
             baselineDataAll=[baselineDataAll PreOnsetData{n}];
@@ -360,8 +348,16 @@ switch MethodChoice
             mkdir('./Mode_f0_all/');
         end
         cd('./Mode_f0_all/');
+        %%
         for n=1:ROINum
-            a=reshape(FCorrectData(:,n,:),[],1);
+            cROIdata = squeeze(FCorrectData(:,n,:));
+            cTraceData = zeros(sum(TrDataNumVec),1);
+            k = 1;
+            for cTr = 1 : TrialNum
+                cTraceData(k:k+TrDataNumVec(cTr)-1) = cROIdata(cTr,1:TrDataNumVec(cTr));
+                k = k + TrDataNumVec(cTr);
+            end
+            a=reshape(cTraceData,[],1);
             [N,x]=hist(a,100);
             [~,I]=max(N);
             ModeF0(n)=x(I);
@@ -387,10 +383,11 @@ switch MethodChoice
             %##############################################################
 
             for m=1:TrialNum
-                FChangeData(m,n,:) = ((FCorrectData(m,n,:) - ModeF0(n))/ ModeF0(n))* 100;
+                FChangeData(m,n,1:TrDataNumVec(m)) = ((FCorrectData(m,n,1:TrDataNumVec(m)) - ModeF0(n))/ ModeF0(n))* 100;
             end
 
         end
+        %%
         cd ..;
     case 2
         for n=1:ROINum
@@ -547,31 +544,17 @@ switch MethodChoice
 end
 if IsContiAcq
     CellFchangeData = cell(length(TrDataNumVec),1);
-    BaseDEFCellAll = cell(length(TrDataNumVec),1);
     for cTr = 1 : length(TrDataNumVec)
         CellFchangeData{cTr} = squeeze(FChangeData(cTr,:,1:TrDataNumVec(cTr)));
-        BaseDEFCellAll{cTr} = squeeze(FChangeData(cTr,:,1:TrialOnsetTime(cTr)));
     end
      FChangeData = CellFchangeData;
-     
-%      nTrs = length(TrDataNumVec);
-else
-    nTrs = size(FChangeData,1);
-    BaseDEFCellAll = cell(nTrs,1);
-    %%
-    for cTr = 1 : nTrs
-        BaseDEFCellAll{cTr} = squeeze(FChangeData(cTr,:,1:TrialOnsetTime(cTr)));
-    end
 end
-BaseDEFAll = cell2mat(BaseDEFCellAll');
-% baselineDataAll was raw data
-% calculate deltaF/F baseline, named BaseDEFAll
-
+   
 if isfield(CaTrials(1),'RingF') && IsNeuropilExtract
-    save DiffFluoResult.mat behavResults behavSettings RawData FChangeData baselineDataAll BaseDEFAll -v7.3
+    save DiffFluoResult.mat behavResults behavSettings RawData FChangeData baselineDataAll -v7.3
 else
     save DiffFluoResult.mat behavResults behavSettings RawData FChangeData ...
-        baselineDataAll RawRingData BaseDEFAll -v7.3
+        baselineDataAll RawRingData -v7.3
 end
 
 if nargout==1
