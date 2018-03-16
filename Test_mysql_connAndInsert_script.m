@@ -2,20 +2,26 @@ host = 'xyMechaine_MySQL57';
 user = 'root';
 password = '1180875,youKU';
 dbname = 'testdata';
-Drivername = 'com.mysql.jdbc.Driver';
-% DrivUrl = ['jdbc:z1MySQL://localhost:3306/',dbname];
-DrivUrl = ['jdbc:mysql://localhost:3306/',dbname];
-conn = database(dbname,user,password,Drivername,DrivUrl,'Vendor','MySQL');
+% Drivername = 'com.mysql.jdbc.Driver';
+Drivername = ' twz1.jdbc.mysql.jdbcMysqlDriver';
+DrivUrl = ['jdbc:z1MySQL://localhost:3306/',dbname];
+% DrivUrl = ['jdbc:mysql://devmetrics.mrkps.com/',dbname];
+% conn = database(dbname,user,password,Drivername,DrivUrl);
+conn = database(dbname,user,password,'Vendor','MySQL','Server',host);
+
+%% Make connection to database
+conn = database('testdata','root','1180875,youKU','Vendor','MYSQL','Server','localhost','PortNumber',3306);
 if ~isempty(conn.Message) % after connection seccess, return message will be empty
     fprintf('Error while connect to the database:\n %s;\n',conn.Message);
     return;
 end
 %%
 % InventoryTablename = []
-curs = exec(conn,'select * from behavDataT');
+% curs = exec(conn,'select * from behavDataT');
+curs = exec(conn,'select * from BehavDataAll','MaxRows',10);
 cursInfo = fetch(curs);
 Columnlist = columnnames(cursInfo,true);
-cursInfo.Data
+% cursInfo.Data
 
 %%
 % InsertData = table({'b27a0316042501'},{'b27a03'},{'2016-04-25'},{'VGAT-IRES_cre'},{'Window'},{'null'},{'Puretone'},450,0.9,...

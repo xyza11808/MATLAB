@@ -269,7 +269,7 @@ if strcmpi(type,'RF')
      
      %%
      ROC_check(f_percent_change,SoundFreqs,frame_rate,frame_rate,1.5,'Stim_time_Align');
-      ROC_check(SelectData,SelectSArray>16000,frame_rate,frame_rate,1.5,'Stim_time_Align_select');
+     ROC_check(SelectData,SelectSArray>16000,frame_rate,frame_rate,1.5,'Stim_time_Align_select');
       %%
      RF2afcClassScorePlot(SelectData,SelectSArray,16000,frame_rate,frame_rate,1.5,1);
      FreqRespCallFun(SelectData,SelectSArray,ones(sum(SelectInds),1),2,{1},frame_rate,frame_rate);

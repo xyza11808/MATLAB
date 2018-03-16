@@ -1131,9 +1131,9 @@ while ischar(tline)
     nSess = nSess + 1;
 end
 
-%
-TaskRatio = TaskRandMean./TaskClusterMean;
-PassRatio = PassRandMean./PassClusterMean;
+%%
+TaskRatio = TaskClusterMean./TaskRandMean;
+PassRatio = PassClusterMean./PassRandMean;
 [~,p] = ttest(TaskRatio,PassRatio);
 hhf = figure('position',[3000 200 320 260]);
 hold on
@@ -1171,6 +1171,7 @@ TaskRandAvgDis = cellfun(@mean,PreferRandDisSum(:,4));
 
 PassRatio = PassRandAvgDis./PassClustAvgDis;
 TaskRatio = TaskRandAvgDis./TaskClusAvgDis;
+%%
 hf = figure('position',[2200 100 380 310]);
 plot(PassRatio,TaskRatio,'ko','MarkerSize',8,'Linewidth',2.4);
 AxisLim = [get(gca,'xlim'),get(gca,'ylim')];
@@ -1183,9 +1184,9 @@ line([0 1],[1,1],'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
 [~,Task_2_base] = ttest(TaskRatio,1);
 [~,Task_2_Pass] = ttest(TaskRatio,PassRatio);
 set(gca,'box','off');
-text(0.94,1.45,sprintf('p2b = %.3e',Pass_2_base),'Color','m');
-text(0.94,1.4,sprintf('t2b = %.3e',Task_2_base),'Color','m');
-text(0.94,1.35,sprintf('t2p = %.3e',Task_2_Pass),'Color','m');
+text(1.1,1.1,sprintf('p2b = %.3e',Pass_2_base),'Color','m');
+text(1.1,1.0,sprintf('t2b = %.3e',Task_2_base),'Color','m');
+text(1.1,0.9,sprintf('t2p = %.3e',Task_2_Pass),'Color','m');
 saveas(hf,'Dis_ratio distribution plot save');
 saveas(hf,'Dis_ratio distribution plot save','png');
 saveas(hf,'Dis_ratio distribution plot save','pdf');

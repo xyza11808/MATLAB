@@ -4,6 +4,7 @@ clc
 [fn,fp,~] = uigetfile('*.txt','Please select the text file contains the path of all task spike tunning');
 
 %%
+
 fpath = fullfile(fp,fn);
 ff = fopen(fpath);
 tline = fgetl(ff);
@@ -13,7 +14,7 @@ while ischar(tline)
        tline = fgetl(ff);
         continue;
     else
-        %%
+        %
         SpikeDataPath = [tline,'\Tunning_fun_plot_New1s'];
         cd(SpikeDataPath);
         load('TunningDataSave.mat');
@@ -24,8 +25,8 @@ while ischar(tline)
         end
         cd('./Curve fitting plots/');
         warning('off','all');
-        if ~isdir('./NewLog_fit_test/');
-            mkdir('./NewLog_fit_test/');
+        if ~isdir('./NewLog_fit_test_new/')
+            mkdir('./NewLog_fit_test_new/');
         end
 %        cd('./NewLog_fit_test');
 %       
@@ -37,13 +38,17 @@ while ischar(tline)
         ROIResidueratio = zeros(nROIs,2);
         PassFitResult = cell(nROIs,1);
         PassFitGOF = cell(nROIs,1);
+        PassSigmoidalFit = cell(nROIs,2);
         %
-        LogResnRatios = zeros(nROIs,1);
+        LogResnRatios = zeros(nROIs,2);
+        
 %         nFitFun = cell(nROIs,1);
         IsCategROI = zeros(nROIs,1);
         IsTunedROI = zeros(nROIs,1);
         LogResidueAll = cell(nROIs,1);
         GauResidueAll = cell(nROIs,1);
+        TaskIndexAll = ones(nROIs,1)*(-1);
+        PassIndexAll = ones(nROIs,1)*(-1);
         %
         for ROInum = 1 : nROIs
             % ROInum = 1;
@@ -71,17 +76,20 @@ while ischar(tline)
             [fit_model,fitgof] = fit(OctaveData,NorTundata,modelfunb,'StartPoint',SP,'Upper',UL,'Lower',LM);
             OctaveRange = linspace(min(OctaveData),max(OctaveData),500);
             FitCurve = feval(fit_model,OctaveRange);
+            FitSlope = fit_model.b2/(4*fit_model.b4);
+            EndPointSlope = (NorTundata(end) - NorTundata(1))/(OctaveData(end) - OctaveData(1));
+            
             
             % first part plots
-            hlogNewf = figure('position',[2750 100 450 400]);
-            hold on
-            plot(OctaveRange,FitCurve,'color','k','LineWidth',2.4);
-            plot(OctaveData, NorTundata,'ro','MarkerSize',15);
-            yscales = get(gca,'ylim');
-            line([fit_model.b3 fit_model.b3],yscales,'Linewidth',2,'LineStyle','--','Color',[.7 .7 .7]);
+% % %             hlogNewf = figure('position',[2750 100 450 400]);
+% % %             hold on
+% % %             plot(OctaveRange,FitCurve,'color','k','LineWidth',2.4);
+% % %             plot(OctaveData, NorTundata,'ro','MarkerSize',12);
+% % %             yscales = get(gca,'ylim');
+% % %             line([fit_model.b3 fit_model.b3],yscales,'Linewidth',2,'LineStyle','--','Color',[.7 .7 .7]);
             FitData = feval(fit_model,OctaveData);
             DiffRatio = sum((NorTundata - FitData).^2)/sum(NorTundata.^2);
-            LogResnRatios(ROInum) = DiffRatio;
+            LogResnRatios(ROInum,1) = DiffRatio;
             LogCoefFit{ROInum} = fit_model;
             LogResidueAll{ROInum} = fitgof;
             if fit_model.b3 > OctaveData(2) && fit_model.b3 < OctaveData(end-1)
@@ -116,9 +124,22 @@ while ischar(tline)
 %                     end
                 end
             end
-            text(0.4,mean(NorTundata),sprintf('rmse = %.3f',fitgof.rmse));
+% %             text(0.4,mean(NorTundata),sprintf('rmse = %.3f',fitgof.rmse));
             
-           % fitting the gaussian function
+            if IsCategROI(ROInum)
+                cFitbound = fit_model.b3;
+                LeftInds = OctaveData < cFitbound;
+                LeftMean = max(mean(NorTundata(LeftInds)),0.1);
+                RightMean = max(mean(NorTundata(~LeftInds)),0.1);
+                TaskIndexAll(ROInum) = abs(LeftMean - RightMean)/(LeftMean + RightMean);
+            else
+                LeftInds = OctaveData < 0;
+                LeftMean = max(mean(NorTundata(LeftInds)),0.1);
+                RightMean = max(mean(NorTundata(~LeftInds)),0.1);
+                TaskIndexAll(ROInum) = abs(LeftMean - RightMean)/(LeftMean + RightMean);
+            end
+            
+           %% fitting the gaussian function
             modelfunc = @(c1,c2,c3,c4,x) c1*exp((-1)*((x - c2).^2)./(2*(c3^2)))+c4;
             [AmpV,AmpInds] = max(NorTundata);
             c0 = [AmpV,OctaveData(AmpInds),mean(abs(diff(OctaveData))),min(NorTundata)];  % 0.4 is the octave step
@@ -129,6 +150,7 @@ while ischar(tline)
            OctaveFitValue_gau = feval(ffit,OctaveData(:));
            Thresratio_gau = sum((NorTundata - OctaveFitValue_gau).^2)/sum(NorTundata.^2);
             ROIResidueratio(ROInum,:) = [DiffRatio,Thresratio_gau];
+            %%
             GauCoefFit{ROInum} = ffit;
             GauResidueAll{ROInum} = gof;
 %             GauFitMSE(ROInum) = gof.rmse;
@@ -149,37 +171,73 @@ while ischar(tline)
             if ~ROIisResponsive(ROInum)
                 IsTunedROI(ROInum) = 0;
             end
-            line([ffit.c2 ffit.c2],yscales,'Color','m','Linewidth',1.8,'LineStyle','--');
-            text(ffit.c2,mean(NorTundata)*0.8,sprintf('Width = %.3f',ffit.c3),...
-                'HorizontalAlignment','center');
-            text(-0.8,yscales(2)*0.8,sprintf('IsResponsive = %d',ROIisResponsive(ROInum)));
-             GausFitData = feval(ffit,OctaveRange(:));
-             plot(OctaveRange,GausFitData,'r','linewidth',1.6);
             
-            title({sprintf('ROI%d,LogResratio = %.3f,IsCateg = %d',ROInum,DiffRatio,IsCategROI(ROInum));...
-                sprintf('Gauratio = %.3f, IsGauTun = %d',Thresratio_gau,IsTunedROI(ROInum))});
-             %
-            saveas(hlogNewf,sprintf('./NewLog_fit_test/Log Fit test Save ROI%d',ROInum));
-            saveas(hlogNewf,sprintf('./NewLog_fit_test/Log Fit test Save ROI%d',ROInum),'png');
+% % %             text(ffit.c2,mean(NorTundata)*0.8,sprintf('Width = %.3f',ffit.c3),...
+% % %                 'HorizontalAlignment','center');
+            
+             GausFitData = feval(ffit,OctaveRange(:));
+% % %              plot(OctaveRange,GausFitData,'r','linewidth',1.6);
             
            % ############################################################################################
-           % fitting passive data with gaussian function
+           %% fitting passive data with gaussian function
            PassFreqConsidered = ~(abs(PassFreqOctave) > 1);
            PassTundata = PassTunningfun(PassFreqConsidered,ROInum);
            PassOctave = PassFreqOctave(PassFreqConsidered);
            [PassMaxAmp,PassmaxInds] = max(PassTundata);
-           c0 = [PassMaxAmp,PassOctave(PassmaxInds),mean(abs(diff(PassOctave))),min(NorTundata)];  % 0.4 is the octave step
-            cUpper = [AmpV*2,max(PassOctave),max(PassOctave) - min(PassOctave),AmpV];
-            cLower = [min(NorTundata),min(PassOctave),min(abs(diff(PassOctave))),-Inf];
+           c0 = [PassMaxAmp,PassOctave(PassmaxInds),mean(abs(diff(PassOctave))),min(PassTundata)];  % 0.4 is the octave step
+            cUpper = [PassMaxAmp*2,max(PassOctave),max(PassOctave) - min(PassOctave),PassMaxAmp];
+            cLower = [min(PassTundata),min(PassOctave),min(abs(diff(PassOctave))),-Inf];
             [Passffit,Passgof] = fit(PassOctave(:),PassTundata(:),modelfunc,...
                'StartPoint',c0,'Upper',cUpper,'Lower',cLower,'Robust','LAR');  % 'Method','NonlinearLeastSquares',
            PassFitValue_gau = feval(Passffit,PassOctave(:));
+           %%
+           if IsCategROI(ROInum)
+                LeftInds = PassOctave < cFitbound;
+                PassLMean = max(mean(PassTundata(LeftInds)),0.1);
+                PassRMean = max(mean(PassTundata(~LeftInds)),0.1);
+                PassIndexAll(ROInum) = abs(PassLMean - PassRMean)/(PassLMean + PassRMean);
+           else
+               LeftInds = PassOctave < 0;
+               PassLMean = max(mean(PassTundata(LeftInds)),0.1);
+                PassRMean = max(mean(PassTundata(~LeftInds)),0.1);
+                PassIndexAll(ROInum) = abs(PassLMean - PassRMean)/(PassLMean + PassRMean);
+           end
+           
+           % fit a sigmoidal function to passive data
+           UL = [max(PassTundata)+abs(min(PassTundata)), Inf, max(PassOctave), 100];
+            SP = [min(PassTundata),max(PassTundata) - min(PassTundata), mean(PassOctave), 1];
+            LM = [-Inf,-Inf, min(PassOctave), -100];
+            ParaBoundLim = ([UL;SP;LM]);
+            [fit_modelP,fitgofP] = fit(PassOctave(:),PassTundata(:),modelfunb,'StartPoint',SP,'Upper',UL,'Lower',LM);
+            PassOctRange = linspace(min(PassOctave),max(PassOctave),500);
+            PassFitCurve = feval(fit_modelP,PassOctRange);
+            PassLogFitV = feval(fit_modelP,PassOctave(:));
+            PassLogDifRatio = sum((PassTundata(:) - PassLogFitV).^2)/sum(PassTundata.^2);
+            LogResnRatios(ROInum,2) = PassLogDifRatio;
+            PassLogSlope = fit_modelP.b2/(fit_modelP.b4*4);
+            PassEndSlope = (PassTundata(end) - PassTundata(1))/(PassOctave(end) - PassOctave(1));
+            
+            PassSigmoidalFit{ROInum,1} = fit_modelP;
+            PassSigmoidalFit{ROInum,2} = fitgofP;
+           
+% % %             plot(PassOctRange,PassFitCurve,'Color',[0.4 0.4 0.4],'linewidth',1.6);
+% % %             plot(PassOctave,PassTundata,'d','Color',[0.4 0.4 0.4],'MarkerSize',12);
+% % %             
+% % %             yscales = get(gca,'ylim');
+% % %             text(0.3,yscales(2)*0.7,sprintf('PassLogRatio = %.4f',PassLogDifRatio));
+% % %             line([ffit.c2 ffit.c2],yscales,'Color','m','Linewidth',1.8,'LineStyle','--');
+% % %             text(-0.8,yscales(2)*0.8,sprintf('IsResponsive = %d',ROIisResponsive(ROInum)));
+% % %             set(gca,'ylim',yscales);
+% % %             title({sprintf('ROI%d,LogResratio = %.3f,IsCateg = %d',ROInum,DiffRatio,IsCategROI(ROInum));...
+% % %                 sprintf('Gauratio = %.3f, IsGauTun = %d',Thresratio_gau,IsTunedROI(ROInum))});
+% % %             xlabel(sprintf('Task%.2f-%.2f, Pass%.2f-%.2f',FitSlope,EndPointSlope,PassLogSlope,PassEndSlope));
+% % %              %
+% % %             saveas(hlogNewf,sprintf('./NewLog_fit_test_new/Log Fit test Save ROI%d',ROInum));
+% % %             saveas(hlogNewf,sprintf('./NewLog_fit_test_new/Log Fit test Save ROI%d',ROInum),'png');
            
            PassFitResult{ROInum} = Passffit;
            PassFitGOF{ROInum} = Passgof;
-%           waitforbuttonpress
-%           pause(2);
-          close(hlogNewf);
+% % %           close(hlogNewf);
         end
         warning('on','all')
         warning('query','all')
@@ -189,7 +247,7 @@ while ischar(tline)
         BehavBoundResult = BehavBoundStrc.boundary_result.Boundary - 1;
         
         save NewCurveFitsave.mat LogCoefFit GauCoefFit ROIisResponsive ROIResidueratio PassFitResult PassFitGOF ...
-            LogResnRatios IsCategROI IsTunedROI LogResidueAll GauResidueAll BehavBoundResult -v7.3
+            LogResnRatios IsCategROI IsTunedROI LogResidueAll GauResidueAll BehavBoundResult TaskIndexAll PassIndexAll -v7.3
         %
         FitBoundInds = cellfun(@(x) x.c2,GauCoefFit);
         TunedROIBound = FitBoundInds(logical(IsTunedROI));
@@ -346,9 +404,7 @@ end
 % condition
 clear
 clc
-CagROIbound = {};
-TunROIPeakPos = {};
-SessBehavBound = [];
+SessCategBoundTunPeakBehav = {};
 m = 1;
 
 [fn,fp,fi] = uigetfile('*.txt','Please select the task session data path');
@@ -360,39 +416,81 @@ while ischar(tline)
         tline = fgetl(fid);
         continue;
     end
-    SessionFitDataPath = fullfile(tline,'Spike_Tunfun_plot\Curve fitting plots\CellCategorySave.mat');
-    SessionTunPath = [tline,'\Spike_Tunfun_plot\Curve fitting plots'];
+    %
+    SessionFitDataPath = fullfile(tline,'Tunning_fun_plot_New1s\Curve fitting plots\NewCurveFitsave.mat');
+    SessionTunPath = [tline,'\Tunning_fun_plot_New1s\Curve fitting plots'];
     BehavData = fullfile(tline,'RandP_data_plots\boundary_result.mat');
-    
+    %
     SessFitDataStrc = load(SessionFitDataPath);
     SessBehavStrc = load(BehavData);
-    
+    %
     CagCoefFitAll = SessFitDataStrc.LogCoefFit;
     TunCoefFitAll = SessFitDataStrc.GauCoefFit;
-    CagROICoefAll = CagCoefFitAll(SessFitDataStrc.CategROiinds);
-    TunROICoefAll = TunCoefFitAll(SessFitDataStrc.TunROIInds);
-    CagROIboundAll = cellfun(@(x) x(3),CagROICoefAll);
-    TunROIPeakPosAll = cellfun(@(x) x(2),TunROICoefAll);
+    CagROICoefAll = CagCoefFitAll(logical(SessFitDataStrc.IsCategROI));
+    TunROICoefAll = TunCoefFitAll(logical(SessFitDataStrc.IsTunedROI));
+    CagROIboundAll = cellfun(@(x) x.b3,CagROICoefAll);
+    TunROIPeakPosAll = cellfun(@(x) x.c2,TunROICoefAll);
     BehavBound = SessBehavStrc.boundary_result.Boundary;
-    Behav4CompBound = log2(double(min(SessBehavStrc.boundary_result.StimType))/16000) + BehavBound;
-    
-    cd(SessionTunPath);
-    save BoundTunROISave.mat CagROIboundAll TunROIPeakPosAll Behav4CompBound -v7.3
-    CagROIbound{m} = CagROIboundAll;
-    TunROIPeakPos{m} = TunROIPeakPosAll;
-    SessBehavBound(m) = Behav4CompBound;
+    %
+    SessCategBoundTunPeakBehav{m,1} = CagROIboundAll;
+    SessCategBoundTunPeakBehav{m,2} = TunROIPeakPosAll;
+    SessCategBoundTunPeakBehav{m,3} = BehavBound;
     
     tline = fgetl(fid);
     m = m + 1;
 end
+%% plot the categorical ROI boundary diff from behavior data
+nSess = size(SessCategBoundTunPeakBehav,1);
+SessROIBound2BehavDiff = [];
+for cSess = 1 : nSess
+    cSessData = SessCategBoundTunPeakBehav{cSess,1} - SessCategBoundTunPeakBehav{cSess,3} + 1;
+    SessROIBound2BehavDiff = [SessROIBound2BehavDiff;cSessData];
+end
+[~,p] = ttest(SessROIBound2BehavDiff);
+[Count,Cent] = hist(SessROIBound2BehavDiff,20);
+
+hf = figure('position',[3000 100 380 300]);
+hold on
+cBar = bar(Cent,Count,0.8,'FaceColor',[.6 .6 .6],'EdgeColor','none');
+set(gca,'xlim',[-1 1]);
+yscales = get(gca,'ylim');
+line([1 1]*mean(SessROIBound2BehavDiff),yscales,'Color',[0.1 0.6 0.1],'Linewidth',1.6,'Linestyle','--');
+text(mean(SessROIBound2BehavDiff)+0.05,yscales(2)*0.9,sprintf('p = %.2e',p),'FontSize',14,'Color','m');
+text(mean(SessROIBound2BehavDiff)+0.05,yscales(2)*0.85,sprintf('mean = %.4f',mean(SessROIBound2BehavDiff)),'FontSize',14,'Color','m');
+xlabel('Dis2BehavBound');
+ylabel('CellCount');
+title('Categ. ROI Boundary distribution');
+set(gca,'FontSize',14);
+% saveas(hf,'Categorical ROI boundary 2BehavBound distribution');
+% saveas(hf,'Categorical ROI boundary 2BehavBound distribution','png');
+% saveas(hf,'Categorical ROI boundary 2BehavBound distribution','pdf');
+BackDiff = SessROIBound2BehavDiff;
 %%
-savePath = uigetdir(pwd,'Please select the data save file');
-cd(savePath);
-save sumBoundTunData.mat CagROIbound TunROIPeakPos SessBehavBound -v7.3
+% plot the categorical ROI boundary diff from Set boundary
+nSess = size(SessCategBoundTunPeakBehav,1);
+SessROIBound2BehavDiff = [];
+for cSess = 1 : nSess
+    cSessData = SessCategBoundTunPeakBehav{cSess,1};
+    SessROIBound2BehavDiff = [SessROIBound2BehavDiff;cSessData];
+end
+[~,p] = ttest(SessROIBound2BehavDiff);
+[Count,Cent] = hist(SessROIBound2BehavDiff,20);
 
-
-SessROIbound = cellfun(@mean,CagROIbound);
-SessBoundSem = cellfun(@std,CagROIbound)./sqrt(cellfun(@numel,CagROIbound));
+hf = figure('position',[3000 100 380 300]);
+hold on
+cBar = bar(Cent,Count,0.8,'FaceColor',[.6 .6 .6],'EdgeColor','none');
+set(gca,'xlim',[-1 1]);
+yscales = get(gca,'ylim');
+line([1 1]*mean(SessROIBound2BehavDiff),yscales,'Color',[0.1 0.6 0.1],'Linewidth',1.6,'Linestyle','--');
+text(mean(SessROIBound2BehavDiff)+0.05,yscales(2)*0.9,sprintf('p = %.2e',p),'FontSize',14,'Color','m');
+text(mean(SessROIBound2BehavDiff)+0.05,yscales(2)*0.85,sprintf('mean = %.4f',mean(SessROIBound2BehavDiff)),'FontSize',14,'Color','m');
+xlabel('Dis2BehavBound');
+ylabel('CellCount');
+title('Categ. ROI Boundary distribution');
+set(gca,'FontSize',14);
+saveas(hf,'Categorical ROI boundary distribution');
+saveas(hf,'Categorical ROI boundary distribution','png');
+saveas(hf,'Categorical ROI boundary distribution','pdf');
 %%
 BehavDataAll = [];
 ROICagMeanAll = [];

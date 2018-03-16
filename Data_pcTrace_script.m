@@ -59,6 +59,8 @@ StartTime = start_frame/frame_rate;
 %%
 FScoreData = reshape(F',15,size(Testdata,3),size(Testdata,1));
 FSDataNorm = permute(FScoreData,[3,1,2]);
+BehavTones = double(behavResults.Stim_toneFreq(:));
+StimFreqTypes = unique(BehavTones);
 LeftCorrInds = trial_outcome' == 1 & behavResults.Trial_Type == 0;
 LeftErrorInds = trial_outcome' == 0 & behavResults.Trial_Type == 0;
 RightCorrInds = trial_outcome' == 1 & behavResults.Trial_Type == 1;
@@ -67,6 +69,22 @@ LeftCorrData = FSDataNorm(LeftCorrInds,:,:);
 RightMeanData = FSDataNorm(RightCorrInds,:,:);
 LeftMeanTrace = squeeze(mean(LeftCorrData));
 RightMeanTrace = squeeze(mean(RightMeanData));
+
+LeftEasyData = FSDataNorm(trial_outcome(:) ~= 2 & BehavTones == StimFreqTypes(1),:,:);
+LeftEasyMean = squeeze(mean(LeftCorrData));
+RightEasyData = FSDataNorm(trial_outcome(:) ~= 2 & BehavTones == StimFreqTypes(end),:,:);
+RightEasyMean = squeeze(mean(RightEasyData));
+
+LeftEasyCorr = FSDataNorm(trial_outcome(:) == 1 & BehavTones == StimFreqTypes(1),:,:);
+LeftEasyCorrMean = squeeze(mean(LeftEasyCorr));
+LeftEasyErro = FSDataNorm(trial_outcome(:) == 0 & BehavTones == StimFreqTypes(1),:,:);
+LeftEasyErroMean = squeeze(mean(LeftEasyErro));
+
+RightEasyCorr = FSDataNorm(trial_outcome(:) == 1 & BehavTones == StimFreqTypes(end),:,:);
+RightEasyCorrMean = squeeze(mean(RightEasyCorr));
+RightEasyErro = FSDataNorm(trial_outcome(:) == 0 & BehavTones == StimFreqTypes(end),:,:);
+RightEasyErroMean = squeeze(mean(RightEasyErro));
+
 
 LeftErroMean = squeeze(mean(FSDataNorm(LeftErrorInds,:,:)));
 RightErroMean = squeeze(mean(FSDataNorm(RightErroInds,:,:)));
@@ -100,6 +118,44 @@ xscales = get(gca,'xlim');
 yscales = get(gca,'ylim');
 zscales = get(gca,'zlim');
 [a,b] = view;
+%% plot the most easy two sounds
+h_meanLine = figure('position',[2000 200 380 300]);
+hold on
+h1 = plot3(LeftEasyMean(1,:),LeftEasyMean(2,:),LeftEasyMean(3,:),'b','LineWidth',1.6);
+h2 = plot3(RightEasyMean(1,:),RightEasyMean(2,:),RightEasyMean(3,:),'r','LineWidth',1.6);
+% h1 = plot3(LeftEasyCorrMean(1,:),LeftEasyCorrMean(2,:),LeftEasyCorrMean(3,:),'b','LineWidth',1.6);
+% h2 = plot3(RightEasyCorrMean(1,:),RightEasyCorrMean(2,:),RightEasyCorrMean(3,:),'r','LineWidth',1.6);
+% h3 = plot3(LeftEasyErroMean(1,:),LeftEasyErroMean(2,:),LeftEasyErroMean(3,:),'Color',[0.2 0.2 0.8],'LineWidth',1.6);
+% h4 = plot3(RightEasyErroMean(1,:),RightEasyErroMean(2,:),RightEasyErroMean(3,:),'Color',[0.8 0.2 0.2],'LineWidth',1.6);
+scatter3(LeftEasyMean(1,start_frame),LeftEasyMean(2,start_frame),LeftEasyMean(3,start_frame),50,'o',...
+    'Markeredgecolor','m','MarkerFaceColor','g','LineWidth',1.6)
+scatter3(RightEasyMean(1,start_frame),RightEasyMean(2,start_frame),RightEasyMean(3,start_frame),50,'o',...
+    'Markeredgecolor','m','MarkerFaceColor','g','LineWidth',1.6)
+% h3 = plot3(LeftErroMean(1,:),LeftErroMean(2,:),LeftErroMean(3,:),'Color',[.3 .3 .3],'LineWidth',1.6);  %,'LineStyle','--'
+% h4 = plot3(RightErroMean(1,:),RightErroMean(2,:),RightErroMean(3,:),'Color',[.7 .7 .7],'LineWidth',1.6); %,'LineStyle','--'
+set(gca,'FontSize',20);
+% legend([h1,h2,h3,h4],{'Left Corr','Right Corr','Left Error','Right Error'},'FontSize',12);
+legend([h1,h2],{'LeftEasy','RightEasy'},'FontSize',12);
+xlabel('x1');
+ylabel('x2');
+zlabel('x3');
+xscales = get(gca,'xlim');
+yscales = get(gca,'ylim');
+zscales = get(gca,'zlim');
+[a,b] = view;
+
+% % Distance calculation
+% TraceDis = sqrt((LeftEasyMean(1,:) - RightEasyMean(1,:)).^2 + (LeftEasyMean(2,:) - RightEasyMean(2,:)).^2 + ...
+%     (LeftEasyMean(3,:) - RightEasyMean(3,:)).^2);
+% h_MeanDis = figure;
+% plot(xTimes,TraceDis,'k','LineWidth',1.4);
+% yaxiss = axis;
+% line([StartTime StartTime],[yaxiss(3) yaxiss(4)],'color',[.8 .8 .8],'LineStyle','--','LineWidth',2);
+% title('Mean Trace distance');
+% xlabel('Time (s)');
+% ylabel('Mean Trace Dis');
+% set(gca,'FontSize',20);
+
 %%
 %
 v = VideoWriter('StateSpace_trajnew.avi','Uncompressed AVI');

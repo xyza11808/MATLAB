@@ -10,8 +10,12 @@ if nargin > 2
         SP=varargin{1}(2,:);
         LM=varargin{1}(3,:);
     end
+else
+    UL = [0.5, 0.5, max(xAxis), 1000];
+    SP = [min(yData),1 - min(yData)-max(yData), mean(xAxis), 1];
+    LM = [0, 0, min(xAxis), 0];
+    useLims=1;
 end
-
 % Transpose if necessary
 if size(xAxis,1)<size(xAxis,2)
     xAxis=xAxis';

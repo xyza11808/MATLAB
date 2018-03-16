@@ -19,6 +19,8 @@ while ischar(tline)
     load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
     load(fullfile(tline,'CSessionData.mat'),'behavResults','smooth_data','start_frame','frame_rate');
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));
+    RespDataStrc = load(fullfile(pwd,'Curve fitting plots','NewCurveFitsave.mat'));
+    RespInds = RespDataStrc.ROIisResponsive;
     ROI_IsSigResp_script
     [~,EndInds] = regexp(tline,'result_save');
     ROIposfilePath = tline(1:EndInds);
@@ -93,7 +95,7 @@ while ischar(tline)
     for cROI = 1 : nROIs
         MaxIndsOctave(cROI) = UsedOctave(maxInds(cROI));
     end
-    
+    ROIsigResp = RespInds;
 %     RespROIInds = (MaxAmp > 10);
     RespROIInds = logical(ROIsigResp);
     modeFreqInds = MaxIndsOctave(RespROIInds) == mode(MaxIndsOctave(RespROIInds));

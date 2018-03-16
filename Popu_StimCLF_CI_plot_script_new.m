@@ -20,6 +20,8 @@ TaskIndex = [];
 PassiveIndex = [];
 TaskDisData = {};
 PassDisData = {};
+TaskPassOneStepclf = {};
+
 if ~exist('UsedPassInds','var')
     UsedPassInds = {};
     isPassIndsExist = 0;
@@ -49,43 +51,6 @@ while ischar(tline)
     PassClfData = PassDataStrc.matrixData;
 %     PassStimOct = PassStimOct(Inds);
 %     PassClfData = PassClfData(Inds,Inds);
-    
-    DisWiseClassCorrData = load(fullfile(tline,'NeuroM_MC_TbyT','AfterTimeLength-1000ms','DisErrorDataAllSave.mat'));
-    PassDisWiseCCorrData = load(fullfile(Passline,'NeuroM_MC_TbyT','AfterTimeLength-1000ms','DisErrorDataAllSave.mat'));
-  %
-%     h_sum = figure('position',[100 200 450 400]);
-%     hold on
-%     h1 = plot(DisWiseClassCorrData.BetweenClassCorrDataM(:,2)*DisWiseClassCorrData.OvatveStep,...
-%         DisWiseClassCorrData.BetweenClassCorrDataM(:,1),'k-o','LineWidth',2,'MarkerSize',10);% between class distance vs error
-%     h2 = plot(DisWiseClassCorrData.LeftClassCorrDataM(:,2)*DisWiseClassCorrData.OvatveStep,...
-%         DisWiseClassCorrData.LeftClassCorrDataM(:,1),'b-o','LineWidth',2,'MarkerSize',10); % left winthin group error
-%     h3 = plot(DisWiseClassCorrData.RightClassCorrDataM(:,2)*DisWiseClassCorrData.OvatveStep,...
-%         DisWiseClassCorrData.RightClassCorrDataM(:,1),'r-o','LineWidth',2,'MarkerSize',10); %right within group error
-%     xlim([0 2.4]);
-%     set(gca,'xtick',DisWiseClassCorrData.BetweenClassCorrDataM(:,2)*DisWiseClassCorrData.OvatveStep,'xticklabel',...
-%         cellstr(num2str(DisWiseClassCorrData.BetweenClassCorrDataM(:,2)*DisWiseClassCorrData.OvatveStep,'%.1f')));
-%     PassDisOctaves = PassDisWiseCCorrData.OvatveStep;
-%     PassBetClaCorr = PassDisWiseCCorrData.BetweenClassCorrDataM;
-%     PassLeftClaCorr = PassDisWiseCCorrData.LeftClassCorrDataM;
-%     PassRClaCorr = PassDisWiseCCorrData.RightClassCorrDataM;
-%     h4 = plot(PassBetClaCorr(:,2)*PassDisOctaves,PassBetClaCorr(:,1),...
-%         'k-o','LineWidth',1.8,'MarkerSize',10,'linestyle','--');
-%     h5 = plot(PassLeftClaCorr(:,2)*PassDisOctaves,PassLeftClaCorr(:,1),...
-%         'b-o','LineWidth',1.8,'MarkerSize',10,'linestyle','--');
-%     h6 = plot(PassRClaCorr(:,2)*PassDisOctaves,PassRClaCorr(:,1),...
-%         'r-o','LineWidth',1.8,'MarkerSize',10,'linestyle','--');
-%     
-%     
-%     xlabel('Octave Difference');
-%     ylabel('Mean correct rate');
-%     title('Distance vs mean correct rate plot');
-%     set(gca,'Fontsize',18);
-%     legend([h1,h2,h3,h4,h5,h6],{'BetClass','WinLClass','WinRClass','PassBetC','PassLWin','PassRWin'},...
-%         'FontSize',10,'Location','Southeast');
-%     legend('boxoff');
-%     saveas(h_sum,'Distance vs correctrate plot save');
-%     saveas(h_sum,'Distance vs correctrate plot save','png');
-%     close(h_sum);
 
     TaskGrNum = floor(length(StimOctave)/2);
     PassGrNum = floor(length(PassStimOct)/2);
@@ -118,8 +83,17 @@ while ischar(tline)
         PairedClfData = PairedClfData(~ExcludedInds,~ExcludedInds);
     end
       %
+      RawMask = ones(size(PairedClfData));
+      OneStepMask = logical(tril(RawMask,-1)-tril(RawMask,-2));
+      TaskOneStepData = PairedClfData(OneStepMask);
+      PassOneStepData = PassClfData(OneStepMask);
+      
+      TaskPassOneStepclf{nSess,1} = TaskOneStepData;
+      TaskPassOneStepclf{nSess,2} = PassOneStepData;
+      
        TaskDisDataStrc = DataIndexDiffSub(PairedClfData);
        PassDisDataStrc = DataIndexDiffSub(PassClfData);
+       
        
        TaskDisData{nSess} = TaskDisDataStrc;
        PassDisData{nSess} = PassDisDataStrc;
@@ -182,7 +156,7 @@ saveas(hf,'Population paired stimulus classification correct rate');
 saveas(hf,'Population paired stimulus classification correct rate','png');
 close(hf);
 %%
-save PopuClfDataSave.mat TaskIndex PassiveIndex TaskDisData PassDisData UsedPassInds BackTaskIndex BackPassIndex -v7.3
+save PopuClfDataSaveNew.mat TaskIndex PassiveIndex TaskDisData PassDisData UsedPassInds BackTaskIndex BackPassIndex TaskPassOneStepclf -v7.3
 
 %% compare population classification rate of paired stimulus, distance-wise
 UsedSessInds = ~(cellfun(@isempty,PassDisData));
@@ -244,3 +218,58 @@ title('Pass AUC distance-wise compare plot');
 saveas(hh_f,'Pass distance-wise AUC compare plot');
 saveas(hh_f,'Pass distance-wise AUC compare plot','png');
 saveas(hh_f,'Pass distance-wise AUC compare plot','pdf');
+
+%% step-one classification groupwise plot
+EmptyInds = ~(cellfun(@isempty,TaskPassOneStepclf(:,1)));
+TaskOneStepDatacell = TaskPassOneStepclf(EmptyInds,1);
+PassOneStepDatacell = TaskPassOneStepclf(EmptyInds,2);
+TaskOneStepDataMtx = (cell2mat(TaskOneStepDatacell'))';
+PassOneStepDataMtx = (cell2mat(PassOneStepDatacell'))';
+TaskOneStepDataSEM = std(TaskOneStepDataMtx)/sqrt(size(TaskOneStepDataMtx,1));
+PassOneStepDataSEM = std(PassOneStepDataMtx)/sqrt(size(PassOneStepDataMtx,1));
+TypeNum = length(TaskOneStepDataSEM);
+GrNum = floor(TypeNum/2);
+TypeStrs = [repmat({'Win'},GrNum,1);{'Bet'};repmat({'Win'},GrNum,1)];
+
+hf = figure('position',[100 100 380 300]);
+hold on
+errorbar(1:TypeNum,mean(TaskOneStepDataMtx),TaskOneStepDataSEM,'-o','Color',[1 0.7 0.2],'linewidth',2);
+errorbar(1:TypeNum,mean(PassOneStepDataMtx),PassOneStepDataSEM,'k-o','linewidth',2);
+set(gca,'xtick',1:TypeNum,'xticklabel',TypeStrs);
+ylabel('Accuracy');
+set(gca,'FontSize',16)
+saveas(hf,'OneStep ClfAccuracy line comparison');
+saveas(hf,'OneStep ClfAccuracy line comparison','png');
+
+%%
+UsedSessDataAll = SessDataAll;
+UsedSessDataAll([10,11],:) = [];
+SessCompareNum = cellfun(@length,UsedSessDataAll(:,1));
+UsedGrNum = min(SessCompareNum);
+WinGrNum = floor(UsedGrNum/2);
+TypeStrs = [repmat({'Win'},WinGrNum,1);{'Bet'};repmat({'Win'},WinGrNum,1)];
+SessNum = length(SessCompareNum);
+SessSumRealDataAll = zeros(SessNum,UsedGrNum);
+SessSumShufDataAll = zeros(SessNum,UsedGrNum);
+for cSess = 1 : SessNum
+    cSessRealData = UsedSessDataAll{cSess,1};
+    cSessShufData = UsedSessDataAll{cSess,2};
+    
+    UsedInds = true(length(cSessRealData),1);
+    if length(cSessRealData) > UsedGrNum
+        cSessGrNum = floor(length(cSessRealData)/2);
+        UsedInds([cSessGrNum,cSessGrNum+2]) = false;
+    end
+    SessSumRealDataAll(cSess,:) = cSessRealData(UsedInds);
+    SessSumShufDataAll(cSess,:) = cSessShufData(UsedInds);
+end
+figure;
+plot(mean(SessSumRealDataAll),'Color',[1 0.7 0.2],'linewidth',1.6);
+hold on
+plot(mean(SessSumShufDataAll),'Color',[.7 .7 .7],'linewidth',1.6);
+set(gca,'xtick',1:UsedGrNum,'xticklabel',TypeStrs);
+ylabel('Accuracy');
+title('OneStep Accuracy');
+set(gca,'FontSize',16)
+saveas(gcf,'Task real and shuf Data plots');
+saveas(gcf,'Task real and shuf Data plots','png');

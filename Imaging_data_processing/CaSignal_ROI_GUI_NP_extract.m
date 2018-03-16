@@ -1362,11 +1362,11 @@ for i = 1: nROI_effective
         BG = reshape(nanmean(nanmean(BG_img)),1,[]); % 1-by-nFrames array
     else
         BG = 0;
-    end;
+    end
     
     if opt_subBG == 1
         F(i,:) = F(i,:) - BG;
-    end;
+    end
         [N,X] = hist(F(i,:));
         F_mode = X((N==max(N)));
         baseline = mean(F_mode);
@@ -1638,7 +1638,7 @@ catch ME
              fname = filenames{nRealTrNo};
             if ~exist(fname,'file')
                 error('File not exists.');
-            end;
+            end
             msg_str1 = sprintf('Batch analyzing %d of total %d trials with %d ROIs...', ...
                 nRealTrNo, End_trial-Start_trial+1, nTROIs);  
         %     disp(['Batch analyzing ' num2str(TrialNo) ' of total ' num2str(End_trial-Start_trial+1) ' trials...']);
@@ -3420,7 +3420,7 @@ switch eventdata.Key   %'uparrow','downarrow','leftarrow','rightarrow'.
         % set ROI
         Set_ROI_button_Callback(hObject, eventdata, handles)
     otherwise
-        fprintf('Key pressed without response.\n');
+%         fprintf('Key pressed without response.\n');
 end
 
 

@@ -60,17 +60,20 @@ end
 
 %%
 % plot current results
-Curve_x = linspace(min(AllFreqOctave),max(AllFreqOctave),500);
-modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));
-[~,breal] = fit_logistic(AllFreqOctave,realy);
-[~,bfit] = fit_logistic(AllFreqOctave,fityAll);
-Curve_realy = modelfun(breal,Curve_x);
-Curve_Fity = modelfun(bfit,Curve_x);
+% Curve_x = linspace(min(AllFreqOctave),max(AllFreqOctave),500);
+% modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));
+% [~,breal] = fit_logistic(AllFreqOctave,realy);
+% [~,bfit] = fit_logistic(AllFreqOctave,fityAll);
+% Curve_realy = modelfun(breal,Curve_x);
+% Curve_Fity = modelfun(bfit,Curve_x);
+
+BehavRestult = FitPsycheCurveWH_nx(AllFreqOctave(:),realy(:));
+NeuFitResult = FitPsycheCurveWH_nx(AllFreqOctave(:),fityAll(:));
 
 h_NewBoundfit = figure('position',[200 200 1000 800]);
 hold on;
-plot(Curve_x,Curve_realy,'k','LineWidth',2);
-plot(Curve_x,Curve_Fity,'r','LineWidth',2);
+plot(NeuFitResult.curve(:,1),NeuFitResult.curve(:,2),'r','LineWidth',2);
+plot(BehavRestult.curve(:,1),BehavRestult.curve(:,2),'k','LineWidth',2);
 scatter(AllFreqOctave,realy,80,'k','o','LineWidth',2);
 scatter(AllFreqOctave,fityAll,80,'r','o','LineWidth',2);
 text(AllFreqOctave(2),0.8,sprintf('nROI = %d',nROI),'FontSize',15);
@@ -86,3 +89,5 @@ set(gca,'FontSize',18);
 saveas(h_NewBoundfit,'Easy train and hard test plots');
 saveas(h_NewBoundfit,'Easy train and hard test plots','png');
 close(h_NewBoundfit);
+
+save EasyTrainBoundTestSave.mat fityAll AllFreqOctave realy TestFreqInds mmdl BehavRestult NeuFitResult -v7.3

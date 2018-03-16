@@ -48,6 +48,15 @@ if nargin > 10
     end
 end
 
+IsBehavPathInput = 0;
+if nargin > 11
+    if ~isempty(varargin{7})
+        BehavPathStr = varargin{7};
+        IsBehavPathInput = 1;
+    end
+end
+
+
 % ifErrorChoiceCorrect = 0;
 switch TrialUseTypeOp
     case 0
@@ -80,9 +89,17 @@ end
 %%
 RawDataAll = RawDataAll(:,ROIindsSelect,:);
 DataSize=size(RawDataAll);
+IsTaskSess = 1;
+if isstruct(BehavStrc)
+    StimAll = BehavStrc.Stim_toneFreq;
+    ChoiceAll = BehavStrc.Action_choice;
+    fprintf('Task session SVM neurometric curve.\n');
+else
+    StimAll = BehavStrc(:,1);
+    ChoiceAll = BehavStrc(:,2);
+    IsTaskSess = 0;
+end
 
-StimAll = BehavStrc.Stim_toneFreq;
-ChoiceAll = BehavStrc.Action_choice;
 CorrTrialStim=StimAll(CorrectInds);
 CorrTrialData=RawDataAll(CorrectInds,:,:);
 CorrStimType=unique(CorrTrialStim);
@@ -129,6 +146,33 @@ nROI = size(ConsideringData,2);
 % T8TData = max(ConsideringData,[],3);  % trial by ROI matrix, will be project by one projection vector
 
 %%
+OriginPath = pwd;
+
+% loading behavior data
+if ~IsBehavPathInput
+    PossibleBehavPath = fullfile(OriginPath,'RandP_data_plots','boundary_result.mat');
+    if exist(PossibleBehavPath,'file')
+        load(PossibleBehavPath);
+    else
+        [filename,filepath,~]=uigetfile('boundary_result.mat','Select your random plot fit result');
+        load(fullfile(filepath,filename));
+    end
+else
+    if exist(BehavPathStr,'file')
+        load(BehavPathStr);
+    else
+        [filename,filepath,~]=uigetfile('boundary_result.mat','Select your random plot fit result');
+        load(fullfile(filepath,filename));
+    end
+end 
+
+if IsTaskSess
+    TypeSVMPred_script;
+else
+    TypeSVMPred_passive_script;
+end
+return;
+
 if ispcaDR
     if ~isdir('./NeuroM_test_pca/')
         mkdir('./NeuroM_test_pca/');
@@ -242,9 +286,7 @@ else
 end
         
 %%
-% loading behavior data
-[filename,filepath,~]=uigetfile('boundary_result.mat','Select your random plot fit result');
-load(fullfile(filepath,filename));
+
 Octavex=log2(double(CorrStimType)/min(double(CorrStimType)));
 % Octavefit=Octavex;
 Octavexfit=Octavex;
@@ -292,16 +334,19 @@ else
 end
 %%
 % plot current results
-modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));
-[~,breal] = fit_logistic(Octavexfit,realy);
-[~,bfit] = fit_logistic(Octavexfit,fityAll);
-Curve_realy = modelfun(breal,Curve_x);
-Curve_Fity = modelfun(bfit,Curve_x);
+% modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));
+% [~,breal] = fit_logistic(Octavexfit,realy);
+% [~,bfit] = fit_logistic(Octavexfit,fityAll);
+% Curve_realy = modelfun(breal,Curve_x);
+% Curve_Fity = modelfun(bfit,Curve_x);
+
+BehavRestult = FitPsycheCurveWH_nx(Octavexfit(:),realy(:));
+NeuFitResult = FitPsycheCurveWH_nx(Octavexfit(:),fityAll(:));
 
 h_compPlot = figure('position',[200 200 1000 800]);
 hold on;
-plot(Curve_x,Curve_realy,'k','LineWidth',2);
-plot(Curve_x,Curve_Fity,'r','LineWidth',2);
+plot(NeuFitResult.curve(:,1),NeuFitResult.curve(:,2),'r','LineWidth',2);
+plot(BehavRestult.curve(:,1),BehavRestult.curve(:,2),'k','LineWidth',2);
 scatter(Octavexfit,realy,80,'k','o','LineWidth',2);
 scatter(Octavexfit,fityAll,80,'r','o','LineWidth',2);
 text(Octavexfit(2),0.8,sprintf('nROI = %d',nROI),'FontSize',15);
@@ -324,7 +369,7 @@ else
 end
 close(h_compPlot);
 
-save NMDataSummry.mat Octavexfit realy fityAll -v7.3
+save NMDataSummry.mat Octavexfit realy fityAll NeuFitResult BehavRestult -v7.3
 
 EasyTrain_boundTest_sciprts
 %%

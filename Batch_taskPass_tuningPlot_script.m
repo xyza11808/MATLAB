@@ -1,11 +1,11 @@
 % batched tuning curve task and passive compare
-% clear
-% clc
-% [TaskPathfn,TaskPathfp,TaskPathfi] = uigetfile('*.txt','Please select the Task session path save file');
-% [PassPathfn,PassPathfp,PassPathfi] = uigetfile('*.txt','Please select the corresponded passive session path save file');
-% if ~TaskPathfi || ~PassPathfi
-%     return;
-% end
+clear
+clc
+[TaskPathfn,TaskPathfp,TaskPathfi] = uigetfile('*.txt','Please select the Task session path save file');
+[PassPathfn,PassPathfp,PassPathfi] = uigetfile('*.txt','Please select the corresponded passive session path save file');
+if ~TaskPathfi || ~PassPathfi
+    return;
+end
 %%
 TaskPathf = fullfile(TaskPathfp,TaskPathfn);
 PassPathf = fullfile(PassPathfp,PassPathfn);
@@ -24,9 +24,9 @@ while ischar(Tasktline) && ischar(Passtline)
         Passtline = fgetl(Passfid);
         continue;
     end
-    %%
+    %
     try
-        %%
+        %
         TaskDataStrc = load(fullfile(Tasktline,'CSessionData.mat'));
         PassDataStrc = load(fullfile(Passtline,'rfSelectDataSet.mat'));
         BehavDataPath = fullfile(Tasktline,'RandP_data_plots','boundary_result.mat');
@@ -40,7 +40,11 @@ while ischar(Tasktline) && ischar(Passtline)
         nROIs = size(TaskData,2);
         DataRespWinT = 1; % using only 500ms time window for sensory response
         DataRespWinF = round(DataRespWinT*TaskDataStrc.frame_rate);
+        BaseResp = squeeze(mean(TaskData(:,:,1:TaskDataStrc.start_frame),3));
         TaskDataResp = max(TaskData(:,:,(TaskDataStrc.start_frame+1):(TaskDataStrc.start_frame+DataRespWinF)),[],3);
+        %
+        TaskDataResp = TaskDataResp - BaseResp;
+        
         NonMissTrInds = TaskOutcome ~= 2;
         CorrectInds = TaskOutcome == 1;
 
@@ -119,7 +123,7 @@ while ischar(Tasktline) && ischar(Passtline)
             PassFreqOctave BoundFreq NonMissTunningFunSEM CorrTunningFunSEM PassTunningfunSEM -v7.3
         %
         for cROI = 1 : nROIs
-            %%
+            %
             PlotInds = abs(PassFreqOctave) < 1.01;
             h = figure('position',[220 300 550 420]);
             hold on;
@@ -153,12 +157,12 @@ while ischar(Tasktline) && ischar(Passtline)
             end
             Arrowy = [0.85 0.85];
             a = annotation('textarrow',Arrowx,Arrowy,'String',{'Behav';'Bound'},'Color','m','FontSize',14);
-            %%
+            %
             saveas(h,sprintf('ROI%d Tunning curve comparison plot',cROI));
             saveas(h,sprintf('ROI%d Tunning curve comparison plot',cROI),'png');
             close(h);
         end
-    %%
+    %
         SessionNum = SessionNum + 1;
         Tasktline = fgetl(Taskfid);
         Passtline = fgetl(Passfid);
@@ -205,7 +209,11 @@ while ischar(Tasktline) && ischar(Passtline)
         % extract Task and passive data, plot it out 
         TaskTrFreq = double(TaskDataStrc.behavResults.Stim_toneFreq);
         TaskOutcome = TaskDataStrc.trial_outcome;
-        TaskData = TaskDataStrc.smooth_data;
+        TaskData = TaskDataStrc.data_aligned;
+        BefStimBase = repmat(mean(TaskData(:,:,1:TaskDataStrc.start_frame),3),1,1,size(TaskData,3));
+        TaskData = TaskData - BefStimBase;
+        
+        %
         nROIs = size(TaskData,2);
         DataRespWinT = 1; % using only 1s time window for sensory response
         DataRespWinF = round(DataRespWinT*TaskDataStrc.frame_rate);
@@ -289,7 +297,8 @@ while ischar(Tasktline) && ischar(Passtline)
         save TunningDataSave.mat NonMissTunningFun CorrTunningFun PassTunningfun TaskFreqOctave ...
             PassFreqOctave BoundFreq NonMissTunningFunSEM CorrTunningFunSEM PassTunningfunSEM -v7.3
         for cROI = 1 : nROIs
-            %
+            %%
+            PassPlotInds = abs(PassFreqOctave) < 1.03;
             h = figure('position',[220 300 550 420]);
             hold on;
             cROItaskNM = NonMissTunningFun(:,cROI);
@@ -297,7 +306,7 @@ while ischar(Tasktline) && ischar(Passtline)
             cROIpass = PassTunningfun(:,cROI);
             l1 = errorbar(TaskFreqOctave,cROItaskNM,NonMissTunningFunSEM(:,cROI),'c-o','LineWidth',1.6);
             l2 = errorbar(TaskFreqOctave,cROItaskCorr,CorrTunningFunSEM(:,cROI),'r-o','LineWidth',1.6);
-            l3 = errorbar(PassFreqOctave,cROIpass,PassTunningfunSEM(:,cROI),'k-o','LineWidth',1.6);
+            l3 = errorbar(PassFreqOctave(PassPlotInds),cROIpass(PassPlotInds),PassTunningfunSEM(PassPlotInds,cROI),'k-o','LineWidth',1.6);
             xlabel('Frequency (kHz)');
             ylabel('Mean \DeltaF/F (%)');
             title(sprintf('ROI%d Tunning, Session%d',cROI,SessionNum));
@@ -314,13 +323,13 @@ while ischar(Tasktline) && ischar(Passtline)
             BoundPos = (BehavBound - xscales(1))/diff(xscales);
             line([BehavBound BehavBound],yscales,'Color',[.7 .7 .7],'linewidth',2,'linestyle','--');
             if BehavBound < 0
-                Arrowx = [BoundPos+0.2,BoundPos+0.03];
+                Arrowx = [BoundPos+0.1,BoundPos+0.03];
             else
-                Arrowx = [BoundPos+0.2,BoundPos+0.01];
+                Arrowx = [BoundPos+0.1,BoundPos+0.01];
             end
             Arrowy = [0.85 0.85];
             a = annotation('textarrow',Arrowx,Arrowy,'String',{'Behav';'Bound'},'Color','m','FontSize',14);
-            %
+            %%
             saveas(h,sprintf('ROI%d Tunning curve comparison plot',cROI));
             saveas(h,sprintf('ROI%d Tunning curve comparison plot',cROI),'png');
             close(h);
@@ -329,7 +338,7 @@ while ischar(Tasktline) && ischar(Passtline)
         SessionNum = SessionNum + 1;
         Tasktline = fgetl(Taskfid);
         Passtline = fgetl(Passfid);
-        %
+        %%
     catch ME
         ErrorNumNew = ErrorNum + 1;
         ErrorSessNew{ErrorNum} = Tasktline;

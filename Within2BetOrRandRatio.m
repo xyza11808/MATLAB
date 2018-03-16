@@ -35,7 +35,7 @@ switch CompareType
             RandIndsDisVec = RandIndsDisMtx(logical(tril(ones(size(RandIndsDisMtx)),-1)));
             OutMean(n) = mean(RandIndsDisVec);
         end
-        DisRatio = OutMean/ClusterInterMean;
+        DisRatio = ClusterInterMean./OutMean;
         [~,p] = ttest(DisRatio,1);
         [RatioCount,RatioCent] = hist(DisRatio,min(DisRatio):0.01:max(DisRatio));
         hhf = figure('position',[100,200,450,380]);
@@ -43,7 +43,7 @@ switch CompareType
         yscales = get(gca,'ylim');
         line([1,1],yscales,'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
         line([mean(DisRatio),mean(DisRatio)],yscales,'Color','r','linewidth',1.6,'linestyle','--');
-        xlabel('Rand/Inter Distance ratio');
+        xlabel('Inter Distance ratio/Rand');
         ylabel('Fraction');
         title(sprintf('p = %.3e',p));
         ylim(yscales);

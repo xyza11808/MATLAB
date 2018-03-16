@@ -484,9 +484,13 @@ for n = 1:fileNum
         OctStep = mean(diff(fit_ReNew.curve(:,1)));
         BehavDerivateCurve = diff(fit_ReNew.curve(:,2));
         BehavDerivateCurve = [BehavDerivateCurve(1);BehavDerivateCurve]/OctStep;
+        [~,BoundInds] = min(abs(fit_ReNewAll.curve(:,2) - 0.5));
+        internal_boundary = fit_ReNewAll.curve(BoundInds,1);
         %
         plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'color','k','LineWidth',2.4);
         plot(fit_ReNewAll.curve(:,1),fit_ReNewAll.curve(:,2),'color','r','LineWidth',2.4);
+        line([fit_ReNewAll.u fit_ReNewAll.u],[0 1],'color',[.7 .7 .7],'LineWidth',1.6,'linestyle','--');
+        line([internal_boundary internal_boundary],[0 1],'color','m','LineWidth',1.6,'linestyle','--');
         hold off;
         ylim([0 1]);
         set(gca,'xtick',octave_dist);
@@ -505,8 +509,7 @@ for n = 1:fileNum
         end
         %
         close(h4);
-        [~,BoundInds] = min(abs(fit_ReNew.curve(:,2) - 0.5));
-        internal_boundary = fit_ReNew.curve(BoundInds,1);
+        
         boundary_result(n).FitValue = fit_ReNew.ffit;
         boundary_result(n).gof = fit_ReNew.gof;
         b = coeffvalues(fit_ReNew.ffit);

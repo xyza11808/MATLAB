@@ -12,6 +12,10 @@ TaskNearBoundOctAll = [];
 PassNearBoundOctAll = [];
 TaskNearBoundDataA = [];
 PassNearBoundDataA = [];
+BoundTunDataOctAll = [];
+BoundTunDataPassOctAll = [];
+CBoundTunDataOctAll = [];
+CBoundTunDataPassOctAll = [];
 for cSess = 1 : nSession
     cSessStrc = SessDataStrcAll{cSess};
     NorCategTaskResp = cSessStrc.CategROITaskData./repmat(max(cSessStrc.CategROITaskData),size(cSessStrc.CategROITaskData,1),1);
@@ -52,6 +56,24 @@ for cSess = 1 : nSession
     NearBoundTunPassData = NorTunPassResp(:,NearBoundOctInds);
     PassNearBoundOctAll = [PassNearBoundOctAll;repmat(cSessStrc.PassOct(:) - cSessStrc.BehavBound,size(NearBoundTunPassData,2),1)];
     PassNearBoundDataA = [PassNearBoundDataA;NearBoundTunPassData(:)];
+    
+    % plot the boundary tuning ROI response and averaged together
+    BoundTunTaskData = NorTunTaskResp(:,BoundTunROIindex{cSess,2});
+    BoundTunPassData = NorTunPassResp(:,BoundTunROIindex{cSess,2});
+%     BoundTunTaskOct = repmat(cSessStrc.TaskOct(:),1,size(BoundTunTaskData,2));
+%     BoundTunPassOct = repmat(cSessStrc.PassOct(:),1,size(BoundTunPassData,2));
+    BoundTunTaskOct = repmat(TaskOct2BoundDiff,1,size(BoundTunTaskData,2));
+    BoundTunPassOct = repmat(cSessStrc.PassOct(:) - cSessStrc.BehavBound,1,size(BoundTunPassData,2));
+    BoundTunDataOctAll = [BoundTunDataOctAll;[BoundTunTaskData(:),BoundTunTaskOct(:)]];
+    BoundTunDataPassOctAll = [BoundTunDataPassOctAll;[BoundTunPassData(:),BoundTunPassOct(:)]];
+    
+    cBoundTunTaskData = NorTunTaskResp(:,BoundTunROIindex{cSess,4});
+    cBoundTunPassData = NorTunPassResp(:,BoundTunROIindex{cSess,4});
+    cBoundTunTaskOct = repmat(cSessStrc.TaskOct(:) - cSessStrc.BehavBound,1,size(cBoundTunTaskData,2));
+    cBoundTunPassOct = repmat(cSessStrc.PassOct(:) - cSessStrc.BehavBound,1,size(cBoundTunPassData,2));
+    CBoundTunDataOctAll = [CBoundTunDataOctAll;[cBoundTunTaskData(:),cBoundTunTaskOct(:)]];
+    CBoundTunDataPassOctAll = [CBoundTunDataPassOctAll;[cBoundTunPassData(:),cBoundTunPassOct(:)]];
+    
 end
 
 %%
@@ -242,3 +264,168 @@ set(gca,'xlim',[-1.1 1.1],'ylim',[0 1],'xtick',UsedInds,'xticklabel',FreqStrs,'y
 xlabel('Frequency (kHz)');
 ylabel('Response (Nor.)');
 set(gca,'FontSize',18)
+
+%% ROI type fraction pie plot
+% pie plot for categorical fraction
+CategFrac = mean(SessROItypeFrac(:,1)./SessROItypeFrac(:,5));
+TunROIFrac = mean(SessROItypeFrac(:,2)./SessROItypeFrac(:,5));
+RestFrac = 1 - CategFrac - TunROIFrac;
+PieData = [CategFrac,TunROIFrac,RestFrac];
+PieStrs = {sprintf('Categ. %.2f%%',CategFrac*100);sprintf('Tuning %.2f%%',TunROIFrac*100);sprintf('NoSelect. %.2f%%',RestFrac*100)};
+CategExplode = [1 0 0];
+tunExplode = [0 1 0];
+hhf = figure('position',[100 100 620 280]);
+subplot(121)
+hp = pie(PieData,CategExplode,PieStrs);
+set(hp(1),'FaceColor','m','EdgeColor','none');
+set(hp(2),'Color','m');
+set(hp(3),'FaceColor','g','EdgeColor','none');
+set(hp(4),'Color',[0 0.5 0]);
+set(hp(5),'FaceColor',[.5 .5 .5],'EdgeColor','none');
+set(hp(6),'Color',[.1 .1 .1]);
+
+subplot(122)
+hp = pie(PieData,tunExplode,PieStrs);
+set(hp(1),'FaceColor','m','EdgeColor','none');
+set(hp(2),'Color','m');
+set(hp(3),'FaceColor','g','EdgeColor','none');
+set(hp(4),'Color',[0 0.5 0]);
+set(hp(5),'FaceColor',[.5 .5 .5],'EdgeColor','none');
+set(hp(6),'Color',[.1 .1 .1]);
+
+saveas(hhf,'Cell type fraction pie plot');
+saveas(hhf,'Cell type fraction pie plot','png');
+saveas(hhf,'Cell type fraction pie plot','pdf');
+
+%% fitting the boundaryTuning data with a gaussian function
+% fitting the tuning with a guassian function
+modelfunc = @(c1,c2,c3,c4,x) c1*exp((-1)*((x - c2).^2)./(2*(c3^2)))+c4;
+[AmpV,AmpInds] = max(BoundTunDataOctAll(:,1));
+c0 = [AmpV,0,0.2,min(BoundTunDataOctAll(:,1))];  % 0.4 is the octave step
+cUpper = [AmpV*1,max(BoundTunDataOctAll(:,2)),max(BoundTunDataOctAll(:,2)) - min(BoundTunDataOctAll(:,2)),AmpV*10];
+cLower = [0,min(BoundTunDataOctAll(:,2)),0.1,-Inf];
+[ffit,gof] = fit(BoundTunDataOctAll(:,2),BoundTunDataOctAll(:,1),modelfunc,...
+'StartPoint',c0,'Upper',cUpper,'Lower',cLower,'Robust','LAR','MaxIter',1000);  % 'Method','NonlinearLeastSquares',
+Octs = linspace(min(BoundTunDataOctAll(:,2)),max(BoundTunDataOctAll(:,2)),500);
+fitData = feval(ffit,Octs);
+figure;
+ll1 = plot(Octs,fitData,'r','linewidth',1.8);
+% Passive fit
+modelfunc = @(c1,c2,c3,c4,x) c1*exp((-1)*((x - c2).^2)./(2*(c3^2)))+c4;
+[AmpV,AmpInds] = max(BoundTunDataPassOctAll(:,1));
+c0 = [AmpV,0,0.2,min(BoundTunDataPassOctAll(:,1))];  % 0.4 is the octave step
+cUpper = [AmpV*1,max(BoundTunDataPassOctAll(:,2)),max(BoundTunDataPassOctAll(:,2)) - min(BoundTunDataPassOctAll(:,2)),AmpV*10];
+cLower = [-1*AmpV*10,min(BoundTunDataPassOctAll(:,2)),0.1,-Inf];
+[ffitPass,gofPass] = fit(BoundTunDataPassOctAll(:,2),BoundTunDataPassOctAll(:,1),modelfunc,...
+'StartPoint',c0,'Upper',cUpper,'Lower',cLower,'Robust','LAR','MaxIter',1000);  % 'Method','NonlinearLeastSquares',
+PassOcts = linspace(min(BoundTunDataPassOctAll(:,2)),max(BoundTunDataPassOctAll(:,2)),500);
+PassfitData = feval(ffitPass,PassOcts);
+hold on
+plot(PassOcts,PassfitData,'k','linewidth',1.8);
+%
+SpaceStep = -2:0.2:2;
+BinCenters = SpaceStep+(0.2/2);
+BinedValueAvg = zeros(length(SpaceStep),2);
+BinedValueAll = cell(length(SpaceStep),1);
+PassBinedValueAvg = zeros(length(SpaceStep),2);
+PassBinValueAll = cell(length(SpaceStep),1);
+for cStep = 1 : length(SpaceStep)-1
+    WithinStepInds = find(BoundTunDataOctAll(:,2) > SpaceStep(cStep) & BoundTunDataOctAll(:,2) < SpaceStep(cStep+1));
+    PassStepInds = find(BoundTunDataPassOctAll(:,2) > SpaceStep(cStep) & BoundTunDataPassOctAll(:,2) < SpaceStep(cStep+1));
+    if ~isempty(WithinStepInds)
+        cBinData = BoundTunDataOctAll(WithinStepInds,1);
+        BinedValueAll{cStep} = cBinData;
+        BinedValueAvg(cStep,:) = [mean(cBinData),std(cBinData)/sqrt(numel(cBinData))];
+    end
+    if ~isempty(PassStepInds)
+        cBinPass = BoundTunDataPassOctAll(PassStepInds,1);
+        PassBinValueAll{cStep} = cBinPass;
+        PassBinedValueAvg(cStep,:) = [mean(cBinPass),std(cBinPass)/sqrt(numel(cBinPass))];
+    end
+end
+EmptyBinInds = cellfun(@isempty,BinedValueAll);
+UsedBinInds = BinCenters(~EmptyBinInds);
+UsedBinData = BinedValueAvg(~EmptyBinInds,:);
+PassEmotyInds = cellfun(@isempty,PassBinValueAll);
+PassUsedBinInds = BinCenters(~PassEmotyInds);
+PassUsedBinData = PassBinedValueAvg(~PassEmotyInds,:);
+PassUsedBinVAll = PassBinValueAll(~PassEmotyInds);
+
+hold on
+errorbar(UsedBinInds,UsedBinData(:,1),UsedBinData(:,2),'ro--','linewidth',1.2);
+errorbar(PassUsedBinInds,PassUsedBinData(:,1),PassUsedBinData(:,2),'ko--','linewidth',1.2);
+set(gca,'xlim',[-1.1 1.1],'ylim',[0 1.2],'xtick',[-1 0 1],'ytick',[0 0.5 1],'box','off');
+xlabel('AwayFromBoundary');
+ylabel('Response (Nor.)');
+ title('Boundary Tuning ROIs')
+set(gca,'FontSize',16)
+saveas(gca,'Boundary tuning ROI population average')
+saveas(gca,'Boundary tuning ROI population average','pdf')
+
+
+%% fitting the constrained boundaryTuning data with a gaussian function
+% fitting the tuning with a guassian function
+modelfunc = @(c1,c2,c3,c4,x) c1*exp((-1)*((x - c2).^2)./(2*(c3^2)))+c4;
+[AmpV,AmpInds] = max(CBoundTunDataOctAll(:,1));
+c0 = [AmpV,0,0.2,min(CBoundTunDataOctAll(:,1))];  % 0.4 is the octave step
+cUpper = [AmpV*10,max(CBoundTunDataOctAll(:,2)),max(CBoundTunDataOctAll(:,2)) - min(CBoundTunDataOctAll(:,2)),AmpV*10];
+cLower = [0,min(CBoundTunDataOctAll(:,2)),0.1,-Inf];
+[ffit,gof] = fit(CBoundTunDataOctAll(:,2),CBoundTunDataOctAll(:,1),modelfunc,...
+'StartPoint',c0,'Upper',cUpper,'Lower',cLower,'Robust','LAR','MaxIter',1000);  % 'Method','NonlinearLeastSquares',
+Octs = linspace(min(CBoundTunDataOctAll(:,2)),max(CBoundTunDataOctAll(:,2)),500);
+fitData = feval(ffit,Octs);
+figure;
+ll1 = plot(Octs,fitData,'r','linewidth',1.8);
+% Passive fit
+modelfunc = @(c1,c2,c3,c4,x) c1*exp((-1)*((x - c2).^2)./(2*(c3^2)))+c4;
+[AmpV,AmpInds] = max(CBoundTunDataPassOctAll(:,1));
+c0 = [AmpV,0,0.2,min(CBoundTunDataPassOctAll(:,1))];  % 0.4 is the octave step
+cUpper = [AmpV*10,max(CBoundTunDataPassOctAll(:,2)),max(CBoundTunDataPassOctAll(:,2)) - min(CBoundTunDataPassOctAll(:,2)),AmpV*10];
+cLower = [-1*AmpV*10,min(CBoundTunDataPassOctAll(:,2)),0.1,-Inf];
+[ffitPass,gofPass] = fit(CBoundTunDataPassOctAll(:,2),CBoundTunDataPassOctAll(:,1),modelfunc,...
+'StartPoint',c0,'Upper',cUpper,'Lower',cLower,'Robust','LAR','MaxIter',1000);  % 'Method','NonlinearLeastSquares',
+PassOcts = linspace(min(CBoundTunDataPassOctAll(:,2)),max(CBoundTunDataPassOctAll(:,2)),500);
+PassfitData = feval(ffitPass,PassOcts);
+hold on
+plot(PassOcts,PassfitData,'k','linewidth',1.8);
+%
+SpaceStep = -2:0.2:2;
+BinCenters = SpaceStep+(0.2/2);
+BinedValueAvg = zeros(length(SpaceStep),2);
+BinedValueAll = cell(length(SpaceStep),1);
+PassBinedValueAvg = zeros(length(SpaceStep),2);
+PassBinValueAll = cell(length(SpaceStep),1);
+for cStep = 1 : length(SpaceStep)-1
+    WithinStepInds = find(CBoundTunDataOctAll(:,2) > SpaceStep(cStep) & CBoundTunDataOctAll(:,2) < SpaceStep(cStep+1));
+    PassStepInds = find(CBoundTunDataPassOctAll(:,2) > SpaceStep(cStep) & CBoundTunDataPassOctAll(:,2) < SpaceStep(cStep+1));
+    if ~isempty(WithinStepInds)
+        cBinData = CBoundTunDataOctAll(WithinStepInds,1);
+        BinedValueAll{cStep} = cBinData;
+        BinedValueAvg(cStep,:) = [mean(cBinData),std(cBinData)/sqrt(numel(cBinData))];
+    end
+    if ~isempty(PassStepInds)
+        cBinPass = CBoundTunDataPassOctAll(PassStepInds,1);
+        PassBinValueAll{cStep} = cBinPass;
+        PassBinedValueAvg(cStep,:) = [mean(cBinPass),std(cBinPass)/sqrt(numel(cBinPass))];
+    end
+end
+EmptyBinInds = cellfun(@isempty,BinedValueAll);
+UsedBinInds = BinCenters(~EmptyBinInds);
+UsedBinData = BinedValueAvg(~EmptyBinInds,:);
+PassEmotyInds = cellfun(@isempty,PassBinValueAll);
+PassUsedBinInds = BinCenters(~PassEmotyInds);
+PassUsedBinData = PassBinedValueAvg(~PassEmotyInds,:);
+PassUsedBinVAll = PassBinValueAll(~PassEmotyInds);
+
+hold on
+errorbar(UsedBinInds,UsedBinData(:,1),UsedBinData(:,2),'ro--','linewidth',1.2);
+errorbar(PassUsedBinInds,PassUsedBinData(:,1),PassUsedBinData(:,2),'ko--','linewidth',1.2);
+set(gca,'xlim',[-1.1 1.1],'ylim',[0 1],'xtick',[-1 0 1],'ytick',[0 0.5 1],'box','off');
+xlabel('AwayFromBoundary');
+ylabel('Response (Nor.)');
+title('Constrained Boundary Tuning ROIs')
+set(gca,'FontSize',16)
+
+saveas(gca,'Constrained Boundary tuning ROI population average')
+saveas(gca,'Constrained Boundary tuning ROI population average','pdf')
+

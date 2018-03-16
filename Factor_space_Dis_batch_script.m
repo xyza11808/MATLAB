@@ -7,9 +7,9 @@ if ~fi
     return;
 end
 [Passfn,Passfp,~] = uigetfile('*.txt','Please select passive factor analysis data path');
-
+PassIndsAll = SessTaskPass_pValue(:,3);
 %%
-clearvars -except fn fp Passfp Passfn
+clearvars -except fn fp Passfp Passfn PassIndsAll
 fpath = fullfile(fp,fn);
 fid = fopen(fpath);
 tline = fgetl(fid);
@@ -33,6 +33,8 @@ IndexTaskPassFitValues = {};
 TaskFrate = [];
 TaskAlignF = [];
 SessPowerPeak = [];
+SessBoundValues = [];
+SessTaskPass_pValue = {};
 m = 1;
 %
 while ischar(tline)
@@ -44,6 +46,13 @@ while ischar(tline)
     %
     TaskPath = fullfile(tline,'DimRed_Resplot_smooth','FactorAnaData.mat');
     cd(fullfile(tline,'DimRed_Resplot_smooth'));
+    SessTaskPass_pValue{m,1} = [];
+    SessTaskPass_pValue{m,2} = [];
+    SessTaskPass_pValue{m,3} = [];
+    SessTaskPass_pValue{m,4} = [];
+    SessTaskPass_pValue{m,5} = [];
+    SessTaskPass_pValue{m,6} = [];
+    SessTaskPass_pValue{m,7} = [];
     
     isBoundaryToneexits = 0;
 %     [fn,fp,~] = uigetfile('FactorAnaData.mat','Please select your task factor analysis saved data');
@@ -194,14 +203,21 @@ while ischar(tline)
     CMap = AllMap([1:ToneNum/2,end-ToneNum/2+1:end],:);
     Opt.isPatchPlot = 0;
     lineMemoStrs = cellstr(num2str(Tones(:)/1000,'%.1fKHz'));
-    
+    nFrames = size(NMSIndexData,2);
     
     lineobj = [];
+    FreqSI_pAll = zeros(ToneNum,nFrames);
     hhf = figure('position',[100 100 460 350]);
     hold on
     for nf = 1 : ToneNum
         cFreqs = Tones(nf);
         cFreqData = NMSIndexData(NMTrTones==cFreqs,:);  % correct trials,  & NMOutcomes == 1
+        cFreqP = zeros(nFrames,1);
+        parfor cFrame = 1 : nFrames
+            [~,Tempp] = ttest(cFreqData(:,cFrame));
+            cFreqP(cFrame) = Tempp;
+        end
+        FreqSI_pAll(nf,:) = cFreqP;
         H = plot_meanCaTrace(mean(cFreqData),std(cFreqData)/sqrt(size(cFreqData,1)),xsTime,hhf,Opt);
         set(H.meanPlot,'color',CMap(nf,:));
         set(H.ep,'facecolor',CMap(nf,:),'facealpha',0.4);
@@ -221,11 +237,13 @@ while ischar(tline)
     saveas(hhf,sprintf('Sess Normalized Sindex sumPlot'),'png');
     close(hhf);
     
+    SessTaskPass_pValue{m,1} = FreqSI_pAll;
     % calculate the peak selection index for each frequency type
     Tones = double(unique(Stimtones));
     ToneNum = length(Tones);
     FrameScale = [TaskStartF.start_frame+1,TaskStartF.start_frame+TaskxTimes.frame_rate]; % within 1s time window
     FreqMaxIndex = zeros(ToneNum,1);
+    TaskFreqstd = zeros(ToneNum,1);
     for cf = 1 : ToneNum
         cfFreq = Tones(cf);
         cFreqData = NMSIndexData(NMTrTones==cfFreq,:);  % correct trials,  & NMOutcomes == 1
@@ -234,7 +252,10 @@ while ischar(tline)
         AbsTrace = abs(MeanTrace);
         [~,MaxInds] = max(AbsTrace(FrameScale(1):FrameScale(2)));
         FreqMaxIndex(cf) = MeanTrace(TaskStartF.start_frame+MaxInds);
+        TaskFreqstd(cf) = mad(MeanTrace) * 1.4826;
     end
+    SessTaskPass_pValue{m,5} = TaskFreqstd;
+    
     ToneOctave = log2(Tones/16000);
     ToneBehavCorr = BehavBoundfile.boundary_result.StimCorr;
     ToneBehavCorr(1:floor(ToneNum/2)) = 1 - ToneBehavCorr(1:floor(ToneNum/2));
@@ -262,6 +283,8 @@ while ischar(tline)
     BehavDerivateCurve = [BehavDerivateCurve(1);BehavDerivateCurve]/OctStep;
     TaskFA_DerivateCurve = diff(fit_ReNew_FA.curve(:,2));
     TaskFA_DerivateCurve = [TaskFA_DerivateCurve(1);TaskFA_DerivateCurve]/OctStep;
+    TaskFA_DC = diff(fit_ReNew_Nor2behavFA.curve(:,2));
+    TaskFA_DC = [TaskFA_DC(1);TaskFA_DC]/OctStep;
     
     hf = figure('position',[560 500 500 370]);
     yyaxis left
@@ -300,26 +323,117 @@ while ischar(tline)
     % load passive factor analysis data
     DatafPath = fullfile(Passline,'DimRed_Resplot','MeanPlotData.mat');
     PassFactorData = load(DatafPath);
-    PassFreqDatas = load(fullfile(Passline,'rfSelectDataSet.mat'),'SelectSArray');
+    PassFreqDatas = load(fullfile(Passline,'rfSelectDataSet.mat'),'SelectSArray','frame_rate');
     PassFreqTypes = unique(PassFreqDatas.SelectSArray);
     PassOctave = log2(double(PassFreqTypes)/16000);
     PassTrTones = double(PassFreqDatas.SelectSArray);
     PassToneNum = length(PassFreqTypes);
     PassFrameScale = [PassFactorData.start_frame+1,PassFactorData.start_frame+PassFactorData.frame_rate];
+    PassnFrames = size(PassFactorData.cLRIndexSum,2);
     PassFreqMaxindex = zeros(PassToneNum,1);
+    PassFreq_PAll = zeros(PassToneNum,PassnFrames);  % test each frame time whether the selection index was significantly diff from 0
+    PassFreqTrace = zeros(PassToneNum,PassnFrames);
+    PassFreqSEMtrace = zeros(PassToneNum,PassnFrames);
+    PassFreqstd = zeros(PassToneNum,1);
     for cf = 1 : PassToneNum
         cfFreq = PassFreqTypes(cf);
         cFreqData = PassFactorData.cLRIndexSum(PassTrTones==cfFreq,:);  % correct trials,  & NMOutcomes == 1
         % calculate the peak value within given time win
         MeanTrace = mean(cFreqData);
+        PassFreqTrace(cf,:) = MeanTrace;
         AbsTrace = abs(MeanTrace);
+        PassFreqSEMtrace(cf,:) = std(cFreqData)./sqrt(size(cFreqData,1));
         [~,MaxInds] = max(AbsTrace(PassFrameScale(1):PassFrameScale(2)));
         PassFreqMaxindex(cf) = MeanTrace(PassFactorData.start_frame+MaxInds);
+        TempP = zeros(PassnFrames,1);
+        parfor cPassf = 1 : PassnFrames
+            [~,PassTP] = ttest(cFreqData(:,cPassf));
+            TempP(cPassf) = PassTP;
+        end
+        PassFreq_PAll(cf,:) = TempP;
+        PassFreqstd(cf) = mad(MeanTrace)*1.4826;
     end
     UsedPassInds = abs(PassOctave) <= 1;
     UsedPassOctaves = PassOctave(UsedPassInds);
     UsedPassFreqMaxIndex = PassFreqMaxindex(UsedPassInds);
     UsedPassFreqs = PassFreqTypes(UsedPassInds);
+    UsedPassFreqMean = PassFreqTrace(UsedPassInds,:);
+    UsedPassFreqSEM = PassFreqSEMtrace(UsedPassInds,:);
+    SessTaskPass_pValue{m,4} = size(PassFactorData.cLRIndexSum,1)/PassToneNum;
+    SessTaskPass_pValue{m,2} = PassFreq_PAll(UsedPassInds,:);
+    SessTaskPass_pValue{m,6} = PassFreqstd(UsedPassInds);
+    
+    
+    % plot frequency wise mean trace plot
+%     if ~exist('Passive Sess Normalized Sindex sumPlot.fig','file')
+        if ~exist('PassIndsAll','var')
+            PassUsedInds = [];
+            disp(log2(Tones/16000));
+            disp(UsedPassOctaves');
+            Inds = input('Please select the used octave inds for passive sessions:\n','s');
+            InputInds = str2num(Inds);
+        else
+            InputInds = PassIndsAll{m};
+        end
+            
+        if ~isempty(InputInds)
+            %
+            PassCompUsedOcts = UsedPassOctaves(InputInds);
+            PassComUsedFreqMean = UsedPassFreqMean(InputInds,:);
+            PassComUsedFreqSEM = UsedPassFreqSEM(InputInds,:);
+            ToneNum = length(PassCompUsedOcts);
+            GrNums = floor(ToneNum/2);
+            cPassMap = blue2red_2(GrNums+1,0.8);
+            SessTaskPass_pValue{m,3} = InputInds;
+
+            Opt.t_eventOn = 1;
+            Opt.eventDur = 0.3;
+            eventOff = Opt.t_eventOn + Opt.eventDur;
+            AllMap = blue2red_2(GrNums+1,0.8);
+            CMap = AllMap([1:GrNums,end-GrNums+1:end],:);
+            if mod(ToneNum,2)
+                CMapNew = zeros(size(CMap,1)+1,3);
+                CMapNew(1:GrNums,:) = CMap(1:GrNums,:);
+                CMapNew(end-GrNums+1:end,:) = CMap(end-GrNums+1:end,:);
+                CMapNew(GrNums+1,:) = [.5 .5 .5];
+                CMap = CMapNew;
+            end
+
+            Opt.isPatchPlot = 0;
+            lineMemoStrs = cellstr(num2str((2.^(PassCompUsedOcts(:)))*16,'%.1fKHz'));
+            xsTime = (1:size(PassComUsedFreqMean,2))/PassFreqDatas.frame_rate;
+
+            lineobj = [];
+            hhf = figure('position',[100 100 460 350]);
+            hold on
+            for nf = 1 : ToneNum
+    %             cFreqs = PassCompUsedOcts(nf);
+                cFreqData = PassComUsedFreqMean(nf,:);  % correct trials,  & NMOutcomes == 1
+                cFreqDataSEM = PassComUsedFreqSEM(nf,:);  
+                H = plot_meanCaTrace(cFreqData,cFreqDataSEM,xsTime,hhf,Opt);
+                set(H.meanPlot,'color',CMap(nf,:));
+                set(H.ep,'facecolor',CMap(nf,:),'facealpha',0.4);
+                lineobj = [lineobj,H.meanPlot];
+            end
+            yscales = get(gca,'ylim');
+            patch([Opt.t_eventOn Opt.t_eventOn eventOff eventOff],[yscales(1) yscales(2) yscales(2) yscales(1)],1,...
+                'Edgecolor','none','facecolor',[.8 .8 .8] ,'facealpha',0.6);
+            legend(lineobj,lineMemoStrs,'FontSize',8)
+            legend('boxoff')
+            title('FreqWise Selection index');
+            xlabel('Time (s)');
+            ylabel('Passive Selction index');
+            set(gca,'FontSize',16);
+            %
+            saveas(hhf,sprintf('Passive Sess Normalized Sindex sumPlot'));
+            saveas(hhf,sprintf('Passive Sess Normalized Sindex sumPlot'),'png');
+            close(hhf);
+            SessTaskPass_pValue{m,2} = PassFreq_PAll(UsedPassInds,:);
+        end
+%     end
+    % $$$$$$$###################################################################################################
+    % %end of the mean trace plot
+    
     PassNorFreqIndex = (UsedPassFreqMaxIndex - min(FreqMaxIndex))/(max(FreqMaxIndex) - min(FreqMaxIndex));
     Nor2BehavPassIndex = (BehavB - BehavA)*(UsedPassFreqMaxIndex - min(FreqMaxIndex))/(max(FreqMaxIndex) - min(FreqMaxIndex)) + BehavA;
     PassFreqstr = cellstr(num2str(UsedPassFreqs(:)/1000,'%.1f'));
@@ -334,6 +448,8 @@ while ischar(tline)
     PassNor2behFAFitTaskOctV = feval(fit_ReNew_PassNor2behFA.ffit,ToneOctave);
     PassFA_DerivateCurve = diff(fit_ReNew_PassFA.curve(:,2));
     PassFA_DerivateCurve = [PassFA_DerivateCurve(1);PassFA_DerivateCurve]/OctStep;
+    PassFA_DC = diff(fit_ReNew_PassNor2behFA.curve(:,2));
+    PassFA_DC = [PassFA_DC(1);PassFA_DC]/OctStep;
     
     hf = figure('position',[560 500 500 370]);
     yyaxis left
@@ -373,18 +489,19 @@ while ischar(tline)
     IndexTaskPassFitValues{m,5} = Nor2BehavTaskOctValues(:);
     IndexTaskPassFitValues{m,6} = PassNor2behFAFitTaskOctV(:);
     
-    SessPowerPeak(m,:) = [max(BehavDerivateCurve),max(TaskFA_DerivateCurve),max(PassFA_DerivateCurve)];
-    
+    SessPowerPeak(m,:) = [max(BehavDerivateCurve),max(TaskFA_DerivateCurve),max(PassFA_DerivateCurve),max(TaskFA_DC),max(PassFA_DC)];
+    SessBoundValues(m,:) = [fit_ReNew.ffit.u,fit_ReNew_FA.ffit.u,fit_ReNew_PassFA.ffit.u,...
+        fit_ReNew_Nor2behavFA.ffit.u,fit_ReNew_PassNor2behFA.ffit.u];
     m = m + 1;
     tline = fgetl(fid);
     Passline = fgetl(Passid);
 end
 %%
-cd('E:\DataToGo\data_for_xu\Factor_new_smooth\New_correct_factorAna\SessionSummary');
+cd('E:\DataToGo\data_for_xu\Factor_new_smooth\New_correct_factorAna\SessionSummary\NewDataSave');
 save FactorAnaDataSave.mat TaskFactorData TaskTime PLotsTLRDis PlotsPLRDis -v7.3
 % save FactorAnaDataSave.mat TaskFactorData TaskTime PassFactorData PassTime PLotsTLRDis PlotsPLRDis -v7.3
 save LRIndexsumSave.mat TaskTones TaskOutcomes ActionChoice LRIndexSum TaskFrate TaskAlignF FreqIndexAll ...
-    NorFreqIndex IndexTaskPassFitValues SessPowerPeak -v7.3
+    NorFreqIndex IndexTaskPassFitValues SessPowerPeak SessBoundValues SessTaskPass_pValue -v7.3
 %% summarize session figs into one ppt file
 clearvars -except fn fp
 m = 1;
@@ -597,8 +714,8 @@ ylabel({'Right Prob.';'Nor. Selection Index'});
 set(gca,'FontSize',16);
 legend([hl1,hl2,hl3],{'BehavData','Task SelectionIndex','Pass SelectionIndex'},'FontSize',8,'Location','Northwest');
 legend('Boxoff')
-saveas(hf,'Behavior and selection index logistic plot without CI');
-saveas(hf,'Behavior and selection index logistic plot without CI','png');
+% saveas(hf,'Behavior and selection index logistic plot without CI');
+% saveas(hf,'Behavior and selection index logistic plot without CI','png');
 %%
 BehavCI = mean(SessBehavData(:,4:6),2) - mean(SessBehavData(:,1:3),2);
 TaskIndexCI = mean(SessTaskIndexData(:,4:6),2) - mean(SessTaskIndexData(:,1:3),2);
@@ -682,21 +799,21 @@ hf = figure('position',[100 100 480 400]);
 hold on
 hl1 = plot(fit_Behav.curve(:,1),fit_Behav.curve(:,2),'r','linewidth',2);
 hl2 = plot(fit_TaskI.curve(:,1),fit_TaskI.curve(:,2),'b','linewidth',2);
-% hl3 = plot(fit_PassI.curve(:,1),fit_PassI.curve(:,2),'k','linewidth',2);
-% plot(fit_Behav.curve(:,1),BehavFit_ci,'r','linewidth',0.8,'linestyle','--');
-% plot(fit_TaskI.curve(:,1),TaskIFit_ci,'b','linewidth',0.8,'linestyle','--');
-% plot(fit_PassI.curve(:,1),PassIFir_ci,'k','linewidth',0.8,'linestyle','--');
+hl3 = plot(fit_PassI.curve(:,1),fit_PassI.curve(:,2),'k','linewidth',2);
+plot(fit_Behav.curve(:,1),BehavFit_ci,'r','linewidth',0.8,'linestyle','--');
+plot(fit_TaskI.curve(:,1),TaskIFit_ci,'b','linewidth',0.8,'linestyle','--');
+plot(fit_PassI.curve(:,1),PassIFir_ci,'k','linewidth',0.8,'linestyle','--');
 errorbar(MeanOctaves,MeanBehavs,SEMBehavs,'ro','MarkerSize',12,'linewidth',1);  %,'Marker','none'
 errorbar(MeanOctaves,MeanTaskIndex,SEMTaskIndex,'bo','MarkerSize',12,'linewidth',1);
-% errorbar(MeanOctaves,MeanPassIndex,SEMPassIndex,'ko','MarkerSize',12,'linewidth',1);
+errorbar(MeanOctaves,MeanPassIndex,SEMPassIndex,'ko','MarkerSize',12,'linewidth',1);
 set(gca,'xtick',MeanOctaves,'xticklabel',OctFreqStrs);
 xlabel('Frequency (kHz)');
 ylabel({'Right Prob.';'Nor. Selection Index'});
 set(gca,'FontSize',16);
-legend([hl1,hl2,hl3],{'BehavData','Task SelectionIndex','Pass SelectionIndex'},'FontSize',8,'Location','Northwest');
-legend('Boxoff')
-saveas(hf,'Behavior and Nor2BehSI logistic plot without 95CI without Pass');
-saveas(hf,'Behavior and Nor2BehSI logistic plot without 95CI without Pass','png');
+legend([hl1,hl2,hl3],{'BehavData','Task SelectionIndex','Pass SelectionIndex'},'FontSize',8,'Location','Northwest','Box','off');
+% legend('Boxoff');
+saveas(hf,'Behavior and Nor2BehSI logistic plot with 95CI');
+saveas(hf,'Behavior and Nor2BehSI logistic plot with 95CI','pdf');
 %%
 BehavCI = mean(SessBehavData(:,4:6),2) - mean(SessBehavData(:,1:3),2);
 TaskIndexCI = mean(SessTaskIndexData(:,4:6),2) - mean(SessTaskIndexData(:,1:3),2);
@@ -714,26 +831,96 @@ set(gca,'xlim',[0 1],'ylim',[0 1],'xtick',[0 0.5 1],'ytick',[0 0.5 1]);
 xlabel('Behav CI');
 ylabel({'TaskIndexCI';'PassIndexCI'});
 set(gca,'FontSize',16)
-% LegH = legend([Cir1,Cir2],{sprintf('TaskInCI,p=%.2e',TaskIndex_p),sprintf('PassInCI,p=%.2e',PassIndex_p)},...
-%     'FontSize',8,'Location','Southwest','TextColor','r');
+LegH = legend([Cir1,Cir2],{sprintf('%.4f-%.4f,p=%.2e',mean(TaskIndexCI),std(TaskIndexCI),TaskIndex_p),...
+    sprintf('%.4f-%.4f,p=%.2e',mean(PassIndexCI),std(PassIndexCI),PassIndex_p)},...
+    'FontSize',8,'Location','Southwest','TextColor','r','Box','off');
 % legend('boxoff');
-% set(LegH,'position',get(LegH,'position')+[-0.1 0 0 0]);
+set(LegH,'position',get(LegH,'position')+[-0.1 0 0 0]);
 title('Category Index');
-saveas(hhf,'Category Index Nor2beh compare plot without legh');
-saveas(hhf,'Category Index Nor2beh compare plot without legh','png');
+saveas(hhf,'Category Index Nor2beh compare plot with legh');
+saveas(hhf,'Category Index Nor2beh compare plot with legh','pdf');
 
 %%
+% E:\DataToGo\data_for_xu\Factor_new_smooth\New_correct_factorAna\SessionSummary\NewDataSave
+cSlopeData = SessPowerPeak(:,[1,4,5]);
 hf = figure('position',[100 100 460 300]);
-plot([1,2,3],SessPowerPeak','Color',[.7 .7 .7],'linewidth',1.4);
-hf = GrdistPlot(SessPowerPeak,{'BehavSlope','TaskSIslope','PassSIslope'},hf);
+plot([1,2,3],cSlopeData','Color',[.7 .7 .7],'linewidth',1.4);
+hf = GrdistPlot(cSlopeData,{'BehavSlope','TaskSIslope','PassSIslope'},hf);
 set(hf,'position',[100 100 460 300]);
-[~,BehavTaskp] = ttest(SessPowerPeak(:,1),SessPowerPeak(:,2));
-[~,BehavPassp] = ttest(SessPowerPeak(:,1),SessPowerPeak(:,3));
-[~,TaskPassp] = ttest(SessPowerPeak(:,2),SessPowerPeak(:,3));
-hf = GroupSigIndication([1,2],max(SessPowerPeak(:,1:2)) , BehavTaskp, hf);
-hf = GroupSigIndication([1,3],max(SessPowerPeak(:,[1,3])) , BehavPassp, hf);
-hf = GroupSigIndication([2,3],max(SessPowerPeak(:,2:3)) , TaskPassp, hf,1.3);
+[~,BehavTaskp] = ttest(cSlopeData(:,1),cSlopeData(:,2));
+[~,BehavPassp] = ttest(cSlopeData(:,1),cSlopeData(:,3));
+[~,TaskPassp] = ttest(cSlopeData(:,2),cSlopeData(:,3));
+hf = GroupSigIndication([1,2],max(cSlopeData(:,1:2)) , BehavTaskp, hf);
+hf = GroupSigIndication([1,3],max(cSlopeData(:,[1,3])) , BehavPassp, hf);
+hf = GroupSigIndication([2,3],max(cSlopeData(:,2:3)) , TaskPassp, hf,1.3);
+title({sprintf('B %.4f, T %.4f, P %.4f',mean(cSlopeData(:,1)),mean(cSlopeData(:,2)),mean(cSlopeData(:,3)));...
+    sprintf('B %.4f, T %.4f, P %.4f',std(cSlopeData(:,1)),std(cSlopeData(:,2)),std(cSlopeData(:,3)))});
 % cd('E:\DataToGo\data_for_xu\Factor_new_smooth\New_correct_factorAna\SessionSummary');
-saveas(hf,'Neuro and behav Slope comparison new');
-saveas(hf,'Neuro and behav Slope comparison new','png');
-saveas(hf,'Neuro and behav Slope comparison new','pdf');
+% saveas(hf,'Neuro Nor2Behav Slope comparison new');
+% saveas(hf,'Neuro Nor2Behav Slope comparison new','png');
+% saveas(hf,'Neuro Nor2Behav Slope comparison new','pdf');
+
+%% boundary comparison
+BehavBound = SessBoundValues(:,1);
+TaskNor2behvBound = SessBoundValues(:,4);
+PassNor2behvBound = SessBoundValues(:,5);
+[~,TaskIndex_p] = ttest(BehavBound,TaskNor2behvBound);
+[~,PassIndex_p] = ttest(BehavBound,PassNor2behvBound);
+hhf = figure('position',[100 100 420 350]);
+hold on
+Cir1 = plot(BehavBound,TaskNor2behvBound,'o','MarkerSize',9,'Linewidth',2,'Color',[1 0.7 0.2]);
+Cir2 = plot(BehavBound,PassNor2behvBound,'ko','MarkerSize',9,'Linewidth',2);
+yscales = get(gca,'ylim');
+xscales = get(gca,'xlim');
+CommonScale = [xscales;yscales];
+UsedScales = [min(CommonScale(:,1)),max(CommonScale(:,2))];
+line(UsedScales,UsedScales,'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
+line([0 0],UsedScales,'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
+line(UsedScales,[0 0],'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
+set(gca,'xtick',[-0.5 0 0.5],'ytick',[-0.5 0 0.5]);  % 'xlim',[0 1],'ylim',[0 1],
+xlabel('Behaviior bound');
+ylabel('Boundary (Task & Pass)');
+set(gca,'FontSize',16)
+LegH = legend([Cir1,Cir2],{sprintf('Task %.4f-%.4f,p=%.2e',mean(TaskNor2behvBound),std(TaskNor2behvBound),TaskIndex_p),...
+    sprintf('Pass %.4f-%.4f,p=%.2e',mean(PassNor2behvBound),std(PassNor2behvBound),PassIndex_p)},...
+    'FontSize',8,'Location','Northwest','TextColor','r','Box','off');
+% legend('boxoff');
+% set(LegH,'position',get(LegH,'position')+[-0.1 0 0 0]);
+title(sprintf('Behavior Bound %.4f-%.4f',mean(BehavBound),std(BehavBound)));
+% saveas(hhf,'Category Index Nor2beh compare plot with legh');
+% saveas(hhf,'Category Index Nor2beh compare plot with legh','pdf');
+
+%% boundary correlation analysis
+BehavBound = SessBoundValues(:,1);
+TaskNor2behvBound = SessBoundValues(:,4);
+PassNor2behvBound = SessBoundValues(:,5);
+[TaskR,TaskIndex_p] = corrcoef(BehavBound,TaskNor2behvBound);
+[PassR,PassIndex_p] = corrcoef(BehavBound,PassNor2behvBound);
+[Taskmd,TaskCurve] = lmFunCalPlot(BehavBound,TaskNor2behvBound,0);
+[Passmd,PassCurve] = lmFunCalPlot(BehavBound,PassNor2behvBound,0);
+hhf = figure('position',[100 100 420 350]);
+hold on
+Cir1 = plot(BehavBound,TaskNor2behvBound,'o','MarkerSize',9,'Linewidth',2,'Color',[1 0.7 0.2]);
+Cir2 = plot(BehavBound,PassNor2behvBound,'ko','MarkerSize',9,'Linewidth',2);
+plot(TaskCurve(:,1),TaskCurve(:,2),'Color','r','linewidth',1.8,'linestyle','--');
+plot(PassCurve(:,1),PassCurve(:,2),'Color','m','linewidth',1.8,'linestyle','--');
+yscales = get(gca,'ylim');
+xscales = get(gca,'xlim');
+CommonScale = [xscales;yscales];
+UsedScales = [min(CommonScale(:,1)),max(CommonScale(:,2))];
+% line(UsedScales,UsedScales,'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
+line([0 0],UsedScales,'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
+line(UsedScales,[0 0],'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
+set(gca,'xtick',[-0.5 0 0.5],'ytick',[-0.5 0 0.5]);  % 'xlim',[0 1],'ylim',[0 1],
+xlabel('Behaviior bound');
+ylabel('Boundary (Task & Pass)');
+set(gca,'FontSize',16)
+LegH = legend([Cir1,Cir2],{sprintf('Task Coef %.4f, p=%.2e',TaskR(1,2),TaskIndex_p(1,2)),...
+    sprintf('Pass Coef %.4f,p=%.2e',PassR(1,2),PassIndex_p(1,2))},...
+    'FontSize',8,'Location','Northwest','TextColor','r','Box','off','Autoupdate','off');
+% legend('boxoff');
+% set(LegH,'position',get(LegH,'position')+[-0.1 0 0 0]);
+% title(sprintf('Behavior Bound %.4f-%.4f',mean(BehavBound),std(BehavBound)));
+title('Boundary correlation analysis');
+saveas(hhf,'Category Index Nor2beh correlation with legh');
+saveas(hhf,'Category Index Nor2beh correlation with legh','pdf');

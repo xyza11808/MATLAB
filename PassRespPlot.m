@@ -22,17 +22,29 @@ StimStart = TimeStimOn*FrameRate;
 StimOffset = round(FrameRate*(TimeStimOn + 0.3));
 xticks = 0:FrameRate:nFrames;
 xticklabels = xticks/FrameRate;
-FreqColors = jet(nCols);
+FreqColorsAll = blue2red_2(nCols+2);
+if mod(nCols,2)
+    cGrFreqNum = floor(nCols/2);
+    UsedFreqs = true(nCols+2,1);
+    UsedFreqs(cGrFreqNum+[1,2]) = false;
+    FreqColors = FreqColorsAll(UsedFreqs,:);
+else
+    cGrFreqNum = floor(nCols/2);
+    UsedFreqs = true(nCols+2,1);
+    UsedFreqs(cGrFreqNum+[0,1]) = false;
+    FreqColors = FreqColorsAll(UsedFreqs,:);
+end
 Strs = cellstr(num2str(FreqTypes(:)/1000,'%.1f'));
 
 if ~isdir('./SepFreq_passive_plots/')
     mkdir('./SepFreq_passive_plots/');
 end
 cd('./SepFreq_passive_plots/');
-
+MeanTraceSaveAll = zeros(nROIs,nRows,nCols,nFrames);
 MeanTraceSave = zeros(nRows,nCols,nFrames);
 cROIColorScale = zeros(nCols,2);
 for cROI = 1 : nROIs
+    %%  
     cROIdata = squeeze(PassData(:,cROI,:));
     cROIColorScale(cROI,:) = [0,prctile(cROIdata(:),85)]; % set uniform colorscale for all subplots
     if cROIColorScale(cROI,2) < 0
@@ -121,10 +133,13 @@ for cROI = 1 : nROIs
     for cFreq = 1 : nCols
         set(AllLhandle(cFreq,:),'Color',FreqColors(cFreq,:));
     end
+    MeanTraceSaveAll(cROI,:,:,:) = MeanTraceSave;
+    %%
     saveas(hmean,sprintf('ROI%d Mean Trace plot save',cROI));
     saveas(hmean,sprintf('ROI%d Mean Trace plot save',cROI),'png');
     close(hmean);
 end
+save FreqMeanDataSave.mat MeanTraceSave MeanTraceSaveAll -v7.3
 cd ..;
 % % start plotting, seperated into two figures, color plot and mean trace plot
 % for cROI = 1 : nROIs

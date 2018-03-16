@@ -29,7 +29,7 @@ end
 SessMeanF = squeeze(mean(MaxFrameAll));
 SessMaxF = squeeze(max(MaxFrameAll));
 MaxDelta = SessMaxF - SessMeanF;
-hfgray = figure('position',[500 200 1000 850]);
+hfgray = figure('position',[50 200 800 680]);
 imagesc(MaxDelta,[0 500]);
 colormap gray
 

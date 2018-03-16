@@ -80,5 +80,6 @@ if ~isdir('./Summarized_plot_save/')
     mkdir('./Summarized_plot_save/');
 end
 cd('./Summarized_plot_save/');
+save SessDataSum.mat SessionDesp SessionData -v7.3
 SummarizedPlot(SessionDesp,SessionData);
 cd ..;

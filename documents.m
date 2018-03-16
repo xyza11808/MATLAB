@@ -132,8 +132,8 @@
   axesObjs = get(h, 'Children');  %axes handles
   dataObjs = get(axesObjs, 'Children'); %handles to low-level graphics objects in axes
   %% high bersion matlab
-  xdata = get(dataObjs, 'XData');  %data from low-level grahics objects
-  ydata = get(dataObjs, 'YData');
+  xdata = get(dataObjs(2), 'XData');  %data from low-level grahics objects
+  ydata = get(dataObjs(2), 'YData');
   % low version matlab
 %    xdata = get(dataObjs{2}, 'XData');  %data from low-level grahics objects
 %   ydata = get(dataObjs{2}, 'YData');
@@ -235,6 +235,7 @@
 %     ff = F(fit_ReNew.ffit.g,fit_ReNew.ffit.l,fit_ReNew.ffit.u,fit_ReNew.ffit.v,x);
 %     fslope = diff(ff,x);
 %     DerivData = double(subs(fslope,fit_ReNew.curve(:,1))); % calculate the derivative function and convert into double value
+% %   Using the int() function to do integration operation
 % ##############################################################################
 
 %%

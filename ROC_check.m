@@ -148,7 +148,9 @@ if isplot
     scatter(ROIDiffmnS,ROCareaABS(ROIDiffmnI),45,linspace(1,10,length(ROCarea)),'LineWidth',2);
     colormap cool
     [tbl,PredData] = lmFunCalPlot(ROIDiffmn,ROCareaABS,0);
-    plot(PredData{1},PredData{2},'color','k','LineStyle','--');
+    plot(PredData(:,1),PredData(:,2),'color',[1 0.7 0.2],'LineStyle','-');
+    plot(PredData(:,1),PredData(:,3),'color',[.7 .7 .7],'LineStyle','--');
+    plot(PredData(:,1),PredData(:,4),'color',[.7 .7 .7],'LineStyle','--');
     axis square
 %     colormap cool
     title({sprintf('mean response value slop = %.3f, Rsqur = %.3f',tbl.Coefficients.Estimate(2),tbl.Rsquared.Adjusted),...
@@ -163,7 +165,9 @@ if isplot
     [hmd,pmd]=corrcoef(ROIDiffmdS,ROCareaABS(ROIDiffmdI));
     scatter(ROIDiffmdS,ROCareaABS(ROIDiffmdI),45,linspace(1,10,length(ROCarea)),'LineWidth',2);
      [tbl,PredData] = lmFunCalPlot(ROIDiffmd,ROCareaABS,0);
-    plot(PredData{1},PredData{2},'color','k','LineStyle','--');
+    plot(PredData(:,1),PredData(:,2),'color',[1 0.7 0.2],'LineStyle','-');
+    plot(PredData(:,1),PredData(:,3),'color',[.7 .7 .7],'LineStyle','--');
+    plot(PredData(:,1),PredData(:,4),'color',[.7 .7 .7],'LineStyle','--');
     axis square
     colormap cool
     title({sprintf('median response value slop = %.3f, Rsqur = %.3f',tbl.Coefficients.Estimate(2),tbl.Rsquared.Adjusted),...

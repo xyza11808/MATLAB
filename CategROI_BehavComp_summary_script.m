@@ -14,6 +14,8 @@ tline = fgetl(fid);
 nSess = 1;
 SessBehavAll = {};
 SessCategROIBound = {};
+SessCategROISlope = {};
+xData = linspace(-1,1,500);
 %
 while ischar(tline)
     if isempty(strfind(tline,'NO_Correction\mode_f_change'))
@@ -64,29 +66,32 @@ while ischar(tline)
     
     CellBoundAll = cellfun(@(x) x.b3,ROITypeDataStrc.LogCoefFit);
     CategROIBound = CellBoundAll(CategROIInds);
+    CategROIMd = ROITypeDataStrc.LogCoefFit(CategROIInds);
+    SlopeAll = cellfun(@(x) CategSlope(x,xData),CategROIMd);
     SessCategROIBound{nSess} = CategROIBound;
+    SessCategROISlope{nSess} = SlopeAll;
     %
-    hf = figure('position',[3000 300 400 350]);
-    hold on
-    plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'Color',[0.5 0.5 1],'Linewidth',3);
-    plot(BehavOctaves, BehavPsycho,'ro','MarkerSize',12);
-    plot(CategROIBound,0.5*ones(size(CategROIBound)),'k*','MarkerSize',8);
-    hl1 = line([BehavCalBound BehavCalBound],[0 1],'Color',[.7 .7 .7],'Linewidth',2,'linestyle','--');
-    hl2 = line([mean(CategROIBound) mean(CategROIBound)],[0 1],'Color',[0 0.6 0],'Linewidth',2,'linestyle','--');
-    set(gca,'xtick',BehavOctaves,'xticklabel',BehavFreqStrs,'ytick',[0 0.5 1],'xlim',[-1 1],'ylim',[0 1]);
-    xlabel('Frequency (kHz)');
-    ylabel('RightProb');
-    set(gca,'FontSize',16);
-    legend([hl1,hl2],{'BehavBound','AvgROIBound'},'location','Northwest','FontSize',8,'TextColor','m');
-    legend('boxoff');
-    saveas(hf,'Behav and CategROI bound compare plot');
-    saveas(hf,'Behav and CategROI bound compare plot','png');
-    close(hf);
+%     hf = figure('position',[3000 300 400 350]);
+%     hold on
+%     plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'Color',[0.5 0.5 1],'Linewidth',3);
+%     plot(BehavOctaves, BehavPsycho,'ro','MarkerSize',12);
+%     plot(CategROIBound,0.5*ones(size(CategROIBound)),'k*','MarkerSize',8);
+%     hl1 = line([BehavCalBound BehavCalBound],[0 1],'Color',[.7 .7 .7],'Linewidth',2,'linestyle','--');
+%     hl2 = line([mean(CategROIBound) mean(CategROIBound)],[0 1],'Color',[0 0.6 0],'Linewidth',2,'linestyle','--');
+%     set(gca,'xtick',BehavOctaves,'xticklabel',BehavFreqStrs,'ytick',[0 0.5 1],'xlim',[-1 1],'ylim',[0 1]);
+%     xlabel('Frequency (kHz)');
+%     ylabel('RightProb');
+%     set(gca,'FontSize',16);
+%     legend([hl1,hl2],{'BehavBound','AvgROIBound'},'location','Northwest','FontSize',8,'TextColor','m');
+%     legend('boxoff');
+%     saveas(hf,'Behav and CategROI bound compare plot');
+%     saveas(hf,'Behav and CategROI bound compare plot','png');
+%     close(hf);
     
     nSess = nSess + 1;
     tline = fgetl(fid);
 end
-
+%%
 cd('E:\DataToGo\data_for_xu\CategROI_summary');
 save CategROIsummary.mat SessCategROIBound SessBehavAll -v7.3
 

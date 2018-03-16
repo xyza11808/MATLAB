@@ -162,12 +162,19 @@ while ischar(tline)
     for n = 1 : TotalROIs
         TaskMaxOctaves(n) = TaskUsedOctaves(MaxInds(n));
     end
-    
-    TunedROImask = ROIinfoData.ROImask(cTunedROIinds);
-    TunedROIOctaves = TaskMaxOctaves(cTunedROIinds);
+    TunedROIOctaves = TaskMaxOctaves(TunedROIInds);
     TaskOctaves = TunedROIOctaves;
-    cTunedROIs = length(TunedROImask);
+    TunedROIindex = find(cTunedROIinds);  % real index value for each ROI
+    % try to distinguish boundary tuning data and sensory tuning data
+    % define within 0.2 Octave Tuning peak as boundary tuning ROIs
+    BoundTunROIinds = TunedROIindex(abs(TaskOctaves - BehavBoundData) < 0.2);
+    BoundTunROIindsConst = TunedROIindex(abs(TaskOctaves - BehavBoundData) < 0.1);
+    PassMaxOct = MaxIndsOctave;
     
+    save TuningTypeIndexSave.mat CategROIInds  TunedROIInds  IIsResponsiveROI PassMaxOct TaskMaxOctaves  BoundTunROIinds BoundTunROIindsConst -v7.3
+    
+    TunedROImask = ROIinfoData.ROImask(TunedROIInds);
+    cTunedROIs = length(TunedROImask);
     SumROImask = double(TunedROImask{1});
     SumROIcolormask = SumROImask * TunedROIOctaves(1);
     for cROI = 2 : cTunedROIs
@@ -463,7 +470,7 @@ while ischar(tline)
     nSess = nSess + 1;
 end
 
-%
+%%
 cd('E:\DataToGo\data_for_xu\SingleCell_RespType_summary');
 save SummarizedTypeFracNew.mat SessROItypeFrac SessBehavBoundModeOctave SessColDescription SessBehavAll SessDataStrcAll -v7.3
 %%

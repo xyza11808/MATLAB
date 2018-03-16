@@ -85,7 +85,10 @@ AlignFrameLen = FrameNum - max(TrFrameDiff);
 AlignData = zeros(AllTrNum,ROInum,AlignFrameLen);
 for nTr = 1 : AllTrNum
     cTrData = squeeze(RawData(nTr,:,:));
-    AlignData(nTr,:,:) = cTrData(:,(TrFrameDiff(nTr)+1):(TrFrameDiff(nTr)+AlignFrameLen));
+    cTrBaseFrame = round((TrStimOnset(nTr)/1000)*Frate);
+    BaseMtx = repmat(mean(cTrData(:,1:cTrBaseFrame),2),1,size(cTrData,2));
+    BaseCorrectData = cTrData - BaseMtx;
+    AlignData(nTr,:,:) = BaseCorrectData(:,(TrFrameDiff(nTr)+1):(TrFrameDiff(nTr)+AlignFrameLen));
     AlignLickFStrc(nTr).Action_LeftLick_frame = AlignLickFStrc(nTr).Action_LeftLick_frame - LickFrameDiff(nTr);
     AlignLickFStrc(nTr).Action_RightLick_frame = AlignLickFStrc(nTr).Action_RightLick_frame - LickFrameDiff(nTr);
     if ~isempty(AlignLickFStrc(nTr).Action_LeftLick_frame)
@@ -206,9 +209,9 @@ for nROI = 1 : ROInum
         clim(2) = 200;
     end
     %
-    hROI = figure('position',[100 100 1500 980],'PaperPositionMode','auto');
-    FreqAxis = [];
-    Freqscales = zeros(NumFreq,2);
+    MeanPlotAxes = [];
+    MeanyScales = zeros(NumFreq,2);
+    hROI = figure('position',[20 100 1200 840],'PaperPositionMode','auto');
     for nFreq = 1 : NumFreq
         cFreqInds = TrStimFreq == FreqTypes(nFreq);
         cFreqOut = TrOutcome(cFreqInds);
@@ -294,30 +297,22 @@ for nROI = 1 : ROInum
                 set(gca,'FontSize',12);
             end
             
-            AxMiss2 = subplot(6,NumFreq,nFreq+NumFreq*5);
+            AxMean = subplot(6,NumFreq,nFreq+NumFreq*5);
             hold on
             plot(CorrectMean,'r','linewidth',1);
             if length(ErroData) == numel(ErroData) % only have single trial for certain condition
                 plot(ErroData,'b','linewidth',1);
-                ErrorTrace = ErroData;
             else
                 plot(ErroMean,'b','linewidth',1);
-                ErrorTrace = ErroMean;
             end
             if numel(MisData) == length(MisData)
                 plot(MisData,'k','linewidth',1);
-                MissTrace = MisData;
             else
                 plot(MissMean,'k','linewidth',1);
-                MissTrace = MissMean;
             end
-            warning('off');
-            MaxRespV = max([max(CorrectMean),max(ErrorTrace),max(MissTrace)]);
-            MinRespV = min([min(CorrectMean),min(ErrorTrace),min(MissTrace)]);
-            warning('on');
-            yscales = [MinRespV,MaxRespV];
-            line([AlignedFrame AlignedFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2);
-            line([SoundOffFrame SoundOffFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2,'linestyle','--');
+            yscales = get(gca,'ylim');
+%             line([AlignedFrame AlignedFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2);
+%             line([SoundOffFrame SoundOffFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2,'linestyle','--');
             set(gca,'xtick',AlignXtick,'xticklabel',AlignxtickLabel,'xlim',[0 size(CorrTrData,2)],'ylim',yscales);
             set(gca,'FontSize',14);
             xlabel('Time (s)');
@@ -325,56 +320,46 @@ for nROI = 1 : ROInum
                 ylabel('Mean \DeltaF/F_0(%)');
 %                 set(gca,'FontSize',16);
             end
-            FreqAxis = [FreqAxis,AxMiss2];
-            Freqscales(nFreq,:) = yscales;
 %             if nFreq == NumFreq
 %                 cAxisPos = get(AxMiss2,'position');
 %                 legend('Corr','Erro','Miss');
 %                 legend('boxoff','Location','northeastoutside','FontSize',4);
 %             end    
         else
-            AxMiss = subplot(6,NumFreq,nFreq+NumFreq*5);  % hold at the last subplot
-            FreqAxis = [FreqAxis,AxMiss];
+            AxMean = subplot(6,NumFreq,nFreq+NumFreq*5);  % hold at the last subplot
             hold on
             plot(CorrectMean,'r','linewidth',1);
             if length(ErroData) == numel(ErroData) % only have single trial for certain condition
                 plot(ErroData,'b','linewidth',1);
-                ErrorTrace = ErroData;
             else
                 plot(ErroMean,'b','linewidth',1);
-                ErrorTrace = ErroMean;
             end
-            warning('off');
-            MaxRespV = max([max(CorrectMean),max(ErrorTrace)]);
-            MinRespV = min([min(CorrectMean),min(ErrorTrace)]);
-            warning('on');
-            yscales = [MinRespV,MaxRespV];
-%             yscales = get(gca,'ylim');
-            line([AlignedFrame AlignedFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2);
-            line([SoundOffFrame SoundOffFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2,'linestyle','--');
+            yscales = get(gca,'ylim');
+%             line([AlignedFrame AlignedFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2);
+%             line([SoundOffFrame SoundOffFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2,'linestyle','--');
             set(gca,'xtick',AlignXtick,'xticklabel',AlignxtickLabel,'xlim',[0 size(CorrTrData,2)],'ylim',yscales);
             set(gca,'FontSize',12);
             xlabel('Time (s)');
             if nFreq == 1
                 ylabel({'Miss Trials';'Mean \DeltaF/F_0(%)'});
             end
-            Freqscales(nFreq,:) = yscales;
 %             if nFreq == NumFreq
 %                 cAxisPos = get(AxMiss2,'position');
 %                 legend('Corr','Erro','Miss');
 %             end    
         end
+        MeanPlotAxes = [MeanPlotAxes,AxMean];
+        MeanyScales(nFreq,:) = get(AxMean,'ylim');
     end
-    UniScale = [min(Freqscales(:,1)),max(Freqscales(:,2))]+[-10,10];
-    if UniScale(1) < -50
-        UniScale(1) = -50;
+    ComYScale = [min(MeanyScales(:,1)),max(MeanyScales(:,2))];
+    if ComYScale(1) < -20
+        ComYScale(1) = -20;
     end
-    for cAxis = 1 : length(FreqAxis)
-        axes(FreqAxis(cAxis));
-        line([AlignedFrame AlignedFrame],UniScale,'Color',[.7 .7 .7],'LineWidth',1.2);
-        line([SoundOffFrame SoundOffFrame],UniScale,'Color',[.7 .7 .7],'LineWidth',1.2,'linestyle','--');
+    for cF = 1 : NumFreq
+       set(MeanPlotAxes(cF),'ylim',ComYScale);
+       line(MeanPlotAxes(cF),[AlignedFrame AlignedFrame],ComYScale,'Color',[.7 .7 .7],'LineWidth',1.2);
+       line(MeanPlotAxes(cF),[SoundOffFrame SoundOffFrame],ComYScale,'Color',[.7 .7 .7],'LineWidth',1.2,'linestyle','--');
     end
-    set(FreqAxis,'ylim',UniScale);
     if ~IsROIstatePlot
         annotation('textbox',[0.49,0.685,0.3,0.3],'String',['ROI' num2str(nROI)],'FitBoxToText','on','EdgeColor',...
                    'none','FontSize',20);

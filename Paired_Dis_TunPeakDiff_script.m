@@ -138,7 +138,7 @@ PassBinDisSEM = PassBinDisSEM(logical(IsPassDataEmpty));
 
 [TaskMdl,TaskFitData] = lmFunCalPlot(TaskTunDis,ROIdisAll,0);
 [PassMdl,PassFitData] = lmFunCalPlot(PassTunDis,ROIdisAll,0);
-
+%%
 hhf = figure('position',[100 100 380 300]);
 hold on
 el1 = errorbar(PassOctBinCen,PassBinDisAvg,PassBinDisSEM,'k-o','linewidth',1.4);
@@ -155,6 +155,7 @@ title(sprintf('TaskSlope = %.3f, Pass = %.3f',TaskMdl.Coefficients.Estimate(2),.
 set(gca,'FontSize',12);
 legend([ll1,ll2],{sprintf('Taskp=%.3e',TaskMdl.Coefficients.pValue(2)),...
     sprintf('Passp=%.3e',PassMdl.Coefficients.pValue(2))},'FontSize',8,'Box','off');
+%%
 saveas(hhf,'TunDiff vs PairedDis correlation plot');
 saveas(hhf,'TunDiff vs PairedDis correlation plot','png');
 saveas(hhf,'TunDiff vs PairedDis correlation plot','pdf');
@@ -164,7 +165,7 @@ saveas(hhf,'TunDiff vs PairedDis correlation plot','pdf');
 [PassMdl,PassFitData] = lmFunCalPlot(PassTunDis,ROIdisAll,0);
 [PassCoef,~] = corrcoef(PassTunDis,ROIdisAll);
 [TaskCoef,~] = corrcoef(TaskTunDis,ROIdisAll);
-
+%%
 hhf = figure('position',[100 100 380 300]);
 hold on
 el2 = plot(PassTunDis,ROIdisAll,'.','linewidth',1.4,'Color',[.8 .8 .8],'MarkerSize',3);

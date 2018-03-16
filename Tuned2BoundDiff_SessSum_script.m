@@ -119,10 +119,10 @@ set(gca,'FontSize',16);
 GroupSigIndication([1,2],max(SessDiffMean),p,hf);
 title('AllROIs')
 % set(gca,'ytick',[0 1]);
-saveas(hf,'Sess2Bound diff compare AllROIs plot');
-saveas(hf,'Sess2Bound diff compare AllROIs plot','png');
+% saveas(hf,'Sess2Bound diff compare AllROIs plot');
+% saveas(hf,'Sess2Bound diff compare AllROIs plot','png');
 
-% scatter plot of all sessions
+%% scatter plot of all sessions
 hf = figure('position',[100 100 350 300]);
 scatter(SessDiffMean(:,1),SessDiffMean(:,2),40,[.1 .1 .1],'o','linewidth',1.5)
 xscales = get(gca,'xlim');
@@ -136,8 +136,8 @@ title('Tun2Bound distance')
 set(gca,'FontSize',16);
 text(CommonScales(1)+0.1*diff(CommonScales),CommonScales(1)+0.8*diff(CommonScales),{sprintf('N = %d',size(SessDiffMean,1)),...
     sprintf('p = %.3e',p)},'FontSize',12)
-saveas(hf,'Sess2Bound diff compare AllROIs scatter plot');
-saveas(hf,'Sess2Bound diff compare AllROIs scatter plot','png');
+% saveas(hf,'Sess2Bound diff compare AllROIs scatter plot');
+% saveas(hf,'Sess2Bound diff compare AllROIs scatter plot','png');
 
 %% Mode Diff Boundary
 UsedDiffData = SessModeDiff;
@@ -154,12 +154,14 @@ set(gca,'FontSize',16);
 GroupSigIndication([1,2],max(UsedDiffData),p,hf);
 title('Prefer2Bound')
 % set(gca,'ytick',[0 1]);
-saveas(hf,'Sess2Bound mode diff compare plot');
-saveas(hf,'Sess2Bound mode diff compare AllROIs plot','png');
-
+% saveas(hf,'Sess2Bound mode diff compare plot');
+% saveas(hf,'Sess2Bound mode diff compare AllROIs plot','pdf');
+%%
 % scatter plot of all sessions
 hf = figure('position',[100 100 350 300]);
-scatter(SessModeDiff(:,1),SessModeDiff(:,2),40,[.1 .1 .1],'o','linewidth',1.5)
+hold on
+scatter(UsedDiffData(:,1),UsedDiffData(:,2),40,[.1 .1 .1],'o','linewidth',1.5);
+scatter(UsedDiffData(1,1),UsedDiffData(1,2),40,'ro','linewidth',2.4);
 xscales = get(gca,'xlim');
 yscales = get(gca,'ylim');
 CommonScales = [min(xscales(1),yscales(1)),max(xscales(2),yscales(2))];
@@ -169,10 +171,10 @@ xlabel('Passive');
 ylabel('Task');
 title('Prefer2Bound distance')
 set(gca,'FontSize',16);
-text(CommonScales(1)+0.1*diff(CommonScales),CommonScales(1)+0.8*diff(CommonScales),{sprintf('N = %d',size(SessModeDiff,1)),...
+text(CommonScales(1)+0.1*diff(CommonScales),CommonScales(1)+0.8*diff(CommonScales),{sprintf('N = %d',size(UsedDiffData,1)),...
     sprintf('p = %.3e',p)},'FontSize',12)
 saveas(hf,'Sess2Bound diff compare mode scatter plot');
-saveas(hf,'Sess2Bound diff compare mode scatter plot','png');
+saveas(hf,'Sess2Bound diff compare mode scatter plot','pdf');
 %% Octave mean diff
 UsedDiffData = SessOctaveMeanDiff;
 [~,p] = ttest(UsedDiffData(:,1),UsedDiffData(:,2));
@@ -329,8 +331,9 @@ xlabel(ha,'Distance (Octave)');
 ylabel(ha,'Fraction');
 title(ha,'SingleNeu2Bound distance');
 set(ha,'FontSize',16);
-text(ha,caxesPos(1)+(0.02*caxesPos(3)),0.8,{sprintf('n = %d',length(PassDiffDataAll));sprintf('p = %.3e',pAll)},'FontSize',12);
 caxesPos = get(ha,'position');
+text(ha,caxesPos(1)+(0.02*caxesPos(3)),0.8,{sprintf('n = %d',length(PassDiffDataAll));sprintf('p = %.3e',pAll)},'FontSize',12);
+
 h_axes = axes('position',[caxesPos(1)+(2/3*caxesPos(3)),caxesPos(2)+0.02*caxesPos(4),caxesPos(3)/3,caxesPos(4)*0.5], 'color', 'none', 'visible','off');
 hold(h_axes,'on');
 bar(h_axes,1,mean(PassDiffDataAll),0.4,'EdgeColor','none','FaceColor','k','facealpha',0.8);
@@ -338,8 +341,8 @@ bar(h_axes,2,mean(TaskDiffDataAll),0.4,'EdgeColor','none','FaceColor','r','facea
 set(h_axes,'xlim',[0.5 2.5],'xcolor','w');
 text(h_axes,[1,2],MeanValue*1.05,MeanStr,'HorizontalAlignment','center');
 
-saveas(hhf,'Paired neuon distance cumulative plot');
-saveas(hhf,'Paired neuon distance cumulative plot','png');
+% saveas(hhf,'Paired neuon distance cumulative plot');
+% saveas(hhf,'Paired neuon distance cumulative plot','png');
 
 %%
 save SessSummaryData.mat SessDiffMean SessModeDiff SessPopuAverageDiff SessOctaveMeanDiff SessNearBoundFrac NearThres SingleNeuDifAll -v7.3

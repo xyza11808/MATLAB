@@ -48,25 +48,36 @@ FrameNum = size(RawData,3);
 onset_time = FrameRate;
 % MegOnFrame = onset_time;
 % cCusMaps = (blue2red_2(nStims/2,0.1))';
-cCusMaps = ([(linspace(0,1,nStims))',zeros(nStims,1),(linspace(1,0,nStims))'])';
+% cCusMaps = ([(linspace(0,1,nStims))',zeros(nStims,1),(linspace(1,0,nStims))'])';
 %%
 %example ROI plot for rf
 %example ROI plot
 % @######################using updated plot meothods below #####################
 %%%
 ExampROIinds = [4,9,17,18,19,31,43,50,76,84];
+% cColorROIs = ceil(length(ExampROIinds)/2);
+% cCusMaps = fliplr((blue2red_2(length(ExampROIinds),0.7))');
+cCusMaps = fliplr((cool(length(ExampROIinds)))');
+ExampleROIOct = ROITunOcts(ExampROIinds);
+[~,ROIOctInds] = sort(ExampleROIOct,'descend');
+ExampROIinds = ExampROIinds(ROIOctInds);
 % cTrMap = (parula(length(ExampROIinds)))';
 ExampleTrials = 1:40;  %trial number choosed to plot
+ExampleTrStims = TrialType(ExampleTrials);
+[SortStims,TrFreqInds] = sort(ExampleTrStims);
+TrStimOcts = log2(SortStims/8000);
+ExampleTrials = ExampleTrials(TrFreqInds);
+
 TrialNum = length(ExampleTrials);
-DataToPlot = RawData(ExampleTrials,ExampROIinds,:);
-TrialTypeP = TrialType(ExampleTrials);
-save ROIinds.mat ExampROIinds ExampleTrials -v7.3
+DataToPlot = RawData(ExampleTrials,ExampROIinds,:); 
+% TrialTypeP = TrialType(ExampleTrials);
+% save ROIinds.mat ExampROIinds ExampleTrials -v7.3
 GapsBetTrace = 40;  %gaps between each trace
 AfterMegT = 4;  % seconds after stimuli start
 BeforeMegT = 1; %Time choossed for baseline
 BeforeMegF = floor(BeforeMegT * FrameRate); 
 SelectEndFrame = BeforeMegF + floor(AfterMegT * FrameRate);
-h_example = figure('position',[200 50 1600 1000],'color','w');
+h_example = figure('position',[100 50 600 500],'color','w');
 hold on
 yBase = 0;
 for n = 1 : length(ExampROIinds)
@@ -96,15 +107,19 @@ for n = 1 : length(ExampROIinds)
     TrialLength = length(cROITrace);
 %     plot(cROITrace + yBase,'color','k','LineWidth',1.2);
     cROITunInds = ROITunOcts(ExampROIinds(n));
-    cColor = StimOcts == cROITunInds;
+%     cColor = StimOcts == cROITunInds;
     
     for k=1:TrialNum
         onset_timeTrial=BeforeMegF+(k-1)*FrameNumNew;
 %         cFreqInds = ROITunOcts(k);
 %         cColor = StimOcts == cFreqInds;
-        line([onset_timeTrial onset_timeTrial],[min(cROITrace)+yBase max(cROITrace)+yBase],'color',[.8 .8 .8],'LineWidth',0.8); % cCusMaps(:,cColor)
+        line([onset_timeTrial onset_timeTrial],[min(cROITrace)+yBase max(cROITrace)+yBase],'color',[.8 .8 .8],'LineWidth',0.4); % cCusMaps(:,cColor)
+        if n == length(ExampROIinds)
+            text(onset_timeTrial,max(cROITrace)+yBase,sprintf('%.1f',TrStimOcts(k)),'FontSize',4);
+        end
     end
-    plot(cROITrace + yBase,'color',cCusMaps(:,cColor),'LineWidth',1.5);
+    plot(cROITrace + yBase,'color',cCusMaps(:,n),'LineWidth',1);
+    text(length(cROITrace)+50,yBase,[num2str(ExampROIinds(n)),' - ',num2str(n)],'color',cCusMaps(:,n));
     % plot right trials in red color
 %     cPartData(:,logical(TrialTypeP)) = nan;
 %     cROITrace = cPartData(:);
@@ -208,15 +223,16 @@ set(gca,'ytick',[],'ycolor','w')
 set(gca,'xtick',[],'xcolor','w')
 xlabel('Time(s)');
 % xscales = get(gca,'xlim');
-line([TrialLength TrialLength],[100,200],'LineWidth',2,'color','k');
-text((TrialLength),150,'100% \DeltaF/F_0');
-line([TrialLength TrialLength+FrameRate*5],[100,100],'LineWidth',2,'color','k');
-text(TrialLength,50,'5 s');
+line([TrialLength TrialLength],[100,300],'LineWidth',0.8,'color','k');
+text((TrialLength),200,'200% \DeltaF/F_0');
+line([TrialLength TrialLength+FrameRate*10],[100,100],'LineWidth',0.8,'color','k');
+text(TrialLength,50,'10 s');
 ylim([-50 yBase]);
 % ylabel('\DeltaF/f_0');
 title('Example ROI plot---Sound Response');
 set(gca,'fontSize',20);
-saveas(h_example,'Example ROI plot.png');
-saveas(h_example,'Example ROI plot.fig');
-saveas(h_example,'Example ROI plot','pdf');
+%%
+saveas(h_example,'Example ROI plot sorted.png');
+saveas(h_example,'Example ROI plot sorted.fig');
+saveas(h_example,'Example ROI plot sorted','pdf');
 % close(h_example);

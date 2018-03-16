@@ -7,7 +7,7 @@ BehavPathAll = {};
 nPath = 0;
 AnmName{1} = 'ztt_curve01';
 % anmName = 'ztt_curve01';
-cd('K:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve01')
+cd('N:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve01')
 datafnames = {'bootStrap_fit_results_curve01_20150921_psycurveday1.mat',...
 'bootStrap_fit_results_curve01_20150929_psycurveday2.mat',...
 'bootStrap_fit_results_curve01_20150930_psycurveday3.mat',...
@@ -25,7 +25,7 @@ end
 anmName = 'ztt_curve02';
 AnmName{2} = anmName;
 
-cd('K:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve02');
+cd('N:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve02');
 % matfiles = dir('bootStrap*.mat')
 % for i = 1:length(matfiles),fprintf('''%s'',...\n',matfiles(i).name);end;
     %
@@ -46,7 +46,7 @@ cd('K:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve02');
 % Animal_3: curve03
 
 AnmName{3} = 'ztt_curve03';
-cd('K:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve03')
+cd('N:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve03')
 % matfiles = dir('bootStrap*.mat')
 % for i = 1:length(matfiles),fprintf('''%s'',...\n',matfiles(i).name);end;
     %
@@ -68,7 +68,7 @@ cd('K:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve03')
 % Animal_4: curve04
 
 AnmName{4} = 'ztt_curve04';
-cd('K:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve04')
+cd('N:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve04')
 % matfiles = dir('bootStrap*.mat')
 % for i = 1:length(matfiles),fprintf('''%s'',...\n',matfiles(i).name);end;
     %
@@ -91,7 +91,7 @@ end
 % Animal_5: curve05
 AnmName{5} = 'ztt_curve05';
 
-cd('K:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve05')
+cd('N:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve05')
 % matfiles = dir('bootStrap*.mat')
 % for i = 1:length(matfiles),fprintf('''%s'',...\n',matfiles(i).name);end;
     %
