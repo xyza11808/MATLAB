@@ -16,7 +16,7 @@ if nargin<5
         error(message('MATLAB:ode45:NotEnoughInputs'));
     end
 end
-
+   
 if nargin==5
     ROI_cf=varargin{1};
     traj_choice=0;
@@ -278,7 +278,9 @@ disp(['The suggested frame range for Seperate_align_plot function is: ' num2str(
 %     
 % end
 %% %###########################################################################
-
+if length(behavResults.Trial_Type) ~= size(data,1)
+    error('BehavData and imagind data hsave unsimilar matrix index.');
+end
 %################################
 %Inds extraction of all kinds of behavior types
 
@@ -742,7 +744,7 @@ elseif str2double(continue_char)==2
     else
         ROIstate = [];
     end
-    save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate FRewardLickT NormalTrialInds frame_lickAllTrials data ROIstate -v7.3
+    save CSessionData.mat smooth_data data_aligned trial_outcome behavResults start_frame frame_rate FRewardLickT NormalTrialInds frame_lickAllTrials data ROIstate DataRaw -v7.3
     %
     
 %     MultiTimes = {[0,0.3],[0,0.5],[0,0.8],[0,1],[0,1.3],[0,1.5]};
@@ -1083,7 +1085,7 @@ elseif str2double(continue_char)==3
         left_right_corr_dis=sqrt((corr_left(:,1)-corr_right(:,1)).^2+(corr_left(:,2)-corr_right(:,2)).^2+...
             (corr_left(:,3)-corr_right(:,3)).^2);
         
-        if ~isdir('./PCA_distance_calculate/')
+        if ~isdir('./PCA_distance_calculate/')  
             mkdir('./PCA_distance_calculate/');
         end
         cd('./PCA_distance_calculate/');

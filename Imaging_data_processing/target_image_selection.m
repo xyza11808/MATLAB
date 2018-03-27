@@ -1,8 +1,8 @@
 %finding the target image for alignment
-cd('F:\batch\batch49\20171205\anm04\test01');
-[im, ~] = load_scim_data('b49a05_test01_2x_2afc_215um_20171205_137.tif');
+cd('F:\batch\batch49\20171203\anm04\test05');
+[im, ~] = load_scim_data('b49a04_test05_2x_2afc_390um_20171203_126.tif');
 
-selectframe=im(:,:,1:50);
+selectframe=im(:,:,1:40);
 figure;
 imagesc(mean(selectframe,3),[0 200]);
 im_reg_target = mean(selectframe,3);
@@ -35,7 +35,7 @@ end
 %     save BadAlignF.mat BadAlignFrame -v7.3
 % end
 %
-dir_imreg_src = 'F:\batch\batch49\20171205\anm04\test01rf';
+dir_imreg_src = 'F:\batch\batch49\20171203\anm04\test05rf';
 cd(dir_imreg_src);
 dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
 BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);

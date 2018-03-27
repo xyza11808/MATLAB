@@ -9,7 +9,7 @@ if nargin > 5
         StimOnBin = TimePoints(minTrBinNum);
         IsTimeInput = 1;
     end
-end
+end   
 TimeLimts = length(TimePoints);
 if nargin > 6
     if ~isempty(varargin{2})
@@ -57,8 +57,8 @@ for nStim = 1 : nStims
     
     hax1 = subplot(2,nStims,nStim);
     hold on
-    hl1 = plot(TimePointsUse,smooth(mean(cCorrLickRateL)),'Color','b','LineWidth',1.5);
-    hl2 = plot(TimePointsUse,smooth(mean(cCorrLickRateR)),'Color','r','LineWidth',1.5);
+    hl1 = plot(TimePointsUse,BinBoundSmooth(cCorrLickRateL,minTrBinNum),'Color','b','LineWidth',1.5);
+    hl2 = plot(TimePointsUse,BinBoundSmooth(cCorrLickRateR,minTrBinNum),'Color','r','LineWidth',1.5);
     yScales = get(gca,'ylim');
     xscales = get(gca,'xlim');
     line([StimOnBin,StimOnBin],yScales,'Color',[.7 .7 .7],'LineWidth',1.6,'LineStyle','--');
@@ -82,8 +82,8 @@ for nStim = 1 : nStims
     
     hax2 = subplot(2,nStims,nStim+nStims);
     hold on
-    hl3 = plot(TimePointsUse,smooth(mean(cErroLickRateL)),'Color','b','LineWidth',1.6);
-    hl4 = plot(TimePointsUse,smooth(mean(cErroLickRateR)),'Color','r','LineWidth',1.6);
+    hl3 = plot(TimePointsUse,BinBoundSmooth(cErroLickRateL,minTrBinNum),'Color','b','LineWidth',1.6);
+    hl4 = plot(TimePointsUse,BinBoundSmooth(cErroLickRateR,minTrBinNum),'Color','r','LineWidth',1.6);
     yScales = get(gca,'ylim');
     xscales = get(gca,'xlim');
     line([StimOnBin,StimOnBin],yScales,'Color',[.7 .7 .7],'LineWidth',1.6,'LineStyle','--');

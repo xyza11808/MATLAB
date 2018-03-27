@@ -62,7 +62,7 @@ clearvars -global
 global CaSignal % ROIinfo ICA_ROIs
 % Choose default command line output for CaSignal_ROI_GUI_NP_extract
 handles.output = hObject;
-usrpth = userpath; % usrpth = usrpth(1:end-1);
+usrpth = 'M:\2p_data\'; % usrpth = usrpth(1:end-1);
 if exist([usrpth filesep 'nx_CaSingal.info'],'file')
     load([usrpth filesep 'nx_CaSingal.info'], '-mat');
     set(handles.DataPathEdit, 'String',info.DataPath);
@@ -2616,7 +2616,7 @@ info.SoloSessionName = get(handles.SoloSessionName, 'String');
 info.SoloStartTrialNo = get(handles.SoloStartTrialNo, 'String');
 info.SoloEndTrialNo = get(handles.SoloEndTrialNo, 'String');
 
-usrpth = userpath; % usrpth = usrpth(1:end-1);
+usrpth = 'M:\2p_data\'; % usrpth = usrpth(1:end-1);
 if strcmp(usrpth(end), ';')||strcmp(usrpth(end), ':'), usrpth(end) = []; end
 save([usrpth filesep 'nx_CaSingal.info'], 'info');
 

@@ -230,7 +230,7 @@ end
 % save timeBinROCResult.mat BINNEDROCResultLR BINNEDROCResultLB BINNEDROCResultRB PXtickAfter PXtick ...
 %     alignpoint FrameBin DatSize -v7.3
 save timeBinROCResult.mat BINNEDROCResultLR PXtickAfter PXtick PXtickTime ...
-    alignpoint FrameBin DatSize -v7.3
+    alignpoint FrameBin DatSize AlignBin FrameRate -v7.3
 if isplot
     cd ..
 end

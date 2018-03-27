@@ -47,7 +47,7 @@ elseif strcmpi(SessionDesp,'RandomPuretone')
     end
     SessionData.MeanRespData = FreqMeanTrace; % Mean trace data aligned to stimulus onset, nROIs-by-nFreqs-by-nFrames array
     SessionData.ChoiceProbData = ChoiceDataValue; 
-    SessionData.TypeNumber = ChoiceDataNumber;
+    SessionData.TypeNumber = ChoiceDataNumber; 
 %%    
 elseif strcmpi(SessionDesp,'RewardOmit')
     %%

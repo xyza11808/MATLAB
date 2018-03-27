@@ -27,7 +27,8 @@ while ischar(tline)
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));
     
     BehavBoundfile = load(fullfile(tline,'RandP_data_plots','boundary_result.mat'));
-    BehavBoundData = BehavBoundfile.boundary_result.Boundary - 1;
+%     BehavBoundData = BehavBoundfile.boundary_result.Boundary - 1;
+    BehavBoundData = BehavBoundfile.boundary_result.FitModelAll{1}{2}.ffit.u - 1;
 %     BehavCorr = BehavBoundfile.boundary_result.StimCorr;
 %     Uncertainty = 1 - BehavCorr;
     
@@ -105,6 +106,7 @@ end
 %%
 SavePath = uigetdir(pwd,'Please select current figure save path');
 cd(SavePath);
+save DisDataSummary.mat SessDiffMean SessModeDiff SessPopuAverageDiff SessOctaveMeanDiff SessNearBoundFrac SingleNeuDifAll NearThres -v7.3
 %% every single ROI diff
 [~,p] = ttest(SessDiffMean(:,1),SessDiffMean(:,2));
 hf = figure('position',[100 100 350 300]);
@@ -119,8 +121,8 @@ set(gca,'FontSize',16);
 GroupSigIndication([1,2],max(SessDiffMean),p,hf);
 title('AllROIs')
 % set(gca,'ytick',[0 1]);
-% saveas(hf,'Sess2Bound diff compare AllROIs plot');
-% saveas(hf,'Sess2Bound diff compare AllROIs plot','png');
+saveas(hf,'Sess2Bound diff compare AllROIs plot');
+saveas(hf,'Sess2Bound diff compare AllROIs plot','png');
 
 %% scatter plot of all sessions
 hf = figure('position',[100 100 350 300]);
@@ -136,8 +138,8 @@ title('Tun2Bound distance')
 set(gca,'FontSize',16);
 text(CommonScales(1)+0.1*diff(CommonScales),CommonScales(1)+0.8*diff(CommonScales),{sprintf('N = %d',size(SessDiffMean,1)),...
     sprintf('p = %.3e',p)},'FontSize',12)
-% saveas(hf,'Sess2Bound diff compare AllROIs scatter plot');
-% saveas(hf,'Sess2Bound diff compare AllROIs scatter plot','png');
+saveas(hf,'Sess2Bound diff compare AllROIs scatter plot');
+saveas(hf,'Sess2Bound diff compare AllROIs scatter plot','png');
 
 %% Mode Diff Boundary
 UsedDiffData = SessModeDiff;
@@ -154,8 +156,8 @@ set(gca,'FontSize',16);
 GroupSigIndication([1,2],max(UsedDiffData),p,hf);
 title('Prefer2Bound')
 % set(gca,'ytick',[0 1]);
-% saveas(hf,'Sess2Bound mode diff compare plot');
-% saveas(hf,'Sess2Bound mode diff compare AllROIs plot','pdf');
+saveas(hf,'Sess2Bound mode diff compare plot');
+saveas(hf,'Sess2Bound mode diff compare AllROIs plot','pdf');
 %%
 % scatter plot of all sessions
 hf = figure('position',[100 100 350 300]);
@@ -341,8 +343,8 @@ bar(h_axes,2,mean(TaskDiffDataAll),0.4,'EdgeColor','none','FaceColor','r','facea
 set(h_axes,'xlim',[0.5 2.5],'xcolor','w');
 text(h_axes,[1,2],MeanValue*1.05,MeanStr,'HorizontalAlignment','center');
 
-% saveas(hhf,'Paired neuon distance cumulative plot');
-% saveas(hhf,'Paired neuon distance cumulative plot','png');
+saveas(hhf,'Paired neuon distance cumulative plot');
+saveas(hhf,'Paired neuon distance cumulative plot','png');
 
 %%
 save SessSummaryData.mat SessDiffMean SessModeDiff SessPopuAverageDiff SessOctaveMeanDiff SessNearBoundFrac NearThres SingleNeuDifAll -v7.3
@@ -350,7 +352,7 @@ save SessSummaryData.mat SessDiffMean SessModeDiff SessPopuAverageDiff SessOctav
 %%
 PassSelectThresFrac = cellfun(@(x) x(2),SessNearBoundFrac(:,1));
 TaskSelectThresFrac = cellfun(@(x) x(2),SessNearBoundFrac(:,2));
-UsedInds = 1:19;
+UsedInds = 1:9;
 PassSelectThresFrac = PassSelectThresFrac(UsedInds);
 TaskSelectThresFrac = TaskSelectThresFrac(UsedInds);
 ForLinePlotData = [PassSelectThresFrac,TaskSelectThresFrac];
@@ -370,5 +372,5 @@ set(gca,'FontSize',18)
 yscales = get(gca,'ylim');
 set(gca,'ytick',0:0.2:yscales(2));
 hf = GroupSigIndication([1,2],max(ForLinePlotData),TestP,hf,1.1,[],12);
-% saveas(hf,'Near two tones cell fraction plots');
-% saveas(hf,'Near two tones cell fraction plots','png');
+saveas(hf,'Near two tones cell fraction plots');
+saveas(hf,'Near two tones cell fraction plots','png');

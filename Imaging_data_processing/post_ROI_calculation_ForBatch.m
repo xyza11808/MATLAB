@@ -11,7 +11,7 @@ if (strcmpi(type,'RF')||strcmpi(type,'2AFC'))==0
     warning('Wrong analysis type input. quit analysis...');
     return;
 end
-  
+
 %%
 %load ROI analysis result
 disp(['please input the ',type,' ROIs analysis result file path.\n']);
@@ -227,6 +227,9 @@ if strcmpi(type,'RF')
     SoundFreqs = double(sound_array(:,1) > 16000);
     SessionBoundary = FreqArray(ceil(length(FreqArray)/2));
     TrialTypes = SelectSArray > SessionBoundary;
+    UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);  % performing color plot
+    PassRespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);
+    return;    
     Passive_factroAna_scripts
 %%
     DataAnaObj = DataAnalysisSum(SelectData,SelectSArray,frame_rate,frame_rate,1);

@@ -3,10 +3,10 @@ function BehavLickPlot(behavStruct,BehavSetting,LickEndT,varargin)
 %behav session, and try to compare control and experimental data to see
 %whetehr there are any differences
 if isempty(LickEndT)
-    LickEndT=10;
+    LickEndT=8;
 end
 if LickEndT > 10
-    LickEndT = 9;
+    LickEndT = 8;
 end
 TrialTypes=behavStruct.Trial_Type;
 TrialStimOnT=behavStruct.Time_stimOnset;
@@ -67,7 +67,7 @@ if ~sum(isProbTrial)  %if there are no prob trials
         CorrRightInds = TrialTypes ==1 & trial_outcome' == 1;
         ErroRightInds = TrialTypes ==1 & trial_outcome' == 0;
         
-        h_all=figure('position',[220 40 1500 900],'PaperPositionMode','auto');
+        h_all=figure('position',[100 40 1500 900],'PaperPositionMode','auto');
         subplot(2,2,1);
         hold on;
         CorrLeftLickTime=lick_time_struct(CorrLeftInds);

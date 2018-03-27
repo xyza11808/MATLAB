@@ -461,9 +461,9 @@ for n = 1:fileNum
         boundary_result(n).StimCorr=Type_choiceR;
         boundary_result(n).StimCorr(1:GrNum) = 1 - boundary_result(n).StimCorr(1:GrNum);
         boundary_result(n).SessBehavAll = SessBehavDatas;
-        if(mean(boundary_result(n).StimCorr)<0.5)
-            continue;
-        end
+%         if(mean(boundary_result(n).StimCorr)<0.5)
+%             continue;
+%         end
         octave_sum=log2(double(max(behavResults.Stim_toneFreq))/double(min(behavResults.Stim_toneFreq)));
         octave_dist = log2(double(stim_types)/double(min(stim_types)));
         OctavesAll = log2(double(behavResults.Stim_toneFreq)/double(min(stim_types)));
@@ -489,7 +489,7 @@ for n = 1:fileNum
         %
         plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'color','k','LineWidth',2.4);
         plot(fit_ReNewAll.curve(:,1),fit_ReNewAll.curve(:,2),'color','r','LineWidth',2.4);
-        line([fit_ReNewAll.u fit_ReNewAll.u],[0 1],'color',[.7 .7 .7],'LineWidth',1.6,'linestyle','--');
+        line([fit_ReNewAll.ffit.u fit_ReNewAll.ffit.u],[0 1],'color',[.7 .7 .7],'LineWidth',1.6,'linestyle','--');
         line([internal_boundary internal_boundary],[0 1],'color','m','LineWidth',1.6,'linestyle','--');
         hold off;
         ylim([0 1]);
@@ -509,15 +509,19 @@ for n = 1:fileNum
         end
         %
         close(h4);
-        
+          
         boundary_result(n).FitValue = fit_ReNew.ffit;
         boundary_result(n).gof = fit_ReNew.gof;
         b = coeffvalues(fit_ReNew.ffit);
         boundary_result(n).FitModelAll = {{fit_ReNew,fit_ReNewAll}};
         boundary_result(n).SlopeCurve = BehavDerivateCurve;
     end
-    RTrNext_ChoiceBias_script;
-    
+    try
+        RTrNext_ChoiceBias_script;
+    catch
+        fprintf('Unable to do last trial choice modulation plots.\n');
+    end
+    close(gcf);
     % cd(FilePath);
     
     if ~(length(stim_types)==2)

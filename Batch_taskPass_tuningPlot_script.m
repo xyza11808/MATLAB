@@ -1,6 +1,7 @@
 % batched tuning curve task and passive compare
 clear
 clc
+cd('E:\DataToGo\data_for_xu\Tuning_curve_plot');
 [TaskPathfn,TaskPathfp,TaskPathfi] = uigetfile('*.txt','Please select the Task session path save file');
 [PassPathfn,PassPathfp,PassPathfi] = uigetfile('*.txt','Please select the corresponded passive session path save file');
 if ~TaskPathfi || ~PassPathfi
@@ -17,14 +18,14 @@ SessionNum = 1;
 ErrorNum = 0;
 ErrorSess = {};
 ErrorMess = {};
-%
+%%
 while ischar(Tasktline) && ischar(Passtline)
-    if isempty(strfind(Tasktline,'NO_Correction\mode_f_change'))
+    if isempty(strfind(Tasktline,'NO_Correction\mode_f_change'))  
         Tasktline = fgetl(Taskfid);
         Passtline = fgetl(Passfid);
         continue;
     end
-    %
+    %%
     try
         %
         TaskDataStrc = load(fullfile(Tasktline,'CSessionData.mat'));
@@ -172,8 +173,9 @@ while ischar(Tasktline) && ischar(Passtline)
         ErrorMess{ErrorNum} = ME;
         Tasktline = fgetl(Taskfid);
         Passtline = fgetl(Passfid);
-        continue;
+%         continue;
     end
+    %%
 end
 
 %%  test with mean trace calculation first
@@ -198,23 +200,49 @@ while ischar(Tasktline) && ischar(Passtline)
     try
         %%
         TaskDataStrc = load(fullfile(Tasktline,'CSessionData.mat'));
-        PassDataStrc = load(fullfile(Passtline,'rfSelectDataSet.mat'));
+        PassDataStrc = load(fullfile(Passtline,'rfSelectDataSet.mat')); 
         BehavDataPath = fullfile(Tasktline,'RandP_data_plots','boundary_result.mat');
+        cd(Tasktline);
+        if ~exist(BehavDataPath,'file')
+            BehavStrc = load(fullfile(Tasktline,'CSessionData.mat'),'behavResults');
+            rand_plot(BehavStrc.behavResults,4,[],1);
+        end
         BehavDataStrc = load(BehavDataPath);
         BehavBound = BehavDataStrc.boundary_result.Boundary;
-        cd(Tasktline);
-        
+        if isempty(BehavBound)
+            BehavBound = BehavDataStrc.boundary_result.FitModelAll{1}{2}.ffit.u;
+        end
 %         AlignedSortPlotAll(TaskDataStrc.data,TaskDataStrc.behavResults,TaskDataStrc.frame_rate,TaskDataStrc.FRewardLickT,TaskDataStrc.frame_lickAllTrials);
         
         % extract Task and passive data, plot it out 
         TaskTrFreq = double(TaskDataStrc.behavResults.Stim_toneFreq);
         TaskOutcome = TaskDataStrc.trial_outcome;
         TaskData = TaskDataStrc.data_aligned;
-        BefStimBase = repmat(mean(TaskData(:,:,1:TaskDataStrc.start_frame),3),1,1,size(TaskData,3));
-        TaskData = TaskData - BefStimBase;
+        nTrials = size(TaskData,1);
+        TestData = squeeze(TaskData(1,1,:));
+        if sum(isnan(TestData))
+            warning('Nan data exists.');
+            TrFrameNums = zeros(nTrials,1);
+            for cTr = 1 : nTrials
+                cTrData = squeeze(TaskData(cTr,1,:));
+                if isempty(find(isnan(cTrData),1,'first'))
+                    TrFrameNums(cTr) = length(cTrData);
+                else
+                    TrFrameNums(cTr) = find(isnan(cTrData),1,'first') - 1;
+                end
+            end
+            UsedFrame = min(TrFrameNums);
+            BackData = TaskData;
+            UsedTaskData = TaskData(:,:,1:UsedFrame);
+        else
+            UsedTaskData = TaskData;
+        end
+        
+        BefStimBase = repmat(mean(UsedTaskData(:,:,1:TaskDataStrc.start_frame),3),1,1,size(UsedTaskData,3));
+        UsedTaskData = UsedTaskData - BefStimBase;
         
         %
-        nROIs = size(TaskData,2);
+        nROIs = size(UsedTaskData,2);
         DataRespWinT = 1; % using only 1s time window for sensory response
         DataRespWinF = round(DataRespWinT*TaskDataStrc.frame_rate);
         % TaskDataResp = max(TaskData(:,:,(TaskDataStrc.start_frame+1):(TaskDataStrc.start_frame+DataRespWinF)),[],3);
@@ -222,9 +250,9 @@ while ischar(Tasktline) && ischar(Passtline)
         CorrectInds = TaskOutcome == 1;
 
         NonMissFreqs = TaskTrFreq(NonMissTrInds);
-        NonMissData = TaskData(NonMissTrInds,:,:);
+        NonMissData = UsedTaskData(NonMissTrInds,:,:);
         CorrTrFreqs = TaskTrFreq(CorrectInds);
-        CorrTrData = TaskData(CorrectInds,:,:);
+        CorrTrData = UsedTaskData(CorrectInds,:,:);
 
         FreqTypes = unique(TaskTrFreq);
         FreqNum = length(FreqTypes);
@@ -297,7 +325,7 @@ while ischar(Tasktline) && ischar(Passtline)
         save TunningDataSave.mat NonMissTunningFun CorrTunningFun PassTunningfun TaskFreqOctave ...
             PassFreqOctave BoundFreq NonMissTunningFunSEM CorrTunningFunSEM PassTunningfunSEM -v7.3
         for cROI = 1 : nROIs
-            %%
+            %
             PassPlotInds = abs(PassFreqOctave) < 1.03;
             h = figure('position',[220 300 550 420]);
             hold on;
@@ -320,6 +348,7 @@ while ischar(Tasktline) && ischar(Passtline)
             legend('boxoff')
             yscales = get(gca,'ylim');
             xscales = get(gca,'xlim');
+            
             BoundPos = (BehavBound - xscales(1))/diff(xscales);
             line([BehavBound BehavBound],yscales,'Color',[.7 .7 .7],'linewidth',2,'linestyle','--');
             if BehavBound < 0
@@ -329,7 +358,7 @@ while ischar(Tasktline) && ischar(Passtline)
             end
             Arrowy = [0.85 0.85];
             a = annotation('textarrow',Arrowx,Arrowy,'String',{'Behav';'Bound'},'Color','m','FontSize',14);
-            %%
+            %
             saveas(h,sprintf('ROI%d Tunning curve comparison plot',cROI));
             saveas(h,sprintf('ROI%d Tunning curve comparison plot',cROI),'png');
             close(h);
@@ -340,9 +369,9 @@ while ischar(Tasktline) && ischar(Passtline)
         Passtline = fgetl(Passfid);
         %%
     catch ME
-        ErrorNumNew = ErrorNum + 1;
-        ErrorSessNew{ErrorNum} = Tasktline;
-        ErrorMessNew{ErrorNum} = ME;
+        ErrorNumNew = ErrorNumNew + 1;
+        ErrorSessNew{ErrorNumNew} = Tasktline;
+        ErrorMessNew{ErrorNumNew} = ME;
         Tasktline = fgetl(Taskfid);
         Passtline = fgetl(Passfid);
         continue;

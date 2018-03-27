@@ -11,8 +11,14 @@ DataSEMValue = zeros(nTypes,nROIs);
      
      for cROI = 1 : nROIs
          cROItypeData = squeeze(Data(cTypeInds,cROI,:));
-         cROItypeMean = mean(cROItypeData);
-         cROItypeSEM = std(cROItypeData)/sqrt(size(cROItypeData,1));
+         if length(cROItypeData) == numel(cROItypeData)
+             cROItypeMean = cROItypeData;
+             cROItypeSEM = zeros(size(cROItypeData));
+         else
+            cROItypeMean = mean(cROItypeData);
+            cROItypeSEM = std(cROItypeData)/sqrt(size(cROItypeData,1));
+         end
+         
          [cMaxvalue,cMaxInds] = max(cROItypeMean(FrameScale(1):FrameScale(2)));
          cMaxSEM = cROItypeSEM(cMaxInds+FrameScale(1)-1);
          DataMeanValues(cType,cROI) = cMaxvalue;

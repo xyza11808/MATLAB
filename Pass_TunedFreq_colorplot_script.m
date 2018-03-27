@@ -1,5 +1,6 @@
 clear
 clc
+cd('E:\DataToGo\data_for_xu\Tuning_curve_plot');
 [fn,fp,fi] = uigetfile('*.txt','Please select the session path savage file');
 if ~fi
     return;
@@ -12,14 +13,15 @@ tline = fgetl(fid);
 CusMap = blue2red_2(32,0.8);
 PreferRandDisSum = {};
 m = 1;
-
+%
 while ischar(tline)
     if isempty(strfind(tline,'NO_Correction\mode_f_change'))
         tline = fgetl(fid);
         continue;
     end
     
-    % passive tuning frequency colormap plot
+    clearvars -except tline fid CusMap PreferRandDisSum m fn fp
+    %% passive tuning frequency colormap plot
     load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));
     [~,EndInds] = regexp(tline,'result_save');
@@ -38,13 +40,16 @@ while ischar(tline)
     DisMatrix = squareform(ROIdistance);
     
     BehavBoundfile = load(fullfile(tline,'RandP_data_plots','boundary_result.mat'));
-    BehavBoundData = BehavBoundfile.boundary_result.Boundary - 1;
+%     BehavBoundData = BehavBoundfile.boundary_result.Boundary - 1;
+%     if isempty(BehavBoundData)
+        BehavBoundData = BehavBoundfile.boundary_result.FitModelAll{1}{2}.ffit.u - 1;
+%     end
     BehavCorr = BehavBoundfile.boundary_result.StimCorr;
     Uncertainty = 1 - BehavCorr;
-    if ~isdir('Tuned freq colormap plot')
-        mkdir('Tuned freq colormap plot');
+    if ~isdir('NMTuned freq colormap plot')
+        mkdir('NMTuned freq colormap plot');
     end
-    cd('Tuned freq colormap plot');
+    cd('NMTuned freq colormap plot');
     % plot the behavior result and uncertainty function
     GroupStimsNum = floor(length(BehavCorr)/2);
     BehavOctaves = log2(double(BehavBoundfile.boundary_result.StimType)/16000);
@@ -69,6 +74,7 @@ while ischar(tline)
     plot(BehavOctaves, FitoctaveData,'bo','MarkerSize',12,'linewidth',2.5);
 %     line([fit_ReNew.ffit.u fit_ReNew.ffit.u],[0 1],'Color',[1 0.4 0.4],'linestyle','--','LineWidth',2);
     line([internal_boundary internal_boundary],[0 1],'Color',[1 0.4 0.4],'linestyle','--','LineWidth',2);
+    set(gca,'xlim',[-1.2 1.2]);
     text(internal_boundary,0.1,'BehavBound','HorizontalAlignment','center','Color','g');
     set(gca,'YColor','k','Ylim',[0 1]);
     ylabel('Right Probability');
@@ -89,7 +95,12 @@ while ischar(tline)
     UsedOctaveInds = ~(abs(PassFreqOctave) > 1);
     UsedOctave = PassFreqOctave(UsedOctaveInds);
     UsedOctave = UsedOctave(:);
-    UsedOctaveData = PassTunningfun(UsedOctaveInds,:);
+    if size(PassTunningfun,2) > size(DisMatrix,2)
+        PassROIUsedInds = 1:size(DisMatrix,2);
+    else
+        PassROIUsedInds = 1:size(PassTunningfun,2);
+    end
+    UsedOctaveData = PassTunningfun(UsedOctaveInds,PassROIUsedInds);
     nROIs = size(UsedOctaveData,2);
     [MaxAmp,maxInds] = max(UsedOctaveData);
     MaxIndsOctave = zeros(nROIs,1);
@@ -227,7 +238,8 @@ while ischar(tline)
     % UsedOctaveInds = ~(abs(PassFreqOctave) > 1);
     UsedOctave = TaskFreqOctave(:);
 %     UsedOctave = UsedOctave(:);
-    UsedOctaveData = CorrTunningFun;
+%     UsedOctaveData = CorrTunningFun;
+    UsedOctaveData = NonMissTunningFun;
     nROIs = size(UsedOctaveData,2);
     [MaxAmp,maxInds] = max(UsedOctaveData);
     MaxIndsOctave = zeros(nROIs,1);
@@ -285,7 +297,7 @@ while ischar(tline)
 %         title(sprintf('Prc%d map',cPrcvalue));
          h_axes = axes('position', hBar.Position, 'ylim', hBar.Limits, 'color', 'none', 'visible','off');
         hl = line(h_axes.XLim, BehavBoundData*[1 1], 'color', 'k', 'parent', h_axes,'LineWidth',4);
-        ModeTunedOctaves = mode(MaxIndsOctave);
+        ModeTunedOctaves = mean(MaxIndsOctave);
         h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'r', 'parent', h_axes,'LineWidth',4);
         % boundary line position
         LineStartPositionB = [hBar.Position(1),(BehavBoundData-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
@@ -478,7 +490,7 @@ while ischar(tline)
     close(hf);
     
     save PreferVsRandDisMeanSave.mat TaskClusterInterMean TaskRandMean PassClusterInterMean PassRandMean -v7.3
-    %
+    %%
     tline = fgetl(fid); 
     m = m + 1;
 end
@@ -502,7 +514,7 @@ nSession = 1;
             if m == 1
                 %
 %                 PPTname = input('Please input the name for current PPT file:\n','s');
-                PPTname = 'testuncertaintySave_All_newCP';
+                PPTname = 'testuncertaintySave_BeforeTrainSessions2';
                 if isempty(strfind(PPTname,'.ppt'))
                     PPTname = [PPTname,'.pptx'];
                 end
@@ -511,7 +523,7 @@ nSession = 1;
                 %
             end
                 Anminfo = SessInfoExtraction(tline);
-                cTunDataPath = [tline,filesep,'Tunning_fun_plot_New1s',filesep,'Tuned freq colormap plot'];
+                cTunDataPath = [tline,filesep,'Tunning_fun_plot_New1s',filesep,'NMTuned freq colormap plot'];
                 UncertaintyImPath = fullfile(cTunDataPath,'Uncertainty curve vs cell count plot.png');
                 TaskRespMap = fullfile(cTunDataPath,'Task top Prc100 colormap save.png');
                 PassRespMap = fullfile(cTunDataPath,'Passive top Prc100 colormap save.png');
