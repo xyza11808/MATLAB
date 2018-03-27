@@ -124,7 +124,7 @@ if ~IsContAcq
         SpikeDataNS(:,cROI,:) = cROIFRMtx';
     end
 else
-    TraceSpikeData(1:5,:) = 0;
+    TraceSpikeData(:,1:5) = 0;
     k = 1;
     for cTr = 1 : nTrials
         cTrData = TraceSpikeData(:,k:(k+nFrameInds(cTr)-1));
