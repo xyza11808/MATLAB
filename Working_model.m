@@ -92,7 +92,7 @@ modelfunb = @(g,l,u,v,x) g+(1-g-l)*0.5*(1+erf((x-u)/sqrt(2*v^2)));
 g = 0;
 l = 0;
 UCu = 0;
-UCv = 0.15;
+UCv = 0.2;
 syms y
 cFun = modelfunb(g,l,UCu,UCv,y);
 UncertainFunDerivt = diff(cFun);

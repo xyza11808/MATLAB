@@ -137,7 +137,9 @@ for cTrs = 1 : nTrs
             StimBasecStr = cellstr(num2str(StimusType(:),['f%.fB',num2str(cInds)]));
             StimStrCell(:,cInds) = StimBasecStr;  % stimulus base function strs
         end
-        RewardBaseFun(cInds,RewardF+cBaseInds) = 1;
+        if TrRewardTi(cTrs) > 0
+            RewardBaseFun(cInds,RewardF+cBaseInds) = 1;
+        end
         if (TrAnswerTime(cTrs) > 0)
             if (AnsFrameInds + cBaseInds < FrameNum)
                 if TrChoice % right choice lick
@@ -278,7 +280,7 @@ parfor croi = 1 : nROIs
         PredTestData = cvglmnetPredict(cvmdfit,TestParaData,[],'response',false);
         %%
         CVPredData{croi,citer} = PredTestData;  % cvPredDataRe = reshape(cvPredData,500,[]);
-        % figure;imagesc(cvPredDataRe');
+        %% figure;imagesc(cvPredDataRe');
         
         [coef,cop] = corrcoef(PredTestData,TestData);
         PredCoef(croi,citer) = coef(1,2);

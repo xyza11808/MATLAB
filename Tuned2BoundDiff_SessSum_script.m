@@ -138,8 +138,8 @@ title('Tun2Bound distance')
 set(gca,'FontSize',16);
 text(CommonScales(1)+0.1*diff(CommonScales),CommonScales(1)+0.8*diff(CommonScales),{sprintf('N = %d',size(SessDiffMean,1)),...
     sprintf('p = %.3e',p)},'FontSize',12)
-saveas(hf,'Sess2Bound diff compare AllROIs scatter plot');
-saveas(hf,'Sess2Bound diff compare AllROIs scatter plot','png');
+% saveas(hf,'Sess2Bound diff compare AllROIs scatter plot');
+% saveas(hf,'Sess2Bound diff compare AllROIs scatter plot','png');
 
 %% Mode Diff Boundary
 UsedDiffData = SessModeDiff;
@@ -343,8 +343,8 @@ bar(h_axes,2,mean(TaskDiffDataAll),0.4,'EdgeColor','none','FaceColor','r','facea
 set(h_axes,'xlim',[0.5 2.5],'xcolor','w');
 text(h_axes,[1,2],MeanValue*1.05,MeanStr,'HorizontalAlignment','center');
 
-saveas(hhf,'Paired neuon distance cumulative plot');
-saveas(hhf,'Paired neuon distance cumulative plot','png');
+% saveas(hhf,'Paired neuon distance cumulative plot');
+% saveas(hhf,'Paired neuon distance cumulative plot','png');
 
 %%
 save SessSummaryData.mat SessDiffMean SessModeDiff SessPopuAverageDiff SessOctaveMeanDiff SessNearBoundFrac NearThres SingleNeuDifAll -v7.3
@@ -352,7 +352,7 @@ save SessSummaryData.mat SessDiffMean SessModeDiff SessPopuAverageDiff SessOctav
 %%
 PassSelectThresFrac = cellfun(@(x) x(2),SessNearBoundFrac(:,1));
 TaskSelectThresFrac = cellfun(@(x) x(2),SessNearBoundFrac(:,2));
-UsedInds = 1:9;
+UsedInds = 1:21;
 PassSelectThresFrac = PassSelectThresFrac(UsedInds);
 TaskSelectThresFrac = TaskSelectThresFrac(UsedInds);
 ForLinePlotData = [PassSelectThresFrac,TaskSelectThresFrac];
@@ -372,5 +372,5 @@ set(gca,'FontSize',18)
 yscales = get(gca,'ylim');
 set(gca,'ytick',0:0.2:yscales(2));
 hf = GroupSigIndication([1,2],max(ForLinePlotData),TestP,hf,1.1,[],12);
-saveas(hf,'Near two tones cell fraction plots');
-saveas(hf,'Near two tones cell fraction plots','png');
+% saveas(hf,'Near two tones cell fraction plots');
+% saveas(hf,'Near two tones cell fraction plots','png');

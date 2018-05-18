@@ -1,16 +1,25 @@
 
-nHiddenLayer = 3; % 3 hidden layers
+xData = [1,0,0,0;0,1,0,0;0,0,1,0;0,0,0,1;1,1,0,0;1,1,0,1;0,0,1,1;0,1,1,1;0,0,0,0;1,1,1,1;];
+xData = xData';
+yData = [1,0;1,0;0,1;0,1;1,0;1,0;0,1;0,1;0,0;0,0;];
+yData = yData';
+%%
+xData = ([1,1,0,0])';
+yData = ([1,0])';
+
+%% nHiddenLayer = 3; % 3 hidden layers
 nHidNodesNum = [20,10,20];
+nHiddenLayer = length(nHidNodesNum);
 nLearnRate = 0.2;
 
-InputData = rand(10,1);
+% InputData = rand(10,1);
 % InputData = (TrainData(1,:))';
-% InputData = InputData(:);
-nInputNodes = length(InputData); % input nodes
+InputData = xData; % rows as number of observation, columns as number of samples
+nInputNodes = size(InputData,1); % input nodes
 % OutputData = TrainOutPutData(:,1);
-OutputData = [1,0];
-% OutputData = OutputData(:);
-nOutputNodes = length(OutputData);
+% OutputData = [1,0];
+OutputData = yData;
+nOutputNodes = size(OutputData,1);
 
 OutFun = @(x) 1./(1+exp(-1*x)); % so that (OutFun)' = OutFun*(1-OutFun);
 deltaFun = @(k,t) (OutFun(k) - t) .* OutFun(k) .*(1 - OutFun(k)); % used for weight derivative calculation
@@ -41,8 +50,11 @@ IterErrorAll = [];
 nIters = 1;
 IterError = 1;
 IterTime = tic;
+nSamples = size(nInputNodes,2);  % samples to be trained
+SampleLayerInOutData = cell(nInputNodes,1); % s
+%%
 while (nIters < 1000) && (IterError > 1e-4)
-    % start the forward calculation
+    %% start the forward calculation
     cHiddenInputSum = cell(nHiddenLayer,1);
     cHiddenoutput = cell(nHiddenLayer,1);
     for nHLs = 1 : nHiddenLayer
@@ -67,7 +79,7 @@ while (nIters < 1000) && (IterError > 1e-4)
         %
     end
 
-    %
+    %%
     %calculate the output node value
     cInputData = LayerInOutValue{nHiddenLayer}(:,2);
     for nOnodes = 1 : nOutputNodes
@@ -75,34 +87,44 @@ while (nIters < 1000) && (IterError > 1e-4)
         OutputInOutData(nOnodes,1) = cNodeInputV;
         OutputInOutData(nOnodes,2) = OutFun(cNodeInputV);
     end
-
+%%
     IterError = 0.5 * sum((OutputInOutData(:,2) - OutputData(:)).^2);
     fprintf(sprintf('cIterError = %.3f.\n',IterError));
-    %
+    %%
     % backpropagate the errors
     % deltaOutNodesData = zeros(nOutputNodes,1);
     deltaOutNodesData = OutFun(OutputInOutData(:,2)) .* (1 - OutFun(OutputInOutData(:,2))) .* (OutFun(OutputInOutData(:,2)) - OutputData(:));
     % DeltaJNodesData
-    %
+    %%
     for nHls = nHiddenLayer : -1 : 1
         cHlNodes = nHidNodesNum(nHls);
         if nHls == nHiddenLayer
-            for nNodes = 1 : cHlNodes
-                cNodesOutput = LayerInOutValue{nHls}(nNodes,2);
-    %             cNodesWeights = HiddenLayerNodeW{}
-                DeltaJNodesData{nHls}(nNodes) = cNodesOutput*(1-cNodesOutput)...
-                    *sum(deltaOutNodesData' .* HiddenLayerNodeW{nHls}(nNodes,:));
-            end
+%             for nNodes = 1 : cHlNodes
+%                 cNodesOutput = LayerInOutValue{nHls}(nNodes,2);
+%     %             cNodesWeights = HiddenLayerNodeW{}
+%                 DeltaJNodesData{nHls}(nNodes) = cNodesOutput*(1-cNodesOutput)...
+%                     *sum(deltaOutNodesData' .* HiddenLayerNodeW{nHls}(nNodes,:));
+%             end
+            cOutputData =  LayerInOutValue{nHls}(:,2);
+            cHiddenWeights = HiddenLayerNodeW{nHls};
+            cLatterPart = cHiddenWeights * deltaOutNodesData;
+            cDelta = cOutputData .* (1 - cOutputData) .* cLatterPart;
+            DeltaJNodesData{nHls} = cDelta;
         else
             for nNodes = 1 : cHlNodes
-                cNodesOutput = LayerInOutValue{nHls}(nNodes,2);
-                cNodesWeights = HiddenLayerNodeW{nHls}(nNodes,:);
+%                 cNodesOutput = LayerInOutValue{nHls}(nNodes,2);
+%                 cNodesWeights = HiddenLayerNodeW{nHls}(nNodes,:);
                 DeltaJNodesData{nHls}(nNodes) = cNodesOutput*(1-cNodesOutput)...
                     *sum((DeltaJNodesData{nHls+1}(:))' .* HiddenLayerNodeW{nHls}(nNodes,:));
             end
+            cOutputData =  LayerInOutValue{nHls}(:,2);
+            cHiddenWeights = HiddenLayerNodeW{nHls};
+            cLatterPart = cHiddenWeights * DeltaJNodesData{nHls+1};
+            cDelta = cOutputData .* (1 - cOutputData) .* cLatterPart;
+            DeltaJNodesData{nHls} = cDelta;
         end
     end
-    %
+    %%
     % updates the weights
     for nHls = 1 : nHiddenLayer
         cnNodes = nHidNodesNum(nHls);
@@ -127,6 +149,7 @@ while (nIters < 1000) && (IterError > 1e-4)
             HiddenLBias{nHls} = HiddenLBias{nHls} + cBiasChange';
         end
     end
+    
     IterErrorAll(nIters) = IterError;
     nIters = nIters + 1;
 end

@@ -227,7 +227,7 @@ if strcmpi(type,'RF')
     SoundFreqs = double(sound_array(:,1) > 16000);
     SessionBoundary = FreqArray(ceil(length(FreqArray)/2));
     TrialTypes = SelectSArray > SessionBoundary;
-    UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);  % performing color plot
+    UnevenRFrespPlot(f_percent_change,sound_array,frame_rate);  % performing color plot
     PassRespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);
     return;    
     Passive_factroAna_scripts

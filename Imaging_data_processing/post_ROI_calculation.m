@@ -80,7 +80,7 @@ if ~iscell(CaTrials(1).f_raw)
     TimeLen = ceil(nFrames/frame_rate);
 else
     nTrFrames = cellfun(@(x) size(x,2),CaTrials(1).f_raw);
-    nFrames = prctile(nTrFrames,95);
+    nFrames = prctile(nTrFrames,80);
     TimeLen = ceil(nFrames/frame_rate);
 end
 % ROI_frame_size=size(CaTrials(1).f_raw);
@@ -310,7 +310,7 @@ if strcmpi(type,'RF')
         RFTunData = NewVshapePlot(f_percent_change,sound_array,frame_rate,frame_rate);
         save RFtunDataSave.mat RFTunData -v7.3
         %%
-        UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);  % performing color plot
+        UnevenRFrespPlot(f_percent_change,sound_array,frame_rate);  % performing color plot
         PassRespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate);
 %         UnevenRFrespPlot(f_percent_change,sound_array(:,2),sound_array(:,1),frame_rate,[],0); % not performing color plot
 %     end

@@ -1,6 +1,19 @@
-function UnevenRFrespPlot(PassData,DBArray,FreqArray,FrameRate,varargin)
+function UnevenRFrespPlot(PassData,SoundArray,FrameRate,varargin)
 % this function is specifically used for passive data color plot with some
 % trials excluded from analysis
+IsvariedStimDur = 0;
+if size(SoundArray,2) > 3
+    StimLenDur = SoundArray(:,3);
+    [SortDurLen,SortInds] = sort(StimLenDur);
+    SoundArray = SoundArray(SortInds,:);
+    PassData = PassData(SortInds,:,:);
+    StimLenF = round((double(SortDurLen)/1000 + 1) * FrameRate);
+    IsvariedStimDur = 1;
+else
+    StimLenF = repmat(round(1.3 * FrameRate),size(SoundArray,1));
+end
+DBArray = SoundArray(:,2);
+FreqArray = SoundArray(:,1);
 TimeStimOn = 1;
 if nargin > 4
     if ~isempty(varargin{1})
@@ -35,6 +48,7 @@ yticklabels = cellstr(num2str(FreqTypes(:)/1000,'%.2f kHz'));
 StimOnF = round(TimeStimOn * FrameRate);
 StimOffF = round((TimeStimOn+0.3) * FrameRate);
 typeData = cell(nROIs,numDB,numFreq);
+TypeFrameInds = cell(numDB,numFreq);
 for nROI = 1 : nROIs
     cROIdata = squeeze(PassData(:,nROI,:));
     if isplot
@@ -61,6 +75,7 @@ for nROI = 1 : nROIs
             cCombInds = DBArray == DBtypes(nDBType) & FreqArray == FreqTypes(nFreqtype);
             cCombData = cROIdata(cCombInds,:);
             typeData{nROI,nDBType,nFreqtype} = cCombData;
+            TypeFrameInds{nDBType,nFreqtype} = StimLenF(cCombInds);
         end
         if isplot
             cDBdatacell = squeeze(typeData(nROI,nDBType,:));
@@ -68,16 +83,29 @@ for nROI = 1 : nROIs
             TrIndscdfSum = vectorcdf(TrialNum);
             cDBdataMatrix = cell2mat(cDBdatacell);
             subplot(numDB,3,(nDBType-1)*3+2)
+            hold on
             imagesc(cDBdataMatrix,clim);
             set(gca,'xtick',xTicks,'xticklabel',Ticklabel,'ytick',TrIndscdfSum,'yticklabel',yticklabels);
             if nDBType == numDB
                 xlabel('Time (s)');
             end
             ylabel('Frequency');
-            patch([StimOnF,StimOffF,StimOffF,StimOnF],[0.5 0.5 (nTrials+0.5) (nTrials+0.5)],1,'FaceColor','g','EdgeColor','none','facealpha',0.4);
+            if ~IsvariedStimDur
+                patch([StimOnF,StimOffF,StimOffF,StimOnF],[0.5 0.5 (nTrials+0.5) (nTrials+0.5)],1,...
+                    'FaceColor','g','EdgeColor','none','facealpha',0.4);
+            end
 %             if nDBType == 1
                 title(sprintf('%d dB',DBtypes(nDBType)),'FontSize',14);
 %             end
+            %
+            cDBFreqFrame = TypeFrameInds(nDBType,:);
+            cDBFreqFrameMtx = cell2mat(cDBFreqFrame');
+            xPlotFrameMtx = [cDBFreqFrameMtx,cDBFreqFrameMtx,nan(numel(cDBFreqFrameMtx),1)];
+            yPlotFrameMtx = [(0.5:numel(cDBFreqFrameMtx))',(0.5:numel(cDBFreqFrameMtx))'+1,nan(numel(cDBFreqFrameMtx),1)];
+            xPlotFrameVec = reshape(xPlotFrameMtx',[],1);
+            yPlotFrameVec = reshape(yPlotFrameMtx',[],1);
+            plot(xPlotFrameVec,yPlotFrameVec,'Linewidth',2,'Color','m');
+            set(gca,'ylim',[0.5 numel(cDBFreqFrameMtx)+0.5],'box','off','xlim',[0.5 size(cDBdataMatrix,2)+0.5]);
             %
             MeanTraceCell = cellfun(@mean,cDBdatacell,'UniformOutput',false);
             nElements = cellfun(@numel,MeanTraceCell);
@@ -125,5 +153,5 @@ for nROI = 1 : nROIs
         close(hROI);
     end
 end
-save UnevenPassdata.mat typeData TimeStimOn FrameRate DBtypes FreqTypes -v7.3
+save UnevenPassdata.mat typeData TimeStimOn FrameRate DBtypes FreqTypes TypeFrameInds -v7.3
 cd ..;

@@ -14,14 +14,19 @@ if isfield(CaTrials,'ROIstateIndic')
     IsROIStatePlot = 1;
     ROIstateColorStr = {'r','g','m'};
 end
+if ~isempty(TrExcludedInds)
+    UsedFrameProj = FrameProjSave(TrExcludedInds);
+else
+    UsedFrameProj = FrameProjSave;
+end
     
-nTrs = length(FrameProjSave);
-FrameSize = size(FrameProjSave(1).MeanFrame);
+nTrs = length(UsedFrameProj);
+FrameSize = size(UsedFrameProj(1).MeanFrame);
 MeanFrameAll = zeros([nTrs,FrameSize]);
 MaxFrameAll = zeros([nTrs,FrameSize]);
 for nntr = 1 : nTrs
-    cMeanFrame = double(FrameProjSave(nntr).MeanFrame);
-    cMaxFrame = double(FrameProjSave(nntr).MaxFrame);
+    cMeanFrame = double(UsedFrameProj(nntr).MeanFrame);
+    cMaxFrame = double(UsedFrameProj(nntr).MaxFrame);
     MeanFrameAll(nntr,:,:) = cMeanFrame;
     MaxFrameAll(nntr,:,:) = cMaxFrame;
 end

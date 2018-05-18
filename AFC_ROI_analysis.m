@@ -372,11 +372,11 @@ V.dt = 1/frame_rate;
 P.lam = 10;
 nTau = 1.8;
 P.gam = 1 - V.dt/nTau; 
-if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
+% if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
      nnspike = DataFluo2Spike(DataRaw,V,P); % estimated spike
-else
-    load('EstimateSPsave.mat');
-end
+% else
+%     load('EstimateSPsave.mat');
+% end
 %%
 if iscell(nnspike)
     SPsizeData = [length(nnspike),size(nnspike{1},1),max(FrameInds)];
@@ -733,11 +733,11 @@ elseif str2double(continue_char)==2
         SigROIinds = FreqRespOnsetHist(data_aligned,behavResults.Stim_toneFreq,trial_outcome,start_frame,frame_rate);
     end
     %%
-    if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
+%     if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
          save EstimateSPsave.mat nnspike SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
-    else
-        load('EstimateSPsave.mat');
-    end
+%     else
+%         load('EstimateSPsave.mat');
+%     end
     %
     if isfield(CaTrials_signal,'ROIstateIndic')
         ROIstate = CaTrials_signal.ROIstateIndic;
@@ -835,7 +835,7 @@ elseif str2double(continue_char)==2
 %     end
     DataAnaObj.popuZscoredCorr(1.5,'Mean');
 %     DataAnaObj.popuSignalCorr(1,'Mean',1);  % boot-strap signal correlation
-    DataAnaObj.popuSignalCorr(1,'Mean');  % normal methods
+%     DataAnaObj.popuSignalCorr(1,'Mean');  % normal methods
     
     %%
     if ~isdir('./spikeData/')

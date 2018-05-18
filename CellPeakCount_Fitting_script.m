@@ -420,8 +420,8 @@ cLgdPos = get(lgd,'position');
 set(lgd,'position',cLgdPos+[0 -0.2 0 0]);
 ylabel('Frac Above chance level');
 set(gca,'FontSize',14);
-saveas(hhf,'Task Passive Fraction compare with chance value')
-saveas(hhf,'Task Passive Fraction compare with chance value','png')
+% saveas(hhf,'Task Passive Fraction compare with chance value')
+% saveas(hhf,'Task Passive Fraction compare with chance value','png')
 
 %% calculate the nearby octave fraction
 [TaskNearSamey,TaskNearSamex] = ecdf(TaskNearSameFrac);

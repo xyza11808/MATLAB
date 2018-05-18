@@ -62,7 +62,7 @@ clearvars -global
 global CaSignal % ROIinfo ICA_ROIs
 % Choose default command line output for CaSignal_ROI_GUI_NP_extract
 handles.output = hObject;
-usrpth = 'M:\2p_data\'; % usrpth = usrpth(1:end-1);
+usrpth = 'D:\'; % usrpth = usrpth(1:end-1);
 if exist([usrpth filesep 'nx_CaSingal.info'],'file')
     load([usrpth filesep 'nx_CaSingal.info'], '-mat');
     set(handles.DataPathEdit, 'String',info.DataPath);
@@ -576,6 +576,8 @@ for i = 1:length(roi_pos) % num ROIs
             h_roi_plots(i) = line(roi_pos{i}(:,1),roi_pos{i}(:,2), 'Color', 'g', 'LineWidth', lw);
         elseif cROIstate(3)
             h_roi_plots(i) = line(roi_pos{i}(:,1),roi_pos{i}(:,2), 'Color', [1 0 1], 'LineWidth', lw);
+        else
+            h_roi_plots(i) = line(roi_pos{i}(:,1),roi_pos{i}(:,2), 'Color', [0.8 0 0], 'LineWidth', lw);
         end
         text(median(roi_pos{i}(:,1)), median(roi_pos{i}(:,2)), num2str(i),'Color','c','FontSize',fsize);
         set(h_roi_plots(i), 'LineWidth', lw);
@@ -1943,7 +1945,7 @@ end
 msg_str = sprintf('CaTrials Saved, with %d trials, %d ROIs', length(CaSignal.CaTrials), CaSignal.CaTrials(TrialNo).nROIs);
 disp(msg_str);
 set(handles.msgBox, 'String', msg_str);
-save_gui_info(handles);
+% save_gui_info(handles);
 
 
 function autosaving_Callback(hObject, eventdata, handles)
@@ -2616,7 +2618,7 @@ info.SoloSessionName = get(handles.SoloSessionName, 'String');
 info.SoloStartTrialNo = get(handles.SoloStartTrialNo, 'String');
 info.SoloEndTrialNo = get(handles.SoloEndTrialNo, 'String');
 
-usrpth = 'M:\2p_data\'; % usrpth = usrpth(1:end-1);
+usrpth = 'D:\'; % usrpth = usrpth(1:end-1);
 if strcmp(usrpth(end), ';')||strcmp(usrpth(end), ':'), usrpth(end) = []; end
 save([usrpth filesep 'nx_CaSingal.info'], 'info');
 

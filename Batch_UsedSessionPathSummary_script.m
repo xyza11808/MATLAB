@@ -1,5 +1,5 @@
 
-GrandPath = 'F:\batch\batch46';
+GrandPath = 'P:\BatchData\batch52';
 xpath = genpath(GrandPath);
 nameSplit = (strsplit(xpath,';'))';
 if isempty(nameSplit{end})
@@ -8,6 +8,8 @@ end
 DirLength = length(nameSplit);
 PossibleInds = cellfun(@(x) strcmpi(x(end-12:end),'mode_f_change'),nameSplit);
 PossDataPath = nameSplit(PossibleInds);
+AllAlignedPInds = cellfun(@(x) strcmpi(x(end-14:end),'im_data_reg_cpu'),nameSplit);
+AllAlignedPath = nameSplit(AllAlignedPInds);
 
 ErrorProcessPath = {};
 ErrorNum = 0;
@@ -47,4 +49,19 @@ for cPosInds = 1 : sum(PossibleInds)
     NormSessPathTask{NormSessPathNum} = TaskPathline;
     NormSessPathPass{NormSessPathNum} = PassPathline;
 end
-        
+
+%%
+nPossTaskPath = length(TaskData);
+TaskProcessedPath = zeros(nPossTaskPath,1);
+TaskDrawedPath = zeros(nPossTaskPath,1);
+for cP = 1 : nPossTaskPath
+    cPath = TaskData{cP};
+    if isempty(strfind(cPath,'20171118')) && isempty(strfind(cPath,'20171117'))
+        if isdir(fullfile(cPath,'result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'))
+            TaskProcessedPath(cP) = 1;
+        elseif isdir(fullfile(cPath,'result_save'))
+            TaskDrawedPath(cP) = 1;
+        end
+    end
+end
+

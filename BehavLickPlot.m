@@ -241,7 +241,7 @@ if ~sum(isProbTrial)  %if there are no prob trials
                 patch([StimOffTime,RespDelayOffTime,RespDelayOffTime,StimOffTime],[axisscale(3),axisscale(3),axisscale(4),axisscale(4)],1,...
                     'facecolor',[.8 .8 .8],'edgecolor','none','facealpha',0.6);
             end
-            set(gca,'xlim',[0 (LickEndT*1000)+300]);
+            set(gca,'xlim',[0 (LickEndT*1000)+300],'ylim',[0 length(CorrectLickT)+1]);
             title(sprintf('Freq-%d Corr',CurrentFreq));
             xlabel('Time (ms)');
             ylabel('# Trials');

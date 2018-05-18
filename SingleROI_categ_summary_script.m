@@ -56,7 +56,7 @@ while ischar(tline)
         CategROIPassData =cell(1,nCategs);
         CategROIPassNorData =cell(1,nCategs);
     end
-    %
+    % 
     for cR = 1 : nCategs
         %
         cRData = CorrTunningFun(:,CategROIIndex(cR));
@@ -148,10 +148,10 @@ BehavFitRes = FitPsycheCurveWH_nx(OctsAll,BehavDataAll);
 OctRange = RightCategDatas{1}.curve(:,1);
 PopuCategDiff = mean(RightDataMtx,2) - mean(LeftDataMtx,2);
 % plot(OctRange,PopuCategDiff,'m','linewidth',1.5);
-NorPopuDiffFit = FitPsycheCurveWH_nx(OctRange,NorPopuDiff);
-
 NorPopuDiff = (max(BehavFitRes.curve(:,2)) - min(BehavFitRes.curve(:,2)))*...
     ((PopuCategDiff - min(PopuCategDiff))./(max(PopuCategDiff) - min(PopuCategDiff))) + min(BehavFitRes.curve(:,2));
+
+NorPopuDiffFit = FitPsycheCurveWH_nx(OctRange,NorPopuDiff);
 
 hf = figure;
 hold on
@@ -207,6 +207,36 @@ plot(LTaskOctAll,LTaskDataAll,'bo')
 plot(LPassOctAll,LPassDataAll,'co')
 plot(RTaskOctAll,RTaskDataAll,'ro')
 plot(RPassOctAll,RPassDataAll,'mo')
+
+%%
+BinSteps = -1.2:0.2:1.2;
+nBins = length(BinSteps);
+BinCenter = BinSteps(1:end-1) + 0.1;
+RBinAvgSemData = zeros(nBins-1,2);
+LBinAvgSemData = zeros(nBins-1,2);
+for cBin = 1 : nBins - 1
+    cROctBinInds = RPassOctAll > BinSteps(cBin) & RPassOctAll < BinSteps(cBin+1);
+    if sum(cROctBinInds)
+        RBinAvgSemData(cBin,:) = [mean(RPassDataAll(cROctBinInds)),std(RPassDataAll(cROctBinInds))/sqrt(sum(cROctBinInds))];
+    end
+    cLOctBinInds = LPassOctAll > BinSteps(cBin) & LPassOctAll < BinSteps(cBin+1);
+    if sum(cLOctBinInds)
+        LBinAvgSemData(cBin,:) = [mean(LPassDataAll(cLOctBinInds)),std(LPassDataAll(cLOctBinInds))/sqrt(sum(cLOctBinInds))];
+    end
+end
+RExInds = RBinAvgSemData(:,1) == 0;
+UsedRBinAvgSemData = RBinAvgSemData(~RExInds,:);
+LExInds = LBinAvgSemData(:,1) == 0;
+UsedLBinAvgSemData = LBinAvgSemData(~LExInds,:);
+LOctBin = BinCenter(~LExInds);
+ROctBin = BinCenter(~RExInds);
+NorUsedRBinAvgSemData = UsedRBinAvgSemData/max(UsedRBinAvgSemData(:,1));
+NorUsedLBinAvgSemData = UsedLBinAvgSemData/max(UsedLBinAvgSemData(:,1));
+%%
+hf = figure('position',[100 500 420 360]);
+hold on
+errorbar(ROctBin,NorUsedRBinAvgSemData(:,1),NorUsedRBinAvgSemData(:,2),'m','Linewidth',1.6,'Marker','none')
+errorbar(LOctBin,flipud(NorUsedLBinAvgSemData(:,1)),flipud(NorUsedLBinAvgSemData(:,2)),'c','Linewidth',1.6,'Marker','none')
 
 %% fit all results
 LTaskFit = FitPsycheCurveWH_nx(LTaskOctAll,LTaskDataAll);
@@ -310,4 +340,45 @@ set(gca,'xlim',[-1.1 1.1],'ylim',[-0.2 3]);
 
 saveas(hSlope,'Slope Amplification plot save');
 saveas(hSlope,'Slope Amplification plot save','pdf');
+
+%% Tuning ROI fitted parameters summary script
+
+
+clear
+clc
+cd('E:\DataToGo\data_for_xu\Tuning_curve_plot');
+[fn,fp,~] = uigetfile('*.txt','Please select the text file contains the path of all task sessions');
+% [Passfn,Passfp,~] = uigetfile('*.txt','Please select the text file contains the path of all passive sessions');
+load('E:\DataToGo\data_for_xu\SingleCell_RespType_summary\NewMethod\SessROItypeData.mat');
+cd('E:\DataToGo\data_for_xu\CategDataSummary');
+%%
+fpath = fullfile(fp,fn);
+% PassFid = fopen(fullfile(Passfp,Passfn));
+
+ff = fopen(fpath);
+tline = fgetl(ff);
+% PassLine = fgetl(PassFid);
+cSess = 1;
+TunROIWidthSum = {}; 
+
+%
+while ischar(tline)
+    if isempty(strfind(tline,'NO_Correction\mode_f_change'))
+       tline = fgetl(ff);
+%        PassLine = fgetl(PassFid);
+        continue;
+    end
+    
+     CellTypeDataStrc = load(fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plots','NewCurveFitsave.mat'));
+     TunROIInds = logical(CellTypeDataStrc.IsTunedROI);
+     TunROIGauFit = CellTypeDataStrc.GauCoefFit(TunROIInds);
+     TunROIWidth = cellfun(@(x) x.c3,TunROIGauFit);
+     
+     TunROIWidthSum{cSess} = TunROIWidth;
+     
+     tline = fgetl(ff);
+     cSess = cSess + 1;
+end
+
+
 

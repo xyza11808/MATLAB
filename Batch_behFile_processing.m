@@ -1,5 +1,5 @@
 
-GrandPath = 'H:\data\behavior\2p_data\behaviro_data\batch49';
+GrandPath = 'H:\data\behavior\2p_data\behaviro_data\batch52\Data';
 xpath = genpath(GrandPath);
 nameSplit = strsplit(xpath,';');
 if isempty(nameSplit{end})
@@ -34,7 +34,7 @@ for n = 1 : DirLength
             [~,SessionType] = behavScore_prob(xxxx.behavResults,xxxx.behavSettings,cfilename,0);
             if strcmpi(SessionType,'RandompuretoneProb') || strcmpi(SessionType,'Randompuretone')
                 fprintf('Random puretone session exists, plot session data.\n');
-                rand_plot(xxxx.behavResults,4,cfilename);
+                rand_plot(xxxx.behavResults,4,cfilename,1);
                 RandomPTSession(nRandomPurePath) = {fullfile(cPATH,cfilename)};
                 nRandomPurePath = nRandomPurePath + 1;
             elseif strcmpi(SessionType,'prob')

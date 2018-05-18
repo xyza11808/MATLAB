@@ -1,5 +1,6 @@
 clear
 clc
+cd('E:\DataToGo\data_for_xu\Tuning_curve_plot');
 [fn,fp,fi] = uigetfile('*.txt','Please select the session path savage file');
 if ~fi
     return;
@@ -9,6 +10,10 @@ clearvars -except fn fp
 fpath = fullfile(fp,fn);
 fid = fopen(fpath);
 tline = fgetl(fid);
+
+CusMap = blue2red_2(32,0.8);
+m = 1;
+%%
 while ischar(tline)
     if isempty(strfind(tline,'NO_Correction\mode_f_change'))
         tline = fgetl(fid);
@@ -19,9 +24,9 @@ while ischar(tline)
     load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
     load(fullfile(tline,'CSessionData.mat'),'behavResults','smooth_data','start_frame','frame_rate');
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));
-    RespDataStrc = load(fullfile(pwd,'Curve fitting plots','NewCurveFitsave.mat'));
-    RespInds = RespDataStrc.ROIisResponsive;
-    ROI_IsSigResp_script
+%     RespDataStrc = load(fullfile(pwd,'Curve fitting plots','NewCurveFitsave.mat'));
+%     RespInds = RespDataStrc.ROIisResponsive;
+%     ROI_IsSigResp_script
     [~,EndInds] = regexp(tline,'result_save');
     ROIposfilePath = tline(1:EndInds);
     ROIposfilePosi = dir(fullfile(ROIposfilePath,'ROIinfo*.mat'));
@@ -33,9 +38,9 @@ while ischar(tline)
     else
         error('No ROI information file detected, please check current session path.');
     end
-    ROIcenter = ROI_insite_label(ROIinfoData,0);
-    ROIdistance = pdist(ROIcenter);
-    DisMatrix = squareform(ROIdistance);
+%     ROIcenter = ROI_insite_label(ROIinfoData,0);
+%     ROIdistance = pdist(ROIcenter);
+%     DisMatrix = squareform(ROIdistance);
     BehavBoundfile = load(fullfile(tline,'RandP_data_plots','boundary_result.mat'));
     BehavBoundData = BehavBoundfile.boundary_result.Boundary - 1;
     BehavCorr = BehavBoundfile.boundary_result.StimCorr;
@@ -91,19 +96,19 @@ while ischar(tline)
     UsedOctaveData = PassTunningfun(UsedOctaveInds,:);
     nROIs = size(UsedOctaveData,2);
     [MaxAmp,maxInds] = max(UsedOctaveData);
-    MaxIndsOctave = zeros(nROIs,1);
+    PassMaxOct = zeros(nROIs,1);
     for cROI = 1 : nROIs
-        MaxIndsOctave(cROI) = UsedOctave(maxInds(cROI));
+        PassMaxOct(cROI) = UsedOctave(maxInds(cROI));
     end
-    ROIsigResp = RespInds;
-%     RespROIInds = (MaxAmp > 10);
-    RespROIInds = logical(ROIsigResp);
-    modeFreqInds = MaxIndsOctave(RespROIInds) == mode(MaxIndsOctave(RespROIInds));
-    [PassClusterInterMean,PassRandMean,hhf] =  Within2BetOrRandRatio(DisMatrix(RespROIInds,RespROIInds),modeFreqInds,'Rand');
-    saveas(hhf,'Passive Rand_vs_intermodeROIs distance ratio distribution');
-    saveas(hhf,'Passive Rand_vs_intermodeROIs distance ratio distribution','png');
-    close(hhf);
-    AllMaxIndsOctaves = MaxIndsOctave;
+%     ROIsigResp = RespInds;
+    RespROIInds = (MaxAmp > 10);
+%     RespROIInds = logical(ROIsigResp);
+%     modeFreqInds = MaxIndsOctave(RespROIInds) == mode(MaxIndsOctave(RespROIInds));
+%     [PassClusterInterMean,PassRandMean,hhf] =  Within2BetOrRandRatio(DisMatrix(RespROIInds,RespROIInds),modeFreqInds,'Rand');
+%     saveas(hhf,'Passive Rand_vs_intermodeROIs distance ratio distribution');
+%     saveas(hhf,'Passive Rand_vs_intermodeROIs distance ratio distribution','png');
+%     close(hhf);
+    AllPassMaxOcts = PassMaxOct;
     PassFreqStrs = cellstr(num2str(BoundFreq*(2.^UsedOctave(:))/1000,'%.1f'));
     BoundFreqIndex = find(UsedOctave > BehavBoundData,1,'first');
     WithBoundyTick = [UsedOctave(1:BoundFreqIndex-1);BehavBoundData;UsedOctave(BoundFreqIndex:end)];
@@ -117,15 +122,15 @@ while ischar(tline)
         %
         PrcThres = prctile(MaxAmp,cPrcvalue);
         cROIinds = MaxAmp >= PrcThres; 
-        GrayNonRespROIs = cROIinds(:) & NonRespROIInds;
-        ColorRespROIs = cROIinds(:) & ~NonRespROIInds;
+        GrayNonRespROIs = cROIinds(:) & NonRespROIInds(:);
+        ColorRespROIs = cROIinds(:) & ~NonRespROIInds(:);
         
         % plot the responsive ROIs with color indicates tuning octave
         AllMasks = ROIinfoData.ROImask(ColorRespROIs);
-        MaxIndsOctave = AllMaxIndsOctaves(ColorRespROIs);
+        PassMaxOct = AllPassMaxOcts(ColorRespROIs);
         nROIs = length(AllMasks);
         SumROImask = double(AllMasks{1});
-        SumROIcolormask = SumROImask * MaxIndsOctave(1);
+        SumROIcolormask = SumROImask * PassMaxOct(1);
         for cROI = 2 : nROIs
             cROINewMask = double(AllMasks{cROI});
             TempSumMask = SumROImask + cROINewMask;
@@ -134,16 +139,16 @@ while ischar(tline)
                 cROINewMask(OverLapInds) = 0;
             end
             SumROImask = double(TempSumMask > 0);
-            SumROIcolormask = SumROIcolormask + cROINewMask * MaxIndsOctave(cROI);
+            SumROIcolormask = SumROIcolormask + cROINewMask * PassMaxOct(cROI);
         end
         
         if sum(GrayNonRespROIs)
             % generate the non-responsive ROIs, gray map
             AllMasksNonrp = ROIinfoData.ROImask(GrayNonRespROIs);
-    %         MaxIndsOctave = AllMaxIndsOctaves(GrayNonRespROIs);
+    %         PassMaxOct = AllPassMaxOcts(GrayNonRespROIs);
             nROIsNonrp = length(AllMasksNonrp);
             SumROImaskNonrp = double(AllMasksNonrp{1});
-            SumROIcolormaskNonrp = SumROImaskNonrp * 0.5;
+            SumROIcolormaskNonrp = SumROImaskNonrp * 0.1;
             for cROI = 2 : nROIsNonrp
                 cROINewMask = double(AllMasksNonrp{cROI});
                 TempSumMask = SumROImaskNonrp + cROINewMask;
@@ -152,14 +157,14 @@ while ischar(tline)
                     cROINewMask(OverLapInds) = 0;
                 end
                 SumROImaskNonrp = double(TempSumMask > 0);
-                SumROIcolormaskNonrp = SumROIcolormaskNonrp + cROINewMask * 0.8;
+                SumROIcolormaskNonrp = SumROIcolormaskNonrp + cROINewMask * 0.1;
             end
         else
             SumROImaskNonrp = zeros(size(SumROImask));
             SumROIcolormaskNonrp = zeros(size(SumROImask));
         end
         %
-        hColor = figure('position',[3000 100 530 450]);
+        hColor = figure('position',[30 100 530 450]);
         ax1=axes;
         h_backf=imagesc(SumROIcolormask,[-1 1]);
         Cpos=get(ax1,'position');
@@ -173,6 +178,7 @@ while ischar(tline)
         ax2.XTick = [];
         ax2.YTick = [];
         colormap(ax2,'gray');
+        colormap(ax1,CusMap);
         set(ax1,'box','off');
         axis(ax1, 'off');
         
@@ -185,7 +191,7 @@ while ischar(tline)
         title(sprintf('Prc%d map',cPrcvalue));
         h_axes = axes('position', hBar.Position, 'ylim', hBar.Limits, 'color', 'none', 'visible','off');
         hl = line(h_axes.XLim, BehavBoundData*[1 1], 'color', 'k', 'parent', h_axes,'LineWidth',4);
-        ModeTunedOctaves = mode(MaxIndsOctave);
+        ModeTunedOctaves = mode(PassMaxOct);
         h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'r', 'parent', h_axes,'LineWidth',4);
         % boundary line position
         LineStartPositionB = [hBar.Position(1),(BehavBoundData-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
@@ -246,12 +252,12 @@ while ischar(tline)
         saveas(hColor,sprintf('Passive top Prc%d colormap save',100-cPrcvalue),'png');
         close(hColor);
     end
-    PassROITunedOctave = AllMaxIndsOctaves;
+    PassROITunedOctave = AllPassMaxOcts;
     PassOctaves = UsedOctave;
-    Octaves = unique(AllMaxIndsOctaves);
+    Octaves = unique(AllPassMaxOcts);
     PassOctaveTypeNum = zeros(length(PassOctaves),1);
     for n = 1 : length(PassOctaves)
-        PassOctaveTypeNum(n) = sum(AllMaxIndsOctaves == PassOctaves(n));
+        PassOctaveTypeNum(n) = sum(AllPassMaxOcts == PassOctaves(n));
     end
 
     %
@@ -262,19 +268,19 @@ while ischar(tline)
     UsedOctaveData = CorrTunningFun;
     nROIs = size(UsedOctaveData,2);
     [MaxAmp,maxInds] = max(UsedOctaveData);
-    MaxIndsOctave = zeros(nROIs,1);
+    TaskMaxOct = zeros(nROIs,1);
     for cROI = 1 : nROIs
-        MaxIndsOctave(cROI) = UsedOctave(maxInds(cROI));
+        TaskMaxOct(cROI) = UsedOctave(maxInds(cROI));
     end
-%     RespROIinds = MaxAmp > 10;
-    RespROIinds = logical(ROIsigResp);
-    modeFreqInds = MaxIndsOctave(RespROIinds) == mode(MaxIndsOctave(RespROIinds));
-    [TaskClusterInterMean,TaskRandMean,hhf] =  Within2BetOrRandRatio(DisMatrix(RespROIinds,RespROIinds),modeFreqInds,'Rand');
-    saveas(hhf,'Task Rand_vs_intermodeROIs distance ratio distribution');
-    saveas(hhf,'Task Rand_vs_intermodeROIs distance ratio distribution','png');
-    close(hhf);
+    RespROIinds = MaxAmp > 10;
+%     RespROIinds = logical(ROIsigResp);
+%     modeFreqInds = TaskMaxOct(RespROIinds) == mode(TaskMaxOct(RespROIinds));
+%     [TaskClusterInterMean,TaskRandMean,hhf] =  Within2BetOrRandRatio(DisMatrix(RespROIinds,RespROIinds),modeFreqInds,'Rand');
+%     saveas(hhf,'Task Rand_vs_intermodeROIs distance ratio distribution');
+%     saveas(hhf,'Task Rand_vs_intermodeROIs distance ratio distribution','png');
+%     close(hhf);
     %
-    AllMaxIndsOctaves = MaxIndsOctave;
+    AllTaskMaxOcts = TaskMaxOct;
     TaskFreqStrs = cellstr(num2str(BoundFreq*(2.^UsedOctave(:))/1000,'%.1f'));
     BoundFreqIndex = find(UsedOctave > BehavBoundData,1,'first');
     WithBoundyTick = [UsedOctave(1:BoundFreqIndex-1);BehavBoundData;UsedOctave(BoundFreqIndex:end)];
@@ -289,15 +295,15 @@ while ischar(tline)
         cROIinds = MaxAmp >= PrcThres; 
         
         
-        ColorRespROIs = cROIinds(:) & ~NonRespROIInds;
-        GrayNonRespROIs = cROIinds(:) & NonRespROIInds;
+        ColorRespROIs = cROIinds(:) & ~NonRespROIInds(:);
+        GrayNonRespROIs = cROIinds(:) & NonRespROIInds(:);
         
         % responsive ROI inds
         AllMasks = ROIinfoData.ROImask(ColorRespROIs);
-        MaxIndsOctave = AllMaxIndsOctaves(ColorRespROIs);
+        TaskMaxOct = AllTaskMaxOcts(ColorRespROIs);
         nROIs = length(AllMasks);
         SumROImask = double(AllMasks{1});
-        SumROIcolormask = SumROImask * MaxIndsOctave(1);
+        SumROIcolormask = SumROImask * TaskMaxOct(1);
         for cROI = 2 : nROIs
             cROINewMask = double(AllMasks{cROI});
             TempSumMask = SumROImask + cROINewMask;
@@ -306,15 +312,15 @@ while ischar(tline)
                 cROINewMask(OverLapInds) = 0;
             end
             SumROImask = double(TempSumMask > 0);
-            SumROIcolormask = SumROIcolormask + cROINewMask * MaxIndsOctave(cROI);
+            SumROIcolormask = SumROIcolormask + cROINewMask * TaskMaxOct(cROI);
         end
         
         % non-responsive ROI colormap generation
         AllMasksNonrp = ROIinfoData.ROImask(GrayNonRespROIs);
-%         MaxIndsOctave = AllMaxIndsOctaves(GrayNonRespROIs);
+%         TaskMaxOct = AllTaskMaxOcts(GrayNonRespROIs);
         nROIsNonrp = length(AllMasksNonrp);
         SumROImaskNonrp = double(AllMasksNonrp{1});
-        SumROIcolormaskNonrp = SumROImaskNonrp * 0.8;
+        SumROIcolormaskNonrp = SumROImaskNonrp * 0.1;
         for cROI = 2 : nROIsNonrp
             cROINewMask = double(AllMasksNonrp{cROI});
             TempSumMask = SumROImaskNonrp + cROINewMask;
@@ -323,10 +329,10 @@ while ischar(tline)
                 cROINewMask(OverLapInds) = 0;
             end
             SumROImaskNonrp = double(TempSumMask > 0);
-            SumROIcolormaskNonrp = SumROIcolormaskNonrp + cROINewMask * 0.8;
+            SumROIcolormaskNonrp = SumROIcolormaskNonrp + cROINewMask * 0.1;
         end
         %
-         hColor = figure('position',[3000 100 530 450]);
+         hColor = figure('position',[30 500 530 450]);
         ax1=axes;
         h_backf=imagesc(SumROIcolormask,[-1 1]);
         Cpos=get(ax1,'position');
@@ -340,6 +346,7 @@ while ischar(tline)
         ax2.XTick = [];
         ax2.YTick = [];
         colormap(ax2,'gray');
+        colormap(ax1,CusMap);
         set(ax1,'box','off');
         axis(ax1, 'off');
         
@@ -352,7 +359,7 @@ while ischar(tline)
         title(sprintf('Prc%d map',cPrcvalue));
         h_axes = axes('position', hBar.Position, 'ylim', hBar.Limits, 'color', 'none', 'visible','off');
         hl = line(h_axes.XLim, BehavBoundData*[1 1], 'color', 'k', 'parent', h_axes,'LineWidth',4);
-        ModeTunedOctaves = mode(MaxIndsOctave);
+        ModeTunedOctaves = mode(TaskMaxOct);
         h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'r', 'parent', h_axes,'LineWidth',4);
         % boundary line position
         LineStartPositionB = [hBar.Position(1),(BehavBoundData-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
@@ -412,13 +419,13 @@ while ischar(tline)
         saveas(hColor,sprintf('Task top Prc%d colormap save',100-cPrcvalue),'png');
         close(hColor);
     end
-    TaskROITunedOctave = AllMaxIndsOctaves;
+    TaskROITunedOctave = AllTaskMaxOcts;
     TaskOctaves = UsedOctave;
     %
-%     Octaves = unique(MaxIndsOctave);
+%     Octaves = unique(TaskMaxOct);
     TaskOctaveTypeNum = zeros(length(UsedOctave),1);
     for n = 1 : length(UsedOctave)
-        TaskOctaveTypeNum(n) = sum(AllMaxIndsOctaves == UsedOctave(n));
+        TaskOctaveTypeNum(n) = sum(AllTaskMaxOcts == UsedOctave(n));
     end
     %
     if mod(length(UsedOctave),2)
@@ -541,7 +548,7 @@ while ischar(tline)
     saveas(hf,'Bound2Behav diff compare scatter plot','png');
     close(hf);
     
-    save PreferVsRandDisMeanSave.mat TaskClusterInterMean TaskRandMean PassClusterInterMean PassRandMean -v7.3
+%     save PreferVsRandDisMeanSave.mat TaskClusterInterMean TaskRandMean PassClusterInterMean PassRandMean -v7.3
     %
     tline = fgetl(fid);
 end

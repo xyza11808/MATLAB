@@ -1,4 +1,4 @@
-function MultiTimeWinClass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,trOutcome,varargin)
+function varargout =  MultiTimeWinClass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,trOutcome,varargin)
 % this function is try to generating different time window to calculate
 % classification performance within given time win, and plot the
 % classificatio rate change time course
@@ -70,3 +70,8 @@ close(h_TWinPlot);
 
 save MWinCLassData.mat MultiTScale TrWinClassPerfAll -v7.3
 cd ..;
+if nargout > 0
+    TimeAccuracyData.TimeScale = MultiTScale;
+    TimeAccuracyData.TimeAccu = TrWinClassPerfAll;
+    varargout{1} = TimeAccuracyData;
+end

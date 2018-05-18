@@ -1,29 +1,75 @@
 %finding the target image for alignment
-cd('P:\BatchData\20180418\anm03\test02');
-[im, ~] = load_scim_data('b53a03_test01_2x_145um_20170418_085.tif');
+cd('S:\BatchData\Batch52\20180430\anm01\test02');
+[im, ~] = load_scim_data('b52a01_test02_2x_2afc_120um_20180430_150.tif');
 
-selectframe=im(:,:,1:25);
+selectframe=im(:,:,1:40);
 figure;
 imagesc(mean(selectframe,3),[-20 200]);
 im_reg_target = mean(selectframe,3);
 figure(gcf);
 colormap gray;
+
 %%
 clc
 dir_imreg_src = pwd;
-save TargetImage.mat im_reg_target
-% dir_imreg_dest = [['F',dir_imreg_src(2:end)] filesep 'im_data_reg_cpu'];
-dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
-t_total=tic;
-BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
-t=toc(t_total);
-disp(t);
-isFileBadAlign = cellfun(@isempty,BadAlignFrame);
-cd(dir_imreg_dest);
-if sum(~isFileBadAlign)
-    save BadAlignF.mat BadAlignFrame -v7.3
+save TargetImage.mat im_reg_target dir_imreg_src -v7.3
+%% dir_imreg_dest = [['F',dir_imreg_src(2:end)] filesep 'im_data_reg_cpu'];
+clear
+clc
+cd('P:\BatchData\batch52');
+[fn,fp,fi] = uigetfile('*.txt','Please select your data path to be aligned');
+if ~fi
+    return;
 end
-% save TargetImage.mat im_reg_target
+fpath = fullfile(fp,fn);
+fid = fopen(fpath);
+tline = fgetl(fid);
+%%
+while ischar(tline)
+    if ~isdir(tline)
+        tline = fgetl(fid);
+        continue;
+    end
+    %
+    cd(tline);
+    clearvars im_reg_target dir_imreg_src
+    
+    load(fullfile(tline,'TargetImage.mat'));
+    
+%     NewStr = strrep(dir_imreg_src,'0520','0420');
+%     dir_imreg_src = NewStr;
+%     save TargetImage.mat im_reg_target dir_imreg_src -v7.3
+%     tline = fgetl(fid);
+    % clc
+    % dir_imreg_src = pwd;
+    % save TargetImage.mat im_reg_target
+    dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
+    t_total=tic;
+    BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
+    t=toc(t_total);
+    disp(t);
+    isFileBadAlign = cellfun(@isempty,BadAlignFrame);
+    cd(dir_imreg_dest);
+    if sum(~isFileBadAlign)
+        save BadAlignF.mat BadAlignFrame -v7.3
+    end
+    
+    %align possible passive session data
+    PosPassDir = [tline,'rf'];
+    if isdir(PosPassDir)
+        NewAlignDir = PosPassDir;
+        cd(NewAlignDir);
+        dir_imreg_dest = [NewAlignDir filesep 'im_data_reg_cpu'];
+        BadAlignFrame = dft_reg_dir_2_zy(NewAlignDir, dir_imreg_dest, [], im_reg_target);
+        isFileBadAlign = cellfun(@isempty,BadAlignFrame);
+        cd(dir_imreg_dest);
+        if sum(~isFileBadAlign)
+            save BadAlignF.mat BadAlignFrame -v7.3
+        end
+    end
+    
+    tline = fgetl(fid);
+end
 %
 % % 
 % dir_imreg_src = 'F:\batch\batch49\20171205\anm05\test02';

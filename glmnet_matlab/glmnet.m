@@ -264,7 +264,7 @@ end
 
 %match the family, abbreviation allowed
 fambase = {'gaussian','binomial','poisson','multinomial','cox','mgaussian'};
-famind = find(strncmp(family,fambase,length(family)),1);
+famind = find(strncmpi(family,fambase,length(family)),1);
 if isempty(famind)
     error('family should be one of ''gaussian'', ''binomial'', ''poisson'', ''multinomial'', ''cox'', ''mgaussian''');
 else

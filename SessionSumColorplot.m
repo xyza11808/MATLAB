@@ -1,4 +1,4 @@
-function SessionSumColorplot(dataligned,alignF,TrialOutcomes,TrialStimFreq,FrameRate,varargin)
+function varargout = SessionSumColorplot(dataligned,alignF,TrialOutcomes,TrialStimFreq,FrameRate,varargin)
 % this function is specifically used for plot the summary plot of current
 % session data and returm the current response for across session summary
 % plot
@@ -66,7 +66,7 @@ cd('./Session_Sum_plot/');
 
 if isplot
     h_colorall = figure;
-    imagesc(DataNor(SortRowInds,:),[-2 2]);
+    imagesc(DataNor(SortRowInds,:),[-1 1]);
     line([alignF,alignF],[0.5,nFrames+0.5],'color',[.8 .8 .8],'LineWidth',1.8);
     colorbar;
     xlabel('Time (s)');
@@ -78,7 +78,11 @@ if isplot
     close(h_colorall);
 end 
 save SessionSumData.mat DataAllMean DataNor FrameDis SortRowInds FrameRate alignF -v7.3
-
+cSessDataStrc.RawData = DataAllMean;
+cSessDataStrc.NorData = DataNor;
+if nargout > 0
+    varargout{1} = cSessDataStrc;
+end
 %%
 % plot the hist for maxinds distribution for peak position selection
 % using only maxium peak inds is after 0.2s after stimulus onset and within 1.5s window after

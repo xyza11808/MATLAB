@@ -10,18 +10,19 @@ clearvars -except fn fp
 fpath = fullfile(fp,fn);
 fid = fopen(fpath);
 tline = fgetl(fid);
+%%
 CusMap = blue2red_2(32,0.8);
 PreferRandDisSum = {};
 m = 1;
-%
+%%
 while ischar(tline)
     if isempty(strfind(tline,'NO_Correction\mode_f_change'))
         tline = fgetl(fid);
         continue;
     end
-    
+    %%
     clearvars -except tline fid CusMap PreferRandDisSum m fn fp
-    %% passive tuning frequency colormap plot
+    % passive tuning frequency colormap plot
     load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));
     [~,EndInds] = regexp(tline,'result_save');
@@ -39,17 +40,26 @@ while ischar(tline)
     ROIdistance = pdist(ROIcenter);
     DisMatrix = squareform(ROIdistance);
     
-    BehavBoundfile = load(fullfile(tline,'RandP_data_plots','boundary_result.mat'));
+    
 %     BehavBoundData = BehavBoundfile.boundary_result.Boundary - 1;
 %     if isempty(BehavBoundData)
+    try
+        BehavBoundfile = load(fullfile(tline,'RandP_data_plots','boundary_result.mat'));
         BehavBoundData = BehavBoundfile.boundary_result.FitModelAll{1}{2}.ffit.u - 1;
+    catch
+        cd(tline);
+        load(fullfile(tline,'CSessionData.mat'),'behavResults');
+        rand_plot(behavResults,4,[],1);
+        BehavBoundfile = load(fullfile(tline,'RandP_data_plots','boundary_result.mat'));
+        BehavBoundData = BehavBoundfile.boundary_result.FitModelAll{1}{2}.ffit.u - 1;
+    end
 %     end
     BehavCorr = BehavBoundfile.boundary_result.StimCorr;
     Uncertainty = 1 - BehavCorr;
-    if ~isdir('NMTuned freq colormap plot')
-        mkdir('NMTuned freq colormap plot');
+    if ~isdir('NMTuned Meanfreq colormap plot')
+        mkdir('NMTuned Meanfreq colormap plot');
     end
-    cd('NMTuned freq colormap plot');
+    cd('NMTuned Meanfreq colormap plot');
     % plot the behavior result and uncertainty function
     GroupStimsNum = floor(length(BehavCorr)/2);
     BehavOctaves = log2(double(BehavBoundfile.boundary_result.StimType)/16000);
@@ -91,7 +101,7 @@ while ischar(tline)
     saveas(hf,'Behavior and uncertainty curve plot','png');
     close(hf);
     %  ######################################################################################
-    % extract passive session maxium responsive frequency index
+    %  extract passive session maxium responsive frequency index
     UsedOctaveInds = ~(abs(PassFreqOctave) > 1);
     UsedOctave = PassFreqOctave(UsedOctaveInds);
     UsedOctave = UsedOctave(:);
@@ -103,19 +113,22 @@ while ischar(tline)
     UsedOctaveData = PassTunningfun(UsedOctaveInds,PassROIUsedInds);
     nROIs = size(UsedOctaveData,2);
     [MaxAmp,maxInds] = max(UsedOctaveData);
-    MaxIndsOctave = zeros(nROIs,1);
+    PassMaxOct = zeros(nROIs,1);
     for cROI = 1 : nROIs
-        MaxIndsOctave(cROI) = UsedOctave(maxInds(cROI));
+        PassMaxOct(cROI) = UsedOctave(maxInds(cROI));
     end
-    modeFreqInds = MaxIndsOctave == mode(MaxIndsOctave);
-    [PassClusterInterMean,PassRandMean,hhf] =  Within2BetOrRandRatio(DisMatrix,modeFreqInds,'Rand');
-    saveas(hhf,'Passive Rand_vs_intermodeROIs distance ratio distribution');
-    saveas(hhf,'Passive Rand_vs_intermodeROIs distance ratio distribution','png');
-    close(hhf);
-    PreferRandDisSum{m,1} = PassClusterInterMean;
-    PreferRandDisSum{m,2} = PassRandMean;
+    modeFreqInds = PassMaxOct == mode(PassMaxOct);
+    PassModeInds = [mode(PassMaxOct),mean(PassMaxOct),BehavBoundData]; 
+    PassMaxAmp = MaxAmp;
+    
+%     [PassClusterInterMean,PassRandMean,hhf] =  Within2BetOrRandRatio(DisMatrix,modeFreqInds,'Rand');
+%     saveas(hhf,'Passive Rand_vs_intermodeROIs distance ratio distribution');
+%     saveas(hhf,'Passive Rand_vs_intermodeROIs distance ratio distribution','png');
+%     close(hhf);
+%     PreferRandDisSum{m,1} = PassClusterInterMean;
+%     PreferRandDisSum{m,2} = PassRandMean;
     %
-    AllMaxIndsOctaves = MaxIndsOctave;
+    AllPassMaxOcts = PassMaxOct;
     PassFreqStrs = cellstr(num2str(BoundFreq*(2.^UsedOctave(:))/1000,'%.1f'));
     BoundFreqIndex = find(UsedOctave > BehavBoundData,1,'first');
     WithBoundyTick = [UsedOctave(1:BoundFreqIndex-1);BehavBoundData;UsedOctave(BoundFreqIndex:end)];
@@ -134,10 +147,12 @@ while ischar(tline)
         
         % plot the responsive ROIs with color indicates tuning octave
         AllMasks = ROIinfoData.ROImask(cROIinds);
-        MaxIndsOctave = AllMaxIndsOctaves(cROIinds);
+        cPrcPassMaxOct = PassMaxOct(cROIinds);
         nROIs = length(AllMasks);
         SumROImask = double(AllMasks{1});
-        SumROIcolormask = SumROImask * MaxIndsOctave(1);
+        SumROIcolormask = SumROImask * cPrcPassMaxOct(1);
+        TestOcts = zeros(nROIs,1);
+%         TestOcts(1) = PassMaxOct(1);
         for cROI = 2 : nROIs
             cROINewMask = double(AllMasks{cROI});
             TempSumMask = SumROImask + cROINewMask;
@@ -146,11 +161,12 @@ while ischar(tline)
                 cROINewMask(OverLapInds) = 0;
             end
             SumROImask = double(TempSumMask > 0);
-            SumROIcolormask = SumROIcolormask + cROINewMask * MaxIndsOctave(cROI);
+            SumROIcolormask = SumROIcolormask + cROINewMask * cPrcPassMaxOct(cROI);
+%             TestOcts(cROI) = PassMaxOct(cROI);
         end
         
         %
-        hColor = figure('position',[3000 100 530 450]);
+        hColor = figure('position',[100 100 530 450]);
         ha = axes;
 %         axis square
         h_im = imagesc(SumROIcolormask,[-1 1]);
@@ -164,16 +180,22 @@ while ischar(tline)
 %         title(sprintf('Prc%d map',cPrcvalue));
         h_axes = axes('position', hBar.Position, 'ylim', hBar.Limits, 'color', 'none', 'visible','off');
         hl = line(h_axes.XLim, BehavBoundData*[1 1], 'color', 'k', 'parent', h_axes,'LineWidth',4);
-        ModeTunedOctaves = mode(MaxIndsOctave);
+        ModeTunedOctaves = mode(PassMaxOct);
+        MeanPopuOcts = mean(PassMaxOct);
         h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'r', 'parent', h_axes,'LineWidth',4);
         % boundary line position
         LineStartPositionB = [hBar.Position(1),(BehavBoundData-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
         % mode line position
         LineStartPositionM = [hBar.Position(1),(ModeTunedOctaves-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
+        LineStartPosMean = [hBar.Position(1)+hBar.Position(3),(MeanPopuOcts-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)]; % position for mean BFs
+        
         BoundArrowx = [LineStartPositionB(1)-0.06,LineStartPositionB(1)];
         BoundArrowy = [LineStartPositionB(2),LineStartPositionB(2)];
         ModeArrowx = [LineStartPositionM(1)-0.06,LineStartPositionM(1)];
         ModeArrowy = [LineStartPositionM(2),LineStartPositionM(2)];
+        MeanArrowx = [LineStartPosMean(1) + 0.03,LineStartPosMean(1)];
+        MeanWrrowy = [LineStartPosMean(2),LineStartPosMean(2)];
+        
         if ModeTunedOctaves < BehavBoundData
             TextBoundDim = [LineStartPositionB(1)-0.18 LineStartPositionB(2)-0.05 0.2 0.1];
             TextModeDim = [LineStartPositionM(1)-0.18 LineStartPositionM(2)-0.05 0.2 0.1];
@@ -183,6 +205,7 @@ while ischar(tline)
                 'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
             annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
                 'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('arrow',MeanArrowx,MeanWrrowy,'Color','m');
 %             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
 %             BoundArrowy = [LineStartPositionB(2)+0.1,LineStartPositionB(2)];
 %             if BoundArrowy(1)> 1
@@ -204,6 +227,7 @@ while ischar(tline)
                 'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
             annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
                 'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('arrow',MeanArrowx,MeanWrrowy,'Color','m');
 %             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
 %             BoundArrowy = [LineStartPositionB(2)-0.1,LineStartPositionB(2)];
 %             if BoundArrowy(1) < 0
@@ -217,6 +241,7 @@ while ischar(tline)
 %             annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
 %             annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
         end
+%         annotation('textbox',[LineStartPosMean(1),LineStartPosMean(2),0.1 0.1],'String','*','Box','off','Color','k','FontSize',10);
         set(ha,'position',get(ha,'position')+[0.1 0 0 0])
         colormap(CusMap);
 %
@@ -225,12 +250,12 @@ while ischar(tline)
         close(hColor);
     end
     %
-    PassROITunedOctave = AllMaxIndsOctaves;
+    PassROITunedOctave = AllPassMaxOcts;
     PassOctaves = UsedOctave;
-    Octaves = unique(AllMaxIndsOctaves);
+    Octaves = unique(AllPassMaxOcts);
     PassOctaveTypeNum = zeros(length(PassOctaves),1);
     for n = 1 : length(PassOctaves)
-        PassOctaveTypeNum(n) = sum(AllMaxIndsOctaves == PassOctaves(n));
+        PassOctaveTypeNum(n) = sum(AllPassMaxOcts == PassOctaves(n));
     end
 
     %
@@ -238,24 +263,28 @@ while ischar(tline)
     % UsedOctaveInds = ~(abs(PassFreqOctave) > 1);
     UsedOctave = TaskFreqOctave(:);
 %     UsedOctave = UsedOctave(:);
-%     UsedOctaveData = CorrTunningFun;
-    UsedOctaveData = NonMissTunningFun;
+    UsedOctaveData = CorrTunningFun;
+%     UsedOctaveData = NonMissTunningFun;
     nROIs = size(UsedOctaveData,2);
     [MaxAmp,maxInds] = max(UsedOctaveData);
-    MaxIndsOctave = zeros(nROIs,1);
+    TaskMaxOct = zeros(nROIs,1);
     for cROI = 1 : nROIs
-        MaxIndsOctave(cROI) = UsedOctave(maxInds(cROI));
+        TaskMaxOct(cROI) = UsedOctave(maxInds(cROI));
     end
-    modeFreqInds = MaxIndsOctave == mode(MaxIndsOctave);
-    [TaskClusterInterMean,TaskRandMean,hhf] =  Within2BetOrRandRatio(DisMatrix,modeFreqInds,'Rand');
-    saveas(hhf,'Task Rand_vs_intermodeROIs distance ratio distribution');
-    saveas(hhf,'Task Rand_vs_intermodeROIs distance ratio distribution','png');
-    close(hhf);
+    modeFreqInds = TaskMaxOct == mode(TaskMaxOct);
+    TaskModeInds = [mode(TaskMaxOct),mean(TaskMaxOct),BehavBoundData];
+    TaskMaxAmp = MaxAmp;
     
-    PreferRandDisSum{m,3} = TaskClusterInterMean;
-    PreferRandDisSum{m,4} = TaskRandMean;
+    save TaskPassBFDis.mat  TaskMaxOct PassMaxOct BehavBoundData TaskMaxAmp PassMaxAmp -v7.3
+%     [TaskClusterInterMean,TaskRandMean,hhf] =  Within2BetOrRandRatio(DisMatrix,modeFreqInds,'Rand');
+%     saveas(hhf,'Task Rand_vs_intermodeROIs distance ratio distribution');
+%     saveas(hhf,'Task Rand_vs_intermodeROIs distance ratio distribution','png');
+%     close(hhf);
     
-    AllMaxIndsOctaves = MaxIndsOctave;
+%     PreferRandDisSum{m,3} = TaskClusterInterMean;
+%     PreferRandDisSum{m,4} = TaskRandMean;
+    
+    AllTaskMaxOcts = TaskMaxOct;
     TaskFreqStrs = cellstr(num2str(BoundFreq*(2.^UsedOctave(:))/1000,'%.1f'));
     BoundFreqIndex = find(UsedOctave > BehavBoundData,1,'first');
     WithBoundyTick = [UsedOctave(1:BoundFreqIndex-1);BehavBoundData;UsedOctave(BoundFreqIndex:end)];
@@ -268,10 +297,10 @@ while ischar(tline)
         PrcThres = prctile(MaxAmp,cPrcvalue);
         cROIinds = MaxAmp >= PrcThres; 
         AllMasks = ROIinfoData.ROImask(cROIinds);
-        MaxIndsOctave = AllMaxIndsOctaves(cROIinds);
+        TaskMaxOct = AllTaskMaxOcts(cROIinds);
         nROIs = length(AllMasks);
         SumROImask = double(AllMasks{1});
-        SumROIcolormask = SumROImask * MaxIndsOctave(1);
+        SumROIcolormask = SumROImask * TaskMaxOct(1);
         for cROI = 2 : nROIs
             cROINewMask = double(AllMasks{cROI});
             TempSumMask = SumROImask + cROINewMask;
@@ -280,7 +309,7 @@ while ischar(tline)
                 cROINewMask(OverLapInds) = 0;
             end
             SumROImask = double(TempSumMask > 0);
-            SumROIcolormask = SumROIcolormask + cROINewMask * MaxIndsOctave(cROI);
+            SumROIcolormask = SumROIcolormask + cROINewMask * TaskMaxOct(cROI);
         end
         %
         hColor = figure('position',[600 300 530 450]);
@@ -297,17 +326,22 @@ while ischar(tline)
 %         title(sprintf('Prc%d map',cPrcvalue));
          h_axes = axes('position', hBar.Position, 'ylim', hBar.Limits, 'color', 'none', 'visible','off');
         hl = line(h_axes.XLim, BehavBoundData*[1 1], 'color', 'k', 'parent', h_axes,'LineWidth',4);
-        ModeTunedOctaves = mean(MaxIndsOctave);
+        ModeTunedOctaves = mode(TaskMaxOct);
+        MeanPopuOcts = mean(TaskMaxOct);
         h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'r', 'parent', h_axes,'LineWidth',4);
         % boundary line position
         LineStartPositionB = [hBar.Position(1),(BehavBoundData-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
         % mode line position
         LineStartPositionM = [hBar.Position(1),(ModeTunedOctaves-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
-        
+         LineStartPosMean = [hBar.Position(1)+hBar.Position(3),(MeanPopuOcts-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)]; 
+         
         BoundArrowx = [LineStartPositionB(1)-0.06,LineStartPositionB(1)];
         BoundArrowy = [LineStartPositionB(2),LineStartPositionB(2)];
         ModeArrowx = [LineStartPositionM(1)-0.06,LineStartPositionM(1)];
         ModeArrowy = [LineStartPositionM(2),LineStartPositionM(2)];
+        MeanArrowx = [LineStartPosMean(1) + 0.03,LineStartPosMean(1)];
+        MeanWrrowy = [LineStartPosMean(2),LineStartPosMean(2)];
+        
         if ModeTunedOctaves < BehavBoundData
             TextBoundDim = [LineStartPositionB(1)-0.18 LineStartPositionB(2)-0.05 0.2 0.1];
             TextModeDim = [LineStartPositionM(1)-0.18 LineStartPositionM(2)-0.05 0.2 0.1];
@@ -317,6 +351,7 @@ while ischar(tline)
                 'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
             annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
                 'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('arrow',MeanArrowx,MeanWrrowy,'Color','m');
 %             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
 %             BoundArrowy = [LineStartPositionB(2)+0.1,LineStartPositionB(2)];
 %             if BoundArrowy(1)> 1
@@ -338,6 +373,7 @@ while ischar(tline)
                 'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
             annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
                 'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('arrow',MeanArrowx,MeanWrrowy,'Color','m');
 %             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
 %             BoundArrowy = [LineStartPositionB(2)-0.1,LineStartPositionB(2)];
 %             if BoundArrowy(1) < 0
@@ -358,13 +394,13 @@ while ischar(tline)
         saveas(hColor,sprintf('Task top Prc%d colormap save',100-cPrcvalue),'png');
         close(hColor);
     end
-    TaskROITunedOctave = AllMaxIndsOctaves;
+    TaskROITunedOctave = AllTaskMaxOcts;
     TaskOctaves = UsedOctave;
     %
-%     Octaves = unique(MaxIndsOctave);
+%     Octaves = unique(TaskMaxOct);
     TaskOctaveTypeNum = zeros(length(UsedOctave),1);
     for n = 1 : length(UsedOctave)
-        TaskOctaveTypeNum(n) = sum(AllMaxIndsOctaves == UsedOctave(n));
+        TaskOctaveTypeNum(n) = sum(AllTaskMaxOcts == UsedOctave(n));
     end
     %
     if mod(length(UsedOctave),2)
@@ -488,11 +524,15 @@ while ischar(tline)
     saveas(hf,'Bound2Behav diff compare scatter plot');
     saveas(hf,'Bound2Behav diff compare scatter plot','png');
     close(hf);
+ %%   
+    PreferRandDisSum{m,1} = PassModeInds;
+    PreferRandDisSum{m,2} = TaskModeInds;
     
-    save PreferVsRandDisMeanSave.mat TaskClusterInterMean TaskRandMean PassClusterInterMean PassRandMean -v7.3
-    %%
+%     save PreferVsRandDisMeanSave.mat TaskClusterInterMean TaskRandMean PassClusterInterMean PassRandMean -v7.3
+    %
     tline = fgetl(fid); 
     m = m + 1;
+    %
 end
 
 %%

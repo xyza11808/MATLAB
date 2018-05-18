@@ -14,6 +14,7 @@ Taskfid =  fopen(TaskPathf);
 Passfid = fopen(PassPathf);
 Tasktline = fgetl(Taskfid);
 Passtline = fgetl(Passfid);
+%%
 SessionNum = 1;
 ErrorNum = 0;
 ErrorSess = {};
@@ -25,9 +26,9 @@ while ischar(Tasktline) && ischar(Passtline)
         Passtline = fgetl(Passfid);
         continue;
     end
-    %%
+    %
     try
-        %
+        %%
         TaskDataStrc = load(fullfile(Tasktline,'CSessionData.mat'));
         PassDataStrc = load(fullfile(Passtline,'rfSelectDataSet.mat'));
         BehavDataPath = fullfile(Tasktline,'RandP_data_plots','boundary_result.mat');
@@ -175,7 +176,7 @@ while ischar(Tasktline) && ischar(Passtline)
         Passtline = fgetl(Passfid);
 %         continue;
     end
-    %%
+    %
 end
 
 %%  test with mean trace calculation first
@@ -186,6 +187,7 @@ Taskfid =  fopen(TaskPathf);
 Passfid = fopen(PassPathf);
 Tasktline = fgetl(Taskfid);
 Passtline = fgetl(Passfid);
+%
 SessionNum = 1;
 ErrorNumNew = 0;
 ErrorSessNew = {};
@@ -199,6 +201,7 @@ while ischar(Tasktline) && ischar(Passtline)
     end
     try
         %%
+        clearvars -except Tasktline Passtline
         TaskDataStrc = load(fullfile(Tasktline,'CSessionData.mat'));
         PassDataStrc = load(fullfile(Passtline,'rfSelectDataSet.mat')); 
         BehavDataPath = fullfile(Tasktline,'RandP_data_plots','boundary_result.mat');
@@ -243,7 +246,7 @@ while ischar(Tasktline) && ischar(Passtline)
         
         %
         nROIs = size(UsedTaskData,2);
-        DataRespWinT = 1; % using only 1s time window for sensory response
+        DataRespWinT = [0 1]; % using only 1s time window for sensory response
         DataRespWinF = round(DataRespWinT*TaskDataStrc.frame_rate);
         % TaskDataResp = max(TaskData(:,:,(TaskDataStrc.start_frame+1):(TaskDataStrc.start_frame+DataRespWinF)),[],3);
         NonMissTrInds = TaskOutcome ~= 2;
@@ -262,7 +265,8 @@ while ischar(Tasktline) && ischar(Passtline)
         CorrTunningFun = zeros(FreqNum,nROIs);
         CorrTunningFunSEM = zeros(FreqNum,nROIs);
         %
-        Framescales = [(TaskDataStrc.start_frame+1),(TaskDataStrc.start_frame+DataRespWinF)];
+        Framescales = [(TaskDataStrc.start_frame+1+DataRespWinF(1)),(TaskDataStrc.start_frame+DataRespWinF(2))];
+        
 %         for nTFreq = 1 : FreqNum
 %             cfreq = FreqTypes(nTFreq);
 %             % non-miss data
@@ -271,6 +275,7 @@ while ischar(Tasktline) && ischar(Passtline)
             DataStrcNM = MeanMaxSEMCal(NonMissData,NonMissFreqs,Framescales);
             NonMissTunningFun = DataStrcNM.MeanValue;
             NonMissTunningFunSEM = DataStrcNM.SEMValue;
+            NonMissTunningCellData = DataStrcNM.MaxIndsDataAll;
 
             %correct data
 %             cfreqInds = CorrTrFreqs == cfreq;
@@ -278,6 +283,7 @@ while ischar(Tasktline) && ischar(Passtline)
             DataStrcCorr = MeanMaxSEMCal(CorrTrData,CorrTrFreqs,Framescales);
             CorrTunningFun = DataStrcCorr.MeanValue;
             CorrTunningFunSEM = DataStrcCorr.SEMValue;
+            CorrTunningCellData = DataStrcCorr.MaxIndsDataAll;
 %         end
 
         % passive data extaction
@@ -287,9 +293,9 @@ while ischar(Tasktline) && ischar(Passtline)
             PassiveData = PassiveData(:,1:nROIs,:);
             nPassROI = nROIs;
         end
-        PassRespWinT = 1;
-        PassRespWinF = round(PassRespWinT*PassDataStrc.frame_rate);
-        PassFrameScale = [(PassDataStrc.frame_rate+1),(PassDataStrc.frame_rate+PassRespWinF)];
+%         PassRespWinT = 1;
+%         PassRespWinF = round(PassRespWinT*PassDataStrc.frame_rate);
+        PassFrameScale = [(PassDataStrc.frame_rate+1+DataRespWinF(1)),(PassDataStrc.frame_rate++DataRespWinF(2))];
         if length(unique(PassDataStrc.sound_array(:,2))) > 1
             UsedDBinds = PassDataStrc.sound_array(:,2) == 70 | PassDataStrc.sound_array(:,2) == 75;
             PassRespData = MeanMaxSEMCal(PassiveData(UsedDBinds,:,:),PassDataStrc.sound_array(UsedDBinds,1),PassFrameScale);
@@ -310,6 +316,7 @@ while ischar(Tasktline) && ischar(Passtline)
 %             cFreqInds = PassDataStrc.sound_array(:,1) == cPasFreq;
             PassTunningfun = PassRespData.MeanValue;
             PassTunningfunSEM = PassRespData.SEMValue;
+            PassTunCellData = PassRespData.MaxIndsDataAll;
 %         end
         %
         BoundFreq = 16000;
@@ -323,7 +330,13 @@ while ischar(Tasktline) && ischar(Passtline)
         cd('./Tunning_fun_plot_New1s/');
 
         save TunningDataSave.mat NonMissTunningFun CorrTunningFun PassTunningfun TaskFreqOctave ...
-            PassFreqOctave BoundFreq NonMissTunningFunSEM CorrTunningFunSEM PassTunningfunSEM -v7.3
+            PassFreqOctave BoundFreq NonMissTunningFunSEM CorrTunningFunSEM PassTunningfunSEM ...
+            PassTunCellData CorrTunningCellData NonMissTunningCellData -v7.3
+        IsModuIndexExists = 0;
+        if exist('NearBoundAmpDiffSig.mat','file')
+            load('NearBoundAmpDiffSig.mat','TaskBoundModuIndex');
+            IsModuIndexExists = 1;
+        end
         for cROI = 1 : nROIs
             %
             PassPlotInds = abs(PassFreqOctave) < 1.03;
@@ -337,8 +350,14 @@ while ischar(Tasktline) && ischar(Passtline)
             l3 = errorbar(PassFreqOctave(PassPlotInds),cROIpass(PassPlotInds),PassTunningfunSEM(PassPlotInds,cROI),'k-o','LineWidth',1.6);
             xlabel('Frequency (kHz)');
             ylabel('Mean \DeltaF/F (%)');
-            title(sprintf('ROI%d Tunning, Session%d',cROI,SessionNum));
-            set(gca,'FontSize',14);
+            if IsModuIndexExists
+                title(sprintf('ROI%d Tunning, BoundModu %.3f',cROI,TaskBoundModuIndex(cROI)));
+                set(gca,'FontSize',10);
+            else
+                title(sprintf('ROI%d Tunning',cROI));
+                set(gca,'FontSize',14);
+            end
+            
             if max(abs(PassFreqOctave)) > 1.5
                 set(gca,'xlim',[-2 2],'xtick',TaskFreqOctave,'xticklabel',FreqStrs);
             else
@@ -376,4 +395,35 @@ while ischar(Tasktline) && ischar(Passtline)
         Passtline = fgetl(Passfid);
         continue;
     end
+end
+
+%%
+TaskPathf = fullfile(TaskPathfp,TaskPathfn);
+PassPathf = fullfile(PassPathfp,PassPathfn);
+Taskfid =  fopen(TaskPathf);
+Passfid = fopen(PassPathf);
+Tasktline = fgetl(Taskfid);
+Passtline = fgetl(Passfid);
+nSess = 1;
+
+while ischar(Tasktline) && ischar(Passtline)
+    if isempty(strfind(Tasktline,'NO_Correction\mode_f_change'))  
+        Tasktline = fgetl(Taskfid);
+        Passtline = fgetl(Passfid);
+        continue;
+    end
+    %
+    NewTaskPath = ['N',Tasktline(2:end)];
+    NewPassPath = ['N',Passtline(2:end)];
+%     mkdir(NewTaskPath);
+%     mkdir(NewPassPath);
+%     [StartInds,EndInds] = regexp(Tasktline,'result_save');
+%     Status = copyfile(Tasktline(1:EndInds),NewTaskPath(1:EndInds));
+    [PStartInds,PEndInds] = regexp(Passtline,'result_save');
+    Status2 = copyfile(Passtline(1:PEndInds),NewPassPath(1:PEndInds));
+    fprintf('Sess%d File Copy %d.\n',nSess,Status2);
+    
+    Tasktline = fgetl(Taskfid);
+    Passtline = fgetl(Passfid);
+    nSess = nSess + 1;
 end

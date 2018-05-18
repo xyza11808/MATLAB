@@ -132,8 +132,8 @@
   axesObjs = get(h, 'Children');  %axes handles
   dataObjs = get(axesObjs, 'Children'); %handles to low-level graphics objects in axes
   %% high bersion matlab
-  xdata = get(dataObjs(2), 'XData');  %data from low-level grahics objects
-  ydata = get(dataObjs(2), 'YData');
+  xdata = get(dataObjs(4), 'XData');  %data from low-level grahics objects
+  ydata = get(dataObjs(4), 'YData');
   % low version matlab
 %    xdata = get(dataObjs{2}, 'XData');  %data from low-level grahics objects
 %   ydata = get(dataObjs{2}, 'YData');
@@ -144,6 +144,17 @@
 %   xdata = get(lineObjs, 'XData');
 %for matlab version later than 2014b, we can also use dot calculator to
 %extract data
+
+%%
+% parameter fitting using fminsearch
+x = (linspace(-1,1,100))';
+TestFun = @(b,x) b(1)./(b(2) + exp(-(x - b(3))*b(4)));
+yData = TestFun([1,1,0,10],x);
+yNoiseData = yData(:) + 0.1*(rand(length(x),1)-0.5);
+ErrorYData = @(a,b,c,d,xData) sum((yNoiseData - a./(b + exp(-(xData - c)*d))).^2); % xData and yNoiseData should all be vector data
+v_noise = fminsearch(@(v) ErrorYData(v(1),v(2),v(3),v(4),x),([1 1 0 1])'); % how to select proper initial parameter value, which can affect final 
+                                                                           % results significantly
+% further fitting options should also be tried
 
 %%
 % %rebuilt data matrix from pca result
@@ -238,103 +249,7 @@
 % %   Using the int() function to do integration operation
 % ##############################################################################
 
-%%
-%this section used to be used for all trials plot in AFC_ROI_analysis
-%function, just as a backup
-%     %######################################################
-%     %plot of all trial results
-%     if ~isdir('.\ALLTrial_plot_save_SM\')
-%         mkdir('.\ALLTrial_plot_save_SM\');
-%     end
-%     cd('.\ALLTrial_plot_save_SM\');
-%     C_lim_all=[];
-%     x_tick=frame_rate:frame_rate:framelength;
-%     x_tick_label=1:floor(double(framelength)/frame_rate);
-%     for n=1:size_data(2)
-%         temp_data=squeeze(data_aligned(:,n,:));
-%         C_lim_all(1)=min(temp_data(:));
-%          C_lim_all(2)=max(temp_data(:));
-%          if C_lim_all(2)>(10*median(temp_data(:)))
-%              C_lim_all(2) = (C_lim_all(2)+median(temp_data(:)))/3;
-%          end
-%          if C_lim_all(2) > 500
-%                  C_lim_all(2) = 400;
-%          end
-%          if diff(C_lim_all)<=0 || sum(isnan(C_lim_all))~=0
-%              disp(['Error data present for ROI' num2str(n) ', skip this ROI.\n']);
-%              continue;
-%          end
-%         h_all=figure;
-%         subplot(3,2,1);
-%         imagesc(temp_data(plot_data_inds.left_trials_bingo_inds,:),C_lim_all);
-%         set(gca,'xticklabel',[],'yticklabel',[]);
-%         ylabel('correct\_left\_trial');
-%         hold on;
-%         hh2=axis;   
-%         triger_position=floor((double(align_time_point)/1000)*frame_rate);
-%         plot([triger_position,triger_position],[hh2(3),hh2(4)],'color',[.8 .8 .8],'LineWidth',2);
-%         hold off;
-%         
-%         subplot(3,2,3);
-%         imagesc(temp_data(plot_data_inds.left_trials_oops_inds,:),C_lim_all);
-%         set(gca,'xticklabel',[],'yticklabel',[]);
-%         ylabel('Error\_left\_trial');
-%         hold on;
-%         hh2=axis;   
-% %         triger_position=align_time_point*frame_rate;
-%         plot([triger_position,triger_position],[hh2(3),hh2(4)],'color',[.8 .8 .8],'LineWidth',2);
-%         hold off;
-%         
-%         subplot(3,2,5);
-%         imagesc(temp_data(plot_data_inds.left_trials_miss_inds,:),C_lim_all);
-%         set(gca,'xtick',x_tick,'xticklabel',x_tick_label,'yticklabel',[]);
-%         ylabel('Miss\_left\_trial');
-%         hold on;
-%         hh2=axis;   
-% %         triger_position=align_time_point*frame_rate;
-%         plot([triger_position,triger_position],[hh2(3),hh2(4)],'color',[.8 .8 .8],'LineWidth',2);
-%         hold off;
-%         
-%         subplot(3,2,2);
-%         imagesc(temp_data(plot_data_inds.right_trials_bingo_inds,:),C_lim_all);
-%         set(gca,'xticklabel',[],'yticklabel',[]);
-%         ylabel('correct\_right\_trial');
-%          hold on;
-%         hh2=axis;   
-% %         triger_position=align_time_point*frame_rate;
-%         plot([triger_position,triger_position],[hh2(3),hh2(4)],'color',[.8 .8 .8],'LineWidth',2);
-%         hold off;
-%         
-%         subplot(3,2,4);
-%         imagesc(temp_data(plot_data_inds.right_trials_oops_inds,:),C_lim_all);
-%         set(gca,'xticklabel',[],'yticklabel',[]);
-%         ylabel('Error\_right\_trial');
-%          hold on;
-%         hh2=axis;   
-% %         triger_position=align_time_point*frame_rate;
-%         plot([triger_position,triger_position],[hh2(3),hh2(4)],'color',[.8 .8 .8],'LineWidth',2);
-%         hold off;
-%         
-%         subplot(3,2,6);
-%         imagesc(temp_data(plot_data_inds.right_trials_miss_inds,:),C_lim_all);
-%         set(gca,'xtick',x_tick,'xticklabel',x_tick_label,'yticklabel',[]);
-%         ylabel('Miss\_right\_trial');
-%          h_bar=colorbar;
-%         plot_position_all=get(h_bar,'position');
-%         set(h_bar,'position',[plot_position_all(1)*1.13 plot_position_all(2) plot_position_all(3)*0.4 plot_position_all(4)])
-%         set(get(h_bar,'Title'),'string','\DeltaF/F_0');
-%          hold on;
-%         hh2=axis;   
-% %         triger_position=align_time_point*frame_rate;
-%         plot([triger_position,triger_position],[hh2(3),hh2(4)],'color',[.8 .8 .8],'LineWidth',2);
-%         hold off;
-%         
-%         suptitle(['ROI\_',num2str(n,'%03d')]);
-%         saveas(h_all,[session_date','_Sum_plot_ROI_',num2str(n,'%03d'),'.png']);
-%         close;
-%     end
-%     cd ..;
-%
+
 %%
 
 %current ROI drawing progress:

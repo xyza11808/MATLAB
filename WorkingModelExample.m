@@ -22,7 +22,7 @@ function varargout = WorkingModelExample(varargin)
 
 % Edit the above text to modify the response to help WorkingModelExample
 
-% Last Modified by GUIDE v2.5 07-Feb-2018 20:44:18
+% Last Modified by GUIDE v2.5 18-May-2018 12:02:56
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -69,6 +69,16 @@ WorkModelPara.UncertainFunCurve = [];
 WorkModelPara.ChoiceDerivetiveFun = [];
 WorkModelPara.ChoiceFitLim = [];
 WorkModelPara.DeriveFun = [];
+WorkModelPara.LRPopuRawData = {[],[]};
+WorkModelPara.LRPopuRawFig = [];
+WorkModelPara.Weights = 1/WorkModelPara.CategROINum;
+WorkModelPara.IsRandWid = 0;
+WorkModelPara.WidTypes = [];
+WorkModelPara.WidTypeFrac = [];
+WorkModelPara.SlopeV = [];
+WorkModelPara.BaseROITypes = [0.1,0.14,0.41,0.35];
+WorkModelPara.BaseROITypeStrs = {'Categ','BoundTun','SensTun','NoiseTun'};
+WorkModelPara.CategGauWeights = [0.5,0.5];
 
 cROIparas = WorkModelPara.CategROIparas;
 set(handles.CategROIsAxes,'Visible','off');
@@ -78,6 +88,7 @@ set(handles.ROIparasTag,'String',sprintf('%.1f,%.1f,%.3f',cROIparas(1),cROIparas
 set(handles.ROIboundLow,'String',num2str(WorkModelPara.BoundScale(1),'%.4f'));
 set(handles.ROIboundHigh,'String',num2str(WorkModelPara.BoundScale(2),'%.4f'));
 set(handles.xDataNums,'String',num2str(WorkModelPara.xDataNumUsed,'%d'));
+set(handles.PoolSumDataPlot,'Value',0);
 
 % #####################################################
 % generate bound Tuning function
@@ -296,6 +307,7 @@ else
         WorkModelPara.CategROINum = ROINum;
     end
 end
+% BoundFracData_Callback(hObject, eventdata, handles)
 CategROICal_Callback(hObject, eventdata, handles);
 % Hints: get(hObject,'String') returns contents of ROINum as text
 %        str2double(get(hObject,'String')) returns contents of ROINum as a double
@@ -493,13 +505,64 @@ switch WorkModelPara.CategNeuType
         LDataMtx = cell2mat(LDataCell);
 
         ChoiceData = (sum(RDataMtx) - sum(LDataMtx))/nCategROI;
+        
+        WorkModelPara.LRPopuRawData{1} = sum(LDataMtx)/nCategROI;
+        WorkModelPara.LRPopuRawData{2} = sum(RDataMtx)/nCategROI;
+        
     case 'Gaussian'
+        BoundFracData_Callback(hObject, eventdata, handles,0); % check if ROI fraction was biased
         cCategTunParas = WorkModelPara.gausCategParaDef;
         TuningPeakNum = nROIs;
         TunPeakData = linspace(-1,1,TuningPeakNum);
-        TunROIFun = cell(TuningPeakNum,1);
-        for cROI = 1 : TuningPeakNum
-            TunROIFun{cROI} = @(x) WorkModelPara.gausCategFun(cCategTunParas(1),TunPeakData(cROI),cCategTunParas(2),cCategTunParas(3),x);
+        if length(unique(WorkModelPara.Weights)) > 1
+           WeightNum = TuningPeakNum * WorkModelPara.Weights;
+           BiasFracTunNum = round(WeightNum(WeightNum > 1));
+           BiasFracTun = find(WeightNum > 1);
+           BiasROINum = sum(BiasFracTunNum);
+           BiasTunPeak = zeros(1,BiasROINum); 
+           k = 1;
+           for cBias = 1 : length(BiasFracTunNum)
+               BiasTunPeak(k:k + BiasFracTunNum(cBias)-1) = TunPeakData(BiasFracTun(cBias));
+               k = k + BiasFracTunNum(cBias);
+           end
+           RestTunPeak = linspace(-1,1,TuningPeakNum - sum(BiasFracTunNum));
+           UsedTunPeak = [BiasTunPeak,RestTunPeak];
+           
+        else
+            UsedTunPeak = TunPeakData;
+        end
+        
+        if ~WorkModelPara.IsRandWid
+            %         TunPeakData = linspace(WorkModelPara.BoundScale(1),WorkModelPara.BoundScale(2),TuningPeakNum);
+            TunROIFun = cell(TuningPeakNum,1);
+            for cROI = 1 : TuningPeakNum
+                TunROIFun{cROI} = @(x) WorkModelPara.gausCategFun(cCategTunParas(1),UsedTunPeak(cROI),cCategTunParas(2),cCategTunParas(3),x);
+            end
+        else
+            if sum(WorkModelPara.WidTypeFrac) >= 1
+                error('The rand ROI width fraction should not be more than 1');
+            else
+                nFracROIs = round(nROIs * WorkModelPara.WidTypeFrac);
+                if sum(nFracROIs) > nROIs
+                    error('ROINum exceed total ROI numbers');
+                else
+                    ROIWidTypes = [];
+                    for cFrac = 1 : length(nFracROIs)
+                        ROIWidTypes = [ROIWidTypes,repmat(WorkModelPara.WidTypes(cFrac),1,nFracROIs(cFrac))];
+                    end
+                    RestROINum = nROIs - sum(nFracROIs);
+                    if RestROINum > 0
+                        ExtraROIs = randsample(length(nFracROIs),RestROINum,true);
+                        ROIWidTypes = [ROIWidTypes,WorkModelPara.WidTypes(ExtraROIs)];
+                    end
+                    UsedROIWidTypes = Vshuffle(ROIWidTypes);
+                    
+                    TunROIFun = cell(TuningPeakNum,1);
+                    for cROI = 1 : TuningPeakNum
+                        TunROIFun{cROI} = @(x) WorkModelPara.gausCategFun(cCategTunParas(1),UsedTunPeak(cROI),UsedROIWidTypes(cROI),cCategTunParas(3),x);
+                    end
+                end
+            end
         end
         
         xscales = linspace(-1,1,xDataNum);
@@ -512,12 +575,167 @@ switch WorkModelPara.CategNeuType
             cROIFun = TunROIFun{cROI};
             cROIData = cROIFun(xscales);
             plot(xscales,cROIData,'Color',UsedColor(cROI,:),'linewidth',1.4);
-            BaseROIRespDataAll{cROI} = cROIData * sign(TunPeakData(cROI));
+            BaseROIRespDataAll{cROI} = cROIData * sign(UsedTunPeak(cROI));
         end
         % calculate the population output, left as negtive value
         popuOutData = sum(cell2mat(BaseROIRespDataAll));
         ChoiceData = (popuOutData - min(popuOutData))/(max(popuOutData) - min(popuOutData))*2-1; % norm to [-1 1]
+        %%
+        LROIInds = UsedTunPeak < 0;
+        RROIInds = UsedTunPeak > 0;
+        LPopuData = -sum(cell2mat(BaseROIRespDataAll(LROIInds)));
+        RPopuData = sum(cell2mat(BaseROIRespDataAll(RROIInds)));
+        WorkModelPara.LRPopuRawData{1} = LPopuData;
+        WorkModelPara.LRPopuRawData{2} = RPopuData;
         
+        %%
+    case 'MixedPopu'
+        % for mixed neuron types
+        set(handles.MixedROIFrac,'Visible','on');
+        set(handles.ROIFracStrs,'Visible','on');
+        ROITypeFracStr = get(handles.MixedROIFrac,'String');
+        ROITypeFrac = str2num(ROITypeFracStr);
+         
+        ROITypeNum = round(nROIs*ROITypeFrac);
+        if sum(ROITypeNum) > nROIs
+            ROITypeNum(4) = ROITypeNum(4) - sum(ROITypeNum) + nROIs;
+        end
+        if nROIs < 100
+            warning('ROI number was low, Please increase the number of ROI used.\n');
+        end
+        
+        %% calculate categprical ROI data
+        cnCategROI = ROITypeNum(1);
+        EachROINum = floor(cnCategROI/2);
+        RPreferBound = linspace(WorkModelPara.BoundScale(1),WorkModelPara.BoundScale(2),EachROINum);
+        LPreferBound = linspace(WorkModelPara.BoundScale(1),WorkModelPara.BoundScale(2),EachROINum);
+        g = WorkModelPara.CategROIparas(1);
+        l = WorkModelPara.CategROIparas(2);
+        v = WorkModelPara.CategROIparas(3);
+        cSlope = (-1)*sqrt(2)*0.5*(g+l-1)/(sqrt(pi)*v);
+        nCategROI = length(RPreferBound);
+        RPrefCategFun = cell(nCategROI,1);
+        LPrefCategFun = cell(nCategROI,1);
+        for cROI = 1 : nCategROI
+            RPrefCategFun{cROI} = @(x) CategModel(g,l,RPreferBound(cROI),v,x);
+            LPrefCategFun{cROI} = @(x) 1 - CategModel(g,l,LPreferBound(cROI),v,x);
+        end
+        WorkModelPara.LCategFun = LPrefCategFun;
+        WorkModelPara.RCategFun = RPrefCategFun;
+        xRange = linspace(-1,1,xDataNum);
+        WorkModelPara.xRange = xRange;
+        
+        axes(handles.CategROIsAxes)
+        cla
+        hold on
+        RDataCell = cell(nCategROI,1);
+        LDataCell = cell(nCategROI,1);
+        for cROI = 1 : nCategROI
+            cRFun = RPrefCategFun{cROI};
+            cLFun = LPrefCategFun{cROI};
+            RDataCell{cROI} = cRFun(xRange);
+            LDataCell{cROI} = cLFun(xRange);
+            plot(xRange,RDataCell{cROI},'r','Linewidth',1.2);
+            plot(xRange,LDataCell{cROI},'b','Linewidth',1.2);
+        end
+        RDataMtx = cell2mat(RDataCell);
+        LDataMtx = cell2mat(LDataCell);
+        CategChoiceData = (sum(RDataMtx) - sum(LDataMtx))/nCategROI;
+        
+        %% processing Gaussian data
+        cnGauNumber =  ROITypeNum(3);
+         BoundFracData_Callback(hObject, eventdata, handles,0); % check if ROI fraction was biased
+        cCategTunParas = WorkModelPara.gausCategParaDef;
+        TuningPeakNum = cnGauNumber;
+        TunPeakData = linspace(-1,1,TuningPeakNum);
+        if length(unique(WorkModelPara.Weights)) > 1
+           WeightNum = TuningPeakNum * WorkModelPara.Weights;
+           BiasFracTunNum = round(WeightNum(WeightNum > 1));
+           BiasFracTun = find(WeightNum > 1);
+           BiasROINum = sum(BiasFracTunNum);
+           BiasTunPeak = zeros(1,BiasROINum); 
+           k = 1;
+           for cBias = 1 : length(BiasFracTunNum)
+               BiasTunPeak(k:k + BiasFracTunNum(cBias)-1) = TunPeakData(BiasFracTun(cBias));
+               k = k + BiasFracTunNum(cBias);
+           end
+           RestTunPeak = linspace(-1,1,TuningPeakNum - sum(BiasFracTunNum));
+           UsedTunPeak = [BiasTunPeak,RestTunPeak];
+           
+        else
+            UsedTunPeak = TunPeakData;
+        end
+        
+        if ~WorkModelPara.IsRandWid
+            %         TunPeakData = linspace(WorkModelPara.BoundScale(1),WorkModelPara.BoundScale(2),TuningPeakNum);
+            TunROIFun = cell(TuningPeakNum,1);
+            for cROI = 1 : TuningPeakNum
+                TunROIFun{cROI} = @(x) WorkModelPara.gausCategFun(cCategTunParas(1),UsedTunPeak(cROI),cCategTunParas(2),cCategTunParas(3),x);
+            end
+        else
+            if sum(WorkModelPara.WidTypeFrac) >= 1
+                error('The rand ROI width fraction should not be more than 1');
+            else
+                nFracROIs = round(cnGauNumber * WorkModelPara.WidTypeFrac);
+                if sum(nFracROIs) > cnGauNumber
+                    error('ROINum exceed total ROI numbers');
+                else
+                    ROIWidTypes = [];
+                    for cFrac = 1 : length(nFracROIs)
+                        ROIWidTypes = [ROIWidTypes,repmat(WorkModelPara.WidTypes(cFrac),1,nFracROIs(cFrac))];
+                    end
+                    RestROINum = cnGauNumber - sum(nFracROIs);
+                    if RestROINum > 0
+                        ExtraROIs = randsample(length(nFracROIs),RestROINum,true);
+                        ROIWidTypes = [ROIWidTypes,WorkModelPara.WidTypes(ExtraROIs)];
+                    end
+                    UsedROIWidTypes = Vshuffle(ROIWidTypes);
+                    
+                    TunROIFun = cell(TuningPeakNum,1);
+                    for cROI = 1 : TuningPeakNum
+                        TunROIFun{cROI} = @(x) WorkModelPara.gausCategFun(cCategTunParas(1),UsedTunPeak(cROI),UsedROIWidTypes(cROI),cCategTunParas(3),x);
+                    end
+                end
+            end
+        end
+        
+        BaseROIRespDataAll = cell(TuningPeakNum,1);
+        UsedColor = parula(TuningPeakNum);
+%         axes(handles.CategROIsAxes)
+%         cla
+%         hold on
+        for cROI = 1 : TuningPeakNum
+            cROIFun = TunROIFun{cROI};
+            cROIData = cROIFun(xRange);
+            plot(xRange,cROIData,'Color',UsedColor(cROI,:),'linewidth',1.4);
+            BaseROIRespDataAll{cROI} = cROIData * sign(UsedTunPeak(cROI));
+        end
+        % calculate the population output, left as negtive value
+        PopuMtxData = cell2mat(BaseROIRespDataAll);
+        popuOutData = sum(PopuMtxData);
+        GauChoiceData = (popuOutData - min(popuOutData))/(max(popuOutData) - min(popuOutData))*2-1; % norm to [-1 1]
+        %
+        LROIInds = UsedTunPeak < 0;
+        RROIInds = UsedTunPeak > 0;
+        LPopuData = -sum(cell2mat(BaseROIRespDataAll(LROIInds)))/sum(LROIInds);
+        RPopuData = sum(cell2mat(BaseROIRespDataAll(RROIInds)))/sum(RROIInds);
+        
+        LPopuDataNor = LPopuData / max(LPopuData);
+        RPopuDataNor = RPopuData / max(RPopuData);
+        
+        LAvgData = mean(LDataMtx) * WorkModelPara.CategGauWeights(1) + LPopuDataNor * WorkModelPara.CategGauWeights(2);
+        RAvgData = mean(RDataMtx) * WorkModelPara.CategGauWeights(1) + RPopuDataNor * WorkModelPara.CategGauWeights(2);
+        
+        WorkModelPara.LRPopuRawData{1} = LAvgData;
+        WorkModelPara.LRPopuRawData{2} = RAvgData;
+        
+        %% adding noisy ROIs
+%         NoisyROINum = ROITypeNum(4);
+         WeightSums = CategChoiceData * WorkModelPara.CategGauWeights(1) + GauChoiceData * WorkModelPara.CategGauWeights(2);
+         NorWeightsSum = (WeightSums - min(WeightSums))/(max(WeightSums) - min(WeightSums))*2 - 1;
+         ChoiceData = NorWeightsSum;
+        
+        %%
     otherwise
         warning('Undefined baseROI type');
         return;
@@ -567,6 +785,8 @@ NewChoiceFunSlope = diff(NewFunc,Newx);
 NewChoiceFunSlopehandle = matlabFunction(NewChoiceFunSlope);
 WorkModelPara.DeriveFun = NewChoiceFunSlopehandle; % handles with five input request
 WorkModelPara.ChoiceDataFitMD = ffit;
+
+PoolSumDataPlot_Callback(hObject, eventdata, handles);
 
 UncertaintyFunUpdate(handles);
 if strcmpi(get(handles.SlopeChangeAxes,'visible'),'on')
@@ -625,6 +845,7 @@ else
 end
 
 UncertaintyFunUpdate(handles);
+WorkModelPara.xRange = linspace(-1,1,InputxDataNum);
 CategROICal_Callback(hObject, eventdata, handles);
 
 % Hints: get(hObject,'String') returns contents of xDataNums as text
@@ -950,11 +1171,13 @@ cla;
 %%
 hold on
 hl1 = plot(WorkModelPara.xRange,FactorOnCHoiceData,'r','linewidth',1.4);
-hl2 = plot(WorkModelPara.xRange,FactorOnChoiceData,'k','linewidth',1.4);
+hl2 = plot(WorkModelPara.xRange,FactorOnChoiceData,'k','linewidth',1.4,'linestyle','--');
 hl3 = plot(WorkModelPara.xRange,WorkModelPara.PopuChoiceData,'b','linewidth',1.4);
 text(Finalfit.u,FactorBoundV,{sprintf('Bound%.4f',Finalfit.u);sprintf('Slope%.2f',SlopeD)});
 legend([hl1,hl2,hl3],{'Final curve','Raw final curve','RawChoiceCurve'},'Box','off','FontSize',10,'Location','Northwest');
 set(gca,'ylim',[-1.1 1.1]);
+
+WorkModelPara.SlopeV = [max(ChoiceSlopeData),abs(SlopeD)];
 %%
 % saveas(gcf,'OverAll figure plot savage');
 % print(gcf,'-painters','OverAll figure plot savage','-dpdf');
@@ -1042,7 +1265,7 @@ function CategNeuTypes_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-set(hObject,'String',{'Sigmoidal';'Gaussian'},'Value',1,'FontSize',12);
+set(hObject,'String',{'Sigmoidal';'Gaussian';'MixedPopu'},'Value',1,'FontSize',12);
 
 
 
@@ -1109,3 +1332,291 @@ function GauModuScale_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in PoolSumDataPlot.
+function PoolSumDataPlot_Callback(hObject, eventdata, handles)
+% hObject    handle to PoolSumDataPlot (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global WorkModelPara
+% Hint: get(hObject,'Value') returns toggle state of PoolSumDataPlot
+cState = get(handles.PoolSumDataPlot,'Value');
+if cState
+    if ~isempty(WorkModelPara.LRPopuRawData{1})
+        if isempty(WorkModelPara.LRPopuRawFig)
+            WorkModelPara.LRPopuRawFig = figure('position',[100 100 420 360]);
+            hold on
+        else
+            figure(WorkModelPara.LRPopuRawFig);
+            clf;
+            hold on
+        end
+        hl1 = plot(WorkModelPara.xRange,WorkModelPara.LRPopuRawData{1},'b','linewidth',1.4);
+        hl2 = plot(WorkModelPara.xRange,WorkModelPara.LRPopuRawData{2},'r','linewidth',1.4);
+        set(gca,'xtick',-1:0.5:1);
+        xlabel('Octave');
+        ylabel('Activity');
+        set(gca,'FontSize',14);
+        legend([hl1,hl2],{'LPool','RPool'},'Location','east','box','off');
+    else
+        warning('Pooling sum data is empty');
+    end
+else
+    if ishandle(WorkModelPara.LRPopuRawFig)
+        close(WorkModelPara.LRPopuRawFig);
+        WorkModelPara.LRPopuRawFig = [];
+    end
+end
+
+function BoundFracData_Callback(hObject, eventdata, handles,varargin)
+% hObject    handle to BoundFracData (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global WorkModelPara
+% Hints: get(hObject,'String') returns contents of BoundFracData as text
+%        str2double(get(hObject,'String')) returns contents of BoundFracData as a double
+IsCategCalUpdate = 1;
+if nargin < 4
+    IsCategCalUpdate = 1;
+else
+    IsCategCalUpdate = varargin{1};
+end
+
+cPeakFrac = str2num(get(handles.BoundFracData,'String'));
+if isempty(cPeakFrac)
+    WorkModelPara.Weights = zeros(WorkModelPara.CategROINum,0);
+    WorkModelPara.Weights(:) = 1/WorkModelPara.CategROINum;
+%     return;
+else
+    if min(cPeakFrac) < 0
+        Strs = '';
+        for cFrac = 1 : length(cPeakFrac)
+            Strs = [Strs,num2str(cPeakFrac(cFrac),'%.1f')];
+        end
+        set(handles.BoundFracData,'String',Strs);
+        error('FracValue should not less than 0.');
+    end
+    if length(cPeakFrac) == WorkModelPara.CategROINum
+        if sum(cPeakFrac) ~= 1
+            cPeakFrac = cPeakFrac / sum(cPeakFrac);
+        end
+        WorkModelPara.Weights = cPeakFrac;
+    elseif length(cPeakFrac) == 2
+        BiasFrac = cPeakFrac(2);
+        CellFracs = zeros(WorkModelPara.CategROINum,1);
+        if cPeakFrac(1) == 1
+            % bias high fraction to the outer frequency    
+            CellFracs(1) = BiasFrac/2;
+            CellFracs(end) = BiasFrac/2;
+            CellFracs(2:end-1) = (1-BiasFrac)/(WorkModelPara.CategROINum-2);
+        elseif cPeakFrac(1) == 0
+            % bias to the near boundary frequency
+            if mod(WorkModelPara.CategROINum,2)
+                CellFracs(:) = (1 - BiasFrac)/(WorkModelPara.CategROINum - 1);
+                CellFracs(ceil(WorkModelPara.CategROINum/2)) = BiasFrac;
+            else
+                CellFracs(:) = (1 - BiasFrac)/(WorkModelPara.CategROINum - 2);
+                CellFracs((WorkModelPara.CategROINum/2)+[0,1]) = BiasFrac/2;
+            end
+        end
+        WorkModelPara.Weights = CellFracs;
+    end
+end
+if IsCategCalUpdate
+    CategROICal_Callback(hObject, eventdata, handles);
+end
+   
+% --- Executes during object creation, after setting all properties.
+function BoundFracData_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to BoundFracData (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in IsRandVarWid.
+function IsRandVarWid_Callback(hObject, eventdata, handles)
+% hObject    handle to IsRandVarWid (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global WorkModelPara
+cV = get(hObject,'Value');
+% Hint: get(hObject,'Value') returns toggle state of IsRandVarWid
+if cV
+    set(handles.RandWidStrs,'visible','on');
+    set(handles.RandWidFrac,'visible','on');
+    set(handles.ROIWidStrs,'visible','on');
+    cWidStrs = get(handles.RandWidStrs,'String');
+    if isempty(cWidStrs)
+        cWidStrs = '0.2,0.4,0.8';
+        cWidFracs = '0.2,0.2,0.2';
+    else
+        cWidFracs = get(handles.RandWidFrac,'String');
+    end
+    
+    WorkModelPara.IsRandWid = 1;
+    WorkModelPara.WidTypes = str2num(cWidStrs);
+    WorkModelPara.WidTypeFrac = str2num(cWidFracs);
+    RandWinStrsAll = num2str(WorkModelPara.WidTypes,'%.2f,');
+    RandWinStrsAll = RandWinStrsAll(1:end-1);
+    set(handles.RandWidStrs,'String',RandWinStrsAll);
+    RandWinFracStrs = num2str(WorkModelPara.WidTypeFrac,'%.2f,');
+    RandWinFracStrs = RandWinFracStrs(1:end-1);
+    set(handles.RandWidFrac,'String',RandWinFracStrs);
+else
+    WorkModelPara.IsRandWid = 0;
+    set(handles.RandWidStrs,'visible','off');
+    set(handles.RandWidFrac,'visible','off');
+    set(handles.ROIWidStrs,'visible','off');
+end
+% callbacks for re-calculation
+CategROICal_Callback(hObject, eventdata, handles);
+
+% --- Executes during object creation, after setting all properties.
+function IsRandVarWid_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to IsRandVarWid (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+set(hObject,'Value',0);
+
+
+function RandWidStrs_Callback(hObject, eventdata, handles)
+% hObject    handle to RandWidStrs (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global WorkModelPara
+cString = get(hObject,'String');
+IsRandVar = WorkModelPara.IsRandWid;
+% Hints: get(hObject,'String') returns contents of RandWidStrs as text
+%        str2double(get(hObject,'String')) returns contents of RandWidStrs as a double
+if ~isempty(cString) && IsRandVar
+    StrWids = str2num(cString);
+    WorkModelPara.WidTypes = StrWids;
+    cFracStrs = repmat(num2str(1/length(StrWids),'%.2f,'),1,length(StrWids));
+    WorkModelPara.cWidFracs = repmat(1/length(StrWids),1,length(StrWids));
+elseif isempty(cString) && IsRandVar
+    cWidStrs = '0.2,0.4,0.8';
+    cWidFracs = '0.2,0.2,0.2';
+    WorkModelPara.WidTypes = str2num(cWidStrs);
+    WorkModelPara.cWidFracs = str2num(cWidFracs);
+end
+RandWinStrsAll = num2str(WorkModelPara.WidTypes,'%.2f,');
+RandWinStrsAll = RandWinStrsAll(1:end-1);
+set(handles.RandWidStrs,'String',RandWinStrsAll);
+RandWinFracStrs = num2str(WorkModelPara.WidTypeFrac,'%.2f,');
+RandWinFracStrs = RandWinFracStrs(1:end-1);
+set(handles.RandWidFrac,'String',RandWinFracStrs);
+
+CategROICal_Callback(hObject, eventdata, handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function RandWidStrs_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to RandWidStrs (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+set(hObject,'Visible','off');
+
+
+function RandWidFrac_Callback(hObject, eventdata, handles)
+% hObject    handle to RandWidFrac (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global WorkModelPara
+cWTypes = WorkModelPara.WidTypes;
+cString = get(hObject,'String');
+cStrFrac = str2num(cString);
+if length(cStrFrac) ~= length(cWTypes)
+    warndlg('Unequal number of width types and fraction number','Error Number warning');
+    return;
+else
+    WorkModelPara.IsRandWid = 1;
+    WorkModelPara.WidTypeFrac = cStrFrac;
+end
+CategROICal_Callback(hObject, eventdata, handles);
+% Hints: get(hObject,'String') returns contents of RandWidFrac as text
+%        str2double(get(hObject,'String')) returns contents of RandWidFrac as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function RandWidFrac_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to RandWidFrac (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+set(hObject,'Visible','off');
+
+% --- Executes during object creation, after setting all properties.
+function ROIWidStrs_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to RandWidFrac (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+set(hObject,'Visible','off');
+
+
+% --- Executes on button press in SaveResultBut.
+function SaveResultBut_Callback(hObject, eventdata, handles)
+% hObject    handle to SaveResultBut (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global WorkModelPara
+cd('S:\WorkingMDDatas\TestData');
+save(sprintf('%sSave.mat',datestr(now,30)),'WorkModelPara','-v7.3');
+% fprintf('Data was saved in folder: S:\\WorkingMDDatas\TestData.\n');
+
+
+function MixedROIFrac_Callback(hObject, eventdata, handles)
+% hObject    handle to MixedROIFrac (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global WorkModelPara
+cFracStr = get(hObject,'String');
+cFracsAll = str2num(cFracStr);
+if sum(cFracsAll) > 1
+    error('Fraction number should be less than 1');
+else
+    WorkModelPara.BaseROITypes = cFracsAll;
+end
+CategROICal_Callback(hObject, eventdata, handles);
+% Hints: get(hObject,'String') returns contents of MixedROIFrac as text
+%        str2double(get(hObject,'String')) returns contents of MixedROIFrac as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function MixedROIFrac_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to MixedROIFrac (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+set(hObject,'String','0.1,0.13,0.41,0.35');
+set(hObject,'Visible','off');
+
+
+% --- Executes during object creation, after setting all properties.
+function ROIFracStrs_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to ROIFracStrs (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+set(hObject,'Visible','off');
