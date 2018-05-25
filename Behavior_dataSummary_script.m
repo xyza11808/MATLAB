@@ -97,5 +97,5 @@ save BehavDataSumSave.mat SessionDespStrc TableDatas -v7.3
 %%
 % find target session data
 SessDespAll = TableDatas.SessBatch;
-TypeInds = strcmp(SessDespAll,'b52a05');
+TypeInds = strcmp(SessDespAll,'b52a03');
 TableTargetDatas = TableDatas(TypeInds,:);

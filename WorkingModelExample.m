@@ -607,6 +607,10 @@ switch WorkModelPara.CategNeuType
         %% calculate categprical ROI data
         cnCategROI = ROITypeNum(1);
         EachROINum = floor(cnCategROI/2);
+        if EachROINum < 1
+            warning('Not enough categprical ROI number');
+            return;
+        end
         RPreferBound = linspace(WorkModelPara.BoundScale(1),WorkModelPara.BoundScale(2),EachROINum);
         LPreferBound = linspace(WorkModelPara.BoundScale(1),WorkModelPara.BoundScale(2),EachROINum);
         g = WorkModelPara.CategROIparas(1);

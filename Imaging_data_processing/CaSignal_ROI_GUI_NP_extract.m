@@ -923,26 +923,31 @@ function CurrentROINoEdit_Callback(hObject, eventdata, handles)
 global CaSignal
 CurrentTrialNo = str2double(get(handles.CurrentTrialNo,'String'));
 CurrentROINo = str2num(get(handles.CurrentROINoEdit,'String'));
+TotalROIs = str2num(get(handles.nROIsText, 'String'));
+
+if CurrentROINo < TotalROIs
+    cROIstateIndex = CaSignal.ROIStateIndicate(CurrentROINo,:);
+    set(handles.NewROITag,'Value',cROIstateIndex(1));
+    set(handles.OldROITag,'Value',cROIstateIndex(2));
+    set(handles.MissROITag,'Value',cROIstateIndex(3));
+elseif CurrentROINo == TotalROIs
+    set(handles.NewROITag,'Value',1);
+    set(handles.OldROITag,'Value',0);
+    set(handles.MissROITag,'Value',0);
+elseif CurrentROINo > TotalROIs + 1
+    warning('The input ROINum is much larger than total number, maybe an error input number.');
+    return;
+end
+
 if get(handles.Go_to_ROI_def_trial_check_button, 'Value') == 1
     % Load the trial where the current ROI was defined.
     ROI_def_trialNo = CaSignal.ROIinfo(CurrentTrialNo).ROI_def_trialNo(CurrentROINo);
     filename = CaSignal.data_file_names{ROI_def_trialNo};
     if exist(filename,'file')
         open_image_file_button_Callback(hObject, eventdata, handles, filename);
-        
     end
 end
-TotalROIs = str2num(get(handles.nROIsText, 'String'));
-if CurrentROINo < TotalROIs
-    cROIstateIndex = CaSignal.ROIStateIndicate(CurrentROINo,:);
-    set(handles.NewROITag,'Value',cROIstateIndex(1));
-    set(handles.OldROITag,'Value',cROIstateIndex(2));
-    set(handles.MissROITag,'Value',cROIstateIndex(3));
-else
-    set(handles.NewROITag,'Value',1);
-    set(handles.OldROITag,'Value',0);
-    set(handles.MissROITag,'Value',0);
-end
+
 update_ROI_plot(handles);
 guidata(hObject, handles);
 

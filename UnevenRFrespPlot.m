@@ -93,6 +93,8 @@ for nROI = 1 : nROIs
             if ~IsvariedStimDur
                 patch([StimOnF,StimOffF,StimOffF,StimOnF],[0.5 0.5 (nTrials+0.5) (nTrials+0.5)],1,...
                     'FaceColor','g','EdgeColor','none','facealpha',0.4);
+            else
+                line([StimOnF StimOnF],[0.5 (nTrials+0.5)],'Color','m','linewidth',2.4);
             end
 %             if nDBType == 1
                 title(sprintf('%d dB',DBtypes(nDBType)),'FontSize',14);

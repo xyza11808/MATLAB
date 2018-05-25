@@ -1,5 +1,7 @@
+clear
+clc
 
-GrandPath = 'P:\BatchData\batch52';
+GrandPath = 'S:\BatchData\Batch52';
 xpath = genpath(GrandPath);
 nameSplit = (strsplit(xpath,';'))';
 if isempty(nameSplit{end})
@@ -64,4 +66,20 @@ for cP = 1 : nPossTaskPath
         end
     end
 end
+
+%%
+PathSaveFilenames = 'S:\BatchData\batch52\Batch52_usedSess_summaryAdd.txt';
+PathSaveFnPass = 'S:\BatchData\batch52\Batch52_usedSess_summaryAdd_Pass.txt';
+nPathNum = length(NormSessPathTask);
+Taskfid = fopen(PathSaveFilenames,'w+');
+Passfid = fopen(PathSaveFnPass,'w+');
+StrFrmt = '%s\r\n';
+fprintf(Taskfid,'%s\r\n','Task path summary:');
+fprintf(Passfid,'%s\r\n','Passive path summary:');
+for cp = 1 : nPathNum
+    fprintf(Taskfid,StrFrmt,NormSessPathTask{cp});
+    fprintf(Passfid,StrFrmt,NormSessPathPass{cp});
+end
+fclose(Taskfid);
+fclose(Passfid);
 

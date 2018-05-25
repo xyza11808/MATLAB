@@ -25,25 +25,28 @@ if sum(~isFileBadAlign)
 end
 % save TargetImage.mat im_reg_target
 %
-% % 
-% dir_imreg_src = 'F:\batch\batch49\20171205\anm05\test02';
-% cd(dir_imreg_src);
-% dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
-% BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
-% isFileBadAlign = cellfun(@isempty,BadAlignFrame);
-% if sum(~isFileBadAlign)
-%     save BadAlignF.mat BadAlignFrame -v7.3
-% end
+%% % 
+load('P:\BatchData\batch52\20180423\anm05\test01\TargetImage.mat','im_reg_target');
+dir_imreg_src = 'P:\BatchData\batch52\20180423\anm05\test01rf';
+cd(dir_imreg_src);
+dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
+BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
+isFileBadAlign = cellfun(@isempty,BadAlignFrame);
+if sum(~isFileBadAlign)
+    save BadAlignF.mat BadAlignFrame -v7.3
+end
 %
-% dir_imreg_src = 'P:\BatchData\20180417\anm05\test01longdur';
-% cd(dir_imreg_src);
-% dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
-% BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
-% isFileBadAlign = cellfun(@isempty,BadAlignFrame);
-% cd(dir_imreg_dest);
-% if sum(~isFileBadAlign)
-%     save BadAlignF.mat BadAlignFrame -v7.3
-% end
+
+load('P:\BatchData\batch52\20180423\anm05\test02\TargetImage.mat','im_reg_target');
+dir_imreg_src = 'P:\BatchData\batch52\20180423\anm05\test02rf';
+cd(dir_imreg_src);
+dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
+BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
+isFileBadAlign = cellfun(@isempty,BadAlignFrame);
+cd(dir_imreg_dest);
+if sum(~isFileBadAlign)
+    save BadAlignF.mat BadAlignFrame -v7.3
+end
 %
 % cd('K:\batch38\20161212\anm04\test02');
 % [im, ~] = load_scim_data('b38a04_test02_3x_2afc_120um_20161212_170.tif');

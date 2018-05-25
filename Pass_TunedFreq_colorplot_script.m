@@ -10,7 +10,7 @@ clearvars -except fn fp
 fpath = fullfile(fp,fn);
 fid = fopen(fpath);
 tline = fgetl(fid);
-%%
+%
 CusMap = blue2red_2(32,0.8);
 PreferRandDisSum = {};
 m = 1;
@@ -20,7 +20,7 @@ while ischar(tline)
         tline = fgetl(fid);
         continue;
     end
-    %%
+    %
     clearvars -except tline fid CusMap PreferRandDisSum m fn fp
     % passive tuning frequency colormap plot
     load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
@@ -524,7 +524,7 @@ while ischar(tline)
     saveas(hf,'Bound2Behav diff compare scatter plot');
     saveas(hf,'Bound2Behav diff compare scatter plot','png');
     close(hf);
- %%   
+ %
     PreferRandDisSum{m,1} = PassModeInds;
     PreferRandDisSum{m,2} = TaskModeInds;
     

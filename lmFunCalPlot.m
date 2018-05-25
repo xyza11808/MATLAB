@@ -33,12 +33,12 @@ MdCoefData = [MdCoefCI(1,1)+MdCoefCI(2,1)*Fitx,MdCoefCI(1,2)+MdCoefCI(2,2)*Fitx]
 if isplot
     h_data = figure('position',[100 100 550 420]);
     hold on;
-    h1 = scatter(x,y,40,'ro');
-    h2 = plot(Fitx,PredValue,'k','LineWidth',1.6);
+    h1 = scatter(x,y,40,'o','MarkerEdgeColor',[.7 .7 .7]);
+    h2 = plot(Fitx,PredValue,'k','LineWidth',1.4);
     xlabel('predictor variables');
     ylabel('Response');
     title({'Linear regression result';sprintf('R-Squr = %.3f, Slope = %.3f',Rsqr,CoefValue)});
-    legend([h1,h2],{'Real Data','Fit Data'});  %,'Location','southeast'
+%     legend([h1,h2],{'Real Data','Fit Data'});  %,'Location','southeast'
     set(gca,'FontSize',18);
 end
 if nargout > 0

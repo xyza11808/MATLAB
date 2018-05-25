@@ -55,6 +55,14 @@ end
 if nargout > 0
     isDataOutput = 1;
 end
+% ways to define trial types for each stimulus
+IsStimTypeDefineVec = 0;
+if nargin > 11
+    if ~isempty(varargin{7})
+        StimTypeDefineVec = varargin{7};
+        IsStimTypeDefineVec = 1;
+    end
+end
 % Time scale to frame scale
 %
 if length(TimeLength) == 1
@@ -117,7 +125,12 @@ end
 UsingData = max(RawDataAll(TrialInds,ROIindsSelect,FrameScale(1):FrameScale(2)),[],3);
 UsingStim = StimAll(TrialInds);
 UsingStimType = unique(UsingStim);
-UsingTrialType = double(UsingStim>UsingStimType(length(UsingStimType)/2));
+% UsingTrialType = double(UsingStim>UsingStimType(length(UsingStimType)/2));
+if IsStimTypeDefineVec
+    UsingTrialType = StimTypeDefineVec(TrialInds);
+else
+    UsingTrialType = double(UsingStim>16000);
+end
 UsingTrialType = UsingTrialType (:);
 
 %%
@@ -175,11 +188,12 @@ nIters = 1000;
 % end
 
 TestLoss = zeros(nIters,1);
+TestInfoAll = zeros(nIters,1);
 % ProbLoss = zeros(nIters,1);
 % ProbLossCell = cell(nIters,1);
 % isBadRegression = zeros(nIters,1);
 parfor nTimes = 1 : nIters
-    TrainSeeds = randsample(length(UsingStim),round(0.8*length(UsingStim)));
+    TrainSeeds = CusRandSample(UsingStim,round(0.8*length(UsingStim)));
     TrainInds = BaseTraingInds;
     TrainInds(TrainSeeds) = true;
     TestInds = ~TrainInds;
@@ -195,6 +209,8 @@ parfor nTimes = 1 : nIters
     ModelPred = predict(TrainM,TestData);
     TestDataLoss = sum(abs(ModelPred - UsingTrialType(TestInds)))/length(ModelPred);
     TestLoss(nTimes) = TestDataLoss;
+    Info = MutInfo(UsingTrialType(TestInds),ModelPred);
+    TestInfoAll(nTimes) = Info;
     
     % skip model score estimation
 %     SVMWeights = TrainM.Beta;
@@ -307,17 +323,17 @@ if ~isDataOutput
     end
 else
     if nargout == 1
-        varargout{1} = TestLoss;
+        varargout{1} = {TestLoss,TestInfoAll};
     elseif nargout == 2
-        varargout{1} = TestLoss;
+        varargout{1} = {TestLoss,TestInfoAll};
         if isShuffle
             varargout{2} = SUFTestLoss;
         else
             varargout{2} = [];
         end
-    elseif nargout == 4
+    elseif nargout > 2
     %     ProbLoss(logical(isBadRegression)) = [];
-        varargout{1} = TestLoss;
+        varargout{1} = {TestLoss,TestInfoAll};
         varargout{2} = [];
     %     varargout{2} = ProbLoss;
     %         SUFProbLoss(logical(SUFisBadRegression)) = [];

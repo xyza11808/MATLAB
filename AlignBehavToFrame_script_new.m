@@ -1,7 +1,12 @@
 % scripts for align behavior parameters into single frame times
 % H:\data\batch\batch27_PV\20160427\anm01\test02\channel1\im_data_reg_cpu\result_save\NO_Correction
 FrameTime = SavedCaTrials.FrameTime;
-FrameNum = SavedCaTrials.nFrames;
+if iscell(SavedCaTrials.f_raw)
+    FrameNumAll = cellfun(@(x) size(x,2),SavedCaTrials.f_raw);
+    FrameNum = min(FrameNumAll);
+else
+    FrameNum = SavedCaTrials.nFrames;
+end
 TrTime = FrameTime*FrameNum;  %in ms
 FrameTimeBin = 0:FrameTime:TrTime;
 TrStimTime = double(behavResults.Time_stimOnset);
@@ -130,6 +135,11 @@ for cTrs = 1 : nTrs
     StimStrCell = cell(nFreqs,ExtraBaseFunNum);
     RewardBaseFun = zeros(ExtraBaseFunNum,FrameNum);
     AnsBaseFun = zeros(2,ExtraBaseFunNum,FrameNum);
+    if TrRewardTi(cTrs) > 0
+        MaxUsefulF = RewardF + BaseFunIndex(end);
+    else
+        MaxUsefulF = AnsFrameInds + BaseFunIndex(end);
+    end
     for cInds = 1 : ExtraBaseFunNum
         cBaseInds = BaseFunIndex(cInds);
         StimBaseFunc(TrFreqs(cTrs) == StimusType,cInds,cBaseInds+cStimOnsetF) = 1;
@@ -138,7 +148,9 @@ for cTrs = 1 : nTrs
             StimStrCell(:,cInds) = StimBasecStr;  % stimulus base function strs
         end
         if TrRewardTi(cTrs) > 0
-            RewardBaseFun(cInds,RewardF+cBaseInds) = 1;
+            if RewardF+cBaseInds <= FrameNum
+                RewardBaseFun(cInds,RewardF+cBaseInds) = 1;
+            end
         end
         if (TrAnswerTime(cTrs) > 0)
             if (AnsFrameInds + cBaseInds < FrameNum)

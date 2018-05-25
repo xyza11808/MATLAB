@@ -1,4 +1,4 @@
-function varargout =  MultiTimeWinClass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,trOutcome,varargin)
+function varargout = MultiTimeWinClass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,trOutcome,varargin)
 % this function is try to generating different time window to calculate
 % classification performance within given time win, and plot the
 % classificatio rate change time course
@@ -26,6 +26,7 @@ fprintf('Time window number is %d.\n',length(MultiTScale));
 % TrWinClassPerf = zeros(length(MultiTScale),1);
 % TrWinClassModel = cell(length(MultiTScale),1000);
 TrWinClassPerfAll = zeros(length(MultiTScale),1000);
+TrWinClassInfo = zeros(length(MultiTScale),1000);
 TimeWinValue = cell(length(MultiTScale),1);
 for nn = 1 : length(MultiTScale)
     CurrentWin = MultiTScale(nn);
@@ -42,7 +43,8 @@ for nn = 1 : length(MultiTScale)
     AllTloss = TbyTAllROIclass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,...
         TimeWin,[],[],[],trOutcome,1);
 %     TrWinClassPerf(nn) = MinTloss;
-    TrWinClassPerfAll(nn,:) = AllTloss;
+    TrWinClassPerfAll(nn,:) = AllTloss{1};
+    TrWinClassInfo(nn,:) = AllTloss{2};
 %     TrWinClassModel(nn,:) = TrainM;
 end
 
@@ -68,10 +70,11 @@ saveas(h_TWinPlot,'Time Win Correct rate plot');
 saveas(h_TWinPlot,'Time Win Correct rate plot','png');
 close(h_TWinPlot);
 
-save MWinCLassData.mat MultiTScale TrWinClassPerfAll -v7.3
+save MWinCLassData.mat MultiTScale TrWinClassPerfAll TrWinClassInfo -v7.3
 cd ..;
 if nargout > 0
     TimeAccuracyData.TimeScale = MultiTScale;
     TimeAccuracyData.TimeAccu = TrWinClassPerfAll;
+    TimeAccuracyData.TimeInfo = TrWinClassInfo;
     varargout{1} = TimeAccuracyData;
 end

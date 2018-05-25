@@ -249,6 +249,16 @@ v_noise = fminsearch(@(v) ErrorYData(v(1),v(2),v(3),v(4),x),([1 1 0 1])'); % how
 % %   Using the int() function to do integration operation
 % ##############################################################################
 
+% ##############################################################################
+% function "sgolayfilt" was used for appling a Savitzky-Golay filtering to raw data
+
+% A Savitzky¨CGolay filter is a digital filter that can be applied to a set of 
+% digital data points for the purpose of smoothing the data, that is, 
+% to increase the signal-to-noise ratio without greatly distorting the signal
+
+% Savitzky-Golay filter as it preserves the local maxima of the original signal better than the others
+
+% ##############################################################################
 
 %%
 

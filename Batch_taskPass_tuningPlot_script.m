@@ -200,8 +200,13 @@ while ischar(Tasktline) && ischar(Passtline)
         continue;
     end
     try
-        %%
-        clearvars -except Tasktline Passtline
+        %
+        if exist(fullfile(Tasktline,'Tunning_fun_plot_New1s','TunningDataSave.mat'),'file')
+            Tasktline = fgetl(Taskfid);
+            Passtline = fgetl(Passfid);
+            continue;
+        end
+%         clearvars -except Tasktline Passtline
         TaskDataStrc = load(fullfile(Tasktline,'CSessionData.mat'));
         PassDataStrc = load(fullfile(Passtline,'rfSelectDataSet.mat')); 
         BehavDataPath = fullfile(Tasktline,'RandP_data_plots','boundary_result.mat');
@@ -382,11 +387,11 @@ while ischar(Tasktline) && ischar(Passtline)
             saveas(h,sprintf('ROI%d Tunning curve comparison plot',cROI),'png');
             close(h);
         end
-    %%
-        SessionNum = SessionNum + 1;
+    %
+%         SessionNum = SessionNum + 1;
         Tasktline = fgetl(Taskfid);
         Passtline = fgetl(Passfid);
-        %%
+        %
     catch ME
         ErrorNumNew = ErrorNumNew + 1;
         ErrorSessNew{ErrorNumNew} = Tasktline;

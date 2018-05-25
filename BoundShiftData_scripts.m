@@ -199,7 +199,7 @@ while ischar(tline)
         if m == 1
             %
             %                 PPTname = input('Please input the name for current PPT file:\n','s');
-            PPTname = 'BoundShift_SingleNeuTuning';
+            PPTname = 'BoundShift_SingleNeuTuning_withMorph';
             if isempty(strfind(PPTname,'.ppt'))
                 PPTname = [PPTname,'.pptx'];
             end
@@ -213,7 +213,9 @@ while ischar(tline)
         TunFilesAll = dir(fullfile(cTunDataPath,'ROI* Tunning curve comparison plot.png'));
         nFiles = length(TunFilesAll);
         ColorFiles = dir(fullfile(cRespColorMap,'ROI* all behavType color plot.png'));
-        
+        [~,EndInds] = regexp(tline,'result_save');
+        ROIposfilePath = tline(1:EndInds);
+        cMorphfiles = fullfile(ROIposfilePath,'ROI_morph_plot');
         
         CoupleSessPath = fgetl(ff);
         CoupAnmInfo = SessInfoExtraction(CoupleSessPath);
@@ -222,6 +224,10 @@ while ischar(tline)
         CoupTunFileAll = dir(fullfile(CoupcTunDataPath,'ROI* Tunning curve comparison plot.png'));
         CoupnFiles = length(CoupTunFileAll);
         CoupColorFiles = dir(fullfile(CoupcColorPath,'ROI* all behavType color plot.png'));
+        [~,CoupEndInds] = regexp(CoupleSessPath,'result_save');
+        CROIposfilePath = CoupleSessPath(1:CoupEndInds);
+        CoupMorphfiles = fullfile(CROIposfilePath,'ROI_morph_plot');
+        
         %
         if nFiles ~= CoupnFiles
             nCompareFiles = min(nFiles,CoupnFiles);
@@ -245,26 +251,31 @@ while ischar(tline)
             exportToPPTX('addslide');
             cfColorPlot = fullfile(cRespColorMap,sprintf('ROI%d all behavType color plot.png',cf));
             cfTunName = fullfile(cTunDataPath,sprintf('ROI%d Tunning curve comparison plot.png',cf));
+            cfMorph = fullfile(cMorphfiles,sprintf('ROI%d morph plot save.png',cf));
             % Anminfo
             exportToPPTX('addtext',sprintf('Session%d',nSession),'Position',[2 0 2 0.5],'FontSize',24);
             exportToPPTX('addnote',tline);
             exportToPPTX('addpicture',imread(cfColorPlot),'Position',[0 0.5 8 5.3]);
-            exportToPPTX('addpicture',imread(cfTunName),'Position',[2 6.2 3.7 2.8]);
+            exportToPPTX('addpicture',imread(cfMorph),'Position',[0 6.6 2.8 2.1]);
+            exportToPPTX('addpicture',imread(cfTunName),'Position',[2.5 6.2 3.5 2.6]);
             
             CoupColorPlot = fullfile(CoupcColorPath,sprintf('ROI%d all behavType color plot.png',cf));
             CoupleTunName = fullfile(CoupcTunDataPath,sprintf('ROI%d Tunning curve comparison plot.png',cf));
+            CouplrMorph = fullfile(CoupMorphfiles,sprintf('ROI%d morph plot save.png',cf));
             
             exportToPPTX('addpicture',imread(CoupColorPlot),'Position',[8 0.5 8 5.3]);
-            exportToPPTX('addpicture',imread(CoupleTunName),'Position',[12 6.2 3.7 2.8]);
+            exportToPPTX('addpicture',imread(CouplrMorph),'Position',[13.2 6.6 2.5 2.1]);
+            exportToPPTX('addpicture',imread(CoupleTunName),'Position',[10 6.2 3.5 2.6]);
 
             exportToPPTX('addtext',sprintf('Batch:%s Anm: %s Date: %s Field: %s',...
                 Anminfo.BatchNum,Anminfo.AnimalNum,Anminfo.SessionDate,Anminfo.TestNum),...
-                'Position',[5.5 6.5 2 2],'FontSize',20);
+                'Position',[6 6.5 2 2],'FontSize',20);
             exportToPPTX('addtext',sprintf('Batch:%s Anm: %s Date: %s Field: %s',...
                 CoupAnmInfo.BatchNum,CoupAnmInfo.AnimalNum,CoupAnmInfo.SessionDate,CoupAnmInfo.TestNum),...
-                'Position',[9 6.5 2 2],'FontSize',20);
+                'Position',[8 6.5 2 2],'FontSize',20);
             %
         end
+        %
     end
     m = m + 1;
     nSession = nSession + 1;
