@@ -1,4 +1,4 @@
-function post_ROI_calculation
+function post_ROI_calculation_ForBatch
 %this script is used for post analysis of ROI analysis result, need the
 %result mat file of TIFF figure analysis
 

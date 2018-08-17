@@ -200,13 +200,14 @@ while ischar(Tasktline) && ischar(Passtline)
         continue;
     end
     try
-        %
-        if exist(fullfile(Tasktline,'Tunning_fun_plot_New1s','TunningDataSave.mat'),'file')
-            Tasktline = fgetl(Taskfid);
-            Passtline = fgetl(Passfid);
-            continue;
-        end
+        %%
+%         if exist(fullfile(Tasktline,'Tunning_fun_plot_New1s','TunningDataSave.mat'),'file')
+%             Tasktline = fgetl(Taskfid);
+%             Passtline = fgetl(Passfid);
+% %             continue;
+%         end
 %         clearvars -except Tasktline Passtline
+        BoundFreq = 14000;
         TaskDataStrc = load(fullfile(Tasktline,'CSessionData.mat'));
         PassDataStrc = load(fullfile(Passtline,'rfSelectDataSet.mat')); 
         BehavDataPath = fullfile(Tasktline,'RandP_data_plots','boundary_result.mat');
@@ -277,20 +278,29 @@ while ischar(Tasktline) && ischar(Passtline)
 %             % non-miss data
 %             cfreqInds = NonMissFreqs == cfreq;
 %             cFreqDataNM = NonMissData(cfreqInds,:,:);
+
+%             DataStrcNM = MeanMaxSEMCal(NonMissData,NonMissFreqs,Framescales);
             DataStrcNM = MeanMaxSEMCal(NonMissData,NonMissFreqs,Framescales);
             NonMissTunningFun = DataStrcNM.MeanValue;
             NonMissTunningFunSEM = DataStrcNM.SEMValue;
             NonMissTunningCellData = DataStrcNM.MaxIndsDataAll;
-
+            NMTypeNumber = DataStrcNM.TypeNumber;
+            NMTypeFreqs = log2(DataStrcNM.CurrentTypes/BoundFreq);
             %correct data
 %             cfreqInds = CorrTrFreqs == cfreq;
 %             cFreqDataCorr = CorrTrData(cfreqInds,:,:);
+
+%             DataStrcCorr = MeanMaxSEMCal(CorrTrData,CorrTrFreqs,Framescales);
             DataStrcCorr = MeanMaxSEMCal(CorrTrData,CorrTrFreqs,Framescales);
             CorrTunningFun = DataStrcCorr.MeanValue;
             CorrTunningFunSEM = DataStrcCorr.SEMValue;
             CorrTunningCellData = DataStrcCorr.MaxIndsDataAll;
+            CorrTypeNum = DataStrcCorr.TypeNumber;
+            CorrTypeFreqs = log2(DataStrcCorr.CurrentTypes/BoundFreq);
 %         end
-
+        if size(NonMissTunningFun,1) ~= size(CorrTunningFun,1)
+            
+        end
         % passive data extaction
         PassiveData = PassDataStrc.f_percent_change;
         nPassROI = size(PassiveData,2);
@@ -303,10 +313,12 @@ while ischar(Tasktline) && ischar(Passtline)
         PassFrameScale = [(PassDataStrc.frame_rate+1+DataRespWinF(1)),(PassDataStrc.frame_rate++DataRespWinF(2))];
         if length(unique(PassDataStrc.sound_array(:,2))) > 1
             UsedDBinds = PassDataStrc.sound_array(:,2) == 70 | PassDataStrc.sound_array(:,2) == 75;
+%             PassRespData = MeanMaxSEMCal(PassiveData(UsedDBinds,:,:),PassDataStrc.sound_array(UsedDBinds,1),PassFrameScale);
             PassRespData = MeanMaxSEMCal(PassiveData(UsedDBinds,:,:),PassDataStrc.sound_array(UsedDBinds,1),PassFrameScale);
             PassFreqTypes = unique(PassDataStrc.sound_array(UsedDBinds,1));
             nPassFreq = length(PassFreqTypes);
         else
+%             PassRespData = MeanMaxSEMCal(PassiveData,PassDataStrc.sound_array(:,1),PassFrameScale);
             PassRespData = MeanMaxSEMCal(PassiveData,PassDataStrc.sound_array(:,1),PassFrameScale);
             PassFreqTypes = unique(PassDataStrc.sound_array(:,1));
             nPassFreq = length(PassFreqTypes);
@@ -324,7 +336,7 @@ while ischar(Tasktline) && ischar(Passtline)
             PassTunCellData = PassRespData.MaxIndsDataAll;
 %         end
         %
-        BoundFreq = 16000;
+        
         TaskFreqOctave = log2(FreqTypes/BoundFreq);
         FreqStrs = cellstr(num2str(FreqTypes(:)/1000,'%.1f'));
         PassFreqOctave = log2(PassFreqTypes/BoundFreq);
@@ -336,7 +348,7 @@ while ischar(Tasktline) && ischar(Passtline)
 
         save TunningDataSave.mat NonMissTunningFun CorrTunningFun PassTunningfun TaskFreqOctave ...
             PassFreqOctave BoundFreq NonMissTunningFunSEM CorrTunningFunSEM PassTunningfunSEM ...
-            PassTunCellData CorrTunningCellData NonMissTunningCellData -v7.3
+            PassTunCellData CorrTunningCellData NonMissTunningCellData NMTypeNumber CorrTypeNum -v7.3
         IsModuIndexExists = 0;
         if exist('NearBoundAmpDiffSig.mat','file')
             load('NearBoundAmpDiffSig.mat','TaskBoundModuIndex');
@@ -345,13 +357,13 @@ while ischar(Tasktline) && ischar(Passtline)
         for cROI = 1 : nROIs
             %
             PassPlotInds = abs(PassFreqOctave) < 1.03;
-            h = figure('position',[220 300 550 420]);
+            h = figure('position',[220 300 550 420],'visible','off');
             hold on;
             cROItaskNM = NonMissTunningFun(:,cROI);
             cROItaskCorr = CorrTunningFun(:,cROI);
             cROIpass = PassTunningfun(:,cROI);
-            l1 = errorbar(TaskFreqOctave,cROItaskNM,NonMissTunningFunSEM(:,cROI),'c-o','LineWidth',1.6);
-            l2 = errorbar(TaskFreqOctave,cROItaskCorr,CorrTunningFunSEM(:,cROI),'r-o','LineWidth',1.6);
+            l1 = errorbar(NMTypeFreqs,cROItaskNM,NonMissTunningFunSEM(:,cROI),'c-o','LineWidth',1.6);
+            l2 = errorbar(CorrTypeFreqs,cROItaskCorr,CorrTunningFunSEM(:,cROI),'r-o','LineWidth',1.6);
             l3 = errorbar(PassFreqOctave(PassPlotInds),cROIpass(PassPlotInds),PassTunningfunSEM(PassPlotInds,cROI),'k-o','LineWidth',1.6);
             xlabel('Frequency (kHz)');
             ylabel('Mean \DeltaF/F (%)');
@@ -387,7 +399,7 @@ while ischar(Tasktline) && ischar(Passtline)
             saveas(h,sprintf('ROI%d Tunning curve comparison plot',cROI),'png');
             close(h);
         end
-    %
+    %%
 %         SessionNum = SessionNum + 1;
         Tasktline = fgetl(Taskfid);
         Passtline = fgetl(Passfid);

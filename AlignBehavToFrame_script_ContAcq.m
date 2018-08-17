@@ -5,17 +5,26 @@
 
 % FrameTimeBin = 0:FrameTime:TrTime;
 TrChoice = double(behavResults.Action_choice);
-NMChoiceInds = TrChoice ~= 2;
-TrStimTime = double(behavResults.Time_stimOnset(NMChoiceInds));
-TrRewardTi = double(behavResults.Time_reward(NMChoiceInds));
-TrAnswerTime = double(behavResults.Time_answer(NMChoiceInds));
-TrTrialTypes = double(behavResults.Trial_Type(NMChoiceInds));
-TrFreqs = double(behavResults.Stim_toneFreq(NMChoiceInds));
+NMInds = TrChoice ~= 2;
 
-TrIsProbTrs = double(behavResults.Trial_isProbeTrial(NMChoiceInds));
+if IsExcludeInds
+    BehavExcludesInds = NMInds(:) | ExcludedTrInds(:);
+    DataExcludeInds = NMInds(~ExcludedTrInds(:));
+else
+    BehavExcludesInds = NMInds;
+    DataExcludeInds = NMInds;
+end
+
+TrStimTime = double(behavResults.Time_stimOnset(BehavExcludesInds));
+TrRewardTi = double(behavResults.Time_reward(BehavExcludesInds));
+TrAnswerTime = double(behavResults.Time_answer(BehavExcludesInds));
+TrTrialTypes = double(behavResults.Trial_Type(BehavExcludesInds));
+TrFreqs = double(behavResults.Stim_toneFreq(BehavExcludesInds));
+
+TrIsProbTrs = double(behavResults.Trial_isProbeTrial(BehavExcludesInds));
 
 FrameTime = SavedCaTrials.FrameTime;
-FrameNumAll = cellfun(@(x) size(x,2),SavedCaTrials.f_raw(NMChoiceInds));
+FrameNumAll = cellfun(@(x) size(x,2),SavedCaTrials.f_raw(BehavExcludesInds));
 FrameNum = min(FrameNumAll);
 TrTime = FrameTime*FrameNumAll;  %in ms
 ProbStimStr = squeeze(behavSettings.probe_stimType);
@@ -213,7 +222,7 @@ nIters = nfolds;
 TrainPerc = 0.75;
 nROIs = size(nnspike{1},1);
 ROImdCoef = cell(nROIs,nIters);
-UsedSpikeData = nnspike(NMChoiceInds);
+UsedSpikeData = nnspike(DataExcludeInds);
 
 nTrs = size(UsedSpikeData,1);
 PredCoef = zeros(nROIs,nIters);
@@ -252,7 +261,7 @@ parfor croi = 1 : nROIs
         cvmdCoef  = cvglmnetCoef(cvmdfit,'lambda_1se');
         ROImdCoef{croi,citer} = cvmdCoef;
         PredTestData = cvglmnetPredict(cvmdfit,TestParaData,[],'response',false);
-        glmnetCoefTabel = array2table(cvmdCoef','VariableNames',glmnetCoefStrs');
+%         glmnetCoefTabel = array2table(cvmdCoef','VariableNames',glmnetCoefStrs');
         %
         CVPredData{croi,citer} = PredTestData;  % cvPredDataRe = reshape(cvPredData,500,[]);
         % figure;imagesc(cvPredDataRe');

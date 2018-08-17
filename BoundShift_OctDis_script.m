@@ -21,8 +21,8 @@ while ischar(tline)
     end
     
     % passive tuning frequency colormap plot
-    load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
-    cd(fullfile(tline,'Tunning_fun_plot_New1s'));
+    load(fullfile(tline,'Tunning_fun_plot_New1s_Minmax','TunningDataSave.mat'));
+    cd(fullfile(tline,'Tunning_fun_plot_New1s_Minmax'));
     
     %     BehavBoundData = BehavBoundfile.boundary_result.Boundary - 1;
     %     if isempty(BehavBoundData)
@@ -55,8 +55,6 @@ while ischar(tline)
         PassMaxIndsOctave(cROI) = PassUsedOctave(PassmaxInds(cROI));
     end
     
-    
-    
     % extract task session maxium responsive frequency index
     % UsedOctaveInds = ~(abs(PassFreqOctave) > 1);
     TaskUsedOctave = TaskFreqOctave(:);
@@ -84,9 +82,13 @@ while ischar(tline)
     tline = fgetl(fid);
     m = m + 1;
 end
+
+%%
 cd('E:\DataToGo\data_for_xu\BoundShiftData');
-save PreferDisSave.mat PreferRandDisSum -v7.3
-load('E:\DataToGo\data_for_xu\BoundShiftData\SessBlockBoundData.mat');
+save PreferDisSaveModified_NewBlock.mat PreferRandDisSum -v7.3
+% load('E:\DataToGo\data_for_xu\BoundShiftData\SessBlockBoundData.mat');
+Numbers = xlsread('E:\DataToGo\data_for_xu\BoundShiftData\BoundShift_NewBlock_TypeInds\NewBlock_TypeInds.xlsx');
+
 %%
 ShapedBlockInds = logical(reshape(SessBlockBound',[],1));
 
@@ -167,4 +169,33 @@ LowSessAvgOct = cellfun(@mean,LowSessDataCell);
 HighSessAvgOct = cellfun(@mean,HighSessDataCell);
 CompareScatterPlot(LowSessAvgOct,HighSessAvgOct);
 
+%% compare single ROI BF distribution for low and high boundary blocks
+SessTypeInds = Numbers;
+LowSessInds = SessTypeInds(:,1) + 1;
+ROIBFAlls = PreferRandDisSum(:,4:5);
+TaskBFsAll = (reshape(ROIBFAlls(:,1),2,[]))';
+PassBFsAll = (reshape(ROIBFAlls(:,2),2,[]))';
+
+
+nSess = size(ROIBFAlls,1)/2;
+LowSessBFs = cell(nSess,2); % first column is task, second column is passive
+HighSessBFs = cell(nSess,2);
+for css = 1 : nSess
+    LowSessBFs(css,1) = TaskBFsAll(css,LowSessInds(css));
+    HighSessBFs(css,1) = TaskBFsAll(css,3-LowSessInds(css));
+    
+    LowSessBFs(css,2) = PassBFsAll(css,LowSessInds(css));
+    HighSessBFs(css,2) = PassBFsAll(css,3-LowSessInds(css));
+end
+%%
+cSess = 12;
+close
+cSessLowBFs = TaskBFsAll{cSess,SessTypeInds(cSess,1)+1};
+cSessHighBFs = TaskBFsAll{cSess,2-SessTypeInds(cSess,1)};
+[Lowy,Lowx] = ecdf(cSessLowBFs);
+[Highy,Highx] = ecdf(cSessHighBFs);
+figure;
+hold on
+plot(Lowx,Lowy,'b');
+plot(Highx,Highy,'r');
 

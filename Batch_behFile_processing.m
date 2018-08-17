@@ -1,5 +1,5 @@
 
-GrandPath = 'H:\data\behavior\2p_data\behaviro_data\batch52\Data';
+GrandPath = 'H:\data\behavior\2p_data\behaviro_data\batch53';
 xpath = genpath(GrandPath);
 nameSplit = strsplit(xpath,';');
 if isempty(nameSplit{end})
@@ -29,7 +29,7 @@ for n = 1 : DirLength
     cd(cPATH);
     for nfile = 1 : matFileLength
         cfilename = matlist(nfile).name;
-        try
+%         try
             xxxx = load(cfilename);
             [~,SessionType] = behavScore_prob(xxxx.behavResults,xxxx.behavSettings,cfilename,0);
             if strcmpi(SessionType,'RandompuretoneProb') || strcmpi(SessionType,'Randompuretone')
@@ -44,11 +44,11 @@ for n = 1 : DirLength
                 NorPTsession(nNormalPTPath) = {fullfile(cPATH,cfilename)};
                 nNormalPTPath = nNormalPTPath + 1;
             end
-        catch ME
-            ErrorNum = ErrorNum + 1;
-            cfPath = fullfile(cPATH,cfilename);
-            ErrorFname{ErrorNum} = cfPath;
-        end
+%         catch ME
+%             ErrorNum = ErrorNum + 1;
+%             cfPath = fullfile(cPATH,cfilename);
+%             ErrorFname{ErrorNum} = cfPath;
+%         end
     end
     if status
         fprintf('!!!!Folder path %s error exist!!!!\n',cPATH);

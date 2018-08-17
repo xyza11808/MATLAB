@@ -9,7 +9,7 @@ if ~fi
 end
 cd(fp);
 load(fullfile(fp,'SessionFrameProj.mat'));
-% load(fn);
+load(fn);
 if ~exist('ROIinfoBU','var')
     ROIinfoBU = ROIinfo(1);
 end
@@ -161,10 +161,16 @@ while ischar(tline)
         tline = fgetl(fid);
         continue;
     end
+    
     %
     [~,EndInds] = regexp(tline,'result_save');
     ROIposfilePath = tline(1:EndInds);
     cd(ROIposfilePath);
+%     if exist(fullfile(ROIposfilePath,'ROI_morph_plot','MorphDataAll.mat'),'file')
+%         tline = fgetl(fid);
+%         continue;
+%     end
+    
     ROIposfilePosi = dir(fullfile(ROIposfilePath,'ROIinfo*.mat'));
     load(ROIposfilePosi(1).name)
     if ~exist('ROIinfoBU','var')
@@ -249,7 +255,7 @@ while ischar(tline)
 
     %    subplot(4,30,k)
        %
-       hf = figure;
+       hf = figure('visible','off');
        imagesc(ROISelectData,[0 ROImaxlim]);
        line(AdjROIpos(:,1),AdjROIpos(:,2),'Color','r','linewidth',1.6);
        text(AdjROIcenter(1),AdjROIcenter(2),num2str(cROI),'color','g');

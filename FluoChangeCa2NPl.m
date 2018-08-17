@@ -173,7 +173,8 @@ else
         for n=1:TrialNum
             cRawData = CaTrials.f_raw{n};
             cRawEndData = cRawData(:,end-5:end);
-            if mean(cRawEndData(:)) < 20
+            cRawNearEndData = cRawData(:,end-15:end-11);
+            if mean(cRawEndData(:)) < (mean(cRawNearEndData(:))/4) && mean(cRawNearEndData(:)) > 20
                 warning('Empty frames exists at trial %d',n);
                 cRawData(:,end-9:end) = [];
                 TrDataNumVec(n) = TrDataNumVec(n) - 10;

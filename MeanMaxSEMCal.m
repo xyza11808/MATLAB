@@ -1,15 +1,23 @@
-function DataStrc = MeanMaxSEMCal(Data,TrTypes,FrameScale)
+function DataStrc = MeanMaxSEMCal(Data,TrTypes,FrameScale,varargin)
 % small function used to calculate the mean max value and corresponded sem
 % using input data set
+IsMinMaxOut = 0;
+if nargin > 3
+    if ~isempty(varargin{1})
+        IsMinMaxOut = varargin{1};
+    end
+end
+
 TrTypeAll = unique(TrTypes);
 nTypes = length(TrTypeAll);
 nROIs = size(Data,2);
 DataMeanValues = zeros(nTypes,nROIs);
 DataSEMValue = zeros(nTypes,nROIs);
 ROITypeIndsData = cell(nTypes,nROIs);
+TypeIndsNum = zeros(nTypes,1);
  for cType = 1 : nTypes
      cTypeInds = TrTypes == TrTypeAll(cType);
-     
+     TypeIndsNum(cType) = sum(cTypeInds);
      for cROI = 1 : nROIs
          cROItypeData = squeeze(Data(cTypeInds,cROI,:));
          if length(cROItypeData) == numel(cROItypeData)
@@ -22,6 +30,16 @@ ROITypeIndsData = cell(nTypes,nROIs);
                 cROItypeMean = (smooth(cROItypeMean,5))';
             end
             cROItypeSEM = std(cROItypeData)/sqrt(size(cROItypeData,1));
+            if IsMinMaxOut
+                SingleTrRespValue = mean(cROItypeData(:,FrameScale(1):FrameScale(2)),2);
+                if length(SingleTrRespValue) > 9 % more than ten trials
+                    LowHighBound = prctile(SingleTrRespValue,[10 90]);
+                    UsedInds = SingleTrRespValue > LowHighBound(1) & SingleTrRespValue < LowHighBound(2);
+
+                    cROItypeMean = mean(cROItypeData(UsedInds,:));
+                    cROItypeSEM = std(cROItypeData(UsedInds,:))/sqrt(sum(UsedInds));
+                end
+            end
          end
          
          [cMaxvalue,cMaxInds] = max(cROItypeMean(FrameScale(1):FrameScale(2)));
@@ -36,6 +54,8 @@ ROITypeIndsData = cell(nTypes,nROIs);
  DataStrc.MeanValue = DataMeanValues;
  DataStrc.SEMValue = DataSEMValue;
  DataStrc.MaxIndsDataAll = ROITypeIndsData;
+ DataStrc.CurrentTypes = TrTypeAll;
+ DataStrc.TypeNumber = TypeIndsNum;
 %          
 %      cTypedData = Data(cTypeInds,:,:);
 %      cTypeMean = squeeze(mean(cTypedData));

@@ -560,7 +560,7 @@ for i = 1:length(roi_pos) % num ROIs
     cROIstate = ROIstateAll(i,:);
     if i == CurrentROINo
         lw = 2;
-        fsize = 18;
+        fsize = 24;
     else
         lw = 1;
         fsize = 15;

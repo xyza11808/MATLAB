@@ -1,21 +1,31 @@
 % scripts for align behavior parameters into single frame times
 % H:\data\batch\batch27_PV\20160427\anm01\test02\channel1\im_data_reg_cpu\result_save\NO_Correction
 FrameTime = SavedCaTrials.FrameTime;
-if iscell(SavedCaTrials.f_raw)
-    FrameNumAll = cellfun(@(x) size(x,2),SavedCaTrials.f_raw);
-    FrameNum = min(FrameNumAll);
-else
+% if iscell(SavedCaTrials.f_raw)
+%     FrameNumAll = cellfun(@(x) size(x,2),SavedCaTrials.f_raw);
+%     FrameNum = min(FrameNumAll);
+% else
     FrameNum = SavedCaTrials.nFrames;
-end
+% end
 TrTime = FrameTime*FrameNum;  %in ms
 FrameTimeBin = 0:FrameTime:TrTime;
-TrStimTime = double(behavResults.Time_stimOnset);
-TrRewardTi = double(behavResults.Time_reward);
-TrAnswerTime = double(behavResults.Time_answer);
-TrTrialTypes = double(behavResults.Trial_Type);
-TrFreqs = double(behavResults.Stim_toneFreq);
-TrChoice = double(behavResults.Action_choice);
-TrIsProbTrs = double(behavResults.Trial_isProbeTrial);
+TrChoiceRaw = double(behavResults.Action_choice);
+NMInds = TrChoiceRaw ~= 2;
+if IsExcludeInds
+    BehavExcludesInds = NMInds(:) | ExcludedTrInds(:);
+    DataExcludeInds = NMInds(~ExcludedTrInds(:));
+else
+    BehavExcludesInds = NMInds;
+    DataExcludeInds = NMInds;
+end
+TrChoice = TrChoiceRaw(BehavExcludesInds);
+TrStimTime = double(behavResults.Time_stimOnset(BehavExcludesInds));
+TrRewardTi = double(behavResults.Time_reward(BehavExcludesInds));
+TrAnswerTime = double(behavResults.Time_answer(BehavExcludesInds));
+TrTrialTypes = double(behavResults.Trial_Type(BehavExcludesInds));
+TrFreqs = double(behavResults.Stim_toneFreq(BehavExcludesInds));
+
+TrIsProbTrs = double(behavResults.Trial_isProbeTrial(BehavExcludesInds));
 
 nTrs = length(TrStimTime);
 ProbStimStr = squeeze(behavSettings.probe_stimType);
@@ -31,7 +41,7 @@ DefStimFIndex = zeros(FrameNum,nFreqs);  % default index values
  StimoffSTrs = StimoffSTrs';
 %  TaskParaStrs = {'LLick','RLick','LAns','RAns',StimSTrs{:},StimoffSTrs{:},'Reward','LTypeOn','LTypeOff',...
 %  'RTypeOn','RTypeOff','EstimateSpike'};
- TaskParaStrs = {'LAns','RAns',StimSTrs{:},'LTypeOn','RTypeOn','Reward'};
+ TaskParaStrs = {'LAns','RAns',StimSTrs{:},'Reward'}; %,'LTypeOn','RTypeOn'
 %
 w = gausswin(5,1);
 TrTaskParaAll = cell(nTrs,1);
@@ -114,21 +124,21 @@ for cTrs = 1 : nTrs
             RewardIndex(RewardF) = 1;
         end
     end
-    % trial type parameter
-    LeftTypeOnIndex = zeros(FrameNum,1);   %% task parameter
-    LeftTypeOffIndex = zeros(FrameNum,1);   %% task parameter
-    RightTypeOnIndex = zeros(FrameNum,1);   %% task parameter
-    RightTypeOffIndex = zeros(FrameNum,1);   %% task parameter
-    
-    cStimOnsetF = floor(TrStimTime(cTrs)/FrameTime);
-    cStimOffsetF = floor((TrStimTime(cTrs)+300)/FrameTime);
-    if TrTrialTypes(cTrs)
-        RightTypeOnIndex(cStimOnsetF) = 1;
-        RightTypeOffIndex(cStimOffsetF) = 1;
-    else
-        LeftTypeOnIndex(cStimOnsetF) = 1;
-        LeftTypeOffIndex(cStimOffsetF) = 1;
-    end
+%     % trial type parameter
+%     LeftTypeOnIndex = zeros(FrameNum,1);   %% task parameter
+%     LeftTypeOffIndex = zeros(FrameNum,1);   %% task parameter
+%     RightTypeOnIndex = zeros(FrameNum,1);   %% task parameter
+%     RightTypeOffIndex = zeros(FrameNum,1);   %% task parameter
+%     
+%     cStimOnsetF = floor(TrStimTime(cTrs)/FrameTime);
+%     cStimOffsetF = floor((TrStimTime(cTrs)+300)/FrameTime);
+%     if TrTrialTypes(cTrs)
+%         RightTypeOnIndex(cStimOnsetF) = 1;
+%         RightTypeOffIndex(cStimOffsetF) = 1;
+%     else
+%         LeftTypeOnIndex(cStimOnsetF) = 1;
+%         LeftTypeOffIndex(cStimOffsetF) = 1;
+%     end
     
     % create the base function for stimulus and reward
     StimBaseFunc = zeros(nFreqs,ExtraBaseFunNum,FrameNum);
@@ -176,7 +186,7 @@ for cTrs = 1 : nTrs
 %         StimFIndex,StimOffIndex,RewardIndex,LeftTypeOnIndex,LeftTypeOffIndex,RightTypeOnIndex,...
 %         RightTypeOffIndex];
     cTrTaskParameters = [LeftAnsFIndex,RightAnsFIndex,...
-        StimFIndex,LeftTypeOnIndex,RightTypeOnIndex,RewardIndex,...
+        StimFIndex,RewardIndex,... %LeftTypeOnIndex,RightTypeOnIndex,
         RewardBaseFun',AnsBaseFunAll',StimBaseFunAll'];
     for nCol = 1:size(cTrTaskParameters,2)
         cTrTaskParameters(:,nCol) = conv(cTrTaskParameters(:,nCol),w,'same');
@@ -184,34 +194,36 @@ for cTrs = 1 : nTrs
     TrTaskParaAll{cTrs} = cTrTaskParameters;
     %
 end
+glmnetCoefStrs = {'ConstantV',TaskParaStrs{:},ReBaseStrs{:},AnsBaseStrs{:},StimBaseStrs{:}};
 TaskParaStrs = {TaskParaStrs{:},ReBaseStrs{:},AnsBaseStrs{:},StimBaseStrs{:},'EstimateSp'};
-%% data preprocessing
-RawData = SavedCaTrials.f_raw;
-[~,DeltaF_F,exclude_inds]=FluoChangeCa2NPl(SavedCaTrials,behavResults,behavSettings,5,'2afc',ROIinfoBU,[]);
-%% spike convertion
-%parameter struc
-TauDiffSPdata = cell(10,1);
-TauSpikeCoef = cell(10,1);
-TauDiffSPdataNS = cell(10,1);
-ROIstd = std(BaseDEFAll,[],2);
-%%
-for nTau = 1 : 10
-    %%
-    V.Ncells = 1;
-    V.T = FrameNum;
-    V.Npixels = 1;
-    V.dt = FrameTime/1000;
-    P.lam = 10;
-    P.gam = 1 - V.dt/nTau; %
-    %%
-    [nnspike,nnCoef,nnspikeNS] = DataFluo2Spike(DeltaF_F,V,P,[],ROIstd); % estimated spike
-    TauDiffSPdata{nTau} = nnspike;
-    TauSpikeCoef{nTau} = nnCoef;
-    TauDiffSPdataNS{nTau} = nnspikeNS;
-end
-save DiffTauSPdata.mat TauDiffSPdata -v7.3
-%
-save newSpikeSave.mat DeltaF_F TrTaskParaAll TauSpikeCoef TauDiffSPdataNS -v7.3
+
+% % % %% data preprocessing
+% % % RawData = SavedCaTrials.f_raw;
+% % % [~,DeltaF_F,exclude_inds]=FluoChangeCa2NPl(SavedCaTrials,behavResults,behavSettings,5,'2afc',ROIinfoBU,[]);
+% % % %% spike convertion
+% % % %parameter struc
+% % % TauDiffSPdata = cell(10,1);
+% % % TauSpikeCoef = cell(10,1);
+% % % TauDiffSPdataNS = cell(10,1);
+% % % ROIstd = std(BaseDEFAll,[],2);
+% % % %%
+% % % for nTau = 1 : 10
+% % %     %%
+% % %     V.Ncells = 1;
+% % %     V.T = FrameNum;
+% % %     V.Npixels = 1;
+% % %     V.dt = FrameTime/1000;
+% % %     P.lam = 10;
+% % %     P.gam = 1 - V.dt/nTau; %
+% % %     %%
+% % %     [nnspike,nnCoef,nnspikeNS] = DataFluo2Spike(DeltaF_F,V,P,[],ROIstd); % estimated spike
+% % %     TauDiffSPdata{nTau} = nnspike;
+% % %     TauSpikeCoef{nTau} = nnCoef;
+% % %     TauDiffSPdataNS{nTau} = nnspikeNS;
+% % % end
+% % % save DiffTauSPdata.mat TauDiffSPdata -v7.3
+% % % %
+% % % save newSpikeSave.mat DeltaF_F TrTaskParaAll TauSpikeCoef TauDiffSPdataNS -v7.3
 % save newSpikeSave.mat nnspike DeltaF_F TrTaskParaAll TauSpikeCoef TauDiffSPdataNS -v7.3
 %% %%
 % ROImd = cell(size(nnspike,2),1);
@@ -254,116 +266,124 @@ save newSpikeSave.mat DeltaF_F TrTaskParaAll TauSpikeCoef TauDiffSPdataNS -v7.3
 % plot(PlotTrInds,PlotTrYinds,'linestyle','--','Color',[.7 .7 .7]);
 % save TestDataSet.mat nnspike TrTaskParaAll -v7.3
 %%
+nnspikeUsed = nnspike(DataExcludeInds,:,:);
 
 nfolds = 10;
 nIters = nfolds;
 TrainPerc = 0.75;
-nROIs = size(nnspike,2);
+nROIs = size(nnspikeUsed,2);
 ROImdCoef = cell(nROIs,nIters);
-nTrs = size(nnspike,1);
+nTrs = size(nnspikeUsed,1);
 PredCoef = zeros(nROIs,nIters);
 PredCoefp = zeros(nROIs,nIters);
 CVindsAll = cell(nROIs,1);
 CVPredData = cell(nROIs,nIters);
 %%
-parfor croi = 1 : nROIs
-    %%
-    cRdata = squeeze(nnspike(:,croi,:));
+ttt = tic;
+for croi = 1 : nROIs
+    %
+    cRdata = squeeze(nnspikeUsed(:,croi,:));
     cRdata = cRdata';
     cc = cvpartition(nTrs,'kFold',10);
     CVindsAll{croi} = cc;
     options = glmnetSet;
     options.alpha = 0.9;
     options.nlambda = 110;
-    %%
+    %
     for citer = 1 : nfolds
-        %%
+        %
         TrainIndsLogi = cc.training(citer);
         
         TrainData = reshape((cRdata(:,TrainIndsLogi)),[],1);
         TrainParaData = cell2mat(TrTaskParaAll(TrainIndsLogi));
         TestParaData = cell2mat(TrTaskParaAll(~TrainIndsLogi));
         TestData = reshape((cRdata(:,~TrainIndsLogi)),[],1);
-        %%
-%         mdl = fitglm(TrainParaData,TrainData, 'Distribution','poisson','VarNames',TaskParaStrs);
+       %
+%         mdl = fitglm(TrainParaData,TrainData,
+%         'Distribution','poisson','VarNames',TaskParaStrs);  
         cvmdfit = cvglmnet(TrainParaData,TrainData,'poisson',options);
         cvmdCoef  = cvglmnetCoef(cvmdfit,'lambda_1se');
         ROImdCoef{croi,citer} = cvmdCoef;
         PredTestData = cvglmnetPredict(cvmdfit,TestParaData,[],'response',false);
-        %%
+        
+        %
         CVPredData{croi,citer} = PredTestData;  % cvPredDataRe = reshape(cvPredData,500,[]);
-        %% figure;imagesc(cvPredDataRe');
+        % figure;imagesc(cvPredDataRe');
         
         [coef,cop] = corrcoef(PredTestData,TestData);
         PredCoef(croi,citer) = coef(1,2);
         PredCoefp(croi,citer) = cop(1,2);
     end
+    fprintf('ROI%d analysis done!\n',croi);
     %
 end
-%%
-if ~isdir('./TestPred_compPlot/')
-    mkdir('./TestPred_compPlot/');
-end
-cd('./TestPred_compPlot/');
-save modelData.mat ROImdCoef PredCoef PredCoefp CVindsAll CVPredData -v7.3
-%%
-for cROI=1:nROIs
-    %
-    cROIData = squeeze(nnspike(:,cROI,:));
-    ROImaxColor = 1;%prctile(cROIData(:),80);
-    cROICVinds = CVindsAll{cROI};
-    for cfold = 1 : nfolds
-        Halffold = nfolds/2;
-        if mod(cfold,Halffold) == 1
-            hf = figure('position',[50 120 1800 950]);
-        end
-        if cfold <= Halffold
-            subplot(2,Halffold,cfold);
-            cTestData = cROIData(cROICVinds.test(cfold),:); % test dataset
-            imagesc(cTestData,[0 ROImaxColor]);
-            title(sprintf('Partition%d',cfold));
-            if cfold == 1
-                ylabel('Behav. Trials');
-            end
-            set(gca,'FontSize',15);
-            
-            subplot(2,Halffold,cfold+Halffold);
-            cPredData = (reshape(CVPredData{cROI,cfold},FrameNum,[]))'; % prediction of test dataset
-            imagesc(cPredData,[0 ROImaxColor]);
-            title({sprintf('Coef = %.3f',PredCoef(cROI,cfold));sprintf('p = %.3e',PredCoefp(cROI,cfold))});
-            if cfold == 1
-                ylabel('Pred. Trials');
-            end
-            set(gca,'FontSize',15);
-        else
-            subplot(2,Halffold,(cfold-Halffold));
-            cTestData = cROIData(cROICVinds.test(cfold),:); % test dataset
-            imagesc(cTestData,[0 ROImaxColor]);
-            title(sprintf('Partition%d',cfold));
-            if cfold == 1
-                ylabel('Behav. Trials');
-            end
-            set(gca,'FontSize',15);
-            
-            subplot(2,Halffold,cfold);
-            cPredData = (reshape(CVPredData{cROI,cfold},FrameNum,[]))'; % prediction of test dataset
-            imagesc(cPredData,[0 ROImaxColor]);
-            title({sprintf('Coef = %.3f',PredCoef(cROI,cfold));sprintf('p = %.3e',PredCoefp(cROI,cfold))});
-            if cfold == 1
-                ylabel('Pred. Trials');
-            end
-            set(gca,'FontSize',15);
-        end
-        if cfold == Halffold
-            saveas(hf,sprintf('ROI%d testVSpred data compare part1',cROI));
-            saveas(hf,sprintf('ROI%d testVSpred data compare part1',cROI),'png');
-            close(hf);
-        elseif cfold == nfolds
-            saveas(hf,sprintf('ROI%d testVSpred data compare part2',cROI));
-            saveas(hf,sprintf('ROI%d testVSpred data compare part2',cROI),'png');
-            close(hf);
-        end
-    end
-    %
-end
-cd ..;
+toc(ttt);
+% glmnetCoefTabel = array2table(cvmdCoef','VariableNames',glmnetCoefStrs');
+save FitDataSave.mat CVPredData ROImdCoef PredCoef PredCoefp -v7.3
+% %%
+% if ~isdir('./TestPred_compPlot/')
+%     mkdir('./TestPred_compPlot/');
+% end
+% cd('./TestPred_compPlot/');
+% save modelData.mat ROImdCoef PredCoef PredCoefp CVindsAll CVPredData -v7.3
+% %%
+% for cROI=1:nROIs
+%     %
+%     cROIData = squeeze(nnspike(:,cROI,:));
+%     ROImaxColor = 1;%prctile(cROIData(:),80);
+%     cROICVinds = CVindsAll{cROI};
+%     for cfold = 1 : nfolds
+%         Halffold = nfolds/2;
+%         if mod(cfold,Halffold) == 1
+%             hf = figure('position',[50 120 1800 950]);
+%         end
+%         if cfold <= Halffold
+%             subplot(2,Halffold,cfold);
+%             cTestData = cROIData(cROICVinds.test(cfold),:); % test dataset
+%             imagesc(cTestData,[0 ROImaxColor]);
+%             title(sprintf('Partition%d',cfold));
+%             if cfold == 1
+%                 ylabel('Behav. Trials');
+%             end
+%             set(gca,'FontSize',15);
+%             
+%             subplot(2,Halffold,cfold+Halffold);
+%             cPredData = (reshape(CVPredData{cROI,cfold},FrameNum,[]))'; % prediction of test dataset
+%             imagesc(cPredData,[0 ROImaxColor]);
+%             title({sprintf('Coef = %.3f',PredCoef(cROI,cfold));sprintf('p = %.3e',PredCoefp(cROI,cfold))});
+%             if cfold == 1
+%                 ylabel('Pred. Trials');
+%             end
+%             set(gca,'FontSize',15);
+%         else
+%             subplot(2,Halffold,(cfold-Halffold));
+%             cTestData = cROIData(cROICVinds.test(cfold),:); % test dataset
+%             imagesc(cTestData,[0 ROImaxColor]);
+%             title(sprintf('Partition%d',cfold));
+%             if cfold == 1
+%                 ylabel('Behav. Trials');
+%             end
+%             set(gca,'FontSize',15);
+%             
+%             subplot(2,Halffold,cfold);
+%             cPredData = (reshape(CVPredData{cROI,cfold},FrameNum,[]))'; % prediction of test dataset
+%             imagesc(cPredData,[0 ROImaxColor]);
+%             title({sprintf('Coef = %.3f',PredCoef(cROI,cfold));sprintf('p = %.3e',PredCoefp(cROI,cfold))});
+%             if cfold == 1
+%                 ylabel('Pred. Trials');
+%             end
+%             set(gca,'FontSize',15);
+%         end
+%         if cfold == Halffold
+%             saveas(hf,sprintf('ROI%d testVSpred data compare part1',cROI));
+%             saveas(hf,sprintf('ROI%d testVSpred data compare part1',cROI),'png');
+%             close(hf);
+%         elseif cfold == nfolds
+%             saveas(hf,sprintf('ROI%d testVSpred data compare part2',cROI));
+%             saveas(hf,sprintf('ROI%d testVSpred data compare part2',cROI),'png');
+%             close(hf);
+%         end
+%     end
+%     %
+% end
+% cd ..;

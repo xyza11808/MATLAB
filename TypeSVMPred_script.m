@@ -1,32 +1,36 @@
 TrType = double(BehavStrc.Trial_Type(CorrectInds));
+UsedActionChoice = double(BehavStrc.Action_choice(CorrectInds));
 %% Stimulus based labeling
 nTrs = length(TrType);
 StimsAll = double(CorrTrialStim);
 StimTypes = unique(StimsAll);
 nStims = length(StimTypes);
 RealLoss = zeros(nTrs,1);
+[NormMdDatas,NormMu,NormSigma] = zscore(ConsideringData);
+NormTrainMd = fitcsvm(NormMdDatas,TrType);
 
-    TrainMdl = fitcsvm(ConsideringData,TrType);
-    c = crossval(TrainMdl,'leaveOut','on');
-    CVTrInds = zeros(nTrs,1);
-    for cTrs = 1 : nTrs
-        CVTrInds(cTrs) = find(c.Partition.test(cTrs));
+Ops = statset('UseParallel',true);
+TrainMdl = fitcsvm(ConsideringData,TrType);
+c = crossval(TrainMdl,'leaveOut','on');
+CVTrInds = zeros(nTrs,1);
+for cTrs = 1 : nTrs
+    CVTrInds(cTrs) = find(c.Partition.test(cTrs));
+end
+L = kfoldLoss(c,'mode','individual');
+RealLoss(CVTrInds) = L;
+%
+
+StimRProb = zeros(nStims,1);
+for cStimInds = 1 : nStims
+    cStim = StimTypes(cStimInds);
+    cStimTrs = StimsAll == cStim;
+    cStimRProb = mean(RealLoss(cStimTrs));
+    if cStim <= 16000
+        StimRProb(cStimInds) = cStimRProb;
+    else
+        StimRProb(cStimInds) = 1 - cStimRProb;
     end
-    L = kfoldLoss(c,'mode','individual');
-    RealLoss(CVTrInds) = L;
-    %
-    
-    StimRProb = zeros(nStims,1);
-    for cStimInds = 1 : nStims
-        cStim = StimTypes(cStimInds);
-        cStimTrs = StimsAll == cStim;
-        cStimRProb = mean(RealLoss(cStimTrs));
-        if cStim <= 16000
-            StimRProb(cStimInds) = cStimRProb;
-        else
-            StimRProb(cStimInds) = 1 - cStimRProb;
-        end
-    end
+end
 StimBasedRProb = StimRProb;
 %     figure;
 %     plot(StimRProb)
@@ -36,58 +40,99 @@ StimBasedRProb = StimRProb;
 % calculate stimulus data for each stimuli type
 nROIs = size(ConsideringData,2);
 StimAvgData = zeros(nStims,nROIs);
+StimCorrAvgData = zeros(nStims,nROIs);
+StimTrTypes = zeros(nStims,1);
 for cStim = 1 : nStims
     cStimInds = StimsAll == StimTypes(cStim);
     cStimData = ConsideringData(cStimInds,:);
     StimAvgData(cStim,:) = mean(cStimData);
+    StimTrTypes(cStim) = mode(TrType(cStimInds));
+    
+    cStimCorrInds = StimsAll(:) == StimTypes(cStim) & UsedActionChoice(:) == TrType(:);
+    StimCorrAvgData(cStim,:) = mean(ConsideringData(cStimCorrInds,:));
 end
 BehavRProb = boundary_result.StimCorr;
-StimRevert = boundary_result.StimType < 16000;
+StimRevert = ~StimTrTypes; %boundary_result.StimType < 16000;
 BehavRProb(StimRevert) = 1 - BehavRProb(StimRevert);
 
-[StimTypePred,StimTypeScore] = predict(TrainMdl,StimAvgData);
+NormedStimAvgData = (StimAvgData - repmat(NormMu,nStims,1))./repmat(NormSigma,nStims,1);
+NormedStimCorrAvgData = (StimCorrAvgData - repmat(NormMu,nStims,1))./repmat(NormSigma,nStims,1);
+%%
+% [StimTypePred,StimTypeScore] = predict(TrainMdl,StimAvgData);
+[StimTypePred,StimTypeScore] = predict(NormTrainMd,NormedStimAvgData);
 TypeNorSc = (max(BehavRProb) - min(BehavRProb)) * (StimTypeScore(:,2) - min(StimTypeScore(:,2)))/...
     (max(StimTypeScore(:,2)) - min(StimTypeScore(:,2))) + min(BehavRProb);
+
+[~,CorrStimTypeScore] = predict(NormTrainMd,NormedStimCorrAvgData);
+CorrTypeNorSc = (max(BehavRProb) - min(BehavRProb)) * (CorrStimTypeScore(:,2) - min(CorrStimTypeScore(:,2)))/...
+    (max(CorrStimTypeScore(:,2)) - min(CorrStimTypeScore(:,2))) + min(BehavRProb);
+
 StimScoreAll = {BehavRProb,StimTypeScore,TypeNorSc};
 StimNorScore = TypeNorSc;
+figure;
+hold on
+plot(BehavRProb,'r-o')
+plot(StimNorScore,'b-o')
+plot(CorrTypeNorSc,'c-o')
+%
+save CurrentTrClfModel.mat BehavRProb StimNorScore TrainMdl StimAvgData StimTypes ...
+    NormedStimAvgData NormMu NormSigma NormTrainMd StimRevert StimsAll -v7.3
 %% Choice based labeling
 StimsAll = double(CorrTrialStim);
 StimTypes = unique(StimsAll);
 nStims = length(StimTypes);
 RealLoss = zeros(nTrs,1);
-    TrainMdl = fitcsvm(ConsideringData,AnmTrChoice);
-    c = crossval(TrainMdl,'leaveOut','on');
-    CVTrInds = zeros(nTrs,1);
-    for cTrs = 1 : nTrs
-        CVTrInds(cTrs) = find(c.Partition.test(cTrs));
+TrainMdl = fitcsvm(ConsideringData,AnmTrChoice);
+NormTrainMdl = fitcsvm(NormMdDatas,AnmTrChoice);  % NormMdDatas,NormMu,NormSigma
+
+c = crossval(TrainMdl,'leaveOut','on');
+CVTrInds = zeros(nTrs,1);
+for cTrs = 1 : nTrs
+    CVTrInds(cTrs) = find(c.Partition.test(cTrs));
+end
+L = kfoldLoss(c,'mode','individual');
+RealLoss(CVTrInds) = L;
+%
+
+StimRProb = zeros(nStims,1);
+for cStimInds = 1 : nStims
+    cStim = StimTypes(cStimInds);
+    cStimTrs = StimsAll == cStim;
+    cStimRProb = mean(RealLoss(cStimTrs));
+    if cStim <= 16000
+        StimRProb(cStimInds) = cStimRProb;
+    else
+        StimRProb(cStimInds) = 1 - cStimRProb;
     end
-    L = kfoldLoss(c,'mode','individual');
-    RealLoss(CVTrInds) = L;
-    %
-    
-    StimRProb = zeros(nStims,1);
-    for cStimInds = 1 : nStims
-        cStim = StimTypes(cStimInds);
-        cStimTrs = StimsAll == cStim;
-        cStimRProb = mean(RealLoss(cStimTrs));
-        if cStim <= 16000
-            StimRProb(cStimInds) = cStimRProb;
-        else
-            StimRProb(cStimInds) = 1 - cStimRProb;
-        end
-    end
+end
 ChoiceBasedRProb = StimRProb;
 %     figure;
 %     plot(StimRProb)
 % figure;plot(StimRProb)
-% #############################################################
+%% #############################################################
 % choice training prediction
-[ChoiceTypePred,ChoiceTypeScore] = predict(TrainMdl,StimAvgData);
+% [ChoiceTypePred,ChoiceTypeScore] = predict(TrainMdl,StimAvgData);
+[ChoiceTypePred,ChoiceTypeScore] = predict(NormTrainMdl,NormedStimAvgData);
 TypeNorSc = (max(BehavRProb) - min(BehavRProb)) * (ChoiceTypeScore(:,2) - min(ChoiceTypeScore(:,2)))/...
     (max(ChoiceTypeScore(:,2)) - min(ChoiceTypeScore(:,2))) + min(BehavRProb);
-ChoiceScoreAll = {BehavRProb,ChoiceTypeScore,TypeNorSc};
+
+[~,CorrChoiceTypeScore] = predict(NormTrainMdl,NormedStimCorrAvgData);
+CorrTypeNorSc = (max(BehavRProb) - min(BehavRProb)) * (CorrChoiceTypeScore(:,2) - min(CorrChoiceTypeScore(:,2)))/...
+    (max(CorrChoiceTypeScore(:,2)) - min(CorrChoiceTypeScore(:,2))) + min(BehavRProb);
+
+ChoiceScoreAll = {BehavRProb,ChoiceTypeScore,TypeNorSc,CorrChoiceTypeScore};
 ChoiceNorScore = TypeNorSc;
 
+figure;
+hold on
+plot(BehavRProb,'r-o')
+plot(ChoiceNorScore,'b-o')
+plot(CorrTypeNorSc,'c-o')
+
+save ChoiceTrClfModel.mat BehavRProb ChoiceTypeScore ChoiceNorScore TrainMdl StimAvgData StimTypes ...
+    NormedStimAvgData NormMu NormSigma NormTrainMd StimRevert NormedStimCorrAvgData StimsAll -v7.3
+
+return;
 %% Correct train and error predict
 TempCorrInds = AnmTrChoice == TrType;
 TempCorrIndex = find(TempCorrInds);
@@ -207,7 +252,7 @@ cd('E:\DataToGo\data_for_xu\Tuning_curve_plot');
 [fn,fp,~] = uigetfile('*.txt','Please select the text file contains the path of all task sessions');
 [Passfn,Passfp,~] = uigetfile('*.txt','Please select the text file contains the path of all passive sessions');
 %%
-clearvars -except fn fp Passfp Passfn 
+clearvars -except fn fp Passfp Passfn
 m = 1;
 nSession = 1;
 

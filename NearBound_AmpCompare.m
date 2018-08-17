@@ -199,7 +199,7 @@ saveas(hhhf,'BoundTunAmp compare plot','png');
 saveas(hhhf,'BoundTunAmp compare plot','pdf');
 
 %% plot the amp compare plot
-% plot the passive Amp compare
+% plot the passive BF Amp compare
 % cSess = 2;
 PassBFAmpAll = (cell2mat(PassBFRespAmpAll(:,1)'))';
 TaskCorresAmp = cell2mat(PassBFRespAmpAll(:,2));
@@ -234,11 +234,11 @@ FracAboveCal = [mean(TaskUsedData < PassUsedData & SigPUsed < 0.05),mean(TaskUse
 FracBelowCal = [mean(TaskUsedData > PassUsedData & SigPUsed < 0.05),mean(TaskUsedData > PassUsedData & SigPUsed < 0.01)];
 text(400,500,sprintf('SigAbove %.3f, %.3f',FracAboveCal(1),FracAboveCal(2)),'Color','b');
 text(400,450,sprintf('SigBelow %.3f, %.3f',FracBelowCal(1),FracBelowCal(2)),'Color','b');
-saveas(hPassf,'Passive BFAmp compare plot');
-saveas(hPassf,'Passive BFAmp compare plot','png');
-saveas(hPassf,'Passive BFAmp compare plot','pdf');
+% saveas(hPassf,'Passive BFAmp compare plot');
+% saveas(hPassf,'Passive BFAmp compare plot','png');
+% saveas(hPassf,'Passive BFAmp compare plot','pdf');
 
-%% plot the task amp compare
+%% plot the task BF amp compare
 PassCorresAmp = cell2mat(TaskBFRespAmpAll(:,1));
 TaskBFAmpAll = (cell2mat(TaskBFRespAmpAll(:,2)'))';
 UInds = ~(PassCorresAmp(:) > 1000 | TaskBFAmpAll(:) > 1000);
@@ -275,9 +275,9 @@ FracBelowCal = [mean(TaskUsedData > PassUsedData & SigPUsed < 0.05),mean(TaskUse
 text(400,500,sprintf('SigAbove %.3f, %.3f',FracAboveCal(1),FracAboveCal(2)),'Color','b');
 text(400,450,sprintf('SigBelow %.3f, %.3f',FracBelowCal(1),FracBelowCal(2)),'Color','b');
 
-saveas(hTaskf,'Task BFAmp compare plot');
-saveas(hTaskf,'Task BFAmp compare plot','png');
-saveas(hTaskf,'Task BFAmp compare plot','pdf');
+% saveas(hTaskf,'Task BFAmp compare plot');
+% saveas(hTaskf,'Task BFAmp compare plot','png');
+% saveas(hTaskf,'Task BFAmp compare plot','pdf');
 
 %% combine the task and passive data together
 PassBFAmpAll = (cell2mat(PassBFRespAmpAll(:,1)'))';
@@ -389,9 +389,9 @@ FracAboveCal = [mean(TaskUsedData < PassUsedData & SigPUsed < 0.05),mean(TaskUse
 FracBelowCal = [mean(TaskUsedData > PassUsedData & SigPUsed < 0.05),mean(TaskUsedData > PassUsedData & SigPUsed < 0.01)];
 text(400,500,sprintf('SigAbove %.3f, %.3f',FracAboveCal(1),FracAboveCal(2)),'Color','b');
 text(400,450,sprintf('SigBelow %.3f, %.3f',FracBelowCal(1),FracBelowCal(2)),'Color','b');
-saveas(hPassf,'Both BFAmp compare plot');
-saveas(hPassf,'Both BFAmp compare plot','png');
-saveas(hPassf,'Both BFAmp compare plot','pdf');
+% saveas(hPassf,'Both BFAmp compare plot');
+% saveas(hPassf,'Both BFAmp compare plot','png');
+% saveas(hPassf,'Both BFAmp compare plot','pdf');
 
 %%
 % extract the BF data for passive surpressed Amplitudes
@@ -561,9 +561,9 @@ text(-0.9,0.65,sprintf('Coefp = %.3e',pCoef(2,1)));
 set(gca,'box','off','xlim',[-1.1 1.1],'ylim',[-1.1 1.1]);
 xlabel('BF(Task)')
 ylabel('BF(Passive)')
-saveas(hf,'PassBF enhanced ROI BF compare plot');
-saveas(hf,'PassBF enhanced ROI BF compare plot','png');
-saveas(hf,'PassBF enhanced ROI BF compare plot','pdf');
+% saveas(hf,'PassBF enhanced ROI BF compare plot');
+% saveas(hf,'PassBF enhanced ROI BF compare plot','png');
+% saveas(hf,'PassBF enhanced ROI BF compare plot','pdf');
 
 %% plot the BF distribution for passBF suppressed ROI's BF
 PassBFSuppInds = PassBFAmpAll > TaskCorresAmp & PassComSigAll < SigLevel & UsedInds;

@@ -9,6 +9,9 @@ function [LabelNPmask,ROIlabel]=SegNPGeneration(FrameSize,ROIpos,ROImask,varargi
 % ROInum=length(ROIpos);
 ROIcenterCELL=cellfun(@mean,ROIpos,'UniformOutput',false);
 ROIcenter=floor(cell2mat(ROIcenterCELL'));
+if length(ROIcenter) == numel(ROIcenter)
+    ROIcenter = (reshape(ROIcenter,2,[]))';
+end
 ROImaskSize=size(ROImask{1});
 
 if ~isequal(ROImaskSize,FrameSize)

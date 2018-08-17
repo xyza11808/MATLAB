@@ -5,7 +5,7 @@ SessStr = SessionPath;
 
 % extract session data from path string
 [StartI,EndIn] = regexp(SessStr,'\d{6,10}');  % eight consecutive numbers for pattern recognition
-YearPatt = {'2015','2016','2017'};
+YearPatt = {'2015','2016','2017','2018','2019'};
 if isempty(StartI)
     SessDate = 'NaN';
 else
@@ -19,7 +19,12 @@ end
 % session Batch number
 [StartI,EndIn] = regexp(SessStr,'batch\d{1,2}');  % two consecutive numbers after character 'batch' for pattern recognition
 if isempty(StartI)
-    BatchNum = 'NaN';
+    [StartINew,EndInNew] = regexp(SessStr,'Batch\d{1,2}');
+    if isempty(StartINew)
+        BatchNum = 'NaN';
+    else
+        BatchNum = SessStr(StartINew:EndInNew);
+    end
 else
     BatchNum = SessStr(StartI:EndIn);
 end

@@ -10,18 +10,19 @@ clearvars -except fn fp
 fpath = fullfile(fp,fn);
 fid = fopen(fpath);
 tline = fgetl(fid);
-%
+%%
 CusMap = blue2red_2(32,0.8);
 PreferRandDisSum = {};
 m = 1;
+BehavBound = 10000;
 %%
 while ischar(tline)
     if isempty(strfind(tline,'NO_Correction\mode_f_change'))
         tline = fgetl(fid);
         continue;
     end
-    %
-    clearvars -except tline fid CusMap PreferRandDisSum m fn fp
+    %%
+    clearvars -except tline fid CusMap PreferRandDisSum m fn fp BehavBound
     % passive tuning frequency colormap plot
     load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));
@@ -62,7 +63,7 @@ while ischar(tline)
     cd('NMTuned Meanfreq colormap plot');
     % plot the behavior result and uncertainty function
     GroupStimsNum = floor(length(BehavCorr)/2);
-    BehavOctaves = log2(double(BehavBoundfile.boundary_result.StimType)/16000);
+    BehavOctaves = log2(double(BehavBoundfile.boundary_result.StimType)/BehavBound);
     FreqStrs = cellstr(num2str(BehavBoundfile.boundary_result.StimType(:)/1000,'%.1f'));
     FitoctaveData = BehavCorr;
     FitoctaveData(1:GroupStimsNum) = 1 - FitoctaveData(1:GroupStimsNum);
@@ -262,8 +263,15 @@ while ischar(tline)
     % extract task session maxium responsive frequency index
     % UsedOctaveInds = ~(abs(PassFreqOctave) > 1);
     UsedOctave = TaskFreqOctave(:);
-%     UsedOctave = UsedOctave(:);
-    UsedOctaveData = CorrTunningFun;
+    CorrUsedTrNumbers = CorrTypeNum;
+    FewTrNumInds = CorrUsedTrNumbers < 5;
+    if ~sum(FewTrNumInds)
+        UsedOctaveData = CorrTunningFun;
+    else  % in case of few correct trials available, NM data will be replaced for correct datas
+        UsedOctaveData = CorrTunningFun;
+        AdditionalData = NonMissTunningFun(FewTrNumInds,:);
+        UsedOctaveData(FewTrNumInds,:) = AdditionalData;
+    end
 %     UsedOctaveData = NonMissTunningFun;
     nROIs = size(UsedOctaveData,2);
     [MaxAmp,maxInds] = max(UsedOctaveData);
@@ -524,7 +532,7 @@ while ischar(tline)
     saveas(hf,'Bound2Behav diff compare scatter plot');
     saveas(hf,'Bound2Behav diff compare scatter plot','png');
     close(hf);
- %
+ %%
     PreferRandDisSum{m,1} = PassModeInds;
     PreferRandDisSum{m,2} = TaskModeInds;
     

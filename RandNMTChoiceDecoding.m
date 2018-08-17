@@ -171,7 +171,7 @@ if IsTaskSess
 else
     TypeSVMPred_passive_script;
 end
-return;
+% return;
 
 if ispcaDR
     if ~isdir('./NeuroM_test_pca/')
@@ -313,7 +313,7 @@ else
 end
 [~,TestPredScore] = predict(mdl,StimSumScore);
 difscore = TestPredScore(:,2) - TestPredScore(:,1);
-%
+%%
 if max(difscore) > 2*abs(min(difscore))
     fityAll=(rescaleB-rescaleA)*((difscore-min(difscore))./(abs(min(difscore))-min(difscore)))+rescaleA; 
     fityAll(fityAll>rescaleB) = rescaleB;
@@ -326,7 +326,7 @@ else
     fityAll=(rescaleB-rescaleA)*((difscore-min(difscore))./(max(difscore)-min(difscore)))+rescaleA;  %rescale to [0 1]
     NorScaleValue = [min(difscore),max(difscore)];
 end
-
+%%
 if ispcaDR
     save Clfsave.mat TrainingScore Choicelabel StimSumScore NorScaleValue fityAll TestPredScore mdl NorScaleValue coeffT -v7.3
 else

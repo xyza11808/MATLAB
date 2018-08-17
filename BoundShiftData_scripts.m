@@ -199,7 +199,7 @@ while ischar(tline)
         if m == 1
             %
             %                 PPTname = input('Please input the name for current PPT file:\n','s');
-            PPTname = 'BoundShift_SingleNeuTuning_withMorph';
+            PPTname = 'BoundShift_SingleNeuTuning_withMorph_Minmax';
             if isempty(strfind(PPTname,'.ppt'))
                 PPTname = [PPTname,'.pptx'];
             end
@@ -207,8 +207,9 @@ while ischar(tline)
             pptSavePath = 'F:\TestOutputSave\BoundShiftSum';
             %
         end
+        %
         Anminfo = SessInfoExtraction(tline);
-        cTunDataPath = [tline,filesep,'Tunning_fun_plot_New1s'];
+        cTunDataPath = [tline,filesep,'Tunning_fun_plot_New1s_Minmax'];
         cRespColorMap = [tline,filesep,'All BehavType Colorplot'];
         TunFilesAll = dir(fullfile(cTunDataPath,'ROI* Tunning curve comparison plot.png'));
         nFiles = length(TunFilesAll);
@@ -219,7 +220,7 @@ while ischar(tline)
         
         CoupleSessPath = fgetl(ff);
         CoupAnmInfo = SessInfoExtraction(CoupleSessPath);
-        CoupcTunDataPath = [CoupleSessPath,filesep,'Tunning_fun_plot_New1s'];
+        CoupcTunDataPath = [CoupleSessPath,filesep,'Tunning_fun_plot_New1s_Minmax'];
         CoupcColorPath = [CoupleSessPath,filesep,'All BehavType Colorplot'];
         CoupTunFileAll = dir(fullfile(CoupcTunDataPath,'ROI* Tunning curve comparison plot.png'));
         CoupnFiles = length(CoupTunFileAll);
@@ -280,7 +281,34 @@ while ischar(tline)
     m = m + 1;
     nSession = nSession + 1;
     saveName = exportToPPTX('saveandclose',pptFullfile);
+    fprintf('Session %d import complete!\n',nSession);
     tline = fgetl(ff);
+    %
 end
 fprintf('Current figures saved in file:\n%s\n',saveName);
 cd(pptSavePath);
+
+%%
+ clear
+ clc
+[fn,fp,fi] = uigetfile('*.txt','Please select the boundary shift sesison data path');
+%%
+fPath = fullfile(fp,fn);
+fids = fopen(fPath);
+tline = fgetl(fids);
+
+while ischar(tline)
+    if isempty(strfind(tline,'NO_Correction\mode_f_change')) %#ok<*STREMP>
+        tline = fgetl(fids);
+        continue;
+    end
+    cd(tline);
+    load('CSessionData.mat');
+    try 
+        RandNMTChoiceDecoding(smooth_data,behavResults,trial_outcome,start_frame,frame_rate,1);
+    catch ME
+        fprintf('Error for session:\n %s\n',tline);
+        fprintf('Error message is: %s\n',ME.message);
+    end
+    tline = fgetl(fids);
+end

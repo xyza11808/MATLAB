@@ -35,7 +35,8 @@ else
 end
 
 boundary_result=struct('SessionName',[],'FitParam',[],'Boundary',[],'LeftCorr',[],'RightCorr',[],'StimType',[],...
-    'StimCorr',[],'Coefficients',[],'P_value',[],'FitValue',[],'Typenumbers',[],'gof',[],'SessBehavAll',[],'FitModelAll',{},'SlopeCurve',{});
+    'StimCorr',[],'Coefficients',[],'P_value',[],'FitValue',[],'Typenumbers',[],'gof',[],'SessBehavAll',[],...
+    'FitModelAll',{},'SlopeCurve',{},'RevertStimRProb',[]);
 if SelfPlot
     choice=input(['please select the logistic analysis method.\n1 for non-linear regression.\n',...
         '2 for linear regression analysis.\n3 for fit_logistic analysis.\n',...
@@ -176,15 +177,18 @@ for n = 1:fileNum
         %     stim_types=[behavSettings.randompureTone_left(1,:) behavSettings.randompureTone_right(1,:)];
         Type_choiceR = zeros(1,length(stim_types));
         TypeNumber = zeros(1,length(stim_types));
+        TypeTrTypes = zeros(length(stim_types),1);
         for i=1:length(stim_types)
             type_inds = behavResults.Stim_toneFreq==stim_types(i);
             TypeNumber(i) = sum(type_inds);
             Type_choiceR(i)=mean(behavResults.Action_choice(type_inds)); % right choice prob
+            TypeTrTypes(i) = mode(behavResults.Trial_Type(type_inds));
         end
         boundary_result(n).Typenumbers = TypeNumber;
         boundary_result(n).StimType=stim_types;
         boundary_result(n).StimCorr=Type_choiceR;
-        boundary_result(n).StimCorr(1:GrNum) = 1 - boundary_result(n).StimCorr(1:GrNum);
+        boundary_result(n).StimCorr(~TypeTrTypes) = 1 - boundary_result(n).StimCorr(~TypeTrTypes);
+        boundary_result(n).RevertStimRProb = ~TypeTrTypes;
         boundary_result(n).SessBehavAll = SessBehavDatas;
         if(mean( boundary_result(n).StimCorr)<0.5)
             continue;
@@ -271,16 +275,19 @@ for n = 1:fileNum
         %regression analysis, but not with a nonlinear regression analysis
         Type_choiceR=zeros(1,length(stim_types));
         TypeNumber = zeros(1,length(stim_types));
+        TypeTrTypes = zeros(length(stim_types),1);
         for i=1:length(stim_types)
             type_inds= behavResults.Stim_toneFreq==stim_types(i);
             TypeNumber(i) = sum(type_inds);
             Type_choiceR(i)=mean(behavResults.Action_choice(type_inds));
+            TypeTrTypes(i) = mode(behavResults.Trial_Type(type_inds));
         end
         
         boundary_result(n).Typenumbers = TypeNumber;
         boundary_result(n).StimType=stim_types;
         boundary_result(n).StimCorr=Type_choiceR;
-        boundary_result(n).StimCorr(1:GrNum) = 1 - boundary_result(n).StimCorr(1:GrNum);
+        boundary_result(n).StimCorr(~TypeTrTypes) = 1 - boundary_result(n).StimCorr(~TypeTrTypes);
+        boundary_result(n).RevertStimRProb = ~TypeTrTypes;
         boundary_result(n).SessBehavAll = SessBehavDatas;
         if(mean(boundary_result(n).StimCorr)<0.5)
             continue;
@@ -345,15 +352,18 @@ for n = 1:fileNum
         %for fit_logistic regression analysis
         Type_choiceR=zeros(1,length(stim_types));
         TypeNumber=zeros(1,length(stim_types));
+        TypeTrTypes = zeros(length(stim_types),1);
         for i=1:length(stim_types)
             type_inds= behavResults.Stim_toneFreq==stim_types(i);
             TypeNumber(i) = sum(type_inds);
             Type_choiceR(i)=mean(behavResults.Action_choice(type_inds));
+            TypeTrTypes(i) = mode(behavResults.Trial_Type(type_inds));
         end
         boundary_result(n).Typenumbers = TypeNumber;
         boundary_result(n).StimType=stim_types;
         boundary_result(n).StimCorr=Type_choiceR;
-        boundary_result(n).StimCorr(1:GrNum) = 1 - boundary_result(n).StimCorr(1:GrNum);
+        boundary_result(n).StimCorr(~TypeTrTypes) = 1 - boundary_result(n).StimCorr(~TypeTrTypes);
+        boundary_result(n).RevertStimRProb = ~TypeTrTypes;
         boundary_result(n).SessBehavAll = SessBehavDatas;
         if(mean(boundary_result(n).StimCorr)<0.5)
             continue;
@@ -451,15 +461,21 @@ for n = 1:fileNum
         % using new fitting method
         Type_choiceR=zeros(1,length(stim_types));
         TypeNumber=zeros(1,length(stim_types));
+        TypeTrTypes = zeros(length(stim_types),1);
+        TypeChoiceSEM = zeros(1,length(stim_types));
         for i=1:length(stim_types)
             type_inds= behavResults.Stim_toneFreq==stim_types(i);
             TypeNumber(i) = sum(type_inds);
             Type_choiceR(i)=mean(behavResults.Action_choice(type_inds));
+            
+            TypeTrTypes(i) = mode(behavResults.Trial_Type(type_inds));
+            TypeChoiceSEM(i) = std(double(behavResults.Action_choice(type_inds)))/sqrt(sum(TypeNumber(i)));
         end
-         boundary_result(n).Typenumbers = TypeNumber;
+        boundary_result(n).Typenumbers = TypeNumber;
         boundary_result(n).StimType=stim_types;
         boundary_result(n).StimCorr=Type_choiceR;
-        boundary_result(n).StimCorr(1:GrNum) = 1 - boundary_result(n).StimCorr(1:GrNum);
+        boundary_result(n).StimCorr(~TypeTrTypes) = 1 - boundary_result(n).StimCorr(~TypeTrTypes);
+        boundary_result(n).RevertStimRProb = ~TypeTrTypes;
         boundary_result(n).SessBehavAll = SessBehavDatas;
 %         if(mean(boundary_result(n).StimCorr)<0.5)
 %             continue;
@@ -470,9 +486,9 @@ for n = 1:fileNum
         TrChoice = double(behavResults.Action_choice);
 %         Type_choiceR(1:floor(length(stim_types)/2))=1-Type_choiceR(1:floor(length(stim_types)/2));
         %
-        h4=figure;
+        h4=figure('position',[100 100 380 320]);
         scatter(octave_dist,Type_choiceR,50,'MarkerEdgeColor','k','LineWidth',3);
-        text(octave_dist+0.01,Type_choiceR-0.02,cellstr(num2str(TypeNumber(:),'n=%d')),'Fontsize',16,'color','b');
+        text(octave_dist+0.01,Type_choiceR-0.02,cellstr(num2str(TypeNumber(:),'n=%d')),'Fontsize',12,'color','b');
         hold on;
         % for parameters: g,l,u,v
         UL = [0.5, 0.5, max(octave_dist), 100];
@@ -498,7 +514,7 @@ for n = 1:fileNum
         set(gca,'xticklabel',cellstr(num2str(Freqs(:)/1000,'%.1f')));
         xlabel('Frequency(kHz)');
         ylabel('Rightward choice');
-        set(gca,'FontSize',16);
+        set(gca,'FontSize',10);
         %
         if exist('fn','var')
             saveas(h4,[fn(1:end-4),'_fit plot'],'png');
@@ -510,10 +526,10 @@ for n = 1:fileNum
         %
         close(h4);
           
-        boundary_result(n).FitValue = fit_ReNew.ffit;
-        boundary_result(n).gof = fit_ReNew.gof;
-        b = coeffvalues(fit_ReNew.ffit);
-        boundary_result(n).FitModelAll = {{fit_ReNew,fit_ReNewAll}};
+        boundary_result(n).FitValue = fit_ReNewAll;
+        boundary_result(n).gof = fit_ReNewAll.gof;
+        b = coeffvalues(fit_ReNewAll.ffit);
+        boundary_result(n).FitModelAll = {{fit_ReNewAll,fit_ReNewAll}};
         boundary_result(n).SlopeCurve = BehavDerivateCurve;
     end
     try

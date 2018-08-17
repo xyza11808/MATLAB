@@ -3,11 +3,21 @@ clc
 
 xData = [1,0,0,0;0,1,0,0;0,0,1,0;0,0,0,1;1,1,0,0;0,0,1,1];
 xData = xData';
-yData = [1,0;1,0;0,1;0,1;1,0;0,1];
+yData = [1,0,1;1,0,1;0,1,1;0,1,0;1,0,0;0,1,0];
 yData = yData';
 % %%
 % xData = ([1,1,0,0])';
 % yData = ([1,0])';
+%%
+clear
+clc
+cd('S:\THBI\DataSet');
+TestIm = loadMNISTImages('t10k-images.idx3-ubyte');
+TestLabel = loadMNISTLabels('t10k-labels.idx1-ubyte');
+TrainIM = loadMNISTImages('train-images.idx3-ubyte');
+TrainLabel = loadMNISTLabels('train-labels.idx1-ubyte');
+xData = TrainIM;
+yData = TrainLabel';
 
 %%
 HidNodesNum = [4,10,6];

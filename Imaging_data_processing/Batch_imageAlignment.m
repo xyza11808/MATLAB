@@ -1,14 +1,13 @@
 %finding the target image for alignment
-cd('S:\BatchData\Batch52\20180430\anm01\test02');
-[im, ~] = load_scim_data('b52a01_test02_2x_2afc_120um_20180430_150.tif');
+cd('N:\batch\batch55\20180811\anm07\test03');
+[im, ~] = load_scim_data('b55a07_test03_2x_rf_150um_20180811_036.tif');
 
 selectframe=im(:,:,1:40);
 figure;
-imagesc(mean(selectframe,3),[-20 200]);
+imagesc(mean(selectframe,3),[-10 100]);
 im_reg_target = mean(selectframe,3);
 figure(gcf);
 colormap gray;
-
 %%
 clc
 dir_imreg_src = pwd;
@@ -16,7 +15,8 @@ save TargetImage.mat im_reg_target dir_imreg_src -v7.3
 %% dir_imreg_dest = [['F',dir_imreg_src(2:end)] filesep 'im_data_reg_cpu'];
 clear
 clc
-cd('P:\BatchData\batch52');
+
+cd('S:\BatchData\batch53');
 [fn,fp,fi] = uigetfile('*.txt','Please select your data path to be aligned');
 if ~fi
     return;
@@ -25,6 +25,7 @@ fpath = fullfile(fp,fn);
 fid = fopen(fpath);
 tline = fgetl(fid);
 %%
+% pause(1800)
 while ischar(tline)
     if ~isdir(tline)
         tline = fgetl(fid);
@@ -33,7 +34,7 @@ while ischar(tline)
     %
     cd(tline);
     clearvars im_reg_target dir_imreg_src
-    
+    %%
     load(fullfile(tline,'TargetImage.mat'));
     
 %     NewStr = strrep(dir_imreg_src,'0520','0420');
@@ -67,7 +68,7 @@ while ischar(tline)
             save BadAlignF.mat BadAlignFrame -v7.3
         end
     end
-    
+    %%
     tline = fgetl(fid);
 end
 %

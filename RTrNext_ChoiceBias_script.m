@@ -35,7 +35,7 @@ for cFreq = 1 : nFreqs
     ReLNextRChoiceProb(cFreq) = mean(ReLNextTrChoice(cLFreqInds));
     ReRNextRChoiceProb(cFreq) = mean(ReRNextTrChoice(cRFreqInds));
 end
-FreqOcts = log2(FreqTypes/16000);
+FreqOcts = log2(FreqTypes/min(FreqTypes)) - 1;
 
 hf = figure('position',[100 100 380 300]);
 hold on

@@ -1,26 +1,57 @@
-function post_ROI_calculation
+function post_ROI_calculation(varargin)
 %this script is used for post analysis of ROI analysis result, need the
 %result mat file of TIFF figure analysis
 
 dbstop if error % stop if error occurs
 
-clc;
-type=input('please input the analysis type.\nRF for receptive field analysis and 2AFC for behavior data analysis.\n','s');
+% modified the function to accept input for batch processing using given
+% input parameters
+% ###############################################################
+InputPatas.IsParaInput = 0;
+InputPatas.SessType = '';
+InputPatas.Choice = 2;
+InputPatas.BaselineMethod = 2;
+InputPatas.SessDataPath = '';
+InputPatas.SessDataFileName = {};
+InputPatas.BehavDataPath = '';
+InputPatas.TriggerTime = 1;
+
+if nargin > 0
+    InputStrc = varargin{1};
+    Inputfields = fieldnames(InputStrc);
+    nInputfields = length(Inputfields);
+    for cfield = 1 : nInputfields
+        InputPatas.(Inputfields{cfield}) = InputStrc.(Inputfields{cfield});
+    end
+end
+
+if ~InputPatas.IsParaInput
+    clc;
+    type = input('please input the analysis type.\nRF for receptive field analysis and 2AFC for behavior data analysis.\n','s');
+else
+    type = InputPatas.SessType;
+end
 
 if (strcmpi(type,'RF')||strcmpi(type,'2AFC'))==0
     warning('Wrong analysis type input. quit analysis...');
     return;
 end
-  
+
 %%
 %load ROI analysis result
-disp(['please input the ',type,' ROIs analysis result file path.\n']);
-[filename,SessPath,Findex]=uigetfile('*.mat','Select your 2p analysis storage data','MultiSelect','on');
-if ~Findex
-    disp('Quit analysis...\n');
-    return;
+if ~InputPatas.IsParaInput
+    disp(['please input the ',type,' ROIs analysis result file path.\n']);
+    [filename,SessPath,Findex]=uigetfile('*.mat','Select your 2p analysis storage data','MultiSelect','on');
+    if ~Findex
+        disp('Quit analysis...\n');
+        return;
+    end
+    cd(SessPath);
+else
+    filename = InputPatas.SessDataFileName;
+    cd(InputPatas.SessDataPath);
 end
-cd(SessPath);
+    
 % files=dir('*.mat');
 for i=1:length(filename)
     RealFileName=filename{i};
@@ -89,17 +120,25 @@ result_size=[trial_num,nROIs,nFrames];  % this should be a three elements vector
 session_date=CaTrials(1).FileName_prefix(:);
 
 if strcmpi(type,'rf')
-    triger_time=input('please input the triger time before sound stimulus deliverying, with default value is 1s.\n');
-    if isempty(triger_time)
-        triger_time=1;
+    if ~InputPatas.IsParaInput
+        triger_time=input('please input the triger time before sound stimulus deliverying, with default value is 1s.\n');
+        if isempty(triger_time)
+            triger_time=1;
+        end
+    else
+        triger_time = InputPatas.TriggerTime;
     end
     triger_inds=floor(triger_time*frame_rate);
 else
-    disp('please select the full data path for behavior file(*.beh) analysis result.\n');
-    [fn2,file_path2]=uigetfile('*.*');
-    filefullpath2=[file_path2,filesep,fn2];  %this can be achieved by the  fullfile function
-    if ~exist(filefullpath2,'file')
-        error('wrong file path for behavior result!');
+    if ~InputPatas.IsParaInput
+        disp('please select the full data path for behavior file(*.beh) analysis result.\n');
+        [fn2,file_path2]=uigetfile('*.*');
+        filefullpath2=[file_path2,filesep,fn2];  %this can be achieved by the  fullfile function
+        if ~exist(filefullpath2,'file')
+            error('wrong file path for behavior result!');
+        end
+    else
+        filefullpath2 = InputPatas.BehavDataPath;
     end
     load(filefullpath2);
     if ~(strcmpi(file_path2,pwd) || strcmpi(file_path2(1:end-1),pwd)) % exclude the last \ character
@@ -731,13 +770,18 @@ elseif strcmpi(type,'2AFC')
     if exist(fullfile(SessPath,'SessionFrameProj.mat'),'file')
         Image2P_ROIlabeling_Infun;
     end
-    fprintf(['Please select the f0 calculation method.\n 1 for mode f0 calculation.\n 2 for pure baseline calculation.\n 3 for block wise calculation.\n',...
-        ' 4 for 8th substraction.\n 5 for mode after baseline correction.\n']);
-    MethodChoice=input('Please select your choice.\n','s');
-    BaselineMethod=str2double(MethodChoice);
-    if isnan(BaselineMethod)
-        BaselineMethod = [];
+    if ~InputPatas.IsParaInput
+        fprintf(['Please select the f0 calculation method.\n 1 for mode f0 calculation.\n 2 for pure baseline calculation.\n 3 for block wise calculation.\n',...
+            ' 4 for 8th substraction.\n 5 for mode after baseline correction.\n']);
+        MethodChoice=input('Please select your choice.\n','s');
+        BaselineMethod=str2double(MethodChoice);
+        if isnan(BaselineMethod)
+            BaselineMethod = [];
+        end
+    else
+        BaselineMethod = InputPatas.BaselineMethod;
     end
+    
     NewFoldName = sprintf('Type%d_f0_calculation',BaselineMethod);
     if ~isdir(NewFoldName)
         mkdir(NewFoldName);
@@ -750,23 +794,26 @@ elseif strcmpi(type,'2AFC')
     end
 %     save RawMatricData.mat f_raw_trials f_percent_change -v7.3
 %     cd('.\plot_save\');
-    %AFC_ROI_analysis(f_percent_change,export_filename_raw)
-    choice=0;
-    while ~choice
-        %     disp('''performing 2AFC analysis, you should do the in site ROI''s tuning analysis first.\n Go on?(y/n)\n');
-        continue_char=input('Before performing 2AFC analysis, would you like to do the in site ROI''s tuning poanalysis first.\n Go on?(y/n)\n','s');
-        
-        if strcmpi(continue_char,'y')
-            choice=1;
-        elseif strcmpi(continue_char,'n')
-            choice=2;
-            disp('performing only population analysis for 2AFC data');
-            continue;
-        else
-            disp('error input, try it again.\n');
+	if ~InputPatas.IsParaInput
+        choice=0;
+        while ~choice
+            %     disp('''performing 2AFC analysis, you should do the in site ROI''s tuning analysis first.\n Go on?(y/n)\n');
+            continue_char=input('Before performing 2AFC analysis, would you like to do the in site ROI''s tuning poanalysis first.\n Go on?(y/n)\n','s');
+
+            if strcmpi(continue_char,'y')
+                choice=1;
+            elseif strcmpi(continue_char,'n')
+                choice=2;
+                disp('performing only population analysis for 2AFC data');
+                continue;
+            else
+                disp('error input, try it again.\n');
+            end
         end
+    else
+        choice = InputPatas.Choice;
     end
-    
+%     
     if choice==1
         cWorkingPath = pwd;
         fprintf('Loading RF ROI analysis files...\n');
