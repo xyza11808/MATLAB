@@ -1,5 +1,5 @@
 
-GrandPath = 'H:\data\behavior\2p_data\behaviro_data\batch53';
+GrandPath = 'H:\data\behavior\2p_data\behaviro_data\batch55';
 xpath = genpath(GrandPath);
 nameSplit = strsplit(xpath,';');
 if isempty(nameSplit{end})

@@ -191,8 +191,11 @@ while ischar(tline)
     end
     %
     SessMeanF = squeeze(mean(MaxFrameAll));
-    SessMaxF = squeeze(max(MaxFrameAll));
-    MaxDelta = SessMaxF - SessMeanF;
+%     SessMaxF = squeeze(max(MaxFrameAll));
+%     MaxDelta = SessMaxF - SessMeanF;
+    MaxDelta = squeeze(mean(MeanFrameAll));
+    FrameSizeBase = zeros([1,size(SessMeanF)]);
+    SessFrameInds = repmat(FrameSizeBase,nTrs,1,1);
     
     % calculate the ROI display region
     nROIs = length(ROIinfoBU.ROIpos);
@@ -248,27 +251,43 @@ while ischar(tline)
         elseif yscales(2) > FrameSize(2)
             yscales(2) = FrameSize(2);
         end
+        
+        ROIPixelNum = sum(sum(ROIinfoBU.ROImask{cROI}));
+        FrameSizeBase(1,:,:) = double(ROIinfoBU.ROImask{cROI});
+        FrameROIBase = repmat(FrameSizeBase,nTrs,1,1);
+%         ROImaskInds = SessFrameInds;
+%         ROImaskInds(:,yscales(1):yscales(2),xscales(1):xscales(2)) = 1;
+        ROIData = MeanFrameAll(logical(FrameROIBase));
+        ROIFrameData = (reshape(ROIData,nTrs,ROIPixelNum))';
+        ROIFrameBrightness = mean(ROIFrameData);
+        [~,MaxInds] = max(ROIFrameBrightness);
+        MaxDelta = squeeze(MeanFrameAll(MaxInds,:,:));
+        
         ROISelectData = MaxDelta(yscales(1):yscales(2),xscales(1):xscales(2));
-        ROImaxlim = prctile(ROISelectData(:),90);
+        ROImaxlim = prctile(ROISelectData(:),100)*1.05;
         AdjROIpos = cROIpos - repmat([ROIedgeShift_x,ROIedgeShift_y],size(cROIpos,1),1);
         AdjROIcenter = mean(AdjROIpos);
 
     %    subplot(4,30,k)
        %
-       hf = figure('visible','off');
+%        hf = figure('visible','off');
+       hf = figure;
        imagesc(ROISelectData,[0 ROImaxlim]);
        line(AdjROIpos(:,1),AdjROIpos(:,2),'Color','r','linewidth',1.6);
        text(AdjROIcenter(1),AdjROIcenter(2),num2str(cROI),'color','g');
        colormap gray;
        axis off
-       saveas(hf,sprintf('ROI%d morph plot save',cROI));
-       saveas(hf,sprintf('ROI%d morph plot save',cROI),'png');
+%        saveas(hf,sprintf('ROI%d morph plot save',cROI));
+%        saveas(hf,sprintf('ROI%d morph plot save',cROI),'png');
+       pause(2);
        close(hf);
        %
     %    k = k + 1;
         ROIMorphData{cROI,1} = ROISelectData;
         ROIMorphData{cROI,2} = AdjROIpos;
     end
+    
+    %
     save MorphDataAll.mat ROIMorphData -v7.3
     cd ..;
     

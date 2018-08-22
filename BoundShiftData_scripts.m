@@ -25,7 +25,7 @@ while ischar(tline)
             %
         end
         Anminfo = SessInfoExtraction(tline);
-        cTunDataPathMode = [tline,filesep,'Tunning_fun_plot_New1s',filesep,'NMTuned Modefreq colormap plot'];
+        cTunDataPathMode = [tline,filesep,'Tunning_fun_plot_New1s',filesep,'NMTuned Meanfreq colormap plot'];
         cTunDataPathMean = [tline,filesep,'Tunning_fun_plot_New1s',filesep,'NMTuned Meanfreq colormap plot'];
         
         TaskRespMapMode = fullfile(cTunDataPathMode,'Task top Prc100 colormap save.png');
@@ -35,7 +35,7 @@ while ischar(tline)
         
         CoupleSessPath = fgetl(ff);
         CoupAnmInfo = SessInfoExtraction(CoupleSessPath);
-        CoupcTunDataPathMode = [CoupleSessPath,filesep,'Tunning_fun_plot_New1s',filesep,'NMTuned Modefreq colormap plot'];
+        CoupcTunDataPathMode = [CoupleSessPath,filesep,'Tunning_fun_plot_New1s',filesep,'NMTuned Meanfreq colormap plot'];
         CoupcTunDataPathMean = [CoupleSessPath,filesep,'Tunning_fun_plot_New1s',filesep,'NMTuned Meanfreq colormap plot'];
         
         CoupTaskRespMapMode = fullfile(CoupcTunDataPathMode,'Task top Prc100 colormap save.png');
@@ -195,21 +195,21 @@ while ischar(tline)
         tline = fgetl(ff);
         continue;
     else
-        %
+        %%
         if m == 1
             %
             %                 PPTname = input('Please input the name for current PPT file:\n','s');
-            PPTname = 'BoundShift_SingleNeuTuning_withMorph_Minmax';
+            PPTname = 'BoundShift_0401_0730_0716_new';
             if isempty(strfind(PPTname,'.ppt'))
                 PPTname = [PPTname,'.pptx'];
             end
             %                 pptSavePath = uigetdir(pwd,'Please select the path used for ppt file savege');
-            pptSavePath = 'F:\TestOutputSave\BoundShiftSum';
+            pptSavePath = 'N:\PlotSummary_folder';
             %
         end
         %
         Anminfo = SessInfoExtraction(tline);
-        cTunDataPath = [tline,filesep,'Tunning_fun_plot_New1s_Minmax'];
+        cTunDataPath = [tline,filesep,'Tunning_fun_plot_New1s'];
         cRespColorMap = [tline,filesep,'All BehavType Colorplot'];
         TunFilesAll = dir(fullfile(cTunDataPath,'ROI* Tunning curve comparison plot.png'));
         nFiles = length(TunFilesAll);
@@ -218,9 +218,9 @@ while ischar(tline)
         ROIposfilePath = tline(1:EndInds);
         cMorphfiles = fullfile(ROIposfilePath,'ROI_morph_plot');
         
-        CoupleSessPath = fgetl(ff);
+%         CoupleSessPath = fgetl(ff);
         CoupAnmInfo = SessInfoExtraction(CoupleSessPath);
-        CoupcTunDataPath = [CoupleSessPath,filesep,'Tunning_fun_plot_New1s_Minmax'];
+        CoupcTunDataPath = [CoupleSessPath,filesep,'Tunning_fun_plot_New1s'];
         CoupcColorPath = [CoupleSessPath,filesep,'All BehavType Colorplot'];
         CoupTunFileAll = dir(fullfile(CoupcTunDataPath,'ROI* Tunning curve comparison plot.png'));
         CoupnFiles = length(CoupTunFileAll);
@@ -276,7 +276,8 @@ while ischar(tline)
                 'Position',[8 6.5 2 2],'FontSize',20);
             %
         end
-        %
+        
+        %%
     end
     m = m + 1;
     nSession = nSession + 1;
