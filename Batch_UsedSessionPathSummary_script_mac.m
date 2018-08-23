@@ -4,10 +4,7 @@ clc
 GrandPath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
 xpath = genpath(GrandPath);
 if ismac
-    nameSplit = (strsplit(xpath,':'))';
-elseif ispc
-    nameSplit = (strsplit(xpath,';'))';
-end
+nameSplit = (strsplit(xpath,':'))';
 if isempty(nameSplit{end})
     nameSplit(end) = [];
 end

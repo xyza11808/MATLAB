@@ -26,15 +26,15 @@ for n = 1 : DirLength
     if ispc
         systemstr = ['ipython H:\Python\save_behavData_2_mat_batch.py ',cPATH];
     elseif ismac
-        systemstr = ['python /Users/xinyu/Documents/extraCode/python_code/Python/save_behavData_2_mat_batch.py ',cPATH];
+        systemstr = ['ipython /Users/xinyu/Documents/extraCode/python_code/Python/save_behavData_2_mat_batch.py ',cPATH];
     end
-    list = dir([cPATH,filesep,'*.beh']);
+    list = dir([cPATH,'\*.beh']);
     if isempty(list)
         fprintf('Folder path %s have no .beh files indside.\n',cPATH);
         continue;
     end
     [status,~] = system(systemstr);
-    matlist = dir([cPATH,filesep,'*.mat']);
+    matlist = dir([cPATH,'\*.mat']);
     matFileLength = length(matlist);
     cd(cPATH);
     for nfile = 1 : matFileLength
