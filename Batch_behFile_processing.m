@@ -3,8 +3,8 @@ if ispc
     xpath = genpath(GrandPath);
     nameSplit = strsplit(xpath,';');
 elseif ismac
-%     GrandPath = '/Users/xinyu/Documents/dataAll/behavior/batch55';
-    GrandPath = '/Users/xinyu/Documents/dataAll/behavior/Temp';
+    GrandPath = '/Users/xinyu/Documents/dataAll/behavior/batch55/anm07';
+%     GrandPath = '/Users/xinyu/Documents/dataAll/behavior/Temp';
     xpath = genpath(GrandPath);
     nameSplit = strsplit(xpath,':');
 end
