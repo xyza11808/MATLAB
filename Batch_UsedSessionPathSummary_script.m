@@ -1,11 +1,13 @@
 clear
 clc
 
-GrandPath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
-xpath = genpath(GrandPath);
 if ismac
+    GrandPath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
+    xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,':'))';
 elseif ispc
+    GrandPath = 'S:\BatchData\batch53';
+    xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,';'))';
 end
 if isempty(nameSplit{end})
@@ -262,20 +264,24 @@ end
 %%
 m = 1;
 nSession = 1;
-tline = NormSessPathTask{37};
+tline = NormSessPathTask{40};
 CoupleSessPath = NormSessPathTask{54};
-Passtline = NormSessPathPass{37};
+Passtline = NormSessPathPass{40};
 PassCoupleSessPath = NormSessPathPass{54};
 
 if m == 1
     %
     %                 PPTname = input('Please input the name for current PPT file:\n','s');
-    PPTname = 'BoundShift_0402_0801_0723';
+    PPTname = 'BoundShift_0501_0718_0725';
     if isempty(strfind(PPTname,'.ppt'))
         PPTname = [PPTname,'.pptx'];
     end
     %                 pptSavePath = uigetdir(pwd,'Please select the path used for ppt file savege');
-    pptSavePath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
+    if ismac
+        pptSavePath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
+    elseif ispc
+        pptSavePath = 'N:\PlotSummary_folder';
+    end
     %
 end
 %

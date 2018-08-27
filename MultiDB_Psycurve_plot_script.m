@@ -2,7 +2,7 @@
 clear
 clc
 %% codes for multi DB curve plot
-StimDBAll = double(behavResults.Stim_toneIntensity);
+StimDBAll = double(behavResults.Stim_toneIntensity); 
 StimFreqAll = double(behavResults.Stim_toneFreq);
 StimChoiceAll = double(behavResults.Action_choice);
 %% using only non-miss trial
