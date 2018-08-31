@@ -85,7 +85,7 @@ FreqTypes = unique(TrFreqAll);
 NumFreqs = numel(FreqTypes);
 ColorTypes = jet(NumFreqs);
 Headers = [];
-HeaderStr = cellstr(num2str(FreqTypes(:)/1000,'.1f%'));
+HeaderStr = cellstr(num2str(FreqTypes(:)/1000,'%.1f'));
 
 hFreqf = figure('position',[500 100 380 300]);
 hold on
