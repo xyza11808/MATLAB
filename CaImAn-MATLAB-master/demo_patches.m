@@ -8,7 +8,7 @@ gcp;                                           % start local cluster
 path_to_package = '../ca_source_extraction';   % path to the folder that contains the package
 addpath(genpath(path_to_package));
              
-filename = '/Users/epnevmatikakis/Documents/Ca_datasets/Neurofinder/neurofinder.02.00/images/neurofinder0200_rig.tif';      
+filename = '/Users/xinyu/Documents/GitHub/MATLAB/CaImAn-MATLAB-master/demoMovie.tif';      
         % path to file (assumed motion corrected)
         
 is_memmaped = true;        % choose whether you want to load the file in memory or not
