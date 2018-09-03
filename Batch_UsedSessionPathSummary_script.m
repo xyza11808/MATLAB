@@ -119,10 +119,10 @@ end
 
 %%
 % batched ROI morph plot
-nSessPath = length(NormSessPathPass); % NormSessPathTask  NormSessPathPass
+nSessPath = length(NormSessPathTask); % NormSessPathTask  NormSessPathPass
 for cSess = 1 : nSessPath
     %
-    cSessPath = NormSessPathPass{cSess};
+    cSessPath = NormSessPathTask{cSess};
 %     [~,EndInds] = regexp(cSessPath,'result_save');
 %     tline = cSessPath(1:EndInds);
     %
@@ -173,21 +173,28 @@ for cSess = 1 : nSessPath
     RegionSize = [];
     switch FrameSize(1)
         case 256
-            RegionSize(1) = 20;
-        case 512
             RegionSize(1) = 30;
+        case 512
+            RegionSize(1) = 15;
         otherwise
             CusSize = input([sprintf('cFrame row number is %d, please input the ROI region size.',FrameSize(1)),'\n'],'s');
             RegionSize(1) = str2num(CusSize);
     end
     switch FrameSize(2)
         case 256
-            RegionSize(2) = 20;
-        case 512
             RegionSize(2) = 30;
+        case 512
+            RegionSize(2) = 15;
         otherwise
             CusSize = input([sprintf('cFrame row number is %d, please input the ROI region size.',FrameSize(2)),'\n'],'s');
             RegionSize(2) = str2num(CusSize);
+    end
+    if FrameSize(2) == FrameSize(1)
+        if FrameSize(2) == 256
+            RegionSize = [20,20];
+        elseif FrameSize(1) == 512
+            RegionSize = [30,30];
+        end
     end
     
     % generate the ROI data for each ROI
@@ -246,6 +253,8 @@ for cSess = 1 : nSessPath
        text(AdjROIcenter(1),AdjROIcenter(2),num2str(cROI),'color','g');
        colormap gray;
        axis off
+       
+       %
        saveas(hf,sprintf('ROI%d morph plot save',cROI));
        saveas(hf,sprintf('ROI%d morph plot save',cROI),'png');
        pause(2);
@@ -264,15 +273,15 @@ end
 %%
 m = 1;
 nSession = 1;
-tline = NormSessPathTask{40};
-CoupleSessPath = NormSessPathTask{54};
-Passtline = NormSessPathPass{40};
-PassCoupleSessPath = NormSessPathPass{54};
+tline = NormSessPathTask{6};
+CoupleSessPath = NormSessPathTask{29};
+Passtline = NormSessPathPass{6};
+PassCoupleSessPath = NormSessPathPass{29};
 
 if m == 1
     %
     %                 PPTname = input('Please input the name for current PPT file:\n','s');
-    PPTname = 'BoundShift_0501_0718_0725';
+    PPTname = 'BoundShift_0502_0721_0630';
     if isempty(strfind(PPTname,'.ppt'))
         PPTname = [PPTname,'.pptx'];
     end

@@ -56,7 +56,7 @@ end
 BinTimepoints = (1:BinLength) * (LickEndT/200);
 %%
 save LickRateDatSave.mat AlignedBinDataL AlignedBinDataR minTrBinNum trial_outcome PlotTypes BinTimepoints -v7.3
-AlignedLickRplot(AlignedBinDataL,AlignedBinDataR,minTrBinNum,double(trial_outcome(:)),PlotTypes,BinTimepoints);
+% AlignedLickRplot(AlignedBinDataL,AlignedBinDataR,minTrBinNum,double(trial_outcome(:)),PlotTypes,BinTimepoints);
 
 if ~sum(isProbTrial)  %if there are no prob trials
     if length(FreqTypes)==2 % single-pair stimulus 2afc task

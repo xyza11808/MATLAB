@@ -207,7 +207,7 @@ while ischar(Tasktline) && ischar(Passtline)
 % %             continue;
 %         end
 %         clearvars -except Tasktline Passtline
-        BoundFreq = 14000;
+        BoundFreq = 8000;
         TaskDataStrc = load(fullfile(Tasktline,'CSessionData.mat'));
         PassDataStrc = load(fullfile(Passtline,'rfSelectDataSet.mat')); 
         BehavDataPath = fullfile(Tasktline,'RandP_data_plots','boundary_result.mat');
