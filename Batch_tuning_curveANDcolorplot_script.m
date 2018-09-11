@@ -1,5 +1,6 @@
 % batched ROI morph plot
 clearvars -except NormSessPathPass NormSessPathTask 
+%%
 nSessPath = length(NormSessPathPass);
 CusMap = blue2red_2(32,0.8);
 ErrorSessNum = [];
@@ -7,6 +8,9 @@ ErrorMes = {};
 k_sess = 0;
 for cSess = 1 : nSessPath
     %
+    if isdir(fullfile(NormSessPathTask{cSess},'Tunning_fun_plot_New1s'))
+        continue;
+    end
     try
     Passtline = NormSessPathPass{cSess};
     Tasktline = NormSessPathTask{cSess};
