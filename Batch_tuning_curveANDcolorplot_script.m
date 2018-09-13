@@ -8,7 +8,7 @@ ErrorMes = {};
 k_sess = 0;
 for cSess = 1 : nSessPath
     %
-    if isdir(fullfile(NormSessPathTask{cSess},'Tunning_fun_plot_New1s'))
+    if exist(fullfile(NormSessPathTask{cSess},'Tunning_fun_plot_New1s','NMTuned Meanfreq colormap plot','TaskPassBFDis.mat'))
         continue;
     end
     try

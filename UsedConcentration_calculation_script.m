@@ -1,5 +1,8 @@
+clear
+clc
 
-UsedConcentration = 0.1; %mg/kg
+
+UsedConcentration = 0.2; %mg/kg
 MouseWeight = 24; %g
 StoreConcen = 10; %mg/ml
 FinalVolume = 0.2; %ml
