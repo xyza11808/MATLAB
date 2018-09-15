@@ -391,15 +391,16 @@ saveName = exportToPPTX('saveandclose',pptFullfile);
 
 nSess = length(NormSessPathTask);
 for cSS = 1 : nSess
+    %
     tline = NormSessPathTask{cSS};
 %     if isempty(strfind(tline,'NO_Correction\mode_f_change'))
 %        tline = fgetl(ff);
 %         continue;
 %     else
         %
-        if isdir(fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plots'))
-            continue;
-        end
+%         if isdir(fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plots'))
+%             continue;
+%         end
             
         SpikeDataPath = [tline,'\Tunning_fun_plot_New1s'];
         cd(SpikeDataPath);
@@ -512,11 +513,10 @@ for cSS = 1 : nSess
                     IsCategROI(ROInum) = 0;
 %                     ROIisResponsive(ROInum) = 0;
                     IsROItun = 1;
-                else  % high response, but no significant difference between two groups
-                    if abs(LeftMean - RightMean) < max([LeftMean , RightMean])/2  % no significant difference between two groups
+                elseif abs(LeftMean - RightMean) < max([LeftMean , RightMean])/2  % no significant difference between two groups
+                      % high response, but no significant difference between two groups  
                         IsCategROI(ROInum) = 0;
                         IsROItun = 0;
-                    end
 %                     if fit_model.b3 >= 0
 %                         if (mean(NorTundata(end-GrNum+1:end)) - mean(NorTundata(1:GrNum))) < mean(NorTundata(end-GrNum+1:end))/2
 %                             IsCategROI(ROInum) = 0;
@@ -528,6 +528,8 @@ for cSS = 1 : nSess
 %                             IsROItun = 0;
 %                        end 
 %                     end
+                else
+                   
                 end
             end
 % %             text(0.4,mean(NorTundata),sprintf('rmse = %.3f',fitgof.rmse));
@@ -561,9 +563,9 @@ for cSS = 1 : nSess
             GauResidueAll{ROInum} = gof;
 %             GauFitMSE(ROInum) = gof.rmse;
             if ~IsCategROI(ROInum)
-               if  Thresratio_gau < 0.2
+               if  Thresratio_gau < 0.1
                    if ROIisResponsive(ROInum)
-                       if ffit.c3 < min(abs(diff(OctaveData)))*2
+                       if ffit.c3 < max(min(abs(diff(OctaveData)))*2,0.4)
                             IsTunedROI(ROInum) = 1;
                        end
                    end
@@ -574,6 +576,11 @@ for cSS = 1 : nSess
             else
                 IsTunedROI(ROInum) = 0;
             end
+            if IsCategROI(ROInum) && Thresratio_gau < DiffRatio/10
+                IsCategROI(ROInum) = 0;
+                IsTunedROI(ROInum) = 1;
+            end
+            
             if ~ROIisResponsive(ROInum)
                 IsTunedROI(ROInum) = 0;
             end
@@ -673,6 +680,7 @@ for cSS = 1 : nSess
         saveas(hhf,'Tuning ROI TunedPeak index distribution');
         saveas(hhf,'Tuning ROI TunedPeak index distribution','png');
         close(hhf);
+        %
         %         SigROIinds = find(ROIisResponsive > 0);
 %         SigLogfitmse = LogFitMSE(SigROIinds);
 %         SigGaufitmse = GauFitMSE(SigROIinds);
@@ -1320,4 +1328,5 @@ for cSess = 1 : cSessions
     saveas(hf,'Bound2Behav diff compare scatter plot');
     saveas(hf,'Bound2Behav diff compare scatter plot','png');
     close(hf);
+    %%
 end
