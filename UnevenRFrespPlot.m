@@ -27,6 +27,13 @@ if nargin > 5
       isplot = varargin{2};
     end
 end
+TimeScale = [0 1];
+if nargin > 6
+    if ~isempty(varargin{3})
+        TimeScale = varargin{3};
+    end
+end
+FrameScales = (TimeStimOn+TimeScale)*FrameRate+[1,0];
 
 DBtypes = unique(DBArray);
 FreqTypes = unique(FreqArray);
@@ -51,6 +58,8 @@ typeData = cell(nROIs,numDB,numFreq);
 TypeFrameInds = cell(numDB,numFreq);
 for nROI = 1 : nROIs
     cROIdata = squeeze(PassData(:,nROI,:));
+    BaselineData = cROIdata(:,1:StimOnF);
+    RespThresV = mean(BaselineData(:)) + 3*std(BaselineData(:));
     if isplot
         hROI = figure('position',[100 100 1600 900]);
         Coloraxis = subplot(numDB,3,1:3:(numDB*3));
@@ -69,7 +78,7 @@ for nROI = 1 : nROIs
         patch([StimOnF,StimOffF,StimOffF,StimOnF],[0.5 0.5 (nTrials+0.5) (nTrials+0.5)],1,'FaceColor','g','EdgeColor','none','facealpha',0.4);
         set(gca,'FontSize',14);
     end
-    
+    cROIRespData = zeros(numDB,numFreq);
     for nDBType = 1 : numDB
         for nFreqtype = 1 : numFreq
             cCombInds = DBArray == DBtypes(nDBType) & FreqArray == FreqTypes(nFreqtype);
@@ -110,6 +119,10 @@ for nROI = 1 : nROIs
             set(gca,'ylim',[0.5 numel(cDBFreqFrameMtx)+0.5],'box','off','xlim',[0.5 size(cDBdataMatrix,2)+0.5]);
             %
             MeanTraceCell = cellfun(@mean,cDBdatacell,'UniformOutput',false);
+            SmoothMeanTrace = cellfun(@(x) smooth(x(StimOnF:end)),MeanTraceCell,'UniformOutput',false);
+            SmoothMaxValue = cellfun(@(x) max(x(FrameScales(1) - StimOnF:FrameScales(2) - StimOnF)),SmoothMeanTrace);
+            cROIRespData(nDBType,:) = SmoothMaxValue;
+            
             nElements = cellfun(@numel,MeanTraceCell);
             if length(unique(nElements)) > 1
                 EleTypes = unique(nElements);
@@ -153,6 +166,31 @@ for nROI = 1 : nROIs
         saveas(hROI,sprintf('ROI%d passive resp plot',nROI));
         saveas(hROI,sprintf('ROI%d passive resp plot',nROI),'png');
         close(hROI);
+        
+        
+        % plots single ROI response v-shaped plots
+        DBStrs = cellstr(num2str(DBtypes(:)));
+        FreqStrs = cellstr(num2str(FreqTypes(:)/1000,'%.1f'));
+        h_hf = figure('position',[100 100 380 300]);
+%         subplot(121)
+        imagesc(cROIRespData);
+        colormap gray
+        set(gca,'yDir','normal','ytick',1:DBtypes,'yticklabel',DBStrs,'xtick',1:numFreq,'xticklabel',FreqStrs,'FontSize',9);
+        title(sprintf('ROI%d',nROI));
+        
+        hhhbar = colorbar;
+        set(get(hhhbar,'title'),'String','\DeltaF/F');
+        
+%         subplot(122)
+%         imagesc(cROIRespData > RespThresV);
+%         colormap gray
+%         set(gca,'yDir','normal','ytick',1:DBtypes,'yticklabel',DBStrs,'xtick',1:numFreq,'xticklabel',FreqStrs,'FontSize',9);
+%         
+%         
+        %
+        saveas(h_hf,sprintf('ROI%d response value colorplot',nROI));
+        saveas(h_hf,sprintf('ROI%d response value colorplot',nROI),'png');
+        close(h_hf);
     end
 end
 save UnevenPassdata.mat typeData TimeStimOn FrameRate DBtypes FreqTypes TypeFrameInds -v7.3

@@ -22,7 +22,7 @@ while ischar(tline)
         continue;
     end
     %%
-    clearvars -except tline fid CusMap PreferRandDisSum m fn fp BehavBound
+%     clearvars -except tline fid CusMap PreferRandDisSum m fn fp BehavBound
     % passive tuning frequency colormap plot
     load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));
@@ -63,7 +63,8 @@ while ischar(tline)
     cd('NMTuned Meanfreq colormap plot');
     % plot the behavior result and uncertainty function
     GroupStimsNum = floor(length(BehavCorr)/2);
-    BehavOctaves = log2(double(BehavBoundfile.boundary_result.StimType)/BehavBound);
+    cSessStims = double(BehavBoundfile.boundary_result.StimType);
+    BehavOctaves = log2(double(BehavBoundfile.boundary_result.StimType)/min(BehavBoundfile.boundary_result.StimType)) - 1;
     FreqStrs = cellstr(num2str(BehavBoundfile.boundary_result.StimType(:)/1000,'%.1f'));
     FitoctaveData = BehavCorr;
     FitoctaveData(1:GroupStimsNum) = 1 - FitoctaveData(1:GroupStimsNum);
@@ -176,7 +177,8 @@ while ischar(tline)
         axis off
         hBar = colorbar('westoutside');
         set(hBar,'position',get(hBar,'position').*[0.7 1 0.5 0.6]+[0.1 0.2 0 0],'TickLength',0);
-        set(hBar,'ytick',[-1 1],'yticklabel',{'8','32'});
+        set(hBar,'ytick',[-1 1],'yticklabel',{num2str(min(cSessStims)/1000,'%d'),...
+            num2str(max(cSessStims)/1000,'%d')});
         title(hBar,'kHz')
 %         title(sprintf('Prc%d map',cPrcvalue));
         h_axes = axes('position', hBar.Position, 'ylim', hBar.Limits, 'color', 'none', 'visible','off');
@@ -329,7 +331,8 @@ while ischar(tline)
         axis off
         hBar = colorbar('westoutside');
         set(hBar,'position',get(hBar,'position').*[0.7 1 0.5 0.6]+[0.1 0.2 0 0]);
-        set(hBar,'ytick',[-1 1],'yticklabel',{'8','32'});
+        set(hBar,'ytick',[-1 1],'yticklabel',{num2str(min(cSessStims)/1000,'%d'),...
+            num2str(max(cSessStims)/1000,'%d')});
         title(hBar,'kHz')
 %         title(sprintf('Prc%d map',cPrcvalue));
          h_axes = axes('position', hBar.Position, 'ylim', hBar.Limits, 'color', 'none', 'visible','off');

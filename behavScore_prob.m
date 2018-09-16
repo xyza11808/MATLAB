@@ -1,5 +1,6 @@
 function [varargout]=behavScore_prob(varargin)
 
+InputAxes = 0;
 if nargin==0
     disp('please select your behavior analysis result data, the mat file contains animal behavior info.\n');
     filepath=uigetdir(pwd,'Select your behavior data analysis result');
@@ -17,6 +18,12 @@ else
     behavSettings=varargin{2};
     fn=varargin{3};
     IsIgnoringPerf = varargin{4};
+    if ~isempty(varargin{5})
+        InputAxes = 1;
+        axes(varargin{5});
+        hold on;
+    end
+        
     batch_plot=0;
 end
 data_save_path='./session_behav_plots/';
@@ -39,8 +46,10 @@ if batch_plot
         rewarded = behavResults.Time_reward ~= 0;
         % a and be should be the same if grace period is 0. If it's not 0, then
         % should use reward time, i.e., pcorrect_b.
-        
-        figure('color','w'); hold on;
+        if ~InputAxes
+            figure('color','w'); 
+            hold on;
+        end
         
         plot(trialInds, smooth(rewarded, 20),'k','linewidth',2)
         plot(trialInds(inds_leftTrials), smooth(rewarded(inds_leftTrials), 20),'b','linewidth',2);
@@ -101,7 +110,7 @@ if batch_plot
         
         saveas(gcf,sprintf('./session_behav_plots/plot_%s.png', fn(1:end-4)), 'png');
         saveas(gcf,sprintf('./session_behav_plots/plot_%s.png', fn(1:end-4)));
-        close;
+%         close;
         
         %use subplot function to plot all result of the given data
         
@@ -118,7 +127,10 @@ else
     % a and be should be the same if grace period is 0. If it's not 0, then
     % should use reward time, i.e., pcorrect_b.
     
-    figure('color','w'); hold on;
+    if ~InputAxes
+        figure('color','w'); 
+        hold on;
+    end
     
     plot(trialInds, smooth(double(rewarded), 20),'k','linewidth',2)
     plot(trialInds(inds_leftTrials), smooth(double(rewarded(inds_leftTrials)), 20),'b','linewidth',2);
@@ -181,7 +193,7 @@ else
     
     saveas(gcf,sprintf('./session_behav_plots/plot_%s.png', fn(1:end-4)), 'png');
     saveas(gcf,sprintf('./session_behav_plots/plot_%s.png', fn(1:end-4)));
-    close;
+%     close;
     
     %defining trial types for further analysis
     StimFreq=unique(behavResults.Stim_toneFreq);
@@ -218,9 +230,19 @@ else
     
     if nargout==1
         varargout{1}={{UserChoice},{SessionType}};
+        if ~InputAxes
+            close;
+        end
     elseif nargout==2
         varargout{1}=UserChoice;
         varargout{2}=SessionType;
+        if ~InputAxes
+            close;
+        end
+    elseif nargout==3
+        varargout{1}=UserChoice;
+        varargout{2}=SessionType;
+        varargout{3}=gcf;
     end
 end
 
