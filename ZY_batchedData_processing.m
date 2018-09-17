@@ -132,6 +132,13 @@ ylabel('MissRate');
 xlabel('Freq (kHz)');
 set(gca,'FontSize',14);
 legend([el1,el2],{'Saline','CNO'},'box','off','location','Northwest');
+%% comparison between different freqs
+nffreq = size(SalineMissRateData,2);
+pValueAll = zeros(nffreq,1);
+for cffreq = 1 : nffreq
+    [~,cf_pValue] = ttest2(SalineMissRateData(:,cffreq),CNOMissRateData(:,cffreq));
+    pValueAll(cffreq) = cf_pValue;
+end
 
 %% rightward choice probability plot
 SalineRProbAll = cellfun(@(x) (x(:,2))',SalineData.RealMissRateData(:,2),'UniformOutput',false);
