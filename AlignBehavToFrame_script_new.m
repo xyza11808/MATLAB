@@ -45,6 +45,8 @@ DefStimFIndex = zeros(FrameNum,nFreqs);  % default index values
 %  TaskParaStrs = {'LLick','RLick','LAns','RAns',StimSTrs{:},StimoffSTrs{:},'Reward','LTypeOn','LTypeOff',...
 %  'RTypeOn','RTypeOff','EstimateSpike'};
  TaskParaStrs = {'LAns','RAns',StimSTrs{:},'Reward'}; %,'LTypeOn','RTypeOn'
+ BehavParaTicks = [1,2,3,3+length(StimSTrs),3+length(StimSTrs)];
+ BehavParaStrs = {'LAns','RAns','On','Reward'};
 %
 w = gausswin(5,1);
 TrTaskParaAll = cell(nTrs,1);
@@ -198,6 +200,14 @@ for cTrs = 1 : nTrs
     %
 end
 glmnetCoefStrs = {'ConstantV',TaskParaStrs{:},ReBaseStrs{:},AnsBaseStrs{:},StimBaseStrs{:}};
+BehavParaTicks = [1,2,3,3+length(StimSTrs)];
+BehavParaStrs = {'LAns','RAns','On','Reward','LeftAns','RAns'};
+BehavParaTicks = [BehavParaTicks,BehavParaTicks(end)+ExtraBaseFunNum+1,1+BehavParaTicks(end)+ExtraBaseFunNum*2];
+for cStimType = 1 : length(StimusType)
+     BehavParaTicks = [BehavParaTicks,BehavParaTicks(end)+ExtraBaseFunNum];
+     BehavParaStrs = [BehavParaStrs,{num2str(StimusType(cStimType))}];
+end
+
 TaskParaStrs = {TaskParaStrs{:},ReBaseStrs{:},AnsBaseStrs{:},StimBaseStrs{:},'EstimateSp'};
 
 % % % %% data preprocessing
@@ -271,7 +281,7 @@ TaskParaStrs = {TaskParaStrs{:},ReBaseStrs{:},AnsBaseStrs{:},StimBaseStrs{:},'Es
 %%
 nnspikeUsed = nnspike(TwopDataNMInds,:,:);
 
-nfolds = 10;
+nfolds = 5;
 nIters = nfolds;
 TrainPerc = 0.75;
 nROIs = size(nnspikeUsed,2);
@@ -283,18 +293,18 @@ CVindsAll = cell(nROIs,1);
 CVPredData = cell(nROIs,nIters);
 %%
 ttt = tic;
-for croi = 1 : nROIs
-    %%
+parfor croi = 1 : nROIs
+    %
     cRdata = squeeze(nnspikeUsed(:,croi,:));
     cRdata = cRdata';
-    cc = cvpartition(nTrs,'kFold',10);
+    cc = cvpartition(nTrs,'kFold',nfolds);
     CVindsAll{croi} = cc;
     options = glmnetSet;
     options.alpha = 0.9;
     options.nlambda = 110;
-    %%
+    %
     for citer = 1 : nfolds
-        %%
+        %
         TrainIndsLogi = cc.training(citer);
         
         TrainData = reshape((cRdata(:,TrainIndsLogi)),[],1);
@@ -309,7 +319,7 @@ for croi = 1 : nROIs
         ROImdCoef{croi,citer} = cvmdCoef;
         PredTestData = cvglmnetPredict(cvmdfit,TestParaData,[],'response',false);
         
-        %%
+        %
         CVPredData{croi,citer} = PredTestData;  % cvPredDataRe = reshape(cvPredData,500,[]);
         % figure;imagesc(cvPredDataRe');
         
@@ -318,11 +328,30 @@ for croi = 1 : nROIs
         PredCoefp(croi,citer) = cop(1,2);
     end
     fprintf('ROI%d analysis done!\n',croi);
-    %%
+    %
 end
 toc(ttt);
 % glmnetCoefTabel = array2table(cvmdCoef','VariableNames',glmnetCoefStrs');
 save FitDataSave.mat CVPredData ROImdCoef PredCoef PredCoefp -v7.3
+
+%%
+
+for cR = 1 : nROIs
+    %%
+    cRCoefCell = ROImdCoef(cR,:);
+    cRCoefData = cell2mat(cRCoefCell);
+    PosCoefInds = cRCoefData(2:end,:);
+    PosCoefSigIndex = double(PosCoefInds > 1e-3);
+    SigCoefParaIndex = mean(PosCoefSigIndex,2) >= 0.5;
+    %%
+    figure
+    plot(SigCoefParaIndex,'.')
+    set(gca,'ylim',[-0.1 1.1])
+    set(gca,'ylim',[-0.1 1.1],'box','off')
+    set(gca,'xtick',BehavParaTicks,'xticklabel',BehavParaStrs(:))
+%%
+end
+%%
 % %%
 % if ~isdir('./TestPred_compPlot/')
 %     mkdir('./TestPred_compPlot/');
