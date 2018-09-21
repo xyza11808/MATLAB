@@ -8,6 +8,16 @@ end
 if LickEndT > 10
     LickEndT = 8;
 end
+fnBase = '';
+if nargin > 3
+    if ~ismepty(varargin{1})
+        fnBase = varargin{1};
+        if contains(fnBase,'.mat')
+            fnBase = fnBase(1:end-3);
+        end
+    end
+end
+
 TrialTypes=behavStruct.Trial_Type;
 TrialStimOnT=behavStruct.Time_stimOnset;
 RespDelay=BehavSetting.responseDelay;
@@ -203,8 +213,8 @@ if ~sum(isProbTrial)  %if there are no prob trials
         ylabel('# Trials');
         
         suptitle('Lick Time Plot');
-        saveas(h_all,'Raster_plot_2T2AFC_Lick_plot.png');
-        saveas(h_all,'Raster_plot_2T2AFC_Lick_plot.fig');
+        saveas(h_all,sprintf('%sRaster_plot_2T2AFC_Lick_plot.png',fnBase));
+        saveas(h_all,sprintf('%sRaster_plot_2T2AFC_Lick_plot.fig',fnBase));
         close(h_all);
     else
         FreqNum=length(FreqTypes);
@@ -279,8 +289,8 @@ if ~sum(isProbTrial)  %if there are no prob trials
             ylabel('# Trials');
         end
         suptitle('Lick Time Plot');
-        saveas(h_all,'Raster_plot_MT2AFC_Lick_plot.png');
-        saveas(h_all,'Raster_plot_MT2AFC_Lick_plot.fig');
+        saveas(h_all,sprintf('%sRaster_plot_MT2AFC_Lick_plot.png',fnBase));
+        saveas(h_all,sprintf('%sRaster_plot_MT2AFC_Lick_plot.fig',fnBase));
         close(h_all);
     end
 else
@@ -374,8 +384,8 @@ else
             
         end
         suptitle('Control Trial lick Time');
-        saveas(fConTrol,'Raster_plot_Prob2AFC_ControlLick_plot.png');
-        saveas(fConTrol,'Raster_plot_Prob2AFC_ControlLick_plot.fig');
+        saveas(fConTrol,sprintf('%sRaster_plot_Prob2AFC_ControlLick_plot.png',fnBase));
+        saveas(fConTrol,sprintf('%sRaster_plot_Prob2AFC_ControlLick_plot.fig',fnBase));
         close(fConTrol);
         %prob Trials plot
         fProb=figure('position',[220 40 1500 900],'PaperPositionMode','auto');
@@ -449,8 +459,8 @@ else
             
         end
         suptitle('Prob Trials lick Time');
-        saveas(fProb,'Raster_plot_Prob2AFC_ProbLick_plot.png');
-        saveas(fProb,'Raster_plot_Prob2AFC_ProbLick_plot.fig');
+        saveas(fProb,sprintf('%sRaster_plot_Prob2AFC_ProbLick_plot.png',fnBase));
+        saveas(fProb,sprintf('%sRaster_plot_Prob2AFC_ProbLick_plot.png',fnBase));
         close(fProb);
     else
         %plot control opto trials and prob opto trials

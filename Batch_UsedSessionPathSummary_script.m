@@ -273,15 +273,15 @@ end
 %%
 m = 1;
 nSession = 1;
-tline = NormSessPathTask{34};
-CoupleSessPath = NormSessPathTask{65};
-Passtline = NormSessPathPass{34};
-PassCoupleSessPath = NormSessPathPass{65};
+tline = NormSessPathTask{24};
+CoupleSessPath = NormSessPathTask{53};
+Passtline = NormSessPathPass{24};
+PassCoupleSessPath = NormSessPathPass{53};
 %
 if m == 1
     %
     %                 PPTname = input('Please input the name for current PPT file:\n','s');
-    PPTname = 'BoundShift_0501_0722_0718';
+    PPTname = 'BoundShift_0301_0721_0801';
     if isempty(strfind(PPTname,'.ppt'))
         PPTname = [PPTname,'.pptx'];
     end
@@ -556,9 +556,9 @@ for cSS = 1 : nSess
            % fitting the gaussian function
             modelfunc = @(c1,c2,c3,c4,x) c1*exp((-1)*((x - c2).^2)./(2*(c3^2)))+c4;
             [AmpV,AmpInds] = max(NorTundata);
-            c0 = [AmpV,OctaveData(AmpInds),mean(abs(diff(OctaveData))),min(NorTundata)];  % 0.4 is the octave step
-            cUpper = [max(AmpV*2,0),max(OctaveData),max(OctaveData) - min(OctaveData),AmpV];
-            cLower = [min(NorTundata),min(OctaveData),0,-Inf];
+            c0 = [AmpV-min(NorTundata),OctaveData(AmpInds),mean(abs(diff(OctaveData))),min(NorTundata)];  % 0.4 is the octave step
+            cUpper = [max((AmpV-min(NorTundata))*2,0),max(OctaveData),max(OctaveData) - min(OctaveData),AmpV];
+            cLower = [0,min(OctaveData),0,-Inf];
             [ffit,gof] = fit(OctaveData(:),NorTundata(:),modelfunc,...
                'StartPoint',c0,'Upper',cUpper,'Lower',cLower,'Robust','LAR');  % 'Method','NonlinearLeastSquares',
            OctaveFitValue_gau = feval(ffit,OctaveData(:));
@@ -589,7 +589,8 @@ for cSS = 1 : nSess
             if (ffit.c3 < 0.2 && max(NorTundata) < 20) || (ffit.c3 < 0.05 && (1 - abs(ffit.c2)) > 0.2) % tuning width should be larger than 0.2 octave
                 IsTunedROI(ROInum) = 0;
             end
-            if ~ROIisResponsive(ROInum) || ffit.c1 < 20
+            DataSorted = sort(NorTundata);
+            if ~ROIisResponsive(ROInum) || (max(NorTundata) - mean(DataSorted(1:3))) < 20
                 IsTunedROI(ROInum) = 0;
             end
             

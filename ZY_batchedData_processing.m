@@ -112,9 +112,14 @@ save SummedDAtaSave.mat RealMissRateData FreqStrs FreqOctaves  -v7.3
 SalineData = load('R:\Xulab_Share_Nutstore\Zhang_Yuan\hM4D withmiss sum plot\ACtx hM4D raw behavior\saline control matfile\SummedDAtaSave.mat');
 CNOControlData = load('R:\Xulab_Share_Nutstore\Zhang_Yuan\hM4D withmiss sum plot\ACtx hM4D raw behavior\control for CNO matfile\SummedDAtaSave.mat');
 CNOData = load('R:\Xulab_Share_Nutstore\Zhang_Yuan\hM4D withmiss sum plot\ACtx hM4D raw behavior\CNO matfile\SummedDAtaSave.mat');
+
+%% for rbp4 data plots
+SalineData = load('R:\Xulab_Share_Nutstore\Zhang_Yuan\CNO_rbp4Data\4rbp4saline\SummedDAtaSave.mat');
+CNOData = load('R:\Xulab_Share_Nutstore\Zhang_Yuan\CNO_rbp4Data\4rbp4cno\SummedDAtaSave.mat');
+
 %% missrate plot
 SalineMissRateAll = cellfun(@(x) (x(:,1))',SalineData.RealMissRateData(:,2),'UniformOutput',false);
-CNOControlMissRateAll = cellfun(@(x) (x(:,1))',CNOControlData.RealMissRateData(:,2),'UniformOutput',false);
+% CNOControlMissRateAll = cellfun(@(x) (x(:,1))',CNOControlData.RealMissRateData(:,2),'UniformOutput',false);
 CNOMissRateAll = cellfun(@(x) (x(:,1))',CNOData.RealMissRateData(:,2),'UniformOutput',false);
 %
 SalineMissRateData = cell2mat(SalineMissRateAll);
@@ -142,7 +147,7 @@ end
 
 %% rightward choice probability plot
 SalineRProbAll = cellfun(@(x) (x(:,2))',SalineData.RealMissRateData(:,2),'UniformOutput',false);
-CNOControlRProbRateAll = cellfun(@(x) (x(:,2))',CNOControlData.RealMissRateData(:,2),'UniformOutput',false);
+% CNOControlRProbRateAll = cellfun(@(x) (x(:,2))',CNOControlData.RealMissRateData(:,2),'UniformOutput',false);
 CNORProbAll = cellfun(@(x) (x(:,2))',CNOData.RealMissRateData(:,2),'UniformOutput',false);
 %
 SalineRProbData = cell2mat(SalineRProbAll);
@@ -163,7 +168,7 @@ set(gca,'FontSize',14);
 
 %% with miss right prob curve
 SalineWMRProbAll = cellfun(@(x) (x(:,3))',SalineData.RealMissRateData(:,2),'UniformOutput',false);
-CNOControlWMRProbRateAll = cellfun(@(x) (x(:,3))',CNOControlData.RealMissRateData(:,2),'UniformOutput',false);
+% CNOControlWMRProbRateAll = cellfun(@(x) (x(:,3))',CNOControlData.RealMissRateData(:,2),'UniformOutput',false);
 CNOWMRProbAll = cellfun(@(x) (x(:,3))',CNOData.RealMissRateData(:,2),'UniformOutput',false);
 %
 SalineWMRProbData = cell2mat(SalineWMRProbAll);

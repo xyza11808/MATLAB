@@ -18,10 +18,12 @@ else
     behavSettings=varargin{2};
     fn=varargin{3};
     IsIgnoringPerf = varargin{4};
-    if ~isempty(varargin{5})
-        InputAxes = 1;
-        axes(varargin{5});
-        hold on;
+    if nargin > 4
+        if ~isempty(varargin{5})
+            InputAxes = 1;
+            axes(varargin{5});
+            hold on;
+        end
     end
         
     batch_plot=0;

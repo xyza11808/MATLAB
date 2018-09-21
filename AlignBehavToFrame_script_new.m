@@ -9,8 +9,9 @@ FrameTime = SavedCaTrials.FrameTime;
 % end
 TrTime = FrameTime*FrameNum;  %in ms
 FrameTimeBin = 0:FrameTime:TrTime;
-TrChoiceRaw = double(behavResults.Action_choice);
+TrChoiceRaw = double(behavResults.Action_choice(:));
 NMInds = TrChoiceRaw ~= 2;
+IsExcludeInds = 1;
 if IsExcludeInds
     BehavExcludesInds = NMInds(:) | ExcludedTrInds(:);
     DataExcludeInds = NMInds(~ExcludedTrInds(:));
@@ -18,6 +19,8 @@ else
     BehavExcludesInds = NMInds;
     DataExcludeInds = NMInds;
 end
+TwopDataNMInds = behavResults.Action_choice(~ExcludedTrInds) ~= 2;
+%%
 TrChoice = TrChoiceRaw(BehavExcludesInds);
 TrStimTime = double(behavResults.Time_stimOnset(BehavExcludesInds));
 TrRewardTi = double(behavResults.Time_reward(BehavExcludesInds));
@@ -266,7 +269,7 @@ TaskParaStrs = {TaskParaStrs{:},ReBaseStrs{:},AnsBaseStrs{:},StimBaseStrs{:},'Es
 % plot(PlotTrInds,PlotTrYinds,'linestyle','--','Color',[.7 .7 .7]);
 % save TestDataSet.mat nnspike TrTaskParaAll -v7.3
 %%
-nnspikeUsed = nnspike(DataExcludeInds,:,:);
+nnspikeUsed = nnspike(TwopDataNMInds,:,:);
 
 nfolds = 10;
 nIters = nfolds;
@@ -281,7 +284,7 @@ CVPredData = cell(nROIs,nIters);
 %%
 ttt = tic;
 for croi = 1 : nROIs
-    %
+    %%
     cRdata = squeeze(nnspikeUsed(:,croi,:));
     cRdata = cRdata';
     cc = cvpartition(nTrs,'kFold',10);
@@ -289,9 +292,9 @@ for croi = 1 : nROIs
     options = glmnetSet;
     options.alpha = 0.9;
     options.nlambda = 110;
-    %
+    %%
     for citer = 1 : nfolds
-        %
+        %%
         TrainIndsLogi = cc.training(citer);
         
         TrainData = reshape((cRdata(:,TrainIndsLogi)),[],1);
@@ -306,7 +309,7 @@ for croi = 1 : nROIs
         ROImdCoef{croi,citer} = cvmdCoef;
         PredTestData = cvglmnetPredict(cvmdfit,TestParaData,[],'response',false);
         
-        %
+        %%
         CVPredData{croi,citer} = PredTestData;  % cvPredDataRe = reshape(cvPredData,500,[]);
         % figure;imagesc(cvPredDataRe');
         
@@ -315,7 +318,7 @@ for croi = 1 : nROIs
         PredCoefp(croi,citer) = cop(1,2);
     end
     fprintf('ROI%d analysis done!\n',croi);
-    %
+    %%
 end
 toc(ttt);
 % glmnetCoefTabel = array2table(cvmdCoef','VariableNames',glmnetCoefStrs');
