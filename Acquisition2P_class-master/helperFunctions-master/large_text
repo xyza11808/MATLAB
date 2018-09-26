@@ -1,0 +1,2 @@
+set(findall(gca,'type', 'text'),'Fontname', 'Myriad Pro', 'Fontsize', 14)
+set(gca,'Fontname', 'Myriad Pro', 'Fontsize', 14)

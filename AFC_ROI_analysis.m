@@ -363,20 +363,27 @@ end
 % NorData=zeros(size_data);
 % % nSpikes = zeros(size_data);
 % ROIstd=zeros(1,size_data(2));
-% 
-%parameter struc
-V.Ncells = 1;
-V.T = size_data(3);
-V.Npixels = 1;
-V.dt = 1/frame_rate;
-P.lam = 10;
-nTau = 1.8;
-P.gam = 1 - V.dt/nTau; 
-% if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
-     nnspike = DataFluo2Spike(DataRaw,V,P); % estimated spike
-% else
-%     load('EstimateSPsave.mat');
-% end
+
+% #############################
+% % old spike deconvolution method
+% %parameter struc
+% V.Ncells = 1;
+% V.T = size_data(3);
+% V.Npixels = 1;
+% V.dt = 1/frame_rate;
+% P.lam = 10;
+% nTau = 1.8;
+% P.gam = 1 - V.dt/nTau; 
+% % if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
+%      nnspike = DataFluo2Spike(DataRaw,V,P); % estimated spike
+% % else
+% %     load('EstimateSPsave.mat');
+% % end
+% ####################################
+% ####################################
+% new spike deconvolution method
+nnspike = Fluo2SpikeConstrainOOpsi(DataRaw,[],[],frame_rate,2);
+
 %%
 if iscell(nnspike)
     SPsizeData = [length(nnspike),size(nnspike{1},1),max(FrameInds)];
@@ -734,7 +741,7 @@ elseif str2double(continue_char)==2
     end
     %%
 %     if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
-         save EstimateSPsave.mat nnspike SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
+         save EstimateSPsaveNewMth.mat nnspike SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
 %     else
 %         load('EstimateSPsave.mat');
 %     end

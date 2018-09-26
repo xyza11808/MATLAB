@@ -213,7 +213,7 @@ if options.temporal_parallel
                 [samples_mcmc.g] = deal(zeros(params.Nsamples,1));
                 [samples_mcmc.params] = deal(struct('lam_', [], 'spiketimes_', [], 'A_', [], 'b_', [], 'C_in', [], 'sg', [], 'g', []));
             end
-            parfor jj = 1:length(O{jo})
+            for jj = 1:length(O{jo})
                 if p == 0   % p = 0 (no dynamics assumed)
                     %cc = max(Ytemp(:,jj),0);
                     cc = max(Ytemp(jj,:),0);

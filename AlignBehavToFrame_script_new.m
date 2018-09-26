@@ -281,7 +281,7 @@ TaskParaStrs = {TaskParaStrs{:},ReBaseStrs{:},AnsBaseStrs{:},StimBaseStrs{:},'Es
 %%
 nnspikeUsed = nnspike(TwopDataNMInds,:,:);
 
-nfolds = 5;
+nfolds = 1;
 nIters = nfolds;
 TrainPerc = 0.75;
 nROIs = size(nnspikeUsed,2);
@@ -294,17 +294,21 @@ CVPredData = cell(nROIs,nIters);
 %%
 ttt = tic;
 parfor croi = 1 : nROIs
-    %
+    %%
     cRdata = squeeze(nnspikeUsed(:,croi,:));
     cRdata = cRdata';
-    cc = cvpartition(nTrs,'kFold',nfolds);
-    CVindsAll{croi} = cc;
+    if nfolds > 1
+        cc = cvpartition(nTrs,'kFold',nfolds);
+        CVindsAll{croi} = cc;
+    else
+        CVindsAll{croi} = true(nTrs,1);
+    end
     options = glmnetSet;
     options.alpha = 0.9;
     options.nlambda = 110;
-    %
+    %%
     for citer = 1 : nfolds
-        %
+        %%
         TrainIndsLogi = cc.training(citer);
         
         TrainData = reshape((cRdata(:,TrainIndsLogi)),[],1);
@@ -321,7 +325,7 @@ parfor croi = 1 : nROIs
         
         %
         CVPredData{croi,citer} = PredTestData;  % cvPredDataRe = reshape(cvPredData,500,[]);
-        % figure;imagesc(cvPredDataRe');
+        %% figure;imagesc(cvPredDataRe');
         
         [coef,cop] = corrcoef(PredTestData,TestData);
         PredCoef(croi,citer) = coef(1,2);
@@ -337,19 +341,26 @@ save FitDataSave.mat CVPredData ROImdCoef PredCoef PredCoefp -v7.3
 %%
 
 for cR = 1 : nROIs
-    %%
+    %
     cRCoefCell = ROImdCoef(cR,:);
     cRCoefData = cell2mat(cRCoefCell);
     PosCoefInds = cRCoefData(2:end,:);
     PosCoefSigIndex = double(PosCoefInds > 1e-3);
-    SigCoefParaIndex = mean(PosCoefSigIndex,2) >= 0.5;
-    %%
-    figure
+    SigCoefParaIndex = mean(PosCoefSigIndex,2) >= 0.4;
+%     figure;
+%     imagesc(PosCoefInds)
+    %
+    hf = figure;
     plot(SigCoefParaIndex,'.')
     set(gca,'ylim',[-0.1 1.1])
     set(gca,'ylim',[-0.1 1.1],'box','off')
-    set(gca,'xtick',BehavParaTicks,'xticklabel',BehavParaStrs(:))
-%%
+    set(gca,'xtick',BehavParaTicks,'xticklabel',BehavParaStrs(:));
+    title(sprintf('ROI%d',cR));
+    
+    saveas(hf,sprintf('ROI%d plot save',cR));
+    saveas(hf,sprintf('ROI%d plot save',cR),'png');
+    close(hf);
+%
 end
 %%
 % %%

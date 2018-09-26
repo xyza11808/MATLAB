@@ -1,6 +1,6 @@
 %finding the target image for alignment
-cd('W:\#members\xy\batch\batch55\20180918\anm07\test06');
-[im, ~] = load_scim_data('b55a07_test06_2x_2afc_160um_20180918_115.tif');
+cd('W:\#members\xy\batch\batch55\20180921\anm06\test07');
+[im, ~] = load_scim_data('b55a06_test07_2x_2afc_150um_20180921_160.tif');
 
 selectframe=im(:,:,1:30);
 figure;
