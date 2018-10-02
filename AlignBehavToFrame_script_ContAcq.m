@@ -6,8 +6,8 @@
 % FrameTimeBin = 0:FrameTime:TrTime;
 TrChoice = double(behavResults.Action_choice);
 NMInds = TrChoice ~= 2;
-
-if IsExcludeInds
+if exist('ExcludedTrInds','var')
+% if IsExcludeInds
     BehavExcludesInds = NMInds(:) | ExcludedTrInds(:);
     DataExcludeInds = NMInds(~ExcludedTrInds(:));
 else
@@ -213,6 +213,13 @@ for cTrs = 1 : nTrs
     %
 end
 glmnetCoefStrs = {'ConstantV',TaskParaStrs{:},ReBaseStrs{:},AnsBaseStrs{:},StimBaseStrs{:}};
+BehavParaTicks = [1,2,3,3+length(StimSTrs)];
+BehavParaStrs = {'LAns','RAns','On','Reward','LeftAns','RAns'};
+BehavParaTicks = [BehavParaTicks,BehavParaTicks(end)+ExtraBaseFunNum+1,1+BehavParaTicks(end)+ExtraBaseFunNum*2];
+for cStimType = 1 : length(StimusType)
+     BehavParaTicks = [BehavParaTicks,BehavParaTicks(end)+ExtraBaseFunNum];
+     BehavParaStrs = [BehavParaStrs,{num2str(StimusType(cStimType))}];
+end
 TaskParaStrs = {TaskParaStrs{:},ReBaseStrs{:},AnsBaseStrs{:},StimBaseStrs{:},'EstimateSp'};
 
 %% load spike data
@@ -230,14 +237,14 @@ PredCoefp = zeros(nROIs,nIters);
 CVindsAll = cell(nROIs,1);
 CVPredData = cell(nROIs,nIters);
 
-UsedSpikeData = nnspike(NMChoiceInds);
+UsedSpikeData = nnspike(NMInds);
 MaxUsefullcellData = num2cell(AllTrMaxUseF);
 MaxUsefulSPData = cellfun(@(x,y) x(:,1:y),UsedSpikeData,MaxUsefullcellData,'UniformOutput',false);
 MaxUsefulFitpara = cellfun(@(x,y) x(1:y,:),TrTaskParaAll,MaxUsefullcellData,'UniformOutput',false);
 %%
 tt=tic;
 parfor croi = 1 : nROIs
-    %
+    %%
     cRdatacell = cellfun(@(x) (x(croi,:))',MaxUsefulSPData,'UniformOutput',false);
 %     squeeze(nnspike(:,croi,:));
 %     cRdata = cRdata';
@@ -246,15 +253,17 @@ parfor croi = 1 : nROIs
     options = glmnetSet;
     options.alpha = 0.9;
     options.nlambda = 110;
-    %
+    options.offset = true;
+    %%
     for citer = 1 : nfolds
-        %
+        %%
         TrainIndsLogi = cc.training(citer);
         
         TrainData = cell2mat(cRdatacell(TrainIndsLogi));
         TrainParaData = cell2mat(MaxUsefulFitpara(TrainIndsLogi));
         TestParaData = cell2mat(MaxUsefulFitpara(~TrainIndsLogi));
         TestData = cell2mat(cRdatacell(~TrainIndsLogi));
+        UsedDataInds = TrainData > 1e-3;
         %
 %         mdl = fitglm(TrainParaData,TrainData, 'Distribution','poisson','VarNames',TaskParaStrs);
         cvmdfit = cvglmnet(TrainParaData,TrainData,'poisson',options);
@@ -262,7 +271,7 @@ parfor croi = 1 : nROIs
         ROImdCoef{croi,citer} = cvmdCoef;
         PredTestData = cvglmnetPredict(cvmdfit,TestParaData,[],'response',false);
 %         glmnetCoefTabel = array2table(cvmdCoef','VariableNames',glmnetCoefStrs');
-        %
+        %%
         CVPredData{croi,citer} = PredTestData;  % cvPredDataRe = reshape(cvPredData,500,[]);
         % figure;imagesc(cvPredDataRe');
         
@@ -274,3 +283,27 @@ parfor croi = 1 : nROIs
 end
  toc(tt);
 save FitDataSave.mat CVPredData ROImdCoef PredCoef PredCoefp -v7.3
+
+%%
+for cR = 1 : nROIs
+    %%
+    cRCoefCell = ROImdCoef(cR,:);
+    cRCoefData = cell2mat(cRCoefCell);
+    PosCoefInds = cRCoefData(2:end,:);
+    PosCoefSigIndex = double(PosCoefInds > 1e-3);
+    SigCoefParaIndex = mean(PosCoefSigIndex,2) >= 0.4;
+%     figure;
+%     imagesc(PosCoefInds)
+    %
+    hf = figure;
+    plot(SigCoefParaIndex,'.')
+    set(gca,'ylim',[-0.1 1.1])
+    set(gca,'ylim',[-0.1 1.1],'box','off')
+    set(gca,'xtick',BehavParaTicks,'xticklabel',BehavParaStrs(:));
+    title(sprintf('ROI%d',cR));
+    %%
+    saveas(hf,sprintf('ROI%d plot save',cR));
+    saveas(hf,sprintf('ROI%d plot save',cR),'png');
+    close(hf);
+%
+end

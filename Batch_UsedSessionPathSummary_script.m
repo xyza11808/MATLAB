@@ -1921,4 +1921,53 @@ for css = 1 : cSessions
 
 end
 
+%%
+clearvars -except NormSessPathTask NormSessPathPass
+nSess = length(NormSessPathTask);
+
+for cSess = 1 : nSess
+    cSessPath = NormSessPathTask{cSess};
+    cd(cSessPath);
+    oldSPfile = fullfile(cSessPath,'EstimateSPsave.mat');
+    if ~exist(oldSPfile,'file')
+        fprintf('Session index %d SPfile not exists.\n',cSess);
+    end
+    clearvars DataRaw
     
+    load(oldSPfile);
+    
+    nnspike = Fluo2SpikeConstrainOOpsi(DataRaw,[],[],frame_rate,2);
+    FrameInds = cellfun(@(x) size(x,2),DataRaw);
+    UsedFrame = ceil(prctile(FrameInds,80));
+    if iscell(nnspike)
+        SPsizeData = [length(nnspike),size(nnspike{1},1),max(FrameInds)];
+        SPDataAll = zeros(SPsizeData);
+        for cTr = 1 : length(nnspike)
+            SPDataAll(cTr,:,:) = [nnspike{cTr},nan(SPsizeData(2),SPsizeData(3) - FrameInds(cTr))];
+        end
+        UsedSPData = SPDataAll(:,:,1:UsedFrame);
+%         SPsizeDataNew = size(UsedSPData);
+    else
+        UsedSPData = nnspike;
+%         SPsizeDataNew = size(UsedSPData);
+    end
+    
+    % performing alignment
+    nROIs = size(data_aligned,2);
+    %performing stimulus onset alignment
+    %2AFC trigger should be at the begaining of each loop
+    onset_time=behavResults.Time_stimOnset;
+    align_time_point=min(onset_time);
+    alignment_frames=floor((double((onset_time-align_time_point))/1000)*frame_rate); 
+    framelength=size(UsedSPData,3)-max(alignment_frames);
+    alignment_frames(alignment_frames<1)=1;
+    start_frame=floor((double(align_time_point)/1000)*frame_rate);
+    
+    SpikeAligned = zeros(length(nnspike),nROIs,framelength);
+
+    for i=1:length(nnspike)
+        SpikeAligned(i,:,:)=UsedSPData(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
+    end
+    
+    save EstimateSPsaveNewMth.mat nnspike DataRaw SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
+end

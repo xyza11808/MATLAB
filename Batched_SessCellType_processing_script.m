@@ -96,7 +96,7 @@ for cSess = 1 : nSessPath
         (repmat(max(CtgROIPassDatas),numel(PassFreqs),1) - repmat(min(CtgROIPassDatas),numel(PassFreqs),1));
     GrInds = (cTunDataUsed.TaskFreqOctave < 0);
 
-    PreferSide = mean(CtgROITaskDatas(GrInds,:)) < mean(CtgROITaskDatas(GrInds,:));
+    PreferSide = mean(CtgROITaskDatas(GrInds,:)) < mean(CtgROITaskDatas(~GrInds,:));
     PreferSideData = Nor_CtgROITaskDatas;
     PreferSideData(:,~PreferSide) = flipud(PreferSideData(:,~PreferSide));
 
@@ -169,3 +169,90 @@ PassBFAlls = cell2mat(PassTunOctSumm(~EmptyInds & SessUsedLogiIndex));
 
 ROISums = cellfun(@numel,SessROINumCell(~EmptyInds & SessUsedLogiIndex));
 
+%% summarized all plots in a ppt file
+clearvars -except NormSessPathTask
+m = 1;
+nSession = length(NormSessPathTask);
+
+for cSess = 1 : nSession
+    tline = NormSessPathTask{cSess};
+    IsErrorExist = 0;
+    %
+    if m == 1
+        %
+        %                 PPTname = input('Please input the name for current PPT file:\n','s');
+        PPTname = 'Celltype_response_colorplot';
+        if isempty(strfind(PPTname,'.ppt'))
+            PPTname = [PPTname,'.pptx'];
+        end
+        %                 pptSavePath = uigetdir(pwd,'Please select the path used for ppt file savege');
+        if ismac
+            pptSavePath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
+        elseif ispc
+            pptSavePath = 'S:\BatchData\batch53';
+        end
+        %
+    end
+    %
+    Anminfo = SessInfoExtraction(tline);
+    cTunPlotPath = fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plots','NewLog_fit_test_new');
+   
+    BehavDataPath = fullfile(tline,'RandP_data_plots','Behav_fit plot.png');
+    TunROIColorPlotPath = fullfile(cTunPlotPath,'Tuning ROIs summary plots.png');
+    CategROIColorPlotPath = fullfile(cTunPlotPath,'Categ ROIs summary plots.png');
+    TunROIBFDisPath = fullfile(cTunPlotPath,'Tuning ROI BF distribution plots.png');
+    nROIfiles = dir(fullfile(cTunPlotPath,'Log Fit test Save ROI*.png'));
+    
+    pptFullfile = fullfile(pptSavePath,PPTname);
+    if ~exist(pptFullfile,'file')
+        NewFileExport = 1;
+    else
+        NewFileExport = 0;
+    end
+    if  m == 1
+        if NewFileExport
+            exportToPPTX('new','Dimensions',[16,9],'Author','XinYu','Comments','Export of tunning curve plot data');
+        else
+            exportToPPTX('open',pptFullfile);
+        end
+    end
+    %
+    exportToPPTX('addslide');
+    exportToPPTX('addnote',tline);
+    try
+         Datas = load(fullfile(cTunPlotPath,'TypeSavedData.mat'),'TunROITaskDatas','CtgROITaskDatas');
+        nTunROIs = size(Datas.TunROITaskDatas,2);
+        nCatgROIs = size(Datas.CtgROITaskDatas,2);
+        exportToPPTX('addtext',sprintf('nROIs = %d\nTfrac %.3f, CFrac %.3f',length(nROIfiles),nTunROIs/length(nROIfiles),nCatgROIs/length(nROIfiles)...
+            ),'Position',[2 0 4 1],'FontSize',20);
+    catch
+        exportToPPTX('addtext',sprintf('nROIs = %d',length(nROIfiles)),'Position',[2 0 2 1],'FontSize',20);
+    end
+    try
+        exportToPPTX('addpicture',imread(TunROIColorPlotPath),'Position',[0 1 10 3.75]);
+%         IsErrorExist = 1;
+    catch
+        IsErrorExist = 1;
+    end
+    try
+        exportToPPTX('addpicture',imread(CategROIColorPlotPath),'Position',[0 5 10 3.75]);
+    catch
+        IsErrorExist = 1;
+    end
+    try
+        exportToPPTX('addpicture',imread(TunROIBFDisPath),'Position',[10.5 0 4 3.37]);
+    catch
+        IsErrorExist = 1;
+    end
+    exportToPPTX('addpicture',imread(BehavDataPath),'Position',[10.5 3.5 4 3]);
+
+    exportToPPTX('addtext',sprintf('Batch:%s Anm:%s \nDate:%s Field:%s\n',...
+        Anminfo.BatchNum,Anminfo.AnimalNum,Anminfo.SessionDate,Anminfo.TestNum),...
+        'Position',[11 7 4 2],'FontSize',20);
+    if IsErrorExist
+        fprintf('Session %d do not have enough plots.\n',cSess);
+    end
+    m = m + 1;
+    
+end
+saveName = exportToPPTX('saveandclose',pptFullfile);

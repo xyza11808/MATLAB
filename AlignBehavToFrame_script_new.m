@@ -11,15 +11,17 @@ TrTime = FrameTime*FrameNum;  %in ms
 FrameTimeBin = 0:FrameTime:TrTime;
 TrChoiceRaw = double(behavResults.Action_choice(:));
 NMInds = TrChoiceRaw ~= 2;
-IsExcludeInds = 1;
+IsExcludeInds = 0;
 if IsExcludeInds
     BehavExcludesInds = NMInds(:) | ExcludedTrInds(:);
     DataExcludeInds = NMInds(~ExcludedTrInds(:));
+    TwopDataNMInds = behavResults.Action_choice(~ExcludedTrInds) ~= 2;
 else
     BehavExcludesInds = NMInds;
     DataExcludeInds = NMInds;
+    TwopDataNMInds = NMInds;
 end
-TwopDataNMInds = behavResults.Action_choice(~ExcludedTrInds) ~= 2;
+% TwopDataNMInds = behavResults.Action_choice(~ExcludedTrInds) ~= 2;
 %%
 TrChoice = TrChoiceRaw(BehavExcludesInds);
 TrStimTime = double(behavResults.Time_stimOnset(BehavExcludesInds));
@@ -341,7 +343,7 @@ save FitDataSave.mat CVPredData ROImdCoef PredCoef PredCoefp -v7.3
 %%
 
 for cR = 1 : nROIs
-    %
+    %%
     cRCoefCell = ROImdCoef(cR,:);
     cRCoefData = cell2mat(cRCoefCell);
     PosCoefInds = cRCoefData(2:end,:);
@@ -356,7 +358,7 @@ for cR = 1 : nROIs
     set(gca,'ylim',[-0.1 1.1],'box','off')
     set(gca,'xtick',BehavParaTicks,'xticklabel',BehavParaStrs(:));
     title(sprintf('ROI%d',cR));
-    
+    %%
     saveas(hf,sprintf('ROI%d plot save',cR));
     saveas(hf,sprintf('ROI%d plot save',cR),'png');
     close(hf);

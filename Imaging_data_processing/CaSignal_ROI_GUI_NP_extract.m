@@ -1134,7 +1134,7 @@ guidata(hObject, handles);
 % --- Executes on button press in import_ROIinfo_from_file.
 function import_ROIinfo_from_file_Callback(hObject, eventdata, handles)
 global CaSignal
-choice = questdlg('Import ROIinfo from different file/session?', 'Import ROIs', 'Yes','No','No');
+choice = questdlg('Import ROIinfo from different file/session?', 'Import ROIs', 'Yes','No','Yes');
 switch choice
     case 'Yes'
         [fn, pth] = uigetfile('*.mat');

@@ -5,13 +5,13 @@ clc
 StimDBAll = double(behavResults.Stim_toneIntensity); 
 StimFreqAll = double(behavResults.Stim_toneFreq);
 StimChoiceAll = double(behavResults.Action_choice);
-%% using only non-miss trial
+% using only non-miss trial
 NMChoiceInds = StimChoiceAll ~= 2;
 NMChoice = StimChoiceAll(NMChoiceInds);
 NMDBAll = StimDBAll(NMChoiceInds);
 NMFreqAll = StimFreqAll(NMChoiceInds);
 NMFreqOctAll = log2(NMFreqAll/min(NMFreqAll)) - 1; % aligned to boundary
-%%
+%
 
 FreqTypes = unique(NMFreqAll);
 FreqStrs = cellstr(num2str(FreqTypes(:)/1000,'%.1f'));
