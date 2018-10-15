@@ -794,26 +794,27 @@ elseif strcmpi(type,'2AFC')
     end
 %     save RawMatricData.mat f_raw_trials f_percent_change -v7.3
 %     cd('.\plot_save\');
-	if ~InputPatas.IsParaInput
-        choice=0;
-        while ~choice
-            %     disp('''performing 2AFC analysis, you should do the in site ROI''s tuning analysis first.\n Go on?(y/n)\n');
-            continue_char=input('Before performing 2AFC analysis, would you like to do the in site ROI''s tuning poanalysis first.\n Go on?(y/n)\n','s');
-
-            if strcmpi(continue_char,'y')
-                choice=1;
-            elseif strcmpi(continue_char,'n')
-                choice=2;
-                disp('performing only population analysis for 2AFC data');
-                continue;
-            else
-                disp('error input, try it again.\n');
-            end
-        end
-    else
-        choice = InputPatas.Choice;
-    end
-%     
+% 	if ~InputPatas.IsParaInput
+%         choice=0;
+%         while ~choice
+%             %     disp('''performing 2AFC analysis, you should do the in site ROI''s tuning analysis first.\n Go on?(y/n)\n');
+%             continue_char=input('Before performing 2AFC analysis, would you like to do the in site ROI''s tuning poanalysis first.\n Go on?(y/n)\n','s');
+% 
+%             if strcmpi(continue_char,'y')
+%                 choice=1;
+%             elseif strcmpi(continue_char,'n')
+%                 choice=2;
+%                 disp('performing only population analysis for 2AFC data');
+%                 continue;
+%             else
+%                 disp('error input, try it again.\n');
+%             end
+%         end
+%     else
+%         choice = InputPatas.Choice;
+%     end
+%    
+    choice=2;
     if choice==1
         cWorkingPath = pwd;
         fprintf('Loading RF ROI analysis files...\n');
