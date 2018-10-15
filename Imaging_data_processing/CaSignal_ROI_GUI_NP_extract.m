@@ -1137,7 +1137,15 @@ global CaSignal
 choice = questdlg('Import ROIinfo from different file/session?', 'Import ROIs', 'Yes','No','Yes');
 switch choice
     case 'Yes'
-        [fn, pth] = uigetfile('*.mat');
+        [StartInds,endInds] = regexp(CaSignal.data_path,'test\d{2,3}rf');
+        PosInfoPath = pwd;
+        if ~isempty(StartInds)
+            PosRelatePath = [CaSignal.data_path(1:endInds-2),CaSignal.data_path(endInds+1:end)];
+            if isdir(PosRelatePath) %#ok<ISDIR>
+                PosInfoPath = PosRelatePath;
+            end
+        end
+        [fn, pth] = uigetfile(PosInfoPath,'*.mat');
         r = load([pth filesep fn]);
         CaSignal.ROIInfoPath = fullfile(pth,fn);
         if isfield(r,'ROIinfo')
