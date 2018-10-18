@@ -61,7 +61,7 @@ for nROI = 1 : nROIs
     BaselineData = cROIdata(:,1:StimOnF);
     RespThresV = mean(BaselineData(:)) + 3*std(BaselineData(:));
     if isplot
-        hROI = figure('position',[100 100 1600 900]);
+        hROI = figure('position',[100 100 1600 900],'visible','off');
         Coloraxis = subplot(numDB,3,1:3:(numDB*3));
         climmax = prctile(cROIdata(:),85);
         if climmax < 0
@@ -171,7 +171,7 @@ for nROI = 1 : nROIs
         % plots single ROI response v-shaped plots
         DBStrs = cellstr(num2str(DBtypes(:)));
         FreqStrs = cellstr(num2str(FreqTypes(:)/1000,'%.1f'));
-        h_hf = figure('position',[100 100 380 300]);
+        h_hf = figure('position',[100 100 380 300],'visible','off');
 %         subplot(121)
         imagesc(cROIRespData);
         colormap gray

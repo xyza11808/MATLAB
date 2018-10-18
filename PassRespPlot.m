@@ -50,7 +50,7 @@ for cROI = 1 : nROIs
     if cROIColorScale(cROI,2) < 0
         cROIColorScale(cROI,2) = 10;
     end
-    hf = figure('position',RealSize,'Paperpositionmode','auto');
+    hf = figure('position',RealSize,'Paperpositionmode','auto','visible','off');
     for cDB = 1 : nRows
         for cFreq = 1 : nCols
             cStimInds = DBArray(:) == DBType(cDB) & FreqArray(:) == FreqTypes(cFreq);
@@ -99,7 +99,7 @@ for cROI = 1 : nROIs
     close(hf);
     
     % mean trace plot
-    hmean = figure('position',MeanRealSize,'Paperpositionmode','auto');
+    hmean = figure('position',MeanRealSize,'Paperpositionmode','auto','visible','off');
     AllLhandle = [];
     for cDB = 1 : nRows
         cDBData = (squeeze(MeanTraceSave(cDB,:,:)))'; % transformed for plots
