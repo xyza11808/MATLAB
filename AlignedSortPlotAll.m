@@ -211,7 +211,7 @@ for nROI = 1 : ROInum
     %
     MeanPlotAxes = [];
     MeanyScales = zeros(NumFreq,2);
-    hROI = figure('position',[20 100 1200 840],'PaperPositionMode','auto');
+    hROI = figure('position',[20 100 1200 840],'PaperPositionMode','auto','visible','off');
     for nFreq = 1 : NumFreq
         cFreqInds = TrStimFreq == FreqTypes(nFreq);
         cFreqOut = TrOutcome(cFreqInds);

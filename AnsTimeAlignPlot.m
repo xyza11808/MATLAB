@@ -77,7 +77,7 @@ if isPlot
             clim(2) = 10;
         end
         %
-        hf = figure('position',[200 100 1500 1000]);
+        hf = figure('position',[200 100 1500 1000],'visible','off');
         for nf = 1 : NumFreq
             cFreqInds = NMStimFreq == FreqTypes(nf);
             cFreqData = cROIdata(cFreqInds,:);
