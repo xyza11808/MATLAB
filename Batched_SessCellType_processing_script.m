@@ -1,25 +1,54 @@
+%% given data path in a txt file for imaging
+clear
+clc
+
+[fn,fp,fi] = uigetfile('*.txt','Please select the used data path saved file');
+if ~fi
+    return;
+end
+fPath = fullfile(fp,fn);
+fids = fopen(fPath);
+tline = fgetl(fids);
+NormSessPathTask = {};
+m = 1;
+
+while ischar(tline)
+    if isempty(strfind(tline,'NO_Correction\mode_f_change'))
+        tline = fgetl(fids);
+        continue;
+    end
+    
+    NormSessPathTask{m} = tline;
+
+    tline = fgetl(fids);
+    m = m + 1;
+end
+%%
 clearvars -except NormSessPathTask
 nSessPath = length(NormSessPathTask); % NormSessPathTask  NormSessPathPass
 TunDataCellAll = cell(nSessPath,5);
-CategDataCellAll = cell(nSessPath,6);
+CategDataCellAll = cell(nSessPath,7);
+CategROIFracs = zeros(nSessPath,2);
 for cSess = 1 : nSessPath
 
 %     cSessPath = 'S:\BatchData\batch53\20180818\anm05\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change';
     cSessPath = NormSessPathTask{cSess};
-    cTuningDataPath = fullfile(cSessPath,'Tunning_fun_plot_New1s','TunningDataSave.mat');
-    cTunFitDataPath = fullfile(cSessPath,'Tunning_fun_plot_New1s','Curve fitting plots','NewLog_fit_test_new','NewCurveFitsave.mat');
-    cd(fullfile(cSessPath,'Tunning_fun_plot_New1s','Curve fitting plots','NewLog_fit_test_new'));
+    %
+    cTuningDataPath = fullfile(cSessPath,'Tunning_fun_plot_New2s','TunningDataSave.mat');
+    cTunFitDataPath = fullfile(cSessPath,'Tunning_fun_plot_New2s','Curve fitting plots','NewLog_fit_test_new','NewCurveFitsave.mat');
+    cd(fullfile(cSessPath,'Tunning_fun_plot_New2s','Curve fitting plots','NewLog_fit_test_new'));
     cTunDataUsed = load(cTuningDataPath);
     cTunFitDataUsed = load(cTunFitDataPath,'IsTunedROI','BehavBoundResult','IsCategROI');
     %
     SessBehavBound = cTunFitDataUsed.BehavBoundResult;
     TaskROIBFAll = cTunDataUsed.TaskFreqOctave;
     PassROIBFAll = cTunDataUsed.PassFreqOctave;
+    NumROIs = numel(cTunFitDataUsed.IsTunedROI);
     cSessTaskFreqs = (2.^cTunDataUsed.TaskFreqOctave)*cTunDataUsed.BoundFreq;
     cSessPassFreqs = (2.^cTunDataUsed.PassFreqOctave)*cTunDataUsed.BoundFreq;
     
     if length(cSessTaskFreqs) ~= length(cSessPassFreqs)
-        continue;
+%         continue;
     end
     TunROIInds = find(cTunFitDataUsed.IsTunedROI);
     TunROINum = length(TunROIInds);
@@ -79,7 +108,7 @@ for cSess = 1 : nSessPath
     xlabel('# ROIs');
     title('Passove Tuning');
     set(gca,'FontSize',14);
-
+%
     saveas(huf,'Tuning ROIs summary plots');
     saveas(huf,'Tuning ROIs summary plots','png');
     close(huf);
@@ -90,8 +119,8 @@ for cSess = 1 : nSessPath
     CtgROITaskDatas = cTunDataUsed.CorrTunningFun(:,CategROIs);
     CtgROIPassDatas = cTunDataUsed.PassTunningfun(:,CategROIs);
 
-    Nor_CtgROITaskDatas = (CtgROITaskDatas - repmat(min(CtgROITaskDatas),numel(PassFreqs),1))./...
-        (repmat(max(CtgROITaskDatas),numel(PassFreqs),1) - repmat(min(CtgROITaskDatas),numel(PassFreqs),1));
+    Nor_CtgROITaskDatas = (CtgROITaskDatas - repmat(min(CtgROITaskDatas),numel(TaskFreqs),1))./...
+        (repmat(max(CtgROITaskDatas),numel(TaskFreqs),1) - repmat(min(CtgROITaskDatas),numel(TaskFreqs),1));
     Nor_CtgROIPassDatas = (CtgROIPassDatas - repmat(min(CtgROIPassDatas),numel(PassFreqs),1))./...
         (repmat(max(CtgROIPassDatas),numel(PassFreqs),1) - repmat(min(CtgROIPassDatas),numel(PassFreqs),1));
     GrInds = (cTunDataUsed.TaskFreqOctave < 0);
@@ -124,6 +153,17 @@ for cSess = 1 : nSessPath
     saveas(huCtgf,'Categ ROIs summary plots','png');
     close(huCtgf);
     
+    % calculate the categorical ROI fraction compared with slope value
+    try
+        cSessBehavPath = fullfile(cSessPath,'RandP_data_plots','boundary_result.mat');
+        cSessBehavData = load(cSessBehavPath);
+        BehavSlope = max(cSessBehavData.boundary_result.SlopeCurve);
+        CategFrac = numel(PreferSide)/NumROIs;
+        CategROIFracs(cSess,:) = [BehavSlope,CategFrac];
+    catch
+        %
+    end
+    
     TunDataCellAll{cSess,1} = cTunFitDataUsed.IsTunedROI;
     TunDataCellAll{cSess,2} = TaskROIBFAll;
     TunDataCellAll{cSess,3} = TaskTunROIOctaves;
@@ -139,6 +179,7 @@ for cSess = 1 : nSessPath
     CategDataCellAll{cSess,4} = PreferSideData;
     CategDataCellAll{cSess,5} = PreferPassData;
     CategDataCellAll{cSess,6} = TaskFreqs;
+    CategDataCellAll{cSess,7} = PreferSide;
     
     save TypeSavedData.mat  TaskOctTypes PassOctTypes TaskTunROIOctaves PassTunROIOctaves ...
         TunROITaskDatas TunROIPassDatas CtgROITaskDatas CtgROIPassDatas PreferSideData ...
@@ -181,7 +222,7 @@ for cSess = 1 : nSession
     if m == 1
         %
         %                 PPTname = input('Please input the name for current PPT file:\n','s');
-        PPTname = 'Celltype_response_colorplot';
+        PPTname = 'Celltype_response_colorplot_1s';
         if isempty(strfind(PPTname,'.ppt'))
             PPTname = [PPTname,'.pptx'];
         end
@@ -195,7 +236,7 @@ for cSess = 1 : nSession
     end
     %
     Anminfo = SessInfoExtraction(tline);
-    cTunPlotPath = fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plots','NewLog_fit_test_new');
+    cTunPlotPath = fullfile(tline,'Tunning_fun_plot_New2s','Curve fitting plots','NewLog_fit_test_new');
    
     BehavDataPath = fullfile(tline,'RandP_data_plots','Behav_fit plot.png');
     TunROIColorPlotPath = fullfile(cTunPlotPath,'Tuning ROIs summary plots.png');
@@ -203,6 +244,9 @@ for cSess = 1 : nSession
     TunROIBFDisPath = fullfile(cTunPlotPath,'Tuning ROI BF distribution plots.png');
     nROIfiles = dir(fullfile(cTunPlotPath,'Log Fit test Save ROI*.png'));
     
+    ColoredBFPlotsTaskPath = fullfile(tline,'Tunning_fun_plot_New1s','Tuned ROI BF plot','Task top Prc100 colormap save.png');
+    ColoredBFPlotsPassPath = fullfile(tline,'Tunning_fun_plot_New1s','Tuned ROI BF plot','Passive top Prc100 colormap save.png');
+
     pptFullfile = fullfile(pptSavePath,PPTname);
     if ~exist(pptFullfile,'file')
         NewFileExport = 1;
@@ -229,22 +273,28 @@ for cSess = 1 : nSession
         exportToPPTX('addtext',sprintf('nROIs = %d',length(nROIfiles)),'Position',[2 0 2 1],'FontSize',20);
     end
     try
-        exportToPPTX('addpicture',imread(TunROIColorPlotPath),'Position',[0 1 10 3.75]);
+        exportToPPTX('addpicture',imread(TunROIColorPlotPath),'Position',[0 1 7 2.62]);
 %         IsErrorExist = 1;
     catch
         IsErrorExist = 1;
     end
     try
-        exportToPPTX('addpicture',imread(CategROIColorPlotPath),'Position',[0 5 10 3.75]);
+        exportToPPTX('addpicture',imread(CategROIColorPlotPath),'Position',[0 3.7 7 2.62]);
     catch
         IsErrorExist = 1;
     end
     try
-        exportToPPTX('addpicture',imread(TunROIBFDisPath),'Position',[10.5 0 4 3.37]);
+        exportToPPTX('addpicture',imread(TunROIBFDisPath),'Position',[0 6.35 3.1 2.6]);
     catch
         IsErrorExist = 1;
     end
-    exportToPPTX('addpicture',imread(BehavDataPath),'Position',[10.5 3.5 4 3]);
+    exportToPPTX('addpicture',imread(BehavDataPath),'Position',[3.5 6.35 3.47 2.6]);
+
+    exportToPPTX('addpicture',imread(ColoredBFPlotsTaskPath),'Position',[7 2 4.5 3.82]);
+    exportToPPTX('addpicture',imread(ColoredBFPlotsPassPath),'Position',[11.5 2 4.5 3.82]);
+
+    exportToPPTX('addtext','Task','Position',[9 1 1 1],'FontSize',20);
+    exportToPPTX('addtext','Pass','Position',[14 1 1 1],'FontSize',20);
 
     exportToPPTX('addtext',sprintf('Batch:%s Anm:%s \nDate:%s Field:%s\n',...
         Anminfo.BatchNum,Anminfo.AnimalNum,Anminfo.SessionDate,Anminfo.TestNum),...
@@ -256,3 +306,372 @@ for cSess = 1 : nSession
     
 end
 saveName = exportToPPTX('saveandclose',pptFullfile);
+
+%%
+clearvars -except NormSessPathTask
+m = 1;
+nSession = length(NormSessPathTask);
+CusMap = blue2red_2(32,0.8);
+
+for cSess = 1 : nSession
+    tline = NormSessPathTask{cSess};
+    if isempty(strfind(tline,'NO_Correction\mode_f_change'))
+        continue;
+    end
+    
+    % passive tuning frequency colormap plot
+    load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
+    load(fullfile(tline,'CSessionData.mat'),'behavResults','smooth_data','start_frame','frame_rate');
+    cTunFitDataPath = fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plots','NewLog_fit_test_new','NewCurveFitsave.mat');
+    cTunFitDataUsed = load(cTunFitDataPath,'IsTunedROI');
+    
+    cd(fullfile(tline,'Tunning_fun_plot_New1s'));
+%     RespDataStrc = load(fullfile(pwd,'Curve fitting plots','NewCurveFitsave.mat'));
+%     RespInds = RespDataStrc.ROIisResponsive;
+%     ROI_IsSigResp_script
+    [~,EndInds] = regexp(tline,'result_save');
+    ROIposfilePath = tline(1:EndInds);
+    ROIposfilePosi = dir(fullfile(ROIposfilePath,'ROIinfo*.mat'));
+    ROIdataStrc = load(fullfile(ROIposfilePath,ROIposfilePosi(1).name));
+    if isfield(ROIdataStrc,'ROIinfoBU')
+        ROIinfoData = ROIdataStrc.ROIinfoBU;
+    elseif isfield(ROIdataStrc,'ROIinfo')
+        ROIinfoData = ROIdataStrc.ROIinfo(1);
+    else
+        error('No ROI information file detected, please check current session path.');
+    end
+    
+    BehavBoundfile = load(fullfile(tline,'RandP_data_plots','boundary_result.mat'));
+    BehavBoundData = BehavBoundfile.boundary_result.Boundary - 1;
+    BehavCorr = BehavBoundfile.boundary_result.StimCorr;
+    
+    if ~isdir('Tuned ROI BF plot')
+        mkdir('Tuned ROI BF plot');
+    end
+    cd('Tuned ROI BF plot');
+    
+    GroupStimsNum = floor(length(BehavCorr)/2);
+    BehavOctaves = log2(double(BehavBoundfile.boundary_result.StimType)/16000);
+    FreqStrs = cellstr(num2str(BehavBoundfile.boundary_result.StimType(:)/1000,'%.1f'));
+    
+    
+    % ###############################################################################
+    % extract passive session maxium responsive frequency index
+    UsedOctaveInds = ~(abs(PassFreqOctave) > 1);
+    UsedOctave = PassFreqOctave(UsedOctaveInds);
+    UsedOctave = UsedOctave(:);
+    UsedOctaveData = PassTunningfun(UsedOctaveInds,:);
+    nROIs = size(UsedOctaveData,2);
+    [MaxAmp,maxInds] = max(UsedOctaveData);
+    PassMaxOct = zeros(nROIs,1);
+    for cROI = 1 : nROIs
+        PassMaxOct(cROI) = UsedOctave(maxInds(cROI));
+    end
+%     ROIsigResp = RespInds;
+    RespROIInds = logical(cTunFitDataUsed.IsTunedROI);
+%     RespROIInds = logical(ROIsigResp);
+%     modeFreqInds = MaxIndsOctave(RespROIInds) == mode(MaxIndsOctave(RespROIInds));
+%     [PassClusterInterMean,PassRandMean,hhf] =  Within2BetOrRandRatio(DisMatrix(RespROIInds,RespROIInds),modeFreqInds,'Rand');
+%     saveas(hhf,'Passive Rand_vs_intermodeROIs distance ratio distribution');
+%     saveas(hhf,'Passive Rand_vs_intermodeROIs distance ratio distribution','png');
+%     close(hhf);
+    AllPassMaxOcts = PassMaxOct;
+    PassFreqStrs = cellstr(num2str(BoundFreq*(2.^UsedOctave(:))/1000,'%.1f'));
+    BoundFreqIndex = find(UsedOctave > BehavBoundData,1,'first');
+    WithBoundyTick = [UsedOctave(1:BoundFreqIndex-1);BehavBoundData;UsedOctave(BoundFreqIndex:end)];
+    WithBoundyTickLabel = [PassFreqStrs(1:BoundFreqIndex-1);'BehavBound';PassFreqStrs(BoundFreqIndex:end)];
+    NonRespROIInds = ~RespROIInds;
+    %
+        cPrcvalue = 0;
+        %
+        PrcThres = prctile(MaxAmp,cPrcvalue);
+        cROIinds = MaxAmp >= PrcThres; 
+        GrayNonRespROIs = cROIinds(:) & NonRespROIInds(:);
+        ColorRespROIs = cROIinds(:) & ~NonRespROIInds(:);
+        
+        % plot the responsive ROIs with color indicates tuning octave
+        AllMasks = ROIinfoData.ROImask(ColorRespROIs);
+        PassMaxOct = AllPassMaxOcts(ColorRespROIs);
+        nROIs = length(AllMasks);
+        SumROImask = double(AllMasks{1});
+        SumROIcolormask = SumROImask * PassMaxOct(1);
+        for cROI = 2 : nROIs
+            cROINewMask = double(AllMasks{cROI});
+            TempSumMask = SumROImask + cROINewMask;
+            OverLapInds = find(TempSumMask > 1);
+            if ~isempty(OverLapInds)
+                cROINewMask(OverLapInds) = 0;
+            end
+            SumROImask = double(TempSumMask > 0);
+            SumROIcolormask = SumROIcolormask + cROINewMask * PassMaxOct(cROI);
+        end
+        
+        if sum(GrayNonRespROIs)
+            % generate the non-responsive ROIs, gray map
+            AllMasksNonrp = ROIinfoData.ROImask(GrayNonRespROIs);
+    %         PassMaxOct = AllPassMaxOcts(GrayNonRespROIs);
+            nROIsNonrp = length(AllMasksNonrp);
+            SumROImaskNonrp = double(AllMasksNonrp{1});
+            SumROIcolormaskNonrp = SumROImaskNonrp * 0.1;
+            for cROI = 2 : nROIsNonrp
+                cROINewMask = double(AllMasksNonrp{cROI});
+                TempSumMask = SumROImaskNonrp + cROINewMask;
+                OverLapInds = find(TempSumMask > 1);
+                if ~isempty(OverLapInds)
+                    cROINewMask(OverLapInds) = 0;
+                end
+                SumROImaskNonrp = double(TempSumMask > 0);
+                SumROIcolormaskNonrp = SumROIcolormaskNonrp + cROINewMask * 0.1;
+            end
+        else
+            SumROImaskNonrp = zeros(size(SumROImask));
+            SumROIcolormaskNonrp = zeros(size(SumROImask));
+        end
+        %
+        hColor = figure('position',[30 100 530 450]);
+        ax1=axes;
+        h_backf=imagesc(SumROIcolormask,[-1 1]);
+        Cpos=get(ax1,'position');
+        view(2);
+        ax2=axes;
+        h_frontf=imagesc(SumROIcolormaskNonrp,[-0.5 0.2]);
+        set(h_frontf,'alphadata',SumROImaskNonrp~=0);
+        set(h_backf,'alphadata',SumROImask~=0);
+        linkaxes([ax1,ax2]);
+        ax2.Visible = 'off';
+        ax2.XTick = [];
+        ax2.YTick = [];
+        colormap(ax2,'gray');
+        colormap(ax1,CusMap);
+        set(ax1,'box','off');
+        axis(ax1, 'off');
+        
+        % alpha(h_frontf,0.4);
+        set([ax1,ax2],'position',Cpos);
+        hBar = colorbar(ax1,'westoutside');
+        set(hBar,'position',get(hBar,'position').*[0.7 1 0.5 0.6]+[0.06 0.2 0 0],'TickLength',0);
+        set(hBar,'ytick',[-1 1],'yticklabel',{'8','32'});
+        title(hBar,'kHz')
+        title(sprintf('Prc%d map',cPrcvalue));
+        h_axes = axes('position', hBar.Position, 'ylim', hBar.Limits, 'color', 'none', 'visible','off');
+        hl = line(h_axes.XLim, BehavBoundData*[1 1], 'color', 'k', 'parent', h_axes,'LineWidth',4);
+        ModeTunedOctaves = mode(PassMaxOct);
+        h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'r', 'parent', h_axes,'LineWidth',4);
+        % boundary line position
+        LineStartPositionB = [hBar.Position(1),(BehavBoundData-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
+        % mode line position
+        LineStartPositionM = [hBar.Position(1),(ModeTunedOctaves-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
+        BoundArrowx = [LineStartPositionB(1)-0.06,LineStartPositionB(1)];
+        BoundArrowy = [LineStartPositionB(2),LineStartPositionB(2)];
+        ModeArrowx = [LineStartPositionM(1)-0.06,LineStartPositionM(1)];
+        ModeArrowy = [LineStartPositionM(2),LineStartPositionM(2)];
+        if ModeTunedOctaves < BehavBoundData
+            TextBoundDim = [LineStartPositionB(1)-0.18 LineStartPositionB(2)-0.05 0.2 0.1];
+            TextModeDim = [LineStartPositionM(1)-0.18 LineStartPositionM(2)-0.05 0.2 0.1];
+            annotation('arrow',BoundArrowx,BoundArrowy,'Color','k','Linewidth',2);
+            annotation('arrow',ModeArrowx,ModeArrowy,'Color','r','Linewidth',2);
+            annotation('textbox',TextBoundDim,'String',{'Behavior';'Boundary'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+%             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
+%             BoundArrowy = [LineStartPositionB(2)+0.1,LineStartPositionB(2)];
+%             if BoundArrowy(1)> 1
+%                 BoundArrowy(1) = 1;
+%             end
+%             ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
+%             ModeArrowy = [LineStartPositionM(2)-0.1,LineStartPositionM(2)];
+%             if ModeArrowy(1) < 0
+%                 ModeArrowy(1) = 0;
+%             end
+%             annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
+%             annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
+        else
+            TextBoundDim = [LineStartPositionB(1)-0.18 LineStartPositionB(2)-0.05 0.2 0.1];
+            TextModeDim = [LineStartPositionM(1)-0.18 LineStartPositionM(2)-0.05 0.2 0.1];
+            annotation('arrow',BoundArrowx,BoundArrowy,'Color','k','Linewidth',2);
+            annotation('arrow',ModeArrowx,ModeArrowy,'Color','r','Linewidth',2);
+            annotation('textbox',TextBoundDim,'String',{'Behavior';'Boundary'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+%             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
+%             BoundArrowy = [LineStartPositionB(2)-0.1,LineStartPositionB(2)];
+%             if BoundArrowy(1) < 0
+%                 BoundArrowy(1) = 0;
+%             end
+%             ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
+%             ModeArrowy = [LineStartPositionM(2)+0.1,LineStartPositionM(2)];
+%             if ModeArrowy(1) > 1
+%                 ModeArrowy(1) = 1;
+%             end
+%             annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
+%             annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
+        end
+        set(ax1,'position',get(ax1,'position')+[0.1 0 0 0])
+        set(ax2,'position',get(ax2,'position')+[0.1 0 0 0])
+   
+%
+        saveas(hColor,sprintf('Passive top Prc%d colormap save',100-cPrcvalue));
+        saveas(hColor,sprintf('Passive top Prc%d colormap save',100-cPrcvalue),'png');
+        close(hColor);
+        %
+    PassROITunedOctave = AllPassMaxOcts;
+    PassOctaves = UsedOctave;
+    Octaves = unique(AllPassMaxOcts);
+    PassOctaveTypeNum = zeros(length(PassOctaves),1);
+    for n = 1 : length(PassOctaves)
+        PassOctaveTypeNum(n) = sum(AllPassMaxOcts == PassOctaves(n));
+    end
+
+    %
+    % extract task session maxium responsive frequency index
+    % UsedOctaveInds = ~(abs(PassFreqOctave) > 1);
+    UsedOctave = TaskFreqOctave;
+    UsedOctave = UsedOctave(:);
+    UsedOctaveData = CorrTunningFun;
+    nROIs = size(UsedOctaveData,2);
+    [MaxAmp,maxInds] = max(UsedOctaveData);
+    TaskMaxOct = zeros(nROIs,1);
+    for cROI = 1 : nROIs
+        TaskMaxOct(cROI) = UsedOctave(maxInds(cROI));
+    end
+
+    %
+    AllTaskMaxOcts = TaskMaxOct;
+    TaskFreqStrs = cellstr(num2str(BoundFreq*(2.^UsedOctave(:))/1000,'%.1f'));
+    BoundFreqIndex = find(UsedOctave > BehavBoundData,1,'first');
+    WithBoundyTick = [UsedOctave(1:BoundFreqIndex-1);BehavBoundData;UsedOctave(BoundFreqIndex:end)];
+    WithBoundyTickLabel = [TaskFreqStrs(1:BoundFreqIndex-1);'BehavBound';TaskFreqStrs(BoundFreqIndex:end)];
+    NonRespROIInds = ~RespROIInds;
+%
+        cPrcvalue = 0;
+        PrcThres = prctile(MaxAmp,cPrcvalue);
+        cROIinds = MaxAmp >= PrcThres; 
+        
+        
+        ColorRespROIs = cROIinds(:) & ~NonRespROIInds(:);
+        GrayNonRespROIs = cROIinds(:) & NonRespROIInds(:);
+        
+        % responsive ROI inds
+        AllMasks = ROIinfoData.ROImask(ColorRespROIs);
+        TaskMaxOct = AllTaskMaxOcts(ColorRespROIs);
+        nROIs = length(AllMasks);
+        SumROImask = double(AllMasks{1});
+        SumROIcolormask = SumROImask * TaskMaxOct(1);
+        for cROI = 2 : nROIs
+            cROINewMask = double(AllMasks{cROI});
+            TempSumMask = SumROImask + cROINewMask;
+            OverLapInds = find(TempSumMask > 1);
+            if ~isempty(OverLapInds)
+                cROINewMask(OverLapInds) = 0;
+            end
+            SumROImask = double(TempSumMask > 0);
+            SumROIcolormask = SumROIcolormask + cROINewMask * TaskMaxOct(cROI);
+        end
+        
+        % non-responsive ROI colormap generation
+        AllMasksNonrp = ROIinfoData.ROImask(GrayNonRespROIs);
+%         TaskMaxOct = AllTaskMaxOcts(GrayNonRespROIs);
+        nROIsNonrp = length(AllMasksNonrp);
+        SumROImaskNonrp = double(AllMasksNonrp{1});
+        SumROIcolormaskNonrp = SumROImaskNonrp * 0.1;
+        for cROI = 2 : nROIsNonrp
+            cROINewMask = double(AllMasksNonrp{cROI});
+            TempSumMask = SumROImaskNonrp + cROINewMask;
+            OverLapInds = find(TempSumMask > 1);
+            if ~isempty(OverLapInds)
+                cROINewMask(OverLapInds) = 0;
+            end
+            SumROImaskNonrp = double(TempSumMask > 0);
+            SumROIcolormaskNonrp = SumROIcolormaskNonrp + cROINewMask * 0.1;
+        end
+        %
+         hColor = figure('position',[30 500 530 450]);
+        ax1=axes;
+        h_backf=imagesc(SumROIcolormask,[-1 1]);
+        Cpos=get(ax1,'position');
+        view(2);
+        ax2=axes;
+        h_frontf=imagesc(SumROIcolormaskNonrp,[-0.5 0.2]);
+        set(h_frontf,'alphadata',SumROImaskNonrp~=0);
+        set(h_backf,'alphadata',SumROImask~=0);
+        linkaxes([ax1,ax2]);
+        ax2.Visible = 'off';
+        ax2.XTick = [];
+        ax2.YTick = [];
+        colormap(ax2,'gray');
+        colormap(ax1,CusMap);
+        set(ax1,'box','off');
+        axis(ax1, 'off');
+        
+        % alpha(h_frontf,0.4);
+        set([ax1,ax2],'position',Cpos);
+        hBar = colorbar(ax1,'westoutside');
+        set(hBar,'position',get(hBar,'position').*[0.7 1 0.5 0.6]+[0.06 0.2 0 0],'TickLength',0);
+        set(hBar,'ytick',[-1 1],'yticklabel',{'8','32'});
+        title(hBar,'kHz')
+        title(sprintf('Prc%d map',cPrcvalue));
+        h_axes = axes('position', hBar.Position, 'ylim', hBar.Limits, 'color', 'none', 'visible','off');
+        hl = line(h_axes.XLim, BehavBoundData*[1 1], 'color', 'k', 'parent', h_axes,'LineWidth',4);
+        ModeTunedOctaves = mode(TaskMaxOct);
+        h2 = line(h_axes.XLim, ModeTunedOctaves*[1 1], 'color', 'r', 'parent', h_axes,'LineWidth',4);
+        % boundary line position
+        LineStartPositionB = [hBar.Position(1),(BehavBoundData-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
+        % mode line position
+        LineStartPositionM = [hBar.Position(1),(ModeTunedOctaves-hBar.Limits(1))/diff(hBar.Limits)*hBar.Position(4)+hBar.Position(2)];
+        BoundArrowx = [LineStartPositionB(1)-0.06,LineStartPositionB(1)];
+        BoundArrowy = [LineStartPositionB(2),LineStartPositionB(2)];
+        ModeArrowx = [LineStartPositionM(1)-0.06,LineStartPositionM(1)];
+        ModeArrowy = [LineStartPositionM(2),LineStartPositionM(2)];
+        if ModeTunedOctaves < BehavBoundData
+            TextBoundDim = [LineStartPositionB(1)-0.18 LineStartPositionB(2)-0.05 0.2 0.1];
+            TextModeDim = [LineStartPositionM(1)-0.18 LineStartPositionM(2)-0.05 0.2 0.1];
+            annotation('arrow',BoundArrowx,BoundArrowy,'Color','k','Linewidth',2);
+            annotation('arrow',ModeArrowx,ModeArrowy,'Color','r','Linewidth',2);
+            annotation('textbox',TextBoundDim,'String',{'Behavior';'Boundary'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+%             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
+%             BoundArrowy = [LineStartPositionB(2)+0.1,LineStartPositionB(2)];
+%             if BoundArrowy(1)> 1
+%                 BoundArrowy(1) = 1;
+%             end
+%             ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
+%             ModeArrowy = [LineStartPositionM(2)-0.1,LineStartPositionM(2)];
+%             if ModeArrowy(1) < 0
+%                 ModeArrowy(1) = 0;
+%             end
+%             annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
+%             annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
+        else
+            TextBoundDim = [LineStartPositionB(1)-0.18 LineStartPositionB(2)-0.05 0.2 0.1];
+            TextModeDim = [LineStartPositionM(1)-0.18 LineStartPositionM(2)-0.05 0.2 0.1];
+            annotation('arrow',BoundArrowx,BoundArrowy,'Color','k','Linewidth',2);
+            annotation('arrow',ModeArrowx,ModeArrowy,'Color','r','Linewidth',2);
+            annotation('textbox',TextBoundDim,'String',{'Behavior';'Boundary'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','k','HorizontalAlignment','left','VerticalAlignment','middle');
+            annotation('textbox',TextModeDim,'String',{'Prefer';'Frequency'},'FitBoxToText','on','EdgeColor','none',...
+                'Color','r','HorizontalAlignment','left','VerticalAlignment','middle');
+%             BoundArrowx = [LineStartPositionB(1)-0.03,LineStartPositionB(1)];
+%             BoundArrowy = [LineStartPositionB(2)-0.1,LineStartPositionB(2)];
+%             if BoundArrowy(1) < 0
+%                 BoundArrowy(1) = 0;
+%             end
+%             ModeArrowx = [LineStartPositionM(1)-0.03,LineStartPositionM(1)];
+%             ModeArrowy = [LineStartPositionM(2)+0.1,LineStartPositionM(2)];
+%             if ModeArrowy(1) > 1
+%                 ModeArrowy(1) = 1;
+%             end
+%             annotation('textarrow',BoundArrowx,BoundArrowy,'String','BehavBound','Color','r','LineWidth',2);
+%             annotation('textarrow',ModeArrowx,ModeArrowy,'String','ModeFreq','Color','m','LineWidth',2);
+        end
+        set(ax1,'position',get(ax1,'position')+[0.1 0 0 0])
+        set(ax2,'position',get(ax2,'position')+[0.1 0 0 0])
+%
+        saveas(hColor,sprintf('Task top Prc%d colormap save',100-cPrcvalue));
+        saveas(hColor,sprintf('Task top Prc%d colormap save',100-cPrcvalue),'png');
+        close(hColor);
+    
+end

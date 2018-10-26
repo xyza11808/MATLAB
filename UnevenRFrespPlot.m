@@ -162,7 +162,9 @@ for nROI = 1 : nROIs
     end
     
     if isplot
-        suptitle(sprintf('ROI%d resp plot',nROI));
+%         suptitle(sprintf('ROI%d resp plot',nROI));
+        annotation('textbox',[0.42 0.75 0.2 0.2],'String',sprintf('ROI%d resp plot',nROI),'EdgeColor',...
+            'none','FitBoxToText','on','FontSize',18)
         saveas(hROI,sprintf('ROI%d passive resp plot',nROI));
         saveas(hROI,sprintf('ROI%d passive resp plot',nROI),'png');
         close(hROI);

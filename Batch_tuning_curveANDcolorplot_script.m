@@ -1,7 +1,7 @@
 % batched ROI morph plot
 clearvars -except NormSessPathPass NormSessPathTask 
 %%
-nSessPath = length(NormSessPathPass);
+nSessPath = length(NormSessPathTask);
 CusMap = blue2red_2(32,0.8);
 ErrorSessNum = [];
 ErrorMes = {};
@@ -118,7 +118,7 @@ for cSess = 1 : nSessPath
         end
 %         PassRespWinT = 1;
 %         PassRespWinF = round(PassRespWinT*PassDataStrc.frame_rate);
-        PassFrameScale = [(PassDataStrc.frame_rate+1+DataRespWinF(1)),(PassDataStrc.frame_rate++DataRespWinF(2))];
+        PassFrameScale = [(PassDataStrc.frame_rate+1+DataRespWinF(1)),(PassDataStrc.frame_rate+DataRespWinF(2))];
         if length(unique(PassDataStrc.sound_array(:,2))) > 1
             UsedDBinds = PassDataStrc.sound_array(:,2) == 70 | PassDataStrc.sound_array(:,2) == 75;
 %             PassRespData = MeanMaxSEMCal(PassiveData(UsedDBinds,:,:),PassDataStrc.sound_array(UsedDBinds,1),PassFrameScale);

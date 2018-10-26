@@ -6,7 +6,7 @@ if ismac
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,':'))';
 elseif ispc
-    GrandPath = 'S:\BatchData\batch53';
+    GrandPath = 'S:\BatchData\batch55';
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,';'))';
 end
@@ -46,7 +46,7 @@ for cPosInds = 1 : sum(PossibleInds)
         continue;
     end
         
-    if ~isdir(fullfile(cPassDataUpperPath,'plot_save','NO_Correction'))
+    if ~exist(fullfile(cPassDataUpperPath,'plot_save','NO_Correction','rfSelectDataSet.mat'),'file')
         cd(cPassDataUpperPath)
         post_ROI_calculation_ForBatch;
     end
@@ -398,10 +398,10 @@ for cSS = 1 : nSess
 %         continue;
 %     else
         %
-%         if isdir(fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plots'))
-%             continue;
-%         end
-            
+        if exist(fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plots','NewLog_fit_test_new','NewCurveFitsave.mat'),'file')
+            continue;
+        end
+        
         SpikeDataPath = [tline,'\Tunning_fun_plot_New1s'];
         cd(SpikeDataPath);
         load('TunningDataSave.mat');
@@ -488,7 +488,7 @@ for cSS = 1 : nSess
                 max(NorTundata),max(NMTunData),PassMaxAmp];
             NMLogFit{ROInum} = NMfitMd;
             % first part plots
-            hlogNewf = figure('position',[2750 100 450 360]);
+            hlogNewf = figure('position',[2750 100 450 360],'visible','off');
             hold on
             plot(OctaveRange,FitCurve,'color','k','LineWidth',2.4);
             plot(OctaveData, NorTundata,'ro','MarkerSize',12);

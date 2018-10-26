@@ -91,8 +91,10 @@ if length(CaTrials)>1
     TrialNum=length(CaTrials);
 else
     TrialNum=CaTrials.TrialNum;
-    if TrialNum ~= length(behavResults.Time_stimOnset)
-        TrialNum = length(behavResults.Time_stimOnset);
+    if ~isempty(behavResults)
+        if TrialNum ~= length(behavResults.Time_stimOnset)
+            TrialNum = length(behavResults.Time_stimOnset);
+        end
     end
 end
 
