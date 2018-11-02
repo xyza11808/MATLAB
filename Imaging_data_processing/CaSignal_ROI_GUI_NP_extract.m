@@ -561,9 +561,11 @@ for i = 1:length(roi_pos) % num ROIs
     if i == CurrentROINo
         lw = 2;
         fsize = 24;
+        Colors = 'r';
     else
         lw = 1;
         fsize = 15;
+        Colors = 'c';
     end
     if ~isempty(roi_pos{i})
         %             if length(CaSignal.ROIplot)>=i & ~isempty(CaSignal.ROIplot(i))...
@@ -579,7 +581,7 @@ for i = 1:length(roi_pos) % num ROIs
         else
             h_roi_plots(i) = line(roi_pos{i}(:,1),roi_pos{i}(:,2), 'Color', [0.8 0 0], 'LineWidth', lw);
         end
-        text(median(roi_pos{i}(:,1)), median(roi_pos{i}(:,2)), num2str(i),'Color','c','FontSize',fsize);
+        text(median(roi_pos{i}(:,1)), median(roi_pos{i}(:,2)), num2str(i),'Color',Colors,'FontSize',fsize);
         set(h_roi_plots(i), 'LineWidth', lw);
     end
 end

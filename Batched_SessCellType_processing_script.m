@@ -26,17 +26,19 @@ end
 %%
 clearvars -except NormSessPathTask
 nSessPath = length(NormSessPathTask); % NormSessPathTask  NormSessPathPass
-TunDataCellAll = cell(nSessPath,5);
+TunDataCellAll = cell(nSessPath,11);
 CategDataCellAll = cell(nSessPath,7);
 CategROIFracs = zeros(nSessPath,2);
+%
 for cSess = 1 : nSessPath
 
-%     cSessPath = 'S:\BatchData\batch53\20180818\anm05\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change';
+%
     cSessPath = NormSessPathTask{cSess};
-    %
-    cTuningDataPath = fullfile(cSessPath,'Tunning_fun_plot_New2s','TunningDataSave.mat');
-    cTunFitDataPath = fullfile(cSessPath,'Tunning_fun_plot_New2s','Curve fitting plots','NewLog_fit_test_new','NewCurveFitsave.mat');
-    cd(fullfile(cSessPath,'Tunning_fun_plot_New2s','Curve fitting plots','NewLog_fit_test_new'));
+    try
+        %
+    cTuningDataPath = fullfile(cSessPath,'Tunning_fun_plot_New1s','TunningDataSave.mat');
+    cTunFitDataPath = fullfile(cSessPath,'Tunning_fun_plot_New1s','Curve fitting plots','NewLog_fit_test_new','NewCurveFitsave.mat');
+    cd(fullfile(cSessPath,'Tunning_fun_plot_New1s','Curve fitting plots','NewLog_fit_test_new'));
     cTunDataUsed = load(cTuningDataPath);
     cTunFitDataUsed = load(cTunFitDataPath,'IsTunedROI','BehavBoundResult','IsCategROI');
     %
@@ -50,6 +52,7 @@ for cSess = 1 : nSessPath
     if length(cSessTaskFreqs) ~= length(cSessPassFreqs)
 %         continue;
     end
+    NumberROIs = length(cTunFitDataUsed.IsTunedROI);
     TunROIInds = find(cTunFitDataUsed.IsTunedROI);
     TunROINum = length(TunROIInds);
     TunROITaskDatas = cTunDataUsed.CorrTunningFun(:,TunROIInds);
@@ -57,6 +60,9 @@ for cSess = 1 : nSessPath
 
     [~,TunDataTaskPeakInds] = max(TunROITaskDatas);
     [~,TunDataPassPeakInds] = max(TunROIPassDatas);
+    
+    [~,AllTaskPeakInds] = max(cTunDataUsed.CorrTunningFun);
+    [~,AllPassPeakInds] = max(cTunDataUsed.PassTunningfun);
 
     TaskTunROIOctaves = zeros(TunROINum,1);
     PassTunROIOctaves = zeros(TunROINum,1);
@@ -64,7 +70,14 @@ for cSess = 1 : nSessPath
         TaskTunROIOctaves(cR) = cTunDataUsed.TaskFreqOctave(TunDataTaskPeakInds(cR));
         PassTunROIOctaves(cR) = cTunDataUsed.PassFreqOctave(TunDataPassPeakInds(cR));
     end
-
+    
+    TaskTunOctAll = zeros(NumberROIs,1);
+    PassTunOctAll = zeros(NumberROIs,1);
+    for ccR = 1 : NumberROIs
+        TaskTunOctAll(ccR) = cTunDataUsed.TaskFreqOctave(AllTaskPeakInds(ccR));
+        PassTunOctAll(ccR) = cTunDataUsed.PassFreqOctave(AllPassPeakInds(ccR));
+    end
+    
     TaskOctTypes = cTunDataUsed.TaskFreqOctave;
     [TaskOctaveNum,~]= histc(TaskTunROIOctaves,TaskOctTypes);
     PassOctTypes = cTunDataUsed.PassFreqOctave;
@@ -96,10 +109,12 @@ for cSess = 1 : nSessPath
     subplot(121)
     imagesc(ROISeqSort,[-1.5 1.5]);
     set(gca,'ytick',1:numel(TaskFreqs),'yticklabel',TaskFreqStrs);
+    set(gca,'xtick',1:numel(TunROIInds),'xticklabel',TunROIInds);
+    xtickangle(-90)
     ylabel('Freq (kHz)');
     xlabel('# ROIs');
     title('Task Tuning');
-    set(gca,'FontSize',14);
+    set(gca,'FontSize',10);
 
     subplot(122)
     imagesc(PassZSTunData,[-1.5 1.5]);
@@ -107,7 +122,7 @@ for cSess = 1 : nSessPath
     ylabel('Freq (kHz)');
     xlabel('# ROIs');
     title('Passove Tuning');
-    set(gca,'FontSize',14);
+    set(gca,'FontSize',10);
 %
     saveas(huf,'Tuning ROIs summary plots');
     saveas(huf,'Tuning ROIs summary plots','png');
@@ -136,6 +151,7 @@ for cSess = 1 : nSessPath
     subplot(121)
     imagesc(PreferSideData',[0 1]);
     set(gca,'xtick',1:numel(TaskFreqs),'xticklabel',TaskFreqStrs);
+    set(gca,'ytick',1:numel(CategROIs),'yticklabel',CategROIs);
     xlabel('Freq (kHz)');
     ylabel('# ROIs');
     title('Task Tuning');
@@ -172,6 +188,8 @@ for cSess = 1 : nSessPath
     TunDataCellAll{cSess,6} = TunROITaskDatas;
     TunDataCellAll{cSess,7} = TunROIPassDatas;
     TunDataCellAll{cSess,8} = SessBehavBound;
+    TunDataCellAll{cSess,9} = TaskTunOctAll;
+    TunDataCellAll{cSess,10} = PassTunOctAll;
     
     CategDataCellAll{cSess,1} = cTunFitDataUsed.IsCategROI;
     CategDataCellAll{cSess,2} = CtgROITaskDatas;
@@ -183,9 +201,19 @@ for cSess = 1 : nSessPath
     
     save TypeSavedData.mat  TaskOctTypes PassOctTypes TaskTunROIOctaves PassTunROIOctaves ...
         TunROITaskDatas TunROIPassDatas CtgROITaskDatas CtgROIPassDatas PreferSideData ...
-        PreferPassData TaskFreqs PassFreqs TunROIInds CategROIs TaskROIBFAll PassROIBFAll SessBehavBound -v7.3
-    
+        PreferPassData TaskFreqs PassFreqs TunROIInds CategROIs TaskROIBFAll PassROIBFAll SessBehavBound PreferSide -v7.3
+    catch 
+        fprintf('Error at session %d.\n',cSess);
+    end
 end
+
+%%
+TaskDisModeAlls = cellfun(@(x,y) abs(mode(x) - y),TunDataCellAll(:,9),TunDataCellAll(:,8));
+PassDisModeAlls = cellfun(@(x,y) abs(mode(x) - y),TunDataCellAll(:,10),TunDataCellAll(:,8));
+
+TaskDisMeanAlls = cellfun(@(x,y) mean(abs(x - y)),TunDataCellAll(:,9),TunDataCellAll(:,8));
+PassDisMeanAlls = cellfun(@(x,y) mean(abs(x - y)),TunDataCellAll(:,10),TunDataCellAll(:,8));
+
 
 %%
 UsedSessPath = 'S:\BatchData\batch53\UsedSessionIndex.mat';
@@ -230,13 +258,13 @@ for cSess = 1 : nSession
         if ismac
             pptSavePath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
         elseif ispc
-            pptSavePath = 'S:\BatchData\batch53';
+            pptSavePath = 'P:\BatchData\batch55';
         end
         %
     end
     %
     Anminfo = SessInfoExtraction(tline);
-    cTunPlotPath = fullfile(tline,'Tunning_fun_plot_New2s','Curve fitting plots','NewLog_fit_test_new');
+    cTunPlotPath = fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plots','NewLog_fit_test_new');
    
     BehavDataPath = fullfile(tline,'RandP_data_plots','Behav_fit plot.png');
     TunROIColorPlotPath = fullfile(cTunPlotPath,'Tuning ROIs summary plots.png');
@@ -244,8 +272,10 @@ for cSess = 1 : nSession
     TunROIBFDisPath = fullfile(cTunPlotPath,'Tuning ROI BF distribution plots.png');
     nROIfiles = dir(fullfile(cTunPlotPath,'Log Fit test Save ROI*.png'));
     
-    ColoredBFPlotsTaskPath = fullfile(tline,'Tunning_fun_plot_New1s','Tuned ROI BF plot','Task top Prc100 colormap save.png');
-    ColoredBFPlotsPassPath = fullfile(tline,'Tunning_fun_plot_New1s','Tuned ROI BF plot','Passive top Prc100 colormap save.png');
+    ColoredBFPlotsTaskPath = fullfile(tline,'Tunning_fun_plot_New1s',...
+        'Tuned ROI fixedRange grayCP plot','Task TunROI BF colormap save.png');
+    ColoredBFPlotsPassPath = fullfile(tline,'Tunning_fun_plot_New1s',...
+        'Tuned ROI fixedRange grayCP plot','Passive TunROI BF colormap save.png');
 
     pptFullfile = fullfile(pptSavePath,PPTname);
     if ~exist(pptFullfile,'file')
@@ -285,13 +315,13 @@ for cSess = 1 : nSession
     end
     try
         exportToPPTX('addpicture',imread(TunROIBFDisPath),'Position',[0 6.35 3.1 2.6]);
+        exportToPPTX('addpicture',imread(ColoredBFPlotsTaskPath),'Position',[7 2 4.5 3.82]);
+        exportToPPTX('addpicture',imread(ColoredBFPlotsPassPath),'Position',[11.5 2 4.5 3.82]);
+        
     catch
         IsErrorExist = 1;
     end
     exportToPPTX('addpicture',imread(BehavDataPath),'Position',[3.5 6.35 3.47 2.6]);
-
-    exportToPPTX('addpicture',imread(ColoredBFPlotsTaskPath),'Position',[7 2 4.5 3.82]);
-    exportToPPTX('addpicture',imread(ColoredBFPlotsPassPath),'Position',[11.5 2 4.5 3.82]);
 
     exportToPPTX('addtext','Task','Position',[9 1 1 1],'FontSize',20);
     exportToPPTX('addtext','Pass','Position',[14 1 1 1],'FontSize',20);
@@ -318,7 +348,7 @@ for cSess = 1 : nSession
     if isempty(strfind(tline,'NO_Correction\mode_f_change'))
         continue;
     end
-    
+    try
     % passive tuning frequency colormap plot
     load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
     load(fullfile(tline,'CSessionData.mat'),'behavResults','smooth_data','start_frame','frame_rate');
@@ -350,10 +380,10 @@ for cSess = 1 : nSession
     end
     cd('Tuned ROI BF plot');
     
-    GroupStimsNum = floor(length(BehavCorr)/2);
-    BehavOctaves = log2(double(BehavBoundfile.boundary_result.StimType)/16000);
-    FreqStrs = cellstr(num2str(BehavBoundfile.boundary_result.StimType(:)/1000,'%.1f'));
-    
+%     GroupStimsNum = floor(length(BehavCorr)/2);
+%     BehavOctaves = log2(double(BehavBoundfile.boundary_result.StimType)/16000);
+%     FreqStrs = cellstr(num2str(BehavBoundfile.boundary_result.StimType(:)/1000,'%.1f'));
+%     
     
     % ###############################################################################
     % extract passive session maxium responsive frequency index
@@ -673,5 +703,104 @@ for cSess = 1 : nSession
         saveas(hColor,sprintf('Task top Prc%d colormap save',100-cPrcvalue));
         saveas(hColor,sprintf('Task top Prc%d colormap save',100-cPrcvalue),'png');
         close(hColor);
+    catch
+        fprintf('Error occurs at session %d.\n',cSess);
+    end
+end
+
+%% import ppt files with full ROIs BF
+clearvars -except NormSessPathTask
+m = 1;
+nSession = length(NormSessPathTask);
+
+for cSess = 1 : nSession
+    tline = NormSessPathTask{cSess};
+    IsErrorExist = 0;
+    %
+    if m == 1
+        %
+        %                 PPTname = input('Please input the name for current PPT file:\n','s');
+        PPTname = 'Celltype_response_Fullcolorplot_1s';
+        if isempty(strfind(PPTname,'.ppt'))
+            PPTname = [PPTname,'.pptx'];
+        end
+        %                 pptSavePath = uigetdir(pwd,'Please select the path used for ppt file savege');
+        if ismac
+            pptSavePath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
+        elseif ispc
+            pptSavePath = 'S:\BatchData\batch55';
+        end
+        %
+    end
+    %
+    Anminfo = SessInfoExtraction(tline);
+    cTunPlotPath = fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plots','NewLog_fit_test_new');
+   
+    BehavDataPath = fullfile(tline,'RandP_data_plots','Behav_fit plot.png');
+    TunROIColorPlotPath = fullfile(cTunPlotPath,'Tuning ROIs summary plots.png');
+    CategROIColorPlotPath = fullfile(cTunPlotPath,'Categ ROIs summary plots.png');
+    TunROIBFDisPath = fullfile(cTunPlotPath,'Tuning ROI BF distribution plots.png');
+    nROIfiles = dir(fullfile(cTunPlotPath,'Log Fit test Save ROI*.png'));
+    
+    ColoredBFPlotsTaskPath = fullfile(tline,'Tunning_fun_plot_New1s','NMTuned Meanfreq colormap plot','Task top Prc100 colormap save.png');
+    ColoredBFPlotsPassPath = fullfile(tline,'Tunning_fun_plot_New1s','NMTuned Meanfreq colormap plot','Passive top Prc100 colormap save.png');
+
+    pptFullfile = fullfile(pptSavePath,PPTname);
+    if ~exist(pptFullfile,'file')
+        NewFileExport = 1;
+    else
+        NewFileExport = 0;
+    end
+    if  m == 1
+        if NewFileExport
+            exportToPPTX('new','Dimensions',[16,9],'Author','XinYu','Comments','Export of tunning curve plot data');
+        else
+            exportToPPTX('open',pptFullfile);
+        end
+    end
+    %
+    exportToPPTX('addslide');
+    exportToPPTX('addnote',tline);
+    try
+         Datas = load(fullfile(cTunPlotPath,'TypeSavedData.mat'),'TunROITaskDatas','CtgROITaskDatas');
+        nTunROIs = size(Datas.TunROITaskDatas,2);
+        nCatgROIs = size(Datas.CtgROITaskDatas,2);
+        exportToPPTX('addtext',sprintf('nROIs = %d\nTfrac %.3f, CFrac %.3f',length(nROIfiles),nTunROIs/length(nROIfiles),nCatgROIs/length(nROIfiles)...
+            ),'Position',[2 0 4 1],'FontSize',20);
+    catch
+        exportToPPTX('addtext',sprintf('nROIs = %d',length(nROIfiles)),'Position',[2 0 2 1],'FontSize',20);
+    end
+    try
+        exportToPPTX('addpicture',imread(TunROIColorPlotPath),'Position',[0 1 7 2.62]);
+%         IsErrorExist = 1;
+    catch
+        IsErrorExist = 1;
+    end
+    try
+        exportToPPTX('addpicture',imread(CategROIColorPlotPath),'Position',[0 3.7 7 2.62]);
+    catch
+        IsErrorExist = 1;
+    end
+    try
+        exportToPPTX('addpicture',imread(TunROIBFDisPath),'Position',[0 6.35 3.1 2.6]);
+        exportToPPTX('addpicture',imread(ColoredBFPlotsTaskPath),'Position',[7 2 4.5 3.82]);
+        exportToPPTX('addpicture',imread(ColoredBFPlotsPassPath),'Position',[11.5 2 4.5 3.82]);
+        
+    catch
+        IsErrorExist = 1;
+    end
+    exportToPPTX('addpicture',imread(BehavDataPath),'Position',[3.5 6.35 3.47 2.6]);
+
+    exportToPPTX('addtext','Task','Position',[9 1 1 1],'FontSize',20);
+    exportToPPTX('addtext','Pass','Position',[14 1 1 1],'FontSize',20);
+
+    exportToPPTX('addtext',sprintf('Batch:%s Anm:%s \nDate:%s Field:%s\n',...
+        Anminfo.BatchNum,Anminfo.AnimalNum,Anminfo.SessionDate,Anminfo.TestNum),...
+        'Position',[11 7 4 2],'FontSize',20);
+    if IsErrorExist
+        fprintf('Session %d do not have enough plots.\n',cSess);
+    end
+    m = m + 1;
     
 end
+saveName = exportToPPTX('saveandclose',pptFullfile);

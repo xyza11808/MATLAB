@@ -6,12 +6,14 @@ CusMap = blue2red_2(32,0.8);
 ErrorSessNum = [];
 ErrorMes = {};
 k_sess = 0;
+%%
 for cSess = 1 : nSessPath
     %
-    if exist(fullfile(NormSessPathTask{cSess},'Tunning_fun_plot_New1s','NMTuned Meanfreq colormap plot','TaskPassBFDis.mat'))
+    if exist(fullfile(NormSessPathTask{cSess},'Tunning_fun_plot_New1s','TunningDataSave.mat'),'file')
         continue;
     end
     try
+    %
     Passtline = NormSessPathPass{cSess};
     Tasktline = NormSessPathTask{cSess};
     TaskDataStrc = load(fullfile(Tasktline,'CSessionData.mat'));
@@ -216,4 +218,5 @@ for cSess = 1 : nSessPath
         ErrorSessNum = [ErrorSessNum,cSess];
         ErrorMes{k_sess} = ME;
     end
+    %
 end
