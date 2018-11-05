@@ -521,6 +521,7 @@ switch eventdata.Key   %'uparrow','downarrow','leftarrow','rightarrow'.
         if ishandle(GUIdataSummary.OpenedFig)
             delete(GUIdataSummary.OpenedFig);
         end
+        GUIdataSummary.OpenedFig = [];
 %     case 'uparrow'
 %         TwoStepPreTrial_Callback(hObject, eventdata, handles);
 %     case 'a'

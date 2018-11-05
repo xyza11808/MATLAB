@@ -29,7 +29,7 @@ nSessPath = length(NormSessPathTask); % NormSessPathTask  NormSessPathPass
 TunDataCellAll = cell(nSessPath,11);
 CategDataCellAll = cell(nSessPath,7);
 CategROIFracs = zeros(nSessPath,2);
-%
+%%
 for cSess = 1 : nSessPath
 
 %
@@ -127,7 +127,74 @@ for cSess = 1 : nSessPath
     saveas(huf,'Tuning ROIs summary plots');
     saveas(huf,'Tuning ROIs summary plots','png');
     close(huf);
+    
+    
+    % task and passive zscore using same mean and std values
+    TaskDataMean = repmat(mean(TunROITaskDatas),size(TunROITaskDatas,1),1);
+    TaskDataStd = repmat(std(TunROITaskDatas),size(TunROITaskDatas,1),1);
 
+    NewTaskZSTunData = (TunROITaskDatas - TaskDataMean) ./TaskDataStd;
+    NewPassZSTunData = (TunROIPassDatas - TaskDataMean) ./TaskDataStd;
+
+    [~,MaxInds] = max(NewTaskZSTunData);
+    [~,MaxSortInds] = sort(MaxInds);
+    ROISeqSort = NewTaskZSTunData(:,MaxSortInds);
+    hNewuf = figure('position',[100 100 800 300]);
+    subplot(121)
+    imagesc(ROISeqSort,[-1.5 1.5]);
+    set(gca,'ytick',1:numel(TaskFreqs),'yticklabel',TaskFreqStrs);
+    set(gca,'xtick',1:numel(TunROIInds),'xticklabel',TunROIInds);
+    xtickangle(-90)
+    ylabel('Freq (kHz)');
+    xlabel('# ROIs');
+    title('Task Tuning');
+    set(gca,'FontSize',10);
+
+    subplot(122)
+    imagesc(NewPassZSTunData,[-1.5 1.5]);
+    set(gca,'ytick',1:numel(PassFreqs),'yticklabel',PassFreqStrs);
+    ylabel('Freq (kHz)');
+    xlabel('# ROIs');
+    title('Passove Tuning');
+    set(gca,'FontSize',10);
+    
+    saveas(hNewuf,'Tuning ROIs CommonZs summary plots');
+    saveas(hNewuf,'Tuning ROIs CommonZs summary plots','png');
+    close(hNewuf);
+    
+    % add plots for all ROIs response summary plots
+    TaskDataALLMean = repmat(mean(cTunDataUsed.CorrTunningFun),size(cTunDataUsed.CorrTunningFun,1),1);
+    TaskDataALLStd = repmat(std(cTunDataUsed.CorrTunningFun),size(cTunDataUsed.CorrTunningFun,1),1);
+
+    TaskZSALLTunData = (cTunDataUsed.CorrTunningFun - TaskDataALLMean) ./TaskDataALLStd;
+    PassZSALLTunData = (cTunDataUsed.PassTunningfun - TaskDataALLMean) ./TaskDataALLStd;
+
+    [~,MaxInds] = max(TaskZSALLTunData);
+    [~,MaxSortInds] = sort(MaxInds);
+    ROISeqSort = TaskZSALLTunData(:,MaxSortInds);
+    hALLuf = figure('position',[100 100 800 300]);
+    subplot(121)
+    imagesc(ROISeqSort,[-2 2]);
+    set(gca,'ytick',1:numel(TaskFreqs),'yticklabel',TaskFreqStrs);
+    % set(gca,'xtick',1:numel(TunROIInds),'xticklabel',TunROIInds);
+    % xtickangle(-90)
+    ylabel('Freq (kHz)');
+    xlabel('# ROIs');
+    title('Task Tuning');
+    set(gca,'FontSize',10);
+
+    subplot(122)
+    imagesc(PassZSALLTunData,[-2 2]);
+    set(gca,'ytick',1:numel(PassFreqs),'yticklabel',PassFreqStrs);
+    ylabel('Freq (kHz)');
+    xlabel('# ROIs');
+    title('Passove Tuning');
+    set(gca,'FontSize',10);
+    
+    saveas(hALLuf,'All ROIs CommonZs summary plots');
+    saveas(hALLuf,'All ROIs CommonZs summary plots','png');
+    close(hALLuf);
+    
     % plots for categorical ROIs
     CategROIs = find(cTunFitDataUsed.IsCategROI);
     CategROINum = length(CategROIs);
