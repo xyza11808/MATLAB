@@ -6,7 +6,7 @@ if ismac
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,':'))';
 elseif ispc
-    GrandPath = 'P:\BatchData\batch55';
+    GrandPath = 'S:\BatchData\batch53';
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,';'))';
 end
@@ -400,7 +400,7 @@ for cSS = 1 : nSess
 %         continue;
 %     else
         %
-        if exist(fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plots','NewLog_fit_test_new','NewCurveFitsave.mat'),'file')
+        if exist(fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plotsNew','NewLog_fit_test_new','NewCurveFitsave.mat'),'file')
             continue;
         end
         try
@@ -409,10 +409,10 @@ for cSS = 1 : nSess
             load('TunningDataSave.mat');
 
             nROIs = size(CorrTunningFun,2);
-            if ~isdir('./Curve fitting plots/')
-                mkdir('./Curve fitting plots/');
+            if ~isdir('./Curve fitting plotsNew/')
+                mkdir('./Curve fitting plotsNew/');
             end
-            cd('./Curve fitting plots/');
+            cd('./Curve fitting plotsNew/');
             warning('off','all');
             if ~isdir('./NewLog_fit_test_new/')
                 mkdir('./NewLog_fit_test_new/');
@@ -1936,15 +1936,25 @@ nSess = length(NormSessPathTask);
 for cSess = 1 : nSess
     cSessPath = NormSessPathTask{cSess};
     cd(cSessPath);
+    
+    clearvars DataRaw
     oldSPfile = fullfile(cSessPath,'EstimateSPsave.mat');
     if ~exist(oldSPfile,'file')
         fprintf('Session index %d SPfile not exists.\n',cSess);
     end
-    clearvars DataRaw
     
-    load(oldSPfile);
+    try
+        load(oldSPfile);
+    catch
+        load(fullfile(cSessPath,'EstimateSPsaveNewMth.mat'));
+    end
+    load(fullfile(cSessPath,'CSessionData.mat'),'DataRaw');
+    if ~exist('DataRaw','var')
+        load(fullfile(cSessPath,'CSessionData.mat'),'data');
+        DataRaw = data;
+    end
     
-    nnspike = Fluo2SpikeConstrainOOpsi(DataRaw,[],[],frame_rate,2);
+    nnspike = Fluo2SpikeConstrainOOpsi(DataRaw,[],[],frame_rate,1.8);
     FrameInds = cellfun(@(x) size(x,2),DataRaw);
     UsedFrame = ceil(prctile(FrameInds,80));
     if iscell(nnspike)
@@ -1977,5 +1987,5 @@ for cSess = 1 : nSess
         SpikeAligned(i,:,:)=UsedSPData(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
     end
     
-    save EstimateSPsaveNewMth.mat nnspike DataRaw SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
+    save EstimateSPsaveNewAR2.mat nnspike DataRaw SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
 end

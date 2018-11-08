@@ -13,6 +13,7 @@ nTypes = length(TrTypeAll);
 nROIs = size(Data,2);
 DataMeanValues = zeros(nTypes,nROIs);
 DataSEMValue = zeros(nTypes,nROIs);
+DataSTDValue = zeros(nTypes,nROIs);
 ROITypeIndsData = cell(nTypes,nROIs);
 TypeIndsNum = zeros(nTypes,1);
  for cType = 1 : nTypes
@@ -24,12 +25,14 @@ TypeIndsNum = zeros(nTypes,1);
              cROItypeData = cROItypeData';
              cROItypeMean = (smooth(cROItypeData,5))';
              cROItypeSEM = zeros(size(cROItypeData));
+             cROItypeSTD = zeros(size(cROItypeData));
          else
             cROItypeMean = mean(cROItypeData);
             if size(cROItypeData,1) < 5
                 cROItypeMean = (smooth(cROItypeMean,5))';
             end
             cROItypeSEM = std(cROItypeData)/sqrt(size(cROItypeData,1));
+            cROItypeSTD = std(cROItypeData);
             if IsMinMaxOut
                 SingleTrRespValue = mean(cROItypeData(:,FrameScale(1):FrameScale(2)),2);
                 if length(SingleTrRespValue) > 9 % more than ten trials
@@ -38,6 +41,7 @@ TypeIndsNum = zeros(nTypes,1);
 
                     cROItypeMean = mean(cROItypeData(UsedInds,:));
                     cROItypeSEM = std(cROItypeData(UsedInds,:))/sqrt(sum(UsedInds));
+                    cROItypeSTD = std(cROItypeData(UsedInds,:));
                 end
             end
          end
@@ -46,6 +50,7 @@ TypeIndsNum = zeros(nTypes,1);
          cMaxSEM = cROItypeSEM(cMaxInds+FrameScale(1)-1);
          DataMeanValues(cType,cROI) = cMaxvalue;
          DataSEMValue(cType,cROI) = cMaxSEM;
+         DataSTDValue(cType,cROI) = cROItypeSTD(cMaxInds+FrameScale(1)-1);
          
          cROIMaxIndsData = cROItypeData(:,cMaxInds+FrameScale(1)-1);
          ROITypeIndsData{cType,cROI} = cROIMaxIndsData;
@@ -53,6 +58,7 @@ TypeIndsNum = zeros(nTypes,1);
  end
  DataStrc.MeanValue = DataMeanValues;
  DataStrc.SEMValue = DataSEMValue;
+ DataStrc.STDData = DataSTDValue;
  DataStrc.MaxIndsDataAll = ROITypeIndsData;
  DataStrc.CurrentTypes = TrTypeAll;
  DataStrc.TypeNumber = TypeIndsNum;

@@ -9,7 +9,7 @@ k_sess = 0;
 %%
 for cSess = 1 : nSessPath
     %
-    if exist(fullfile(NormSessPathTask{cSess},'Tunning_fun_plot_New1s','TunningDataSave.mat'),'file')
+    if exist(fullfile(NormSessPathTask{cSess},'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'),'file')
         continue;
     end
     try
@@ -93,7 +93,9 @@ for cSess = 1 : nSessPath
             DataStrcNM = MeanMaxSEMCal(NonMissData,NonMissFreqs,Framescales);
             NonMissTunningFun = DataStrcNM.MeanValue;
             NonMissTunningFunSEM = DataStrcNM.SEMValue;
+            NonMissTunningFunSTD = DataStrcNM.STDData;
             NonMissTunningCellData = DataStrcNM.MaxIndsDataAll;
+            
             NMTypeNumber = DataStrcNM.TypeNumber;
             NMTypeFreqs = log2(DataStrcNM.CurrentTypes/BoundFreq);
             %correct data
@@ -104,6 +106,7 @@ for cSess = 1 : nSessPath
             DataStrcCorr = MeanMaxSEMCal(CorrTrData,CorrTrFreqs,Framescales);
             CorrTunningFun = DataStrcCorr.MeanValue;
             CorrTunningFunSEM = DataStrcCorr.SEMValue;
+            CorrTunningFunSTD = DataStrcCorr.STDData;
             CorrTunningCellData = DataStrcCorr.MaxIndsDataAll;
             CorrTypeNum = DataStrcCorr.TypeNumber;
             CorrTypeFreqs = log2(DataStrcCorr.CurrentTypes/BoundFreq);
@@ -143,6 +146,7 @@ for cSess = 1 : nSessPath
 %             cFreqInds = PassDataStrc.sound_array(:,1) == cPasFreq;
             PassTunningfun = PassRespData.MeanValue;
             PassTunningfunSEM = PassRespData.SEMValue;
+            PassTunningfunSTD = PassRespData.STDData;
             PassTunCellData = PassRespData.MaxIndsDataAll;
 %         end
         %
@@ -156,9 +160,10 @@ for cSess = 1 : nSessPath
         end
         cd('./Tunning_fun_plot_New1s/');
 
-        save TunningDataSave.mat NonMissTunningFun CorrTunningFun PassTunningfun TaskFreqOctave ...
+        save TunningSTDDataSave.mat NonMissTunningFun CorrTunningFun PassTunningfun TaskFreqOctave ...
             PassFreqOctave BoundFreq NonMissTunningFunSEM CorrTunningFunSEM PassTunningfunSEM ...
-            PassTunCellData CorrTunningCellData NonMissTunningCellData NMTypeNumber CorrTypeNum -v7.3
+            PassTunCellData CorrTunningCellData NonMissTunningCellData NMTypeNumber CorrTypeNum PassTunningfunSTD ...
+            CorrTunningFunSTD NonMissTunningFunSTD -v7.3
         IsModuIndexExists = 0;
         if exist('NearBoundAmpDiffSig.mat','file')
             load('NearBoundAmpDiffSig.mat','TaskBoundModuIndex');

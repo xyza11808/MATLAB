@@ -1,8 +1,8 @@
 %finding the target image for alignment
-cd('W:\#members\xy\batch\batch58\20181105\anm02\test04');
-[im, ~] = load_scim_data('b58a02_test04_2x_2afc_250um_20181105_124.tif');
+cd('W:\#members\xy\batch\batch58\20181107\anm01\test03rf');
+[im, ~] = load_scim_data('b58a01_test03_2x_rf_120um_20181107_050.tif');
 
-selectframe=im(:,:,1:40);
+selectframe=im(:,:,90:120);
 figure('position',[100 100 480 420]);
 imagesc(mean(selectframe,3),[-10 200]);
 im_reg_target = mean(selectframe,3);
@@ -37,7 +37,7 @@ IsTargetIMExist = cellfun(@(x) exist(fullfile(x,'TargetImage.mat'),'file'),nameS
 UsedDataPath = nameSplit(IsTargetIMExist > 0);
 DirLength = length(UsedDataPath);
 %%
-TargetUpPath = 'F:\batch\';
+TargetUpPath = 'G:\batch\';
 for cs = 1 : DirLength
     tline = UsedDataPath{cs};
     %
@@ -67,10 +67,11 @@ for cs = 1 : DirLength
     
     %align possible passive session data
     PosPassDir = [tline,'rf'];
+    PosPassTagDir = [TargetUpPath,tline(StInds:end),'rf'];
     if isdir(PosPassDir)
         NewAlignDir = PosPassDir;
         cd(NewAlignDir);
-        dir_imreg_dest = [NewAlignDir filesep 'im_data_reg_cpu'];
+        dir_imreg_dest = [PosPassTagDir filesep 'im_data_reg_cpu'];
         BadAlignFrame = dft_reg_dir_2_zy(NewAlignDir, dir_imreg_dest, [], im_reg_target);
         isFileBadAlign = cellfun(@isempty,BadAlignFrame);
         cd(dir_imreg_dest);

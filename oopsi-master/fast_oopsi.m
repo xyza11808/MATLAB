@@ -105,7 +105,7 @@ if V.fast_poiss && V.fast_nonlin,
     else                V.fast_poiss = 0;   V.fast_nonlin = 0;
     end
 end
-if ~isfield(V,'fast_iter_max'), V.fast_iter_max=1; end % max # of iterations before convergence
+if ~isfield(V,'fast_iter_max'), V.fast_iter_max=100; end % max # of iterations before convergence
 
 % things that matter if we are iterating to estimate parameters
 if V.fast_iter_max>1;
@@ -122,10 +122,10 @@ if V.fast_iter_max>1;
         if isfield(V,'n'), siz=size(V.n); V.n(V.n==0)=NaN; if siz(1)<siz(2), V.n=V.n'; end; end
     end
     
-    if ~isfield(V,'est_sig'),   V.est_sig   = 0; end    % whether to estimate sig
-    if ~isfield(V,'est_lam'),   V.est_lam   = 0; end    % whether to estimate lam
-    if ~isfield(V,'est_gam'),   V.est_gam   = 0; end    % whether to estimate gam
-    if ~isfield(V,'est_a'),     V.est_a     = 0; end    % whether to estimate a
+    if ~isfield(V,'est_sig'),   V.est_sig   = 1; end    % whether to estimate sig
+    if ~isfield(V,'est_lam'),   V.est_lam   = 1; end    % whether to estimate lam
+    if ~isfield(V,'est_gam'),   V.est_gam   = 1; end    % whether to estimate gam
+    if ~isfield(V,'est_a'),     V.est_a     = 1; end    % whether to estimate a
     if ~isfield(V,'est_b'),     V.est_b     = 1; end    % whether to estimate b
     if ~isfield(V,'fast_plot'), V.fast_plot = 1; end    % whether to plot results from each iteration
     if ~isfield(V,'fast_thr'),  V.fast_thr  = 0; end    % whether to threshold spike train before estimating 'a' and 'b'

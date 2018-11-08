@@ -50,15 +50,16 @@ TraceSpikeData = zeros(size(SessionTraceData));
 TraceEstimatedTrace = zeros(size(SessionTraceData));
 ROIFitCoefs = cell(nROIs,1);
 parfor cROI = 1 : nROIs
-    
+    %%
     cROISessTrace = SessionTraceData(cROI,:)/100;
     cROISessTraceNM = cROISessTrace - min(cROISessTrace);
     
     lam = choose_lambda(exp(-1/(fr*DecayTime)),GetSn(cROISessTraceNM),lamPr);
     spkmin = spkSNR*GetSn(cROISessTraceNM);
     
-    [cc2, spk2, opts_oasis2] = deconvolveCa(cROISessTraceNM,'ar1','optimize_b',true,'method','thresholded',...
-                                    'optimize_pars',true,'maxIter',100,'smin',spkmin,'window',200,'lambda',lam);
+    [cc2, spk2, opts_oasis2] = deconvolveCa(cROISessTraceNM,'ar2','optimize_b',true,'method','thresholded',...
+                                    'optimize_pars',true,'maxIter',100,'smin',spkmin,'window',150,'lambda',lam);
+    %%
     TraceSpikeData(cROI,:) = spk2;
     TraceEstimatedTrace(cROI,:) = cc2;
     ROIFitCoefs{cROI} = opts_oasis2;

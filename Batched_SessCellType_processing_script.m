@@ -109,7 +109,7 @@ for cSess = 1 : nSessPath
     subplot(121)
     imagesc(ROISeqSort,[-1.5 1.5]);
     set(gca,'ytick',1:numel(TaskFreqs),'yticklabel',TaskFreqStrs);
-    set(gca,'xtick',1:numel(TunROIInds),'xticklabel',TunROIInds);
+    set(gca,'xtick',1:numel(TunROIInds),'xticklabel',TunROIInds(MaxSortInds));
     xtickangle(-90)
     ylabel('Freq (kHz)');
     xlabel('# ROIs');
@@ -117,7 +117,7 @@ for cSess = 1 : nSessPath
     set(gca,'FontSize',10);
 
     subplot(122)
-    imagesc(PassZSTunData,[-1.5 1.5]);
+    imagesc(PassZSTunData(:,MaxSortInds),[-1.5 1.5]);
     set(gca,'ytick',1:numel(PassFreqs),'yticklabel',PassFreqStrs);
     ylabel('Freq (kHz)');
     xlabel('# ROIs');
@@ -143,7 +143,7 @@ for cSess = 1 : nSessPath
     subplot(121)
     imagesc(ROISeqSort,[-1.5 1.5]);
     set(gca,'ytick',1:numel(TaskFreqs),'yticklabel',TaskFreqStrs);
-    set(gca,'xtick',1:numel(TunROIInds),'xticklabel',TunROIInds);
+    set(gca,'xtick',1:numel(TunROIInds),'xticklabel',TunROIInds(MaxSortInds));
     xtickangle(-90)
     ylabel('Freq (kHz)');
     xlabel('# ROIs');
@@ -151,7 +151,7 @@ for cSess = 1 : nSessPath
     set(gca,'FontSize',10);
 
     subplot(122)
-    imagesc(NewPassZSTunData,[-1.5 1.5]);
+    imagesc(NewPassZSTunData(:,MaxSortInds),[-1.5 1.5]);
     set(gca,'ytick',1:numel(PassFreqs),'yticklabel',PassFreqStrs);
     ylabel('Freq (kHz)');
     xlabel('# ROIs');
@@ -184,7 +184,7 @@ for cSess = 1 : nSessPath
     set(gca,'FontSize',10);
 
     subplot(122)
-    imagesc(PassZSALLTunData,[-2 2]);
+    imagesc(PassZSALLTunData(:,MaxSortInds),[-2 2]);
     set(gca,'ytick',1:numel(PassFreqs),'yticklabel',PassFreqStrs);
     ylabel('Freq (kHz)');
     xlabel('# ROIs');
@@ -221,7 +221,7 @@ for cSess = 1 : nSessPath
     set(gca,'ytick',1:numel(CategROIs),'yticklabel',CategROIs);
     xlabel('Freq (kHz)');
     ylabel('# ROIs');
-    title('Task Tuning');
+    title('Task Categ');
     set(gca,'FontSize',14);
 
     subplot(122)
@@ -229,7 +229,7 @@ for cSess = 1 : nSessPath
     set(gca,'xtick',1:numel(PassFreqs),'xticklabel',PassFreqStrs);
     xlabel('Freq (kHz)');
     ylabel('# ROIs');
-    title('Passove Tuning');
+    title('Passove Categ');
     set(gca,'FontSize',14);
 %
     saveas(huCtgf,'Categ ROIs summary plots');
@@ -317,7 +317,7 @@ for cSess = 1 : nSession
     if m == 1
         %
         %                 PPTname = input('Please input the name for current PPT file:\n','s');
-        PPTname = 'Celltype_response_colorplot_1s';
+        PPTname = 'Celltype_response_colorplot_1sCorr';
         if isempty(strfind(PPTname,'.ppt'))
             PPTname = [PPTname,'.pptx'];
         end
@@ -325,7 +325,7 @@ for cSess = 1 : nSession
         if ismac
             pptSavePath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
         elseif ispc
-            pptSavePath = 'P:\BatchData\batch55';
+            pptSavePath = 'P:\BatchData\batch53';
         end
         %
     end
