@@ -52,19 +52,22 @@ plot(HiSNRData,'m')
 %%
 Datas = load('PlotRelatedDataSP.mat');
 %%
-close
-cEOI = 1;
+% close
+cEOI = 2;
 cROICellData = squeeze(Datas.ROIMeanTraceData(cEOI,:,:));
 hf = figure;
 hold on
 cFreqNum = size(cROICellData,1);
 CMaps = jet(cFreqNum);
+FreqInds = cellstr(num2str((1:cFreqNum)'));
+hlAll = [];
 for cf = 1 : cFreqNum
-    plot(cROICellData{cf,1},'Color',CMaps(cf,:),'linewidth',1.8);
+    hl = plot(cROICellData{cf,1},'Color',CMaps(cf,:),'linewidth',1.8);
+    hlAll = [hlAll,hl];
 end
 ylims = get(gca,'ylim');
 line([Datas.AlignedFrame,Datas.AlignedFrame],ylims,'Color',[.7 .7 .7],'linewidth',2,'linestyle','--');
-
+legend(hlAll,FreqInds,'box','off')
 
 %% aligned data for each behavior events
 
