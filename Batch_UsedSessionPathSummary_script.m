@@ -6,7 +6,7 @@ if ismac
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,':'))';
 elseif ispc
-    GrandPath = 'S:\BatchData\batch53';
+    GrandPath = 'S:\BatchData\batch55';
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,';'))';
 end
@@ -1989,3 +1989,30 @@ for cSess = 1 : nSess
     
     save EstimateSPsaveNewAR2.mat nnspike DataRaw SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
 end
+
+%% batched spike data analysis
+clearvars -except NormSessPathTask
+
+%
+nSess = length(NormSessPathTask);
+ErroSess = [];
+for css = 1 : nSess
+    
+    csPath = NormSessPathTask{css};
+    cd(csPath);
+    
+    if ~exist('EstimateSPsaveNewAR2.mat','file')
+        fprintf('Non-exist spike data file for session %d',css);
+        continue;
+    end
+    clearvars behavResults nnspike
+    
+    load('EstimateSPsaveNewAR2.mat');
+    
+    try
+        TrSummarization_script
+    catch
+        ErroSess = [ErroSess,css];
+    end
+end
+    

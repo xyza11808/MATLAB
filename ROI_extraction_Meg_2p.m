@@ -63,6 +63,8 @@ if nROI
         PixelMatrix=reshape(AllPixelVector,[],NumberImages);
         ROI_Struct(n).ROIvalue = mean(PixelMatrix);
         ROI_Struct(n).ROIPixel = PixelMatrix;
+        
+        RawDataAll(n,:) = mean(PixelMatrix);
     end
 end
 clearvars nROIPixel nROIvalue
@@ -92,6 +94,14 @@ if ~isempty(varargin)
 
     save MatrixData.mat RawDataAll FchangeDataAll BaselineValue -v7.3
 else
-    FchangeDataAll=[];
-    BaselineValue=[];
+    % no stim onset time was given, using global mode as baseline
+    FchangeDataAll=zeros(size(RawDataAll));
+    BaselineValue=zeros(nROI,1);
+    for cr = 1 : nROI
+        crData = RawDataAll(cr,:);
+        [Count,cent] = hist(crData,30);
+        [~,MaxInds] = max(Count);
+        BaselineValue(cr) = cent(MaxInds);
+        FchangeDataAll(cr,:) = (crData - BaselineValue(cr))/BaselineValue(cr);
+    end
 end
