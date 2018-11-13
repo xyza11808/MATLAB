@@ -131,7 +131,7 @@ for cROI = 1 : nROIs
         %     figure
         %     hist(TrainRespDataMtx,20)
 
-            PredTestData = cvglmnetPredict(cvmdfit,TestBehavParaMtx,'lambda_min','response');
+            PredTestData = cvglmnetPredict(cvmdfit,TestBehavParaMtx,'lambda_1se','response');
             FoldTestPred{cf,1} = PredTestData;
             FoldTestPred{cf,2} = TestRespData;
 
