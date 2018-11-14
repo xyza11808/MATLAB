@@ -69,7 +69,20 @@ ylims = get(gca,'ylim');
 line([Datas.AlignedFrame,Datas.AlignedFrame],ylims,'Color',[.7 .7 .7],'linewidth',2,'linestyle','--');
 legend(hlAll,FreqInds,'box','off')
 
-%% aligned data for each behavior events
+%% batched session from loaded file path
+[fn,fp,fi] = uigetfile('*.txt','Please select the session savage path file');
+if ~fi
+    return;
+end
+%%
+fpath = fullfile(fp,fn);
+fid = fopen(fpath);
+tline = fgetl(fid);
 
-
+while ischar(tline)
+    cd(tline);
+    
+    TrSummarization_script;
+    
+end
 

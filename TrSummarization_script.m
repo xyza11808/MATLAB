@@ -1,5 +1,13 @@
 % clear
 % clc
+load('CSessionData.mat','data');
+DataRaw = data;
+load('EstimateSPsaveNew.mat');
+clearvars nnspike SpikeAligned 
+
+nnspike = Fluo2SpikeConstrainOOpsi(DataRaw,[],[],frame_rate,2);
+
+save EstimateSPsaveNewAR2.mat DataRaw behavResults frame_rate nnspike -v7.3
 %%
 TrFreqsAll = double(behavResults.Stim_toneFreq(:));
 TrChoiceAll = double(behavResults.Action_choice(:));
@@ -16,9 +24,11 @@ TrTimeReNM = TrTimeRe(NMInds);
 TrStimOnTimeNM = TrStimOnTime(NMInds);
 TrTrTypesNM = TrTrTypes(NMInds);
 NMTrNum = length(TrFreqsNM);
-
-nROIs = size(SpikeAligned,2);
-
+if ~iscell(DataRaw)
+    nROIs = size(DataRaw,2);
+else
+    nROIs = size(DataRaw{1},1);
+end
 TrOctsNM = log2(TrFreqsNM/min(TrFreqsNM)) - 1;
 TrAnsFTimeNM = round((TrAnsTimeNM/1000)*frame_rate);
 TrFTimeReNM = round((TrTimeReNM/1000)*frame_rate);
@@ -29,7 +39,11 @@ FrameWin = round(TimeWin*frame_rate);
 %%
 TrEventsRespData = zeros(NMTrNum,nROIs,3); % freq, answer, reward corresponded to three columns
 for ctr = 1 : NMTrNum
-    cTrSPData = nnspike{ctr};
+    if iscell(nnspike)
+        cTrSPData = nnspike{ctr};
+    else
+        cTrSPData = squeeze(nnspike(ctr,:,:));
+    end
     cStimOnResp = cTrSPData(:,(TrStimOnFTimeNM(ctr)+1):(TrStimOnFTimeNM(ctr)+1+FrameWin));
     TrEventsRespData(ctr,:,1) = mean(cStimOnResp,2);
     

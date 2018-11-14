@@ -6,7 +6,7 @@ if ismac
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,':'))';
 elseif ispc
-    GrandPath = 'S:\BatchData\batch55';
+    GrandPath = 'P:\BatchData\batch55';
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,';'))';
 end
@@ -1990,7 +1990,7 @@ for cSess = 1 : nSess
     save EstimateSPsaveNewAR2.mat nnspike DataRaw SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
 end
 
-%% batched spike data analysis
+%% batched spike data analysis for task sessions
 clearvars -except NormSessPathTask
 
 %
@@ -2015,4 +2015,24 @@ for css = 1 : nSess
         ErroSess = [ErroSess,css];
     end
 end
+%% batched spike data analysis for passive sessions
+clearvars -except NormSessPathPass
+
+%
+nSess = length(NormSessPathPass);
+ErroSess = [];
+for css = 54 : nSess
     
+    csPath = NormSessPathPass{css};
+    cd(csPath);
+    clearvars SelectSArray SelectData
+    
+    load('rfSelectDataSet.mat');
+    
+    try
+        PassSP_Data_script
+    catch
+        ErroSess = [ErroSess,css];
+        fprintf('Error occurs for session %d.\n',css);
+    end
+end
