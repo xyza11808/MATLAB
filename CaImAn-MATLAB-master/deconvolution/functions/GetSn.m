@@ -1,4 +1,4 @@
-function sn = GetSn(Y, range_ff, method)
+function sn = GetSn(Y, range_ff, method,varargin)
 %% Estimate noise standard deviation
 
 %% inputs:
@@ -28,10 +28,22 @@ if any(size(Y)==1)
 else
     Y = Y';
 end
-
+IsSampleRateGiven = 0;
+if nargin > 3
+    if ~isempty(varargin{1})
+        SampleRate = varargin{1};
+        IsSampleRateGiven = 1;
+    end
+end
 %% estimate the noise
-[psdx, ff] = pwelch(Y, [],[],[], 1);
-indf = and(ff>=range_ff(1), ff<=range_ff(2));
+if IsSampleRateGiven
+    [psdx, ff] = pwelch(Y, [],[],[], SampleRate);
+    range_ff = range_ff * SampleRate;
+    indf = and(ff>=range_ff(1), ff<=range_ff(2));
+else
+    [psdx, ff] = pwelch(Y, [],[],[], 1);
+    indf = and(ff>=range_ff(1), ff<=range_ff(2));
+end
 switch method
     case 'mean'
         sn=sqrt(mean(psdx(indf, :)/2));

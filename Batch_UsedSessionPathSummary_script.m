@@ -6,7 +6,7 @@ if ismac
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,':'))';
 elseif ispc
-    GrandPath = 'P:\BatchData\batch55';
+    GrandPath = 'S:\BatchData\batch55';
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,';'))';
 end
@@ -2035,4 +2035,24 @@ for css = 54 : nSess
         ErroSess = [ErroSess,css];
         fprintf('Error occurs for session %d.\n',css);
     end
+end
+%% batched stim onset alignment plots
+clearvars -except NormSessPathTask
+
+%
+nSess = length(NormSessPathTask);
+ErroSess = [];
+for css = 1 : nSess
+    
+    csPath = NormSessPathTask{css};
+    cd(csPath);
+    
+    clearvars behavResults data frame_rate FRewardLickT frame_lickAllTrials ROIstate
+    load('CSessionData.mat');
+    if exist('ROIstate','var')
+        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials,[],ROIstate); 
+    else
+        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials,[]); 
+    end
+    
 end

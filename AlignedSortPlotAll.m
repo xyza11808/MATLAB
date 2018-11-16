@@ -196,6 +196,7 @@ if ~isdir('./All BehavType Colorplot/')
 end
 cd('./All BehavType Colorplot/');
 %%
+ROIMeanTraceData = cell(ROInum,NumFreq,3);
 for nROI = 1 : ROInum
     cROIdata = squeeze(AlignData(:,nROI,:));
     climMax = prctile(cROIdata(:),85);
@@ -300,15 +301,20 @@ for nROI = 1 : ROInum
             AxMean = subplot(6,NumFreq,nFreq+NumFreq*5);
             hold on
             plot(CorrectMean,'r','linewidth',1);
+            ROIMeanTraceData{nROI,nFreq,1} = CorrectMean;
             if length(ErroData) == numel(ErroData) % only have single trial for certain condition
                 plot(ErroData,'b','linewidth',1);
+                ROIMeanTraceData{nROI,nFreq,2} = ErroData;
             else
                 plot(ErroMean,'b','linewidth',1);
+                ROIMeanTraceData{nROI,nFreq,2} = ErroMean;
             end
             if numel(MisData) == length(MisData)
                 plot(MisData,'k','linewidth',1);
+                ROIMeanTraceData{nROI,nFreq,3} = MisData;
             else
                 plot(MissMean,'k','linewidth',1);
+                ROIMeanTraceData{nROI,nFreq,3} = MissMean;
             end
             yscales = get(gca,'ylim');
 %             line([AlignedFrame AlignedFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2);
@@ -329,10 +335,13 @@ for nROI = 1 : ROInum
             AxMean = subplot(6,NumFreq,nFreq+NumFreq*5);  % hold at the last subplot
             hold on
             plot(CorrectMean,'r','linewidth',1);
+            ROIMeanTraceData{nROI,nFreq,1} = CorrectMean;
             if length(ErroData) == numel(ErroData) % only have single trial for certain condition
                 plot(ErroData,'b','linewidth',1);
+                ROIMeanTraceData{nROI,nFreq,2} = ErroData;
             else
                 plot(ErroMean,'b','linewidth',1);
+                ROIMeanTraceData{nROI,nFreq,2} = ErroMean;
             end
             yscales = get(gca,'ylim');
 %             line([AlignedFrame AlignedFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2);
@@ -341,7 +350,7 @@ for nROI = 1 : ROInum
             set(gca,'FontSize',12);
             xlabel('Time (s)');
             if nFreq == 1
-                ylabel({'Miss Trials';'Mean \DeltaF/F_0(%)'});
+                ylabel({'Mean \DeltaF/F_0(%)'});
             end
 %             if nFreq == NumFreq
 %                 cAxisPos = get(AxMiss2,'position');
@@ -375,5 +384,5 @@ for nROI = 1 : ROInum
     close(hROI);
 end
 
-save PlotRelatedData.mat FreqTypeEventF AnsFIndsSort SessionDesp AlignLickStrc -v7.3
+save PlotRelatedData.mat FreqTypeEventF AnsFIndsSort SessionDesp AlignLickStrc AlignedFrame SoundOffFrame Frate ROIMeanTraceData -v7.3
 cd ..;

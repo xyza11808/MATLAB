@@ -341,10 +341,14 @@ for nROI = 1 : ROInum
             AxMean = subplot(6,NumFreq,nFreq+NumFreq*5);  % hold at the last subplot
             hold on
             plot(CorrectMean,'r','linewidth',1);
+            ROIMeanTraceData{nROI,nFreq,1} = CorrectMean;
+            
             if length(ErroData) == numel(ErroData) % only have single trial for certain condition
                 plot(smooth(ErroData,7),'b','linewidth',1);
+                ROIMeanTraceData{nROI,nFreq,2} = smooth(ErroData,7);
             else
                 plot(ErroMean,'b','linewidth',1);
+                ROIMeanTraceData{nROI,nFreq,2} = ErroMean;
             end
             yscales = get(gca,'ylim');
 %             line([AlignedFrame AlignedFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2);
@@ -353,7 +357,7 @@ for nROI = 1 : ROInum
             set(gca,'FontSize',12);
             xlabel('Time (s)');
             if nFreq == 1
-                ylabel({'Miss Trials';'Mean SP rate'});
+                ylabel({'Mean SP rate'});
             end
 %             if nFreq == NumFreq
 %                 cAxisPos = get(AxMiss2,'position');

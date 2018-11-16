@@ -62,7 +62,7 @@ if (AfterAliLen - MinAnsF) < 2*Frate
     for ntr = 1 : length(EarlyAnsStimFreq)
         EarlyAnsAlignData(ntr,:,:) = EarlyAnsData(ntr,:,(EarlyAnsAlignDiff(ntr)+1):(EarlyAnsAlignDiff(ntr)+NewAfteraliLen));
     end
-    save EarlyAnsAlignSave.mat EarlyAnsAlignData EarlyAnsOutcome EarlyAnsStimFreq MinAnsF SelectROIinds EarlyAnsChoice -v7.3
+    save EarlyAnsAlignSave.mat EarlyAnsAlignData EarlyAnsOutcome EarlyAnsStimFreq MinAnsF SelectROIinds EarlyAnsChoice Frate -v7.3
 end
 
 %
@@ -148,5 +148,5 @@ if isPlot
         close(hf);
     end
 end
-save AnsAlignData.mat AnsAlignData MinAnsF NonMissInds NMStimFreq NMOutcome NMChoice -v7.3
+save AnsAlignData.mat AnsAlignData MinAnsF NonMissInds NMStimFreq NMOutcome NMChoice Frate -v7.3
 cd ..;

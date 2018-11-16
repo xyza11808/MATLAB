@@ -46,13 +46,16 @@ if iscell(nnspike)
 else
     NMSpikeData = nnspike(NMInds,:,:);
 end
-TrEventsRespData = zeros(NMTrNum,nROIs,4); % freq, answer, reward corresponded to three columns
+TrEventsRespData = zeros(NMTrNum,nROIs,5); % freq, answer, reward corresponded to three columns
 for ctr = 1 : NMTrNum
     if iscell(nnspike)
         cTrSPData = NMSpikeData{ctr};
     else
         cTrSPData = squeeze(NMSpikeData(ctr,:,:));
     end
+    BeforeSPBaselineMtx = cTrSPData(:,1:TrStimOnFTimeNM(ctr));
+    BeforeSPBaselineTrace = mean(BeforeSPBaselineMtx,2);
+    TrEventsRespData(ctr,:,5) = BeforeSPBaselineTrace;
     cStimOnResp = cTrSPData(:,(TrStimOnFTimeNM(ctr)+1):(TrStimOnFTimeNM(ctr)+1+FrameWin));
     TrEventsRespData(ctr,:,1) = mean(cStimOnResp,2);
     cStimOffResp = cTrSPData(:,(TrStimOnFTimeNM(ctr)+1+FrameWin):(TrStimOnFTimeNM(ctr)+1+2*FrameWin));
@@ -65,6 +68,7 @@ for ctr = 1 : NMTrNum
         cReResp = cTrSPData(:,(TrFTimeReNM(ctr)+1):(TrFTimeReNM(ctr)+1+FrameWin));
         TrEventsRespData(ctr,:,3) = mean(cReResp,2);
     end
+    
 end
 
 %%
@@ -190,9 +194,9 @@ end
  
 %% analysis ROI coef Data 
 nROIs = length(AllROIData);
-CoefValueThres = 0.05;
-RepeatFracThres = 1;
-ROIAboveThresInds = cell(nROIs,2);
+CoefValueThres = 0.5;
+RepeatFracThres = 0.5;
+ROIAboveThresInds = cell(nROIs,4);
 for cROI = 1 : nROIs
     cROIdata = AllROIData{cROI};
     cROICoefdata = cellfun(@(x) (cell2mat((x(:,1))'))',cROIdata(:,1),'uniformOutput',false);
@@ -200,19 +204,35 @@ for cROI = 1 : nROIs
     
     cROIDev = (cell2mat((cROIdata(:,2))'))';
     
-    CoefAboveThresMeanFrac = mean(double(abs(cROICoef_AllRepeats) > 0.05));
+    CoefAboveThresMeanFrac = mean(double(abs(cROICoef_AllRepeats) > CoefValueThres));
     CoefAboveThresInds = CoefAboveThresMeanFrac >= RepeatFracThres;
     
     ROIAboveThresInds{cROI,1} = CoefAboveThresInds;
     ROIAboveThresInds{cROI,2} = [mean(cROIDev(:)),std(cROIDev(:)),numel(cROIDev)];
     ROIAboveThresInds{cROI,3} = CoefAboveThresMeanFrac;
+    ROIAboveThresInds{cROI,4} = mean(cROICoef_AllRepeats);
 end
 %%
 save SPDataBehavCoefSave.mat ROIAboveThresInds AllROIData -v7.3
 %%
+cROI = 28;
 cROISPData = cellfun(@(x) x(cROI,:),NMSpikeData,'uniformOutput',false);
 cROISPDataMtx = cell2mat(cROISPData');
 %
 cROIData = cellfun(@(x) x(cROI,:),DataRaw,'uniformOutput',false);
 cROIDataMtx = cell2mat(cROIData');
 %%
+figure;
+plot(cROISPDataMtx)
+yyaxis right
+plot(cROIDataMtx)
+%%
+ccROIData = squeeze(TrEventsRespData(:,103,:));
+figure;
+imagesc(ccROIData(FreqSortInds,:))
+%%
+close;
+cROI = 103;
+figure
+plot(ROIAboveThresInds{cROI,1},'ko','linewidth',1.8);
+ylim([-0.05 1.05]);
