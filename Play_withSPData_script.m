@@ -1,8 +1,7 @@
 
-FrameInds = cellfun(@(x) size(x,2),nnspike);
-UsedFrame = ceil(prctile(FrameInds,80));
-
 if iscell(nnspike)
+    FrameInds = cellfun(@(x) size(x,2),nnspike);
+    UsedFrame = ceil(prctile(FrameInds,80));
     SPsizeData = [length(nnspike),size(nnspike{1},1),max(FrameInds)];
     SPDataAll = zeros(SPsizeData);
     for cTr = 1 : length(nnspike)
@@ -19,17 +18,21 @@ end
 AlignedSortPlotAll_ForSP(UsedSPData,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials,[],ROIstate);
 
 %%
-cROI = 106;
-cROIDataCell = cellfun(@(x) (x(cROI,:))',nnspike,'Uniformoutput',false);
+cROI = 1;
+if iscell(nnspike)
+    cROIDataCell = cellfun(@(x) (x(cROI,:))',nnspike,'Uniformoutput',false);
+    cROIDataSP = cell2mat(cROIDataCell);
+else
+    cROIDataSP = squeeze(nnspike(:,cROI,:));
+end
 
-cROIDataSP = cell2mat(cROIDataCell);
 figure;
 plot(cROIDataSP)
 %% plot spike data sorted by frequency
 TrFreqsAll = double(behavResults.Stim_toneFreq(:));
 [~,FreqSortInds] = sort(TrFreqsAll);
 
-cROI = 22;
+cROI = 1;
 cROIData = squeeze(UsedSPData(:,cROI,:));
 figure
 imagesc(cROIData(FreqSortInds,:))
@@ -53,7 +56,7 @@ plot(HiSNRData,'m')
 Datas = load('PlotRelatedDataSP.mat');
 %%
 % close
-cEOI = 2;
+cEOI = 1;
 cROICellData = squeeze(Datas.ROIMeanTraceData(cEOI,:,:));
 hf = figure;
 hold on
@@ -78,11 +81,15 @@ end
 fpath = fullfile(fp,fn);
 fid = fopen(fpath);
 tline = fgetl(fid);
-
+%%
 while ischar(tline)
+    if isempty(tline)
+        tline = fgetl(fid);
+        continue;
+    end
     cd(tline);
     
     TrSummarization_script;
-    
+    tline = fgetl(fid);
 end
 

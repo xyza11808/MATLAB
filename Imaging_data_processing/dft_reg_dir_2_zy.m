@@ -78,6 +78,9 @@ end
 % total_time_GPU=zeros(1,length(datafiles));
 total_time_CPU = zeros(1,length(datafiles));
 FrameIsBadAlign = cell(1,length(datafiles));
+MeanDataAll = cell(1,length(datafiles));
+MaxDataAll = cell(1,length(datafiles));
+fNameAll = cell(1,length(datafiles));
 parfor i = 1:length(datafiles)
 %   for i = 1:length(datafiles)
     %%
@@ -94,6 +97,7 @@ parfor i = 1:length(datafiles)
         fname = [src_dir filesep a];
     end
     file_basename = a(1: end-7);
+    fNameAll{i} = fname;
     
     im_info = imfinfo(fname);
     if isfield(im_info(1),'ImageDescription')
@@ -179,6 +183,9 @@ parfor i = 1:length(datafiles)
         
     end
     
+    MeanDataAll{i} = squeeze(mean(im_dft_reg,3));
+    MaxDataAll{i} = max(im_mov_avg(im_dft_reg,3),[],3);
+    
     if save_to_image == 1
         write_data_to_tiff(save_name, im_dft_reg, imTagStruct); 
 %     figure;
@@ -209,7 +216,8 @@ end
 %     dft_reg_trial(1).dft_im_data = im_dft_reg;
 %     parsave_dft_dir(dft_reg_trial(1).filename, dft_reg_trial);
 
-save time_dis_CPU.mat total_time_CPU FrameIsBadAlign -v7.3
+save(fullfile(save_path,'time_dis_CPU.mat'), 'total_time_CPU', 'FrameIsBadAlign', '-v7.3');
+save(fullfile(save_path,'MaxMeanData.mat'), 'MeanDataAll',  'MaxDataAll', 'fNameAll', '-v7.3');
 if nargout > 0
    varargout{1} = FrameIsBadAlign ;
 end

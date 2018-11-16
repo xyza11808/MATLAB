@@ -46,7 +46,7 @@ if iscell(nnspike)
 else
     NMSpikeData = nnspike(NMInds,:,:);
 end
-TrEventsRespData = zeros(NMTrNum,nROIs,3); % freq, answer, reward corresponded to three columns
+TrEventsRespData = zeros(NMTrNum,nROIs,4); % freq, answer, reward corresponded to three columns
 for ctr = 1 : NMTrNum
     if iscell(nnspike)
         cTrSPData = NMSpikeData{ctr};
@@ -55,6 +55,8 @@ for ctr = 1 : NMTrNum
     end
     cStimOnResp = cTrSPData(:,(TrStimOnFTimeNM(ctr)+1):(TrStimOnFTimeNM(ctr)+1+FrameWin));
     TrEventsRespData(ctr,:,1) = mean(cStimOnResp,2);
+    cStimOffResp = cTrSPData(:,(TrStimOnFTimeNM(ctr)+1+FrameWin):(TrStimOnFTimeNM(ctr)+1+2*FrameWin));
+    TrEventsRespData(ctr,:,4) = mean(cStimOffResp,2);
     
     cAnsResp = cTrSPData(:,(TrAnsFTimeNM(ctr)+1):(TrAnsFTimeNM(ctr)+1+FrameWin));
     TrEventsRespData(ctr,:,2) = mean(cAnsResp,2);
@@ -78,7 +80,7 @@ end
 % close
 AllROIData = cell(nROIs,1);
 for cROI = 1 : nROIs
-    % cROI = 42;
+    %% cROI = 42;
     cROIData = squeeze(TrEventsRespData(:,cROI,:));
     % figure('position',[200 100 800 320])
     % subplot(121)
@@ -101,22 +103,25 @@ for cROI = 1 : nROIs
     ReRMtx = TrTrTypesNM == 1 & TrTrTypesNM == TrChoiceNM;
     IsReConsidered = 0;
     if IsReConsidered
-        DataFitMtx = zeros(numel(cROIData),nFreqs+2+2);
+        DataFitMtx = zeros(numel(cROIData),2*nFreqs+2+2);
         DataFitMtx(1:NMTrNum,1:nFreqs) = FreqMetrix;
         DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+1) = AnsLMtx;
         DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+2) = AnsRMtx;
-        DataFitMtx(NMTrNum*2+1:end,nFreqs+3) = ReLMtx;
-        DataFitMtx(NMTrNum*2+1:end,nFreqs+4) = ReRMtx;
+        DataFitMtx(NMTrNum*2+1:NMTrNum*3,nFreqs+3) = ReLMtx;
+        DataFitMtx(NMTrNum*2+1:NMTrNum*3,nFreqs+4) = ReRMtx;
+        DataFitMtx(3*NMTrNum+1:end,1:nFreqs+5:end) = FreqMetrix;
         RespData = cROIData;
     else
-        DataFitMtx = zeros(numel(cROIData(:,1:2)),nFreqs+2);
+        DataFitMtx = zeros(numel(cROIData(:,[1,2,4])),2*nFreqs+2);
         DataFitMtx(1:NMTrNum,1:nFreqs) = FreqMetrix;
         DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+1) = AnsLMtx;
         DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+2) = AnsRMtx;
-        RespData = cROIData(:,1:2);
+        DataFitMtx(NMTrNum*2+1:NMTrNum*3,nFreqs+3:end) = FreqMetrix;
+        
+        RespData = cROIData(:,[1,2,4]);
     end
 
-    %
+    %%
     options = glmnetSet;
     options.alpha = 0.9;
     options.nlambda = 110;
@@ -141,6 +146,7 @@ for cROI = 1 : nROIs
             BehavParaInds = false(size(DataFitMtx,1),1);
             BehavParaInds(TrainInds) = true;
             BehavParaInds(TrainInds+NMTrNum) = true;
+            BehavParaInds(TrainInds+NMTrNum*2) = true;
             BehavParaMtx = DataFitMtx(BehavParaInds,:);
             TestBehavParaMtx = DataFitMtx(~BehavParaInds,:);
             %
@@ -201,123 +207,12 @@ for cROI = 1 : nROIs
     ROIAboveThresInds{cROI,2} = [mean(cROIDev(:)),std(cROIDev(:)),numel(cROIDev)];
     ROIAboveThresInds{cROI,3} = CoefAboveThresMeanFrac;
 end
+%%
 save SPDataBehavCoefSave.mat ROIAboveThresInds AllROIData -v7.3
 %%
-% close
-% cROI = 117;
-% hf = figure;
-% hold on
-% 
-% plot(ROIAboveThresInds{cROI,1},'ko','linewidth',1.8);
-% plot(ROIAboveThresInds{cROI,3},'ro','linewidth',1.8);
-% xlim([0 11])
-% ylim([-0.05 1.05])
-% title(sprintf('ROI %d DE Avg = %.4f, std = %.4f',cROI,ROIAboveThresInds{cROI,2}(1),ROIAboveThresInds{cROI,2}(2)));
-% 
-% %%
-% % evaluating alpha value effects
-% UsedAlpha = 0:0.1:1;
-% NumAlpha = length(UsedAlpha);
-% MinCVM = zeros(NumAlpha,2);
-% for cTest = 1 : NumAlpha
-%     options.alpha = UsedAlpha(cTest);
-%     cvmdfit = cvglmnet(BehavParaMtx,TrainRespDataMtx,'poisson',options);
-%     MinCVM(cTest,1) = min(cvmdfit.cvm);
-%     
-%     PredTestData = cvglmnetPredict(cvmdfit,TestBehavParaMtx,'lambda_min','response');
-%     MinCVM(cTest,2) = sqrt(sum((PredTestData(:) - TestRespData(:)).^2)/numel(TestRespData));
-% end
-% 
-% 
-% %% test of every single ROI response pattern
-% close
-% close
-% close
-%     cROI = 2;
-%     cROIData = squeeze(TrEventsRespData(:,cROI,:));
-%     figure('position',[200 100 800 320])
-%     subplot(121)
-%     imagesc(cROIData(FreqSortInds,:),[0 min(max(cROIData(:)),0.05)]);  %
-% 
-%     cRData = zeros(nFreqs,2);
-%     for ccf = 1 : nFreqs
-%         cRData(ccf,1) = mean(cROIData(FreqInds{ccf},1));
-%         cRData(ccf,2) = std(cROIData(FreqInds{ccf},1));
-%     end
-%     subplot(122)
-%     errorbar((1:nFreqs)',cRData(:,1),cRData(:,2),'k-o','linewidth',2)
-% 
-% 
-%     %
-%     FreqMetrix = double(repmat(FreqTypes',NMTrNum,1) == repmat(TrOctsNM,1,nFreqs)); 
-%     AnsLMtx = 1 - TrChoiceNM;
-%     AnsRMtx = TrChoiceNM;
-%     ReLMtx = TrTrTypesNM == 0 & TrTrTypesNM == TrChoiceNM;
-%     ReRMtx = TrTrTypesNM == 1 & TrTrTypesNM == TrChoiceNM;
-%     IsReConsidered = 0;
-%     if IsReConsidered
-%         DataFitMtx = zeros(numel(cROIData),nFreqs+2+2);
-%         DataFitMtx(1:NMTrNum,1:nFreqs) = FreqMetrix;
-%         DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+1) = AnsLMtx;
-%         DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+2) = AnsRMtx;
-%         DataFitMtx(NMTrNum*2+1:end,nFreqs+3) = ReLMtx;
-%         DataFitMtx(NMTrNum*2+1:end,nFreqs+4) = ReRMtx;
-%         RespData = cROIData;
-%     else
-%         DataFitMtx = zeros(numel(cROIData(:,1:2)),nFreqs+2);
-%         DataFitMtx(1:NMTrNum,1:nFreqs) = FreqMetrix;
-%         DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+1) = AnsLMtx;
-%         DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+2) = AnsRMtx;
-%         RespData = cROIData(:,1:2);
-%     end
-% 
-%     %
-%     options = glmnetSet;
-%     options.alpha = 0.9;
-%     options.nlambda = 110;
-%     
-%     nFolds = 5;
-%     cc = cvpartition(NMTrNum,'kFold',nFolds);
-%     cf = 1;
-%     
-%     TrainInds = find(cc.training(cf));
-%     BlankInds = false(NMTrNum,1);
-%     % TrainInds = randsample(NMTrNum,round(NMTrNum*0.7));
-%     BlankInds(TrainInds) = true;
-% 
-%     TrainRespDataMtx = reshape(RespData(BlankInds,:),[],1);
-%     TestRespData = reshape(RespData(~BlankInds,:),[],1);
-% 
-%     BehavParaInds = false(size(DataFitMtx,1),1);
-%     BehavParaInds(TrainInds) = true;
-%     BehavParaInds(TrainInds+NMTrNum) = true;
-%     BehavParaMtx = DataFitMtx(BehavParaInds,:);
-%     TestBehavParaMtx = DataFitMtx(~BehavParaInds,:);
-%     %
-%     cvmdfit = cvglmnet(BehavParaMtx,TrainRespDataMtx,'poisson',options,[],20);
-%     CoefUseds = cvglmnetCoef(cvmdfit,'lambda_1se');
-% 
-% 
-% %             FoldDev(cf) = max(cvmdfit.glmnet_fit.dev);
-% 
-%     %
-%     figure
-%     hist(TrainRespDataMtx,20)
-% 
-%     PredTestData = cvglmnetPredict(cvmdfit,TestBehavParaMtx,'lambda_min','response');
-% 
-%     CoefAbsAll = abs(CoefUseds(2:end));
-%     [CoefSort,SortInds] = sort(CoefAbsAll,'descend');
-%     DevExplained = 100*CoefSort/sum(CoefSort);
-% 
-%     CoefExplainBlank = zeros(numel(CoefAbsAll),1);
-% 
-%     figure('position',[1000 100 800 320]);
-%     subplot(121)
-%     hold on
-%     plot(PredTestData,'k');
-%     plot(TestRespData,'r')
-% 
-%     subplot(122)
-%     plot(1:length(CoefUseds)-1,abs(CoefUseds(2:end)),'ko','linewidth',1.8);
-
+cROISPData = cellfun(@(x) x(cROI,:),NMSpikeData,'uniformOutput',false);
+cROISPDataMtx = cell2mat(cROISPData');
+%
+cROIData = cellfun(@(x) x(cROI,:),DataRaw,'uniformOutput',false);
+cROIDataMtx = cell2mat(cROIData');
+%%

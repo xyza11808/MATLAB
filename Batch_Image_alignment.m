@@ -1,8 +1,8 @@
 %finding the target image for alignment
-cd('W:\#members\xy\batch\batch58\20181107\anm01\test03rf');
-[im, ~] = load_scim_data('b58a01_test03_2x_rf_120um_20181107_050.tif');
+cd('W:\#members\xy\batch\batch58\20181112\anm03\test02');
+[im, ~] = load_scim_data('b58a03_test02_2x_2afc_160um_20181112_118.tif');
 
-selectframe=im(:,:,90:120);
+selectframe=im(:,:,1:60);
 figure('position',[100 100 480 420]);
 imagesc(mean(selectframe,3),[-10 200]);
 im_reg_target = mean(selectframe,3);
