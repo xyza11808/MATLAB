@@ -1996,23 +1996,25 @@ clearvars -except NormSessPathTask
 %
 nSess = length(NormSessPathTask);
 ErroSess = [];
-for css = 1 : nSess
+for css = 2 : nSess-1
     
-    csPath = NormSessPathTask{css};
-    cd(csPath);
+    cSessPath = NormSessPathTask{css};
+    cd(cSessPath);
     
-    if ~exist('EstimateSPsaveNewAR2.mat','file')
-        fprintf('Non-exist spike data file for session %d',css);
-        continue;
-    end
-    clearvars behavResults nnspike
+%     if ~exist('EstimateSPsaveNewAR2.mat','file')
+%         fprintf('Non-exist spike data file for session %d',css);
+%         continue;
+%     end
+    clearvars behavResults nnspike DataRaw
     
-    load('EstimateSPsaveNewAR2.mat');
+    load('EstimateSPsaveNewMth.mat');
     
     try
-        TrSummarization_script
+        TrSummarization_WithStimOff_script;
+%         PredCoef_summary_script
     catch
         ErroSess = [ErroSess,css];
+        sprintf('Error at session %d.\n',css);
     end
 end
 %% batched spike data analysis for passive sessions
@@ -2021,7 +2023,7 @@ clearvars -except NormSessPathPass
 %
 nSess = length(NormSessPathPass);
 ErroSess = [];
-for css = 54 : nSess
+for css = 1 : nSess
     
     csPath = NormSessPathPass{css};
     cd(csPath);
@@ -2050,9 +2052,43 @@ for css = 1 : nSess
     clearvars behavResults data frame_rate FRewardLickT frame_lickAllTrials ROIstate
     load('CSessionData.mat');
     if exist('ROIstate','var')
-        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials,[],ROIstate); 
+        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,0,frame_lickAllTrials,[],ROIstate); 
     else
-        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials,[]); 
+        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,0,frame_lickAllTrials,[]); 
     end
     
+end
+
+%% extract and save tuning ROI index
+clearvars -except NormSessPathTask
+% 30   53  14 for S55 sessions
+%
+nSess = length(NormSessPathTask);
+ErroSess = [];
+for css = 1 : nSess
+    
+    cSessPath = NormSessPathTask{css};
+    cd(cSessPath);
+    try
+        
+        clearvars ROIAboveThresInds ROIRespTypeCoef ROIRespType
+        if exist('SPDataBehavCoefSaveOff.mat','file')
+            load('SPDataBehavCoefSaveOff.mat');
+        else
+            clearvars behavResults nnspike DataRaw
+            load('EstimateSPsaveNewAR2.mat');
+            TrSummarization_WithStimOff_script;
+        end
+        if exist('CoefSummarySave.mat','file')
+            load('CoefSummarySave.mat');
+        else
+            PredCoef_summary_script
+        end
+    
+    
+        ExtractROI_Inds_script
+    catch
+        ErroSess = [ErroSess,css];
+        sprintf('Error at session %d.\n',css);
+    end
 end

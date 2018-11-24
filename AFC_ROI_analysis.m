@@ -764,9 +764,9 @@ elseif str2double(continue_char)==2
 %     TimeCourseChoiceDecod(smooth_data,TrParaAll,start_frame,frame_rate);
     %%
     if isfield(CaTrials_signal,'ROIstateIndic')
-        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials,[],ROIstate); % plot lick frames
+        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials,[],ROIstate); % plot lick frames
     else
-        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials);
+        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials);
     end
     AnsTimeAlignPlot(data_aligned,behavResults,1,frame_rate,trial_outcome,1); % answer time alignment, with figure plot
     %
@@ -799,6 +799,7 @@ elseif str2double(continue_char)==2
      end
      ROIAUCcolorp(TimeCourseStrc,start_frame/frame_rate);
      script_for_summarizedPlot;
+     return;
      %%
 %      if ~exist('nnspike','var')
 %          nnspike = DataFluo2Spike(data_aligned,V,P); % estimated spike

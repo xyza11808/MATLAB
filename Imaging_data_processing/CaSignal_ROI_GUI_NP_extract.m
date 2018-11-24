@@ -154,10 +154,10 @@ CaSignal.ROIInfoPath = '';
 CaSignal.ContAcqCheck = 0;
 CaSignal.IsAutozoom = 0;
 CaSignal.IsROIUpdated = []; % value will be 1 if ROI was newly added or modified from loaded file
-CaSignal.AllTrMeanIm = [];
-CaSignal.AllTrMaxIm = [];
+CaSignal.AllTrMeanIm = {};
+CaSignal.AllTrMaxIm = {};
 fprintf('Matlab Two-photon imaging data analysis GUI.\n');
-fprintf('           Version :  2.03.10             \n');
+fprintf('           Version :  2.04.02             \n');
 % Update handles structure
 guidata(hObject, handles);
 
@@ -434,8 +434,8 @@ end
 PosTrImDataPath = fullfile(CaSignal.CaTrials.DataPath,'NotUsedNow','summarized.mat');
 if exist(PosTrImDataPath,'file')
     TrImDataStrc = load(PosTrImDataPath);
-    CaSignal.AllTrMeanIm = uint16(TrImDataStrc.mean_images);
-    CaSignal.AllTrMaxIm = uint16(TrImDataStrc.max_images);
+    CaSignal.AllTrMeanIm = TrImDataStrc.MeanDataAll;
+    CaSignal.AllTrMaxIm = TrImDataStrc.MaxDataAll;
 end
 
 handles = update_image_axes(handles,im);
@@ -614,7 +614,7 @@ if get(handles.dispMeanMode, 'Value')==1
             mean_im = mean(im,3);
             CaSignal.PlotData(1)={mean_im};
         else
-            CaSignal.PlotData(1)={squeeze(CaSignal.AllTrMeanIm(:,:,TrialNo))};
+            CaSignal.PlotData(1)=CaSignal.AllTrMeanIm(TrialNo);
         end
         CaSignal.CurrentAnaTrial(1)=TrialNo;
     end
@@ -641,7 +641,7 @@ if get(handles.dispMaxDelta,'Value')==1
             max_im = max(im,[],3);
             CaSignal.MaxDelta = max_im - mean_im;
         else
-            CaSignal.MaxDelta = squeeze(CaSignal.AllTrMaxIm(:,:,TrialNo)) - (squeeze(CaSignal.AllTrMeanIm(:,:,TrialNo)));
+            CaSignal.MaxDelta = CaSignal.AllTrMaxIm{TrialNo} - CaSignal.AllTrMeanIm{TrialNo};
         end
         
         CaSignal.CurrentAnaTrial(2)=TrialNo;
@@ -668,7 +668,7 @@ if get(handles.dispMaxMode,'Value')==1
             max_im = max(im,[],3);
             CaSignal.PlotData(2)={max_im};
         else
-            CaSignal.PlotData(2)={squeeze(CaSignal.AllTrMaxIm(:,:,TrialNo))};
+            CaSignal.PlotData(2) = CaSignal.AllTrMaxIm(TrialNo);
         end
         CaSignal.CurrentAnaTrial(3)=TrialNo;
     end

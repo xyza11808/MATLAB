@@ -1,6 +1,8 @@
 % clear
 % clc
-% load('CSessionData.mat','data');
+if ~exist('DataRaw','var')
+    load('CSessionData.mat','DataRaw');
+end
 % DataRaw = data;
 % try
 %     load('EstimateSPsaveNew.mat');
@@ -154,27 +156,37 @@ for cROI = 1 : nROIs
             BehavParaMtx = DataFitMtx(BehavParaInds,:);
             TestBehavParaMtx = DataFitMtx(~BehavParaInds,:);
             %
-            cvmdfit = cvglmnet(BehavParaMtx,TrainRespDataMtx,'poisson',options,[],20);
-            CoefUseds = cvglmnetCoef(cvmdfit,'lambda_1se');
+            if ~sum(TrainRespDataMtx)
+                cvmdfit = cvglmnet(BehavParaMtx,TrainRespDataMtx,'poisson',options,[],20);
+                CoefUseds = cvglmnetCoef(cvmdfit,'lambda_1se');
 
-            FoldCoefs{cf,1} = CoefUseds(2:end);
-            FoldDev(cf) = max(cvmdfit.glmnet_fit.dev);
+                FoldCoefs{cf,1} = CoefUseds(2:end);
+                FoldDev(cf) = max(cvmdfit.glmnet_fit.dev);
 
-            %
-        %     figure
-        %     hist(TrainRespDataMtx,20)
+                %
+            %     figure
+            %     hist(TrainRespDataMtx,20)
 
-            PredTestData = cvglmnetPredict(cvmdfit,TestBehavParaMtx,'lambda_1se','response');
+                PredTestData = cvglmnetPredict(cvmdfit,TestBehavParaMtx,'lambda_1se','response');
+                
+                CoefAbsAll = abs(CoefUseds(2:end));
+                [CoefSort,SortInds] = sort(CoefAbsAll,'descend');
+                DevExplained = 100*CoefSort/sum(CoefSort);
+                FoldCoefs{cf,2} = SortInds;
+                CoefExplainBlank = zeros(numel(CoefAbsAll),1);
+                CoefExplainBlank(SortInds) = DevExplained;
+                FoldCoefs{cf,3} = CoefExplainBlank;
+            else
+                CoefUseds = zeros(size(BehavParaMtx,2)+1,1);
+                FoldCoefs{cf,1} = CoefUseds(2:end);
+                FoldDev(cf) = 0;
+                PredTestData = zeros(size(TestRespData));
+                FoldCoefs{cf,2} = CoefUseds;
+                FoldCoefs{cf,3} = CoefUseds;
+            end
             FoldTestPred{cf,1} = PredTestData;
             FoldTestPred{cf,2} = TestRespData;
-
-            CoefAbsAll = abs(CoefUseds(2:end));
-            [CoefSort,SortInds] = sort(CoefAbsAll,'descend');
-            DevExplained = 100*CoefSort/sum(CoefSort);
-            FoldCoefs{cf,2} = SortInds;
-            CoefExplainBlank = zeros(numel(CoefAbsAll),1);
-            CoefExplainBlank(SortInds) = DevExplained;
-            FoldCoefs{cf,3} = CoefExplainBlank;
+            
         %     figure('position',[1000 100 800 320]);
         %     subplot(121)
         %     hold on
@@ -213,26 +225,26 @@ for cROI = 1 : nROIs
     ROIAboveThresInds{cROI,4} = mean(cROICoef_AllRepeats);
 end
 %%
-save SPDataBehavCoefSave.mat ROIAboveThresInds AllROIData -v7.3
+save SPDataBehavCoefSaveOff.mat ROIAboveThresInds AllROIData -v7.3
 %%
-cROI = 28;
-cROISPData = cellfun(@(x) x(cROI,:),NMSpikeData,'uniformOutput',false);
-cROISPDataMtx = cell2mat(cROISPData');
-%
-cROIData = cellfun(@(x) x(cROI,:),DataRaw,'uniformOutput',false);
-cROIDataMtx = cell2mat(cROIData');
-%%
-figure;
-plot(cROISPDataMtx)
-yyaxis right
-plot(cROIDataMtx)
-%%
-ccROIData = squeeze(TrEventsRespData(:,103,:));
-figure;
-imagesc(ccROIData(FreqSortInds,:))
-%%
-close;
-cROI = 103;
-figure
-plot(ROIAboveThresInds{cROI,1},'ko','linewidth',1.8);
-ylim([-0.05 1.05]);
+% cROI = 28;
+% cROISPData = cellfun(@(x) x(cROI,:),NMSpikeData,'uniformOutput',false);
+% cROISPDataMtx = cell2mat(cROISPData');
+% %
+% cROIData = cellfun(@(x) x(cROI,:),DataRaw,'uniformOutput',false);
+% cROIDataMtx = cell2mat(cROIData');
+% %%
+% figure;
+% plot(cROISPDataMtx)
+% yyaxis right
+% plot(cROIDataMtx)
+% %%
+% ccROIData = squeeze(TrEventsRespData(:,103,:));
+% figure;
+% imagesc(ccROIData(FreqSortInds,:))
+% %%
+% close;
+% cROI = 103;
+% figure
+% plot(ROIAboveThresInds{cROI,1},'ko','linewidth',1.8);
+% ylim([-0.05 1.05]);

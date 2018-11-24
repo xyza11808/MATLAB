@@ -1,25 +1,33 @@
 function AlignedSortPlotAll(RawData,BehavStrc,Frate,RewardTime,varargin)
 % Function used for plot ROI response for each frequency and outcome
 % combination
-IsLickPlot = 0;
+IsPlot = 1;
 if nargin > 4
     if ~isempty(varargin{1})
-        LickTimeStrc = varargin{1};
+        IsPlot = varargin{1};
+    end
+end
+
+IsLickPlot = 0;
+if nargin > 4
+    if ~isempty(varargin{2})
+        LickTimeStrc = varargin{2};
         IsLickPlot = 1;
     end
 end
+
 IsTrIndsInput = 0;
 if nargin > 5
-    if ~isempty(varargin{2})
-        UsedTrInds = varargin{2};
+    if ~isempty(varargin{3})
+        UsedTrInds = varargin{3};
         IsTrIndsInput = 1;
     end
 end
 IsROIstatePlot = 0;
 if nargin > 6
-    if ~isempty(varargin{3})
+    if ~isempty(varargin{4})
         IsROIstatePlot = 1;
-        ROIstate = varargin{3};
+        ROIstate = varargin{4};
     end
 end
 
@@ -212,50 +220,59 @@ for nROI = 1 : ROInum
     %
     MeanPlotAxes = [];
     MeanyScales = zeros(NumFreq,2);
-    hROI = figure('position',[20 100 1200 840],'PaperPositionMode','auto','visible','off');
+    if IsPlot
+        hROI = figure('position',[20 100 1200 840],'PaperPositionMode','auto','visible','off');
+    end
     for nFreq = 1 : NumFreq
         cFreqInds = TrStimFreq == FreqTypes(nFreq);
         cFreqOut = TrOutcome(cFreqInds);
         cFreqData = cROIdata(cFreqInds,:);
         %Correct data plot
-        AxCorr = subplot(6,NumFreq,[nFreq,nFreq+NumFreq]);
-        hold on;
+        if IsPlot
+            AxCorr = subplot(6,NumFreq,[nFreq,nFreq+NumFreq]);
+            hold on;
+        end
         CorrTrData = cFreqData(cFreqOut == 1,:);
         if ~isempty(CorrTrData)
-            CorrTrAnsSortInds = AnsFIndsSort{nFreq,2};
-            CorrTrAnsEventFPlot = FreqTypeEventF{nFreq,1};
-            CorrTrReEventFPlot = FreqTypeEventF{nFreq,2};
-            imagesc(CorrTrData(CorrTrAnsSortInds,:),clim);
-            plot(CorrTrAnsEventFPlot(:,1),CorrTrAnsEventFPlot(:,2),'Color',[1 0 1],'LineWidth',1.8);
-            plot(CorrTrReEventFPlot(:,1),CorrTrReEventFPlot(:,2),'Color','g','LineWidth',1.8);
-            line([AlignedFrame AlignedFrame],[0.5 size(CorrTrData,1)+0.5],'Color',[.7 .7 .7],'LineWidth',2);
-            line([SoundOffFrame SoundOffFrame],[0.5 size(CorrTrData,1)+0.5],'Color',[.7 .7 .7],'LineWidth',2,'linestyle','--');
-            nfLeftCorrLick = AlignLickStrc{nFreq,1};
-            nfRightCorrLick = AlignLickStrc{nFreq,2};
-            plot(nfLeftCorrLick(1,:),nfLeftCorrLick(2,:),'ro','MarkerFaceColor','r','MarkerSize',2);
-            plot(nfRightCorrLick(1,:),nfRightCorrLick(2,:),'go','MarkerFaceColor','g','MarkerSize',2);
-
-            set(gca,'yDir','reverse','ylim',[0.5 size(CorrTrData,1)+0.5],'xlim',[0 size(CorrTrData,2)]);
-            if nFreq == NumFreq
-                AxsPos = get(AxCorr,'position');
-                hbar = colorbar;
-                set(AxCorr,'position',AxsPos);
-                barPos = get(hbar,'position');
-                set(hbar,'position',[barPos(1),barPos(2),barPos(3)*0.3,barPos(4)]);
+            if IsPlot
+                CorrTrAnsSortInds = AnsFIndsSort{nFreq,2};
+                CorrTrAnsEventFPlot = FreqTypeEventF{nFreq,1};
+                CorrTrReEventFPlot = FreqTypeEventF{nFreq,2};
+                imagesc(CorrTrData(CorrTrAnsSortInds,:),clim);
+                plot(CorrTrAnsEventFPlot(:,1),CorrTrAnsEventFPlot(:,2),'Color',[1 0 1],'LineWidth',1.8);
+                plot(CorrTrReEventFPlot(:,1),CorrTrReEventFPlot(:,2),'Color','g','LineWidth',1.8);
+                line([AlignedFrame AlignedFrame],[0.5 size(CorrTrData,1)+0.5],'Color',[.7 .7 .7],'LineWidth',2);
+                line([SoundOffFrame SoundOffFrame],[0.5 size(CorrTrData,1)+0.5],'Color',[.7 .7 .7],'LineWidth',2,'linestyle','--');
+                if IsLickPlot
+                    nfLeftCorrLick = AlignLickStrc{nFreq,1};
+                    nfRightCorrLick = AlignLickStrc{nFreq,2};
+                    plot(nfLeftCorrLick(1,:),nfLeftCorrLick(2,:),'ro','MarkerFaceColor','r','MarkerSize',2);
+                    plot(nfRightCorrLick(1,:),nfRightCorrLick(2,:),'go','MarkerFaceColor','g','MarkerSize',2);
+                end
+                set(gca,'yDir','reverse','ylim',[0.5 size(CorrTrData,1)+0.5],'xlim',[0 size(CorrTrData,2)]);
+                if nFreq == NumFreq
+                    AxsPos = get(AxCorr,'position');
+                    hbar = colorbar;
+                    set(AxCorr,'position',AxsPos);
+                    barPos = get(hbar,'position');
+                    set(hbar,'position',[barPos(1),barPos(2),barPos(3)*0.3,barPos(4)]);
+                end
+                if nFreq == 1
+                    ylabel('Correct Trials','Color','r');
+                end
+                set(gca,'xtick',AlignXtick,'xticklabel',AlignxtickLabel);
+                title(sprintf('Freq = %d',FreqTypes(nFreq)));
+                set(gca,'FontSize',12);
             end
-            if nFreq == 1
-                ylabel('Correct Trials','Color','r');
-            end
-            set(gca,'xtick',AlignXtick,'xticklabel',AlignxtickLabel);
-            title(sprintf('Freq = %d',FreqTypes(nFreq)));
-            set(gca,'FontSize',12);
         end
         
         % error data plot
-        AxErro = subplot(6,NumFreq,[nFreq+NumFreq*2,nFreq+NumFreq*3]);
-        hold on;
+        if IsPlot
+            AxErro = subplot(6,NumFreq,[nFreq+NumFreq*2,nFreq+NumFreq*3]);
+            hold on;
+        end
         ErroData = cFreqData(cFreqOut == 0,:);
-        if ~isempty(ErroData)
+        if ~isempty(ErroData) && IsPlot
             ErroTrAnsSortInds = AnsFIndsSort{nFreq,1};
             ErroTrAnsEventFPlot = FreqTypeEventF{nFreq,3};
             imagesc(ErroData(ErroTrAnsSortInds,:),clim);
@@ -264,67 +281,81 @@ for nROI = 1 : ROInum
             line([SoundOffFrame SoundOffFrame],[0.5 size(CorrTrData,1)+0.5],'Color',[.7 .7 .7],'LineWidth',2,'linestyle','--');
             set(gca,'yDir','reverse','ylim',[0.5 size(ErroData,1)+0.5],'xlim',[0 size(ErroData,2)]);
 %             xlabel('Time (s)');
-            nfLeftErroLick = AlignLickStrc{nFreq,3};
-            nfRightErroLick = AlignLickStrc{nFreq,4};
-            plot(nfLeftErroLick(1,:),nfLeftErroLick(2,:),'ro','MarkerFaceColor','r','MarkerSize',2);
-            plot(nfRightErroLick(1,:),nfRightErroLick(2,:),'go','MarkerFaceColor','g','MarkerSize',2);
-            
+            if IsLickPlot
+                nfLeftErroLick = AlignLickStrc{nFreq,3};
+                nfRightErroLick = AlignLickStrc{nFreq,4};
+                plot(nfLeftErroLick(1,:),nfLeftErroLick(2,:),'ro','MarkerFaceColor','r','MarkerSize',2);
+                plot(nfRightErroLick(1,:),nfRightErroLick(2,:),'go','MarkerFaceColor','g','MarkerSize',2);
+            end
             set(gca,'xtick',AlignXtick,'xticklabel',AlignxtickLabel);
             set(gca,'FontSize',12);
         end
-        if nFreq == 1
-            ylabel('Error Trials','Color','b');
-%             set(gca,'FontSize',16);
+        if IsPlot
+            if nFreq == 1 && IsPlot
+                ylabel('Error Trials','Color','b');
+    %             set(gca,'FontSize',16);
+            end
         end
-        
         CorrectMean = mean(CorrTrData);
         ErroMean = mean(ErroData);
         MisData = cFreqData(cFreqOut == 2,:);
         if ~isempty(MisData)
             MissMean = mean(MisData);
-            AxMiss1 = subplot(6,NumFreq,nFreq+NumFreq*4);
-            hold on
-            imagesc(MisData,clim);
-            line([AlignedFrame AlignedFrame],[0.5 size(MisData,1)+0.5],'Color',[.7 .7 .7],'LineWidth',2);
-            line([SoundOffFrame SoundOffFrame],[0.5 size(CorrTrData,1)+0.5],'Color',[.7 .7 .7],'LineWidth',2,'linestyle','--');
-            set(gca,'yDir','reverse','ylim',[0.5 size(MisData,1)+0.5],'xlim',[0 size(MisData,2)]);
-            
-%             ylabel('Miss Trials');
-            set(gca,'xtick',[]);
-            set(gca,'FontSize',12);
-            
-            if nFreq == 1
-                ylabel('Miss Trials');
+            if IsPlot
+                AxMiss1 = subplot(6,NumFreq,nFreq+NumFreq*4);
+                hold on
+                imagesc(MisData,clim);
+                line([AlignedFrame AlignedFrame],[0.5 size(MisData,1)+0.5],'Color',[.7 .7 .7],'LineWidth',2);
+                line([SoundOffFrame SoundOffFrame],[0.5 size(CorrTrData,1)+0.5],'Color',[.7 .7 .7],'LineWidth',2,'linestyle','--');
+                set(gca,'yDir','reverse','ylim',[0.5 size(MisData,1)+0.5],'xlim',[0 size(MisData,2)]);
+
+    %             ylabel('Miss Trials');
+                set(gca,'xtick',[]);
                 set(gca,'FontSize',12);
+
+                if nFreq == 1
+                    ylabel('Miss Trials');
+                    set(gca,'FontSize',12);
+                end
+
+                AxMean = subplot(6,NumFreq,nFreq+NumFreq*5);
+                hold on
+                plot(CorrectMean,'r','linewidth',1);
             end
-            
-            AxMean = subplot(6,NumFreq,nFreq+NumFreq*5);
-            hold on
-            plot(CorrectMean,'r','linewidth',1);
             ROIMeanTraceData{nROI,nFreq,1} = CorrectMean;
             if length(ErroData) == numel(ErroData) % only have single trial for certain condition
-                plot(ErroData,'b','linewidth',1);
+                if IsPlot
+                    plot(ErroData,'b','linewidth',1);
+                end
                 ROIMeanTraceData{nROI,nFreq,2} = ErroData;
             else
-                plot(ErroMean,'b','linewidth',1);
+                if IsPlot
+                    plot(ErroMean,'b','linewidth',1);
+                end
                 ROIMeanTraceData{nROI,nFreq,2} = ErroMean;
             end
             if numel(MisData) == length(MisData)
-                plot(MisData,'k','linewidth',1);
+                if IsPlot
+                    plot(MisData,'k','linewidth',1);
+                end
                 ROIMeanTraceData{nROI,nFreq,3} = MisData;
             else
-                plot(MissMean,'k','linewidth',1);
+                if IsPlot
+                    plot(MissMean,'k','linewidth',1);
+                end
                 ROIMeanTraceData{nROI,nFreq,3} = MissMean;
             end
-            yscales = get(gca,'ylim');
-%             line([AlignedFrame AlignedFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2);
-%             line([SoundOffFrame SoundOffFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2,'linestyle','--');
-            set(gca,'xtick',AlignXtick,'xticklabel',AlignxtickLabel,'xlim',[0 size(CorrTrData,2)],'ylim',yscales);
-            set(gca,'FontSize',14);
-            xlabel('Time (s)');
-            if nFreq == 1
-                ylabel('Mean \DeltaF/F_0(%)');
-%                 set(gca,'FontSize',16);
+            if IsPlot
+                yscales = get(gca,'ylim');
+    %             line([AlignedFrame AlignedFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2);
+    %             line([SoundOffFrame SoundOffFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2,'linestyle','--');
+                set(gca,'xtick',AlignXtick,'xticklabel',AlignxtickLabel,'xlim',[0 size(CorrTrData,2)],'ylim',yscales);
+                set(gca,'FontSize',14);
+                xlabel('Time (s)');
+                if nFreq == 1
+                    ylabel('Mean \DeltaF/F_0(%)');
+    %                 set(gca,'FontSize',16);
+                end
             end
 %             if nFreq == NumFreq
 %                 cAxisPos = get(AxMiss2,'position');
@@ -332,56 +363,68 @@ for nROI = 1 : ROInum
 %                 legend('boxoff','Location','northeastoutside','FontSize',4);
 %             end    
         else
-            AxMean = subplot(6,NumFreq,nFreq+NumFreq*5);  % hold at the last subplot
-            hold on
-            plot(CorrectMean,'r','linewidth',1);
+            if IsPlot
+                AxMean = subplot(6,NumFreq,nFreq+NumFreq*5);  % hold at the last subplot
+                hold on
+                plot(CorrectMean,'r','linewidth',1);
+            end
             ROIMeanTraceData{nROI,nFreq,1} = CorrectMean;
             if length(ErroData) == numel(ErroData) % only have single trial for certain condition
-                plot(ErroData,'b','linewidth',1);
+               if IsPlot
+                    plot(ErroData,'b','linewidth',1);
+               end
                 ROIMeanTraceData{nROI,nFreq,2} = ErroData;
             else
-                plot(ErroMean,'b','linewidth',1);
+                if IsPlot
+                    plot(ErroMean,'b','linewidth',1);
+                end
                 ROIMeanTraceData{nROI,nFreq,2} = ErroMean;
             end
-            yscales = get(gca,'ylim');
-%             line([AlignedFrame AlignedFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2);
-%             line([SoundOffFrame SoundOffFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2,'linestyle','--');
-            set(gca,'xtick',AlignXtick,'xticklabel',AlignxtickLabel,'xlim',[0 size(CorrTrData,2)],'ylim',yscales);
-            set(gca,'FontSize',12);
-            xlabel('Time (s)');
-            if nFreq == 1
-                ylabel({'Mean \DeltaF/F_0(%)'});
+            if IsPlot
+                yscales = get(gca,'ylim');
+    %             line([AlignedFrame AlignedFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2);
+    %             line([SoundOffFrame SoundOffFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2,'linestyle','--');
+                set(gca,'xtick',AlignXtick,'xticklabel',AlignxtickLabel,'xlim',[0 size(CorrTrData,2)],'ylim',yscales);
+                set(gca,'FontSize',12);
+                xlabel('Time (s)');
+                if nFreq == 1
+                    ylabel({'Mean \DeltaF/F_0(%)'});
+                end
             end
 %             if nFreq == NumFreq
 %                 cAxisPos = get(AxMiss2,'position');
 %                 legend('Corr','Erro','Miss');
 %             end    
         end
-        MeanPlotAxes = [MeanPlotAxes,AxMean];
-        MeanyScales(nFreq,:) = get(AxMean,'ylim');
+        if IsPlot
+            MeanPlotAxes = [MeanPlotAxes,AxMean];
+            MeanyScales(nFreq,:) = get(AxMean,'ylim');
+        end
     end
-    ComYScale = [min(MeanyScales(:,1)),max(MeanyScales(:,2))];
-    if ComYScale(1) < -20
-        ComYScale(1) = -20;
+    if IsPlot
+        ComYScale = [min(MeanyScales(:,1)),max(MeanyScales(:,2))];
+        if ComYScale(1) < -20
+            ComYScale(1) = -20;
+        end
+        for cF = 1 : NumFreq
+           set(MeanPlotAxes(cF),'ylim',ComYScale);
+           line(MeanPlotAxes(cF),[AlignedFrame AlignedFrame],ComYScale,'Color',[.7 .7 .7],'LineWidth',1.2);
+           line(MeanPlotAxes(cF),[SoundOffFrame SoundOffFrame],ComYScale,'Color',[.7 .7 .7],'LineWidth',1.2,'linestyle','--');
+        end
+        if ~IsROIstatePlot
+            annotation('textbox',[0.49,0.685,0.3,0.3],'String',['ROI' num2str(nROI)],'FitBoxToText','on','EdgeColor',...
+                       'none','FontSize',20);
+        else
+            ColorStr = {'r','g','m'};
+            cROIstate = logical(ROIstate(nROI,:));
+            annotation('textbox',[0.49,0.685,0.3,0.3],'String',['ROI' num2str(nROI)],'FitBoxToText','on','EdgeColor',...
+                       'none','FontSize',20,'Color',ColorStr{cROIstate});
+        end
+               %
+        saveas(hROI,sprintf('ROI%d all behavType color plot',nROI));
+        saveas(hROI,sprintf('ROI%d all behavType color plot',nROI),'png');
+        close(hROI);
     end
-    for cF = 1 : NumFreq
-       set(MeanPlotAxes(cF),'ylim',ComYScale);
-       line(MeanPlotAxes(cF),[AlignedFrame AlignedFrame],ComYScale,'Color',[.7 .7 .7],'LineWidth',1.2);
-       line(MeanPlotAxes(cF),[SoundOffFrame SoundOffFrame],ComYScale,'Color',[.7 .7 .7],'LineWidth',1.2,'linestyle','--');
-    end
-    if ~IsROIstatePlot
-        annotation('textbox',[0.49,0.685,0.3,0.3],'String',['ROI' num2str(nROI)],'FitBoxToText','on','EdgeColor',...
-                   'none','FontSize',20);
-    else
-        ColorStr = {'r','g','m'};
-        cROIstate = logical(ROIstate(nROI,:));
-        annotation('textbox',[0.49,0.685,0.3,0.3],'String',['ROI' num2str(nROI)],'FitBoxToText','on','EdgeColor',...
-                   'none','FontSize',20,'Color',ColorStr{cROIstate});
-    end
-           %
-    saveas(hROI,sprintf('ROI%d all behavType color plot',nROI));
-    saveas(hROI,sprintf('ROI%d all behavType color plot',nROI),'png');
-    close(hROI);
 end
 
 save PlotRelatedData.mat FreqTypeEventF AnsFIndsSort SessionDesp AlignLickStrc AlignedFrame SoundOffFrame Frate ROIMeanTraceData -v7.3

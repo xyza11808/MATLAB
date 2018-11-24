@@ -49,7 +49,7 @@ end
 TraceSpikeData = zeros(size(SessionTraceData));
 TraceEstimatedTrace = zeros(size(SessionTraceData));
 ROIFitCoefs = cell(nROIs,1);
-for cROI = 1 : nROIs
+parfor cROI = 1 : nROIs
     %%
     cROISessTrace = SessionTraceData(cROI,:)/100;
     cROISessTraceNM = cROISessTrace - min(cROISessTrace);

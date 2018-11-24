@@ -22,7 +22,7 @@ function varargout = SameNeuron_acrossSess_check(varargin)
 
 % Edit the above text to modify the response to help SameNeuron_acrossSess_check
 
-% Last Modified by GUIDE v2.5 02-Nov-2018 12:45:05
+% Last Modified by GUIDE v2.5 25-Nov-2018 00:52:49
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -65,6 +65,7 @@ GUIdataSummary.SessMorphPath = {'';'';'';''}; % ROI morph path for each session
 GUIdataSummary.SessColorPlotPath = {'';'';'';''}; % ROI colorplot path for each session
 GUIdataSummary.SessBehavPlotPath = {'';'';'';''}; % ROI behav path for each session
 GUIdataSummary.OpenedFig = [];
+GUIdataSummary.IsROIChecked = {[];[];[];[]}; % ROI check index for each session, whether ROI is used or not
 % Update handles structure
 guidata(hObject, handles);
 
@@ -133,6 +134,7 @@ TunCurvePath = fullfile(InputString,'Tunning_fun_plot_New1s','ROI* Tunning curve
 NumFiles = dir(TunCurvePath);
 set(handles.(sprintf('Sess%d_totalROI_tag',SessIndex)),'String',num2str(length(NumFiles)));
 GUIdataSummary.TotalROINum(SessIndex) = length(NumFiles);
+GUIdataSummary.IsROIChecked{SessIndex} = ones(length(NumFiles),1);
 GUIdataSummary.(sprintf('Sess%dPath',SessIndex)) = fullfile(InputString,'Tunning_fun_plot_New1s');
 [~,EndInds] = regexp(InputString,'result_save');
 ROIposfilePath = InputString(1:EndInds);
@@ -215,6 +217,7 @@ SyncROIplot_updates(hObject, eventdata, handles);
 function SyncROIplot_updates(hObject, eventdata, handles)
 global GUIdataSummary
 ComROIs = GUIdataSummary.ROINum;
+IsROICheckUpdates = 0;
 for USess = 1 : 4
     if GUIdataSummary.TotalROINum(USess)
         set(handles.(sprintf('Sess%dROIEdit_tag',USess)),'BackgroundColor','white');
@@ -228,6 +231,11 @@ for USess = 1 : 4
             continue;
         end
         eval(sprintf('Sess%dLoad_tag_Callback(hObject, eventdata, handles);',USess));
+        if ComROIs <= GUIdataSummary.TotalROINum(USess) && ~IsROICheckUpdates
+            cROICheckValue = GUIdataSummary.IsROIChecked{USess}(ComROIs);
+            set(handles.ROICheck_box,'Value',cROICheckValue);
+            IsROICheckUpdates = 1;
+        end
     end
 end
         
@@ -596,3 +604,46 @@ function ROINumMinus_KeyPressFcn(hObject, eventdata, handles)
 %	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
 % handles    structure with handles and user data (see GUIDATA)
 figure1_KeyPressFcn(hObject, eventdata, handles);
+
+
+% --- Executes on button press in ROICheck_box.
+function ROICheck_box_Callback(hObject, eventdata, handles)
+% hObject    handle to ROICheck_box (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global GUIdataSummary
+cState = get(hObject,'Value');
+cROINum = GUIdataSummary.ROINum;
+if cState
+    if sum(GUIdataSummary.TotalROINum)
+        for cSess = 1 : 4
+            if GUIdataSummary.TotalROINum(cSess) > 10  &&  cROINum >= GUIdataSummary.TotalROINum(cSess)% should be at least 10 ROIs
+                GUIdataSummary.IsROIChecked{cSess}(cROINum) = 1;
+            end
+        end
+    end
+else
+    if sum(GUIdataSummary.TotalROINum)
+        for cSess = 1 : 4
+            if GUIdataSummary.TotalROINum(cSess) > 10  &&  cROINum >= GUIdataSummary.TotalROINum(cSess)% should be at least 10 ROIs
+                GUIdataSummary.IsROIChecked{cSess}(cROINum) = 0;
+            end
+        end
+    end
+end
+% Hint: get(hObject,'Value') returns toggle state of ROICheck_box
+
+
+% --- Executes on button press in SaveCHeckIndex_tag.
+function SaveCHeckIndex_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to SaveCHeckIndex_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global GUIdataSummary
+for css = 1 : 4
+    if ~isempty(GUIdataSummary.(sprintf('Sess%dPath',css)))
+        SavePath = fullfile(GUIdataSummary.(sprintf('Sess%dPath',css)),'SelectROIIndex,mat');
+        ROIIndex = GUIdataSummary.IsROIChecked{css};
+        save(SavePath,'ROIIndex','-v7.3');
+    end
+end

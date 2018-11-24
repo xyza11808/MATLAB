@@ -37,9 +37,9 @@ IsTargetIMExist = cellfun(@(x) exist(fullfile(x,'TargetImage.mat'),'file'),nameS
 UsedDataPath = nameSplit(IsTargetIMExist > 0);
 DirLength = length(UsedDataPath);
 %%
-TargetUpPath = 'G:\batch\';
+TargetUpPath = 'F:\batch\';
 for cs = 1 : DirLength
-    tline = UsedDataPath{cs};
+    tline = NewUsedPath{cs};
     %
     cd(tline);
     clearvars im_reg_target dir_imreg_src
@@ -48,7 +48,7 @@ for cs = 1 : DirLength
     [StInds,EdInds] = regexp(tline,'batch58');
     TagPath = [TargetUpPath,tline(StInds:end)];
 %     NewStr = strrep(dir_imreg_src,'0520','0420');
-%     dir_imreg_src = NewStr;
+%     dir_imreg_src = NewStr;-
 %     save TargetImage.mat im_reg_target dir_imreg_src -v7.3
 %     tline = fgetl(fid);
     % clc
