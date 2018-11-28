@@ -6,8 +6,30 @@
 % figure;plot(ROI1Trace)
 % f_percent_change = f_percent_change;
 %%
-nnspike = Fluo2SpikeConstrainOOpsi(SelectData,[],[],frame_rate,2);
-save EstimatedSPDataAR2.mat nnspike SelectData SelectSArray frame_rate -v7.3
+% if exist('EstimatedSPDataAR2.mat','file')  && exist('ROIglmCoefSave.mat','file')
+%     return;
+% end
+% nnspike = Fluo2SpikeConstrainOOpsi(SelectData,[],[],frame_rate,2);
+% save EstimatedSPDataAR2.mat nnspike SelectData SelectSArray frame_rate -v7.3
+load('EstimatedSPDataAR2.mat','nnspike');
+% SP data plots for preview
+% FreqTypes = unique(SelectSArray);
+% nFreqs = numel(FreqTypes);
+% cfMeanData = zeros(nFreqs,size(nnspike,2),size(nnspike,3));
+% for cf = 1 : nFreqs
+%     cfInds = SelectSArray == FreqTypes(cf);
+%     cfData = nnspike(cfInds,:,:);
+%     MeancfData = squeeze(mean(cfData));
+%     cfMeanData(cf,:,:) = MeancfData;
+% end
+% 
+% 
+% %%
+% cROI = 84;
+% cRData = squeeze(cfMeanData(:,cROI,:));
+% figure;
+% imagesc(cRData)
+
 %%
 % close
 % cROI = 196;
@@ -109,21 +131,40 @@ end
 %%
 % Extract Coef Data
 ROIAboveThresSummary = cell(nROIs,2);
+PassBFInds = zeros(nROIs,1); % zeros indicates no significant tuning
 for cr = 1 : nROIs
     %
     crCoef = ROICoefData{cr};
     crCoefMtx = cell2mat(crCoef(:,1));
     
     AvgCoefData = mean(abs(crCoefMtx));
-    crCoefAboveThres = double(mean(abs(crCoefMtx) > 0.1) >= 1);
-    crAboveThresIndex = find(crCoefAboveThres);
-    [AboveThresIndsCoefAvg,AboveThresIndsSortSeq] = sort(AvgCoefData(crAboveThresIndex),'descend');
-    AboveThresIndsSort = crAboveThresIndex(AboveThresIndsSortSeq);
+    crCoefAboveThres = double(mean(abs(crCoefMtx) > 0.5) >= 0.5);
+    AvgCoefInds = mean(crCoefMtx);
+    NegRespInds = AvgCoefInds < 0; % exclude negtive response value, which may just caused by no response
+    crCoefAboveThres(NegRespInds) = 0;
     
-    ROIAboveThresSummary{cr,1} = AboveThresIndsSort;
-    ROIAboveThresSummary{cr,2} = AboveThresIndsCoefAvg;
+    if sum(crCoefAboveThres)
+        TempCoefs = AvgCoefInds;
+        TempCoefs(~crCoefAboveThres) = 0;
+
+        TempCoefIndex = zeros(2,nFreqs);
+        TempCoefIndex(1,1:end) = TempCoefs(1:nFreqs);
+        TempCoefIndex(2,1:end) = TempCoefs(1+nFreqs:end);
+        TempCoefIndex = max(TempCoefIndex);
+        [~,BFCoefIndex] = max(TempCoefIndex);
+        PassBFInds(cr) = BFCoefIndex;
+
+        crAboveThresIndex = find(crCoefAboveThres);
+        [AboveThresIndsCoefAvg,AboveThresIndsSortSeq] = sort(AvgCoefData(crAboveThresIndex),'descend');
+        AboveThresIndsSort = crAboveThresIndex(AboveThresIndsSortSeq);
+    
+        ROIAboveThresSummary{cr,1} = AboveThresIndsSort;
+        ROIAboveThresSummary{cr,2} = AboveThresIndsCoefAvg;
+    end
+    
+    %
    %
 end
-
-save ROIglmCoefSave.mat ROIAboveThresSummary FreqTypes -v7.3
+%%
+save ROIglmCoefSave.mat ROIAboveThresSummary FreqTypes PassBFInds -v7.3
 

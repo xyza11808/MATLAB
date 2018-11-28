@@ -145,24 +145,25 @@ end
 % clear
 % clc
 % 
-% if ismac
-%     GrandPath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
-%     xpath = genpath(GrandPath);
-%     nameSplit = (strsplit(xpath,':'))';
-% elseif ispc
-%     GrandPath = 'F:\batch\batch49';
-%     xpath = genpath(GrandPath);
-%     nameSplit = (strsplit(xpath,';'))';
-% end
-% if isempty(nameSplit{end})
-%     nameSplit(end) = [];
-% end
-% DirLength = length(nameSplit);
-% 
-% PossibleInds = cellfun(@(x) length(dir(fullfile(x,'*.tif'))) > 20,nameSplit);
-% PossDataPath = nameSplit(PossibleInds);
-% AllAlignedPInds = cellfun(@(x) strcmpi(x(end-14:end),'im_data_reg_cpu'),PossDataPath);
+if ismac
+    GrandPath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
+    xpath = genpath(GrandPath);
+    nameSplit = (strsplit(xpath,':'))';
+elseif ispc
+    GrandPath = 'K:\batch38';
+    xpath = genpath(GrandPath);
+    nameSplit = (strsplit(xpath,';'))';
+end
+if isempty(nameSplit{end})
+    nameSplit(end) = [];
+end
+DirLength = length(nameSplit);
+
+PossibleInds = cellfun(@(x) length(dir(fullfile(x,'*.tif'))) > 20,nameSplit);
+PossDataPath = nameSplit(PossibleInds);
+AllAlignedPInds = cellfun(@(x) strcmpi(x(end-14:end),'im_data_reg_cpu'),PossDataPath);
+PosRawTifWithAlignPath = cellfun(@(x) x(1:end-15),PossDataPath(AllAlignedPInds),'UniformOutput',false);
 % RawTifDataPath = PossDataPath(~AllAlignedPInds);
-% 
-% %
-% cellfun(@(x) delete(fullfile(x,'*.tif')),RawTifDataPath);
+
+%%
+cellfun(@(x) delete(fullfile(x,'*.tif')),PosRawTifWithAlignPath);

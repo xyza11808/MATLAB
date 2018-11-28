@@ -22,7 +22,7 @@ function varargout = SameNeuron_acrossSess_check(varargin)
 
 % Edit the above text to modify the response to help SameNeuron_acrossSess_check
 
-% Last Modified by GUIDE v2.5 25-Nov-2018 00:52:49
+% Last Modified by GUIDE v2.5 25-Nov-2018 18:19:45
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -113,7 +113,8 @@ if exist(cRBehavPath,'file')
     axes(handles.(sprintf('Sess%dBehav_tag',SessIndex)));
     imshow(cBehavid);
 end
-    
+cROIindex = GUIdataSummary.IsROIChecked{SessIndex}(CommonROIs);
+set(handles.(sprintf('ROICheck%d_box',SessIndex)),'Value',cROIindex);
 
 
 function SessPathEdit_Fun(hObject, eventdata, handles, SessIndex)
@@ -134,7 +135,14 @@ TunCurvePath = fullfile(InputString,'Tunning_fun_plot_New1s','ROI* Tunning curve
 NumFiles = dir(TunCurvePath);
 set(handles.(sprintf('Sess%d_totalROI_tag',SessIndex)),'String',num2str(length(NumFiles)));
 GUIdataSummary.TotalROINum(SessIndex) = length(NumFiles);
-GUIdataSummary.IsROIChecked{SessIndex} = ones(length(NumFiles),1);
+PosROICheckDataPath = fullfile(InputString,'Tunning_fun_plot_New1s','SelectROIIndex.mat');
+if exist(PosROICheckDataPath,'file')
+    cSessIndex = load(PosROICheckDataPath);
+    GUIdataSummary.IsROIChecked{SessIndex} = cSessIndex.ROIIndex;
+else
+    GUIdataSummary.IsROIChecked{SessIndex} = ones(length(NumFiles),1);
+end
+set(handles.(sprintf('Sess%dPathEdit_tag',SessIndex)),'Value',1);
 GUIdataSummary.(sprintf('Sess%dPath',SessIndex)) = fullfile(InputString,'Tunning_fun_plot_New1s');
 [~,EndInds] = regexp(InputString,'result_save');
 ROIposfilePath = InputString(1:EndInds);
@@ -217,7 +225,7 @@ SyncROIplot_updates(hObject, eventdata, handles);
 function SyncROIplot_updates(hObject, eventdata, handles)
 global GUIdataSummary
 ComROIs = GUIdataSummary.ROINum;
-IsROICheckUpdates = 0;
+% IsROICheckUpdates = 0;
 for USess = 1 : 4
     if GUIdataSummary.TotalROINum(USess)
         set(handles.(sprintf('Sess%dROIEdit_tag',USess)),'BackgroundColor','white');
@@ -231,10 +239,10 @@ for USess = 1 : 4
             continue;
         end
         eval(sprintf('Sess%dLoad_tag_Callback(hObject, eventdata, handles);',USess));
-        if ComROIs <= GUIdataSummary.TotalROINum(USess) && ~IsROICheckUpdates
+        if ComROIs <= GUIdataSummary.TotalROINum(USess)
             cROICheckValue = GUIdataSummary.IsROIChecked{USess}(ComROIs);
-            set(handles.ROICheck_box,'Value',cROICheckValue);
-            IsROICheckUpdates = 1;
+            set(handles.(sprintf('ROICheck%d_box',USess)),'Value',cROICheckValue);
+%             IsROICheckUpdates = 1;
         end
     end
 end
@@ -606,33 +614,50 @@ function ROINumMinus_KeyPressFcn(hObject, eventdata, handles)
 figure1_KeyPressFcn(hObject, eventdata, handles);
 
 
-% --- Executes on button press in ROICheck_box.
-function ROICheck_box_Callback(hObject, eventdata, handles)
-% hObject    handle to ROICheck_box (see GCBO)
+% --- Executes on button press in ROICheck4_box.
+function ROICheck4_box_Callback(hObject, eventdata, handles)
+% hObject    handle to ROICheck4_box (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global GUIdataSummary
+% global GUIdataSummary
 cState = get(hObject,'Value');
+% cROINum = GUIdataSummary.ROINum;
+% if cState
+%     if sum(GUIdataSummary.TotalROINum)
+%         for cSess = 1 : 4
+%             if GUIdataSummary.TotalROINum(cSess) > 10  &&  cROINum <= GUIdataSummary.TotalROINum(cSess)% should be at least 10 ROIs
+%                 GUIdataSummary.IsROIChecked{cSess}(cROINum) = 1;
+%             end
+%         end
+%     end
+% else
+%     if sum(GUIdataSummary.TotalROINum)
+%         for cSess = 1 : 4
+%             if GUIdataSummary.TotalROINum(cSess) > 10  &&  cROINum <= GUIdataSummary.TotalROINum(cSess)% should be at least 10 ROIs
+%                 GUIdataSummary.IsROIChecked{cSess}(cROINum) = 0;
+%             end
+%         end
+%     end
+% end
+ROIIsCheckFun(cState,4);
+% Hint: get(hObject,'Value') returns toggle state of ROICheck4_box
+
+function ROIIsCheckFun(cROIState,SessIndex)
+global GUIdataSummary
 cROINum = GUIdataSummary.ROINum;
-if cState
-    if sum(GUIdataSummary.TotalROINum)
-        for cSess = 1 : 4
-            if GUIdataSummary.TotalROINum(cSess) > 10  &&  cROINum >= GUIdataSummary.TotalROINum(cSess)% should be at least 10 ROIs
-                GUIdataSummary.IsROIChecked{cSess}(cROINum) = 1;
-            end
+if cROIState
+    if GUIdataSummary.TotalROINum(SessIndex) > 10
+        if cROINum <= GUIdataSummary.TotalROINum(SessIndex)
+            GUIdataSummary.IsROIChecked{SessIndex}(cROINum) = 1;
         end
     end
 else
-    if sum(GUIdataSummary.TotalROINum)
-        for cSess = 1 : 4
-            if GUIdataSummary.TotalROINum(cSess) > 10  &&  cROINum >= GUIdataSummary.TotalROINum(cSess)% should be at least 10 ROIs
-                GUIdataSummary.IsROIChecked{cSess}(cROINum) = 0;
-            end
+    if GUIdataSummary.TotalROINum(SessIndex) > 10
+        if cROINum <= GUIdataSummary.TotalROINum(SessIndex)
+            GUIdataSummary.IsROIChecked{SessIndex}(cROINum) = 0;
         end
     end
 end
-% Hint: get(hObject,'Value') returns toggle state of ROICheck_box
-
 
 % --- Executes on button press in SaveCHeckIndex_tag.
 function SaveCHeckIndex_tag_Callback(hObject, eventdata, handles)
@@ -642,8 +667,39 @@ function SaveCHeckIndex_tag_Callback(hObject, eventdata, handles)
 global GUIdataSummary
 for css = 1 : 4
     if ~isempty(GUIdataSummary.(sprintf('Sess%dPath',css)))
-        SavePath = fullfile(GUIdataSummary.(sprintf('Sess%dPath',css)),'SelectROIIndex,mat');
+        SavePath = fullfile(GUIdataSummary.(sprintf('Sess%dPath',css)),'SelectROIIndex.mat');
         ROIIndex = GUIdataSummary.IsROIChecked{css};
         save(SavePath,'ROIIndex','-v7.3');
     end
 end
+fprintf('ROI index have been saved.\n');
+
+% --- Executes on button press in ROICheck3_box.
+function ROICheck3_box_Callback(hObject, eventdata, handles)
+% hObject    handle to ROICheck3_box (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+cState = get(hObject,'Value');
+ROIIsCheckFun(cState,3);
+% Hint: get(hObject,'Value') returns toggle state of ROICheck3_box
+
+
+% --- Executes on button press in ROICheck2_box.
+function ROICheck2_box_Callback(hObject, eventdata, handles)
+% hObject    handle to ROICheck2_box (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+cState = get(hObject,'Value');
+ROIIsCheckFun(cState,2);
+% Hint: get(hObject,'Value') returns toggle state of ROICheck2_box
+
+
+% --- Executes on button press in ROICheck1_box.
+function ROICheck1_box_Callback(hObject, eventdata, handles)
+% hObject    handle to ROICheck1_box (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+cState = get(hObject,'Value');
+ROIIsCheckFun(cState,1);
+
+% Hint: get(hObject,'Value') returns toggle state of ROICheck1_box

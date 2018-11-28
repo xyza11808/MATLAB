@@ -1,12 +1,11 @@
-clear
-clc
+cclr
 
 if ismac
     GrandPath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,':'))';
 elseif ispc
-    GrandPath = 'S:\BatchData\batch55';
+    GrandPath = 'S:\BatchData\batch58';
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,';'))';
 end
@@ -119,10 +118,10 @@ end
 
 %%
 % batched ROI morph plot
-nSessPath = length(NormSessPathTask); % NormSessPathTask  NormSessPathPass
+nSessPath = length(NormSessPathPass); % NormSessPathTask  NormSessPathPass
 for cSess = 1 : nSessPath
     %
-    cSessPath = NormSessPathTask{cSess};
+    cSessPath = NormSessPathPass{cSess};
 %     [~,EndInds] = regexp(cSessPath,'result_save');
 %     tline = cSessPath(1:EndInds);
     %
@@ -392,7 +391,7 @@ ErroSessInds = [];
 m = 1;
 
 nSess = length(NormSessPathTask);
-for cSS = 1 : nSess
+for cSS = nSess : -1 : 1
     %
     tline = NormSessPathTask{cSS};
 %     if isempty(strfind(tline,'NO_Correction\mode_f_change'))
@@ -406,7 +405,7 @@ for cSS = 1 : nSess
         try
             SpikeDataPath = [tline,'\Tunning_fun_plot_New1s'];
             cd(SpikeDataPath);
-            load('TunningDataSave.mat');
+            load('TunningSTDDataSave.mat');
 
             nROIs = size(CorrTunningFun,2);
             if ~isdir('./Curve fitting plotsNew/')
@@ -835,7 +834,7 @@ for cSess = 1 : cSessions
     clearvars -except cSessions NormSessPathTask CusMap cSess
     tline = NormSessPathTask{cSess};
     % passive tuning frequency colormap plot
-    load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
+    load(fullfile(tline,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'));
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));
     [~,EndInds] = regexp(tline,'result_save');
     ROIposfilePath = tline(1:EndInds);
@@ -1351,7 +1350,7 @@ end
 
 %% gray map plots
 % irresponsive ROIs were coded using gray color
-clearvars -except NormSessPathTask
+clearvars -except NormSessPathTask NormSessPathPass
 CusMap = blue2red_2(32,0.8);
 cSessions = length(NormSessPathTask);
 for css = 1 : cSessions
@@ -1991,7 +1990,7 @@ for cSess = 1 : nSess
 end
 
 %% batched spike data analysis for task sessions
-clearvars -except NormSessPathTask
+clearvars -except NormSessPathTask NormSessPathPass
 
 %
 nSess = length(NormSessPathTask);
@@ -2018,7 +2017,7 @@ for css = 2 : nSess-1
     end
 end
 %% batched spike data analysis for passive sessions
-clearvars -except NormSessPathPass
+clearvars -except NormSessPathPass NormSessPathTask
 
 %
 nSess = length(NormSessPathPass);
@@ -2039,7 +2038,7 @@ for css = 1 : nSess
     end
 end
 %% batched stim onset alignment plots
-clearvars -except NormSessPathTask
+clearvars -except NormSessPathTask NormSessPathPass
 
 %
 nSess = length(NormSessPathTask);
@@ -2060,7 +2059,7 @@ for css = 1 : nSess
 end
 
 %% extract and save tuning ROI index
-clearvars -except NormSessPathTask
+clearvars -except NormSessPathTask NormSessPathPass
 % 30   53  14 for S55 sessions
 %
 nSess = length(NormSessPathTask);
@@ -2069,26 +2068,240 @@ for css = 1 : nSess
     
     cSessPath = NormSessPathTask{css};
     cd(cSessPath);
+    %
+    cSessPath = pwd;
     try
-        
-        clearvars ROIAboveThresInds ROIRespTypeCoef ROIRespType
+        clearvars -except NormSessPathTask NormSessPathPass nSess ErroSess css cSessPath
+%         clearvars ROIAboveThresInds ROIRespTypeCoef ROIRespType
         if exist('SPDataBehavCoefSaveOff.mat','file')
             load('SPDataBehavCoefSaveOff.mat');
         else
             clearvars behavResults nnspike DataRaw
-            load('EstimateSPsaveNewAR2.mat');
+            load('EstimateSPsaveNewMth.mat');
             TrSummarization_WithStimOff_script;
         end
+%         clearvars ROIRespType ROIRespTypeCoef
+        clearvars -except NormSessPathTask NormSessPathPass nSess ErroSess css cSessPath
+        load('SPDataBehavCoefSaveOff.mat');
         if exist('CoefSummarySave.mat','file')
             load('CoefSummarySave.mat');
+            
         else
+            
             PredCoef_summary_script
         end
     
-    
         ExtractROI_Inds_script
+        
     catch
         ErroSess = [ErroSess,css];
         sprintf('Error at session %d.\n',css);
     end
+    %
 end
+
+%% combine task and passive data together
+clearvars -except NormSessPathTask NormSessPathPass
+
+nSession = length(NormSessPathTask);
+
+for css = 1 : nSession
+    cTaskPath = NormSessPathTask{css};
+    cPassPath = NormSessPathPass{css};
+    cd(cTaskPath);
+    try
+        clearvars TaskCoefDataStrc PassCoefDataStrc
+%
+        TaskCoefPath = fullfile(cTaskPath,'SigSelectiveROIInds.mat');
+        TaskCoefDataStrc = load(TaskCoefPath);
+        PassCoefPath = fullfile(cPassPath,'ROIglmCoefSave.mat');
+        PassCoefDataStrc = load(PassCoefPath);
+        PassBFFileData = PassCoefDataStrc.PassBFInds;
+        PassBFIndex = find(PassBFFileData);
+        nFreqs = numel(PassCoefDataStrc.FreqTypes);
+        
+        % plot the task and passive BF together
+        TaskBFPath = fullfile(cTaskPath,'Tuning BF distribution plots.fig');
+        ff = openfig(TaskBFPath);
+        hold on
+        [Count,edges] = histcounts(PassBFFileData(PassBFIndex),0.5:nFreqs+0.5);
+        plot(1:nFreqs,Count,'k-o','linewidth',1.6);
+        saveas(ff,'Task passive Tuning distribution plots');
+        saveas(ff,'Task passive Tuning distribution plots','png');
+        close(ff);
+        
+        PassRespROIInds = cellfun(@(x) ~isempty(x),PassCoefDataStrc.ROIAboveThresSummary(:,1));
+        PassRespROIIndex = find(PassRespROIInds);
+        % check is extra passive tuning ROI exists in task Tuning ROIs
+        nTotalROIs = size(PassCoefDataStrc.ROIAboveThresSummary,1);
+        BlankPassCoefInds  = zeros(nTotalROIs,nFreqs);
+
+        cPassROINum = length(PassRespROIIndex);
+        IsPassInTask = true(cPassROINum,1);
+        for cPassr = 1 : cPassROINum
+            IsPassInTask(cPassr) = (any(TaskCoefDataStrc.SigROIInds == PassRespROIIndex(cPassr)));
+
+            cROISigCoefIndex = PassCoefDataStrc.ROIAboveThresSummary{PassRespROIIndex(cPassr),1};
+            cROISigCoefAll = PassCoefDataStrc.ROIAboveThresSummary{PassRespROIIndex(cPassr),2};
+            if max(cROISigCoefIndex) > nFreqs && min(cROISigCoefIndex) <= nFreqs
+                % check if StimOff response exists
+                TempBlankInds = zeros(nFreqs,2);
+                OffInds = cROISigCoefIndex > nFreqs;
+                OnCoefIndex = cROISigCoefIndex(~OffInds);
+                OnCoefValues = cROISigCoefAll(~OffInds);
+                TempBlankInds(OnCoefIndex,1) = OnCoefValues;
+
+                OffCoefIndex = cROISigCoefIndex(OffInds) - nFreqs;
+                OffCoefValues = cROISigCoefAll(OffInds);
+                TempBlankInds(OffCoefIndex,2) = OffCoefValues;
+                RespCoefValues = max(TempBlankInds,[],2);
+            elseif any(cROISigCoefIndex <= nFreqs)
+                % only Stim on resp exists
+                RespCoefValues = zeros(nFreqs,1);
+                RespCoefValues(cROISigCoefIndex) = cROISigCoefAll;
+            elseif any(cROISigCoefIndex > nFreqs)
+                % only stim off resps
+                RespCoefValues = zeros(nFreqs,1);
+                RespCoefValues(cROISigCoefIndex - nFreqs) = cROISigCoefAll;
+            end
+            BlankPassCoefInds(PassRespROIIndex(cPassr),:) = RespCoefValues;
+
+        end
+
+        % sort the task Resp data
+        [~,maxInds] = max(TaskCoefDataStrc.SigROICoefMtx,[],2);
+        [~,SortInds] = sort(maxInds);
+        TaskSortCoefs = TaskCoefDataStrc.SigROICoefMtx(SortInds,:);
+        if mean(IsPassInTask) ~= 1
+            ExtraPassTunROIs = PassRespROIIndex(~IsPassInTask);
+            TaskAllCoefs = [TaskSortCoefs;zeros(numel(ExtraPassTunROIs),nFreqs)];
+            ROIIndsAll = [TaskCoefDataStrc.SigROIInds(SortInds);ExtraPassTunROIs];
+
+            PassAllCoefs = BlankPassCoefInds(ROIIndsAll,:); 
+        else
+            TaskAllCoefs = TaskSortCoefs;
+            ROIIndsAll = TaskCoefDataStrc.SigROIInds(SortInds);
+            PassAllCoefs = BlankPassCoefInds(ROIIndsAll,:);
+        end
+        %
+        hSumf = figure('position',[100 100 900 540]);
+        subplot(221)
+        imagesc(TaskAllCoefs,[0 2])
+        line([0.5 nFreqs+0.5],[0.5 0.5]+size(TaskSortCoefs,1),'Color','r','linewidth',2);
+        set(gca,'xtick',1:nFreqs,'xticklabel',cellstr(num2str(PassCoefDataStrc.FreqTypes(:)/1000,'%.1f')),...
+            'ytick',1:numel(ROIIndsAll),'yticklabel',ROIIndsAll);
+        ylabel('# ROIs');
+        title('Task')
+
+        subplot(222)
+        imagesc(PassAllCoefs,[0 2])
+        line([0.5 nFreqs+0.5],[0.5 0.5]+size(TaskSortCoefs,1),'Color','r','linewidth',2);
+        set(gca,'xtick',1:nFreqs,'xticklabel',cellstr(num2str(PassCoefDataStrc.FreqTypes(:)/1000,'%.1f')),...
+            'ytick',1:numel(ROIIndsAll),'yticklabel',ROIIndsAll);
+        ylabel('# ROIs');
+        title('Passive')
+
+        % Plot LAns Passive ROI resp
+        LeftAnsROIIndex = TaskCoefDataStrc.LAnsROIInds;
+        if ~isempty(LeftAnsROIIndex)
+            PassLAnsCoef = BlankPassCoefInds(LeftAnsROIIndex,:);
+            subplot(223)
+            imagesc(PassLAnsCoef,[0 2])
+            set(gca,'xtick',1:nFreqs,'xticklabel',cellstr(num2str(PassCoefDataStrc.FreqTypes(:)/1000,'%.1f')),...
+                'ytick',1:numel(LeftAnsROIIndex),'yticklabel',LeftAnsROIIndex);
+            ylabel('# ROIs');
+            title('LeftAns PassCoef')
+        end
+
+        % Plot RAns Passive ROI resp
+        RightAnsROIIndex = TaskCoefDataStrc.RAnsROIInds;
+        if ~isempty(RightAnsROIIndex)
+            PassRAnsCoef = BlankPassCoefInds(RightAnsROIIndex,:);
+            subplot(224)
+            imagesc(PassRAnsCoef,[0 2])
+            set(gca,'xtick',1:nFreqs,'xticklabel',cellstr(num2str(PassCoefDataStrc.FreqTypes(:)/1000,'%.1f')),...
+                'ytick',1:numel(RightAnsROIIndex),'yticklabel',RightAnsROIIndex);
+            ylabel('# ROIs');
+            title('RightAns PassCoef')
+        end
+%
+        saveas(hSumf,'Task Passive Coef Summary','png');
+        saveas(hSumf,'Task Passive Coef Summary');
+        close(hSumf);
+    catch
+        fprintf('Error for session %d.\n',css);
+    end
+end
+
+%% summerizing former results
+
+clearvars -except NormSessPathTask NormSessPathPass
+m = 1;
+nSession = length(NormSessPathTask);
+
+for cSess = 1 : nSession
+    tline = NormSessPathTask{cSess};
+    IsErrorExist = 0;
+    %
+    if m == 1
+        %
+        %                 PPTname = input('Please input the name for current PPT file:\n','s');
+        PPTname = 'Task_passive_TunCoef_summary';
+        if isempty(strfind(PPTname,'.ppt'))
+            PPTname = [PPTname,'.pptx'];
+        end
+        %                 pptSavePath = uigetdir(pwd,'Please select the path used for ppt file savege');
+        if ismac
+            pptSavePath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
+        elseif ispc
+            pptSavePath = 'S:\BatchData\batch58';
+        end
+        %
+    end
+    %
+    Anminfo = SessInfoExtraction(tline);
+    cTunPlotPath = fullfile(tline,'Task Passive Coef Summary.png');
+   
+    BehavDataPath = fullfile(tline,'RandP_data_plots','Behav_fit plot.png');
+    
+    nROIfiles = dir(fullfile(tline,'All BehavType Colorplot','ROI* all behavType color plot.png'));
+    
+    TunDisPlotPath = fullfile(tline,'Task passive Tuning distribution plots.png');
+
+    pptFullfile = fullfile(pptSavePath,PPTname);
+    if ~exist(pptFullfile,'file')
+        NewFileExport = 1;
+    else
+        NewFileExport = 0;
+    end
+    if  m == 1
+        if NewFileExport
+            exportToPPTX('new','Dimensions',[16,9],'Author','XinYu','Comments','Export of tunning curve plot data');
+        else
+            exportToPPTX('open',pptFullfile);
+        end
+    end
+    %
+    exportToPPTX('addslide');
+    exportToPPTX('addnote',tline);
+    
+    exportToPPTX('addtext',sprintf('nROIs = %d',length(nROIfiles)),'Position',[2 0 2 1],'FontSize',20);
+
+    exportToPPTX('addpicture',imread(cTunPlotPath),'Position',[0 1 8 4.8]);
+    exportToPPTX('addpicture',imread(BehavDataPath),'Position',[9 1 4.5 3.82]);
+    
+    exportToPPTX('addpicture',imread(TunDisPlotPath),'Position',[9 5 5.34 4]);
+
+%     exportToPPTX('addtext','Task','Position',[9 1 1 1],'FontSize',20);
+%     exportToPPTX('addtext','Pass','Position',[14 1 1 1],'FontSize',20);
+
+    exportToPPTX('addtext',sprintf('Batch:%s Anm:%s \nDate:%s Field:%s\n',...
+        Anminfo.BatchNum,Anminfo.AnimalNum,Anminfo.SessionDate,Anminfo.TestNum),...
+        'Position',[2 7 4 1],'FontSize',20);
+%     if IsErrorExist
+%         fprintf('Session %d do not have enough plots.\n',cSess);
+%     end
+    m = m + 1;
+    
+end
+saveName = exportToPPTX('saveandclose',pptFullfile);

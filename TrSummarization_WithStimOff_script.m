@@ -86,7 +86,9 @@ end
 % close
 AllROIData = cell(nROIs,1);
 for cROI = 1 : nROIs
-    %% cROI = 42;
+    %
+%     cROI = 27;
+    close
     cROIData = squeeze(TrEventsRespData(:,cROI,:));
     % figure('position',[200 100 800 320])
     % subplot(121)
@@ -126,8 +128,10 @@ for cROI = 1 : nROIs
         
         RespData = cROIData(:,[1,2,4]);
     end
-
-    %%
+    figure;
+    imagesc(RespData)
+    
+    %
     options = glmnetSet;
     options.alpha = 0.9;
     options.nlambda = 110;
@@ -156,7 +160,7 @@ for cROI = 1 : nROIs
             BehavParaMtx = DataFitMtx(BehavParaInds,:);
             TestBehavParaMtx = DataFitMtx(~BehavParaInds,:);
             %
-            if ~sum(TrainRespDataMtx)
+%             if ~sum(TrainRespDataMtx)
                 cvmdfit = cvglmnet(BehavParaMtx,TrainRespDataMtx,'poisson',options,[],20);
                 CoefUseds = cvglmnetCoef(cvmdfit,'lambda_1se');
 
@@ -176,14 +180,14 @@ for cROI = 1 : nROIs
                 CoefExplainBlank = zeros(numel(CoefAbsAll),1);
                 CoefExplainBlank(SortInds) = DevExplained;
                 FoldCoefs{cf,3} = CoefExplainBlank;
-            else
-                CoefUseds = zeros(size(BehavParaMtx,2)+1,1);
-                FoldCoefs{cf,1} = CoefUseds(2:end);
-                FoldDev(cf) = 0;
-                PredTestData = zeros(size(TestRespData));
-                FoldCoefs{cf,2} = CoefUseds;
-                FoldCoefs{cf,3} = CoefUseds;
-            end
+%             else
+%                 CoefUseds = zeros(size(BehavParaMtx,2)+1,1);
+%                 FoldCoefs{cf,1} = CoefUseds(2:end);
+%                 FoldDev(cf) = 0;
+%                 PredTestData = zeros(size(TestRespData));
+%                 FoldCoefs{cf,2} = CoefUseds;
+%                 FoldCoefs{cf,3} = CoefUseds;
+%             end
             FoldTestPred{cf,1} = PredTestData;
             FoldTestPred{cf,2} = TestRespData;
             
@@ -210,6 +214,7 @@ CoefValueThres = 0.5;
 RepeatFracThres = 0.5;
 ROIAboveThresInds = cell(nROIs,4);
 for cROI = 1 : nROIs
+    %
     cROIdata = AllROIData{cROI};
     cROICoefdata = cellfun(@(x) (cell2mat((x(:,1))'))',cROIdata(:,1),'uniformOutput',false);
     cROICoef_AllRepeats = cell2mat(cROICoefdata);
@@ -218,7 +223,7 @@ for cROI = 1 : nROIs
     
     CoefAboveThresMeanFrac = mean(double(abs(cROICoef_AllRepeats) > CoefValueThres));
     CoefAboveThresInds = CoefAboveThresMeanFrac >= RepeatFracThres;
-    
+    %
     ROIAboveThresInds{cROI,1} = CoefAboveThresInds;
     ROIAboveThresInds{cROI,2} = [mean(cROIDev(:)),std(cROIDev(:)),numel(cROIDev)];
     ROIAboveThresInds{cROI,3} = CoefAboveThresMeanFrac;
