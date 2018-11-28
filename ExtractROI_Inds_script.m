@@ -61,8 +61,44 @@ if ~isempty(LAnsROIInds)
             crStimCoef = SigROICoefMtx(crStimCoefInds,:);
             ExCludeInds = crStimCoef >= LAnsCoef;
             if sum(ExCludeInds(1:nFreqs/2)) % if any stim coef is larger than answer coef
-                
-    
+                ExcludeCoefInds = [~ExCludeInds(1:nFreqs/2),false(1,nFreqs/2)];
+                SigROICoefMtx(crStimCoefInds,ExcludeCoefInds) = 0;
+            else
+                SigROICoefMtx(crStimCoefInds,1:nFreqs/2) = 0;
+            end
+        end
+    end
+end
+    % prepare the right condition
+if ~isempty(RAnsROIInds)
+    for ccr = 1 : length(RAnsROIInds)
+        cRAnsRInds = RAnsROIInds(ccr);
+        RAnsCoef = ROIRespTypeCoef{cRAnsRInds,3};
+        if any(SigROIInds(:) == cRAnsRInds)
+            crStimROIinds = SigROIInds(:) == cRAnsRInds;
+            crStimCoef = SigROICoefMtx(crStimROIinds,:);
+            SavedCoefInds = crStimCoef >= RAnsCoef
+            if sum(SavedCoefInds((1+nFreqs/2):end))
+                ExcludeCoefInds = [false(1,nFreqs/2),SavedCoefInds((1+nFreqs/2):end)];
+                SigROICoefMtx(crStimCoefInds,ExcludeCoefInds) = 0;
+            else
+                SigROICoefMtx(crStimCoefInds,(1+nFreqs/2):end) = 0;
+            end
+        end
+    end
+end
+nStimSigROIs = length(SigROIInds);
+StimExcludeInds = zeros(nStimSigROIs,1);
+for cr = 1 : nStimSigROIs
+    if sum(SigROICoefMtx(cr,:)) < 0.01
+        StimExcludeInds(cr) = 1;
+    end
+end
+%vExclude false stim response
+SigROIInds = SigROIInds(~StimExcludeInds);
+SigROICoefMtx = SigROICoefMtx(~StimExcludeInds,:);
+
+        
 save SigSelectiveROIInds.mat SigROIInds LAnsROIInds RAnsROIInds SigROICoefMtx -v7.3
 %%
 
