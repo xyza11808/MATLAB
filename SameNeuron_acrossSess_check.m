@@ -126,7 +126,7 @@ end
 if ~isdir(InputString)
     fprintf('Current Input is not a valid folder,quit function.\n');
     return;
-elseif isempty(strfind(InputString,'result_save\plot_save'))
+elseif isempty(strfind(InputString,'plot_save'))
     fprintf('Current Input is not a valid 2p data path,quit function.\n');
     return;
 end

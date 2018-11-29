@@ -118,10 +118,10 @@ end
 
 %%
 % batched ROI morph plot
-nSessPath = length(NormSessPathPass); % NormSessPathTask  NormSessPathPass
-for cSess = 1 : nSessPath
+nSessPath = length(NormSessPathTask); % NormSessPathTask  NormSessPathPass
+for cSess = nSessPath : -1 : 1
     %
-    cSessPath = NormSessPathPass{cSess};
+    cSessPath = NormSessPathTask{cSess};
 %     [~,EndInds] = regexp(cSessPath,'result_save');
 %     tline = cSessPath(1:EndInds);
     %

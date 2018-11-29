@@ -39,23 +39,13 @@ for cR = 1 : cSigROIs
     SigROICoefMtx(cR,:) = MergedCoef;
 end
 SigROIInds = find(OnOrOffROIinds);
-[~,maxInds] = max(SigROICoefMtx,[],2);
-[~,sortSeq] = sort(maxInds);
-hhhf = figure;
-imagesc(SigROICoefMtx(sortSeq,:),[0 2]);
-xlabel('Freqs');
-set(gca,'ytick',1:cSigROIs,'yticklabel',SigROIInds(sortSeq));
-title('SP pred ROI Tun Coef');
-saveas(hhhf,'SPPred ROITun Coef Plots');
-saveas(hhhf,'SPPred ROITun Coef Plots','png');
-close(hhhf);
 
 LAnsROIInds = find(ROIRespType(:,2));
 RAnsROIInds = find(ROIRespType(:,3));
 if ~isempty(LAnsROIInds)
     for cr = 1 : length(LAnsROIInds)
         cLAnsRInds = LAnsROIInds(cr);
-        LAnsCoef = ROIRespTypeCoef{cLAnsRInds,2};
+        LAnsCoef = ROIRespTypeCoef{cLAnsRInds,2}(1,2);
         if any(SigROIInds(:) == cLAnsRInds)
             crStimCoefInds = SigROIInds(:) == cLAnsRInds;
             crStimCoef = SigROICoefMtx(crStimCoefInds,:);
@@ -73,16 +63,16 @@ end
 if ~isempty(RAnsROIInds)
     for ccr = 1 : length(RAnsROIInds)
         cRAnsRInds = RAnsROIInds(ccr);
-        RAnsCoef = ROIRespTypeCoef{cRAnsRInds,3};
+        RAnsCoef = ROIRespTypeCoef{cRAnsRInds,3}(1,2);
         if any(SigROIInds(:) == cRAnsRInds)
             crStimROIinds = SigROIInds(:) == cRAnsRInds;
             crStimCoef = SigROICoefMtx(crStimROIinds,:);
-            SavedCoefInds = crStimCoef >= RAnsCoef
+            SavedCoefInds = crStimCoef >= RAnsCoef;
             if sum(SavedCoefInds((1+nFreqs/2):end))
                 ExcludeCoefInds = [false(1,nFreqs/2),SavedCoefInds((1+nFreqs/2):end)];
-                SigROICoefMtx(crStimCoefInds,ExcludeCoefInds) = 0;
+                SigROICoefMtx(crStimROIinds,ExcludeCoefInds) = 0;
             else
-                SigROICoefMtx(crStimCoefInds,(1+nFreqs/2):end) = 0;
+                SigROICoefMtx(crStimROIinds,(1+nFreqs/2):end) = 0;
             end
         end
     end
@@ -97,8 +87,20 @@ end
 %vExclude false stim response
 SigROIInds = SigROIInds(~StimExcludeInds);
 SigROICoefMtx = SigROICoefMtx(~StimExcludeInds,:);
+ %% 
+[~,maxInds] = max(SigROICoefMtx,[],2);
+[~,sortSeq] = sort(maxInds);
+hhhf = figure;
+imagesc(SigROICoefMtx(sortSeq,:),[0 2]);
+xlabel('Freqs');
+set(gca,'ytick',1:cSigROIs,'yticklabel',SigROIInds(sortSeq));
+title('SP pred ROI Tun Coef');
+%%
+saveas(hhhf,'SPPred ROITun Coef Plots');
+saveas(hhhf,'SPPred ROITun Coef Plots','png');
+close(hhhf);
 
-        
+      
 save SigSelectiveROIInds.mat SigROIInds LAnsROIInds RAnsROIInds SigROICoefMtx -v7.3
 %%
 

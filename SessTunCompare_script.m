@@ -64,11 +64,12 @@ end
 %%
 cclr
 %%
-load('SessCompDataSave.mat', 'SessPaths')
-% SessPaths = {'S:\BatchData\batch58\20181101\anm01\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
-%     'S:\BatchData\batch58\20181102\anm01\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
-%     'S:\BatchData\batch58\20181103\anm01\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
-%     'S:\BatchData\batch58\20181104\anm01\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'};
+% load('SessCompDataSave.mat', 'SessPaths')
+SessPaths = {'S:\BatchData\batch58\20181101\anm03\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
+    'S:\BatchData\batch58\20181102\anm03\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
+    'S:\BatchData\batch58\20181103\anm03\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...%};%,...
+    'S:\BatchData\batch58\20181104\anm03\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
+    'S:\BatchData\batch58\20181106\anm03\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'};
 nSess = length(SessPaths);
 SessDataAll = cell(nSess,1);
 SessROIIndexAll = cell(nSess,1);
@@ -85,7 +86,7 @@ for cSess = 1 : nSess
     
     SessROINum(cSess) = size(cSessDatas.TaskZSALLTunData,2);
 end
-
+  
 ComparedROINum = min(SessROINum);
 CompROIIndexCell = cell2mat((cellfun(@(x) x(1:ComparedROINum),SessROIIndexAll,'UniformOutput',false))');
 UsedROIindex = sum(CompROIIndexCell,2) == nSess;
@@ -153,7 +154,7 @@ end
 
 PassZslim = [0 1.5];
 hPassf = figure('position',[80 120 1750 950]);
-hSPCoef = figure('position',[80 120 1750 340]);
+hSPCoef = figure('position',[80 120 1750 600]);
 for UsedSortInds = 1 : nSess
     [~,MaxZSDataInds] = max(NewSessPassData{UsedSortInds});
     [~,SortSeq] = sort(MaxZSDataInds);
@@ -181,9 +182,15 @@ for UsedSortInds = 1 : nSess
     SourcePath = fullfile(SessPaths{UsedSortInds},'SPPred ROITun Coef Plots.png');
     cfid = imread(SourcePath);
     figure(hSPCoef);
-    subplot(1,nSess,UsedSortInds)
+    subplot(2,nSess,UsedSortInds)
     imshow(cfid);
     title(sprintf('Sess %d',UsedSortInds));
+    
+    ccfid = imread(fullfile(SessPaths{UsedSortInds},'RandP_data_plots','Behav_fit plot.png'));
+    subplot(2,nSess,UsedSortInds+nSess)
+    imshow(ccfid);
+%     title(sprintf('Sess %d',UsedSortInds));
+    
 %     TargPath = fullfile(SavePath,sprintf('SPPred ROITun Coef Plots Sess%d.png',UsedSortInds));
 %     copyfile(SourcePath,TargPath);
 end
@@ -198,3 +205,134 @@ saveas(hSPCoef,'SP coef Plot Summary');
 saveas(hSPCoef,'SP coef Plot Summary','png');
 close(hSPCoef);
  
+%% exploring the temporal trace for each session using common ROIs
+TempSessTaskDataAll = cell(nSess,2);
+TempSessPassDataAll = cell(nSess,2);
+
+for cSess = 1 : nSess
+    %%
+    cSessTaskPath = fullfile(SessPaths{cSess},'CSessionData.mat');
+    cSessTaskDataStrc = load(cSessTaskPath,'data_aligned','start_frame','frame_rate','behavResults');
+    NMTrInds = cSessTaskDataStrc.behavResults.Action_choice ~= 2;
+    NMdataChoices = double(cSessTaskDataStrc.behavResults.Action_choice(NMTrInds));
+    NMDatas = cSessTaskDataStrc.data_aligned(NMTrInds,UsedROIindex,:);
+    NMdataTrTypes = double(cSessTaskDataStrc.behavResults.Trial_Type(NMTrInds));
+    FreqTypesAll = unique(double(cSessTaskDataStrc.behavResults.Stim_toneFreq(NMTrInds)));
+    StartFrame = cSessTaskDataStrc.start_frame;
+    TAskFRate = cSessTaskDataStrc.frame_rate;
+    
+    % Avg all NM trials together
+    NMAllTrAvgs = squeeze(mean(NMDatas));
+    NMAllTrZsDatas = (nanzscore(NMAllTrAvgs'))';
+    NANEndInds = find(isnan(NMAllTrZsDatas(1,:)),1,'first');
+    NMAllTrZsDatasUsed = NMAllTrZsDatas(:,1:NANEndInds-1);
+    
+    % Avg NM trials using correct left and correct right trials
+    NMCorrLInds = (NMdataTrTypes(:) == 0 & NMdataTrTypes(:) == NMdataChoices(:));
+    NMCorrRInds = (NMdataTrTypes(:) == 1 & NMdataTrTypes(:) == NMdataChoices(:));
+    NMCorrLAllTrAvgs = squeeze(mean(NMDatas(NMCorrLInds,:,:)));
+    NMCorrLZsDatas = (nanzscore(NMCorrLAllTrAvgs'))';
+    NANEndInds_L = find(isnan(NMCorrLZsDatas(1,:)),1,'first');
+    NMCorrLZsDatasUsed = NMCorrLZsDatas(:,1:NANEndInds_L-1); 
+    
+    NMCorrRAllTrAvgs = squeeze(mean(NMDatas(NMCorrRInds,:,:)));
+    NMCorrRZsDatas = (nanzscore(NMCorrRAllTrAvgs'))';
+    NANEndInds_R = find(isnan(NMCorrRZsDatas(1,:)),1,'first');
+    NMCorrRZsDatasUsed = NMCorrRZsDatas(:,1:NANEndInds_R-1); 
+    
+    % extract passive datas
+    [StartInds,EndInds] = regexp(SessPaths{cSess},'test\d{2,3}');
+    cPassDataUpperPath = fullfile(sprintf('%srf',SessPaths{cSess}(1:EndInds)),'im_data_reg_cpu','result_save');
+    cSessPassDataPath = fullfile(cPassDataUpperPath,'plot_save','NO_Correction','rfSelectDataSet.mat');
+    cSessPassDataStrc = load(cSessPassDataPath,'SelectData','SelectSArray','frame_rate');
+    
+    % Avg all Passive trials
+    PassDatas = cSessPassDataStrc.SelectData(:,UsedROIindex,:);
+    PassAllTrAvgDatas = squeeze(mean(PassDatas));
+    PassAllTrZsDatas = zscore(PassAllTrAvgDatas,0,2);
+    
+    % Avg according to defined Left and right trials
+    PassAllTrFreqs = cSessPassDataStrc.SelectSArray;
+    DefaultBound = min(FreqTypesAll) * 2;
+    PassLInds = PassAllTrFreqs < DefaultBound;
+    PassLDatas = squeeze(mean(PassDatas(PassLInds,:,:)));
+    PassLZsData = zscore(PassLDatas,0,2);
+    
+    
+    PassRDatas = squeeze(mean(PassDatas(~PassLInds,:,:)));
+    PassRZsData = zscore(PassRDatas,0,2);
+    SortDescription = {'Sorted by All Trials';'Sorted by CorrL Trials';'Sorted by CorrR Trials'};
+    for cSort = 1 : 3
+        switch cSort
+            case 1
+                [~,MaxInds] = max(NMAllTrZsDatasUsed,[],2);
+                [~,TaskAllSortInds] = sort(MaxInds);
+            case 2
+                [~,MaxInds] = max(NMCorrLZsDatasUsed,[],2);
+                [~,TaskAllSortInds] = sort(MaxInds);
+            case 3
+                [~,MaxInds] = max(NMCorrRZsDatasUsed,[],2);
+                [~,TaskAllSortInds] = sort(MaxInds);
+            otherwise
+                fprintf('No defined sorting method.\n');
+        end
+                
+        hhhhf = figure('position',[30 70 680 1000]);
+
+        % All Trial Avg plots
+        subplot(321)
+        imagesc(NMAllTrZsDatasUsed(TaskAllSortInds,:),[-0.5 2]);
+        colormap hot
+        line([StartFrame StartFrame],[0.5,size(NMAllTrZsDatasUsed,1)+0.5],'Color','c','linewidth',2);
+        xTicksUsed = 0:TAskFRate:size(NMAllTrZsDatasUsed,2);
+        set(gca,'xtick',xTicksUsed,'xticklabel',xTicksUsed/TAskFRate);
+        title('Task All Trials')
+
+        subplot(322)
+        imagesc(PassAllTrZsDatas(TaskAllSortInds,:),[-0.5 2]);
+        colormap hot
+        line([cSessPassDataStrc.frame_rate cSessPassDataStrc.frame_rate],[0.5,size(PassAllTrZsDatas,1)+ 0.5],'Color','c','linewidth',2);
+        xTicksUsed = 0:TAskFRate:size(PassAllTrZsDatas,2);
+        set(gca,'xtick',xTicksUsed,'xticklabel',xTicksUsed/TAskFRate);
+        title('Pass All Trials')
+
+        subplot(323)
+        imagesc(NMCorrLZsDatasUsed(TaskAllSortInds,:),[-0.5 2]);
+        colormap hot
+        line([StartFrame StartFrame],[0.5,size(NMCorrLZsDatasUsed,1)+0.5],'Color','c','linewidth',2);
+        xTicksUsed = 0:TAskFRate:size(NMCorrLZsDatasUsed,2);
+        set(gca,'xtick',xTicksUsed,'xticklabel',xTicksUsed/TAskFRate);
+        title('Task Corr Left')
+
+        subplot(324)
+        imagesc(PassLZsData(TaskAllSortInds,:),[-0.5 2]);
+        colormap hot
+        line([cSessPassDataStrc.frame_rate cSessPassDataStrc.frame_rate],[0.5,size(PassLZsData,1)+ 0.5],'Color','c','linewidth',2);
+        xTicksUsed = 0:TAskFRate:size(PassLZsData,2);
+        set(gca,'xtick',xTicksUsed,'xticklabel',xTicksUsed/TAskFRate);
+        title('Pass Left Trials')
+
+        subplot(325)
+        imagesc(NMCorrRZsDatasUsed(TaskAllSortInds,:),[-0.5 2]);
+        colormap hot
+        line([StartFrame StartFrame],[0.5,size(NMCorrRZsDatasUsed,1)+0.5],'Color','c','linewidth',2);
+        xTicksUsed = 0:TAskFRate:size(NMCorrRZsDatasUsed,2);
+        set(gca,'xtick',xTicksUsed,'xticklabel',xTicksUsed/TAskFRate);
+        title('Task Corr Left')
+
+        subplot(326)
+        imagesc(PassRZsData(TaskAllSortInds,:),[-0.5 2]);
+        colormap hot
+        line([cSessPassDataStrc.frame_rate cSessPassDataStrc.frame_rate],[0.5,size(PassRZsData,1)+ 0.5],'Color','c','linewidth',2);
+        xTicksUsed = 0:TAskFRate:size(PassRZsData,2);
+        set(gca,'xtick',xTicksUsed,'xticklabel',xTicksUsed/TAskFRate);
+        title('Pass Left Trials')
+
+        annotation('textbox',[0.38,0.685,0.3,0.3],'String',SortDescription{cSort},'FitBoxToText','on','EdgeColor',...
+                       'none','FontSize',20,'Color','m');
+        saveas(hhhhf,fullfile(SessPaths{cSess},sprintf('TracePlots %s',SortDescription{cSort})));
+        saveas(hhhhf,fullfile(SessPaths{cSess},sprintf('TracePlots %s',SortDescription{cSort})),'png');
+        close(hhhhf);
+    end
+    %%
+end

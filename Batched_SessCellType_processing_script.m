@@ -24,7 +24,7 @@ while ischar(tline)
     m = m + 1;
 end
 %%
-clearvars -except NormSessPathTask
+clearvars -except NormSessPathTask NormSessPathPass
 nSessPath = length(NormSessPathTask); % NormSessPathTask  NormSessPathPass
 TunDataCellAll = cell(nSessPath,11);
 CategDataCellAll = cell(nSessPath,7);
