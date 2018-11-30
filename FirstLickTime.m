@@ -1,4 +1,4 @@
-function [FLickT,RewardLickT,SelectedTrialInds]=FirstLickTime(LickTimeData,Actionside,TrialResult,OnsetStruct,AnswerTime)
+function [FLickT,RewardLickT,FLickTSide]=FirstLickTime(LickTimeData,Actionside,TrialResult,OnsetStruct,AnswerTime)
 %this function is used for calculate the first lick time after stim onset
 %the unique output is the first lick time for all the non-missing trials.
 %the output variable FLickT contains the first time lick time, with lick

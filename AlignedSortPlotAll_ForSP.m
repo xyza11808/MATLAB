@@ -318,10 +318,10 @@ for nROI = 1 : ROInum
                 plot(MissMean,'k','linewidth',1);
                 ROIMeanTraceData{nROI,nFreq,3} = MissMean;
             end
-            if min(ROIMeanTraceData{nROI,nFreq,2}) < 0 || min(ROIMeanTraceData{nROI,nFreq,3}) < 0
-                fprintf('Negtive data exists.\n');
-                return;
-            end
+%             if min(ROIMeanTraceData{nROI,nFreq,2}) < 0 || min(ROIMeanTraceData{nROI,nFreq,3}) < 0
+%                 fprintf('Negtive data exists.\n');
+%                 return;
+%             end
             yscales = get(gca,'ylim');
 %             line([AlignedFrame AlignedFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2);
 %             line([SoundOffFrame SoundOffFrame],yscales,'Color',[.7 .7 .7],'LineWidth',1.2,'linestyle','--');

@@ -3,7 +3,8 @@
 
 % cSessPath = 'S:\BatchData\batch55\20180906\anm07\test06\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change';
 % cd(cSessPath);
-GlmCoefDataPath = fullfile(cSessPath,'SPDataBehavCoefSaveOff.mat');
+% GlmCoefDataPath = fullfile(cSessPath,'SPDataBehavCoefSaveOff.mat');
+GlmCoefDataPath = fullfile(cSessPath,'SPDataBehavCoefSaveOffFlick.mat');
 GlmCoefDataStrc = load(GlmCoefDataPath);
 
 SoundAlignDataPath = fullfile(cSessPath,'All BehavType Colorplot','PlotRelatedData.mat');
@@ -48,8 +49,9 @@ AnsPeakV = zeros(nROIs,2);
 for cff = 1 : 2
     for cr = 1 : nROIs
         cTrace = squeeze(AnsWinResp(cff,cr,:));
-        [~,MaxInds] = max(abs(cTrace));
-        AnsPeakV(cr,cff) = cTrace(MaxInds);
+%         [~,MaxInds] = max(abs(cTrace));
+%         AnsPeakV(cr,cff) = cTrace(MaxInds);
+        AnsPeakV(cr,cff) = mean(cTrace);
     end
 end
 
@@ -59,7 +61,7 @@ end
 ROICoefAll = cell2mat(GlmCoefDataStrc.ROIAboveThresInds(:,4));
 ROICoefIndsAll = cell2mat(GlmCoefDataStrc.ROIAboveThresInds(:,1));
 
-CoefRespPeakAll = [OnPeakAll,AnsPeakV,OffPeakAll];
+% CoefRespPeakAll = [OnPeakAll,AnsPeakV,OffPeakAll];
 
 NegPeakInds = [OnPeakAll < 10,AnsPeakV < 10,OffPeakAll < 10];
 
@@ -117,5 +119,5 @@ for cROI = 1 : nROIs
         end
     end
 end 
-
+%%
 save CoefSummarySave.mat ROIRespTypeCoef ROIRespType -v7.3

@@ -65,11 +65,11 @@ end
 cclr
 %%
 % load('SessCompDataSave.mat', 'SessPaths')
-SessPaths = {'S:\BatchData\batch58\20181101\anm03\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
-    'S:\BatchData\batch58\20181102\anm03\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
-    'S:\BatchData\batch58\20181103\anm03\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...%};%,...
-    'S:\BatchData\batch58\20181104\anm03\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
-    'S:\BatchData\batch58\20181106\anm03\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'};
+% SessPaths = {'S:\BatchData\batch58\20181101\anm02\test04\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
+%     'S:\BatchData\batch58\20181102\anm02\test04\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
+%     'S:\BatchData\batch58\20181103\anm02\test04\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...%};%,...
+%     'S:\BatchData\batch58\20181104\anm02\test04\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
+%     'S:\BatchData\batch58\20181105\anm02\test04\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'};
 nSess = length(SessPaths);
 SessDataAll = cell(nSess,1);
 SessROIIndexAll = cell(nSess,1);
@@ -206,11 +206,12 @@ saveas(hSPCoef,'SP coef Plot Summary','png');
 close(hSPCoef);
  
 %% exploring the temporal trace for each session using common ROIs
-TempSessTaskDataAll = cell(nSess,2);
-TempSessPassDataAll = cell(nSess,2);
+TempSessTaskDataAll = cell(nSess,5);
+TempSessPassDataAll = cell(nSess,4);
+SessRespTimeAll = cell(nSess,1);
 
 for cSess = 1 : nSess
-    %%
+    %
     cSessTaskPath = fullfile(SessPaths{cSess},'CSessionData.mat');
     cSessTaskDataStrc = load(cSessTaskPath,'data_aligned','start_frame','frame_rate','behavResults');
     NMTrInds = cSessTaskDataStrc.behavResults.Action_choice ~= 2;
@@ -218,14 +219,25 @@ for cSess = 1 : nSess
     NMDatas = cSessTaskDataStrc.data_aligned(NMTrInds,UsedROIindex,:);
     NMdataTrTypes = double(cSessTaskDataStrc.behavResults.Trial_Type(NMTrInds));
     FreqTypesAll = unique(double(cSessTaskDataStrc.behavResults.Stim_toneFreq(NMTrInds)));
+    
+    % extract answer time data to calculate the distribution
+    NMTrOnset = double(cSessTaskDataStrc.behavResults.Setted_TimeOnset(NMTrInds));
+    NMTrAnsTime = double(cSessTaskDataStrc.behavResults.Time_answer(NMTrInds));
+    AnmRespTime = NMTrAnsTime - NMTrOnset;
+    SessRespTimeAll{cSess} = AnmRespTime;
+    
+    
     StartFrame = cSessTaskDataStrc.start_frame;
     TAskFRate = cSessTaskDataStrc.frame_rate;
+    TempSessTaskDataAll{cSess,4} = StartFrame;
+    TempSessTaskDataAll{cSess,5} = TAskFRate;
     
     % Avg all NM trials together
     NMAllTrAvgs = squeeze(mean(NMDatas));
     NMAllTrZsDatas = (nanzscore(NMAllTrAvgs'))';
     NANEndInds = find(isnan(NMAllTrZsDatas(1,:)),1,'first');
     NMAllTrZsDatasUsed = NMAllTrZsDatas(:,1:NANEndInds-1);
+    TempSessTaskDataAll{cSess,1} = NMAllTrZsDatasUsed;
     
     % Avg NM trials using correct left and correct right trials
     NMCorrLInds = (NMdataTrTypes(:) == 0 & NMdataTrTypes(:) == NMdataChoices(:));
@@ -234,11 +246,13 @@ for cSess = 1 : nSess
     NMCorrLZsDatas = (nanzscore(NMCorrLAllTrAvgs'))';
     NANEndInds_L = find(isnan(NMCorrLZsDatas(1,:)),1,'first');
     NMCorrLZsDatasUsed = NMCorrLZsDatas(:,1:NANEndInds_L-1); 
+    TempSessTaskDataAll{cSess,2} = NMCorrLZsDatasUsed;
     
     NMCorrRAllTrAvgs = squeeze(mean(NMDatas(NMCorrRInds,:,:)));
     NMCorrRZsDatas = (nanzscore(NMCorrRAllTrAvgs'))';
     NANEndInds_R = find(isnan(NMCorrRZsDatas(1,:)),1,'first');
     NMCorrRZsDatasUsed = NMCorrRZsDatas(:,1:NANEndInds_R-1); 
+    TempSessTaskDataAll{cSess,2} = NMCorrRZsDatasUsed;
     
     % extract passive datas
     [StartInds,EndInds] = regexp(SessPaths{cSess},'test\d{2,3}');
@@ -250,6 +264,7 @@ for cSess = 1 : nSess
     PassDatas = cSessPassDataStrc.SelectData(:,UsedROIindex,:);
     PassAllTrAvgDatas = squeeze(mean(PassDatas));
     PassAllTrZsDatas = zscore(PassAllTrAvgDatas,0,2);
+    TempSessPassDataAll{cSess,1} = PassAllTrZsDatas;
     
     % Avg according to defined Left and right trials
     PassAllTrFreqs = cSessPassDataStrc.SelectSArray;
@@ -257,10 +272,13 @@ for cSess = 1 : nSess
     PassLInds = PassAllTrFreqs < DefaultBound;
     PassLDatas = squeeze(mean(PassDatas(PassLInds,:,:)));
     PassLZsData = zscore(PassLDatas,0,2);
-    
+    TempSessPassDataAll{cSess,2} = PassLZsData;
     
     PassRDatas = squeeze(mean(PassDatas(~PassLInds,:,:)));
     PassRZsData = zscore(PassRDatas,0,2);
+    TempSessPassDataAll{cSess,3} = PassRZsData;
+    TempSessPassDataAll{cSess,4} = cSessPassDataStrc.frame_rate;
+    
     SortDescription = {'Sorted by All Trials';'Sorted by CorrL Trials';'Sorted by CorrR Trials'};
     for cSort = 1 : 3
         switch cSort
@@ -334,5 +352,88 @@ for cSess = 1 : nSess
         saveas(hhhhf,fullfile(SessPaths{cSess},sprintf('TracePlots %s',SortDescription{cSort})),'png');
         close(hhhhf);
     end
-    %%
+    
 end
+
+% plot the answer time distribution
+CountDatas = cell(nSess,1);
+Colors = cool(nSess);
+handAll = [];
+Strs = cellstr(num2str((1 : nSess)','Sess%d'));
+
+hf = figure('position',[100 100 450 380]);
+hold on
+
+for cscs = 1 : nSess
+    cSessAnsT = SessRespTimeAll{cscs};
+    [Count,Cents] = hist(cSessAnsT,20);
+    
+    CountDatas{cscs} = [Cents;Count/numel(cSessAnsT)];
+    
+    hl = plot(Cents,Count/numel(cSessAnsT),'Color',Colors(cscs,:),'linewidth',2);
+    handAll = [handAll,hl];
+    
+end
+xlims = get(gca,'xlim');
+set(gca,'xlim',[0 xlims(2)]);
+xlabel('AnsTime (ms)');
+ylabel('Frac.');
+title('AnsTime Distribution');
+set(gca,'FontSize',12);
+legend(handAll,Strs,'Box','off','FontSize',8);
+%
+saveas(hf,'AnsTime Distribution plots save');
+saveas(hf,'AnsTime Distribution plots save','png');
+close(hf);
+
+save TempTraceDataSave.mat TempSessTaskDataAll TempSessPassDataAll SessRespTimeAll CountDatas -v7.3
+%% align all trials mean trace using data from differnet sessions
+for css = 1 : nSess
+   %
+    [~,Maxinds] = max(TempSessTaskDataAll{css,1},[],2);
+    [~,SortInds] = sort(Maxinds);
+    
+    if nSess == 4
+        Newf = figure('position',[20 100 1200 600]);
+    elseif nSess == 5
+        Newf = figure('position',[20 100 1600 800]);
+    else
+        Newf = figure('position',[20 100 1400 600]);
+    end
+    
+    for cf = 1 : nSess
+        cfTaskData = TempSessTaskDataAll{cf,1};
+        cfPassData = TempSessPassDataAll{cf,1};
+        
+        subplot(3,nSess,cf)
+        imagesc(cfTaskData(SortInds,:),[-0.5 2]);
+        colormap hot
+        line([1 1]*TempSessTaskDataAll{cf,4},[0.5,size(cfTaskData,1)+0.5],'Color','c','linewidth',2);
+        xTicksUsed = 0:TempSessTaskDataAll{cf,5}:size(cfTaskData,2);
+        set(gca,'xtick',xTicksUsed,'xticklabel',xTicksUsed/TempSessTaskDataAll{cf,5});
+        title(sprintf('Sess%d Task plots',cf));
+        
+        subplot(3,nSess,cf+nSess)
+        imagesc(cfPassData(SortInds,:),[-0.5 2]);
+        colormap hot
+        line([1 1]*TempSessPassDataAll{cf,4},[0.5,size(cfPassData,1)+0.5],'Color','c','linewidth',2);
+        xTicksUsed = 0:TempSessPassDataAll{cf,4}:size(cfPassData,2);
+        set(gca,'xtick',xTicksUsed,'xticklabel',xTicksUsed/TempSessPassDataAll{cf,4});
+        title(sprintf('Sess%d Pass plots',cf));
+        
+        subplot(3,nSess,cf+nSess*2)
+        ccfid = imread(fullfile(SessPaths{cf},'RandP_data_plots','Behav_fit plot.png'));
+        imshow(ccfid);
+        
+        annotation('textbox',[0.47,0.7,0.3,0.3],'String',sprintf('Sorted by sess%d',css),'FitBoxToText','on','EdgeColor',...
+                       'none','FontSize',14,'Color','m');
+    end
+    %
+    saveas(Newf,sprintf('Sorted by sess %d temporal trace plots',css));
+    saveas(Newf,sprintf('Sorted by sess %d temporal trace plots',css),'png');
+    close(Newf);
+    %
+end
+
+
+

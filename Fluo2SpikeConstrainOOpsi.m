@@ -58,7 +58,23 @@ parfor cROI = 1 : nROIs
     lam = choose_lambda(exp(-1/(fr*DecayTime)),GetSn(cROISessTraceNM),lamPr);
     spkmin = spkSNR*GetSn(cROISessTraceNM);
     
-    [cc2, spk2, opts_oasis2] = deconvolveCa(cROISessTraceNM,'ar2','optimize_b',true,'method','foopsi',...
+    [Count,Cent] = hist(cROISessTraceNM,100);
+    [~,MaxInds] = max(Count);
+    fBase = Cent(MaxInds);
+    if (prctile(cROISessTraceNM,99) - fBase) < 1.5  % filtering the trace when signal is low
+        if fr < 35
+            cDes = designfilt('lowpassfir','PassbandFrequency',1,'StopbandFrequency',5,...
+                'StopbandAttenuation', 60,'SampleRate',frame_rate,'DesignMethod','kaiserwin');  %'ZeroPhase',true,
+        else
+            cDes = designfilt('lowpassfir','PassbandFrequency',5,'StopbandFrequency',10,...
+                'StopbandAttenuation', 50,'SampleRate',frame_rate,'DesignMethod','kaiserwin');
+        end
+        NFSignal = filtfilt(cDes,cROISessTraceNM);
+    else
+        NFSignal = cROISessTraceNM;
+    end 
+    
+    [cc2, spk2, opts_oasis2] = deconvolveCa(NFSignal,'ar2','optimize_b',true,'method','foopsi',...
                                     'optimize_pars',true,'maxIter',100,'smin',spkmin,'window',150,'lambda',lam);
     %%
     TraceSpikeData(cROI,:) = spk2;

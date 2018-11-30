@@ -119,7 +119,7 @@ end
 %%
 % batched ROI morph plot
 nSessPath = length(NormSessPathTask); % NormSessPathTask  NormSessPathPass
-for cSess = nSessPath : -1 : 1
+for cSess = 51 : nSessPath
     %
     cSessPath = NormSessPathTask{cSess};
 %     [~,EndInds] = regexp(cSessPath,'result_save');
@@ -129,7 +129,7 @@ for cSess = nSessPath : -1 : 1
     ROIposfilePath = cSessPath(1:EndInds);
     cd(ROIposfilePath);
     if exist('./ROI_morph_plot/MorphDataAll.mat','file')
-        continue;
+%         continue;
     end
     %     if exist(fullfile(ROIposfilePath,'ROI_morph_plot','MorphDataAll.mat'),'file')
     %         tline = fgetl(fid);
@@ -240,6 +240,9 @@ for cSess = nSessPath : -1 : 1
         
         ROISelectData = MaxDelta(yscales(1):yscales(2),xscales(1):xscales(2));
         ROImaxlim = prctile(ROISelectData(:),100)*1.05;
+        if ROImaxlim > 200
+            ROImaxlim = 150;
+        end
         AdjROIpos = cROIpos - repmat([ROIedgeShift_x,ROIedgeShift_y],size(cROIpos,1),1);
         AdjROIcenter = mean(AdjROIpos);
 
@@ -2111,7 +2114,7 @@ for css = 1 : nSession
     cd(cTaskPath);
     try
         clearvars TaskCoefDataStrc PassCoefDataStrc
-%
+%%
         TaskCoefPath = fullfile(cTaskPath,'SigSelectiveROIInds.mat');
         TaskCoefDataStrc = load(TaskCoefPath);
         PassCoefPath = fullfile(cPassPath,'ROIglmCoefSave.mat');
@@ -2132,7 +2135,7 @@ for css = 1 : nSession
         
         PassRespROIInds = cellfun(@(x) ~isempty(x),PassCoefDataStrc.ROIAboveThresSummary(:,1));
         PassRespROIIndex = find(PassRespROIInds);
-        % check is extra passive tuning ROI exists in task Tuning ROIs
+        %% check is extra passive tuning ROI exists in task Tuning ROIs
         nTotalROIs = size(PassCoefDataStrc.ROIAboveThresSummary,1);
         BlankPassCoefInds  = zeros(nTotalROIs,nFreqs);
 
@@ -2246,7 +2249,7 @@ for cSess = 1 : nSession
     if m == 1
         %
         %                 PPTname = input('Please input the name for current PPT file:\n','s');
-        PPTname = 'Task_passive_TunCoef_summary';
+        PPTname = 'Task_passive_TunCoef_summaryAll';
         if isempty(strfind(PPTname,'.ppt'))
             PPTname = [PPTname,'.pptx'];
         end
@@ -2267,6 +2270,10 @@ for cSess = 1 : nSession
     nROIfiles = dir(fullfile(tline,'All BehavType Colorplot','ROI* all behavType color plot.png'));
     
     TunDisPlotPath = fullfile(tline,'Task passive Tuning distribution plots.png');
+    
+    NlnFitTunDataPath = fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plotsNew','NewLog_fit_test_new');
+    TunDataCPfid = imread(fullfile(NlnFitTunDataPath,'Tuning ROIs CommonZs summary plots.png'));
+    CatgDataCPfid = imread(fullfile(NlnFitTunDataPath,'Categ ROIs summary plots.png'));
 
     pptFullfile = fullfile(pptSavePath,PPTname);
     if ~exist(pptFullfile,'file')
@@ -2285,19 +2292,20 @@ for cSess = 1 : nSession
     exportToPPTX('addslide');
     exportToPPTX('addnote',tline);
     
-    exportToPPTX('addtext',sprintf('nROIs = %d',length(nROIfiles)),'Position',[2 0 2 1],'FontSize',20);
+    exportToPPTX('addtext',sprintf('nROIs = %d',length(nROIfiles)),'Position',[0 0 2 1],'FontSize',20);
 
     exportToPPTX('addpicture',imread(cTunPlotPath),'Position',[0 1 8 4.8]);
-    exportToPPTX('addpicture',imread(BehavDataPath),'Position',[9 1 4.5 3.82]);
+    exportToPPTX('addpicture',imread(BehavDataPath),'Position',[0 6 3.53 3]);
     
-    exportToPPTX('addpicture',imread(TunDisPlotPath),'Position',[9 5 5.34 4]);
-
+    exportToPPTX('addpicture',imread(TunDisPlotPath),'Position',[4 6 4 3]);
+    exportToPPTX('addpicture',TunDataCPfid,'Position',[8 1 8 3]);
+    exportToPPTX('addpicture',CatgDataCPfid,'Position',[8 5 8 3]);
 %     exportToPPTX('addtext','Task','Position',[9 1 1 1],'FontSize',20);
 %     exportToPPTX('addtext','Pass','Position',[14 1 1 1],'FontSize',20);
 
     exportToPPTX('addtext',sprintf('Batch:%s Anm:%s \nDate:%s Field:%s\n',...
         Anminfo.BatchNum,Anminfo.AnimalNum,Anminfo.SessionDate,Anminfo.TestNum),...
-        'Position',[2 7 4 1],'FontSize',20);
+        'Position',[2.2 0 4 1],'FontSize',20);
 %     if IsErrorExist
 %         fprintf('Session %d do not have enough plots.\n',cSess);
 %     end

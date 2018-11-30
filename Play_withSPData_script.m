@@ -56,7 +56,7 @@ plot(HiSNRData,'m')
 Datas = load('PlotRelatedDataSP.mat');
 %%
 % close
-cEOI = 27;
+cEOI = 167;
 cROICellData = squeeze(Datas.ROIMeanTraceData(cEOI,:,:));
 hf = figure;
 hold on
