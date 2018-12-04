@@ -49,7 +49,7 @@ end
 TraceSpikeData = zeros(size(SessionTraceData));
 TraceEstimatedTrace = zeros(size(SessionTraceData));
 ROIFitCoefs = cell(nROIs,1);
-parfor cROI = 1 : nROIs
+for cROI = 1 : nROIs
     %%
     cROISessTrace = SessionTraceData(cROI,:)/100;
     cROISessTraceNM = cROISessTrace - min(cROISessTrace);
@@ -64,10 +64,10 @@ parfor cROI = 1 : nROIs
     if (prctile(cROISessTraceNM,99) - fBase) < 1.5  % filtering the trace when signal is low
         if fr < 35
             cDes = designfilt('lowpassfir','PassbandFrequency',1,'StopbandFrequency',5,...
-                'StopbandAttenuation', 60,'SampleRate',frame_rate,'DesignMethod','kaiserwin');  %'ZeroPhase',true,
+                'StopbandAttenuation', 60,'SampleRate',fr,'DesignMethod','kaiserwin');  %'ZeroPhase',true,
         else
             cDes = designfilt('lowpassfir','PassbandFrequency',5,'StopbandFrequency',10,...
-                'StopbandAttenuation', 50,'SampleRate',frame_rate,'DesignMethod','kaiserwin');
+                'StopbandAttenuation', 50,'SampleRate',fr,'DesignMethod','kaiserwin');
         end
         NFSignal = filtfilt(cDes,cROISessTraceNM);
     else

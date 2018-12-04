@@ -7,10 +7,10 @@
 % f_percent_change = f_percent_change;
 %%
 if exist('EstimatedSPDataAR2.mat','file')  && exist('ROIglmCoefSave.mat','file')
-    return;
+%     return;
 end
 nnspike = Fluo2SpikeConstrainOOpsi(SelectData,[],[],frame_rate,2);
-save EstimatedSPDataAR2.mat nnspike SelectData SelectSArray frame_rate -v7.3
+save EstimatedSPDatafilter.mat nnspike SelectData SelectSArray frame_rate -v7.3
 % load('EstimatedSPDataAR2.mat','nnspike');
 % SP data plots for preview
 % FreqTypes = unique(SelectSArray);

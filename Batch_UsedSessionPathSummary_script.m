@@ -5,7 +5,7 @@ if ismac
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,':'))';
 elseif ispc
-    GrandPath = 'S:\BatchData\batch58';
+    GrandPath = 'S:\BatchData\batch55';
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,';'))';
 end
@@ -119,7 +119,7 @@ end
 %%
 % batched ROI morph plot
 nSessPath = length(NormSessPathTask); % NormSessPathTask  NormSessPathPass
-for cSess = 51 : nSessPath
+for cSess = 1 : nSessPath
     %
     cSessPath = NormSessPathTask{cSess};
 %     [~,EndInds] = regexp(cSessPath,'result_save');
@@ -1939,18 +1939,18 @@ for cSess = 1 : nSess
     cSessPath = NormSessPathTask{cSess};
     cd(cSessPath);
     
-    clearvars DataRaw
-    oldSPfile = fullfile(cSessPath,'EstimateSPsave.mat');
-    if ~exist(oldSPfile,'file')
-        fprintf('Session index %d SPfile not exists.\n',cSess);
-    end
-    
-    try
-        load(oldSPfile);
-    catch
-        load(fullfile(cSessPath,'EstimateSPsaveNewMth.mat'));
-    end
-    load(fullfile(cSessPath,'CSessionData.mat'),'DataRaw');
+    clearvars DataRaw frame_rate
+%     oldSPfile = fullfile(cSessPath,'EstimateSPsave.mat');
+%     if ~exist(oldSPfile,'file')
+%         fprintf('Session index %d SPfile not exists.\n',cSess);
+%     end
+%      
+%     try
+%         load(oldSPfile);
+%     catch
+%         load(fullfile(cSessPath,'EstimateSPsaveNewMth.mat'));
+%     end
+    load(fullfile(cSessPath,'CSessionData.mat'),'DataRaw','frame_rate');
     if ~exist('DataRaw','var')
         load(fullfile(cSessPath,'CSessionData.mat'),'data');
         DataRaw = data;
@@ -1989,9 +1989,29 @@ for cSess = 1 : nSess
         SpikeAligned(i,:,:)=UsedSPData(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
     end
     
-    save EstimateSPsaveNewAR2.mat nnspike DataRaw SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
+    save EstimateSPsaveNewFilter.mat nnspike DataRaw SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
 end
+% batched spike data analysis for passive sessions
+clearvars -except NormSessPathPass NormSessPathTask
 
+%
+nSess = length(NormSessPathPass);
+ErroSess = [];
+for css = 1 : nSess
+    
+    csPath = NormSessPathPass{css};
+    cd(csPath);
+    clearvars SelectSArray SelectData
+    
+    load('rfSelectDataSet.mat');
+    
+    try
+        PassSP_Data_script
+    catch
+        ErroSess = [ErroSess,css];
+        fprintf('Error occurs for session %d.\n',css);
+    end
+end
 %% batched spike data analysis for task sessions
 clearvars -except NormSessPathTask NormSessPathPass
 
@@ -2019,27 +2039,7 @@ for css = 2 : nSess-1
         sprintf('Error at session %d.\n',css);
     end
 end
-%% batched spike data analysis for passive sessions
-clearvars -except NormSessPathPass NormSessPathTask
 
-%
-nSess = length(NormSessPathPass);
-ErroSess = [];
-for css = 1 : nSess
-    
-    csPath = NormSessPathPass{css};
-    cd(csPath);
-    clearvars SelectSArray SelectData
-    
-    load('rfSelectDataSet.mat');
-    
-    try
-        PassSP_Data_script
-    catch
-        ErroSess = [ErroSess,css];
-        fprintf('Error occurs for session %d.\n',css);
-    end
-end
 %% batched stim onset alignment plots
 clearvars -except NormSessPathTask NormSessPathPass
 
