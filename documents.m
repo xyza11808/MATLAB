@@ -126,6 +126,11 @@
 % hh = plot(rand(2,5));
 % set(hh,{'LineWidth'},{1,1.2,1.3,1.4,2.5}');
 
+% ######################
+% lillietest
+% returns a test decision for the null hypothesis that the data in vector x comes from a distribution in the normal family, 
+% against the alternative that it does not come from such a distribution, using a Lilliefors test.
+
 %% %%%%% ##################################################################
 %extract data from fig file
   h = gcf; %current figure handle

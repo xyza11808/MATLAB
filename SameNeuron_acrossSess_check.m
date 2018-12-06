@@ -22,7 +22,7 @@ function varargout = SameNeuron_acrossSess_check(varargin)
 
 % Edit the above text to modify the response to help SameNeuron_acrossSess_check
 
-% Last Modified by GUIDE v2.5 25-Nov-2018 18:19:45
+% Last Modified by GUIDE v2.5 04-Dec-2018 15:07:06
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -164,11 +164,32 @@ end
 function SessColorplot_openFun(hObject, eventdata, handles, SessIndex)
 global GUIdataSummary
 cUsedPath = fullfile(GUIdataSummary.SessColorPlotPath{SessIndex});
-cColorPlotid = fullfile(cUsedPath,sprintf('ROI%d all behavType color plot.png',GUIdataSummary.ROINum));
-hf = figure('position',[10 10 1500 900]);
-imshow(cColorPlotid);
+cColorPlotid = fullfile(cUsedPath,sprintf('ROI%d all behavType color plot.fig',GUIdataSummary.ROINum));
+% hf = figure('position',[10 10 1500 900]);
+% imshow(cColorPlotid);
+hf = openfig(cColorPlotid,'visible');
 clc
 GUIdataSummary.OpenedFig = hf;
+
+function SessPassMorph_openFun(hObject, eventdata, handles, SessIndex)
+global GUIdataSummary
+cSessPath = GUIdataSummary.(sprintf('Sess%dPath',SessIndex));
+[~,EndInds] = regexp(cSessPath,'test\d{2,3}');
+cPassDataUpperPath = fullfile(sprintf('%srf',cSessPath(1:EndInds)),'im_data_reg_cpu','result_save','ROI_morph_plot');
+PassSessMorphfile = fullfile(cPassDataUpperPath,sprintf('ROI%d morph plot save.fig',GUIdataSummary.ROINum));
+% PassSessFilePath = fullfile(cPassDataUpperPath,'plot_save','NO_Correction');
+openfig(PassSessMorphfile,'visible');
+clc
+ 
+function SessPassColorPlot_openFun(hObject, eventdata, handles, SessIndex)
+global GUIdataSummary
+cSessPath = GUIdataSummary.(sprintf('Sess%dPath',SessIndex));
+[~,EndInds] = regexp(cSessPath,'test\d{2,3}');
+cPassDataUpperPath = fullfile(sprintf('%srf',cSessPath(1:EndInds)),'im_data_reg_cpu','result_save','plot_save','NO_Correction');
+PassSessMorphfile = fullfile(cPassDataUpperPath,'Uneven_colorPlot',sprintf('ROI%d passive resp plot.fig',GUIdataSummary.ROINum));
+% PassSessFilePath = fullfile(cPassDataUpperPath,'plot_save','NO_Correction');
+openfig(PassSessMorphfile,'visible');
+clc
 
 
 function Sess1PathEdit_tag_Callback(hObject, eventdata, handles)
@@ -672,7 +693,7 @@ for css = 1 : 4
         save(SavePath,'ROIIndex','-v7.3');
     end
 end
-fprintf('ROI index have been saved.\n');
+fprintf('ROI index has been saved.\n');
 
 % --- Executes on button press in ROICheck3_box.
 function ROICheck3_box_Callback(hObject, eventdata, handles)
@@ -703,3 +724,61 @@ cState = get(hObject,'Value');
 ROIIsCheckFun(cState,1);
 
 % Hint: get(hObject,'Value') returns toggle state of ROICheck1_box
+
+
+% --- Executes on button press in PassMorph1_tag.
+function PassMorph1_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to PassMorph1_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+SessPassMorph_openFun(hObject, eventdata, handles, 1);
+
+% --- Executes on button press in PassMorph2_tag.
+function PassMorph2_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to PassMorph2_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+SessPassMorph_openFun(hObject, eventdata, handles, 2);
+
+% --- Executes on button press in PassMorph3_tag.
+function PassMorph3_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to PassMorph3_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+SessPassMorph_openFun(hObject, eventdata, handles, 3);
+
+% --- Executes on button press in PassMorph4_tag.
+function PassMorph4_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to PassMorph4_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+SessPassMorph_openFun(hObject, eventdata, handles, 4);
+
+
+% --- Executes on button press in PassColorPlot1_tag.
+function PassColorPlot1_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to PassColorPlot1_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+SessPassColorPlot_openFun(hObject, eventdata, handles, 1);
+
+% --- Executes on button press in PassColorPlot2_tag.
+function PassColorPlot2_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to PassColorPlot2_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+SessPassColorPlot_openFun(hObject, eventdata, handles, 2);
+
+% --- Executes on button press in PassColorPlot3_tag.
+function PassColorPlot3_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to PassColorPlot3_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+SessPassColorPlot_openFun(hObject, eventdata, handles, 3);
+
+% --- Executes on button press in PassColorPlot4_tag.
+function PassColorPlot4_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to PassColorPlot4_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+SessPassColorPlot_openFun(hObject, eventdata, handles, 4);

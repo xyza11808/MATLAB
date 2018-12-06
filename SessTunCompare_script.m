@@ -65,10 +65,10 @@ end
 cclr
 %%
 % load('SessCompDataSave.mat', 'SessPaths')
-SessPaths = {'S:\BatchData\batch58\20181104\anm01\test03\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
-    'S:\BatchData\batch58\20181106\anm01\test03\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
-    'S:\BatchData\batch58\20181111\anm03\test02\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...%};%,...
-    'S:\BatchData\batch58\20181112\anm03\test02\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'};
+SessPaths = {'S:\BatchData\batch55\20180905\anm07\test06\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
+    'S:\BatchData\batch55\20180910\anm07\test06\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'};%,... %
+%     'S:\BatchData\batch55\20180908\anm03\test02\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'};%,...
+%     'S:\BatchData\batch58\20181112\anm03\test02\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'};
 nSess = length(SessPaths);
 SessDataAll = cell(nSess,1);
 SessROIIndexAll = cell(nSess,1);
@@ -114,7 +114,7 @@ for UsedSortInds = 1 : nSess
 % UsedSortInds = 2; % the session index number that will be used for sorting
     [~,MaxZSDataInds] = max(SessTaskDataAll{UsedSortInds});
     [~,SortSeq] = sort(MaxZSDataInds);
-    hPlotf = figure('position',[80 120 1750 900]);
+    hPlotf = figure('position',[2000 120 1750 900]);
     for css = 1 : nSess
         subplot(3,nSess,css);  % task data plots
         imagesc(SessTaskDataAll{css}(:,SortSeq),zsLims);
@@ -152,8 +152,8 @@ for css = 1 : nSess
 end
 
 PassZslim = [0 1.5];
-hPassf = figure('position',[80 120 1750 950]);
-hSPCoef = figure('position',[80 120 1750 600]);
+hPassf = figure('position',[2000 120 1750 950]);
+hSPCoef = figure('position',[2000 120 1750 600]);
 for UsedSortInds = 1 : nSess
     [~,MaxZSDataInds] = max(NewSessPassData{UsedSortInds});
     [~,SortSeq] = sort(MaxZSDataInds);
