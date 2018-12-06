@@ -129,7 +129,7 @@ for cSess = 1 : nSessPath
     ROIposfilePath = cSessPath(1:EndInds);
     cd(ROIposfilePath);
     if exist('./ROI_morph_plot/MorphDataAll.mat','file')
-%         continue;
+        continue;
     end
     %     if exist(fullfile(ROIposfilePath,'ROI_morph_plot','MorphDataAll.mat'),'file')
     %         tline = fgetl(fid);
@@ -394,7 +394,7 @@ ErroSessInds = [];
 m = 1;
 
 nSess = length(NormSessPathTask);
-for cSS = nSess : -1 : 1
+for cSS = 1 : nSess
     %
     tline = NormSessPathTask{cSS};
 %     if isempty(strfind(tline,'NO_Correction\mode_f_change'))

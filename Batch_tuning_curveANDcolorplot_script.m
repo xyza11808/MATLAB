@@ -16,6 +16,8 @@ for cSess = 1 : nSessPath
     %
     Passtline = NormSessPathPass{cSess};
     Tasktline = NormSessPathTask{cSess};
+    
+    %
     TaskDataStrc = load(fullfile(Tasktline,'CSessionData.mat'));
     PassDataStrc = load(fullfile(Passtline,'rfSelectDataSet.mat')); 
     BehavDataPath = fullfile(Tasktline,'RandP_data_plots','boundary_result.mat');
@@ -214,7 +216,7 @@ for cSess = 1 : nSessPath
             saveas(h,sprintf('ROI%d Tunning curve comparison plot',cROI),'png');
             close(h);
         end
-    
+    %
         tline = Tasktline;
         BehavBound = BoundFreq;
         ColorPlot_for_batch_script;

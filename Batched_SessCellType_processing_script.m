@@ -246,7 +246,7 @@ for cSess = 1 : nSessPath
     catch
         %
     end
-    
+    %
     TunDataCellAll{cSess,1} = cTunFitDataUsed.IsTunedROI;
     TunDataCellAll{cSess,2} = TaskROIBFAll;
     TunDataCellAll{cSess,3} = TaskTunROIOctaves;

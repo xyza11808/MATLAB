@@ -41,6 +41,9 @@ TrFTimeReNM = round((TrTimeReNM/1000)*frame_rate);
 TrStimOnFTimeNM = round((TrStimOnTimeNM/1000)*frame_rate);
 TimeWin = 0.3;%s, time window used for response calculation
 FrameWin = round(TimeWin*frame_rate);
+AnsDelayFun = [0.5,1];
+AnsDelayFrame = round(AnsDelayFun*frame_rate);
+NumAnsDelayFun = length(AnsDelayFrame);
 [~,FreqSortInds] = sort(TrOctsNM);
 %%
 if iscell(nnspike)
@@ -48,14 +51,14 @@ if iscell(nnspike)
 else
     NMSpikeData = nnspike(NMInds,:,:);
 end
-TrEventsRespData = zeros(NMTrNum,nROIs,5); % freq, answer, reward corresponded to three columns
+TrEventsRespData = zeros(NMTrNum,nROIs,5+NumAnsDelayFun); % freq, answer, reward corresponded to three columns
 for ctr = 1 : NMTrNum
     if iscell(nnspike)
         cTrSPData = NMSpikeData{ctr};
     else
         cTrSPData = squeeze(NMSpikeData(ctr,:,:));
     end
-    BeforeSPBaselineMtx = cTrSPData(:,1:TrStimOnFTimeNM(ctr));
+    BeforeSPBaselineMtx = cTrSPData(:,(TrStimOnFTimeNM(ctr)-FrameWin+1):TrStimOnFTimeNM(ctr));
     BeforeSPBaselineTrace = mean(BeforeSPBaselineMtx,2);
     TrEventsRespData(ctr,:,5) = BeforeSPBaselineTrace;
     cStimOnResp = cTrSPData(:,(TrStimOnFTimeNM(ctr)+1):(TrStimOnFTimeNM(ctr)+1+FrameWin));
@@ -70,8 +73,15 @@ for ctr = 1 : NMTrNum
         cReResp = cTrSPData(:,(TrFTimeReNM(ctr)+1):(TrFTimeReNM(ctr)+1+FrameWin));
         TrEventsRespData(ctr,:,3) = mean(cReResp,2);
     end
-    
+    for cAnsDelayNum = 1 : length(AnsDelayFrame)
+        cAnsDelayResp = cTrSPData(:,(TrAnsFTimeNM(ctr)+1+AnsDelayFrame(cAnsDelayNum)):(TrAnsFTimeNM(ctr)+1+FrameWin+AnsDelayFrame(cAnsDelayNum)));
+        TrEventsRespData(ctr,:,5+cAnsDelayNum) = mean(cAnsDelayResp,2);
+    end
 end
+
+% substract baseline activity for all response types
+BaseSubMtx = repmat(TrEventsRespData(:,:,5),1,1,4);
+BaseSubTrEventsResp = max(TrEventsRespData(:,:,1:4) - BaseSubMtx,0);
 
 %%
 FreqTypes = unique(TrOctsNM);
@@ -84,11 +94,13 @@ end
 
 %%
 % close
+NumParas = size(TrEventsRespData,3);
+
 AllROIData = cell(nROIs,1);
 for cROI = 1 : nROIs
     %
 %     cROI = 27;
-    close
+%     close
     cROIData = squeeze(TrEventsRespData(:,cROI,:));
     % figure('position',[200 100 800 320])
     % subplot(121)
@@ -110,27 +122,43 @@ for cROI = 1 : nROIs
     ReLMtx = TrTrTypesNM == 0 & TrTrTypesNM == TrChoiceNM;
     ReRMtx = TrTrTypesNM == 1 & TrTrTypesNM == TrChoiceNM;
     IsReConsidered = 0;
+    %
     if IsReConsidered
-        DataFitMtx = zeros(numel(cROIData),2*nFreqs+2+2);
+        DataFitMtx = zeros(numel(cROIData),2*nFreqs+2+2+NumAnsDelayFun*2);
         DataFitMtx(1:NMTrNum,1:nFreqs) = FreqMetrix;
         DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+1) = AnsLMtx;
         DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+2) = AnsRMtx;
         DataFitMtx(NMTrNum*2+1:NMTrNum*3,nFreqs+3) = ReLMtx;
         DataFitMtx(NMTrNum*2+1:NMTrNum*3,nFreqs+4) = ReRMtx;
         DataFitMtx(3*NMTrNum+1:end,1:nFreqs+5:end) = FreqMetrix;
+        for cDelayNum = 1 : NumAnsDelayFun
+            cRowStartInds = NMTrNum*3 + 1 + (cDelayNum - 1) * NMTrNum;
+            cColStartInds = 2*nFreqs + 2 + (cDelayNum - 1) * 2;
+            
+            DataFitMtx(cRowStartInds:cRowStartInds+NMTrNum,cColStartInds + 1) = AnsLMtx;
+            DataFitMtx(cRowStartInds:cRowStartInds+NMTrNum,cColStartInds + 2) = AnsRMtx;
+        end
+        
         RespData = cROIData;
     else
-        DataFitMtx = zeros(numel(cROIData(:,[1,2,4])),2*nFreqs+2);
+        DataFitMtx = zeros(numel(cROIData(:,[1,2,4,6:NumParas])),2*nFreqs+2+NumAnsDelayFun*2);
         DataFitMtx(1:NMTrNum,1:nFreqs) = FreqMetrix;
         DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+1) = AnsLMtx;
         DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+2) = AnsRMtx;
-        DataFitMtx(NMTrNum*2+1:NMTrNum*3,nFreqs+3:end) = FreqMetrix;
+        DataFitMtx(NMTrNum*2+1:NMTrNum*3,nFreqs+3:2*nFreqs+2) = FreqMetrix;
+        for cDelayNum = 1 : NumAnsDelayFun
+            cRowStartInds = NMTrNum*3 + (cDelayNum - 1) * NMTrNum;
+            cColStartInds = 2*nFreqs + 2 + (cDelayNum - 1) * 2;
+            
+            DataFitMtx(cRowStartInds+1:cRowStartInds+NMTrNum,cColStartInds + 1) = AnsLMtx;
+            DataFitMtx(cRowStartInds+1:cRowStartInds+NMTrNum,cColStartInds + 2) = AnsRMtx;
+        end
         
-        RespData = cROIData(:,[1,2,4]);
+        RespData = cROIData(:,[1,2,4,6:NumParas]);
     end
-    figure;
-    imagesc(RespData)
-    
+%     figure;
+%     imagesc(RespData)
+%     
     %
     options = glmnetSet;
     options.alpha = 0.9;
@@ -157,6 +185,10 @@ for cROI = 1 : nROIs
             BehavParaInds(TrainInds) = true;
             BehavParaInds(TrainInds+NMTrNum) = true;
             BehavParaInds(TrainInds+NMTrNum*2) = true;
+            
+            for cDelayN = 1 : NumAnsDelayFun
+                BehavParaInds(TrainInds+NMTrNum*(2+cDelayN)) = true;
+            end
             BehavParaMtx = DataFitMtx(BehavParaInds,:);
             TestBehavParaMtx = DataFitMtx(~BehavParaInds,:);
             %
@@ -210,7 +242,7 @@ end
  
 %% analysis ROI coef Data 
 nROIs = length(AllROIData);
-CoefValueThres = 0.5;
+CoefValueThres = 0.4;
 RepeatFracThres = 0.5;
 ROIAboveThresInds = cell(nROIs,4);
 for cROI = 1 : nROIs
@@ -220,9 +252,11 @@ for cROI = 1 : nROIs
     cROICoef_AllRepeats = cell2mat(cROICoefdata);
     
     cROIDev = (cell2mat((cROIdata(:,2))'))';
+    cROICoef_meanV = mean(cROICoef_AllRepeats);
+    PosCoefIndex = cROICoef_meanV > 0;
     
     CoefAboveThresMeanFrac = mean(double(abs(cROICoef_AllRepeats) > CoefValueThres));
-    CoefAboveThresInds = CoefAboveThresMeanFrac >= RepeatFracThres;
+    CoefAboveThresInds = CoefAboveThresMeanFrac >= RepeatFracThres & PosCoefIndex;
     %
     ROIAboveThresInds{cROI,1} = CoefAboveThresInds;
     ROIAboveThresInds{cROI,2} = [mean(cROIDev(:)),std(cROIDev(:)),numel(cROIDev)];
