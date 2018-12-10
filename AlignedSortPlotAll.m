@@ -417,8 +417,13 @@ for nROI = 1 : ROInum
         else
             ColorStr = {'r','g','m'};
             cROIstate = logical(ROIstate(nROI,:));
-            annotation('textbox',[0.49,0.685,0.3,0.3],'String',['ROI' num2str(nROI)],'FitBoxToText','on','EdgeColor',...
-                       'none','FontSize',20,'Color',ColorStr{cROIstate});
+            if sum(cROIstate)
+                annotation('textbox',[0.49,0.685,0.3,0.3],'String',['ROI' num2str(nROI)],'FitBoxToText','on','EdgeColor',...
+                           'none','FontSize',20,'Color',ColorStr{cROIstate});
+            else
+                annotation('textbox',[0.49,0.685,0.3,0.3],'String',['ROI' num2str(nROI)],'FitBoxToText','on','EdgeColor',...
+                           'none','FontSize',20,'Color','c');
+            end
         end
                %
         saveas(hROI,sprintf('ROI%d all behavType color plot',nROI));

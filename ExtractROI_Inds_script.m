@@ -15,7 +15,7 @@ for cR = 1 : nROIs
     end
     OnOffMergeData{cR} = cRDatas;
 end
-nFreqs = (length(ROIAboveThresInds{1,1}) - 2)/2;
+nFreqs = (length(ROIAboveThresInds{1,1}) - 6)/2;
 %%
 OnOrOffROIinds = cSessOnRespInds | cSessOffRespInds;
 OnSigDataCell = ROIRespTypeCoef(OnOrOffROIinds,1);
@@ -59,7 +59,7 @@ if ~isempty(LAnsROIInds)
         end
     end
 end
-    % prepare the right condition
+    % processing the right condition
 if ~isempty(RAnsROIInds)
     for ccr = 1 : length(RAnsROIInds)
         cRAnsRInds = RAnsROIInds(ccr);
@@ -87,6 +87,23 @@ end
 %vExclude false stim response
 SigROIInds = SigROIInds(~StimExcludeInds);
 SigROICoefMtx = SigROICoefMtx(~StimExcludeInds,:);
+
+%% processing delayed ans function coef index
+LAnsDelayROIInds = find(ROIRespType(:,5));
+RAnsDelayROIInds = find(ROIRespType(:,6));
+% left
+LAnsDelayROINum = numel(LAnsDelayROIInds);
+LAnsDMaxCoef = zeros(LAnsDelayROINum,1);
+for cLAnsDR = 1 : LAnsDelayROINum
+    LAnsDMaxCoef(cLAnsDR) = ROIRespTypeCoef{LAnsDelayROIInds(cLAnsDR),5}(1,2);
+end
+%right
+RAnsDelayROINum = numel(RAnsDelayROIInds);
+RAnsDMaxCoef = zeros(RAnsDelayROINum,1);
+for cRAnsDR = 1 : RAnsDelayROINum
+    RAnsDMaxCoef(cRAnsDR) = ROIRespTypeCoef{RAnsDelayROIInds(cRAnsDR),6}(1,2);
+end
+
  %% 
 [~,maxInds] = max(SigROICoefMtx,[],2);
 [~,sortSeq] = sort(maxInds);
@@ -100,8 +117,11 @@ saveas(hhhf,'SPPred ROITun Coef Plots');
 saveas(hhhf,'SPPred ROITun Coef Plots','png');
 close(hhhf);
 
-      
-save SigSelectiveROIInds.mat SigROIInds LAnsROIInds RAnsROIInds SigROICoefMtx -v7.3
+LAnsMergedInds = find(ROIRespType(:,5) | ROIRespType(:,2));
+RAnsMergedInds = find(ROIRespType(:,6) | ROIRespType(:,3));
+
+save SigSelectiveROIInds.mat SigROIInds LAnsROIInds RAnsROIInds SigROICoefMtx ...
+    LAnsDelayROIInds LAnsDMaxCoef RAnsDelayROIInds RAnsDMaxCoef LAnsMergedInds RAnsMergedInds -v7.3
 %%
 
 OnTunBF = cellfun(@(x) x(1,1),OnTunData);

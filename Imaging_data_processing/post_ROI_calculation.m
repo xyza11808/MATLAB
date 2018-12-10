@@ -768,7 +768,7 @@ if strcmpi(type,'RF')
     %%
 elseif strcmpi(type,'2AFC')
     if exist(fullfile(SessPath,'SessionFrameProj.mat'),'file')
-        Image2P_ROIlabeling_Infun;
+%         Image2P_ROIlabeling_Infun;
     end
     if ~InputPatas.IsParaInput
         fprintf(['Please select the f0 calculation method.\n 1 for mode f0 calculation.\n 2 for pure baseline calculation.\n 3 for block wise calculation.\n',...

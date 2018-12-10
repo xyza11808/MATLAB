@@ -1,4 +1,4 @@
-function TrialByTNMtest(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin)
+function TrialByTNMtest(RawDataAll,BehavStrc,TrialResult,AlignFrame,FrameRate,varargin)
 %this function will calculate pca points trial by trial and then group them
 %according to its corresponded trial type, with this group of points we
 %will then using a SVM mechine to classified the two trial types and see
@@ -19,15 +19,20 @@ if nargin>6
 else
     isShuffle=0;
 end
-
+StimAll = double(BehavStrc.Stim_toneFreq(:));
+TrTypeAll = double(BehavStrc.Trial_Type(:));
 %%
 %some preprocesing and prelocation
 DataSize=size(RawDataAll);
-CorrectInds=TrialResult==1;
+CorrectInds = TrialResult==1;
 % CorrectInds=true(1,length(TrialResult));
 CorrTrialStim=StimAll(CorrectInds);
 CorrTrialData=RawDataAll(CorrectInds,:,:);
 CorrStimType=unique(CorrTrialStim);
+NMTrInds = TrialResult ~= 2;
+NMOutcomes = TrialResult(NMTrInds);
+NMTrialStims = StimAll(NMTrInds);
+NMTrTypes = TrTypeAll(NMTrInds);
 % TrialPCAscore=zeros(length(CorrTrialStim),3);
 ALLROIMeanTrial=zeros(length(CorrStimType),DataSize(2));
 if length(TimeLength) == 1
@@ -45,8 +50,8 @@ if FrameScale(2) > DataSize(3)
     warning('Time Selection excceed matrix index, correct to %d',DataSize(3));
 end
 
-ConsideringData=CorrTrialData(:,:,FrameScale(1):FrameScale(2));
-
+ConsideringData = CorrTrialData(:,:,FrameScale(1):FrameScale(2));
+NMTrUsedData = RawDataAll(NMTrInds,:,FrameScale(1):FrameScale(2));
 %%  
 if isShuffle
     %shuffled trial types
@@ -97,7 +102,8 @@ Octavex=log2(double(CorrStimType)/min(double(CorrStimType)));
 Octavexfit=Octavex;
 % OctaveTest=Octavex;
 realy=boundary_result.StimCorr;
-realy(1:3)=1-realy(1:3);
+GrStimNum = floor(numel(realy)/2);
+realy(1:GrStimNum)=1-realy(1:GrStimNum);
 Curve_x=linspace(min(Octavex),max(Octavex),500);
 modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));
 rescaleB=max(realy);
@@ -105,34 +111,34 @@ rescaleA=min(realy);
 
 %%
 % h3df = figure;
-LeftStims=CorrStimType(1:length(CorrStimType)/2);
-RightStims=CorrStimType((length(CorrStimType)/2+1):end);
+LeftStims=CorrStimType(1:GrStimNum);
+RightStims=CorrStimType((GrStimNum+1):end);
 LeftStimsStr=cellstr(num2str(LeftStims(:)));
 RightStimsStr=cellstr(num2str(RightStims(:)));
 nROIs = DataSize(2);
-TrialProj = zeros(length(CorrTrialStim),3);
-ProjCoef = coeff(:,1:3)';
-for nTrial = 1 : length(CorrTrialStim)
-    CTrialData = squeeze(ConsideringData(nTrial,:,:));
+TrialProj = zeros(size(NMTrUsedData,1),3);
+ProjCoef = coeff';
+for nTrial = 1 : size(NMTrUsedData,1)
+    CTrialData = squeeze(NMTrUsedData(nTrial,:,:));
     CDataVector = zeros(nROIs,1);
     for nROI = 1 : nROIs
         CDataVector(nROI) = CTrialData(nROI,cROImaxInds(nROI));
     end
     TrialProj (nTrial,:) = (ProjCoef * (CDataVector - mean(CDataVector)))';
 end
-CorrTrialLabel = CorrTrialStim > CorrStimType((length(CorrStimType)/2)+1);
-LeftPointInds = CorrTrialLabel == false;
-RightPointInds = CorrTrialLabel == true;
+NMTrialLabel = NMTrTypes;
+LeftPointInds = ~NMTrialLabel & NMOutcomes(:) == 1;
+RightPointInds = NMTrialLabel & NMOutcomes(:) == 1;
 h=figure;
 hold on;
 plot3(TrialProj(LeftPointInds,1),TrialProj(LeftPointInds,2),TrialProj(LeftPointInds,3),'bo','MarkerSize',10);
 plot3(TrialProj(RightPointInds,1),TrialProj(RightPointInds,2),TrialProj(RightPointInds,3),'r*','MarkerSize',10);
-plot3(scoreT(1:3,1),scoreT(1:3,2),scoreT(1:3,3),'gp','MarkerSize',12);
-plot3(scoreT(4:6,1),scoreT(4:6,2),scoreT(4:6,3),'kp','MarkerSize',12)
-text(scoreT(1:3,1),scoreT(1:3,2),scoreT(1:3,3),LeftStimsStr);
-text(scoreT(4:6,1),scoreT(4:6,2),scoreT(4:6,3),RightStimsStr);
+plot3(scoreT(1:GrStimNum,1),scoreT(1:GrStimNum,2),scoreT(1:GrStimNum,3),'gp','MarkerSize',12);
+plot3(scoreT(GrStimNum+1:end,1),scoreT(GrStimNum+1:end,2),scoreT(GrStimNum+1:end,3),'kp','MarkerSize',12)
+text(scoreT(1:GrStimNum,1),scoreT(1:GrStimNum,2),scoreT(1:GrStimNum,3),LeftStimsStr);
+text(scoreT(GrStimNum+1:end,1),scoreT(GrStimNum+1:end,2),scoreT(GrStimNum+1:end,3),RightStimsStr);
 
-ErrorT = TrialResult == 0;
+ErrorT = NMOutcomes(:) == 0;
 plot3(TrialProj(ErrorT,1),TrialProj(ErrorT,2),TrialProj(ErrorT,3),'md','MarkerSize',12);
 legend('Left\_score','Right\_score','LSum\_score','RSum\_score','ErrorTrials','location','northeastoutside');
 legend('boxoff')
@@ -140,7 +146,9 @@ legend('boxoff')
 % ErrorTrialLabel = CorrTrialLabel(ErrorT);
 
 %%
-CSvmModel = fitcsvm(TrialProj,CorrTrialLabel(:));
+CorrTrProj = TrialProj(NMOutcomes(:) == 1,:);
+TrainTrLabels = NMTrialLabel(NMOutcomes(:) == 1);
+CSvmModel = fitcsvm(CorrTrProj,TrainTrLabels(:));
 CVSVMModel = crossval(CSvmModel);  %performing cross-validation
 ErrorRate=kfoldLoss(CVSVMModel);  %disp kfold loss of validation
 fprintf('Error Rate = %.4f.\n',ErrorRate);
@@ -155,7 +163,7 @@ saveas(h,'T8T_pca_points.png');
 saveas(h,'T8T_pca_points.fig');
 close(h);
 
-save T8TResult.mat TrialProj CorrTrialLabel realy Octavex CSvmModel ErrorRate fityAll -v7.3
+save T8TResult.mat TrialProj realy Octavex CSvmModel ErrorRate fityAll -v7.3
 save pcaResultSave.mat scoreT -v7.3
 options = statset('UseParallel',true);
 [bootStat,bootSample]=bootstrp(1000,@(Data,TrialType)ScoreBootFun(Data,TrialType,CSvmModel,realy),...

@@ -207,10 +207,12 @@ LeftStims=CorrStimType(1:length(CorrStimType)/2);
 RightStims=CorrStimType((length(CorrStimType)/2+1):end);
 LeftStimsStr=cellstr(num2str(LeftStims(:)));
 RightStimsStr=cellstr(num2str(RightStims(:)));
-LeftNonpcaDataTA = zeros(300,DataSize(2));
-RightNonpcaDataTA = zeros(300,DataSize(2));
-LeftNonpcaDataTE = zeros(300,DataSize(2));
-RightNonpcaDataTE = zeros(300,DataSize(2));
+GrStimNum = length(CorrStimType)/2; 
+
+LeftNonpcaDataTA = zeros(GrStimNum*100,DataSize(2));
+RightNonpcaDataTA = zeros(GrStimNum*100,DataSize(2));
+LeftNonpcaDataTE = zeros(GrStimNum*100,DataSize(2));
+RightNonpcaDataTE = zeros(GrStimNum*100,DataSize(2));
 
 h3d=figure;
 hold on;
@@ -219,7 +221,7 @@ for CVNumber=1:100
         TempStim=CorrStimType(n);
         SingleStimInds=CorrTrialStim==TempStim;
         SingleStimDataAll=ConsideringData(SingleStimInds,:,:);
-        SingleStimTrialResult = CorrTrialResults(SingleStimInds);
+%         SingleStimTrialResult = CorrTrialResults(SingleStimInds);
         TrialNum=size(SingleStimDataAll,1);
         SampleTrial=randsample(TrialNum,floor(TrialNum*0.8));
         RawTrialInds=zeros(1,TrialNum);
@@ -265,10 +267,10 @@ for CVNumber=1:100
     TestingMeanSub = ALLROIMeanTestData - repmat(mean(ALLROIMeanTestData),size(ALLROIMeanTestData,1),1);
     score2 = TestingMeanSub * coeffT;
     
-    LeftNonpcaDataTA((1+(CVNumber-1)*3):(CVNumber*3),:) = ALLROIMeanData(1:3,:);
-    RightNonpcaDataTA((1+(CVNumber-1)*3):(CVNumber*3),:) = ALLROIMeanData(4:6,:);
-    LeftNonpcaDataTE((1+(CVNumber-1)*3):(CVNumber*3),:) = ALLROIMeanTestData(1:3,:);
-    RightNonpcaDataTE((1+(CVNumber-1)*3):(CVNumber*3),:) = ALLROIMeanTestData(4:6,:);
+    LeftNonpcaDataTA((1+(CVNumber-1)*GrStimNum):(CVNumber*GrStimNum),:) = ALLROIMeanData(1:GrStimNum,:);
+    RightNonpcaDataTA((1+(CVNumber-1)*GrStimNum):(CVNumber*GrStimNum),:) = ALLROIMeanData(GrStimNum+1:end,:);
+    LeftNonpcaDataTE((1+(CVNumber-1)*GrStimNum):(CVNumber*GrStimNum),:) = ALLROIMeanTestData(1:GrStimNum,:);
+    RightNonpcaDataTE((1+(CVNumber-1)*GrStimNum):(CVNumber*GrStimNum),:) = ALLROIMeanTestData(GrStimNum+1:end,:);
 %     if sum(explained(1:3))<80
 %         warning('The first three component explains less than 80 percents, the pca result may not acurate.');
 %     end
@@ -292,17 +294,17 @@ for CVNumber=1:100
     % saveas(h2d,'Random_pcs_2d_space.fig');
     % close(h2d);
 
-    CVScoreType1(:,(1+(CVNumber-1)*3):(CVNumber*3))=score(1:3,1:3)';
-    CVScoreType2(:,(1+(CVNumber-1)*3):(CVNumber*3))=score(4:6,1:3)';
-    CVScoreTypeTest1(:,(1+(CVNumber-1)*3):(CVNumber*3))=score2(1:3,1:3)';
-    CVScoreTypeTest2(:,(1+(CVNumber-1)*3):(CVNumber*3))=score2(4:6,1:3)';
+    CVScoreType1(:,(1+(CVNumber-1)*GrStimNum):(CVNumber*GrStimNum))=score(1:GrStimNum,1:3)';
+    CVScoreType2(:,(1+(CVNumber-1)*GrStimNum):(CVNumber*GrStimNum))=score(GrStimNum+1:end,1:3)';
+    CVScoreTypeTest1(:,(1+(CVNumber-1)*GrStimNum):(CVNumber*GrStimNum))=score2(1:GrStimNum,1:3)';
+    CVScoreTypeTest2(:,(1+(CVNumber-1)*GrStimNum):(CVNumber*GrStimNum))=score2(GrStimNum+1:end,1:3)';
     
     % h3d=figure;
     % hold on;
-    scatter3(score(1:3,1),score(1:3,2),score(1:3,3),30,'bo');
-    text(score(1:3,1),score(1:3,2),score(1:3,3),LeftStimsStr);
-    scatter3(score(4:6,1),score(4:6,2),score(4:6,3),30,'r*');
-    text(score(4:6,1),score(4:6,2),score(4:6,3),RightStimsStr);
+    scatter3(score(1:GrStimNum,1),score(1:GrStimNum,2),score(1:GrStimNum,3),30,'bo');
+    text(score(1:GrStimNum,1),score(1:GrStimNum,2),score(1:GrStimNum,3),LeftStimsStr);
+    scatter3(score(GrStimNum+1:end,1),score(GrStimNum+1:end,2),score(GrStimNum+1:end,3),30,'r*');
+    text(score(GrStimNum+1:end,1),score(GrStimNum+1:end,2),score(GrStimNum+1:end,3),RightStimsStr);
     
 end
 legend('LeftScore','RightScore','location','northeastoutside');
@@ -345,7 +347,7 @@ hold on
 scatter3(CVScoreType1(1,:),CVScoreType1(2,:),CVScoreType1(3,:),30,'bo');
 scatter3(CVScoreType2(1,:),CVScoreType2(2,:),CVScoreType2(3,:),30,'r*');
 
-labelType=[zeros(1,300) ones(1,300)]';
+labelType=[zeros(1,GrStimNum*100) ones(1,GrStimNum*100)]';
 TrainingData=[CVScoreType1';CVScoreType2'];
 
 if ~isLoadModel
@@ -402,16 +404,16 @@ PredictL=predict(CVsvmmodel,LeftData);
 PredictR=predict(CVsvmmodel,RightData);
 ErrorRateTest=(sum(PredictL)+sum(1-PredictR))/(length(PredictL)+length(PredictR));  %Test data errorrate
 
-% % % % % % % % % 
+%% % % % % % % % % 
 % Calculate performance of every single point and merged together
 [~,xxx] = predict(CVsvmmodel,TrainingData);
 xxxx=xxx(:,2)-xxx(:,1);
 NormalScore = xxxx;
 NormalBase = max(xxxx)-min(xxxx);
-LeftScore = NormalScore(1:300);
-RightScore = NormalScore(301:end);
-LeftTypeScore = reshape(LeftScore,3,100);
-RightTypeScore = reshape(RightScore,3,100);
+LeftScore = NormalScore(1:GrStimNum*100);
+RightScore = NormalScore(GrStimNum*100+1:end);
+LeftTypeScore = reshape(LeftScore,GrStimNum,100);
+RightTypeScore = reshape(RightScore,GrStimNum,100);
 
 LeftMean = mean(LeftTypeScore,2);
 RIghtMean = mean(RightTypeScore,2);
@@ -452,11 +454,11 @@ save TestDataSet.mat CVScoreTypeTest1 CVScoreTypeTest2 ErrorRateTest -v7.3
 
 %%
 %plot the 3d seperation plane and current types points
-h_3dplane = figure('position',[420 100 1150 950]);
+h_3dplane = figure('position',[220 100 480 400]);
 hold on;
 PointScores = scoreT(:,1:3);
-scatter3(PointScores(1:3,1),PointScores(1:3,2),PointScores(1:3,3),50,'p','MarkerEdgeColor','b','LineWidth',1);
-scatter3(PointScores(4:6,1),PointScores(4:6,2),PointScores(4:6,3),50,'p','MarkerEdgeColor','r','LineWidth',1);
+scatter3(PointScores(1:GrStimNum,1),PointScores(1:GrStimNum,2),PointScores(1:GrStimNum,3),50,'p','MarkerEdgeColor','b','LineWidth',1);
+scatter3(PointScores(GrStimNum+1:end,1),PointScores(GrStimNum+1:end,2),PointScores(GrStimNum+1:end,3),50,'p','MarkerEdgeColor','r','LineWidth',1);
 text(PointScores(:,1),PointScores(:,2),PointScores(:,3),cellstr(num2str(double(CorrStimType(:)))));
 % extract coefficients from svm model
 % VectorCoeff = CVsvmmodel.Beta; % calculation exists at early line
@@ -492,7 +494,7 @@ close(h_3dplane);
 %%
 % [~,breal]=fit_logistic(Octavex,realy);
 %excludes some bad points from fit
-h3=figure;
+h3=figure('position',[220 100 480 400]);
 scatter(Octavex,realy,30,'MarkerEdgeColor','r','MarkerFaceColor','y');
 hold on;
 inds_exclude=input('please select the trial inds that should be excluded from analysis.\n','s');
@@ -562,7 +564,7 @@ ylabel('Fraction choice (R)');
 ylim([0 1]);
 CorrStimTypeTick = CorrStimType/1000;
 set(gca,'xtick',Octavex,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'FontSize',20);
-set(gca,'FontSize',18);
+set(gca,'FontSize',14);
 %%
 if length(TimeLength) == 1
     saveas(h2CompPlot,sprintf('Neuro_psycho_%dms_comp_plot.png',TimeLength*1000));

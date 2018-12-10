@@ -831,11 +831,13 @@ end
 
 %% batched colormap plots
 CusMap = blue2red_2(32,0.8);
-cSessions = length(NormSessPathTask);
-for cSess = 1 : cSessions 
+% NSessions = length(NormSessPathTask);
+NSessions = length(NormSessPathTask);
+for cSess = 1 : NSessions 
     %
-    clearvars -except cSessions NormSessPathTask CusMap cSess
-    tline = NormSessPathTask{cSess};
+    clearvars -except NSessions NormSessPathTask CusMap cSess UsedPathAll 
+%     tline = NormSessPathTask{cSess};
+    tline =  NormSessPathTask{cSess};
     % passive tuning frequency colormap plot
     load(fullfile(tline,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'));
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));
@@ -1362,7 +1364,7 @@ for css = 1 : cSessions
     clearvars -except NormSessPathTask css cSessions CusMap
     %
     tline = NormSessPathTask{css};
-    load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
+    load(fullfile(tline,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'));
     load(fullfile(tline,'CSessionData.mat'),'behavResults','smooth_data','start_frame','frame_rate');
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));
     
@@ -1935,11 +1937,11 @@ end
 clearvars -except NormSessPathTask NormSessPathPass
 nSess = length(NormSessPathTask);
 
-for cSess = 1 : nSess
+for cSess = 35 : nSess
     cSessPath = NormSessPathTask{cSess};
     cd(cSessPath);
     
-    clearvars DataRaw frame_rate
+    clearvars DataRaw frame_rate behavResults data_aligned
 %     oldSPfile = fullfile(cSessPath,'EstimateSPsave.mat');
 %     if ~exist(oldSPfile,'file')
 %         fprintf('Session index %d SPfile not exists.\n',cSess);
@@ -1950,13 +1952,13 @@ for cSess = 1 : nSess
 %     catch
 %         load(fullfile(cSessPath,'EstimateSPsaveNewMth.mat'));
 %     end
-    load(fullfile(cSessPath,'CSessionData.mat'),'DataRaw','frame_rate');
+    load(fullfile(cSessPath,'CSessionData.mat'),'DataRaw','frame_rate','data_aligned','behavResults','start_frame');
     if ~exist('DataRaw','var')
-        load(fullfile(cSessPath,'CSessionData.mat'),'data');
-        DataRaw = data;
+        load(fullfile(cSessPath,'EstimateSPsaveNewAR2.mat'),'DataRaw');
+%         DataRaw = data;
     end
     
-    nnspike = Fluo2SpikeConstrainOOpsi(DataRaw,[],[],frame_rate,1.8);
+    nnspike = Fluo2SpikeConstrainOOpsi(DataRaw,[],[],frame_rate,1);
     FrameInds = cellfun(@(x) size(x,2),DataRaw);
     UsedFrame = ceil(prctile(FrameInds,80));
     if iscell(nnspike)
@@ -1989,7 +1991,7 @@ for cSess = 1 : nSess
         SpikeAligned(i,:,:)=UsedSPData(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
     end
     
-    save EstimateSPsaveNewFilter.mat nnspike DataRaw SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
+    save EstimateSPsaveNewMth.mat nnspike DataRaw SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
 end
 % batched spike data analysis for passive sessions
 clearvars -except NormSessPathPass NormSessPathTask
@@ -2060,6 +2062,23 @@ for css = 1 : nSess
     end
     
 end
+%% batched trial by trial svm prediction psychometric curve
+clearvars -except NormSessPathTask NormSessPathPass
+
+%
+nSess = length(NormSessPathTask);
+% ErroSess = [];
+for css = 1 : nSess
+    
+    csPath = NormSessPathTask{css};
+    cd(csPath);
+    
+    clearvars behavResults data_aligned frame_rate
+    load('CSessionData.mat')
+%     Partitioned_neurometric_prediction;
+    multiCClass(data_aligned,behavResults,trial_outcome,start_frame,frame_rate,1,[]);
+    
+end
 
 %% extract and save tuning ROI index
 clearvars -except NormSessPathTask NormSessPathPass
@@ -2067,35 +2086,35 @@ clearvars -except NormSessPathTask NormSessPathPass
 %
 nSess = length(NormSessPathTask);
 ErroSess = [];
-for css = 1 : nSess
-    
-    cSessPath = NormSessPathTask{css};
-    cd(cSessPath);
-    %
-    cSessPath = pwd;
+for css = 1:nSess
     try
+        %
+        cSessPath = NormSessPathTask{css};
+        cd(cSessPath);
+        %
+        cSessPath = pwd;
+    
         clearvars -except NormSessPathTask NormSessPathPass nSess ErroSess css cSessPath
 %         clearvars ROIAboveThresInds ROIRespTypeCoef ROIRespType
-        if exist('SPDataBehavCoefSaveOff.mat','file')
+%         if exist('SPDataBehavCoefSaveOff.mat','file')
             load('SPDataBehavCoefSaveOff.mat');
-        else
-            clearvars behavResults nnspike DataRaw
-            load('EstimateSPsaveNewMth.mat');
-            TrSummarization_WithStimOff_script;
-        end
+%         else
+%             clearvars behavResults nnspike DataRaw
+%             load('EstimateSPsaveNewMth.mat');
+%             TrSummarization_WithStimOff_script;
+%     end
 %         clearvars ROIRespType ROIRespTypeCoef
-        clearvars -except NormSessPathTask NormSessPathPass nSess ErroSess css cSessPath
-        load('SPDataBehavCoefSaveOff.mat');
-        if exist('CoefSummarySave.mat','file')
-            load('CoefSummarySave.mat');
-            
-        else
+%         clearvars -except NormSessPathTask NormSessPathPass nSess ErroSess css cSessPath
+%         load('SPDataBehavCoefSaveOff.mat');
+%         if exist('CoefSummarySave.mat','file')
+%             load('CoefSummarySave.mat');
+%         else
             
             PredCoef_summary_script
-        end
+%         end
     
         ExtractROI_Inds_script
-        
+     % 
     catch
         ErroSess = [ErroSess,css];
         sprintf('Error at session %d.\n',css);
@@ -2135,7 +2154,7 @@ for css = 1 : nSession
         
         PassRespROIInds = cellfun(@(x) ~isempty(x),PassCoefDataStrc.ROIAboveThresSummary(:,1));
         PassRespROIIndex = find(PassRespROIInds);
-        %% check is extra passive tuning ROI exists in task Tuning ROIs
+        % check is extra passive tuning ROI exists in task Tuning ROIs
         nTotalROIs = size(PassCoefDataStrc.ROIAboveThresSummary,1);
         BlankPassCoefInds  = zeros(nTotalROIs,nFreqs);
 
@@ -2205,7 +2224,7 @@ for css = 1 : nSession
         title('Passive')
 
         % Plot LAns Passive ROI resp
-        LeftAnsROIIndex = TaskCoefDataStrc.LAnsROIInds;
+        LeftAnsROIIndex = TaskCoefDataStrc.LAnsMergedInds;
         if ~isempty(LeftAnsROIIndex)
             PassLAnsCoef = BlankPassCoefInds(LeftAnsROIIndex,:);
             subplot(223)
@@ -2217,7 +2236,7 @@ for css = 1 : nSession
         end
 
         % Plot RAns Passive ROI resp
-        RightAnsROIIndex = TaskCoefDataStrc.RAnsROIInds;
+        RightAnsROIIndex = TaskCoefDataStrc.RAnsMergedInds;
         if ~isempty(RightAnsROIIndex)
             PassRAnsCoef = BlankPassCoefInds(RightAnsROIIndex,:);
             subplot(224)
@@ -2237,7 +2256,6 @@ for css = 1 : nSession
 end
 
 %% summerizing former results
-
 clearvars -except NormSessPathTask NormSessPathPass
 m = 1;
 nSession = length(NormSessPathTask);

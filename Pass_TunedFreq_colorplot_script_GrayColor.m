@@ -21,7 +21,7 @@ while ischar(tline)
     end
     
     % passive tuning frequency colormap plot
-    load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
+    load(fullfile(tline,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'));
     load(fullfile(tline,'CSessionData.mat'),'behavResults','smooth_data','start_frame','frame_rate');
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));
 %     RespDataStrc = load(fullfile(pwd,'Curve fitting plots','NewCurveFitsave.mat'));

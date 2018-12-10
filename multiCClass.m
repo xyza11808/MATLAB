@@ -1,4 +1,4 @@
-function varargout = multiCClass(RawDataAll,StimAll,TrialResult,AlignFrame,FrameRate,varargin)
+function varargout = multiCClass(RawDataAll,BehavStrc,TrialResult,AlignFrame,FrameRate,varargin)
 % this function is trying to performing a multiclass classification of
 % different sounds and seeing whether there is any pattern exists for
 % stimulus belongs to different octave diff and categories
@@ -45,6 +45,7 @@ if nargin > 9
     end
 end
 
+StimAll = double(BehavStrc.Stim_toneFreq(:));
 StimAll = double(StimAll);
 if isShuffle
     StimAll = Vshuffle(StimAll);
@@ -92,7 +93,7 @@ switch TrOutcomeOp
 end
 
 DataSelect = RawDataAll(TrialInds,ROIindsSelect,FrameScale(1):FrameScale(2));
-DataUsing = max(DataSelect,[],3);
+DataUsing = mean(DataSelect,3);
 StimTrUsing = StimAll(TrialInds);
 AllStimTypes = unique(StimTrUsing);
 % if mod(length(AllStimTypes),2)
@@ -114,10 +115,10 @@ if isPlot
     end
 
     if isPartialROI
-        if ~isdir(sprintf('./Partial_%dROI/',ROIFraction*100))
-            mkdir(sprintf('./Partial_%dfROI/',ROIFraction*100));
+        if ~isdir(sprintf('./Partial_%.0fROI/',ROIFraction*100))
+            mkdir(sprintf('./Partial_%.0fROI/',ROIFraction*100));
         end
-        cd(sprintf('./Partial_%dROI/',ROIFraction*100));
+        cd(sprintf('./Partial_%.0fROI/',ROIFraction*100));
     end
     
     if length(TimeLength) == 1
@@ -187,7 +188,7 @@ StimTypesAll = unique(StimTrUsing);
 ClassNum = length(StimTypesAll)*(length(StimTypesAll) - 1)/2;
 % DataAllCVerro = zeros(ClassNum,10);
 Class82CVErro = zeros(ClassNum,100);
-PairedROCAll = zeros(ClassNum,size(DataUsing,2));
+% PairedROCAll = zeros(ClassNum,size(DataUsing,2));
 m = 1;
 for nStimtype = 1 : length(StimTypesAll)
     for npairType = (nStimtype+1) : length(StimTypesAll)
@@ -225,7 +226,7 @@ matrixData = 1 - squareform(TypeErro);
 BoundaryData = diag(0.5*ones(length(StimIndex),1));
 matrixData = matrixData - BoundaryData;  % set boundary values to 0.5
 if isPlot
-    h_mt = figure('position',[720 240 1000 680]);
+    h_mt = figure('position',[720 240 500 340]);
     imagesc(StimIndex,StimIndex,matrixData,[0.5 1])
     set(gca,'xtick',StimIndex,'xticklabel',cellstr(num2str(StimForStr(:),'%.2f')),...
         'ytick',StimIndex,'yticklabel',cellstr(num2str(StimForStr(:),'%.2f')));
@@ -242,7 +243,7 @@ save PairedClassResult.mat matrixData StimTypesAll Class82CVErro -v7.3
 %%
 % calculate the classification error compared with stimlus distance.
 TempMatrixData = matrixData;
-SimTypesBack = StimTypesAll;
+% SimTypesBack = StimTypesAll;
 if mod(length(StimTypesAll),2)
     BoundFreqInds = ceil(length(StimTypesAll)/2);
     StimTypesAll(BoundFreqInds) = [];
@@ -278,7 +279,7 @@ save DisErrorDataAllSave.mat BetweenClassCorrData LeftClassCorrData RightClassCo
 
 %%
 if isPlot
-    h_sum = figure('position',[100 200 1000 800]);
+    h_sum = figure('position',[100 200 500 400]);
     hold on
     h1 = plot(BetweenClassCorrDataM(:,2)*OvatveStep,BetweenClassCorrDataM(:,1),'k-o','LineWidth',1.6);% between class distance vs error
     h2 = plot(LeftClassCorrDataM(:,2)*OvatveStep,LeftClassCorrDataM(:,1),'b-o','LineWidth',1.6); % left winthin group error

@@ -49,7 +49,7 @@ end
 TraceSpikeData = zeros(size(SessionTraceData));
 TraceEstimatedTrace = zeros(size(SessionTraceData));
 ROIFitCoefs = cell(nROIs,1);
-for cROI = 1 : nROIs
+parfor cROI = 1 : nROIs
     %%
     cROISessTrace = SessionTraceData(cROI,:)/100;
     cROISessTraceNM = cROISessTrace - min(cROISessTrace);
@@ -73,7 +73,13 @@ for cROI = 1 : nROIs
     else
         NFSignal = cROISessTraceNM;
     end 
-    
+%     if any(isnan(NFSignal))
+%         NFSignal = cROISessTraceNM;
+%         warning('cTrace filtering skipped due to nan value output.\n');
+%     end
+%     if any(isnan(NFSignal))
+%         fprintf('DEbug point.\n');
+%     end
     [cc2, spk2, opts_oasis2] = deconvolveCa(NFSignal,'ar2','optimize_b',true,'method','foopsi',...
                                     'optimize_pars',true,'maxIter',100,'smin',spkmin,'window',150,'lambda',lam);
     %%

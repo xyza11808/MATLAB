@@ -154,7 +154,7 @@ set(handles.(sprintf('Sess%dInfo_tag',SessIndex)),'String',...
         Anminfo.BatchNum,Anminfo.AnimalNum,Anminfo.SessionDate,Anminfo.TestNum));
 TempBehavPath = fullfile(InputString,'RandP_data_plots');
 GUIdataSummary.SessBehavPlotPath{SessIndex} = TempBehavPath;
-if ~exist(fullfile(GUIdataSummary.SessMorphPath{SessIndex},'MorphDataAll.mat'),'file')
+if ~exist(fullfile(GUIdataSummary.SessMorphPath{SessIndex},sprintf('ROI%d morph plot save.png',GUIdataSummary.ROINum)),'file')
     fprintf('ROI morph file seems not exists, please check the input path.\n');
     GUIdataSummary.SessMorphPath{SessIndex} = '';
     return;

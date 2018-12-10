@@ -7,17 +7,38 @@ if length(TimeScale) == 1
 elseif length(TimeScale) == 2
     FrameScale = sort([(start_frame + round(TimeScale(1)*frame_rate)),(start_frame + round(TimeScale(2)*frame_rate))]);
 end
-RespData = max(smooth_data(:,:,FrameScale(1):FrameScale(2)),[],3);
+if exist('UsedROIInds','var')
+    RespData = mean(data_aligned(:,UsedROIInds,FrameScale(1):FrameScale(2)),3);
+else
+    RespData = mean(data_aligned(:,:,FrameScale(1):FrameScale(2)),3);
+end
 %%
 % Trial outcomes correction
-AnimalChoice = behavResults.Action_choice;
+AnimalChoice = double(behavResults.Action_choice(:));
 UsingTrInds = AnimalChoice ~= 2;
 % UsingTrInds = trial_outcome == 1;
 UsingAnmChoice = double(AnimalChoice(UsingTrInds));
 UsingRespData = RespData(UsingTrInds,:);
-Stimlulus = double(behavResults.Stim_toneFreq(UsingTrInds));
+Stimlulus = (double(behavResults.Stim_toneFreq(UsingTrInds)))';
 TrialOutcomes = trial_outcome(UsingTrInds);
-TrialTypes = double(behavResults.Trial_Type(UsingTrInds));
+TrialTypes = (double(behavResults.Trial_Type(UsingTrInds)))';
+
+StimTypes = unique(Stimlulus);
+StimAvgDatas = zeros(numel(StimTypes),size(UsingRespData,2));
+StimRProb = zeros(numel(StimTypes),1);
+for cs = 1 : numel(StimTypes)
+    csInds = Stimlulus == StimTypes(cs);
+    StimAvgDatas(cs,:) = mean(UsingRespData(csInds,:));
+    
+    StimRProb(cs) = mean(UsingAnmChoice(csInds));
+end
+rescaleB = max(StimRProb);
+rescaleA = min(StimRProb);
+
+StimOctaves = log2(Stimlulus/min(Stimlulus)) - 1;
+StimOctaveTypes = unique(StimOctaves);
+BehavFit = FitPsycheCurveWH_nx(StimOctaves(:),UsingAnmChoice);
+
 %%
 % % % nTrs = size(UsingRespData,1);
 % % % nROI = size(UsingRespData,2);
@@ -112,21 +133,32 @@ TrialTypes = double(behavResults.Trial_Type(UsingTrInds));
 %%
 %%
 % repeats of same partition fold, using 100 times of repeats
-if ~isdir('./Test_anmChoice_predNew/')
-    mkdir('./Test_anmChoice_predNew/');
+if exist('UsedROIInds','var')
+    if ~isdir('./Test_anmChoice_predPartROI/')
+        mkdir('./Test_anmChoice_predPartROI/');
+    end
+    cd('./Test_anmChoice_predPartROI/');
+else
+    if ~isdir('./Test_anmChoice_predNew/')
+        mkdir('./Test_anmChoice_predNew/');
+    end
+    cd('./Test_anmChoice_predNew/');
 end
-cd('./Test_anmChoice_predNew/');
-
+%%
 nTrs = size(UsingRespData,1);
 nROI = size(UsingRespData,2);
-nRepeats = 100;
+nRepeats = 50;
 foldsRange = 20*ones(nRepeats,1);
 foldLen = length(foldsRange);
 IterPredChoice = zeros(foldLen,nTrs);
+ModelPerf = zeros(foldLen,foldsRange(1));
+ModelScoreAll = cell(foldLen,foldsRange(1));
 parfor nIters = 1 : foldLen
     kfolds = foldsRange(nIters);
     cp = cvpartition(nTrs,'k',kfolds);
     PredChoice = zeros(nTrs,1);
+    mdPerfTemp = zeros(kfolds,1);
+    TempMDFitAll = cell(kfolds,1);
     for nn = 1 : kfolds
         TrIdx = cp.training(nn);
         TeIdx = cp.test(nn);
@@ -134,18 +166,53 @@ parfor nIters = 1 : foldLen
         TrainingDataset = UsingRespData(TrIdx,:);
         Trainclasslabel = UsingAnmChoice(TrIdx);
         mdl = fitcsvm(TrainingDataset,Trainclasslabel(:));
-
+        
+        mdPerfTemp(nn) = kfoldLoss(crossval(mdl));
+        
         TestData = UsingRespData(TeIdx,:);
         PredC = predict(mdl,TestData);
-
+        
+        [~,Scores] = predict(mdl,StimAvgDatas);
+        UsedScores = Scores(:,2);
+        fityAll = (rescaleB-rescaleA)*((UsedScores-min(UsedScores))./(max(UsedScores)-min(UsedScores)))+rescaleA; 
+        TempMDFitAll{nn} = fityAll;
+        
         PredChoice(TeIdx) = PredC;
     end
+    ModelPerf(nIters,:) = mdPerfTemp;
     IterPredChoice(nIters,:) = PredChoice;
+    ModelScoreAll(nIters,:) = TempMDFitAll;
 end
+save ModelPredictionSave.mat ModelPerf IterPredChoice ModelScoreAll -v7.3
+%% plots the prediction score result and real behavior data
+MdPredsAll = (ModelScoreAll(:))';
+mdPredScoreMtx = cell2mat(MdPredsAll);
+OctMeanmdPredScore = mean(mdPredScoreMtx,2);
+PredScoreOctMtx = repmat(StimOctaveTypes(:),1,sum(foldsRange));
+
+PredScoreFits = FitPsycheCurveWH_nx(PredScoreOctMtx(:),mdPredScoreMtx(:));
+hScoref = figure('position',[100 100 420 340]);
+hold on
+plot(PredScoreFits.curve(:,1),PredScoreFits.curve(:,2),'r','linewidth',2);
+plot(BehavFit.curve(:,1),BehavFit.curve(:,2),'k','linewidth',2)
+plot(StimOctaveTypes,OctMeanmdPredScore,'ro','linewidth',1.8);
+plot(StimOctaveTypes,StimRProb,'ko','linewidth',1.8);
+xlim([-1.1 1.1]);
+ylim([-0.05 1.05]);
+set(gca,'xtick',StimOctaveTypes,'xticklabel',cellstr(num2str(StimTypes/1000,'%.1f')),'ytick',[0 0.5 1]);
+title('Pred score and behav compare plot');
+set(gca,'FontSize',12);
+xlabel('Frequnecy (kHz)');
+ylabel('Right prob');
+
+saveas(hScoref,'PredScore psychometric curve plots');
+saveas(hScoref,'PredScore psychometric curve plots','png');
+close(hScoref);
+
 %%
 % repeats of same partition fold, using 100 times of repeats
 
-TrialTypeMatrix = repmat(TrialTypes,foldLen,1);
+TrialTypeMatrix = repmat((TrialTypes(:))',foldLen,1);
 PredOutcomes = IterPredChoice == TrialTypeMatrix;
 StimTypes = unique(Stimlulus);
 GroupNum = length(StimTypes)/2;
@@ -164,10 +231,11 @@ StimOct = log2(StimTypes/min(StimTypes));
 Colormaps = cool(foldLen);
 h = figure;
 hold on;
-plot(StimOct,RealStimPerf,'k-o','LineWidth',2);
+
 for nxnx = 1 : foldLen
     plot(StimOct,PredStimPerf(:,nxnx),'-o','LineWidth',2,'Color',Colormaps(nxnx,:));
 end
+plot(StimOct,RealStimPerf,'k-o','LineWidth',2);
 xlabel('Octave');
 ylabel('Correct rate');
 ylim([0 1.1]);
@@ -177,8 +245,8 @@ saveas(h,'TbyT Pred animal choice correct rate');
 saveas(h,'TbyT Pred animal choice correct rate','png');
 close(h);
 %%
-TrialOutcomes = double(UsingAnmChoice == TrialTypes);
-StimTypes = unique(Stimlulus);
+TrialOutcomes = double(UsingAnmChoice(:) == TrialTypes(:));
+
 NumStim = length(StimTypes);
 StimPerformance = zeros(NumStim,1);
 StimInds = cell(NumStim,1);
@@ -198,23 +266,25 @@ PredRightwardPerf = PredStimPerf;
 RealRightwardPerf(1:GroupNum) = 1 - RealRightwardPerf(1:GroupNum);
 PredRightwardPerf(1:GroupNum,:) = 1 - PredRightwardPerf(1:GroupNum,:);
 PredRightwardPerfMean = mean(PredRightwardPerf,2);
-[~,breal] = fit_logistic(StimOct,RealRightwardPerf);
-[~,bPred] = fit_logistic(StimOct,PredRightwardPerfMean);
+[~,breal] = fit_logistic(StimOctaveTypes,RealRightwardPerf);
+[~,bPred] = fit_logistic(StimOctaveTypes,PredRightwardPerfMean);
 modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));
-curvex = linspace(min(StimOct),max(StimOct),500);
+curvex = linspace(min(StimOctaveTypes),max(StimOctaveTypes),500);
 curve_realy = modelfun(breal,curvex);
 curve_fity = modelfun(bPred,curvex);
 
-h2CompPlot=figure('position',[300 150 1100 900],'PaperpositionMode','auto');
+h2CompPlot=figure('position',[300 150 500 400],'PaperpositionMode','auto');
 hold on;
 plot(curvex,curve_fity,'r','LineWidth',2);
 plot(curvex,curve_realy,'k','LineWidth',2);
-scatter(StimOct,RealRightwardPerf,80,'k','o','LineWidth',2);
-scatter(StimOct,PredRightwardPerfMean,80,'r','o','LineWidth',2);
-text(StimOct(2),0.8,sprintf('nROI = %d',nROI),'FontSize',15);
+scatter(StimOctaveTypes,RealRightwardPerf,50,'k','o','LineWidth',2);
+scatter(StimOctaveTypes,PredRightwardPerfMean,50,'r','o','LineWidth',2);
+text(StimOctaveTypes(2),0.8,sprintf('nROI = %d',nROI),'FontSize',10);
 legend('logi\_fitc','logi\_realc','Real\_data','Fit\_data','location','southeast');
 legend('boxoff');
-set(gca,'xtick',StimOct,'xticklabel',cellstr(num2str(StimTypes(:)/1000,'%.2f')),'FontSize',20);
+xlim([-1.1 1.1]);
+ylim([-0.05 1.05]);
+set(gca,'xtick',StimOctaveTypes,'xticklabel',cellstr(num2str(StimTypes(:)/1000,'%.2f')),'FontSize',10);
 xlabel('Tone Frequency (kHz)');
 ylabel('Rightward Probability');
 saveas(h2CompPlot,'TBYT choice decoding result compare plot');
@@ -248,7 +318,7 @@ if LabelMeanS
     ROCSummary = 1 - ROCSummary;
 end
 
-h_dis = figure('position',[100 100 1000 800]);
+h_dis = figure('position',[100 100 500 400]);
 hold on;
 bar(ChoceLeftCenters,ChoceLeftCounts*(-1),0.4,'FaceColor','b','EdgeColor','none');
 bar(ChoceRightCenters,ChoceRightCounts,0.4,'FaceColor','r','EdgeColor','none');
@@ -261,7 +331,7 @@ set(gca,'ytick',ylimvalues+[0.1,-0.1],'yticklabel',{'Left choice','Right choice'
 ylabel('Anmimal choice');
 xlabel('Right choice probability');
 title('Probability distribution');
-set(gca,'FontSize',18);
+set(gca,'FontSize',10);
 text(0.2,0.4,sprintf('AUC = %.4f',ROCSummary),'FontSize',16,'Color','k');
 saveas(h_dis,'Distribution of animal choice compared with rightpred probability worstPerf');
 saveas(h_dis,'Distribution of animal choice compared with rightpred probability worstPerf','png');
@@ -291,7 +361,7 @@ if LabelMeanS
     ROCSummary = 1 - ROCSummary;
 end
 
-h_dis = figure('position',[100 100 1000 800]);
+h_dis = figure('position',[100 100 500 400]);
 hold on;
 bar(ChoceLeftCenters,ChoceLeftCounts*(-1),0.4,'FaceColor','b','EdgeColor','none');
 bar(ChoceRightCenters,ChoceRightCounts,0.4,'FaceColor','r','EdgeColor','none');
@@ -304,7 +374,7 @@ set(gca,'ytick',ylimvalues+[0.1,-0.1],'yticklabel',{'Left choice','Right choice'
 ylabel('Anmimal choice');
 xlabel('Right choice probability');
 title('Probability distribution');
-set(gca,'FontSize',18);
+set(gca,'FontSize',10);
 text(0.2,0.4,sprintf('AUC = %.4f',ROCSummary),'FontSize',16,'Color','k');
 saveas(h_dis,'Distribution of animal choice compared with rightpred probability');
 saveas(h_dis,'Distribution of animal choice compared with rightpred probability','png');

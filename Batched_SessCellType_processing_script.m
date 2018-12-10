@@ -10,6 +10,7 @@ fPath = fullfile(fp,fn);
 fids = fopen(fPath);
 tline = fgetl(fids);
 NormSessPathTask = {};
+NormSessPathPass = {};
 m = 1;
 
 while ischar(tline)
@@ -19,7 +20,12 @@ while ischar(tline)
     end
     
     NormSessPathTask{m} = tline;
-
+    
+    [~,EndInds] = regexp(tline,'test\d{2,3}');
+    cPassDataUpperPath = fullfile(sprintf('%srf',tline(1:EndInds)),'im_data_reg_cpu','result_save');
+    PassPathline = fullfile(cPassDataUpperPath,'plot_save','NO_Correction');
+    NormSessPathPass{m} = PassPathline;
+    
     tline = fgetl(fids);
     m = m + 1;
 end

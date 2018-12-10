@@ -16,7 +16,7 @@ for cSess = 1 : nSessPath
     %
     Passtline = NormSessPathPass{cSess};
     Tasktline = NormSessPathTask{cSess};
-    
+     
     %
     TaskDataStrc = load(fullfile(Tasktline,'CSessionData.mat'));
     PassDataStrc = load(fullfile(Passtline,'rfSelectDataSet.mat')); 

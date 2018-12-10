@@ -65,9 +65,9 @@ end
 cclr
 %%
 % load('SessCompDataSave.mat', 'SessPaths')
-SessPaths = {'S:\BatchData\batch55\20180905\anm07\test06\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
-    'S:\BatchData\batch55\20180910\anm07\test06\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'};%,... %
-%     'S:\BatchData\batch55\20180908\anm03\test02\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'};%,...
+SessPaths = {'P:\BatchData\batch55\20180825\anm03\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
+    'P:\BatchData\batch55\20180830\anm03\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',... %};%
+    'S:\BatchData\batch55\20180908\anm03\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'};%,...
 %     'S:\BatchData\batch58\20181112\anm03\test02\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'};
 nSess = length(SessPaths);
 SessDataAll = cell(nSess,1);
@@ -89,6 +89,13 @@ end
 ComparedROINum = min(SessROINum);
 CompROIIndexCell = cell2mat((cellfun(@(x) x(1:ComparedROINum),SessROIIndexAll,'UniformOutput',false))');
 UsedROIindex = sum(CompROIIndexCell,2) == nSess;
+
+for cSess = 1 : nSess
+    cSessUsedROIIndexPath = fullfile(SessPaths{cSess},'Tunning_fun_plot_New1s','SelectROIIndex.mat');
+    ROIIndex = SessROIIndexAll{cSess};
+    save(cSessUsedROIIndexPath,'ROIIndex','UsedROIindex','-v7.3');
+end
+    
 %%
 SessTaskDataAll = cell(nSess,1);
 SessPassDataAll = cell(nSess,1);

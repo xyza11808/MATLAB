@@ -131,6 +131,22 @@
 % returns a test decision for the null hypothesis that the data in vector x comes from a distribution in the normal family, 
 % against the alternative that it does not come from such a distribution, using a Lilliefors test.
 
+% ######################
+% GrdistPlot(GrData,varargin)
+% custum function used for Group data plots
+
+
+% ############################
+% exponential decay function, lamda insicates 'exponential decay constant'
+% N0 = 1;
+% lamda = 0.8;
+% t = 0 : 1/30 : 5;
+% mdFun = @(x) N0*exp(-lamda*x);
+% 
+% figure;
+% plot(t,mdFun(t))
+% https://en.wikipedia.org/wiki/Exponential_decay
+
 %% %%%%% ##################################################################
 %extract data from fig file
   h = gcf; %current figure handle
