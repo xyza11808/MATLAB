@@ -118,15 +118,15 @@ end
 
 %%
 % batched ROI morph plot
-nSessPath = length(NormSessPathTask); % NormSessPathTask  NormSessPathPass
+nSessPath = length(NormSessPathPass); % NormSessPathTask  NormSessPathPass
 for cSess = 1 : nSessPath
     %
-    cSessPath = NormSessPathTask{cSess};
+    cSessPath = NormSessPathPass{cSess};
 %     [~,EndInds] = regexp(cSessPath,'result_save');
 %     tline = cSessPath(1:EndInds);
     %
     [~,EndInds] = regexp(cSessPath,'result_save');
-    ROIposfilePath = cSessPath(1:EndInds);
+    ROIposfilePath = cSessPath(1:EndInds); 
     cd(ROIposfilePath);
     if exist('./ROI_morph_plot/MorphDataAll.mat','file')
         continue;
@@ -395,7 +395,7 @@ m = 1;
 
 nSess = length(NormSessPathTask);
 for cSS = 1 : nSess
-    %
+    %%
     tline = NormSessPathTask{cSS};
 %     if isempty(strfind(tline,'NO_Correction\mode_f_change'))
 %        tline = fgetl(ff);
@@ -826,14 +826,14 @@ for cSS = 1 : nSess
             ErroSessInds(m) = cSS;
             m = m + 1;
         end
-        %
+        %%
 end
 
 %% batched colormap plots
 CusMap = blue2red_2(32,0.8);
 % NSessions = length(NormSessPathTask);
 NSessions = length(NormSessPathTask);
-for cSess = 1 : NSessions 
+for cSess = 22 : NSessions 
     %
     clearvars -except NSessions NormSessPathTask CusMap cSess UsedPathAll 
 %     tline = NormSessPathTask{cSess};
@@ -1953,10 +1953,10 @@ for cSess = 35 : nSess
 %         load(fullfile(cSessPath,'EstimateSPsaveNewMth.mat'));
 %     end
     load(fullfile(cSessPath,'CSessionData.mat'),'DataRaw','frame_rate','data_aligned','behavResults','start_frame');
-    if ~exist('DataRaw','var')
-        load(fullfile(cSessPath,'EstimateSPsaveNewAR2.mat'),'DataRaw');
-%         DataRaw = data;
-    end
+%     if ~exist('DataRaw','var')
+%         load(fullfile(cSessPath,'EstimateSPsaveNewAR2.mat'),'DataRaw');
+% %         DataRaw = data;
+%     end
     
     nnspike = Fluo2SpikeConstrainOOpsi(DataRaw,[],[],frame_rate,1);
     FrameInds = cellfun(@(x) size(x,2),DataRaw);
@@ -1996,19 +1996,20 @@ end
 % batched spike data analysis for passive sessions
 clearvars -except NormSessPathPass NormSessPathTask
 
-%
+%%
 nSess = length(NormSessPathPass);
 ErroSess = [];
 for css = 1 : nSess
     
     csPath = NormSessPathPass{css};
     cd(csPath);
-    clearvars SelectSArray SelectData
+    clearvars SelectSArray SelectData nnspike
     
-    load('rfSelectDataSet.mat');
+%     load('rfSelectDataSet.mat');
     
     try
         PassSP_Data_script
+        PassCoef_toMtx_script;
     catch
         ErroSess = [ErroSess,css];
         fprintf('Error occurs for session %d.\n',css);
@@ -2075,8 +2076,8 @@ for css = 1 : nSess
     
     clearvars behavResults data_aligned frame_rate
     load('CSessionData.mat')
-%     Partitioned_neurometric_prediction;
-    multiCClass(data_aligned,behavResults,trial_outcome,start_frame,frame_rate,1,[]);
+    Partitioned_neurometric_prediction;
+%     multiCClass(data_aligned,behavResults,trial_outcome,start_frame,frame_rate,1,[]);
     
 end
 
@@ -2088,21 +2089,21 @@ nSess = length(NormSessPathTask);
 ErroSess = [];
 for css = 1:nSess
     try
-        %
+        %%
         cSessPath = NormSessPathTask{css};
         cd(cSessPath);
-        %
+        %%
         cSessPath = pwd;
     
         clearvars -except NormSessPathTask NormSessPathPass nSess ErroSess css cSessPath
 %         clearvars ROIAboveThresInds ROIRespTypeCoef ROIRespType
 %         if exist('SPDataBehavCoefSaveOff.mat','file')
-            load('SPDataBehavCoefSaveOff.mat');
+%             load('SPDataBehavCoefSaveOff.mat');
 %         else
 %             clearvars behavResults nnspike DataRaw
-%             load('EstimateSPsaveNewMth.mat');
-%             TrSummarization_WithStimOff_script;
-%     end
+            load('EstimateSPsaveNewMth.mat');
+            TrSummarization_WithStimOff_script;
+%         end
 %         clearvars ROIRespType ROIRespTypeCoef
 %         clearvars -except NormSessPathTask NormSessPathPass nSess ErroSess css cSessPath
 %         load('SPDataBehavCoefSaveOff.mat');
@@ -2114,7 +2115,7 @@ for css = 1:nSess
 %         end
     
         ExtractROI_Inds_script
-     % 
+     %% 
     catch
         ErroSess = [ErroSess,css];
         sprintf('Error at session %d.\n',css);
@@ -2133,7 +2134,7 @@ for css = 1 : nSession
     cd(cTaskPath);
     try
         clearvars TaskCoefDataStrc PassCoefDataStrc
-%%
+%
         TaskCoefPath = fullfile(cTaskPath,'SigSelectiveROIInds.mat');
         TaskCoefDataStrc = load(TaskCoefPath);
         PassCoefPath = fullfile(cPassPath,'ROIglmCoefSave.mat');
@@ -2275,7 +2276,7 @@ for cSess = 1 : nSession
         if ismac
             pptSavePath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
         elseif ispc
-            pptSavePath = 'S:\BatchData\batch58';
+            pptSavePath = 'S:\BatchData\batch55\summarization';
         end
         %
     end
@@ -2290,8 +2291,8 @@ for cSess = 1 : nSession
     TunDisPlotPath = fullfile(tline,'Task passive Tuning distribution plots.png');
     
     NlnFitTunDataPath = fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plotsNew','NewLog_fit_test_new');
-    TunDataCPfid = imread(fullfile(NlnFitTunDataPath,'Tuning ROIs CommonZs summary plots.png'));
-    CatgDataCPfid = imread(fullfile(NlnFitTunDataPath,'Categ ROIs summary plots.png'));
+%     TunDataCPfid = imread(fullfile(NlnFitTunDataPath,'Tuning ROIs CommonZs summary plots.png'));
+%     CatgDataCPfid = imread(fullfile(NlnFitTunDataPath,'Categ ROIs summary plots.png'));
 
     pptFullfile = fullfile(pptSavePath,PPTname);
     if ~exist(pptFullfile,'file')
@@ -2316,8 +2317,8 @@ for cSess = 1 : nSession
     exportToPPTX('addpicture',imread(BehavDataPath),'Position',[0 6 3.53 3]);
     
     exportToPPTX('addpicture',imread(TunDisPlotPath),'Position',[4 6 4 3]);
-    exportToPPTX('addpicture',TunDataCPfid,'Position',[8 1 8 3]);
-    exportToPPTX('addpicture',CatgDataCPfid,'Position',[8 5 8 3]);
+%     exportToPPTX('addpicture',TunDataCPfid,'Position',[8 1 8 3]);
+%     exportToPPTX('addpicture',CatgDataCPfid,'Position',[8 5 8 3]);
 %     exportToPPTX('addtext','Task','Position',[9 1 1 1],'FontSize',20);
 %     exportToPPTX('addtext','Pass','Position',[14 1 1 1],'FontSize',20);
 

@@ -6,11 +6,13 @@
 % figure;plot(ROI1Trace)
 % f_percent_change = f_percent_change;
 %%
-if exist('EstimatedSPDataAR2.mat','file')  && exist('ROIglmCoefSave.mat','file')
-%     return;
-end
-nnspike = Fluo2SpikeConstrainOOpsi(SelectData,[],[],frame_rate,2);
-save EstimatedSPDatafilter.mat nnspike SelectData SelectSArray frame_rate -v7.3
+% if exist('EstimatedSPDataAR2.mat','file')  && exist('ROIglmCoefSave.mat','file')
+% %     return;
+% end
+% nnspike = Fluo2SpikeConstrainOOpsi(SelectData,[],[],frame_rate,2);
+% save EstimatedSPDatafilter.mat nnspike SelectData SelectSArray frame_rate -v7.3
+load('EstimatedSPDatafilter.mat');
+load('rfSelectDataSet.mat','SelectData');
 % load('EstimatedSPDataAR2.mat','nnspike');
 % SP data plots for preview
 % FreqTypes = unique(SelectSArray);
@@ -49,6 +51,10 @@ save EstimatedSPDatafilter.mat nnspike SelectData SelectSArray frame_rate -v7.3
 %
 Time_Win = 0.3;
 FrameWin = round(Time_Win * frame_rate);
+
+FrameDurStrc = load('rfSelectDataSet.mat','sound_array');
+FrameDurData = round(FrameDurStrc.sound_array(:,3)/1000*frame_rate);
+
 OnsetFrame = frame_rate;
 OffsetFrame = frame_rate+FrameWin;
 
@@ -73,17 +79,45 @@ options = glmnetSet;
 options.alpha = 0.9;
 options.nlambda = 110;
 nROIs = size(SelectData,2);
-
+nTrials = size(SelectData,1);
+IsVariedDur = 0;
+if length(unique(FrameDurData)) > 2
+    IsVariedDur = 1;
+end
 ROICoefData = cell(nROIs,1);
+ROIOnOffFResp = zeros(nROIs,nFreqs*2);
 % for loop for each ROI
 for cROI = 1 : nROIs
+    %
     ROISPData = squeeze(nnspike(:,cROI,:));
     ROISPTrace = reshape(ROISPData',[],1);
-
+    cROIRawData = squeeze(SelectData(:,cROI,:));
+    
     OnsetTrResp = mean(ROISPData(:,OnsetFrame+1:OnsetFrame+FrameWin),2);
-    OffTrResp = mean(ROISPData(:,OffsetFrame+1:OffsetFrame+FrameWin),2);
+    OnsetTrFReap = mean(cROIRawData(:,OnsetFrame+1:OnsetFrame+FrameWin),2);
+    if IsVariedDur
+       TempRespData = zeros(nTrials,FrameWin); 
+       TempFRespData = zeros(nTrials,FrameWin); 
+       for cTr = 1 : nTrials
+           TempRespData(cTr,:) = ROISPData(cTr,FrameDurData(cTr)+1:FrameDurData(cTr)+FrameWin);
+           TempFRespData(cTr,:) = cROIRawData(cTr,FrameDurData(cTr)+1:FrameDurData(cTr)+FrameWin);
+       end
+       OffTrResp = mean(TempRespData,2);
+       OffFTrResp = mean(TempFRespData,2);
+    else
+        OffTrResp = mean(ROISPData(:,OffsetFrame+1:OffsetFrame+FrameWin),2);
+        OffFTrResp = mean(cROIRawData(:,OffsetFrame+1:OffsetFrame+FrameWin),2);
+    end
     RespMtx = [OnsetTrResp,OffTrResp];
-
+    
+    
+    for cFreqs = 1 : nFreqs
+        cFreqsInds = SelectSArray == FreqTypes(cFreqs);
+        ROIOnOffFResp(cROI,cFreqs) = mean(OnsetTrFReap(cFreqsInds));
+        ROIOnOffFResp(cROI,cFreqs+nFreqs) = mean(OffFTrResp(cFreqsInds));
+    end
+        
+%
     TotalRespMtx = RespMtx(:);
 
     nRepeats = 5;
@@ -136,11 +170,14 @@ for cr = 1 : nROIs
     %
     crCoef = ROICoefData{cr};
     crCoefMtx = cell2mat(crCoef(:,1));
+    cROIResp = ROIOnOffFResp(cr,:);
     
     AvgCoefData = mean(abs(crCoefMtx));
-    crCoefAboveThres = double(mean(abs(crCoefMtx) > 0.5) >= 0.5);
+    crCoefAboveThres = double(mean(abs(crCoefMtx) > 0.4) >= 0.6);
+    crCoefAboveThres(cROIResp < 10) = 0;
+    
     AvgCoefInds = mean(crCoefMtx);
-    NegRespInds = AvgCoefInds < 0; % exclude negtive response value, which may just caused by no response
+    NegRespInds = AvgCoefInds < 0; % exclude negtive response value, which may just caused by negtive response
     crCoefAboveThres(NegRespInds) = 0;
     
     if sum(crCoefAboveThres)
@@ -166,5 +203,5 @@ for cr = 1 : nROIs
    %
 end
 %%
-save ROIglmCoefSave.mat ROIAboveThresSummary FreqTypes PassBFInds -v7.3
+save ROIglmCoefSave.mat ROIAboveThresSummary FreqTypes PassBFInds ROICoefData ROIOnOffFResp -v7.3
 

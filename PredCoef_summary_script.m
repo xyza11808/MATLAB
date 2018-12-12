@@ -39,7 +39,7 @@ AnsFWin = round(AnsWin*SoundAlignDataStrc.Frate);
 AnsWinRespALL = cell(3,1);
 for cAns = 1 : 3
     cAnsF = AnsFWin(cAns,:);
-    if AnsAlignDataStrc.MinAnsF+AnsFWin(2) > cAnsFrame
+    if AnsAlignDataStrc.MinAnsF+cAnsF(2) > cAnsFrame
         AnsWinResp = ChoiceSortAnsData(:,:,AnsAlignDataStrc.MinAnsF+cAnsF(1):end);
         AnsWinResp = AnsWinResp - repmat(ChoiceSortAnsData(:,:,AnsAlignDataStrc.MinAnsF),1,1,size(AnsWinResp,3));
     else

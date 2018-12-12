@@ -130,7 +130,7 @@ BehavFit = FitPsycheCurveWH_nx(StimOctaves(:),UsingAnmChoice);
 % % % % close(h2CompPlot);
 % % % 
 % % % cd ..;
-%%
+%
 %%
 % repeats of same partition fold, using 100 times of repeats
 if exist('UsedROIInds','var')
@@ -147,18 +147,20 @@ end
 %%
 nTrs = size(UsingRespData,1);
 nROI = size(UsingRespData,2);
-nRepeats = 50;
-foldsRange = 20*ones(nRepeats,1);
+nRepeats = 200;
+foldsRange = 6*ones(nRepeats,1);
 foldLen = length(foldsRange);
 IterPredChoice = zeros(foldLen,nTrs);
 ModelPerf = zeros(foldLen,foldsRange(1));
 ModelScoreAll = cell(foldLen,foldsRange(1));
+TestScoreAll = cell(foldLen,foldsRange(1));
 parfor nIters = 1 : foldLen
     kfolds = foldsRange(nIters);
     cp = cvpartition(nTrs,'k',kfolds);
     PredChoice = zeros(nTrs,1);
     mdPerfTemp = zeros(kfolds,1);
     TempMDFitAll = cell(kfolds,1);
+    TempTestScoreFit = cell(kfolds,1);
     for nn = 1 : kfolds
         TrIdx = cp.training(nn);
         TeIdx = cp.test(nn);
@@ -172,6 +174,28 @@ parfor nIters = 1 : foldLen
         TestData = UsingRespData(TeIdx,:);
         PredC = predict(mdl,TestData);
         
+        TestTrFreqs = StimOctaves(TeIdx);
+        TrFreqAvgData = cell(numel(StimOctaveTypes),1);
+        for cfreq = 1 : numel(StimOctaveTypes)
+            cfreqInds = TestTrFreqs == StimOctaveTypes(cfreq);
+%             disp(sum(cfreqInds));
+            if sum(cfreqInds) == 1
+                TrFreqAvgData{cfreq} = TestData(cfreqInds,:);
+            else
+                TrFreqAvgData{cfreq} = mean(TestData(cfreqInds,:));
+            end
+        end
+        EmptyInds = cellfun(@isempty,TrFreqAvgData);
+        if sum(EmptyInds)
+            TempTestScoreFit{nn} = [];
+        else
+            TestFreqAvgData = cell2mat(TrFreqAvgData);
+            [~,TestScore] = predict(mdl,TestFreqAvgData);
+            TestUseScore = TestScore(:,2);
+%             TEstFFit = (rescaleB-rescaleA)*((TestUseScore-min(TestUseScore))./(max(TestUseScore)-min(TestUseScore)))+rescaleA;
+            TempTestScoreFit{nn} = TestUseScore;
+        end 
+        
         [~,Scores] = predict(mdl,StimAvgDatas);
         UsedScores = Scores(:,2);
         fityAll = (rescaleB-rescaleA)*((UsedScores-min(UsedScores))./(max(UsedScores)-min(UsedScores)))+rescaleA; 
@@ -182,8 +206,10 @@ parfor nIters = 1 : foldLen
     ModelPerf(nIters,:) = mdPerfTemp;
     IterPredChoice(nIters,:) = PredChoice;
     ModelScoreAll(nIters,:) = TempMDFitAll;
+    TestScoreAll(nIters,:) = TempTestScoreFit;
 end
-save ModelPredictionSave.mat ModelPerf IterPredChoice ModelScoreAll -v7.3
+
+save ModelPredictionSave.mat ModelPerf IterPredChoice ModelScoreAll TestScoreAll -v7.3
 %% plots the prediction score result and real behavior data
 MdPredsAll = (ModelScoreAll(:))';
 mdPredScoreMtx = cell2mat(MdPredsAll);
@@ -266,30 +292,64 @@ PredRightwardPerf = PredStimPerf;
 RealRightwardPerf(1:GroupNum) = 1 - RealRightwardPerf(1:GroupNum);
 PredRightwardPerf(1:GroupNum,:) = 1 - PredRightwardPerf(1:GroupNum,:);
 PredRightwardPerfMean = mean(PredRightwardPerf,2);
-[~,breal] = fit_logistic(StimOctaveTypes,RealRightwardPerf);
-[~,bPred] = fit_logistic(StimOctaveTypes,PredRightwardPerfMean);
-modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));
-curvex = linspace(min(StimOctaveTypes),max(StimOctaveTypes),500);
-curve_realy = modelfun(breal,curvex);
-curve_fity = modelfun(bPred,curvex);
+PredRightwardPerfSEM = std(PredRightwardPerf,[],2);%/sqrt(size(PredRightwardPerf,2));
+PerfFit = FitPsycheCurveWH_nx(StimOctaveTypes,PredRightwardPerfMean);
+
+% [~,breal] = fit_logistic(StimOctaveTypes,RealRightwardPerf);
+% [~,bPred] = fit_logistic(StimOctaveTypes,PredRightwardPerfMean);
+% modelfun = @(p1,t)(p1(2)./(1 + exp(-p1(3).*(t-p1(1)))));
+% curvex = linspace(min(StimOctaveTypes),max(StimOctaveTypes),500);
+% curve_realy = modelfun(breal,curvex);
+% curve_fity = modelfun(bPred,curvex);
 
 h2CompPlot=figure('position',[300 150 500 400],'PaperpositionMode','auto');
 hold on;
-plot(curvex,curve_fity,'r','LineWidth',2);
-plot(curvex,curve_realy,'k','LineWidth',2);
-scatter(StimOctaveTypes,RealRightwardPerf,50,'k','o','LineWidth',2);
-scatter(StimOctaveTypes,PredRightwardPerfMean,50,'r','o','LineWidth',2);
+plot(PerfFit.curve(:,1),PerfFit.curve(:,2),'r','LineWidth',2);
+plot(BehavFit.curve(:,1),BehavFit.curve(:,2),'k','linewidth',2)
+plot(StimOctaveTypes,StimRProb,'ko','linewidth',1.8);
+errorbar(StimOctaveTypes,PredRightwardPerfMean,PredRightwardPerfSEM,'ro','linewidth',1.8);
 text(StimOctaveTypes(2),0.8,sprintf('nROI = %d',nROI),'FontSize',10);
 legend('logi\_fitc','logi\_realc','Real\_data','Fit\_data','location','southeast');
 legend('boxoff');
 xlim([-1.1 1.1]);
 ylim([-0.05 1.05]);
-set(gca,'xtick',StimOctaveTypes,'xticklabel',cellstr(num2str(StimTypes(:)/1000,'%.2f')),'FontSize',10);
+set(gca,'xtick',StimOctaveTypes,'xticklabel',cellstr(num2str(StimTypes(:)/1000,'%.2f')),'FontSize',12);
 xlabel('Tone Frequency (kHz)');
 ylabel('Rightward Probability');
 saveas(h2CompPlot,'TBYT choice decoding result compare plot');
 saveas(h2CompPlot,'TBYT choice decoding result compare plot','png');
 close(h2CompPlot);
+
+%% Test score Prediction plot
+TestScoreMtx = cell2mat((TestScoreAll(:))');
+PosNaNInds = sum(isnan(TestScoreMtx)) == 0;
+UsedTestScoreMtx = TestScoreMtx(:,PosNaNInds);
+AvgUsedTestScore = mean(UsedTestScoreMtx,2);
+AvgUsedTestRPRob = (rescaleB-rescaleA)*((AvgUsedTestScore-min(AvgUsedTestScore))./...
+    (max(AvgUsedTestScore)-min(AvgUsedTestScore)))+rescaleA; 
+% StdUsedTestScore = std(UsedTestScoreMtx,[],2);
+% UsedNum = size(UsedTestScoreMtx,2);
+% CurBehavFits = FitPsycheCurveWH_nx(StimOctaves(:),UsingAnmChoice(:));
+CurTestScorFit = FitPsycheCurveWH_nx(StimOctaveTypes(:),AvgUsedTestRPRob);
+
+hTestScoref = figure('position',[100 100 420 340]);
+hold on
+plot(CurTestScorFit.curve(:,1),CurTestScorFit.curve(:,2),'r','linewidth',2);
+plot(BehavFit.curve(:,1),BehavFit.curve(:,2),'k','linewidth',2)
+plot(StimOctaveTypes,AvgUsedTestRPRob,'ro','linewidth',1.8);
+plot(StimOctaveTypes,StimRProb,'ko','linewidth',1.8);
+xlim([-1.1 1.1]);
+ylim([-0.05 1.05]);
+set(gca,'xtick',StimOctaveTypes,'xticklabel',cellstr(num2str(StimTypes/1000,'%.1f')),'ytick',[0 0.5 1]);
+title('Testing trial score and behav compare plot');
+set(gca,'FontSize',12);
+xlabel('Frequnecy (kHz)');
+ylabel('Right prob');
+
+saveas(hTestScoref,'TestPredScore psychometric curve plots');
+saveas(hTestScoref,'TestPredScore psychometric curve plots','png');
+close(hTestScoref);
+
 
 %%
 % new distribution plots for only worst trials
