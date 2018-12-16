@@ -99,7 +99,7 @@ end
 NumPaths = length(Sess4_16_Part1_PathAll);
 for cPath = 10 : NumPaths
     c832Path = Sess8_32PathAll{cPath};
-    c416Path = Sess4_16_Part1_PathAll{cPath};
+    c416Path = Sess4_16_Part1_PathAll{cPath};zzzzz
     
     cSess832Path = fullfile(c832Path,'Tunning_fun_plot_New1s','NMTuned Meanfreq colormap plot','TaskPassBFDis.mat');
     cSess832TunData = load(cSess832Path);

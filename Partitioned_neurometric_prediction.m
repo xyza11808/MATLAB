@@ -1,7 +1,7 @@
 
 % this scripts is used for analysis of the trial by trial results by using
 % error trials as real behavior choice for training
-TimeScale = 1.5;
+TimeScale = 1;
 if length(TimeScale) == 1
     FrameScale = sort([(start_frame+1),(start_frame + round(TimeScale*frame_rate))]);
 elseif length(TimeScale) == 2
@@ -350,7 +350,7 @@ saveas(hTestScoref,'TestPredScore psychometric curve plots');
 saveas(hTestScoref,'TestPredScore psychometric curve plots','png');
 close(hTestScoref);
 
-
+save NeuroCurveVSBehav.mat StimOctaveTypes AvgUsedTestRPRob StimRProb PredRightwardPerfMean -v7.3
 %%
 % new distribution plots for only worst trials
 % plots the trial by trial choice prob

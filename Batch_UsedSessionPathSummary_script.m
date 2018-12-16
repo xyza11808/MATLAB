@@ -838,8 +838,8 @@ for cSess = 22 : NSessions
     clearvars -except NSessions NormSessPathTask CusMap cSess UsedPathAll 
 %     tline = NormSessPathTask{cSess};
     tline =  NormSessPathTask{cSess};
-    % passive tuning frequency colormap plot
-    load(fullfile(tline,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'));
+    %% passive tuning frequency colormap plot
+    load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));
     [~,EndInds] = regexp(tline,'result_save');
     ROIposfilePath = tline(1:EndInds);
@@ -1080,15 +1080,15 @@ for cSess = 22 : NSessions
     % extract task session maxium responsive frequency index
     % UsedOctaveInds = ~(abs(PassFreqOctave) > 1);
     UsedOctave = TaskFreqOctave(:);
-    CorrUsedTrNumbers = CorrTypeNum;
-    FewTrNumInds = CorrUsedTrNumbers < 5;
-    if ~sum(FewTrNumInds)
+%     CorrUsedTrNumbers = CorrTypeNum;
+%     FewTrNumInds = CorrUsedTrNumbers < 5;
+%     if ~sum(FewTrNumInds)
         UsedOctaveData = CorrTunningFun;
-    else  % in case of few correct trials available, NM data will be replaced for correct datas
-        UsedOctaveData = CorrTunningFun;
-        AdditionalData = NonMissTunningFun(FewTrNumInds,:);
-        UsedOctaveData(FewTrNumInds,:) = AdditionalData;
-    end
+%     else  % in case of few correct trials available, NM data will be replaced for correct datas
+%         UsedOctaveData = CorrTunningFun;
+%         AdditionalData = NonMissTunningFun(FewTrNumInds,:);
+%         UsedOctaveData(FewTrNumInds,:) = AdditionalData;
+%     end
 %     UsedOctaveData = NonMissTunningFun;
     nROIs = size(UsedOctaveData,2);
     [MaxAmp,maxInds] = max(UsedOctaveData);
@@ -1350,7 +1350,7 @@ for cSess = 22 : NSessions
     saveas(hf,'Bound2Behav diff compare scatter plot');
     saveas(hf,'Bound2Behav diff compare scatter plot','png');
     close(hf);
-    %
+    %%
 end
 
 %% gray map plots
@@ -1937,7 +1937,7 @@ end
 clearvars -except NormSessPathTask NormSessPathPass
 nSess = length(NormSessPathTask);
 
-for cSess = 35 : nSess
+for cSess = 1 : nSess
     cSessPath = NormSessPathTask{cSess};
     cd(cSessPath);
     
@@ -1953,10 +1953,10 @@ for cSess = 35 : nSess
 %         load(fullfile(cSessPath,'EstimateSPsaveNewMth.mat'));
 %     end
     load(fullfile(cSessPath,'CSessionData.mat'),'DataRaw','frame_rate','data_aligned','behavResults','start_frame');
-%     if ~exist('DataRaw','var')
-%         load(fullfile(cSessPath,'EstimateSPsaveNewAR2.mat'),'DataRaw');
-% %         DataRaw = data;
-%     end
+    if ~exist('DataRaw','var')
+        load(fullfile(cSessPath,'EstimateSPsaveNewAR2.mat'),'DataRaw');
+%         DataRaw = data;
+    end
     
     nnspike = Fluo2SpikeConstrainOOpsi(DataRaw,[],[],frame_rate,1);
     FrameInds = cellfun(@(x) size(x,2),DataRaw);
@@ -2003,9 +2003,9 @@ for css = 1 : nSess
     
     csPath = NormSessPathPass{css};
     cd(csPath);
-    clearvars SelectSArray SelectData nnspike
-    
-%     load('rfSelectDataSet.mat');
+%     clearvars SelectSArray SelectData nnspike
+    clearvars PassiveTunROIStrc
+    load('rfSelectDataSet.mat');
     
     try
         PassSP_Data_script
@@ -2089,10 +2089,10 @@ nSess = length(NormSessPathTask);
 ErroSess = [];
 for css = 1:nSess
     try
-        %%
+        %
         cSessPath = NormSessPathTask{css};
         cd(cSessPath);
-        %%
+        %
         cSessPath = pwd;
     
         clearvars -except NormSessPathTask NormSessPathPass nSess ErroSess css cSessPath
@@ -2115,7 +2115,7 @@ for css = 1:nSess
 %         end
     
         ExtractROI_Inds_script
-     %% 
+     %
     catch
         ErroSess = [ErroSess,css];
         sprintf('Error at session %d.\n',css);

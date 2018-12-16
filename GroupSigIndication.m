@@ -56,7 +56,7 @@ if p > 0.05
 %     plot([Plotx(2),Plotx(2)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
     StarPosx = mean(x);
     StarPosy = Ploty + max(y)*TextUppSacle;
-    text(StarPosx,StarPosy,'N.S.','HorizontalAlignment','center');
+    text(StarPosx,StarPosy,sprintf('p = %.2f',p),'HorizontalAlignment','center');
 elseif p > 0.01
     Plotx = x;
     Ploty = max(y)*yScaleFactor;

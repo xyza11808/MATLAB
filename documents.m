@@ -151,7 +151,7 @@
 %extract data from fig file
   h = gcf; %current figure handle
   axesObjs = get(h, 'Children');  %axes handles
-  dataObjs = get(axesObjs, 'Children'); %handles to low-level graphics objects in axes
+%   dataObjs = get(axesObjs, 'Children'); %handles to low-level graphics objects in axes
   %% high bersion matlab
   xdata = get(dataObjs(4), 'XData');  %data from low-level grahics objects
   ydata = get(dataObjs(4), 'YData');
