@@ -50,11 +50,11 @@ if ~isempty(LAnsROIInds)
             crStimCoefInds = SigROIInds(:) == cLAnsRInds;
             crStimCoef = SigROICoefMtx(crStimCoefInds,:);
             ExCludeInds = crStimCoef >= LAnsCoef;
-            if sum(ExCludeInds(1:nFreqs/2)) % if any stim coef is larger than answer coef
-                ExcludeCoefInds = [~ExCludeInds(1:nFreqs/2),false(1,nFreqs/2)];
+            if sum(ExCludeInds(1:floor(nFreqs/2))) % if any stim coef is larger than answer coef
+                ExcludeCoefInds = [~ExCludeInds(1:floor(nFreqs/2)),false(1,ceil(nFreqs/2))];
                 SigROICoefMtx(crStimCoefInds,ExcludeCoefInds) = 0;
             else
-                SigROICoefMtx(crStimCoefInds,1:nFreqs/2) = 0;
+                SigROICoefMtx(crStimCoefInds,1:floor(nFreqs/2)) = 0;
             end
         end
     end
@@ -68,11 +68,11 @@ if ~isempty(RAnsROIInds)
             crStimROIinds = SigROIInds(:) == cRAnsRInds;
             crStimCoef = SigROICoefMtx(crStimROIinds,:);
             SavedCoefInds = crStimCoef >= RAnsCoef;
-            if sum(SavedCoefInds((1+nFreqs/2):end))
-                ExcludeCoefInds = [false(1,nFreqs/2),SavedCoefInds((1+nFreqs/2):end)];
+            if sum(SavedCoefInds((1 + ceil(nFreqs/2)):end))
+                ExcludeCoefInds = [false(1,ceil(nFreqs/2)),SavedCoefInds((1+ceil(nFreqs/2)):end)];
                 SigROICoefMtx(crStimROIinds,ExcludeCoefInds) = 0;
             else
-                SigROICoefMtx(crStimROIinds,(1+nFreqs/2):end) = 0;
+                SigROICoefMtx(crStimROIinds,(1+ceil(nFreqs/2)):end) = 0;
             end
         end
     end

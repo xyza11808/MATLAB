@@ -11,7 +11,7 @@
 % end
 nnspike = Fluo2SpikeConstrainOOpsi(SelectData,[],[],frame_rate,2);
 save EstimatedSPDatafilter.mat nnspike SelectData SelectSArray frame_rate -v7.3
-load('EstimatedSPDatafilter.mat');
+% load('EstimatedSPDatafilter.mat');
 load('rfSelectDataSet.mat','SelectData');
 % load('EstimatedSPDataAR2.mat','nnspike');
 % SP data plots for preview

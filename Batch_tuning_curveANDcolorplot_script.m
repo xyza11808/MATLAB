@@ -1,6 +1,6 @@
 % batched ROI morph plot
 clearvars -except NormSessPathPass NormSessPathTask 
-%%
+%
 nSessPath = length(NormSessPathTask);
 CusMap = blue2red_2(32,0.8);
 ErrorSessNum = [];
@@ -9,15 +9,15 @@ k_sess = 0;
 %%
 for cSess = 1 : nSessPath
     %
-    if exist(fullfile(NormSessPathTask{cSess},'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'),'file')
-        continue;
-    end
+%     if exist(fullfile(NormSessPathTask{cSess},'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'),'file')
+%         continue;
+%     end
     try
     %
     Passtline = NormSessPathPass{cSess};
     Tasktline = NormSessPathTask{cSess};
      
-    %
+    %%
     TaskDataStrc = load(fullfile(Tasktline,'CSessionData.mat'));
     PassDataStrc = load(fullfile(Passtline,'rfSelectDataSet.mat')); 
     BehavDataPath = fullfile(Tasktline,'RandP_data_plots','boundary_result.mat');
@@ -155,7 +155,17 @@ for cSess = 1 : nSessPath
         
         TaskFreqOctave = log2(FreqTypes/BoundFreq);
         FreqStrs = cellstr(num2str(FreqTypes(:)/1000,'%.1f'));
-        PassFreqOctave = log2(PassFreqTypes/BoundFreq);
+        PassAllOctave = log2(PassFreqTypes/BoundFreq);
+        PassFreqInds = zeros(length(TaskFreqOctave),1);
+        for cTaskOct = 1 : length(TaskFreqOctave)
+            cTOcts = TaskFreqOctave(cTaskOct);
+            Pass2TaskDis = abs(PassAllOctave - cTOcts);
+            [~,PassUseInds] = min(Pass2TaskDis);
+            PassFreqInds(cTaskOct) = PassUseInds;
+        end
+        PassFreqOctave = PassAllOctave(PassFreqInds);
+        
+        %
         BehavBound = BehavBound - 1; % convert into positive-negtive value
         if ~isdir('./Tunning_fun_plot_New1s/')
             mkdir('./Tunning_fun_plot_New1s/');
@@ -165,7 +175,7 @@ for cSess = 1 : nSessPath
         save TunningSTDDataSave.mat NonMissTunningFun CorrTunningFun PassTunningfun TaskFreqOctave ...
             PassFreqOctave BoundFreq NonMissTunningFunSEM CorrTunningFunSEM PassTunningfunSEM ...
             PassTunCellData CorrTunningCellData NonMissTunningCellData NMTypeNumber CorrTypeNum PassTunningfunSTD ...
-            CorrTunningFunSTD NonMissTunningFunSTD -v7.3
+            CorrTunningFunSTD NonMissTunningFunSTD PassFreqInds PassAllOctave -v7.3
         IsModuIndexExists = 0;
         if exist('NearBoundAmpDiffSig.mat','file')
             load('NearBoundAmpDiffSig.mat','TaskBoundModuIndex');
@@ -173,7 +183,7 @@ for cSess = 1 : nSessPath
         end
         for cROI = 1 : nROIs
             %
-            PassPlotInds = abs(PassFreqOctave) < 1.03;
+            PassPlotInds = PassFreqInds;
             h = figure('position',[220 300 550 420],'visible','off');
             hold on;
             cROItaskNM = NonMissTunningFun(:,cROI);
@@ -181,7 +191,7 @@ for cSess = 1 : nSessPath
             cROIpass = PassTunningfun(:,cROI);
             l1 = errorbar(NMTypeFreqs,cROItaskNM,NonMissTunningFunSEM(:,cROI),'c-o','LineWidth',1.6);
             l2 = errorbar(CorrTypeFreqs,cROItaskCorr,CorrTunningFunSEM(:,cROI),'r-o','LineWidth',1.6);
-            l3 = errorbar(PassFreqOctave(PassPlotInds),cROIpass(PassPlotInds),PassTunningfunSEM(PassPlotInds,cROI),'k-o','LineWidth',1.6);
+            l3 = errorbar(PassFreqOctave,cROIpass(PassPlotInds),PassTunningfunSEM(PassPlotInds,cROI),'k-o','LineWidth',1.6);
             xlabel('Frequency (kHz)');
             ylabel('Mean \DeltaF/F (%)');
             if IsModuIndexExists
@@ -216,14 +226,15 @@ for cSess = 1 : nSessPath
             saveas(h,sprintf('ROI%d Tunning curve comparison plot',cROI),'png');
             close(h);
         end
-    %
         tline = Tasktline;
         BehavBound = BoundFreq;
         ColorPlot_for_batch_script;
+        %%
     catch ME
         k_sess = k_sess + 1;
         ErrorSessNum = [ErrorSessNum,cSess];
         ErrorMes{k_sess} = ME;
+        sprintf('Error for sessopn %d.\n',cSess);
     end
     %
 end

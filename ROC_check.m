@@ -109,7 +109,7 @@ for n=1:SizeData(2)
     %     ROCRevertShff(n)=gather(ShuffleStrc.Type1value > ShuffleStrc.Type2value);    %ubar   hbar
     %     ROCShufflearea(n)=ShuffleSummary.AUC;
 end
-
+%%
 ShffROCareaABS=ROCShufflearea;
 % ShffROCareaABS(ROCRevertShff == 1) = 1 - ShffROCareaABS(ROCRevertShff == 1);
 ROCareaABS = ROCarea;
@@ -117,6 +117,7 @@ ROCareaABS(ROCRevert == 1) = 1 - ROCareaABS(ROCRevert == 1); % using real AUC va
 SigROC = ROCareaABS > ROCShufflearea;
 RandThres=mean(ShffROCareaABS);
 RespFraction=sum(ROCareaABS>RandThres)/length(ROCarea);
+%%
 if isplot
     hist(ROCarea);
     % set(h,'FaceColor','c','EdgeColor','w');
@@ -189,6 +190,7 @@ if isplot
     close(h_popu_correl);
 end
 %%
+%     save ROC_score.mat ROCarea RespFraction ROIDiffmd ROIDiffmn ROCRevert ROCShufflearea ROCRevertShff -v7.3
     save ROC_score.mat ROCarea RespFraction ROIDiffmd ROIDiffmn ROCRevert ROCShufflearea ROCRevertShff -v7.3
 
     %%

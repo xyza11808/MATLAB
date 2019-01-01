@@ -9,7 +9,7 @@ if nargin > 4
 end
 
 IsLickPlot = 0;
-if nargin > 4
+if nargin > 5
     if ~isempty(varargin{2})
         LickTimeStrc = varargin{2};
         IsLickPlot = 1;
@@ -17,14 +17,14 @@ if nargin > 4
 end
 
 IsTrIndsInput = 0;
-if nargin > 5
+if nargin > 6
     if ~isempty(varargin{3})
         UsedTrInds = varargin{3};
         IsTrIndsInput = 1;
     end
 end
 IsROIstatePlot = 0;
-if nargin > 6
+if nargin > 7
     if ~isempty(varargin{4})
         IsROIstatePlot = 1;
         ROIstate = varargin{4};

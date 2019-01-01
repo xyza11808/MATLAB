@@ -1,5 +1,5 @@
 % passive tuning frequency colormap plot
-    load(fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat'));
+    load(fullfile(tline,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'));
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));
     [~,EndInds] = regexp(tline,'result_save');
     ROIposfilePath = tline(1:EndInds);

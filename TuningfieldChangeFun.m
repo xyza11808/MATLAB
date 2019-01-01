@@ -33,6 +33,14 @@ TaskRespField = squeeze(TaskAndPassiveCoefMtx(:,:,1)) > 0;
 PassRespField = squeeze(TaskAndPassiveCoefMtx(:,:,2)) > 0;
 EitherRespFields = (TaskRespField | PassRespField);
 [EitherRespFieldIndexR, EitherRespFieldIndexC] = find(EitherRespFields);
+RespROIs = find(sum(EitherRespFields,2) > 0);
+RespFieldMtx = TaskRespField(RespROIs,:) - PassRespField(RespROIs,:);
+RespFieldMask = EitherRespFields(RespROIs,:);
+RespFieldStrc.RespFieldMtx = RespFieldMtx;
+RespFieldStrc.RespFieldMask = RespFieldMask;
+RespFieldStrc.TaskRespField = squeeze(TaskAndPassiveCoefMtx(:,:,1));
+RespFieldStrc.PassRespField = squeeze(TaskAndPassiveCoefMtx(:,:,2));
+
 RespFieldDiff = double(TaskRespField(EitherRespFields)) - double(PassRespField(EitherRespFields));
 
 FieldFiffAndInds = [RespFieldDiff,EitherRespFieldIndexC];
@@ -47,7 +55,7 @@ TaskNoChangeCoef = TaskRespCoef(NoChangeSubIndex);
 [~,NoChangeCols] = ind2sub(size(EitherRespFields),NoChangeSubIndex);
 
 TPNochangeCoef = [TaskNoChangeCoef(:),PassNoChangeCoef(:),NoChangeCols(:)];
-
+%%
 FieldIndsDataChange = cell(nFreqTypes,3);
 hf = figure('position',[20 100 650 320]);
 hold on
@@ -76,7 +84,7 @@ xlabel('Freq Inds');
 ylabel('Change Direction');
 title('Session tuning position change');
 set(gca,'FontSize',12)
-
+%%
 saveas(hf,'Tuning frequency change direction plots save');
 saveas(hf,'Tuning frequency change direction plots save','png');
 close(hf);
@@ -86,4 +94,7 @@ if nargout > 0
     varargout{1} = FieldIndsDataChange;
     varargout{2} = FieldFiffAndInds;
     varargout{3} = TPNochangeCoef;
+    if nargout >3
+        varargout{4} = RespFieldStrc;
+    end
 end

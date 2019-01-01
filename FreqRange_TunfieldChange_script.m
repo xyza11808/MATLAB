@@ -39,6 +39,8 @@ end
 NumPaths = length(Sess4_16_Part1_PathAll);
 FieldChangeDataAll = cell(NumPaths,6);
 FieldChangePos816 = cell(NumPaths,2);
+IndexedFieldChange = cell(NumPaths,4);
+OctIndexFieldChange = cell(NumPaths,2);
 for cPath = 1 : NumPaths
     c832Path = Sess8_32PathAll{cPath};
     c416Path = Sess4_16_Part1_PathAll{cPath};
@@ -66,24 +68,29 @@ for cPath = 1 : NumPaths
     CommonROINum = min(numel(cSess832DataStrc.ROIIndex),numel(cSess416DataStrc.ROIIndex));
     CommonROIIndex = cSess832DataStrc.ROIIndex(1:CommonROINum) & cSess416DataStrc.ROIIndex(1:CommonROINum);
     
-    % loading Ans response ROI inds
+    % response field change analysis
     cd(c832Path);
     c832BoundIndex = cSess832ToneBound/max(cSess832StimOct)*(numel(cSess832StimOct) - 1) + 1;
-    [FieldChange,FieldChangeWithIndex832,c832TPCoefDiff] = TuningfieldChangeFun(c832Path,numel(cSess832DataStrc.ROIIndex),CommonROIIndex,c832BoundIndex);
+    [FieldChange,FieldChangeWithIndex832,c832TPCoefDiff,FieldChangeMtx] = TuningfieldChangeFun(c832Path,numel(cSess832DataStrc.ROIIndex),CommonROIIndex,c832BoundIndex);
     NearFieldChangeAll = cell2mat((FieldChange(NearBoundInds))');
     FarFieldChangeAll = cell2mat((FieldChange(~NearBoundInds))');
     FieldChangeDataAll{cPath,1} = NearFieldChangeAll;
     FieldChangeDataAll{cPath,2} = FarFieldChangeAll;
     NoChangeNearInds = abs(cSess832StimOct(c832TPCoefDiff(:,3)) - cSess832ToneBound) <= 0.4;
     FieldChangeDataAll{cPath,5} = [c832TPCoefDiff,NoChangeNearInds(:)];
+    FieldChange(:,4) = mat2cell(cSess832StimOct(:) - 1,ones(numel(cSess832StimOct),1));
+    OctIndexFieldChange{cPath,1} = FieldChange;
     
     FieldChangeOctDis = abs(cSess832StimOct(FieldChangeWithIndex832(:,2)) - cSess832ToneBound);
     FieldChangePos816{cPath,1} = [FieldChangeWithIndex832(:,1),FieldChangeOctDis(:)];
+    IndexedFieldChange{cPath,1} = FieldChangeMtx;
+    IndexedFieldChange{cPath,2} = cSess832BehavStrc.boundary_result.StimCorr;
     
-     % loading Ans response ROI inds
+    
+     % response field change analysis
     cd(c416Path);
     c416BoundIndex = cSess416ToneBound/max(cSess416StimOct)*(numel(cSess416StimOct) - 1) + 1;
-    [FieldChange416, FieldChangeWithIndex416, c416TPCoefDiff] = TuningfieldChangeFun(c416Path,numel(cSess416DataStrc.ROIIndex),CommonROIIndex,c416BoundIndex);
+    [FieldChange416, FieldChangeWithIndex416, c416TPCoefDiff,FieldChangeMtx416] = TuningfieldChangeFun(c416Path,numel(cSess416DataStrc.ROIIndex),CommonROIIndex,c416BoundIndex);
     NearFieldChangeAll416 = cell2mat((FieldChange416(cSess416NearBoundInds))');
     FarFieldChangeAll416 = cell2mat((FieldChange416(~cSess416NearBoundInds))');
     FieldChangeDataAll{cPath,3} = NearFieldChangeAll416;
@@ -93,7 +100,10 @@ for cPath = 1 : NumPaths
     
     FieldChangeOctDis416 = abs(cSess416StimOct(FieldChangeWithIndex416(:,2)) - cSess416ToneBound);
     FieldChangePos816{cPath,2} = [FieldChangeWithIndex416(:,1),FieldChangeOctDis416(:)];
-    
+    IndexedFieldChange{cPath,3} = FieldChangeMtx416;
+    IndexedFieldChange{cPath,4} = cSess416BehavStrc.boundary_result.StimCorr;
+    FieldChange416(:,4) = mat2cell(cSess416StimOct(:) - 1,ones(numel(cSess416StimOct),1));
+    OctIndexFieldChange{cPath,2} = FieldChange416;
 end
 
 %% 
@@ -114,8 +124,47 @@ c416NearFieldCData = c416NearFieldAll(c416NearFieldCInds);
 c416FarFieldCInds = c416FarFieldAll ~= 0;
 c416FarFieldCData = c416FarFieldAll(c416FarFieldCInds);
 
+%%
+IndexedFieldChangeBU = IndexedFieldChange;
+IDFields = cellfun(@(x) Six2eightFun(x.RespFieldMtx),IndexedFieldChange(:,1),'UniformOutput',false);
+IDFieldsmask = cellfun(@(x) Six2eightFun(x.RespFieldMask),IndexedFieldChange(:,1),'UniformOutput',false);
+PassRespAlls = cellfun(@(x) Six2eightFun(x.PassRespField),IndexedFieldChange(:,1),'UniformOutput',false);
+for css = 1 : length(IDFields)
+    cssBehav = IndexedFieldChange{css,2};
+    if length(cssBehav) == 6
+        NewcssBehav = nan(1,8);
+        NewcssBehav(1:3) = cssBehav(1:3);
+        NewcssBehav(6:8) = cssBehav(4:6);
+    else
+        NewcssBehav = cssBehav;
+    end
+    IndexedFieldChange{css,2} = NewcssBehav;
+end
+SessBehavsMtx = cell2mat(IndexedFieldChange(:,2));
+%
+IDFieldsMtx = cell2mat(IDFields);
+IDFieldsMaskMtx = cell2mat(IDFieldsmask);
 
+IndexTypesAll = size(IDFieldsMtx,2);
+for cInds = 1 : IndexTypesAll
+    cIndsMasks = IDFieldsMaskMtx(:,cInds);
+    cIndsMtx = IDFieldsMtx(:,cInds);
+    
+    cIndsRealMtx = cIndsMtx(cIndsMasks);
+    cIndsRealMtxPos = binofit(sum(cIndsRealMtx == 1),numel(cIndsRealMtx));
+    
+    IndexTypesAll(cInds) = cIndsRealMtxPos;
+end
+figure;
+plot(mean(SessBehavsMtx,'omitnan'));
+yyaxis right
+plot(IndexTypesAll)
 
+PassRespAllMtx = cell2mat(PassRespAlls);
+PassRespInds = sum(PassRespAllMtx,2,'omitnan') > 0;
+PassRespSigMtx = PassRespAllMtx(PassRespInds,:);
+figure;
+plot(mean(PassRespSigMtx > 0))
 
 %% calculate the octive distance and filed change
 c832FieldChange_pos_All = cell2mat(FieldChangePos816(:,1));
@@ -180,7 +229,7 @@ for cPath = 1 : NumPaths
     CommonROINum = min(numel(cSess728DataStrc.ROIIndex),numel(cSess416_2DataStrc.ROIIndex));
     CommonROIIndex = cSess728DataStrc.ROIIndex(1:CommonROINum) & cSess416_2DataStrc.ROIIndex(1:CommonROINum);
     
-    % loading Ans response ROI inds
+    % analysis field changes 
     cd(c728Path);
     c728BoundIndex = cSess728ToneBound/max(cSess728StimOct)*(numel(cSess728StimOct) - 1) + 1;
     [FieldChange,FieldChangeWithIndex,c728TPCoefDiff] = TuningfieldChangeFun(c728Path,numel(cSess728DataStrc.ROIIndex),CommonROIIndex,c728BoundIndex);
@@ -195,7 +244,7 @@ for cPath = 1 : NumPaths
     FieldChangePos{cPath,1} = [FieldChangeWithIndex(:,1),FieldChangeOcts(:)];
     
     
-     % loading Ans response ROI inds
+     % analysis field changes 
     cd(c416_2Path);
     c416_2BoundIndex = cSess416_2ToneBound/max(cSess416_2StimOct)*(numel(cSess416_2StimOct) - 1) + 1;
     [FieldChange416_2,FieldChangeWithIndex416_2,c416_2TPCoefDiff] = TuningfieldChangeFun(c416_2Path,numel(cSess416_2DataStrc.ROIIndex),CommonROIIndex,c416_2BoundIndex);

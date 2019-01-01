@@ -175,22 +175,34 @@ function SessPassMorph_openFun(hObject, eventdata, handles, SessIndex)
 global GUIdataSummary
 cSessPath = GUIdataSummary.(sprintf('Sess%dPath',SessIndex));
 [~,EndInds] = regexp(cSessPath,'test\d{2,3}');
-cPassDataUpperPath = fullfile(sprintf('%srf',cSessPath(1:EndInds)),'im_data_reg_cpu','result_save','ROI_morph_plot');
+[~,ROIDataInfoEndI] = regexp(cSessPath,'result_save');
+cPassDataUpperPath = fullfile(sprintf('%srf%s',cSessPath(1:EndInds),cSessPath(1+EndInds:ROIDataInfoEndI)),'ROI_morph_plot');
 PassSessMorphfile = fullfile(cPassDataUpperPath,sprintf('ROI%d morph plot save.fig',GUIdataSummary.ROINum));
-% PassSessFilePath = fullfile(cPassDataUpperPath,'plot_save','NO_Correction');
-openfig(PassSessMorphfile,'visible');
-clc
- 
+try
+    % PassSessFilePath = fullfile(cPassDataUpperPath,'plot_save','NO_Correction');
+    openfig(PassSessMorphfile,'visible');
+    clc
+catch ME
+    fprintf('Unable to open request file.\n');
+    fprintf('%s.\n',ME.message);
+end
+    
 function SessPassColorPlot_openFun(hObject, eventdata, handles, SessIndex)
 global GUIdataSummary
 cSessPath = GUIdataSummary.(sprintf('Sess%dPath',SessIndex));
 [~,EndInds] = regexp(cSessPath,'test\d{2,3}');
-cPassDataUpperPath = fullfile(sprintf('%srf',cSessPath(1:EndInds)),'im_data_reg_cpu','result_save','plot_save','NO_Correction');
-PassSessMorphfile = fullfile(cPassDataUpperPath,'Uneven_colorPlot',sprintf('ROI%d passive resp plot.fig',GUIdataSummary.ROINum));
-% PassSessFilePath = fullfile(cPassDataUpperPath,'plot_save','NO_Correction');
-openfig(PassSessMorphfile,'visible');
-clc
-
+[~,ROIDataInfoEndI] = regexp(cSessPath,'result_save');
+cPassDataUpperPath = fullfile(sprintf('%srf%s',cSessPath(1:EndInds),cSessPath(1+EndInds:ROIDataInfoEndI)),'plot_save','NO_Correction');
+% cPassDataUpperPath = fullfile(sprintf('%srf',cSessPath(1:EndInds)),'im_data_reg_cpu','result_save','plot_save','NO_Correction');
+try
+    PassSessMorphfile = fullfile(cPassDataUpperPath,'Uneven_colorPlot',sprintf('ROI%d passive resp plot.fig',GUIdataSummary.ROINum));
+    % PassSessFilePath = fullfile(cPassDataUpperPath,'plot_save','NO_Correction');
+    openfig(PassSessMorphfile,'visible');
+    clc
+catch ME
+    fprintf('Unable to open request file.\n');
+    fprintf('%s.\n',ME.message);
+end
 
 function Sess1PathEdit_tag_Callback(hObject, eventdata, handles)
 % hObject    handle to Sess1PathEdit_tag (see GCBO)
@@ -551,19 +563,18 @@ function figure1_KeyPressFcn(hObject, eventdata, handles)
 global GUIdataSummary
 switch eventdata.Key   %'uparrow','downarrow','leftarrow','rightarrow'.
     case 'rightarrow'
-        ROINumPlus_Callback(hObject, eventdata, handles)
+        ROINumPlus_Callback(hObject, eventdata, handles);
     case 'leftarrow'
-        ROINumMinus_Callback(hObject, eventdata, handles)
+        ROINumMinus_Callback(hObject, eventdata, handles);
     case 'space'
         if ishandle(GUIdataSummary.OpenedFig)
             delete(GUIdataSummary.OpenedFig);
         end
         GUIdataSummary.OpenedFig = [];
-%     case 'uparrow'
-%         TwoStepPreTrial_Callback(hObject, eventdata, handles);
-%     case 'a'
-%         % add new ROI
-%         ROI_add_Callback(hObject, eventdata, handles);
+    case 'd'
+       ROINumPlus_Callback(hObject, eventdata, handles);
+    case 'a'
+        ROINumMinus_Callback(hObject, eventdata, handles);
 %     case 's'
 %         % set ROI
 %         Set_ROI_button_Callback(hObject, eventdata, handles)
@@ -690,7 +701,11 @@ for css = 1 : 4
     if ~isempty(GUIdataSummary.(sprintf('Sess%dPath',css)))
         SavePath = fullfile(GUIdataSummary.(sprintf('Sess%dPath',css)),'SelectROIIndex.mat');
         ROIIndex = GUIdataSummary.IsROIChecked{css};
-        save(SavePath,'ROIIndex','-v7.3');
+        try
+            save(SavePath,'ROIIndex','-v7.3');
+        catch ME
+            fprintf('cannot save ROI idnex for session %d.\n',css);
+        end
     end
 end
 fprintf('ROI index has been saved.\n');

@@ -529,7 +529,7 @@ for n = 1:fileNum
         boundary_result(n).FitValue = fit_ReNewAll;
         boundary_result(n).gof = fit_ReNewAll.gof;
         b = coeffvalues(fit_ReNewAll.ffit);
-        boundary_result(n).FitModelAll = {{fit_ReNewAll,fit_ReNewAll}};
+        boundary_result(n).FitModelAll = {{fit_ReNewAll,fit_ReNew}};
         boundary_result(n).SlopeCurve = BehavDerivateCurve;
     end
     try

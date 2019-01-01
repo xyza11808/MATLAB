@@ -44,9 +44,12 @@ if nargin > 9
         isPlot = varargin{5};
     end
 end
-
-StimAll = double(BehavStrc.Stim_toneFreq(:));
-StimAll = double(StimAll);
+if isstruct(BehavStrc)
+    StimAll = double(BehavStrc.Stim_toneFreq(:));
+    StimAll = double(StimAll);
+else
+    StimAll = BehavStrc;
+end
 if isShuffle
     StimAll = Vshuffle(StimAll);
 end
@@ -204,7 +207,7 @@ for nStimtype = 1 : length(StimTypesAll)
 %         DataAllCVerro(m,:) = CVerror;
         parfor nIters = 1 : 100
             TrainInds = false(length(StimSetAll),1);
-            RandInds = randsample(length(StimSetAll),round(0.8*length(StimSetAll)));
+            RandInds = CusRandSample(StimSetAll,round(0.8*length(StimSetAll)));
             TrainInds(RandInds) = true;
             TestInds = ~TrainInds;
             ItMdl = fitcsvm(DataSetAll(TrainInds,:),StimSetAll(TrainInds));
@@ -239,7 +242,9 @@ if isPlot
     saveas(h_mt,'Multi class classification correct rate','png');
     close(h_mt);
 end
-save PairedClassResult.mat matrixData StimTypesAll Class82CVErro -v7.3
+if isPlot ~= 2
+    save PairedClassResult.mat matrixData StimTypesAll Class82CVErro -v7.3
+end
 %%
 % calculate the classification error compared with stimlus distance.
 TempMatrixData = matrixData;
@@ -274,9 +279,10 @@ BetClassWinError = TempMatrixData((ClassNum+1):end,1:ClassNum);
 
 [LeftClassCorrData,LeftClassCorrDataM] = DistanceBasedError(LeftWinClassDis,LeftWinClassError);
 [RightClassCorrData,RightClassCorrDataM] = DistanceBasedError(RightWinClassDis,RightWinClassError);
-save DisErrorDataAllSave.mat BetweenClassCorrData LeftClassCorrData RightClassCorrData OvatveStep StimTypesAll ...
-   BetweenClassCorrDataM LeftClassCorrDataM RightClassCorrDataM -v7.3
-
+if isPlot~= 2
+    save DisErrorDataAllSave.mat BetweenClassCorrData LeftClassCorrData RightClassCorrData OvatveStep StimTypesAll ...
+       BetweenClassCorrDataM LeftClassCorrDataM RightClassCorrDataM -v7.3
+end
 %%
 if isPlot
     h_sum = figure('position',[100 200 500 400]);

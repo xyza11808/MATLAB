@@ -23,12 +23,15 @@ while ischar(tline)
     
     [~,EndInds] = regexp(tline,'test\d{2,3}');
     cPassDataUpperPath = fullfile(sprintf('%srf',tline(1:EndInds)),'im_data_reg_cpu','result_save');
-    PassPathline = fullfile(cPassDataUpperPath,'plot_save','NO_Correction');
+    
+    [~,InfoDataEndInds] = regexp(tline,'result_save');
+    PassPathline = fullfile(sprintf('%srf%s',tline(1:EndInds),tline(EndInds+1:InfoDataEndInds)),'plot_save','NO_Correction');
     NormSessPathPass{m} = PassPathline;
     
     tline = fgetl(fids);
     m = m + 1;
 end
+fclose(fids);
 %%
 clearvars -except NormSessPathTask NormSessPathPass
 nSessPath = length(NormSessPathTask); % NormSessPathTask  NormSessPathPass
@@ -127,7 +130,7 @@ for cSess = 1 : nSessPath
     set(gca,'ytick',1:numel(PassFreqs),'yticklabel',PassFreqStrs);
     ylabel('Freq (kHz)');
     xlabel('# ROIs');
-    title('Passove Tuning');
+    title('Passive Tuning');
     set(gca,'FontSize',10);
 %
     saveas(huf,'Tuning ROIs summary plots');
@@ -161,7 +164,7 @@ for cSess = 1 : nSessPath
     set(gca,'ytick',1:numel(PassFreqs),'yticklabel',PassFreqStrs);
     ylabel('Freq (kHz)');
     xlabel('# ROIs');
-    title('Passove Tuning');
+    title('Passive Tuning');
     set(gca,'FontSize',10);
     
     saveas(hNewuf,'Tuning ROIs CommonZs summary plots');
@@ -194,7 +197,7 @@ for cSess = 1 : nSessPath
     set(gca,'ytick',1:numel(PassFreqs),'yticklabel',PassFreqStrs);
     ylabel('Freq (kHz)');
     xlabel('# ROIs');
-    title('Passove Tuning');
+    title('Passive Tuning');
     set(gca,'FontSize',10);
     
     saveas(hALLuf,'All ROIs CommonZs summary plots');
@@ -235,7 +238,7 @@ for cSess = 1 : nSessPath
     set(gca,'xtick',1:numel(PassFreqs),'xticklabel',PassFreqStrs);
     xlabel('Freq (kHz)');
     ylabel('# ROIs');
-    title('Passove Categ');
+    title('Passive Categ');
     set(gca,'FontSize',14);
 %
     saveas(huCtgf,'Categ ROIs summary plots');

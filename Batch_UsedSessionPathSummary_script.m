@@ -124,17 +124,17 @@ for cSess = 1 : nSessPath
     cSessPath = NormSessPathPass{cSess};
 %     [~,EndInds] = regexp(cSessPath,'result_save');
 %     tline = cSessPath(1:EndInds);
-    %
+    %%
     [~,EndInds] = regexp(cSessPath,'result_save');
     ROIposfilePath = cSessPath(1:EndInds); 
     cd(ROIposfilePath);
     if exist('./ROI_morph_plot/MorphDataAll.mat','file')
-        continue;
+%         continue;
     end
     %     if exist(fullfile(ROIposfilePath,'ROI_morph_plot','MorphDataAll.mat'),'file')
     %         tline = fgetl(fid);
     %         continue;
-    %     end
+    %     end 
 
     ROIposfilePosi = dir(fullfile(ROIposfilePath,'ROIinfo*.mat'));
     load(ROIposfilePosi(1).name)
@@ -269,7 +269,7 @@ for cSess = 1 : nSessPath
     
     save MorphDataAll.mat ROIMorphData -v7.3
     cd ..;
-    %
+    %%
 end
 
 %%
@@ -405,6 +405,7 @@ for cSS = 1 : nSess
         if exist(fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plotsNew','NewLog_fit_test_new','NewCurveFitsave.mat'),'file')
             continue;
         end
+        %%
         try
             SpikeDataPath = [tline,'\Tunning_fun_plot_New1s'];
             cd(SpikeDataPath);
@@ -1992,6 +1993,8 @@ for cSess = 1 : nSess
     end
     
     save EstimateSPsaveNewMth.mat nnspike DataRaw SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
+
+
 end
 % batched spike data analysis for passive sessions
 clearvars -except NormSessPathPass NormSessPathTask
@@ -2002,6 +2005,7 @@ ErroSess = [];
 for css = 1 : nSess
     
     csPath = NormSessPathPass{css};
+    %%
     cd(csPath);
 %     clearvars SelectSArray SelectData nnspike
     clearvars PassiveTunROIStrc
@@ -2014,6 +2018,7 @@ for css = 1 : nSess
         ErroSess = [ErroSess,css];
         fprintf('Error occurs for session %d.\n',css);
     end
+    %%
 end
 %% batched spike data analysis for task sessions
 clearvars -except NormSessPathTask NormSessPathPass
@@ -2092,7 +2097,7 @@ for css = 1:nSess
         %
         cSessPath = NormSessPathTask{css};
         cd(cSessPath);
-        %
+        %%
         cSessPath = pwd;
     
         clearvars -except NormSessPathTask NormSessPathPass nSess ErroSess css cSessPath
@@ -2115,7 +2120,7 @@ for css = 1:nSess
 %         end
     
         ExtractROI_Inds_script
-     %
+     %%
     catch
         ErroSess = [ErroSess,css];
         sprintf('Error at session %d.\n',css);

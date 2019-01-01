@@ -369,6 +369,7 @@ GroupSigIndication([1,2],max(SessOctDiffMeanAll(:,1:2)),p_12,hf);
 GroupSigIndication([3,4],max(SessOctDiffMeanAll(:,3:4)),p_34,hf);
 saveas(hf,'Plots save ExAns for 8-32k and 4-16k');
 saveas(hf,'Plots save ExAns for 8-32k and 4-16k','png');
+saveas(hf,'Plots save ExAns for 8-32k and 4-16k','pdf');
 
 %% another session
 hNewf = FourColDataPlots(SessOctDiffMeanAll_2,{'7-28T','7-28P','4-16T','4-16P'},{'r','k','m','k'});
@@ -379,3 +380,4 @@ GroupSigIndication([1,2],max(SessOctDiffMeanAll_2(:,1:2)),p_12,hNewf);
 GroupSigIndication([3,4],max(SessOctDiffMeanAll_2(:,3:4)),p_34,hNewf);
 saveas(hNewf,'Plots save ExAns for 7-28k and 4-16k');
 saveas(hNewf,'Plots save ExAns for 7-28k and 4-16k','png');
+saveas(hNewf,'Plots save ExAns for 7-28k and 4-16k','pdf');

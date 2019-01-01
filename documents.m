@@ -147,6 +147,18 @@
 % plot(t,mdFun(t))
 % https://en.wikipedia.org/wiki/Exponential_decay
 
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% reset color scale for multiple subplots
+h = gcf; %current figure handle
+axesObjs = get(h, 'Children');  %axes handles
+nAxes = length(axesObjs);
+for cA = 1 : nAxes
+    try
+        set(axesObjs(cA),'clim',[0 100]);
+    end
+end
+
+
 %% %%%%% ##################################################################
 %extract data from fig file
   h = gcf; %current figure handle
