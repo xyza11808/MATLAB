@@ -9,7 +9,7 @@ nFrames = numel(RawData);
  if size(RawData,2) ~= 1
      RawData = RawData(:);
  end
- StdFactor = 2;
+ StdFactor = 4;
  if isempty(PeakThres)
      PeakThres = (mad(RawData,1) * 1.4826) * StdFactor;  % 2 times std value
  end
@@ -21,7 +21,7 @@ nFrames = numel(RawData);
  end
  
  if isempty(PeakDur)
-     PeakDur = 60; % frame numbers
+     PeakDur = 10; % frame numbers
  end
  [Count,Cen] = hist(RawData,100);
  [~,MaxInds] = max(Count);
