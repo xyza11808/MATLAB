@@ -9,10 +9,25 @@
 % if exist('EstimatedSPDataAR2.mat','file')  && exist('ROIglmCoefSave.mat','file')
 % %     return;
 % end
-nnspike = Fluo2SpikeConstrainOOpsi(SelectData,[],[],frame_rate,2);
-save EstimatedSPDatafilter.mat nnspike SelectData SelectSArray frame_rate -v7.3
+load('rfSelectDataSet.mat','SelectData','frame_rate');
+if exist('EstimatedSPDatafilter.mat','file')
+    load('EstimatedSPDatafilter.mat');
+else
+    nnspike = Fluo2SpikeConstrainOOpsi(SelectData,[],[],frame_rate,2);
+    save EstimatedSPDatafilter.mat nnspike SelectData SelectSArray frame_rate -v7.3
+end
 % load('EstimatedSPDatafilter.mat');
-load('rfSelectDataSet.mat','SelectData');
+
+cSessPassTrInds = true(numel(SelectSArray),1);
+if exist('PassFreqUsedInds.mat','file')
+    UsedTrIndsStrc = load('PassFreqUsedInds.mat');
+    if ~isempty(UsedTrIndsStrc.PassTrInds)
+        cSessPassTrInds(~UsedTrIndsStrc.PassTrInds) = false;
+    else
+        return;
+    end
+end
+UsedFreqArray = SelectSArray(cSessPassTrInds);
 % load('EstimatedSPDataAR2.mat','nnspike');
 % SP data plots for preview
 % FreqTypes = unique(SelectSArray);
@@ -63,10 +78,10 @@ OffsetFrame = frame_rate+FrameWin;
 % imagesc(RespMtx(SortInds,:))
 
 %
-nTrials = length(SelectSArray);
-FreqTypes = unique(SelectSArray);
+nTrials = length(UsedFreqArray);
+FreqTypes = unique(UsedFreqArray);
 nFreqs = length(FreqTypes);
-FreqMtxInds = double(repmat(SelectSArray,1,nFreqs) == repmat(FreqTypes',nTrials,1));
+FreqMtxInds = double(repmat(UsedFreqArray,1,nFreqs) == repmat(FreqTypes',nTrials,1));
 FreqMtxOnOffMtx = zeros(nTrials*2,nFreqs*2);
 FreqMtxOnOffMtx(1:nTrials,1:nFreqs) = FreqMtxInds;
 FreqMtxOnOffMtx((1:nTrials)+nTrials,(1:nFreqs)+nFreqs) = FreqMtxInds;
@@ -78,20 +93,21 @@ FreqMtxOnOffMtx((1:nTrials)+nTrials,(1:nFreqs)+nFreqs) = FreqMtxInds;
 options = glmnetSet;
 options.alpha = 0.9;
 options.nlambda = 110;
-nROIs = size(SelectData,2);
-nTrials = size(SelectData,1);
+UsedSelectDatas = SelectData(cSessPassTrInds,:,:);
+nROIs = size(UsedSelectDatas,2);
+nTrials = size(UsedSelectDatas,1);
 IsVariedDur = 0;
 if length(unique(FrameDurData)) > 2
     IsVariedDur = 1;
 end
 ROICoefData = cell(nROIs,1);
 ROIOnOffFResp = zeros(nROIs,nFreqs*2);
-% for loop for each ROI
+%% for loop for each ROI
 for cROI = 1 : nROIs
     %
-    ROISPData = squeeze(nnspike(:,cROI,:));
+    ROISPData = squeeze(nnspike(cSessPassTrInds,cROI,:));
     ROISPTrace = reshape(ROISPData',[],1);
-    cROIRawData = squeeze(SelectData(:,cROI,:));
+    cROIRawData = squeeze(UsedSelectDatas(:,cROI,:));
     
     OnsetTrResp = mean(ROISPData(:,OnsetFrame+1:OnsetFrame+FrameWin),2);
     OnsetTrFReap = mean(cROIRawData(:,OnsetFrame+1:OnsetFrame+FrameWin),2);
@@ -109,10 +125,10 @@ for cROI = 1 : nROIs
         OffFTrResp = mean(cROIRawData(:,OffsetFrame+1:OffsetFrame+FrameWin),2);
     end
     RespMtx = [OnsetTrResp,OffTrResp];
-    
+    %
     
     for cFreqs = 1 : nFreqs
-        cFreqsInds = SelectSArray == FreqTypes(cFreqs);
+        cFreqsInds = UsedFreqArray == FreqTypes(cFreqs);
         ROIOnOffFResp(cROI,cFreqs) = mean(OnsetTrFReap(cFreqsInds));
         ROIOnOffFResp(cROI,cFreqs+nFreqs) = mean(OffFTrResp(cFreqsInds));
     end
@@ -158,7 +174,7 @@ for cROI = 1 : nROIs
     %     figure;
     %     imagesc(abs(FoldCoefMtx))
     end
-    
+    %
     ROICoefData{cROI} = AllRepeatData;
     
 end
@@ -167,7 +183,7 @@ end
 ROIAboveThresSummary = cell(nROIs,2);
 PassBFInds = zeros(nROIs,1); % zeros indicates no significant tuning
 for cr = 1 : nROIs
-    %
+    %%
     crCoef = ROICoefData{cr};
     crCoefMtx = cell2mat(crCoef(:,1));
     cROIResp = ROIOnOffFResp(cr,:);
@@ -179,7 +195,7 @@ for cr = 1 : nROIs
     AvgCoefInds = mean(crCoefMtx);
     NegRespInds = AvgCoefInds < 0; % exclude negtive response value, which may just caused by negtive response
     crCoefAboveThres(NegRespInds) = 0;
-    
+    %%
     if sum(crCoefAboveThres)
         TempCoefs = AvgCoefInds;
         TempCoefs(~crCoefAboveThres) = 0;
@@ -199,7 +215,7 @@ for cr = 1 : nROIs
         ROIAboveThresSummary{cr,2} = AboveThresIndsCoefAvg;
     end
     
-    %
+    %%
    %
 end
 %%

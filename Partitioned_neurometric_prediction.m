@@ -133,17 +133,17 @@ BehavFit = FitPsycheCurveWH_nx(StimOctaves(:),UsingAnmChoice);
 %
 %%
 % repeats of same partition fold, using 100 times of repeats
-if exist('UsedROIInds','var')
-    if ~isdir('./Test_anmChoice_predPartROI/')
-        mkdir('./Test_anmChoice_predPartROI/');
+% if exist('UsedROIInds','var')
+%     if ~isdir('./Test_anmChoice_predPartROI/')
+%         mkdir('./Test_anmChoice_predPartROI/');
+%     end
+%     cd('./Test_anmChoice_predPartROI/');
+% else
+    if ~isdir('./Test_anmChoice_predNewCROIs/')
+        mkdir('./Test_anmChoice_predNewCROIs/');
     end
-    cd('./Test_anmChoice_predPartROI/');
-else
-    if ~isdir('./Test_anmChoice_predNew/')
-        mkdir('./Test_anmChoice_predNew/');
-    end
-    cd('./Test_anmChoice_predNew/');
-end
+    cd('./Test_anmChoice_predNewCROIs/');
+% end
 %%
 nTrs = size(UsingRespData,1);
 nROI = size(UsingRespData,2);
@@ -242,7 +242,7 @@ TrialTypeMatrix = repmat((TrialTypes(:))',foldLen,1);
 PredOutcomes = IterPredChoice == TrialTypeMatrix;
 StimTypes = unique(Stimlulus);
 GroupNum = length(StimTypes)/2;
-if mod(GroupNum,2)
+if mod(length(StimTypes),2)
     warning('Current session may contains boundary sounds, please check the following analysis result.');
 end
 RealStimPerf = zeros(length(StimTypes),1);

@@ -44,7 +44,7 @@ for cSess = 1 : nSessPath
 %
     cSessPath = NormSessPathTask{cSess};
     try
-        %
+        %%
     cTuningDataPath = fullfile(cSessPath,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat');
     cTunFitDataPath = fullfile(cSessPath,'Tunning_fun_plot_New1s','Curve fitting plotsNew','NewLog_fit_test_new','NewCurveFitsave.mat');
     cd(fullfile(cSessPath,'Tunning_fun_plot_New1s','Curve fitting plotsNew','NewLog_fit_test_new'));
@@ -279,6 +279,7 @@ for cSess = 1 : nSessPath
         TunROITaskDatas TunROIPassDatas CtgROITaskDatas CtgROIPassDatas PreferSideData ...
         PreferPassData TaskFreqs PassFreqs TunROIInds CategROIs TaskROIBFAll PassROIBFAll ...
         TaskZSALLTunData PassZSALLTunData SessBehavBound PreferSide -v7.3
+    %%
     catch 
         fprintf('Error at session %d.\n',cSess);
     end

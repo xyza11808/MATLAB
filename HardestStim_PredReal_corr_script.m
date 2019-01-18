@@ -11,7 +11,7 @@ for cSess = 1 : nSession
     %
     tline = NormSessPathTask{cSess};
     
-    cTbyTPath = fullfile(tline,'Test_anmChoice_predNew');
+    cTbyTPath = fullfile(tline,'Test_anmChoice_predNewCROIs');
 
 %     PredChoiceStrc = load(fullfile(cTbyTPath,'ModelPredictionSave.mat'),'IterPredChoice');
     SessStimStrc = load(fullfile(cTbyTPath,'AnmChoicePredSaveNew.mat'),'Stimlulus','RealStimPerf','UsingAnmChoice','StimInds','IterPredChoice');
@@ -89,7 +89,7 @@ for cSess = 1 : nSession
     
     tline = NormSessPathTask{cSess};
     
-    cTbyTPath = fullfile(tline,'Test_anmChoice_predNew');
+    cTbyTPath = fullfile(tline,'Test_anmChoice_predNewCROIs');
 
 %     PredChoiceStrc = load(fullfile(cTbyTPath,'ModelPredictionSave.mat'),'IterPredChoice');
     SessStimStrc = load(fullfile(cTbyTPath,'NeuroCurveVSBehav.mat'));
@@ -146,6 +146,7 @@ set(gca,'xtick',-1:1,'xticklabel',[8 16 32],'ytick',[0 0.5 1],'xlim',[-1.05,1.05
 xlabel('Frequency (kHz)');
 ylabel('Rightchoice Prob.');
 set(gca,'FontSize',12);
+legend([hl1,hl2,hl3],{'Behav','TestScore','PredPerf'},'Box','off','location','Northwest','FontSize',8);
 
 saveas(hihf,'TrbyTr psychometric and neurometric curve plots');
 saveas(hihf,'TrbyTr psychometric and neurometric curve plots','png');
@@ -182,8 +183,14 @@ tbl = fitlm(TestPredPerfAll,BehavRProbAll);
 MdRsqure = tbl.Rsquared.Adjusted;
 xRange = (linspace(0,1,500))';
 LineyValues = predict(tbl,xRange);
+MdCoefCI = coefCI(tbl,0.05);
+MdCoefData = [MdCoefCI(1,1)+MdCoefCI(2,1)*xRange,MdCoefCI(1,2)+MdCoefCI(2,2)*xRange];
+Patchx = [xRange;flipud(xRange)];
+Patchy = [MdCoefData(:,1);flipud(MdCoefData(:,2))];
+
 hCoeff = figure('position',[100 100 390 300]);
 hold on
+patch(Patchx,Patchy,1,'FaceColor',[.7 .7 .7],'edgeColor','none','facealpha',0.5);
 scatter(TestPredPerfAll,BehavRProbAll,30,OctsAll(:)+1,'o','filled');
 plot(xRange,LineyValues,'k','linewidth',1.6);
 set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'xlim',[-0.05 1.05],'ylim',[-0.05 1.05]);

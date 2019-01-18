@@ -38,8 +38,10 @@ RespFieldMtx = TaskRespField(RespROIs,:) - PassRespField(RespROIs,:);
 RespFieldMask = EitherRespFields(RespROIs,:);
 RespFieldStrc.RespFieldMtx = RespFieldMtx;
 RespFieldStrc.RespFieldMask = RespFieldMask;
-RespFieldStrc.TaskRespField = squeeze(TaskAndPassiveCoefMtx(:,:,1));
-RespFieldStrc.PassRespField = squeeze(TaskAndPassiveCoefMtx(:,:,2));
+RespFieldStrc.TaskRespField = squeeze(TaskAndPassiveCoefMtx(RespROIs,:,1));
+RespFieldStrc.PassRespField = squeeze(TaskAndPassiveCoefMtx(RespROIs,:,2));
+RespFieldStrc.TotalNumROIs = sum(TPCommonInds);
+RespFieldStrc.RespROIIndex = RespROIs;
 
 RespFieldDiff = double(TaskRespField(EitherRespFields)) - double(PassRespField(EitherRespFields));
 

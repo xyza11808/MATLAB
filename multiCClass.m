@@ -240,7 +240,7 @@ if isPlot
     colorbar;
     saveas(h_mt,'Multi class classification correct rate');
     saveas(h_mt,'Multi class classification correct rate','png');
-    close(h_mt);
+%     close(h_mt);
 end
 if isPlot ~= 2
     save PairedClassResult.mat matrixData StimTypesAll Class82CVErro -v7.3

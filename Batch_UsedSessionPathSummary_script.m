@@ -5,7 +5,7 @@ if ismac
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,':'))';
 elseif ispc
-    GrandPath = 'S:\BatchData\batch55';
+    GrandPath = 'S:\BatchData\batch53';
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,';'))';
 end
@@ -118,18 +118,18 @@ end
 
 %%
 % batched ROI morph plot
-nSessPath = length(NormSessPathPass); % NormSessPathTask  NormSessPathPass
+nSessPath = length(NormSessPathTask); % NormSessPathTask  NormSessPathPass
 for cSess = 1 : nSessPath
     %
-    cSessPath = NormSessPathPass{cSess};
+    cSessPath = NormSessPathTask{cSess};
 %     [~,EndInds] = regexp(cSessPath,'result_save');
 %     tline = cSessPath(1:EndInds);
-    %%
+    %
     [~,EndInds] = regexp(cSessPath,'result_save');
     ROIposfilePath = cSessPath(1:EndInds); 
     cd(ROIposfilePath);
     if exist('./ROI_morph_plot/MorphDataAll.mat','file')
-%         continue;
+        continue;
     end
     %     if exist(fullfile(ROIposfilePath,'ROI_morph_plot','MorphDataAll.mat'),'file')
     %         tline = fgetl(fid);
@@ -269,7 +269,7 @@ for cSess = 1 : nSessPath
     
     save MorphDataAll.mat ROIMorphData -v7.3
     cd ..;
-    %%
+    %
 end
 
 %%
@@ -2005,20 +2005,23 @@ ErroSess = [];
 for css = 1 : nSess
     
     csPath = NormSessPathPass{css};
-    %%
+    %
     cd(csPath);
 %     clearvars SelectSArray SelectData nnspike
     clearvars PassiveTunROIStrc
     load('rfSelectDataSet.mat');
     
     try
-        PassSP_Data_script
+%         if ~exist('ROIglmCoefSave.mat','file')
+            PassSP_Data_script;
+%         end
         PassCoef_toMtx_script;
-    catch
+    catch ME
+        disp(ME.message);
         ErroSess = [ErroSess,css];
         fprintf('Error occurs for session %d.\n',css);
     end
-    %%
+    %
 end
 %% batched spike data analysis for task sessions
 clearvars -except NormSessPathTask NormSessPathPass
@@ -2071,7 +2074,6 @@ end
 %% batched trial by trial svm prediction psychometric curve
 clearvars -except NormSessPathTask NormSessPathPass
 
-%
 nSess = length(NormSessPathTask);
 % ErroSess = [];
 for css = 1 : nSess
@@ -2079,9 +2081,48 @@ for css = 1 : nSess
     csPath = NormSessPathTask{css};
     cd(csPath);
     
-    clearvars behavResults data_aligned frame_rate
+    clearvars behavResults data_aligned frame_rate UsedROIInds BehavDataStrc ROIIndex
+    
+    BehavDataStrc = load(fullfile(csPath,'RandP_data_plots','boundary_result.mat'));
+    if exist(fullfile(csPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'),'file')
+        load(fullfile(csPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'));
+        UsedROIInds = logical(ROIIndex);
+    end 
+    
     load('CSessionData.mat')
+    
     Partitioned_neurometric_prediction;
+%     multiCClass(data_aligned,behavResults,trial_outcome,start_frame,frame_rate,1,[]);
+    
+end
+
+%% batched trial by trial svm prediction psychometric curve for pass session
+clearvars -except NormSessPathTask NormSessPathPass
+nSess = length(NormSessPathPass);
+% ErroSess = [];
+for css = 9 : nSess
+    
+    csPath = NormSessPathPass{css};
+    cd(csPath);
+    cdTaskPath = NormSessPathTask{css};
+    clearvars SelectSArray SelectData UsedROIInds BehavDataStrc ROIIndex
+    
+    BehavDataStrc = load(fullfile(cdTaskPath,'RandP_data_plots','boundary_result.mat'));
+    if exist(fullfile(cdTaskPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'),'file')
+        load(fullfile(cdTaskPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'));
+        UsedROIInds = logical(ROIIndex);
+    end 
+    
+    load('rfSelectDataSet.mat');
+    PassUSedTrStrc = load('PassUsedInds.mat');
+    if isempty(PassUSedTrStrc.PassUsedTrInds)  
+        warning('Not using passive session data for session %d',css);
+        continue;
+    else
+        UsedTrInds = PassUSedTrStrc.PassUsedTrInds;
+    end
+        
+    Partitioned_neurometric_forPass;
 %     multiCClass(data_aligned,behavResults,trial_outcome,start_frame,frame_rate,1,[]);
     
 end
@@ -2092,22 +2133,24 @@ clearvars -except NormSessPathTask NormSessPathPass
 %
 nSess = length(NormSessPathTask);
 ErroSess = [];
+% for css = 1:length(ErroSess)
 for css = 1:nSess
+    
     try
         %
         cSessPath = NormSessPathTask{css};
         cd(cSessPath);
-        %%
+        %
         cSessPath = pwd;
     
-        clearvars -except NormSessPathTask NormSessPathPass nSess ErroSess css cSessPath
-%         clearvars ROIAboveThresInds ROIRespTypeCoef ROIRespType
+%         clearvars -except NormSessPathTask NormSessPathPass nSess ErroSess css cSessPath
+        clearvars ROIAboveThresInds ROIRespTypeCoef ROIRespType
 %         if exist('SPDataBehavCoefSaveOff.mat','file')
-%             load('SPDataBehavCoefSaveOff.mat');
+            load('SPDataBehavCoefSaveOff.mat');
 %         else
 %             clearvars behavResults nnspike DataRaw
-            load('EstimateSPsaveNewMth.mat');
-            TrSummarization_WithStimOff_script;
+%             load('EstimateSPsaveNewMth.mat');
+%             TrSummarization_WithStimOff_script;
 %         end
 %         clearvars ROIRespType ROIRespTypeCoef
 %         clearvars -except NormSessPathTask NormSessPathPass nSess ErroSess css cSessPath
@@ -2120,9 +2163,9 @@ for css = 1:nSess
 %         end
     
         ExtractROI_Inds_script
-     %%
+     %
     catch
-        ErroSess = [ErroSess,css];
+%         ErroSess = [ErroSess,css];
         sprintf('Error at session %d.\n',css);
     end
     %
@@ -2138,6 +2181,7 @@ for css = 1 : nSession
     cPassPath = NormSessPathPass{css};
     cd(cTaskPath);
     try
+        %%
         clearvars TaskCoefDataStrc PassCoefDataStrc
 %
         TaskCoefPath = fullfile(cTaskPath,'SigSelectiveROIInds.mat');
@@ -2256,6 +2300,7 @@ for css = 1 : nSession
         saveas(hSumf,'Task Passive Coef Summary','png');
         saveas(hSumf,'Task Passive Coef Summary');
         close(hSumf);
+        %%
     catch
         fprintf('Error for session %d.\n',css);
     end
@@ -2337,3 +2382,88 @@ for cSess = 1 : nSession
     
 end
 saveName = exportToPPTX('saveandclose',pptFullfile);
+
+%%
+clearvars -except NormSessPathTask NormSessPathPass
+m = 1;
+nSession = length(NormSessPathTask);
+
+% Sess8_32_Inds = SessIndexAll == 4;
+% Sess8_32PathAll = SessPathAll(Sess8_32_Inds,1);
+
+%
+Plots_Save_path = 'E:\DataToGo\NewDataForXU';
+SubDir = 'SingleROIResp_summary';
+if ~isdir(fullfile(Plots_Save_path,SubDir))
+    mkdir(fullfile(Plots_Save_path,SubDir));
+end
+SavingPath = fullfile(Plots_Save_path,SubDir);
+SessSummaryfileName = 'SingleROIsummary_FormerAnaData.pptx';
+%
+pptFullfile = fullfile(SavingPath,SessSummaryfileName);
+if ~exist(pptFullfile,'file')
+    NewFileExport = 1;
+else
+    NewFileExport = 0;
+end
+if NewFileExport
+    exportToPPTX('new','Dimensions',[16,9],'Author','XinYu','Comments','Export of tunning curve plot data');
+else
+    exportToPPTX('open',pptFullfile);
+end 
+%
+NumPaths = length(NormSessPathTask);
+
+for cPath = 1 : NumPaths
+    c832Path = NormSessPathTask{cPath};
+    try
+        Sess832ROIIndexFile = fullfile(c832Path,'Tunning_fun_plot_New1s','SelectROIIndex.mat');
+        cSess832DataStrc = load(Sess832ROIIndexFile);
+    %     CommonROINum = min(numel(cSess832DataStrc.ROIIndex),numel(cSess416DataStrc.ROIIndex));
+        CommonROIIndex = logical(cSess832DataStrc.ROIIndex);
+    catch
+        % no selection index file
+        TunCurveFiles = dir(fullfile(c832Path,'Tunning_fun_plot_New1s','ROI* Tunning curve comparison plot.png'));
+        nROIs = length(TunCurveFiles);
+        CommonROIIndex = true(nROIs,1);
+    end
+        
+    c832PathInfo = SessInfoExtraction(c832Path);
+%     c416PathInfo = SessInfoExtraction(c416Path);
+    RealCommonROIs = find(CommonROIIndex);
+    for cROI = 1 : length(RealCommonROIs)
+        cROIIndex = RealCommonROIs(cROI);
+        
+        exportToPPTX('addslide');
+
+        c832ColorPath = fullfile(c832Path,'All BehavType Colorplot',sprintf('ROI%d all behavType color plot.png',cROIIndex));
+%         c416ColorPath = fullfile(c416Path,'All BehavType Colorplot',sprintf('ROI%d all behavType color plot.png',cROIIndex));
+        c832TunPath = fullfile(c832Path,'Tunning_fun_plot_New1s',sprintf('ROI%d Tunning curve comparison plot.png',cROIIndex));
+%         c416TunPath = fullfile(c416Path,'Tunning_fun_plot_New1s',sprintf('ROI%d Tunning curve comparison plot.png',cROIIndex));
+        
+%         [~,c832MorphInds] = regexp(c832Path,'result_save');
+%         [~,c416MorphInds] = regexp(c416Path,'result_save');
+%         c832MorphPath = fullfile(c832Path(1:c832MorphInds),'ROI_morph_plot',sprintf('ROI%d morph plot save.png',cROIIndex));
+%         c416MorphPath = fullfile(c416Path(1:c416MorphInds),'ROI_morph_plot',sprintf('ROI%d morph plot save.png',cROIIndex));
+
+        exportToPPTX('addpicture',imread(c832ColorPath),'Position',[0 0 8 5.6]);
+%         exportToPPTX('addpicture',imread(c832MorphPath),'Position',[0 5.6 1.8 1.4]);
+%         exportToPPTX('addpicture',imread(c416ColorPath),'Position',[8 0 8 5.6]);
+%         exportToPPTX('addpicture',imread(c416MorphPath),'Position',[8 5.6 1.8 1.4]);
+        exportToPPTX('addpicture',imread(c832TunPath),'Position',[2 5.6 4.45 3.4]);
+%         exportToPPTX('addpicture',imread(c416TunPath),'Position',[10 5.6 4.45 3.4]);
+
+        exportToPPTX('addtext',sprintf('Batch:%s Anm: %s \nDate: %s Field: %s',...
+            c832PathInfo.BatchNum,c832PathInfo.AnimalNum,c832PathInfo.SessionDate,c832PathInfo.TestNum),...
+            'Position',[0 7 2 2],'FontSize',20);
+%         exportToPPTX('addtext',sprintf('Batch:%s Anm: %s \nDate: %s Field: %s',...
+%             c416PathInfo.BatchNum,c416PathInfo.AnimalNum,c416PathInfo.SessionDate,c416PathInfo.TestNum),...
+%             'Position',[8 7 2 2],'FontSize',20);
+        
+        exportToPPTX('addnote',c832Path);
+
+    end
+end
+saveName = exportToPPTX('saveandclose',pptFullfile);
+
+

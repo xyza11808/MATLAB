@@ -1,6 +1,9 @@
 
-clear
+clear 
 clc
+%%
+[behavResults,behavSettings] = behav_cell2struct(SessionResults,SessionSettings);
+
 %% codes for multi DB curve plot
 StimDBAll = double(behavResults.Stim_toneIntensity); 
 StimFreqAll = double(behavResults.Stim_toneFreq);
@@ -11,8 +14,8 @@ NMChoice = StimChoiceAll(NMChoiceInds);
 NMDBAll = StimDBAll(NMChoiceInds);
 NMFreqAll = StimFreqAll(NMChoiceInds);
 NMFreqOctAll = log2(NMFreqAll/min(NMFreqAll)) - 1; % aligned to boundary
-%
-
+% 
+ 
 FreqTypes = unique(NMFreqAll);
 FreqStrs = cellstr(num2str(FreqTypes(:)/1000,'%.1f'));
 OctTypes = unique(NMFreqOctAll);
@@ -26,6 +29,7 @@ DBFitSave = cell(DBTypesNum,1);
 DBFreqChoiceAvg = cell(DBTypesNum,2);
 LineColor = cool(DBTypesNum);
 linehandleStrs = cell(DBTypesNum,1);
+DBFreqTypeNum = zeros(DBTypesNum,numel(FreqTypes));
 hl = [];
 hf = figure('position',[100 100 380 340]);
 hold on
@@ -49,6 +53,7 @@ for cDB = 1 : DBTypesNum
     FreqRChoiceFrac = zeros(cFreqTypeNum,1);
     for cf = 1 : cFreqTypeNum
         FreqRChoiceFrac(cf) = mean(cDBChoice(cDBFreqOcts == cFreqTypes(cf)));
+        DBFreqTypeNum(cDB,cf) = sum(cDBFreqOcts == cFreqTypes(cf));
     end
     chl = plot(cTrFitAll.curve(:,1),cTrFitAll.curve(:,2),'Color',LineColor(cDB,:),'linewidth',3);
     plot(cFreqTypes,FreqRChoiceFrac,'o','Color',LineColor(cDB,:),'linewidth',2.4);

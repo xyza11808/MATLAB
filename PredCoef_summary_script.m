@@ -22,45 +22,58 @@ CorrROIMeanTrace = squeeze(SoundAlignDataStrc.ROIMeanTraceData(:,:,1));
 
 %% extract answer alignment peak value
 cAnsFrame = size(AnsAlignDataStrc.AnsAlignData,3);
-ChoiceSortAnsData = zeros(2,nROIs,cAnsFrame);
-NMfreqTypes = unique(AnsAlignDataStrc.NMStimFreq);
-% for cf = 1 : nFreqs
-cLeftInds = AnsAlignDataStrc.NMChoice == 0;
-cLeftIndsData = AnsAlignDataStrc.AnsAlignData(cLeftInds,:,:);
-ChoiceSortAnsData(1,:,:) = squeeze(mean(cLeftIndsData));
 
-cRIndsData = AnsAlignDataStrc.AnsAlignData(~cLeftInds,:,:);
-ChoiceSortAnsData(2,:,:) = squeeze(mean(cRIndsData));
+NMfreqTypes = unique(AnsAlignDataStrc.NMStimFreq);
+Numfreq = numel(NMfreqTypes);
+ChoiceSortAnsData = zeros(Numfreq,nROIs,cAnsFrame);
+for cf = 1 : Numfreq
+    cffInds = AnsAlignDataStrc.NMStimFreq(:) == NMfreqTypes(cf) & AnsAlignDataStrc.NMOutcome(:) == 1;
+    cLeftIndsData = AnsAlignDataStrc.AnsAlignData(cffInds,:,:);
+    ChoiceSortAnsData(cf,:,:) = squeeze(mean(cLeftIndsData));
+end
+% cRIndsData = AnsAlignDataStrc.AnsAlignData(~cLeftInds,:,:);
+% ChoiceSortAnsData(2,:,:) = squeeze(mean(cRIndsData));
 
 % end
 
 AnsWin = [0,0.3;0.5,0.8;1,1.3];  %s
+nWins = size(AnsWin,1);
 AnsFWin = round(AnsWin*SoundAlignDataStrc.Frate);
-AnsWinRespALL = cell(3,1);
-for cAns = 1 : 3
+AnsWinRespALL = cell(nWins,1);
+BeforeAnsWin = round(0.2*SoundAlignDataStrc.Frate);
+for cAns = 1 : nWins
     cAnsF = AnsFWin(cAns,:);
     if AnsAlignDataStrc.MinAnsF+cAnsF(2) > cAnsFrame
         AnsWinResp = ChoiceSortAnsData(:,:,AnsAlignDataStrc.MinAnsF+cAnsF(1):end);
-        AnsWinResp = AnsWinResp - repmat(ChoiceSortAnsData(:,:,AnsAlignDataStrc.MinAnsF),1,1,size(AnsWinResp,3));
+        AnsWinResp = AnsWinResp - repmat(ChoiceSortAnsData(:,:,AnsAlignDataStrc.MinAnsF-BeforeAnsWin),1,1,size(AnsWinResp,3));
     else
         AnsWinResp = ChoiceSortAnsData(:,:,AnsAlignDataStrc.MinAnsF+cAnsF(1):AnsAlignDataStrc.MinAnsF+cAnsF(2));
-         AnsWinResp = AnsWinResp - repmat(ChoiceSortAnsData(:,:,AnsAlignDataStrc.MinAnsF),1,1,size(AnsWinResp,3));
+         AnsWinResp = AnsWinResp - repmat(ChoiceSortAnsData(:,:,AnsAlignDataStrc.MinAnsF-BeforeAnsWin),1,1,size(AnsWinResp,3));
     end
     AnsWinRespALL{cAns} = AnsWinResp;
 end
 %%
-AnsPeakV = zeros(3,nROIs,2);
-for cAnsDelay = 1 : 3
+TrTypeInds = NMfreqTypes > min(NMfreqTypes)*2;
+AnsPeakFreqV = zeros(nWins,nROIs,Numfreq);
+AnsPeakV = zeros(nWins,nROIs,2);
+for cAnsDelay = 1 : nWins
+    %
    cAnsData = AnsWinRespALL{cAnsDelay};
-    for cff = 1 : 2
+    for cff = 1 : Numfreq
         for cr = 1 : nROIs
             cTrace = squeeze(cAnsData(cff,cr,:));
     %         [~,MaxInds] = max(abs(cTrace));
     %         AnsPeakV(cr,cff) = cTrace(MaxInds);
-            AnsPeakV(cAnsDelay,cr,cff) = mean(cTrace);
+            AnsPeakFreqV(cAnsDelay,cr,cff) = mean(cTrace);
         end
     end
+    %
+    cAnsFreqData = squeeze(AnsPeakFreqV(cAnsDelay,:,:));
+    cLAnsChoiceData = mean((cAnsFreqData(:,~TrTypeInds) > 20),2);
+    cRAnsChoiceData = mean((cAnsFreqData(:,TrTypeInds) > 20),2);
+    AnsPeakV(cAnsDelay,:,:) = [cLAnsChoiceData,cRAnsChoiceData];
 end
+
 %% extract Coef information
 % since glmnet also can detect the negetive peak of calcium trace, so we
 % will excluded those coefficients from detected coefs
@@ -69,8 +82,13 @@ ROICoefIndsAll = cell2mat(GlmCoefDataStrc.ROIAboveThresInds(:,1));
 
 % CoefRespPeakAll = [OnPeakAll,AnsPeakV,OffPeakAll];
 
-NegPeakInds = [OnPeakAll,squeeze(AnsPeakV(1,:,:)),OffPeakAll,squeeze(AnsPeakV(2,:,:)),squeeze(AnsPeakV(3,:,:))] < 10;
-
+RespNegPeakInds = [OnPeakAll < 10,squeeze(AnsPeakV(1,:,:)) < 0.8,OffPeakAll < 10,squeeze(AnsPeakV(2,:,:)) < 0.8,...
+    squeeze(AnsPeakV(3,:,:)) < 0.8];
+CoefNegInds = ROICoefAll <= 0.4;
+% CoefPosInds = ROICoefAll >= 1;
+NegPeakInds = RespNegPeakInds | CoefNegInds;
+% NegPeakInds(CoefPosInds) = false;
+%%
 ROICoefAll(NegPeakInds) = 0;
 ROICoefIndsAll(NegPeakInds) = 0;
 

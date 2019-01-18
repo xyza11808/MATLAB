@@ -154,7 +154,7 @@ axesObjs = get(h, 'Children');  %axes handles
 nAxes = length(axesObjs);
 for cA = 1 : nAxes
     try
-        set(axesObjs(cA),'clim',[0 100]);
+        set(axesObjs(cA),'clim',[0 250]);
     end
 end
 
@@ -163,10 +163,12 @@ end
 %extract data from fig file
   h = gcf; %current figure handle
   axesObjs = get(h, 'Children');  %axes handles
-%   dataObjs = get(axesObjs, 'Children'); %handles to low-level graphics objects in axes
+  dataObjs = get(axesObjs, 'Children'); %handles to low-level graphics objects in axes
   %% high bersion matlab
-  xdata = get(dataObjs(4), 'XData');  %data from low-level grahics objects
-  ydata = get(dataObjs(4), 'YData');
+  xdata1 = get(dataObjs(1), 'XData');  %data from low-level grahics objects
+  ydata1 = get(dataObjs(1), 'YData');
+  xdata2 = get(dataObjs(2), 'XData');  %data from low-level grahics objects
+  ydata2 = get(dataObjs(2), 'YData');
   % low version matlab
 %    xdata = get(dataObjs{2}, 'XData');  %data from low-level grahics objects
 %   ydata = get(dataObjs{2}, 'YData');
@@ -293,10 +295,49 @@ v_noise = fminsearch(@(v) ErrorYData(v(1),v(2),v(3),v(4),x),([1 1 0 1])'); % how
 
 % ##############################################################################
 
-%%
+%% for passive session used frequency trial index finding
 
-%current ROI drawing progress:
-%L:\imagingdata\batch\batch17\20150819\anm03\test01\im_data_reg
-
+% clearvars -except NormSessPathTask NormSessPathPass
+% nSess = length(NormSessPathPass);
+% % ErroSess = [];
+% for css = 1 : nSess
+%     
+%     csPath = NormSessPathPass{css};
+%     cd(csPath);
+%     cdTaskPath = NormSessPathTask{css};
+%     clearvars SelectSArray SelectData UsedROIInds BehavDataStrc ROIIndex
+%     
+%     BehavDataStrc = load(fullfile(cdTaskPath,'RandP_data_plots','boundary_result.mat'));
+%     TaskSound = BehavDataStrc.boundary_result.StimType;
+%     if exist(fullfile(cdTaskPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'),'file')
+%         load(fullfile(cdTaskPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'));
+%         UsedROIInds = logical(ROIIndex);
+%     end 
+%     
+%     load('rfSelectDataSet.mat');
+%     PassFreqs = (unique(SelectSArray))';
+%     disp(TaskSound);
+%     disp(PassFreqs);
+%     
+%     PassUsedStrs = input('Please input the passive used frequency inds:\n','s');
+%     PassTeUsedInds = str2num(PassUsedStrs);
+%     if length(PassTeUsedInds) == 1 && PassTeUsedInds > 0
+%         PassUsedInds = true(numel(PassFreqs),1);
+%         PassUsedTrInds = true(numel(SelectSArray),1);
+%     elseif length(PassTeUsedInds) > 2
+%         PassUsedInds = PassTeUsedInds;
+%         PassUsedFreqs = PassFreqs(PassUsedInds);
+%         PassUsedTrInds = false(numel(SelectSArray),1);
+%         for cf = 1 : length(PassUsedFreqs)
+%             cfInds = SelectSArray == PassUsedFreqs(cf);
+%             PassUsedTrInds(cfInds) = true;
+%         end
+%     else
+%         PassUsedInds = [];
+%         PassUsedTrInds = [];
+%     end
+%     
+%     save PassUsedInds.mat PassUsedInds PassUsedTrInds -v7.3
+% end
 
 

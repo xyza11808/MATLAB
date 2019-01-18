@@ -13,10 +13,17 @@ if exist('UsedROIInds','var')
 else
     RespData = mean(SelectData(:,:,FrameScale(1):FrameScale(2)),3);
 end
+if exist('UsedTrInds','var')
+    RespData = mean(SelectData(UsedTrInds,:,FrameScale(1):FrameScale(2)),3);
+    Stimlulus = SelectSArray(UsedTrInds);
+else
+    RespData = mean(SelectData(UsedTrInds,:,FrameScale(1):FrameScale(2)),3);
+    Stimlulus = SelectSArray;
+end
+
 %% generate artificial choice types for passive sessions
 % Trial outcomes correction
 
-Stimlulus = SelectSArray;
 StimTypes = unique(Stimlulus);
 GroupNum = length(StimTypes)/2;
 StimOctaves = log2(Stimlulus/min(Stimlulus)) - 1;
@@ -36,11 +43,11 @@ end
 TrialOutcomes = ones(numel(AnimalChoice),1);
 TrialTypes = AnimalChoice;
 
-StimTypeOcts = log2(BehavDataStrc.boundary_result.StimType(:)/min(Stimlulus)) - 1;
-LeftInds = StimTypeOcts <= 0;
+TaskStimTypeOcts = log2(BehavDataStrc.boundary_result.StimType(:)/min(Stimlulus)) - 1;
+LeftInds = TaskStimTypeOcts < 0;
 StimRProb = BehavDataStrc.boundary_result.StimCorr;
 StimRProb(LeftInds) = 1 - StimRProb(LeftInds);
-
+    
 rescaleB = max(StimRProb);
 rescaleA = min(StimRProb);
 BehavFit = BehavDataStrc.boundary_result.FitValue;
@@ -141,17 +148,17 @@ end
 %
 %%
 % repeats of same partition fold, using 100 times of repeats
-if exist('UsedROIInds','var')
-    if ~isdir('./Test_anmChoice_predPartROI/')
-        mkdir('./Test_anmChoice_predPartROI/');
-    end
-    cd('./Test_anmChoice_predPartROI/');
-else
+% if exist('UsedROIInds','var')
+%     if ~isdir('./Test_anmChoice_predPartROI/')
+%         mkdir('./Test_anmChoice_predPartROI/');
+%     end
+%     cd('./Test_anmChoice_predPartROI/');
+% else
     if ~isdir('./Test_anmChoice_predNew/')
         mkdir('./Test_anmChoice_predNew/');
     end
     cd('./Test_anmChoice_predNew/');
-end
+% end
 %%
 nTrs = size(UsingRespData,1);
 nROI = size(UsingRespData,2);
@@ -232,7 +239,7 @@ hold on
 plot(PredScoreFits.curve(:,1),PredScoreFits.curve(:,2),'r','linewidth',2);
 plot(BehavFit.curve(:,1)-1,BehavFit.curve(:,2),'k','linewidth',2)
 plot(StimOctaveTypes,OctMeanmdPredScore,'ro','linewidth',1.8);
-plot(StimOctaveTypes,StimRProb,'ko','linewidth',1.8);
+plot(TaskStimTypeOcts,StimRProb,'ko','linewidth',1.8);
 xlim([-1.1 1.1]);
 ylim([-0.05 1.05]);
 set(gca,'xtick',StimOctaveTypes,'xticklabel',cellstr(num2str(StimTypes/1000,'%.1f')),'ytick',[0 0.5 1]);
@@ -317,7 +324,7 @@ h2CompPlot=figure('position',[300 150 500 400],'PaperpositionMode','auto');
 hold on;
 plot(PerfFit.curve(:,1),PerfFit.curve(:,2),'r','LineWidth',2);
 plot(BehavFit.curve(:,1)-1,BehavFit.curve(:,2),'k','linewidth',2)
-plot(StimOctaveTypes,StimRProb,'ko','linewidth',1.8);
+plot(TaskStimTypeOcts,StimRProb,'ko','linewidth',1.8);
 errorbar(StimOctaveTypes,PredRightwardPerfMean,PredRightwardPerfSEM,'ro','linewidth',1.8);
 text(StimOctaveTypes(2),0.8,sprintf('nROI = %d',nROI),'FontSize',10);
 legend('logi\_fitc','logi\_realc','Real\_data','Fit\_data','location','southeast');
@@ -348,7 +355,7 @@ hold on
 plot(CurTestScorFit.curve(:,1),CurTestScorFit.curve(:,2),'r','linewidth',2);
 plot(BehavFit.curve(:,1)-1,BehavFit.curve(:,2),'k','linewidth',2)
 plot(StimOctaveTypes,AvgUsedTestRPRob,'ro','linewidth',1.8);
-plot(StimOctaveTypes,StimRProb,'ko','linewidth',1.8);
+plot(TaskStimTypeOcts,StimRProb,'ko','linewidth',1.8);
 xlim([-1.1 1.1]);
 ylim([-0.05 1.05]);
 set(gca,'xtick',StimOctaveTypes,'xticklabel',cellstr(num2str(StimTypes/1000,'%.1f')),'ytick',[0 0.5 1]);

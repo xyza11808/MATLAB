@@ -1,5 +1,6 @@
 clear
 %%
+
 % Session saved data path: K:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data
 % summrize behav session path
 AnmName = cell(5,1);
@@ -7,7 +8,7 @@ BehavPathAll = {};
 nPath = 0;
 AnmName{1} = 'ztt_curve01';
 % anmName = 'ztt_curve01';
-cd('N:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve01')
+cd('R:\Xulab_Share_Nutstore\Projects\Behavior_data\Zhou_Taotao\curve_plot_fitting\curve01\bootStrap_fit')
 datafnames = {'bootStrap_fit_results_curve01_20150921_psycurveday1.mat',...
 'bootStrap_fit_results_curve01_20150929_psycurveday2.mat',...
 'bootStrap_fit_results_curve01_20150930_psycurveday3.mat',...
@@ -25,7 +26,7 @@ end
 anmName = 'ztt_curve02';
 AnmName{2} = anmName;
 
-cd('N:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve02');
+cd('R:\Xulab_Share_Nutstore\Projects\Behavior_data\Zhou_Taotao\curve_plot_fitting\curve02\bootStrap_fit');
 % matfiles = dir('bootStrap*.mat')
 % for i = 1:length(matfiles),fprintf('''%s'',...\n',matfiles(i).name);end;
     %
@@ -46,7 +47,7 @@ cd('N:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve02');
 % Animal_3: curve03
 
 AnmName{3} = 'ztt_curve03';
-cd('N:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve03')
+cd('R:\Xulab_Share_Nutstore\Projects\Behavior_data\Zhou_Taotao\curve_plot_fitting\curve03\bootStrap_fit')
 % matfiles = dir('bootStrap*.mat')
 % for i = 1:length(matfiles),fprintf('''%s'',...\n',matfiles(i).name);end;
     %
@@ -68,7 +69,7 @@ cd('N:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve03')
 % Animal_4: curve04
 
 AnmName{4} = 'ztt_curve04';
-cd('N:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve04')
+cd('R:\Xulab_Share_Nutstore\Projects\Behavior_data\Zhou_Taotao\curve_plot_fitting\curve04\bootStrap_fit')
 % matfiles = dir('bootStrap*.mat')
 % for i = 1:length(matfiles),fprintf('''%s'',...\n',matfiles(i).name);end;
     %
@@ -91,7 +92,7 @@ end
 % Animal_5: curve05
 AnmName{5} = 'ztt_curve05';
 
-cd('N:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data\curve05')
+cd('R:\Xulab_Share_Nutstore\Projects\Behavior_data\Zhou_Taotao\curve_plot_fitting\curve05\bootStrap_fit')
 % matfiles = dir('bootStrap*.mat')
 % for i = 1:length(matfiles),fprintf('''%s'',...\n',matfiles(i).name);end;
     %
@@ -110,6 +111,7 @@ for cInds = 1 : length(inds_use)
     BehavPathAll{nPath} = fullfile(pwd,datafnames{inds_use(cInds)});
 end
 
+cd('E:\DataToGo\data_for_xu\ZTT_data_summary');
 save UsedSessPathSave.mat BehavPathAll nPath -v7.3
 
 %% process each session data
@@ -140,52 +142,52 @@ for cSess = 1 : nPath
     SessBehavOct{cSess} = cSessOcts;
     
     
-    hhf = figure('position',[100 100 480 400]);
-    scatter(cSessOcts,cSessChoice,50,'MarkerEdgeColor','k','LineWidth',3);
-    yyaxis left
-    hold on;
-    % for parameters: g,l,u,v
-    UL = [0.5, 0.5, max(cSessOcts), 100];
-    SP = [cSessChoice(1),1 - cSessChoice(end)-cSessChoice(1), mean(cSessOcts), 1];
-    LM = [0, 0, min(cSessOcts), 0];
-    ParaBoundLim = ([UL;SP;LM]);
-    F=@(g,l,u,v,x) g+(1-g-l)*0.5*(1+erf((x-u)/sqrt(2*v^2)));
-    fit_ReNew = FitPsycheCurveWH_nx(cSessOcts, cSessChoice, ParaBoundLim);
-%     syms x
-%     ff = F(fit_ReNew.ffit.g,fit_ReNew.ffit.l,fit_ReNew.ffit.u,fit_ReNew.ffit.v,x);
-%     fslope = diff(ff,x);
-%     DerivData = double(subs(fslope,fit_ReNew.curve(:,1))); % calculate the derivative function and convert into double value
-    
-    %
-    OctStep = mean(diff(fit_ReNew.curve(:,1)));
-    BehavDerivateCurve = diff(fit_ReNew.curve(:,2));
-    BehavDerivateCurve = [BehavDerivateCurve(1);BehavDerivateCurve]/OctStep;
-    [MaxV,MaxInds] = max(BehavDerivateCurve);
-    SessBoundSlope(cSess,:) = [fit_ReNew.curve(MaxInds,1),MaxV];
-    %
-    plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'color','k','LineWidth',2.4);
-    ylim([0 1]);
-    ylabel('Rightward choice');
-
-    yyaxis right
-    plot(fit_ReNew.curve(:,1),BehavDerivateCurve,'Color',[.7 .7 .7],'linewidth',2);
-    set(gca,'yColor',[.7 .7 .7]);
-    Ryscales = get(gca,'ylim');
-    set(gca,'ylim',[-0.1 Ryscales(2)]);
-    ylabel('Derivative')
-
-%     set(gca,'xtick',cSessOcts);
-    set(gca,'xtick',TickOct);
-%     Freqs = double(unique(BehavDataStc.toneFreq));
-%     set(gca,'xticklabel',cellstr(num2str(Freqs(:)/1000,'%.1f')));
-    set(gca,'xticklabel',TickStrs);
-    xlabel('Frequency(kHz)');
-    set(gca,'FontSize',14);
-
-    title(sprintf('Session%d',cSess));
-    saveas(hhf,sprintf('Session%d behavior plot save',cSess));
-    saveas(hhf,sprintf('Session%d behavior plot save',cSess),'png');
-    close(hhf);
+%     hhf = figure('position',[100 100 480 400]);
+%     scatter(cSessOcts,cSessChoice,50,'MarkerEdgeColor','k','LineWidth',3);
+%     yyaxis left
+%     hold on;
+%     % for parameters: g,l,u,v
+%     UL = [0.5, 0.5, max(cSessOcts), 100];
+%     SP = [cSessChoice(1),1 - cSessChoice(end)-cSessChoice(1), mean(cSessOcts), 1];
+%     LM = [0, 0, min(cSessOcts), 0];
+%     ParaBoundLim = ([UL;SP;LM]);
+%     F=@(g,l,u,v,x) g+(1-g-l)*0.5*(1+erf((x-u)/sqrt(2*v^2)));
+%     fit_ReNew = FitPsycheCurveWH_nx(cSessOcts, cSessChoice, ParaBoundLim);
+% %     syms x
+% %     ff = F(fit_ReNew.ffit.g,fit_ReNew.ffit.l,fit_ReNew.ffit.u,fit_ReNew.ffit.v,x);
+% %     fslope = diff(ff,x);
+% %     DerivData = double(subs(fslope,fit_ReNew.curve(:,1))); % calculate the derivative function and convert into double value
+%     
+%     %
+%     OctStep = mean(diff(fit_ReNew.curve(:,1)));
+%     BehavDerivateCurve = diff(fit_ReNew.curve(:,2));
+%     BehavDerivateCurve = [BehavDerivateCurve(1);BehavDerivateCurve]/OctStep;
+%     [MaxV,MaxInds] = max(BehavDerivateCurve);
+%     SessBoundSlope(cSess,:) = [fit_ReNew.curve(MaxInds,1),MaxV];
+%     %
+%     plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'color','k','LineWidth',2.4);
+%     ylim([0 1]);
+%     ylabel('Rightward choice');
+% 
+%     yyaxis right
+%     plot(fit_ReNew.curve(:,1),BehavDerivateCurve,'Color',[.7 .7 .7],'linewidth',2);
+%     set(gca,'yColor',[.7 .7 .7]);
+%     Ryscales = get(gca,'ylim');
+%     set(gca,'ylim',[-0.1 Ryscales(2)]);
+%     ylabel('Derivative')
+% 
+% %     set(gca,'xtick',cSessOcts);
+%     set(gca,'xtick',TickOct);
+% %     Freqs = double(unique(BehavDataStc.toneFreq));
+% %     set(gca,'xticklabel',cellstr(num2str(Freqs(:)/1000,'%.1f')));
+%     set(gca,'xticklabel',TickStrs);
+%     xlabel('Frequency(kHz)');
+%     set(gca,'FontSize',14);
+% 
+%     title(sprintf('Session%d',cSess));
+%     saveas(hhf,sprintf('Session%d behavior plot save',cSess));
+%     saveas(hhf,sprintf('Session%d behavior plot save',cSess),'png');
+%     close(hhf);
 end
 save BehavDataSum.mat SessBehavData SessBehavOct SessBoundSlope -v7.3
 cd ..;
@@ -256,7 +258,7 @@ ParaBoundLim = ([UL;SP;LM]);
 % F=@(g,l,u,v,x) g+(1-g-l)*0.5*(1+erf((x-u)/sqrt(2*v^2)));
 fit_ReNew = FitPsycheCurveWH_nx(SessOctMtx(:), SessBehavMtx(:), ParaBoundLim);
 fitCI = predint(fit_ReNew.ffit,fit_ReNew.curve(:,1),0.95,'functional','on');
-h_f = figure('position',[100 100 480 420]);
+h_f = figure('position',[100 100 360 300]);
 hold on
 plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'k','linewidth',2.4);
 plot(fit_ReNew.curve(:,1),fitCI,'Color',[.7 .7 .7],'linestyle','--','linewidth',1.6);
@@ -269,3 +271,4 @@ title(sprintf('n = %d',length(SessBehavData)));
 set(gca,'FontSize',14)
 saveas(h_f,'Summarized multiSess behav Data fitting plot');
 saveas(h_f,'Summarized multiSess behav Data fitting plot','png');
+saveas(h_f,'Summarized multiSess behav Data fitting plot','pdf');

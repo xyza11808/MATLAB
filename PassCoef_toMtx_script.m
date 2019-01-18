@@ -26,5 +26,5 @@ for cR = 1 : RespNum
         PassRespCoefMtx(cR,:) = max(TempRespInds);
     end
 end
-
+%%
 save PassCoefMtxSave.mat PassRespCoefMtx PassRespROIInds -v7.3

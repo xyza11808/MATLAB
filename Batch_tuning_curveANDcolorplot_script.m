@@ -13,7 +13,7 @@ for cSess = 1 : nSessPath
 %         continue;
 %     end
     try
-    %
+    %%
     Passtline = NormSessPathPass{cSess};
     Tasktline = NormSessPathTask{cSess};
      
