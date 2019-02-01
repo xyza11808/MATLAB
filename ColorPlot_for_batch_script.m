@@ -1,3 +1,4 @@
+CusMap = blue2red_2(32,0.8);
 % passive tuning frequency colormap plot
     load(fullfile(tline,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'));
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));

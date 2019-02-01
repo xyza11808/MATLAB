@@ -2,7 +2,7 @@
 clearvars -except NormSessPathPass NormSessPathTask 
 %
 nSessPath = length(NormSessPathTask);
-CusMap = blue2red_2(32,0.8);
+% CusMap = blue2red_2(32,0.8);
 ErrorSessNum = [];
 ErrorMes = {};
 k_sess = 0;

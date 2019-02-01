@@ -155,10 +155,10 @@ xlabel('Frequnecy (kHz)');
 ylabel('Right prob');
     
 %%
-if ~isdir('./Test_anmChoice_LOO/')
-    mkdir('./Test_anmChoice_LOO/');
+if ~isdir('./Test_anmChoice_LOO832/')
+    mkdir('./Test_anmChoice_LOO832/');
 end
-cd('./Test_anmChoice_LOO/');
+cd('./Test_anmChoice_LOO832/');
 
 save LOOPred_NeuroCurve.mat PredTrChoice UsingAnmChoice MdSelfPerf BehavFit PredPerfFits...
     OctPredRProb StimRProb StimOctaveTypes StimOctaves -v7.3

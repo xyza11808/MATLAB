@@ -636,6 +636,7 @@ title('Threshold')
 set(gca,'box','off');
 
 %%
+cd('S:\BatchData\batch55\summarization\TbyTLOO_MethodCorrelation');
 saveas(h816f,'Sess716 NeuroANDBehav Bound and thres corr');
 saveas(h816f,'Sess716 NeuroANDBehav Bound and thres corr','png');
 saveas(h816f,'Sess716 NeuroANDBehav Bound and thres corr','pdf');

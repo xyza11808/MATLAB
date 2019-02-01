@@ -6,7 +6,7 @@ if isempty(PassPath)
     [~,InfoDataEndInds] = regexp(Tatline,'result_save');
     PassPath = fullfile(sprintf('%srf%s',Tatline(1:EndInds),Tatline(EndInds+1:InfoDataEndInds)),'plot_save','NO_Correction');
 end
-
+% CusMap = blue2red_2(32,0.8);
 try
     %
 %     Passtline = NormSessPathPass{cSess};
