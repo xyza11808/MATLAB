@@ -122,7 +122,7 @@ end
 % % #######################################
 
 % Data considered 
-UsingData = max(RawDataAll(TrialInds,ROIindsSelect,FrameScale(1):FrameScale(2)),[],3);
+UsingData = mean(RawDataAll(TrialInds,ROIindsSelect,FrameScale(1):FrameScale(2)),3);
 UsingStim = StimAll(TrialInds);
 UsingStimType = unique(UsingStim);
 % UsingTrialType = double(UsingStim>UsingStimType(length(UsingStimType)/2));
@@ -233,7 +233,7 @@ parfor nTimes = 1 : nIters
 % %     fprintf('Test Data error rate is %.3f.\n',TestDataLoss);
 end
 MnTestLoss = mean(TestLoss);
-fprintf('Min Test Data error rate is %.3f.\n',MnTestLoss);
+fprintf('Mean Test Data error rate is %.3f.\n',MnTestLoss);
 
 if isShuffle
     % ####################################################

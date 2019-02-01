@@ -19,7 +19,17 @@ AnsAlignDataStrc = load(AnsAlignDataPath);
 CorrROIMeanTrace = squeeze(SoundAlignDataStrc.ROIMeanTraceData(:,:,1));
 % extract stim alignment peak value
 [OnPeakAll,OffPeakAll] = cellfun(@(x) OnOffPeakValueExtract(x,round(SoundAlignDataStrc.AlignedFrame),SoundAlignDataStrc.Frate),CorrROIMeanTrace);
-
+% check the STD data also
+try
+    SessTunData = load(fullfile(cSessPath,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'),'CorrTunningFun','CorrTunningFunSTD');
+    SessTunLowThresInds = (SessTunData.CorrTunningFun <= SessTunData.CorrTunningFunSTD)';
+catch
+    SessTunANDColorPlotFun(cSessPath,[]);
+    SessTunData = load(fullfile(cSessPath,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'),'CorrTunningFun','CorrTunningFunSTD');
+    SessTunLowThresInds = (SessTunData.CorrTunningFun <= SessTunData.CorrTunningFunSTD)';
+end
+OnPeakAll(SessTunLowThresInds) = 0;
+OffPeakAll(SessTunLowThresInds) = 0;
 %% extract answer alignment peak value
 cAnsFrame = size(AnsAlignDataStrc.AnsAlignData,3);
 
@@ -69,8 +79,8 @@ for cAnsDelay = 1 : nWins
     end
     %
     cAnsFreqData = squeeze(AnsPeakFreqV(cAnsDelay,:,:));
-    cLAnsChoiceData = mean((cAnsFreqData(:,~TrTypeInds) > 20),2);
-    cRAnsChoiceData = mean((cAnsFreqData(:,TrTypeInds) > 20),2);
+    cLAnsChoiceData = mean((cAnsFreqData(:,~TrTypeInds) > 15),2);
+    cRAnsChoiceData = mean((cAnsFreqData(:,TrTypeInds) > 15),2);
     AnsPeakV(cAnsDelay,:,:) = [cLAnsChoiceData,cRAnsChoiceData];
 end
 
@@ -82,7 +92,7 @@ ROICoefIndsAll = cell2mat(GlmCoefDataStrc.ROIAboveThresInds(:,1));
 
 % CoefRespPeakAll = [OnPeakAll,AnsPeakV,OffPeakAll];
 
-RespNegPeakInds = [OnPeakAll < 10,squeeze(AnsPeakV(1,:,:)) < 0.8,OffPeakAll < 10,squeeze(AnsPeakV(2,:,:)) < 0.8,...
+RespNegPeakInds = [OnPeakAll < 10,squeeze(AnsPeakV(1,:,:)) < 0.7,OffPeakAll < 10,squeeze(AnsPeakV(2,:,:)) < 0.8,...
     squeeze(AnsPeakV(3,:,:)) < 0.8];
 CoefNegInds = ROICoefAll <= 0.4;
 % CoefPosInds = ROICoefAll >= 1;

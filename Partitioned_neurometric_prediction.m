@@ -139,16 +139,16 @@ BehavFit = FitPsycheCurveWH_nx(StimOctaves(:),UsingAnmChoice);
 %     end
 %     cd('./Test_anmChoice_predPartROI/');
 % else
-    if ~isdir('./Test_anmChoice_predNewCROIs/')
-        mkdir('./Test_anmChoice_predNewCROIs/');
+    if ~isdir('./Test_anmChoice_predCROIs/')
+        mkdir('./Test_anmChoice_predCROIs/');
     end
-    cd('./Test_anmChoice_predNewCROIs/');
+    cd('./Test_anmChoice_predCROIs/');
 % end
 %%
 nTrs = size(UsingRespData,1);
 nROI = size(UsingRespData,2);
-nRepeats = 200;
-foldsRange = 6*ones(nRepeats,1);
+nRepeats = 400;
+foldsRange = 5*ones(nRepeats,1);
 foldLen = length(foldsRange);
 IterPredChoice = zeros(foldLen,nTrs);
 ModelPerf = zeros(foldLen,foldsRange(1));
@@ -325,13 +325,18 @@ TestScoreMtx = cell2mat((TestScoreAll(:))');
 PosNaNInds = sum(isnan(TestScoreMtx)) == 0;
 UsedTestScoreMtx = TestScoreMtx(:,PosNaNInds);
 AvgUsedTestScore = mean(UsedTestScoreMtx,2);
+% UpperBound = min(max(AvgUsedTestScore),-min(AvgUsedTestScore));
 AvgUsedTestRPRob = (rescaleB-rescaleA)*((AvgUsedTestScore-min(AvgUsedTestScore))./...
     (max(AvgUsedTestScore)-min(AvgUsedTestScore)))+rescaleA; 
+% AvgUsedTestRPRob = (rescaleB-rescaleA)*((AvgUsedTestScore+UpperBound)./...
+%     (UpperBound*2))+rescaleA;
+% AvgUsedTestRPRob(AvgUsedTestRPRob > 1) = 1;
+% AvgUsedTestRPRob(AvgUsedTestRPRob < 0) = 0;
 % StdUsedTestScore = std(UsedTestScoreMtx,[],2);
 % UsedNum = size(UsedTestScoreMtx,2);
 % CurBehavFits = FitPsycheCurveWH_nx(StimOctaves(:),UsingAnmChoice(:));
 CurTestScorFit = FitPsycheCurveWH_nx(StimOctaveTypes(:),AvgUsedTestRPRob);
-
+%%
 hTestScoref = figure('position',[100 100 420 340]);
 hold on
 plot(CurTestScorFit.curve(:,1),CurTestScorFit.curve(:,2),'r','linewidth',2);
@@ -345,12 +350,12 @@ title('Testing trial score and behav compare plot');
 set(gca,'FontSize',12);
 xlabel('Frequnecy (kHz)');
 ylabel('Right prob');
-
+%%
 saveas(hTestScoref,'TestPredScore psychometric curve plots');
 saveas(hTestScoref,'TestPredScore psychometric curve plots','png');
 close(hTestScoref);
 
-save NeuroCurveVSBehav.mat StimOctaveTypes AvgUsedTestRPRob StimRProb PredRightwardPerfMean -v7.3
+save NeuroCurveVSBehav.mat StimOctaveTypes AvgUsedTestRPRob StimRProb PredRightwardPerfMean CurTestScorFit PerfFit PredScoreOctMtx -v7.3
 %%
 % new distribution plots for only worst trials
 % plots the trial by trial choice prob

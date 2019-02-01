@@ -463,20 +463,29 @@ for n = 1:fileNum
         TypeNumber=zeros(1,length(stim_types));
         TypeTrTypes = zeros(length(stim_types),1);
         TypeChoiceSEM = zeros(1,length(stim_types));
+        TypeBinoCI = zeros(2,length(stim_types));
         for i=1:length(stim_types)
             type_inds= behavResults.Stim_toneFreq==stim_types(i);
             TypeNumber(i) = sum(type_inds);
-            Type_choiceR(i)=mean(behavResults.Action_choice(type_inds));
+            cTrChoice = double(behavResults.Action_choice(type_inds));
+            Type_choiceR(i) = mean(cTrChoice);
+            TypeBinoCI(:,i) = std(cTrChoice)/sqrt(numel(cTrChoice)) * [1 1] + mean(cTrChoice);
+%             [pHat,pCI] = binofit(sum(cTrChoice),numel(cTrChoice));
+%             Type_choiceR(i) = pHat;
+%             TypeBinoCI(:,i) = pCI;
             
             TypeTrTypes(i) = mode(behavResults.Trial_Type(type_inds));
             TypeChoiceSEM(i) = std(double(behavResults.Action_choice(type_inds)))/sqrt(sum(TypeNumber(i)));
         end
+        ErrorBarNegDis = abs(Type_choiceR - TypeBinoCI(1,:));
+        ErrorBarPosDis = abs(TypeBinoCI(2,:) - Type_choiceR);
         boundary_result(n).Typenumbers = TypeNumber;
         boundary_result(n).StimType=stim_types;
         boundary_result(n).StimCorr=Type_choiceR;
         boundary_result(n).StimCorr(~TypeTrTypes) = 1 - boundary_result(n).StimCorr(~TypeTrTypes);
         boundary_result(n).RevertStimRProb = ~TypeTrTypes;
         boundary_result(n).SessBehavAll = SessBehavDatas;
+        boundary_result(n).ErrorCI = TypeBinoCI;
 %         if(mean(boundary_result(n).StimCorr)<0.5)
 %             continue;
 %         end
@@ -506,7 +515,8 @@ for n = 1:fileNum
         plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'color','k','LineWidth',2.4);
         plot(fit_ReNewAll.curve(:,1),fit_ReNewAll.curve(:,2),'color','r','LineWidth',2.4);
         line([fit_ReNewAll.ffit.u fit_ReNewAll.ffit.u],[0 1],'color',[.7 .7 .7],'LineWidth',1.6,'linestyle','--');
-        line([internal_boundary internal_boundary],[0 1],'color','m','LineWidth',1.6,'linestyle','--');
+        errorbar(octave_dist,Type_choiceR,ErrorBarNegDis,ErrorBarPosDis,'ko','linewidth',2);
+%         line([internal_boundary internal_boundary],[0 1],'color','m','LineWidth',1.6,'linestyle','--');
         hold off;
         ylim([0 1]);
         set(gca,'xtick',octave_dist);

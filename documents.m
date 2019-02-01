@@ -154,7 +154,7 @@ axesObjs = get(h, 'Children');  %axes handles
 nAxes = length(axesObjs);
 for cA = 1 : nAxes
     try
-        set(axesObjs(cA),'clim',[0 250]);
+        set(axesObjs(cA),'clim',[0 400],'xlim',[0 6*28]);
     end
 end
 

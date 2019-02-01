@@ -103,8 +103,8 @@ for cPath = 1 : NumPaths
     cd(c832Path);
     c832BoundIndex = cSess832ToneBound/max(cSess832StimOct)*(numel(cSess832StimOct) - 1) + 1;
     [FieldChange,FieldChangeWithIndex832,c832TPCoefDiff,FieldChangeMtx] = TuningfieldChangeFun(c832Path,numel(cSess832DataStrc.ROIIndex),CommonROIIndex,c832BoundIndex);
-    NearFieldChangeAll = cell2mat((FieldChange(NearBoundInds))');
-    FarFieldChangeAll = cell2mat((FieldChange(~NearBoundInds))');
+    NearFieldChangeAll = cell2mat((FieldChange(NearBoundInds,1)));
+    FarFieldChangeAll = cell2mat((FieldChange(~NearBoundInds,1)));
     FieldChangeDataAll{cPath,1} = NearFieldChangeAll;
     FieldChangeDataAll{cPath,2} = FarFieldChangeAll;
     NoChangeNearInds = abs(cSess832StimOct(c832TPCoefDiff(:,3)) - cSess832ToneBound) <= 0.4;
@@ -151,8 +151,8 @@ for cPath = 1 : NumPaths
     cd(c416Path);
     c416BoundIndex = cSess416ToneBound/max(cSess416StimOct)*(numel(cSess416StimOct) - 1) + 1;
     [FieldChange416, FieldChangeWithIndex416, c416TPCoefDiff,FieldChangeMtx416] = TuningfieldChangeFun(c416Path,numel(cSess416DataStrc.ROIIndex),CommonROIIndex,c416BoundIndex);
-    NearFieldChangeAll416 = cell2mat((FieldChange416(cSess416NearBoundInds))');
-    FarFieldChangeAll416 = cell2mat((FieldChange416(~cSess416NearBoundInds))');
+    NearFieldChangeAll416 = cell2mat((FieldChange416(cSess416NearBoundInds,1)));
+    FarFieldChangeAll416 = cell2mat((FieldChange416(~cSess416NearBoundInds,1)));
     FieldChangeDataAll{cPath,3} = NearFieldChangeAll416;
     FieldChangeDataAll{cPath,4} = FarFieldChangeAll416;
     NoChangeNearInds416 = abs(cSess416StimOct(c416TPCoefDiff(:,3)) - cSess416ToneBound) <= 0.4;
@@ -170,13 +170,13 @@ for cPath = 1 : NumPaths
     PassRespCoefMtx = FieldChangeMtx416.PassRespField;
     TaskNullCoefInds = sum(TaskRespCoefMtx,2) == 0;
     TaskNullCoefROIs = FieldChangeMtx416.RespROIIndex(TaskNullCoefInds);
-    TaskNullCoefTunData = (cSess832TunStrc.CorrTunningFun(:,TaskNullCoefROIs))';
+    TaskNullCoefTunData = (cSess416TunStrc.CorrTunningFun(:,TaskNullCoefROIs))';
     TaskCoefTunMixedMtx = TaskRespCoefMtx;
     TaskCoefTunMixedMtx(TaskNullCoefInds,:) = TaskNullCoefTunData;
     
     PassNullCoefInds = sum(PassRespCoefMtx,2) == 0;
     PassNullCoefROIs = FieldChangeMtx416.RespROIIndex(PassNullCoefInds);
-    PassNullCoefTunData = (cSess832TunStrc.PassTunningfun(:,PassNullCoefROIs))';
+    PassNullCoefTunData = (cSess416TunStrc.PassTunningfun(:,PassNullCoefROIs))';
     PassCoefTunMixedMtx = PassRespCoefMtx;
     PassCoefTunMixedMtx(PassNullCoefInds,:) = PassNullCoefTunData;
     %
@@ -195,7 +195,7 @@ for cPath = 1 : NumPaths
             DiffBFCoefBF416(cIsSameInds,:) = [TaskMixedMtxBFInds(cIsSameInds),PassMixedMtxBFInds(cIsSameInds)];
         end
     end
-     
+     %
      SameDiffCoefDataSummary(cPath,:) = {SameBFTaskCoefMtx, SameBFPassCoefMtx, DiffBFCoefBF,FieldChangeMtx.RespROIIndex, ...
          SameBFTaskCoefMtx416, SameBFPassCoefMtx416, DiffBFCoefBF416, FieldChangeMtx416.RespROIIndex,cSess832ToneBound, cSess416ToneBound};
     
@@ -546,4 +546,21 @@ Sess416PassOcts = Sess416Octaves(DifferBFROIAllBFs(:,2));
 c832TaskDis = Sess832TaskOcts(:) - DifferBFROIsBehavBound;
 c832PassDis = Sess832PassOcts(:) - DifferBFROIsBehavBound;
 
+%%
+c832NearFieldChange = cell2mat(FieldChangeDataAll(:,1));
+c832FarFieldChange = cell2mat(FieldChangeDataAll(:,2));
+c416NearFieldChange = cell2mat(FieldChangeDataAll(:,3));
+c416FarFieldChange = cell2mat(FieldChangeDataAll(:,4));
+changetypes = unique(c832NearFieldChange);
+changetypeNum = length(changetypes);
+SessTypechangetypeNum = zeros(changetypeNum,4);
 
+for cType = 1 : changetypeNum
+    
+    SessTypechangetypeNum(cType,1) = sum(c832NearFieldChange == changetypes(cType));
+    SessTypechangetypeNum(cType,2) = sum(c832FarFieldChange == changetypes(cType));
+    SessTypechangetypeNum(cType,3) = sum(c416NearFieldChange == changetypes(cType));
+    SessTypechangetypeNum(cType,4) = sum(c416FarFieldChange == changetypes(cType));
+end
+
+    

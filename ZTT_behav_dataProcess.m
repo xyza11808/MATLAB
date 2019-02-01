@@ -1,10 +1,12 @@
-clear
+
+cclr
 %%
 
 % Session saved data path: K:\Xin_Yu\Data_Sharing\ZhouTT_Early_Behavior_Data
 % summrize behav session path
 AnmName = cell(5,1);
 BehavPathAll = {};
+AnmIndex = [];
 nPath = 0;
 AnmName{1} = 'ztt_curve01';
 % anmName = 'ztt_curve01';
@@ -20,6 +22,7 @@ inds_use = 2:7;
 for cInds = 1 : length(inds_use)
     nPath = nPath + 1;
     BehavPathAll{nPath} = fullfile(pwd,datafnames{inds_use(cInds)});
+    AnmIndex(nPath) = 1;
 end
 %
 % Animal_2: curve02
@@ -42,6 +45,7 @@ cd('R:\Xulab_Share_Nutstore\Projects\Behavior_data\Zhou_Taotao\curve_plot_fittin
     for cInds = 1 : length(inds_use)
         nPath = nPath + 1;
         BehavPathAll{nPath} = fullfile(pwd,datafnames{inds_use(cInds)});
+        AnmIndex(nPath) = 2;
     end
 %
 % Animal_3: curve03
@@ -64,6 +68,7 @@ cd('R:\Xulab_Share_Nutstore\Projects\Behavior_data\Zhou_Taotao\curve_plot_fittin
     for cInds = 1 : length(inds_use)
         nPath = nPath + 1;
         BehavPathAll{nPath} = fullfile(pwd,datafnames{inds_use(cInds)});
+        AnmIndex(nPath) = 3;
     end
 %
 % Animal_4: curve04
@@ -87,6 +92,7 @@ cd('R:\Xulab_Share_Nutstore\Projects\Behavior_data\Zhou_Taotao\curve_plot_fittin
 for cInds = 1 : length(inds_use)
     nPath = nPath + 1;
     BehavPathAll{nPath} = fullfile(pwd,datafnames{inds_use(cInds)});
+    AnmIndex(nPath) = 4;
 end
 %
 % Animal_5: curve05
@@ -109,20 +115,21 @@ cd('R:\Xulab_Share_Nutstore\Projects\Behavior_data\Zhou_Taotao\curve_plot_fittin
 for cInds = 1 : length(inds_use)
     nPath = nPath + 1;
     BehavPathAll{nPath} = fullfile(pwd,datafnames{inds_use(cInds)});
+    AnmIndex(nPath) = 5;
 end
 
 cd('E:\DataToGo\data_for_xu\ZTT_data_summary');
-save UsedSessPathSave.mat BehavPathAll nPath -v7.3
+save UsedSessPathSave.mat BehavPathAll nPath AnmIndex -v7.3
 
 %% process each session data
-if ~isdir('./Session_behav_example/')
-    mkdir('./Session_behav_example/');
-end
-cd('./Session_behav_example/');
+% if ~isdir('./Session_behav_example/')
+%     mkdir('./Session_behav_example/');
+% end
+% cd('./Session_behav_example/');
 
 TickTone = [8000;16000;32000];
 TickOct = log2(TickTone/8000);
-TickStrs = cellstr(num2str(TickTone/1000));
+TickStrs = cellstr(num2str(TickTone(:)/1000,'%.1f'));
 
 SessBehavData = cell(nPath,1);
 SessBehavOct = cell(nPath,1);
@@ -138,8 +145,8 @@ for cSess = 1 : nPath
     end
     cSessOcts = log2(double(BehavDataStc.toneFreq)/8000);
     cSessChoice = BehavDataStc.frac_choice_right;
-    SessBehavData{cSess} = cSessChoice;
-    SessBehavOct{cSess} = cSessOcts;
+    SessBehavData{cSess} = cSessChoice(:);
+    SessBehavOct{cSess} = cSessOcts(:);
     
     
 %     hhf = figure('position',[100 100 480 400]);
@@ -189,8 +196,8 @@ for cSess = 1 : nPath
 %     saveas(hhf,sprintf('Session%d behavior plot save',cSess),'png');
 %     close(hhf);
 end
-save BehavDataSum.mat SessBehavData SessBehavOct SessBoundSlope -v7.3
-cd ..;
+% save BehavDataSum.mat SessBehavData SessBehavOct SessBoundSlope -v7.3
+% cd ..;
 %%
 % hf = GrdistPlot(SessBoundSlope,{'BehavBound','Slope'});
 % saveas(hf,'Bound slope distribution save');
@@ -272,3 +279,50 @@ set(gca,'FontSize',14)
 saveas(h_f,'Summarized multiSess behav Data fitting plot');
 saveas(h_f,'Summarized multiSess behav Data fitting plot','png');
 saveas(h_f,'Summarized multiSess behav Data fitting plot','pdf');
+
+%% summarize the behavior data for each animal
+TickTone = [8000;16000;32000];
+TickOct = log2(TickTone/8000);
+TickStrs = cellstr(num2str(TickTone(:)/1000,'%.1f'));
+
+AnmIndexTypes = unique(AnmIndex);
+AnmNumbers = numel(AnmIndexTypes);
+AnmProbFit = cell(AnmNumbers,6);
+
+for cAnm = 1 : AnmNumbers
+    cAnmInds = AnmIndex == AnmIndexTypes(cAnm);
+    cAnmSessRProb = SessBehavData(cAnmInds);
+    cAnmSessOcts = SessBehavOct(cAnmInds);
+    cAnmRProbVec = cell2mat(cAnmSessRProb);
+    cAnmOctVec = cell2mat(cAnmSessOcts);
+    
+    cAnmFits = FitPsycheCurveWH_nx(cAnmOctVec, cAnmRProbVec);
+    
+    cAnmRProbMtx = cell2mat(cAnmSessRProb');
+    cAnmRProbAvg = mean(cAnmRProbMtx,2);
+    cAnmRProbStd = std(cAnmRProbMtx,[],2)/sqrt(size(cAnmRProbMtx,2));
+    cAnmOctMtx = cell2mat(cAnmSessOcts');
+    cAnmOctAvg = mean(cAnmOctMtx,2);
+    
+    
+    AnmProbFit(cAnm,:) = {cAnmFits,cAnmRProbAvg,cAnmOctAvg,cAnmRProbStd,cAnmRProbMtx,cAnmOctMtx};
+    
+    % plot current result
+    hf = figure('position',[2000 100 340 240]);
+    hold on
+    plot(cAnmFits.curve(:,1),cAnmFits.curve(:,2),'k','linewidth',1.5);
+    errorbar(cAnmOctAvg,cAnmRProbAvg,cAnmRProbStd,'ko','linewidth',1.2);
+    set(gca,'xlim',[min(cAnmOctAvg)-0.1,max(cAnmOctAvg)+0.1],'xtick',TickOct,'xticklabel',TickStrs,'ylim',[-0.05 1.05],'ytick',[0 0.5 1]);
+    xlabel('Frequency (kHz)');
+    ylabel('Rightward choice');
+    title(sprintf('Anm %d',AnmIndexTypes(cAnm)));
+    set(gca,'FontSize',12);
+    saveas(hf,sprintf('Anm%d behav curve plot',cAnm));
+    saveas(hf,sprintf('Anm%d behav curve plot',cAnm),'pdf');
+    saveas(hf,sprintf('Anm%d behav curve plot',cAnm),'png');
+    close(hf);
+    
+end
+
+
+

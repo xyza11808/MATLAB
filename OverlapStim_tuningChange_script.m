@@ -33,11 +33,13 @@ while ischar(tline)
 end
 SessIndexAll = cell2mat(SessPathAll(:,2));
 %% processing 8k-32k and 4k-16k sessions data
-Sess8_32_Inds = SessIndexAll == 4;
+Sess8_32_Inds = SessIndexAll == 1;
 Sess8_32PathAll = SessPathAll(Sess8_32_Inds,1);
+Sess8_32PassPath = SessPathAll(Sess8_32_Inds,3);
 
-Sess4_16_Part1_Inds = SessIndexAll == 3;
+Sess4_16_Part1_Inds = SessIndexAll == 2;
 Sess4_16_Part1_PathAll = SessPathAll(Sess4_16_Part1_Inds,1);
+Sess4_16PassPath = SessPathAll(Sess4_16_Part1_Inds,3);
 
 if length(Sess4_16_Part1_PathAll) ~= length(Sess8_32PathAll)
     warning('The session path number is different, please check your input data.\n');
@@ -50,16 +52,19 @@ AllROITuns = cell(NumPaths,2);
 OverlapROITuns = cell(NumPaths,2);
 PeakPosShiftSum = zeros(NumPaths,10);
 OLPFreq_fracSummry = cell(NumPaths,8);
-SavePath = 'E:\DataToGo\NewDataForXU\Tuning_distribution\Sess728BFDis_sepNew';
+OverLapCoefMtxAll = cell(NumPaths,7);
+SavePath = 'E:\DataToGo\NewDataForXU\Tuning_distribution\Sess832BFDis_SigRespOnly';
 if ~isdir(SavePath)
     mkdir(SavePath);
 end
-
+%%
 for cPath = 1 : NumPaths
     %
-%     cPath = 6;
+%     cPath = 7;
     c832Path = Sess8_32PathAll{cPath};
+    c832PassPath = Sess8_32PassPath{cPath};
     c416Path = Sess4_16_Part1_PathAll{cPath};
+    c416PassPath = Sess4_16PassPath{cPath};
     
     cSess832Path = fullfile(c832Path,'Tunning_fun_plot_New1s','NMTuned Meanfreq colormap plot','TaskPassBFDis.mat');
     cSess832TunData = load(cSess832Path);
@@ -68,6 +73,15 @@ for cPath = 1 : NumPaths
     
     Sess832ROIIndexFile = fullfile(c832Path,'Tunning_fun_plot_New1s','SelectROIIndex.mat');
     Sess416ROIIndexFile = fullfile(c416Path,'Tunning_fun_plot_New1s','SelectROIIndex.mat');
+    try
+        Sess832ROITunDataStrc = load(fullfile(c832Path,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'),'CorrTunningFun','PassTunningfun');
+        Sess416ROITunDataStrc = load(fullfile(c416Path,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'),'CorrTunningFun','PassTunningfun');
+    catch
+        Sess832ROITunDataStrc = load(fullfile(c832Path,'Tunning_fun_plot_New1s','TunningDataSave.mat'),'CorrTunningFun','PassTunningfun');
+        Sess416ROITunDataStrc = load(fullfile(c416Path,'Tunning_fun_plot_New1s','TunningDataSave.mat'),'CorrTunningFun','PassTunningfun');
+    end
+    Sess832SigROITunInds = (max(Sess832ROITunDataStrc.CorrTunningFun) > 10)';
+    Sess416SigROITunInds = (max(Sess416ROITunDataStrc.CorrTunningFun) > 10)';
     
     Sess832BehavStrc = load(fullfile(c832Path,'RandP_data_plots','boundary_result.mat'));
     Sess416BehavStrc = load(fullfile(c416Path,'RandP_data_plots','boundary_result.mat'));
@@ -78,7 +92,24 @@ for cPath = 1 : NumPaths
     CommonROINum = min(numel(cSess832DataStrc.ROIIndex),numel(cSess416DataStrc.ROIIndex));
     CommonROIIndex = cSess832DataStrc.ROIIndex(1:CommonROINum) & cSess416DataStrc.ROIIndex(1:CommonROINum);
     
-
+%     CommonROIIndex = CommonROIIndex & Sess832SigROITunInds(1:CommonROINum) & Sess416SigROITunInds(1:CommonROINum);
+    % considering single neuron representation of frequency is significant
+%     % or not
+%     c832TaskCoefMtx = load(fullfile(c832Path,'SigSelectiveROIInds.mat'));
+%     c832PassCoefMtx = load(fullfile(c832PassPath,'PassCoefMtxSave.mat'));
+%     c416TaskCoefMtx = load(fullfile(c416Path,'SigSelectiveROIInds.mat'));
+%     c416PassCoefMtx = load(fullfile(c416PassPath,'PassCoefMtxSave.mat'));
+%     
+%     c832TPRespROIs = [c832TaskCoefMtx.SigROIInds(:);c832PassCoefMtx.PassRespROIInds(:)];
+%     c416TPRespROIs = [c416TaskCoefMtx.SigROIInds(:);c416PassCoefMtx.PassRespROIInds(:)];
+%     Base832RespROIs = false(size(cSess832DataStrc.ROIIndex));
+%     Base832RespROIs(c832TPRespROIs) = true;
+%     Base416RespROIs = false(size(cSess416DataStrc.ROIIndex));
+%     Base416RespROIs(c416TPRespROIs) = true;
+%     EitherRespROIs = Base832RespROIs(1:CommonROINum) | Base416RespROIs(1:CommonROINum);
+%     CommonROIIndex(~EitherRespROIs) = false;
+    
+    %
     c832FreqsTypes = Sess832BehavStrc.boundary_result.StimType;
     nFreqsc832 = length(c832FreqsTypes);
     CommonOctRange832 = log2(c832FreqsTypes/4000);  % octave within the 4k and 32k range
@@ -104,7 +135,7 @@ for cPath = 1 : NumPaths
     c416CommonROITuns = cSess416TunData.TaskMaxOct(CommonROIIndex) + 1 + log2(Freqs416Types(1)/4000);
     c832CommonROIPassTuns = cSess832TunData.PassMaxOct(CommonROIIndex) + 1 + log2(c832FreqsTypes(1)/4000);
     c416CommonROIPassTuns = cSess416TunData.PassMaxOct(CommonROIIndex) + 1 + log2(Freqs416Types(1)/4000);
-    
+    %
     c832UsedInds = false(numel(c832CommonROITuns),1);
     for cR = 1 : length(c832WithinShareOcts)
         cRTunInds = abs(c832CommonROITuns - c832WithinShareOcts(cR)) < 1e-3;
@@ -115,7 +146,7 @@ for cPath = 1 : NumPaths
         cRTunInds = abs(c416CommonROITuns - c416WithinShareOcts(cR)) < 1e-3;
         c416UsedInds(cRTunInds) = true;
     end
-    
+    %
     c832Edges = [-0.1,0.2,0.6,0.85,1,1.15,1.4,1.8,2.1] + log2(c832FreqsTypes(1)/4000);
     c416Edges = [-0.1,0.2,0.6,0.85,1,1.15,1.4,1.8,2.1] + log2(Freqs416Types(1)/4000);
     c832Bins = [0,0.4,0.8,0.9,1.1,1.2,1.6,2] + log2(c832FreqsTypes(1)/4000);
@@ -126,8 +157,9 @@ for cPath = 1 : NumPaths
     
     SharedOctRange = [max(c832Bins(1),c416Bins(1)),...
         min(c832Bins(end),c416Bins(end))];
-    c832WithinShareInds = c832Bins > SharedOctRange(1) & c832Bins < SharedOctRange(2);
-    c416WithinShareInds = c416Bins > SharedOctRange(1) & c416Bins < SharedOctRange(2);
+%     SharedOctRange = [-0.1,3.5]; 
+    c832WithinShareInds = c832Bins >= SharedOctRange(1) & c832Bins <= SharedOctRange(2);
+    c416WithinShareInds = c416Bins >= SharedOctRange(1) & c416Bins <= SharedOctRange(2);
     
     c832OLP_TunDisN = histcounts(c832CommonROITuns,c832Edges);
     c832OLP_TunDisNPass = histcounts(c832CommonROIPassTuns,c832Edges);
@@ -182,6 +214,48 @@ for cPath = 1 : NumPaths
     OLPFreq_fracSummry{cPath,9} = c832WSPassDis/numel(c832CommonROITuns);
     OLPFreq_fracSummry{cPath,10} = c416WSPassDis/numel(c416CommonROITuns);
     
+    %
+%     if size(c832TaskCoefMtx.SigROICoefMtx,2) < numel(c832WithinShareInds)
+%         % session bin edges is larger than real frequency number
+%         NumBins = numel(c832WithinShareInds);
+%         WithinUsedInds = true(NumBins,1);
+%         WithinUsedInds(ceil(NumBins/2):(floor(NumBins/2)+1)) = false;
+%     else
+%         WithinUsedInds = true(numel(c832WithinShareInds),1);
+%     end
+%     
+%     c832BaseCoefMtx = zeros(numel(cSess832DataStrc.ROIIndex),sum(c832WithinShareInds));
+%     c832TaskOverlapCoef = c832BaseCoefMtx;
+%     c832TaskOverlapCoef(c832TaskCoefMtx.SigROIInds,WithinUsedInds) = c832TaskCoefMtx.SigROICoefMtx(:,c832WithinShareInds(WithinUsedInds));
+%     c832TaskOverlapCoef(~CommonROIIndex,:) = 0;
+%     
+%     c832PassOverlapCoef = c832BaseCoefMtx;
+%     c832PassOverlapCoef(c832PassCoefMtx.PassRespROIInds,WithinUsedInds) = c832PassCoefMtx.PassRespCoefMtx(:,c832WithinShareInds(WithinUsedInds));
+%     c832PassOverlapCoef(~CommonROIIndex,:) = 0;
+%     
+%     if size(c416TaskCoefMtx.SigROICoefMtx,2) < numel(c416WithinShareInds)
+%         % session bin edges is larger than real frequency number
+%         NumBins = numel(c416WithinShareInds);
+%         WithinUsedInds416 = true(NumBins,1);
+%         WithinUsedInds416(ceil(NumBins/2):(floor(NumBins/2)+1)) = false;
+%     else
+%         WithinUsedInds416 = true(numel(c416WithinShareInds),1);
+%     end
+%     c416BaseCoefMtx = zeros(numel(cSess416DataStrc.ROIIndex),sum(c416WithinShareInds));
+%     c416TaskOverlapCoef = c416BaseCoefMtx;
+%     c416TaskOverlapCoef(c416TaskCoefMtx.SigROIInds,WithinUsedInds416) = c416TaskCoefMtx.SigROICoefMtx(:,c416WithinShareInds(WithinUsedInds416));
+%     c416TaskOverlapCoef(~CommonROIIndex,:) = 0;
+%     
+%     c416PassOverlapCoef = c416BaseCoefMtx;
+%     c416PassOverlapCoef(c416PassCoefMtx.PassRespROIInds,WithinUsedInds416) = c416PassCoefMtx.PassRespCoefMtx(:,c416WithinShareInds(WithinUsedInds416));
+%     c416PassOverlapCoef(~CommonROIIndex,:) = 0;
+%     
+%     c832OverlapOcts = c832OLP_Octs(c832WithinShareInds);
+%     c416OverlapOcts = c416OLP_Octs(c416WithinShareInds);
+%     
+%     OverLapCoefMtxAll(cPath,:) = {c832TaskOverlapCoef,c832PassOverlapCoef,c416TaskOverlapCoef,c416PassOverlapCoef,c832OverlapOcts,...
+%         c416OverlapOcts,BehavBound};
+
     %
     hcf = figure('position',[100 100 650 240]);
     subplot(1,2,1)
@@ -336,13 +410,14 @@ errorbar(c416SessOcts,c416SessFracDiffAvg,c416SessFracDiffSem,'b-o','linewidth',
 yscales = get(gca,'ylim');
 line([mean(c416SessBehavBound) mean(c416SessBehavBound)],yscales,'Color','b','linestyle','--');
 line([mean(c728SessBehavBound) mean(c728SessBehavBound)],yscales,'Color','r','linestyle','--');
-title(sprintf('Session 728, n = %d',NumPaths))
+title(sprintf('Session FracDiff, n = %d',NumPaths))
 set(gca,'xlim',[0 3]);
 
-% saveas(hf,fullfile(SumSavePath,'Sess832 fraction diff summary plots'));
-% saveas(hf,fullfile(SumSavePath,'Sess832 fraction diff summary plots'),'png');
+saveas(hf,fullfile(SumSavePath,'Sess832 fraction diff summary plots'));
+saveas(hf,fullfile(SumSavePath,'Sess832 fraction diff summary plots'),'png');
+saveas(hf,fullfile(SumSavePath,'Sess832 fraction diff summary plots'),'pdf');
 
-%% examinate session fraction change for each session
+%% examinate session fraction change for each task session
 SumSavePath = 'E:\DataToGo\NewDataForXU\Tuning_distribution';
 
 c728SessFracDiffMtx = cell2mat(OLPFreq_fracSummry(:,7));
@@ -364,12 +439,12 @@ errorbar(c416SessOcts,c416SessFracDiffAvg,c416SessFracDiffSem,'b-o','linewidth',
 yscales = get(gca,'ylim');
 line([mean(c416SessBehavBound) mean(c416SessBehavBound)],yscales,'Color','b','linestyle','--');
 line([mean(c728SessBehavBound) mean(c728SessBehavBound)],yscales,'Color','r','linestyle','--');
-title(sprintf('Session 832, n = %d',NumPaths))
+title(sprintf('Session Task, n = %d',NumPaths))
 set(gca,'xlim',[0 3]);
 
-% saveas(hf,fullfile(SumSavePath,'Sess832 fraction summary plots'));
-% saveas(hf,fullfile(SumSavePath,'Sess832 fraction summary plots'),'png');
-
+saveas(hf,fullfile(SumSavePath,'Sess832 fraction summary plots'));
+saveas(hf,fullfile(SumSavePath,'Sess832 fraction summary plots'),'png');
+saveas(hf,fullfile(SumSavePath,'Sess832 fraction summary plots'),'pdf');
 
 %
 %% examinate session fraction change for each passive session
@@ -394,14 +469,15 @@ errorbar(c416SessOcts,c416SessFracDiffAvg,c416SessFracDiffSem,'b-o','linewidth',
 yscales = get(gca,'ylim');
 line([mean(c416SessBehavBound) mean(c416SessBehavBound)],yscales,'Color','b','linestyle','--');
 line([mean(c728SessBehavBound) mean(c728SessBehavBound)],yscales,'Color','r','linestyle','--');
-title(sprintf('Session 728, n = %d',NumPaths))
+title(sprintf('Passive session, n = %d',NumPaths))
 set(gca,'xlim',[0 3]);
-
-% saveas(hf,fullfile(SumSavePath,'Sess728 Passive fraction summary plots'));
-% saveas(hf,fullfile(SumSavePath,'Sess728 Passive fraction summary plots'),'png');
-
+%%
+saveas(hf,fullfile(SumSavePath,'Sess832 Passive fraction summary plots'));
+saveas(hf,fullfile(SumSavePath,'Sess832 Passive fraction summary plots'),'png');
+saveas(hf,fullfile(SumSavePath,'Sess832 Passive fraction summary plots'),'pdf');
 
 %% calculate the peak distance between two freq ranges
+c728PeakPosShiftSum = PeakPosShiftSum;
 c728TaskPeakDis = c728PeakPosShiftSum(:,1) - c728PeakPosShiftSum(:,5);
 c728PassPeakDis = c728PeakPosShiftSum(:,2) - c728PeakPosShiftSum(:,6);
 c728TaskBoundaryDis = c728PeakPosShiftSum(:,4) - c728PeakPosShiftSum(:,8);
@@ -409,7 +485,7 @@ c728TaskBoundaryDis = c728PeakPosShiftSum(:,4) - c728PeakPosShiftSum(:,8);
 % c832TaskPeakDis = c832PeakPosShiftSum(:,1) - c832PeakPosShiftSum(:,5);
 % c832PassPeakDis = c832PeakPosShiftSum(:,2) - c832PeakPosShiftSum(:,6);
 % c832TaskBoundaryDis = c832PeakPosShiftSum(:,4) - c832PeakPosShiftSum(:,8);
-%%
+%
 % hf = GrdistPlot([c728TaskPeakDis,c728PassPeakDis,c728TaskBoundaryDis,c832TaskPeakDis,c832PassPeakDis,...
 %     c832TaskBoundaryDis],{'716Task','716Pass','716Bound','816Task','816Pass','816Bound'});
 
@@ -446,7 +522,7 @@ if length(TPDisAvg) > 2
     [~,pTB] = ttest(TaskDataAll,BoundDisAll);
     GroupSigIndication([1,3],TPDisAvg([1,3])+TPDisSEM([1,3]),pTB,hSumf);
 end
-set(gca,'ylim',[-0.5 1],'ytick',[-0.5,0,0.5,1])
+% set(gca,'ylim',[-0.5 1],'ytick',[-0.5,0,0.5,1])
 
 % SumSavePath = 'E:\DataToGo\NewDataForXU\Tuning_distribution';
 % saveas(hSumf,fullfile(SumSavePath,'Tuning peak distance compare plots for 728Sess AllPoints'));
@@ -458,7 +534,7 @@ set(gca,'ylim',[-0.5 1],'ytick',[-0.5,0,0.5,1])
 %% calculate the peak distance between FracDiffPeak
 c728TaskPeakDis = PeakPosShiftSum(:,1) - PeakPosShiftSum(:,5);
 c728PassPeakDis = PeakPosShiftSum(:,2) - PeakPosShiftSum(:,6);
-c728FracDiffPeak = PeakPosShiftSum(:,9) - PeakPosShiftSum(:,10);
+c728FracDiffPeak = PeakPosShiftSum(:,4) - PeakPosShiftSum(:,8);
 
 %
 % hf = GrdistPlot([c728TaskPeakDis,c728PassPeakDis,c728TaskBoundaryDis,c832TaskPeakDis,c832PassPeakDis,...
@@ -497,7 +573,7 @@ if length(TPDisAvg) > 2
     [~,pTB] = ttest(TaskDataAll,BoundDisAll);
     GroupSigIndication([1,3],TPDisAvg([1,3])+TPDisSEM([1,3]),pTB,hSumf);
 end
-set(gca,'ylim',[-0.5 1],'ytick',[-0.5,0,0.5,1])
+% set(gca,'ylim',[-0.5 1],'ytick',[-0.5,0,0.5,1])
 
 %%
 hhhf = GrdistPlot([c728TaskPeakDis,c728PassPeakDis,c728FracDiffPeak],{'716Task','716Pass','716FracDiff'});
@@ -505,4 +581,8 @@ hhhf = GrdistPlot([c728TaskPeakDis,c728PassPeakDis,c728FracDiffPeak],{'716Task',
 GroupSigIndication([1,2],max([TaskDataAll,PassDataAll]),pTP,hhhf);
 [~,pPB] = ttest(PassDataAll,BoundDisAll);
 GroupSigIndication([2,3],max([PassDataAll,BoundDisAll]),pPB,hhhf,1.2);
+
+%%
+
+
 

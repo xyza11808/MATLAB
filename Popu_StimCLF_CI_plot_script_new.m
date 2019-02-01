@@ -22,7 +22,7 @@ TaskDisData = {};
 PassDisData = {};
 TaskPassOneStepclf = {};
 
-if ~exist('UsedPassInds','var')
+if ~exist('UsedPassInds','var') || isempty(UsedPassInds)
     UsedPassInds = {};
     isPassIndsExist = 0;
 else
@@ -36,9 +36,9 @@ while ischar(tline)
         continue;
     end
     %
-    cd(fullfile(tline,'NeuroM_MC_TbyT','AfterTimeLength-1000ms'));
-    filepath = fullfile(tline,'NeuroM_MC_TbyT','AfterTimeLength-1000ms','PairedClassResult.mat');
-    PassFPath = fullfile(Passline,'NeuroM_MC_TbyT','AfterTimeLength-1000ms','PairedClassResult.mat');
+    cd(fullfile(tline,'NeuroM_MC_TbyTNew','AfterTimeLength-1000ms'));
+    filepath = fullfile(tline,'NeuroM_MC_TbyTNew','AfterTimeLength-1000ms','PairedClassResult.mat');
+    PassFPath = fullfile(Passline,'NeuroM_MC_TbyTNew','AfterTimeLength-1000ms','PairedClassResult.mat');
     fDataStrc = load(filepath);
     PassDataStrc = load(PassFPath);
     StimsAll = double(fDataStrc.StimTypesAll);
@@ -55,6 +55,7 @@ while ischar(tline)
     TaskGrNum = floor(length(StimOctave)/2);
     PassGrNum = floor(length(PassStimOct)/2);
     disp((PassStimOct(:))');
+    disp(StimOctave');
     if ~isPassIndsExist
         UsedInds = input('Please select the used passive tone index:\n','s');
         PassUseInds = str2num(UsedInds);

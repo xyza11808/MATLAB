@@ -1941,8 +1941,8 @@ nSess = length(NormSessPathTask);
 for cSess = 1 : nSess
     cSessPath = NormSessPathTask{cSess};
     cd(cSessPath);
-    
-    clearvars DataRaw frame_rate behavResults data_aligned
+    %
+    clearvars DataRaw frame_rate behavResults data_aligned SpikeAligned
 %     oldSPfile = fullfile(cSessPath,'EstimateSPsave.mat');
 %     if ~exist(oldSPfile,'file')
 %         fprintf('Session index %d SPfile not exists.\n',cSess);
@@ -1953,30 +1953,38 @@ for cSess = 1 : nSess
 %     catch
 %         load(fullfile(cSessPath,'EstimateSPsaveNewMth.mat'));
 %     end
-    load(fullfile(cSessPath,'CSessionData.mat'),'DataRaw','frame_rate','data_aligned','behavResults','start_frame');
+    load(fullfile(cSessPath,'CSessionData.mat'),'DataRaw','frame_rate','data_aligned','behavResults','start_frame','data');
     if ~exist('DataRaw','var')
-        load(fullfile(cSessPath,'EstimateSPsaveNewAR2.mat'),'DataRaw');
+        try
+            DataRaw = data;
+        catch
+            load(fullfile(cSessPath,'EstimateSPsaveNewAR2.mat'),'DataRaw');
+        end
 %         DataRaw = data;
     end
     
     nnspike = Fluo2SpikeConstrainOOpsi(DataRaw,[],[],frame_rate,1);
-    FrameInds = cellfun(@(x) size(x,2),DataRaw);
-    UsedFrame = ceil(prctile(FrameInds,80));
+    %
+    
     if iscell(nnspike)
+        FrameInds = cellfun(@(x) size(x,2),DataRaw);
+        UsedFrame = ceil(prctile(FrameInds,80));
         SPsizeData = [length(nnspike),size(nnspike{1},1),max(FrameInds)];
         SPDataAll = zeros(SPsizeData);
         for cTr = 1 : length(nnspike)
             SPDataAll(cTr,:,:) = [nnspike{cTr},nan(SPsizeData(2),SPsizeData(3) - FrameInds(cTr))];
         end
         UsedSPData = SPDataAll(:,:,1:UsedFrame);
+        NumTrs = length(nnspike);
 %         SPsizeDataNew = size(UsedSPData);
     else
         UsedSPData = nnspike;
+        NumTrs = size(nnspike,1);
 %         SPsizeDataNew = size(UsedSPData);
     end
     
     % performing alignment
-    nROIs = size(data_aligned,2);
+    nROIs = size(UsedSPData,2);
     %performing stimulus onset alignment
     %2AFC trigger should be at the begaining of each loop
     onset_time=behavResults.Time_stimOnset;
@@ -1986,15 +1994,15 @@ for cSess = 1 : nSess
     alignment_frames(alignment_frames<1)=1;
     start_frame=floor((double(align_time_point)/1000)*frame_rate);
     
-    SpikeAligned = zeros(length(nnspike),nROIs,framelength);
-
-    for i=1:length(nnspike)
+    SpikeAligned = zeros(NumTrs,nROIs,framelength);
+    
+    for i=1:size(UsedSPData,1)
         SpikeAligned(i,:,:)=UsedSPData(i,:,alignment_frames(i):(alignment_frames(i)+framelength-1));
     end
-    
+    %
     save EstimateSPsaveNewMth.mat nnspike DataRaw SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
 
-
+%
 end
 % batched spike data analysis for passive sessions
 clearvars -except NormSessPathPass NormSessPathTask
@@ -2060,16 +2068,46 @@ ErroSess = [];
 for css = 1 : nSess
     
     csPath = NormSessPathTask{css};
+    cPassPath = NormSessPathPass{css};
     cd(csPath);
-    
-    clearvars behavResults data frame_rate FRewardLickT frame_lickAllTrials ROIstate
-    load('CSessionData.mat');
-    if exist('ROIstate','var')
-        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,0,frame_lickAllTrials,[],ROIstate); 
-    else
-        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,0,frame_lickAllTrials,[]); 
+    try
+        %
+        clearvars behavResults data frame_rate FRewardLickT frame_lickAllTrials ROIstate
+        load('CSessionData.mat','behavResults','trial_outcome','start_frame','frame_rate');
+        load('EstimateSPsaveNewMth.mat','SpikeAligned');
+    %     if exist('ROIstate','var')
+    %         AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,0,frame_lickAllTrials,[],ROIstate); 
+    %     else
+    %         AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,0,frame_lickAllTrials,[]); 
+    %     end
+        if ~isdir('NewSpikeDec_temporal')
+            mkdir('NewSpikeDec_temporal');
+        end
+        cd('NewSpikeDec_temporal')
+        MultiTimeWinClass(SpikeAligned*frame_rate,behavResults.Stim_toneFreq(:),trial_outcome(:),start_frame,frame_rate,1,0.1);
+        
+        cd(cPassPath);
+        clearvars SelectData SelectSArray PassOutcome nnspike
+        load('rfSelectDataSet.mat');
+        load('EstimatedSPDatafilter.mat','nnspike');
+        PassOutcome = ones(numel(SelectSArray),1);
+        if exist('PassUsedInds.mat','file')
+            load('PassUsedInds.mat');
+            UsedInds = PassUsedTrInds;
+        else
+            UsedInds = true(numel(SelectSArray),1);
+        end
+        if ~isdir('NewSpikeDec_temporal')
+            mkdir('NewSpikeDec_temporal');
+        end
+        cd('NewSpikeDec_temporal')
+        MultiTimeWinClass(nnspike(UsedInds,:,:)*frame_rate,SelectSArray(UsedInds),PassOutcome(UsedInds),frame_rate,frame_rate,1,0.1);
+        
+        %
+    catch
+        fprintf('Error occurs for session %d.\n',css);
+        ErroSess = [ErroSess,css];
     end
-    
 end
 %% batched trial by trial svm prediction psychometric curve
 clearvars -except NormSessPathTask NormSessPathPass
@@ -2080,18 +2118,20 @@ for css = 1 : nSess
     
     csPath = NormSessPathTask{css};
     cd(csPath);
-    
+    fprintf('Processing session %d....\n',css);
     clearvars behavResults data_aligned frame_rate UsedROIInds BehavDataStrc ROIIndex
-    
-    BehavDataStrc = load(fullfile(csPath,'RandP_data_plots','boundary_result.mat'));
+%     clearvars behavResults
+%     BehavDataStrc = load(fullfile(csPath,'RandP_data_plots','boundary_result.mat'));
     if exist(fullfile(csPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'),'file')
         load(fullfile(csPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'));
         UsedROIInds = logical(ROIIndex);
     end 
     
-    load('CSessionData.mat')
-    
-    Partitioned_neurometric_prediction;
+    load('CSessionData.mat');
+    IsTaskSess = 1;
+%     rand_plot(behavResults,4,[],1);
+    TP_TrChoicePred_LOO_script;
+%     Partitioned_neurometric_prediction;
 %     multiCClass(data_aligned,behavResults,trial_outcome,start_frame,frame_rate,1,[]);
     
 end
@@ -2100,14 +2140,17 @@ end
 clearvars -except NormSessPathTask NormSessPathPass
 nSess = length(NormSessPathPass);
 % ErroSess = [];
-for css = 9 : nSess
+for css = 1 : nSess
     
     csPath = NormSessPathPass{css};
     cd(csPath);
     cdTaskPath = NormSessPathTask{css};
+    fprintf('Processing session %d...\n',css);
+    
     clearvars SelectSArray SelectData UsedROIInds BehavDataStrc ROIIndex
     
     BehavDataStrc = load(fullfile(cdTaskPath,'RandP_data_plots','boundary_result.mat'));
+    
     if exist(fullfile(cdTaskPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'),'file')
         load(fullfile(cdTaskPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'));
         UsedROIInds = logical(ROIIndex);
@@ -2121,16 +2164,19 @@ for css = 9 : nSess
     else
         UsedTrInds = PassUSedTrStrc.PassUsedTrInds;
     end
-        
-    Partitioned_neurometric_forPass;
-%     multiCClass(data_aligned,behavResults,trial_outcome,start_frame,frame_rate,1,[]);
+    IsTaskSess = 0;
+    
+    TP_TrChoicePred_LOO_script;
+%     Partitioned_neurometric_forPass;
+%     trial_outcome = ones(numel(SelectSArray),1);
+%     multiCClass(SelectData,SelectSArray,trial_outcome,frame_rate,frame_rate,1,[]);
     
 end
 
 %% extract and save tuning ROI index
 clearvars -except NormSessPathTask NormSessPathPass
 % 30   53  14 for S55 sessions
-%
+% ###################################
 nSess = length(NormSessPathTask);
 ErroSess = [];
 % for css = 1:length(ErroSess)

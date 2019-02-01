@@ -39,7 +39,7 @@ if ~exist('FactorDataSmooth','var')
     nTrs = size(UsedAlignData,1);
     parfor cTr = 1 : nTrs 
         for croi = 1 : nROIs
-            FactorDataSmooth(cTr,croi,:) = smooth(UsedAlignData(cTr,croi,:),30);  %data set specifically used for factor analysis
+            FactorDataSmooth(cTr,croi,:) = smooth(UsedAlignData(cTr,croi,:),20);  %data set specifically used for factor analysis
         end
     end
 end
@@ -206,7 +206,7 @@ title('Mean Trace distance');
 xlabel('Time (s)');
 ylabel('Mean Trace Dis');
 set(gca,'FontSize',20);
-
+%%
 saveas(h_meanLine,'Mean Trace in factor space');
 saveas(h_meanLine,'Mean Trace in factor space','png');
 close(h_meanLine);
@@ -243,7 +243,7 @@ ylabel('Select Index');
 title('Corr Right Trials');
 colorbar;
 set(gca,'FontSize',20);
-
+%%
 saveas(hh,'Single Trial factor space color plot');
 saveas(hh,'Single Trial factor space color plot','png');
 close(hh);
@@ -309,6 +309,8 @@ ylabel('Time (s)');
 xlabel('Sensory percent')
 title('Sensory and choice explaination of index');
 set(gca,'FontSize',20);
+
+%%
 saveas(h_CorrErroDif,'sensory contribution to index value');
 saveas(h_CorrErroDif,'sensory contribution to index value','png');
 close(h_CorrErroDif);
@@ -338,6 +340,7 @@ text(0,(LRThresValue+0.05),'Thres','HorizontalAlignment','left','FontSize',15);
 set(gca,'ytick',[0.2,0.8],'yticklabel',{'Prefer sensory','Prefer Choice'});
 set(gca,'FontSize',20,'box','off','TickLength',[0;0]);
 title('Sensory Choice Preference');
+%%
 saveas(hstack,'Sensory choice perference plot');
 saveas(hstack,'Sensory choice perference plot','png');
 save SensoyChoicePrefer.mat LeftstackFrac RightstackFrac LeftErroPeakMean LeftCorrPeakMean RightCorrPeakMean RightErroPeakMean -v7.3

@@ -106,10 +106,10 @@ AllStimTypes = unique(StimTrUsing);
 %%
 if isPlot
     if ~isShuffle
-        if ~isdir('./NeuroM_MC_TbyT/')
-            mkdir('./NeuroM_MC_TbyT/');
+        if ~isdir('./NeuroM_MC_TbyTNew/')
+            mkdir('./NeuroM_MC_TbyTNew/');
         end
-        cd('./NeuroM_MC_TbyT/');
+        cd('./NeuroM_MC_TbyTNew/');
     else
         if ~isdir('./NeuroM_MC_TbyT_shuf/')
             mkdir('./NeuroM_MC_TbyT_shuf/');
@@ -240,7 +240,7 @@ if isPlot
     colorbar;
     saveas(h_mt,'Multi class classification correct rate');
     saveas(h_mt,'Multi class classification correct rate','png');
-%     close(h_mt);
+    close(h_mt);
 end
 if isPlot ~= 2
     save PairedClassResult.mat matrixData StimTypesAll Class82CVErro -v7.3

@@ -54,7 +54,7 @@ onset_time = FrameRate;
 %example ROI plot
 % @######################using updated plot meothods below #####################
 %%%
-ExampROIinds = [4,9,17,18,19,31,43,50,76,84];
+ExampROIinds = [14,13,63,74,12,105,36,42,24,6];
 % cColorROIs = ceil(length(ExampROIinds)/2);
 % cCusMaps = fliplr((blue2red_2(length(ExampROIinds),0.7))');
 cCusMaps = fliplr((cool(length(ExampROIinds)))');
@@ -147,9 +147,9 @@ ylim([-50 yBase]);
 % ylabel('\DeltaF/f_0');
 title('Example ROI plot---Sound Response');
 set(gca,'fontSize',20)
-saveas(h_example,'Example ROI plot.png');
-saveas(h_example,'Example ROI plot.fig');
-% close(h_example);
+% saveas(h_example,'Example ROI plot.png');
+% saveas(h_example,'Example ROI plot.fig');
+% % close(h_example);
 
 
 %%

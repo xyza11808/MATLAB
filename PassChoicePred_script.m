@@ -43,57 +43,87 @@ for cStim = 1 : NumStims
 end
 
 %%
-nRepeats = 50;
-PassStimPerfAll = zeros(nRepeats,NumStims,NumStims);
-parfor ccRe = 1 : nRepeats
-    cRepeatPerf = zeros(NumStims,NumStims);
-    for cBaseStim = 1 : NumStims
-        for cCompStim = (cBaseStim+1) : NumStims
-            %
-            cBaseStimData = StimTypeIndsAll{cBaseStim,2};
-            cCompStimData = StimTypeIndsAll{cCompStim,2};
-            cBaseStimTrNum = size(cBaseStimData,1);
-            cCompStimTrNum = size(cCompStimData,1);
-            if abs(cBaseStimTrNum - cCompStimTrNum) > 10
-                % unbiased stim trial number for current pairs
-                UsedTrNum = min(cBaseStimTrNum, cCompStimTrNum);
-                if cBaseStimTrNum > cCompStimTrNum
-                    RepeatPerfAll = zeros(nRepeats,1);
-                    for cRepeat = 1 : nRepeats
-                        UsedBaseStimInds = randsample(cBaseStimTrNum, cCompStimTrNum);
-                        UsedBaseData = cBaseStimData(UsedBaseStimInds,:);
-                        UsedCompData = cCompStimData;
-                        TypeLabels = [zeros(cCompStimTrNum,1);ones(cCompStimTrNum,1)];
-                        ItMdl = fitcsvm([UsedBaseData;UsedCompData],TypeLabels);
-                        MdPerf = kfoldLoss(crossval(ItMdl));
-                        RepeatPerfAll(cRepeat) = MdPerf;
+if isPairedStimPred
+    nRepeats = 50;
+    PassStimPerfAll = zeros(nRepeats,NumStims,NumStims);
+    parfor ccRe = 1 : nRepeats
+        cRepeatPerf = zeros(NumStims,NumStims);
+        for cBaseStim = 1 : NumStims
+            for cCompStim = (cBaseStim+1) : NumStims
+                %
+                cBaseStimData = StimTypeIndsAll{cBaseStim,2};
+                cCompStimData = StimTypeIndsAll{cCompStim,2};
+                cBaseStimTrNum = size(cBaseStimData,1);
+                cCompStimTrNum = size(cCompStimData,1);
+                if abs(cBaseStimTrNum - cCompStimTrNum) > 10
+                    % unbiased stim trial number for current pairs
+                    UsedTrNum = min(cBaseStimTrNum, cCompStimTrNum);
+                    if cBaseStimTrNum > cCompStimTrNum
+                        RepeatPerfAll = zeros(nRepeats,1);
+                        for cRepeat = 1 : nRepeats
+                            UsedBaseStimInds = randsample(cBaseStimTrNum, cCompStimTrNum);
+                            UsedBaseData = cBaseStimData(UsedBaseStimInds,:);
+                            UsedCompData = cCompStimData;
+                            TypeLabels = [zeros(cCompStimTrNum,1);ones(cCompStimTrNum,1)];
+                            ItMdl = fitcsvm([UsedBaseData;UsedCompData],TypeLabels);
+                            MdPerf = kfoldLoss(crossval(ItMdl));
+                            RepeatPerfAll(cRepeat) = MdPerf;
+                        end
+                    else
+                        RepeatPerfAll = zeros(nRepeats,1);
+                        for cRepeat = 1 : nRepeats
+                            UsedBaseStimInds = randsample(cCompStimTrNum, cBaseStimTrNum);
+                            UsedBaseData = cBaseStimData;
+                            UsedCompData = cCompStimData(UsedBaseStimInds,:);
+                            TypeLabels = [zeros(cBaseStimTrNum,1);ones(cBaseStimTrNum,1)];
+                            ItMdl = fitcsvm([UsedBaseData;UsedCompData],TypeLabels);
+                            MdPerf = kfoldLoss(crossval(ItMdl));
+                            RepeatPerfAll(cRepeat) = MdPerf;
+                        end
                     end
                 else
-                    RepeatPerfAll = zeros(nRepeats,1);
-                    for cRepeat = 1 : nRepeats
-                        UsedBaseStimInds = randsample(cCompStimTrNum, cBaseStimTrNum);
-                        UsedBaseData = cBaseStimData;
-                        UsedCompData = cCompStimData(UsedBaseStimInds,:);
-                        TypeLabels = [zeros(cBaseStimTrNum,1);ones(cBaseStimTrNum,1)];
-                        ItMdl = fitcsvm([UsedBaseData;UsedCompData],TypeLabels);
-                        MdPerf = kfoldLoss(crossval(ItMdl));
-                        RepeatPerfAll(cRepeat) = MdPerf;
-                    end
+                    TypeLabels = [zeros(cBaseStimTrNum,1);ones(cCompStimTrNum,1)];
+                    ItMdl = fitcsvm([cBaseStimData;cCompStimData],TypeLabels);
+                    RepeatPerfAll = kfoldLoss(crossval(ItMdl));
                 end
-            else
-                TypeLabels = [zeros(cBaseStimTrNum,1);ones(cCompStimTrNum,1)];
-                ItMdl = fitcsvm([cBaseStimData;cCompStimData],TypeLabels);
-                RepeatPerfAll = kfoldLoss(crossval(ItMdl));
+
+                cRepeatPerf(cBaseStim,cCompStim) = mean(RepeatPerfAll);
+
+                %
             end
-
-            cRepeatPerf(cBaseStim,cCompStim) = mean(RepeatPerfAll);
-
-            %
         end
+        PassStimPerfAll(ccRe,:,:) = cRepeatPerf;
     end
-    PassStimPerfAll(ccRe,:,:) = cRepeatPerf;
+else
+   % pesudo choice classification
+   TrainTestRatio = 0.8;
+    NumTrs = numel(UsingAnmChoice);
+    if isRepeat
+        nRepeats = 100;
+    else
+        nRepeats = 500;
+    end
+    PassRepeatPredAccu = zeros(nRepeats,2);
+    TrBaseIndex = false(NumTrs,1);
+    parfor cRepeat = 1 : nRepeats
+        cTrainInds = randsample(NumTrs,round(NumTrs*TrainTestRatio));
+        TrainIndex = TrBaseIndex;
+        TrainIndex(cTrainInds) = true;
+        
+        TrainChoice = UsingAnmChoice(TrainIndex);
+        TrainData = UsingRespData(TrainIndex,:);
+        TestChoice = UsingAnmChoice(~TrainIndex);
+        TestData = UsingRespData(~TrainIndex,:);
+        
+        mdl = fitcsvm(TrainData,TrainChoice);
+        mdLoss = kfoldLoss(crossval(mdl));
+        
+        TestDataPrediction = predict(mdl,TestData);
+        TestDataAccuracy = mean(TestDataPrediction == TestChoice);
+        PassRepeatPredAccu(cRepeat,:) = [mdLoss,TestDataAccuracy];
+    end
+    
 end
-
 
 %%
 % nTrs = size(UsingRespData,1);
