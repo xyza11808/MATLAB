@@ -57,8 +57,12 @@ end
 %%
 RawDataAll = RawDataAll(:,ROIindsSelect,:);
 DataSize=size(RawDataAll);
-
-CorrTrialStim=StimAll(CorrectInds);
+if isstruct(StimAll)
+    CorrTrialStim=StimAll.Stim_toneFreq(CorrectInds);
+else
+    CorrTrialStim=StimAll(CorrectInds);
+end
+CorrTrialStim = double(CorrTrialStim(:));
 CorrTrialData=RawDataAll(CorrectInds,:,:);
 CorrStimType=unique(CorrTrialStim);
 CorrTrialTypes = CorrTrialStim > CorrStimType(length(CorrStimType)/2);

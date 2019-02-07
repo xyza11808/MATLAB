@@ -101,6 +101,7 @@ else
 end
 
 CorrTrialStim=StimAll(CorrectInds);
+CorrTrOutcomes = TrialResult(CorrectInds);
 CorrTrialData=RawDataAll(CorrectInds,:,:);
 CorrStimType=unique(CorrTrialStim);
 if mod(length(CorrStimType),2)
@@ -179,10 +180,10 @@ if ispcaDR
     end
     cd('./NeuroM_test_pca/');
 else
-    if ~isdir('./NeuroM_test/')
-        mkdir('./NeuroM_test/');
+    if ~isdir('./NeuroM_test_LA/')
+        mkdir('./NeuroM_test_LA/');
     end
-    cd('./NeuroM_test/');
+    cd('./NeuroM_test_LA/');
 end
     
 if isPartialROI
@@ -251,7 +252,7 @@ Freqtypes = CorrStimType;
 AllFreqData = zeros(length(Freqtypes),nROI);
 for nfreqs = 1 : length(Freqtypes)
     cFreq = Freqtypes(nfreqs);
-    cFreqInds = CorrTrialStim == cFreq;
+    cFreqInds = CorrTrialStim(:) == cFreq;% & CorrTrOutcomes(:) == 1
     cFreqData = ConsideringData(cFreqInds,:);
     AllFreqData(nfreqs,:) = mean(cFreqData);
 end
@@ -358,6 +359,7 @@ ylim([0 1]);
 CorrStimTypeTick = Freqtypes/1000;
 set(gca,'xtick',Octavex,'xticklabel',cellstr(num2str(CorrStimTypeTick(:),'%.2f')),'FontSize',20);
 set(gca,'FontSize',18);
+%%
 if length(TimeLength) == 1
     saveas(h_compPlot,sprintf('Neuro_psycho_%dms_comp_plot.png',TimeLength*1000));
     saveas(h_compPlot,sprintf('Neuro_psycho_%dms_comp_plot.fig',TimeLength*1000));
