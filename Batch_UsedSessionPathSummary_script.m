@@ -5,7 +5,7 @@ if ismac
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,':'))';
 elseif ispc
-    GrandPath = 'S:\BatchData\batch53';
+    GrandPath = 'P:\BatchData\batch55';
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,';'))';
 end
