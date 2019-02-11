@@ -41,7 +41,7 @@ if ~isempty(opt) && patchPlot
         [yaxis(3), yaxis(4), yaxis(4),yaxis(3)],1,...
         'facecolor',[.1 .8 .1],'Edgecolor','none', 'facealpha',0.8);
 elseif isfield(opt,'isPatchPlot')
-    H.eventPatch = line([t_eventOn t_eventOn],[yaxis(3) yaxis(4)],1,'LineWidth',2.5,'color',[.8 .8 .8]);
+    H.eventPatch = line([t_eventOn t_eventOn],[yaxis(3) yaxis(4)],'LineWidth',2.5,'color',[.8 .8 .8]);
 end
 
 if ~issceondY

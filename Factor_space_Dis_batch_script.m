@@ -7,7 +7,7 @@ if ~fi
     return;
 end
 [Passfn,Passfp,~] = uigetfile('*.txt','Please select passive factor analysis data path');
-PassIndsAll = SessTaskPass_pValue(:,3);
+% PassIndsAll = SessTaskPass_pValue(:,3);
 %%
 clearvars -except fn fp Passfp Passfn PassIndsAll
 fpath = fullfile(fp,fn);
@@ -34,6 +34,7 @@ TaskFrate = [];
 TaskAlignF = [];
 SessPowerPeak = [];
 SessBoundValues = [];
+SessFitResultAll = {};
 SessTaskPass_pValue = {};
 m = 1;
 %
@@ -53,7 +54,7 @@ while ischar(tline)
     SessTaskPass_pValue{m,5} = [];
     SessTaskPass_pValue{m,6} = [];
     SessTaskPass_pValue{m,7} = [];
-    
+    %
     isBoundaryToneexits = 0;
 %     [fn,fp,~] = uigetfile('FactorAnaData.mat','Please select your task factor analysis saved data');
 %     TaskPath = fullfile(fp,fn);
@@ -89,6 +90,7 @@ while ischar(tline)
     LRIndexSum{m} = LRindex;
     NMTrInds = Actions ~= 2;
     NMTrTones = Stimtones(NMTrInds);
+    NMTrOctaves = log2(NMTrTones/16000);
     NMTrChoice = Actions(NMTrInds);
     NMSIndexData = LRindex(NMTrInds,:);
     NMTrOutcomes = TaskData.trial_outcome(NMTrInds);
@@ -199,7 +201,7 @@ while ischar(tline)
     Opt.t_eventOn = StimOnTime;
     Opt.eventDur = 0.3;
     eventOff = Opt.t_eventOn + Opt.eventDur;
-    AllMap = blue2red_2(ToneNum/2+1,0.8);
+    AllMap = blue2red_2(ToneNum+1,0.8);
     CMap = AllMap([1:ToneNum/2,end-ToneNum/2+1:end],:);
     Opt.isPatchPlot = 0;
     lineMemoStrs = cellstr(num2str(Tones(:)/1000,'%.1fKHz'));
@@ -244,6 +246,7 @@ while ischar(tline)
     FrameScale = [TaskStartF.start_frame+1,TaskStartF.start_frame+TaskxTimes.frame_rate]; % within 1s time window
     FreqMaxIndex = zeros(ToneNum,1);
     TaskFreqstd = zeros(ToneNum,1);
+    ToneBehavCorr = zeros(ToneNum,1);
     for cf = 1 : ToneNum
         cfFreq = Tones(cf);
         cFreqData = NMSIndexData(NMTrTones==cfFreq,:);  % correct trials,  & NMOutcomes == 1
@@ -253,12 +256,14 @@ while ischar(tline)
         [~,MaxInds] = max(AbsTrace(FrameScale(1):FrameScale(2)));
         FreqMaxIndex(cf) = MeanTrace(TaskStartF.start_frame+MaxInds);
         TaskFreqstd(cf) = mad(MeanTrace) * 1.4826;
+        
+        ToneBehavCorr(cf) = mean(NMTrChoice(NMTrTones(:) == cfFreq));
     end
     SessTaskPass_pValue{m,5} = TaskFreqstd;
     
     ToneOctave = log2(Tones/16000);
-    ToneBehavCorr = BehavBoundfile.boundary_result.StimCorr;
-    ToneBehavCorr(1:floor(ToneNum/2)) = 1 - ToneBehavCorr(1:floor(ToneNum/2));
+%     ToneBehavCorr = BehavBoundfile.boundary_result.StimCorr;
+%     ToneBehavCorr(1:floor(ToneNum/2)) = 1 - ToneBehavCorr(1:floor(ToneNum/2));
     BehavB = max(ToneBehavCorr);
     BehavA = min(ToneBehavCorr);
     NorFreqIndex = (FreqMaxIndex - min(FreqMaxIndex))/(max(FreqMaxIndex) - min(FreqMaxIndex));
@@ -273,7 +278,7 @@ while ischar(tline)
     ParaBoundLim = ([UL;SP;LM]);
     ParaBoundLimFA = ([UL;SP_FA;LM]);
     Nor2BehavParaBoundLim = [UL;Nor2BehavSP_FA;LM];
-    fit_ReNew = FitPsycheCurveWH_nx(ToneOctave, ToneBehavCorr, ParaBoundLim);
+    fit_ReNew = FitPsycheCurveWH_nx(NMTrOctaves, NMTrChoice, ParaBoundLim);
     fit_ReNew_FA = FitPsycheCurveWH_nx(ToneOctave, NorFreqIndex, ParaBoundLimFA);
     fit_ReNew_Nor2behavFA = FitPsycheCurveWH_nx(ToneOctave, Nor2BehavFreqIndex, Nor2BehavParaBoundLim);
     FAFitTaskOctaveValues = feval(fit_ReNew_FA.ffit,ToneOctave);
@@ -291,15 +296,15 @@ while ischar(tline)
     hold on
     plot(ToneOctave,ToneBehavCorr,'ro','MarkerSize',12,'linewidth',1.8);
     hl1 = plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'Color','r','linewidth',2,'Linestyle','-');
-    plot(ToneOctave,NorFreqIndex,'ko','MarkerSize',12,'linewidth',1.8);
-    hl2 = plot(fit_ReNew_FA.curve(:,1),fit_ReNew_FA.curve(:,2),'Color','k','linewidth',2,'Linestyle','-');
+    plot(ToneOctave,Nor2BehavFreqIndex,'ko','MarkerSize',12,'linewidth',1.8);
+    hl2 = plot(fit_ReNew_Nor2behavFA.curve(:,1),fit_ReNew_Nor2behavFA.curve(:,2),'Color','k','linewidth',2,'Linestyle','-');
     set(gca,'yColor','k');
     ylabel('Psycho. Curve');
     
     yyaxis right
     hold on
     hl3 = plot(fit_ReNew.curve(:,1),BehavDerivateCurve,'Color',[.9 .6 .6],'linewidth',1.8,'Linestyle','-');
-    hl4 = plot(fit_ReNew_FA.curve(:,1),TaskFA_DerivateCurve,'Color',[0.7 0.7 0.7],'linewidth',1.8,'Linestyle','-');
+    hl4 = plot(fit_ReNew_Nor2behavFA.curve(:,1),TaskFA_DC,'Color',[0.7 0.7 0.7],'linewidth',1.8,'Linestyle','-');
     set(gca,'yColor',[.7 .7 .7]);
     ylabel('Dis. power');
 %     if IsBoundToneExist
@@ -383,13 +388,13 @@ while ischar(tline)
             PassComUsedFreqSEM = UsedPassFreqSEM(InputInds,:);
             ToneNum = length(PassCompUsedOcts);
             GrNums = floor(ToneNum/2);
-            cPassMap = blue2red_2(GrNums+1,0.8);
+            cPassMap = blue2red_2(ToneNum+1,0.8);
             SessTaskPass_pValue{m,3} = InputInds;
 
             Opt.t_eventOn = 1;
             Opt.eventDur = 0.3;
             eventOff = Opt.t_eventOn + Opt.eventDur;
-            AllMap = blue2red_2(GrNums+1,0.8);
+            AllMap = blue2red_2(ToneNum+1,0.8);
             CMap = AllMap([1:GrNums,end-GrNums+1:end],:);
             if mod(ToneNum,2)
                 CMapNew = zeros(size(CMap,1)+1,3);
@@ -456,15 +461,15 @@ while ischar(tline)
     hold on
     plot(ToneOctave,ToneBehavCorr,'ro','MarkerSize',12,'linewidth',1.8);
     hl1 = plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'Color','r','linewidth',2,'Linestyle','-');
-    plot(UsedPassOctaves,PassNorFreqIndex,'ko','MarkerSize',12,'linewidth',1.8);
-    hl2 = plot(fit_ReNew_PassFA.curve(:,1),fit_ReNew_PassFA.curve(:,2),'Color','k','linewidth',2,'Linestyle','-');
+    plot(UsedPassOctaves,Nor2BehavPassIndex,'ko','MarkerSize',12,'linewidth',1.8);
+    hl2 = plot(fit_ReNew_PassNor2behFA.curve(:,1),fit_ReNew_PassNor2behFA.curve(:,2),'Color','k','linewidth',2,'Linestyle','-');
     set(gca,'ycolor','k','ylim',[0 1])
     ylabel('Psycho. curve');
     
     yyaxis right
     hl3 = plot(fit_ReNew.curve(:,1),BehavDerivateCurve,'Color',[.9 .6 .6],'linewidth',1.8,'Linestyle','-');
-    hl4 = plot(fit_ReNew_PassFA.curve(:,1),PassFA_DerivateCurve,'Color',[.7 .7 .7],'linewidth',1.8,'Linestyle','-');
-    set(gca,'ycolor',[.6 .6 .6],'ylim',[-0.1 max(max(PassFA_DerivateCurve),max(BehavDerivateCurve))+0.2]);
+    hl4 = plot(fit_ReNew_PassNor2behFA.curve(:,1),PassFA_DC,'Color',[.7 .7 .7],'linewidth',1.8,'Linestyle','-');
+    set(gca,'ycolor',[.6 .6 .6],'ylim',[-0.1 max(max(PassFA_DC),max(BehavDerivateCurve))+0.2]);
     ylabel('Dis. power');
     
 %     if IsBoundToneExist
@@ -492,6 +497,9 @@ while ischar(tline)
     SessPowerPeak(m,:) = [max(BehavDerivateCurve),max(TaskFA_DerivateCurve),max(PassFA_DerivateCurve),max(TaskFA_DC),max(PassFA_DC)];
     SessBoundValues(m,:) = [fit_ReNew.ffit.u,fit_ReNew_FA.ffit.u,fit_ReNew_PassFA.ffit.u,...
         fit_ReNew_Nor2behavFA.ffit.u,fit_ReNew_PassNor2behFA.ffit.u];
+    SessFitResultAll(m,:) = {fit_ReNew.ffit,fit_ReNew_FA.ffit,fit_ReNew_PassFA.ffit,...
+        fit_ReNew_Nor2behavFA.ffit,fit_ReNew_PassNor2behFA.ffit};
+    
     m = m + 1;
     tline = fgetl(fid);
     Passline = fgetl(Passid);
@@ -501,9 +509,9 @@ cd('E:\DataToGo\data_for_xu\Factor_new_smooth\New_correct_factorAna\SessionSumma
 save FactorAnaDataSave.mat TaskFactorData TaskTime PLotsTLRDis PlotsPLRDis -v7.3
 % save FactorAnaDataSave.mat TaskFactorData TaskTime PassFactorData PassTime PLotsTLRDis PlotsPLRDis -v7.3
 save LRIndexsumSave.mat TaskTones TaskOutcomes ActionChoice LRIndexSum TaskFrate TaskAlignF FreqIndexAll ...
-    NorFreqIndex IndexTaskPassFitValues SessPowerPeak SessBoundValues SessTaskPass_pValue -v7.3
+    NorFreqIndex IndexTaskPassFitValues SessPowerPeak SessBoundValues SessTaskPass_pValue SessFitResultAll -v7.3
 %% summarize session figs into one ppt file
-clearvars -except fn fp
+clearvars -except fn fp Passfp Passfn PassIndsAll
 m = 1;
 nSession = 1;
 
@@ -520,7 +528,7 @@ while ischar(tline)
         if m == 1
             %
 %                 PPTname = input('Please input the name for current PPT file:\n','s');
-            PPTname = 'Session_FAPeak_BehavPlot_all_new';
+            PPTname = 'Session_FAPeak_BehavPlot_all_new2';
             if isempty(strfind(PPTname,'.ppt'))
                 PPTname = [PPTname,'.pptx'];
             end
@@ -924,3 +932,32 @@ LegH = legend([Cir1,Cir2],{sprintf('Task Coef %.4f, p=%.2e',TaskR(1,2),TaskIndex
 title('Boundary correlation analysis');
 saveas(hhf,'Category Index Nor2beh correlation with legh');
 saveas(hhf,'Category Index Nor2beh correlation with legh','pdf');
+%%
+%% Threshold comparison
+BehavThresValue = cellfun(@(x) x.v,SessFitResultAll(:,1));
+TaskThresValue = cellfun(@(x) x.v,SessFitResultAll(:,4));
+
+[TaskIndexRR,TaskIndex_p] = corrcoef(BehavThresValue,TaskThresValue);
+
+hhf = figure('position',[100 100 360 280]);
+hold on
+Cir1 = plot(BehavThresValue,TaskThresValue,'o','MarkerSize',9,'Linewidth',2,'Color',[1 0.7 0]);
+yscales = get(gca,'ylim');
+xscales = get(gca,'xlim');
+CommonScale = [xscales;yscales];
+UsedScales = [min(CommonScale(:,1)),max(CommonScale(:,2))];
+line(UsedScales,UsedScales,'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
+% set(gca,'xtick',[-0.5 0 0.5],'ytick',[-0.5 0 0.5]);  % 'xlim',[0 1],'ylim',[0 1],
+xlabel('Behaviior bound');
+ylabel('Boundary (Task)');
+set(gca,'FontSize',12);
+text([0.1,0.1], [0.8,0.7],{sprintf('C%.4f',TaskIndexRR(1,2)),sprintf('P%.4f',TaskIndex_p(1,2))})
+% LegH = legend([Cir1,Cir2],{sprintf('Task %.4f-%.4f,p=%.2e',mean(TaskNor2behvBound),std(TaskNor2behvBound),TaskIndex_p),...
+%     sprintf('Pass %.4f-%.4f,p=%.2e',mean(PassNor2behvBound),std(PassNor2behvBound),PassIndex_p)},...
+%     'FontSize',8,'Location','Northwest','TextColor','r','Box','off');
+% legend('boxoff');
+% set(LegH,'position',get(LegH,'position')+[-0.1 0 0 0]);
+title('Threshold comparison');
+saveas(hhf,'Task and behavior threshold comparison plot');
+saveas(hhf,'Task and behavior threshold comparison plot','png');
+saveas(hhf,'Task and behavior threshold comparison plot','pdf');
