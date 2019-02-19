@@ -89,6 +89,11 @@ RightEasyErroMean = squeeze(mean(RightEasyErro));
 LeftErroMean = squeeze(mean(FSDataNorm(LeftErrorInds,:,:)));
 RightErroMean = squeeze(mean(FSDataNorm(RightErroInds,:,:)));
 
+nTones = length(StimFreqTypes);
+StimAvgData = cell(nTones,1);
+for cTone = 1 : nTones
+    StimAvgData{cTone} = squeeze(mean(FSDataNorm(trial_outcome(:) == 1 & BehavTones == StimFreqTypes(cTone),:,:)));
+end
 %%
 if ~isdir('./DimRed_Resplot_smooth/')
     mkdir('./DimRed_Resplot_smooth/');
@@ -118,6 +123,24 @@ xscales = get(gca,'xlim');
 yscales = get(gca,'ylim');
 zscales = get(gca,'zlim');
 [a,b] = view;
+
+%%
+% h_AllStimLine = figure('position',[200 200 600 460]);
+% cMap = blue2red_2(nTones);
+% hold on
+% for cTone = 1 : nTones
+%     plot3(StimAvgData{cTone}(1,:),StimAvgData{cTone}(2,:),StimAvgData{cTone}(3,:),'Color',cMap(cTone,:),'LineWidth',1.6);
+%     scatter3(StimAvgData{cTone}(1,start_frame),StimAvgData{cTone}(2,start_frame),StimAvgData{cTone}(3,start_frame),50,'o',...
+%         'Markeredgecolor','m','MarkerFaceColor','g','LineWidth',1.6)
+% end
+% set(gca,'FontSize',20);
+% % legend([h1,h2,h3,h4],{'Left Corr','Right Corr','Left Error','Right Error'},'FontSize',12);
+% % legend([h1,h2],{'Left Corr','Right Corr'},'FontSize',12);
+% xlabel('x1');
+% ylabel('x2');
+% zlabel('x3');
+
+
 %% plot the most easy two sounds
 h_meanLine = figure('position',[2000 200 380 300]);
 hold on

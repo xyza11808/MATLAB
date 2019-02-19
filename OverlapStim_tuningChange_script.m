@@ -33,11 +33,11 @@ while ischar(tline)
 end
 SessIndexAll = cell2mat(SessPathAll(:,2));
 %% processing 8k-32k and 4k-16k sessions data
-Sess8_32_Inds = SessIndexAll == 1;
+Sess8_32_Inds = SessIndexAll == 4;
 Sess8_32PathAll = SessPathAll(Sess8_32_Inds,1);
 Sess8_32PassPath = SessPathAll(Sess8_32_Inds,3);
 
-Sess4_16_Part1_Inds = SessIndexAll == 2;
+Sess4_16_Part1_Inds = SessIndexAll == 3;
 Sess4_16_Part1_PathAll = SessPathAll(Sess4_16_Part1_Inds,1);
 Sess4_16PassPath = SessPathAll(Sess4_16_Part1_Inds,3);
 
@@ -53,7 +53,7 @@ OverlapROITuns = cell(NumPaths,2);
 PeakPosShiftSum = zeros(NumPaths,10);
 OLPFreq_fracSummry = cell(NumPaths,8);
 OverLapCoefMtxAll = cell(NumPaths,7);
-SavePath = 'E:\DataToGo\NewDataForXU\Tuning_distribution\Sess832BFDis_SigRespOnly';
+SavePath = 'E:\DataToGo\NewDataForXU\Tuning_distribution\Sess716BFDis';
 if ~isdir(SavePath)
     mkdir(SavePath);
 end
@@ -80,8 +80,8 @@ for cPath = 1 : NumPaths
         Sess832ROITunDataStrc = load(fullfile(c832Path,'Tunning_fun_plot_New1s','TunningDataSave.mat'),'CorrTunningFun','PassTunningfun');
         Sess416ROITunDataStrc = load(fullfile(c416Path,'Tunning_fun_plot_New1s','TunningDataSave.mat'),'CorrTunningFun','PassTunningfun');
     end
-    Sess832SigROITunInds = (max(Sess832ROITunDataStrc.CorrTunningFun) > 10)';
-    Sess416SigROITunInds = (max(Sess416ROITunDataStrc.CorrTunningFun) > 10)';
+%     Sess832SigROITunInds = (max(Sess832ROITunDataStrc.CorrTunningFun) > 10)';
+%     Sess416SigROITunInds = (max(Sess416ROITunDataStrc.CorrTunningFun) > 10)';
     
     Sess832BehavStrc = load(fullfile(c832Path,'RandP_data_plots','boundary_result.mat'));
     Sess416BehavStrc = load(fullfile(c416Path,'RandP_data_plots','boundary_result.mat'));
@@ -413,9 +413,9 @@ line([mean(c728SessBehavBound) mean(c728SessBehavBound)],yscales,'Color','r','li
 title(sprintf('Session FracDiff, n = %d',NumPaths))
 set(gca,'xlim',[0 3]);
 
-saveas(hf,fullfile(SumSavePath,'Sess832 fraction diff summary plots'));
-saveas(hf,fullfile(SumSavePath,'Sess832 fraction diff summary plots'),'png');
-saveas(hf,fullfile(SumSavePath,'Sess832 fraction diff summary plots'),'pdf');
+% saveas(hf,fullfile(SumSavePath,'Sess832 fraction diff summary plots'));
+% saveas(hf,fullfile(SumSavePath,'Sess832 fraction diff summary plots'),'png');
+% saveas(hf,fullfile(SumSavePath,'Sess832 fraction diff summary plots'),'pdf');
 
 %% examinate session fraction change for each task session
 SumSavePath = 'E:\DataToGo\NewDataForXU\Tuning_distribution';
@@ -442,9 +442,9 @@ line([mean(c728SessBehavBound) mean(c728SessBehavBound)],yscales,'Color','r','li
 title(sprintf('Session Task, n = %d',NumPaths))
 set(gca,'xlim',[0 3]);
 
-saveas(hf,fullfile(SumSavePath,'Sess832 fraction summary plots'));
-saveas(hf,fullfile(SumSavePath,'Sess832 fraction summary plots'),'png');
-saveas(hf,fullfile(SumSavePath,'Sess832 fraction summary plots'),'pdf');
+% saveas(hf,fullfile(SumSavePath,'Sess832 fraction summary plots'));
+% saveas(hf,fullfile(SumSavePath,'Sess832 fraction summary plots'),'png');
+% saveas(hf,fullfile(SumSavePath,'Sess832 fraction summary plots'),'pdf');
 
 %
 %% examinate session fraction change for each passive session

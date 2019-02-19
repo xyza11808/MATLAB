@@ -28,7 +28,7 @@ while ischar(tline)
     
     clearvars data_aligned start_frame frame_rate 
     load(cSessDataPath);
-    cSessData = SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1);
+    cSessData = SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,0,1);
     
     SessDataRespAll{nSess,1} = cSessData;
     SessDataRespAll{nSess,2} = start_frame;
@@ -45,7 +45,7 @@ while ischar(tline)
     else
         UsedPassData = SelectData;
     end
-    cPassData = SessionSumColorplot(UsedPassData,frame_rate,TrOucome,SelectSArray,frame_rate,[],1);
+    cPassData = SessionSumColorplot(UsedPassData,frame_rate,TrOucome,SelectSArray,frame_rate,0,1);
     
     PassSessDataRespAll{nSess,1} = cPassData;
     PassSessDataRespAll{nSess,2} = frame_rate;
@@ -54,15 +54,40 @@ while ischar(tline)
     Passline = fgetl(Passid);
     nSess = nSess + 1;
 end
-cd('E:\DataToGo\data_for_xu\SessRespSummaryData');
-save SessDataSave.mat SessDataRespAll PassSessDataRespAll -v7.3
+% cd('E:\DataToGo\data_for_xu\SessRespSummaryData');
+% save SessDataSave.mat SessDataRespAll PassSessDataRespAll -v7.3
 %%
 UsedSess = 1:19;
 SessCellDataAll = cellfun(@(x) x.NorData,SessDataRespAll(:,1),'uniformOutput',false);
 NormDataAll = SessCellDataAll(UsedSess);
 SessDataFrames = cellfun(@(x) size(x,2),NormDataAll);
 UsedFInds = min(SessDataFrames);
+fRate = SessDataRespAll{UsedSess(1),3};
 
+PassSessCellAll = cellfun(@(x) x.NorData,PassSessDataRespAll(:,1),'uniformOutput',false);
+PassDataCell = PassSessCellAll(UsedSess);
+
+SessDataFrames = cellfun(@(x) size(x,2),PassDataCell);
+UsedFPass = min(SessDataFrames);
+
+PassSessData = [];
+SessDataAlls = [];
+for cSess = 1 : length(NormDataAll)
+    cSessData = NormDataAll{cSess}(:,1:UsedFInds);
+    SessDataAlls = [SessDataAlls;cSessData];
+    
+    cPassData = PassDataCell{cSess}(:,1:UsedFPass);
+    PassSessData = [PassSessData;cPassData];
+end
+%%
+UsedSess = 20:21;
+% UsedFrameRange = 1:155;
+% SessCellDataAll = cellfun(@(x) zscore(x.RawData(:,UsedFrameRange),0,2),SessDataRespAll(:,1),'uniformOutput',false);
+SessCellDataAll = cellfun(@(x) x.NorData,SessDataRespAll(:,1),'uniformOutput',false);
+NormDataAll = SessCellDataAll(UsedSess);
+SessDataFrames = cellfun(@(x) size(x,2),NormDataAll);
+UsedFInds = min(SessDataFrames);
+fRate = SessDataRespAll{UsedSess(1),3};
 
 PassSessCellAll = cellfun(@(x) x.NorData,PassSessDataRespAll(:,1),'uniformOutput',false);
 PassDataCell = PassSessCellAll(UsedSess);
@@ -87,12 +112,12 @@ huf = figure('position',[100 100 600 320]);
 subplot(121)
 imagesc(SessDataAlls(Inds,:),[0,2])
 colormap hot
-FramePatch = round([1,1.3]*55);
+FramePatch = round([1,1.3]*fRate);
 nCells = size(SessDataAlls,1);
 patch([FramePatch(1) FramePatch(2) FramePatch(2) FramePatch(1)],[0 0 nCells nCells]+0.5, 1, 'FaceColor','g',...
     'EdgeColor','none','Facealpha',0.4)
-xTimeTick = 0:55:size(SessDataAlls,2);
-xTickLabels = xTimeTick/55;
+xTimeTick = 0:fRate:size(SessDataAlls,2);
+xTickLabels = xTimeTick/fRate;
 set(gca,'xtick',xTimeTick,'xTicklabel',xTickLabels);
 hbar = colorbar;
 cPos = get(hbar,'position');
@@ -103,18 +128,18 @@ title(sprintf('nROIs = %d',size(SessDataAlls,1)));
 subplot(122)
 imagesc(PassSessData(Inds,:),[0,2])
 colormap hot
-FramePatch = round([1,1.3]*55);
+FramePatch = round([1,1.3]*fRate);
 nCells = size(PassSessData,1);
 patch([FramePatch(1) FramePatch(2) FramePatch(2) FramePatch(1)],[0 0 nCells nCells]+0.5, 1, 'FaceColor','g',...
     'EdgeColor','none','Facealpha',0.4)
-xTimeTick = 0:55:size(PassSessData,2);
-xTickLabels = xTimeTick/55;
+xTimeTick = 0:fRate:size(PassSessData,2);
+xTickLabels = xTimeTick/fRate;
 set(gca,'xtick',xTimeTick,'xTicklabel',xTickLabels);
 hbar = colorbar;
 cPos = get(hbar,'position');
 set(hbar,'YTick',[0 2],'position',cPos.*[1 1 0.5 0.3]+[0.1 0.03 0 0]);
 title(sprintf('nROIs = %d',size(PassSessData,1)));
-
+%%
 saveas(huf,'Sess Summarized Response plot');
 saveas(huf,'Sess Summarized Response plot','png');
 saveas(huf,'Sess Summarized Response plot','pdf');

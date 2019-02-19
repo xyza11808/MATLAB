@@ -1,3 +1,39 @@
+%% given data path in a txt file for imaging
+clear
+clc
+
+[fn,fp,fi] = uigetfile('*.txt','Please select the used data path saved file');
+if ~fi
+    return;
+end
+fPath = fullfile(fp,fn);
+fids = fopen(fPath);
+tline = fgetl(fids);
+NormSessPathTask = {};
+NormSessPathPass = {};
+m = 1;
+
+while ischar(tline)
+    if isempty(strfind(tline,'NO_Correction\mode_f_change'))
+        tline = fgetl(fids);
+        continue;
+    end
+    
+    NormSessPathTask{m} = tline;
+    
+    [~,EndInds] = regexp(tline,'test\d{2,3}');
+    cPassDataUpperPath = fullfile(sprintf('%srf',tline(1:EndInds)),'im_data_reg_cpu','result_save');
+    
+    [~,InfoDataEndInds] = regexp(tline,'result_save');
+    PassPathline = fullfile(sprintf('%srf%s',tline(1:EndInds),tline(EndInds+1:InfoDataEndInds)),'plot_save','NO_Correction');
+    NormSessPathPass{m} = PassPathline;
+    
+    tline = fgetl(fids);
+    m = m + 1;
+end
+fclose(fids);
+%%
+
 clearvars -except NormSessPathTask NormSessPathPass
 
 nSession = length(NormSessPathTask);
@@ -7,6 +43,7 @@ HardBehavChoiceAll = cell(nSession,1);
 AllStimPredANDBehavChoice = cell(nSession,3);
 PredCI = cell(nSession,1);
 AllSessTrCI = cell(nSession,1);
+WorstPerfAll = zeros(nSession,1);
 for cSess = 1 : nSession
     %
     tline = NormSessPathTask{cSess};
@@ -15,7 +52,8 @@ for cSess = 1 : nSession
 
 %     PredChoiceStrc = load(fullfile(cTbyTPath,'ModelPredictionSave.mat'),'IterPredChoice');
     SessStimStrc = load(fullfile(cTbyTPath,'AnmChoicePredSaveNew.mat'),'Stimlulus','RealStimPerf','UsingAnmChoice','StimInds','IterPredChoice');
-    [~,WorstPerfInds] = min(SessStimStrc.RealStimPerf);
+    [cWorstPerf,WorstPerfInds] = min(SessStimStrc.RealStimPerf);
+    WorstPerfAll(cSess) = cWorstPerf;
     WorstStimInds = SessStimStrc.StimInds{WorstPerfInds};
     %
     HardChoiceData = SessStimStrc.IterPredChoice(:,WorstStimInds);
@@ -748,3 +786,16 @@ figure;
 hold on
 plot(c416NeuroFitSummary(:,3),c416NeuroFitSummary(:,1),'ro');
 plot(c416NeuroFitSummary(:,3),c416NeuroFitSummary(:,2),'ko');
+
+%% generate a random choice correlation for comparison
+nTrials = 726;
+nRepeat = 1000;
+RandR = zeros(nRepeat,1);
+for cRe = 1 : nRepeat
+    RandData = rand(2,nTrials);
+    RandBinaryData = double(RandData > 0.5);
+    [cR,cP] = corrcoef(RandBinaryData(1,:),RandBinaryData(2,:));
+    RandR(cRe) = cR(1,2);
+end
+    
+    

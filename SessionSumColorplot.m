@@ -50,10 +50,15 @@ end
 UsingTrData = dataligned(TrialInds,:,:);
 DataAllMean = squeeze(mean(UsingTrData));
 FrameDis = [alignF - 1, nFrames - alignF - 1];
-DataNor = zeros(size(DataAllMean));
-for nmnm = 1 : nROIs
-    DataNor(nmnm,:) = zscore(DataAllMean(nmnm,:));
+IsNanInds = isnan(DataAllMean(1,:));
+if sum(IsNanInds)
+    DataAllMean = DataAllMean(:,~IsNanInds);
 end
+DataNor = zscore(DataAllMean,0,2);
+% DataNor = zeros(size(DataAllMean));
+% for nmnm = 1 : nROIs
+%     DataNor(nmnm,:) = zscore(DataAllMean(nmnm,:));
+% end
 [~,maxInds] = max(DataNor,[],2);
 [~,SortRowInds] = sort(maxInds);
 xticks = 0:FrameRate:size(DataNor,2);

@@ -7,7 +7,8 @@ if ~fi
     return;
 end
 [Passfn,Passfp,~] = uigetfile('*.txt','Please select passive factor analysis data path');
-% PassIndsAll = SessTaskPass_pValue(:,3);
+%%
+PassIndsAll = SessTaskPass_pValue(:,3);
 %%
 clearvars -except fn fp Passfp Passfn PassIndsAll
 fpath = fullfile(fp,fn);
@@ -653,33 +654,43 @@ end
 
 %% plot the multi-session curve together
 SessNum = size(IndexTaskPassFitValues,1);
-SessOctaves = zeros(SessNum,6);
-SessTaskIndexData = zeros(SessNum,6);
-SessPassIndexData = zeros(SessNum,6);
-SessBehavData = zeros(SessNum,6);
+SessOctaves = nan(SessNum,8);
+SessTaskIndexData = nan(SessNum,8);
+SessPassIndexData = nan(SessNum,8);
+SessBehavData = nan(SessNum,8);
 for cSess = 1 : SessNum
     cSessOctaves = IndexTaskPassFitValues{cSess,1};
     cSessTaskIndex = IndexTaskPassFitValues{cSess,2};
     cSessPassIndex = IndexTaskPassFitValues{cSess,3};
     cSessBehav = IndexTaskPassFitValues{cSess,4};
-    if length(cSessOctaves) > 6
-        cUsedOctInds = abs(cSessOctaves) > 0.18;  % not  include the closet two tones for simplicity
+    if length(cSessOctaves) == 7
+        cUsedOctInds = [1,2,3,5,6,7];
+        cAssignInds = [1,2,3,6,7,8];
+    elseif length(cSessOctaves) == 8
+        cUsedOctInds = 1:8;
+        cAssignInds = 1:8;
     else
-        cUsedOctInds = 1:length(cSessOctaves);
+        cUsedOctInds = 1:6;
+        cAssignInds = [1,2,3,6,7,8];
     end
-    SessOctaves(cSess,:) = cSessOctaves(cUsedOctInds);
-    SessTaskIndexData(cSess,:) = cSessTaskIndex(cUsedOctInds);
-    SessPassIndexData(cSess,:) = cSessPassIndex(cUsedOctInds);
-    SessBehavData(cSess,:) = cSessBehav(cUsedOctInds);
+    SessOctaves(cSess,cAssignInds) = cSessOctaves(cUsedOctInds);
+    SessTaskIndexData(cSess,cAssignInds) = cSessTaskIndex(cUsedOctInds);
+    SessPassIndexData(cSess,cAssignInds) = cSessPassIndex(cUsedOctInds);
+    SessBehavData(cSess,cAssignInds) = cSessBehav(cUsedOctInds);
 end
-MeanOctaves = mean(SessOctaves);
+%%
+cStimSessNum = zeros(8,1);
+for cStim = 1 : 8
+    cStimSessNum(cStim) = sum(~isnan(SessOctaves(:,cStim)));
+end
+MeanOctaves = mean(SessOctaves,'omitnan');
 % SEMOctaves = std(SessOctaves)/sqrt(SessNum);
-MeanBehavs = mean(SessBehavData);
-SEMBehavs = std(SessBehavData)/sqrt(SessNum);
-MeanTaskIndex = mean(SessTaskIndexData);
-SEMTaskIndex = std(SessTaskIndexData)/sqrt(SessNum);
-MeanPassIndex = mean(SessPassIndexData);
-SEMPassIndex = std(SessPassIndexData)/sqrt(SessNum);
+MeanBehavs = mean(SessBehavData,'omitnan');
+SEMBehavs = std(SessBehavData,'omitnan')./sqrt(cStimSessNum');
+MeanTaskIndex = mean(SessTaskIndexData,'omitnan');
+SEMTaskIndex = std(SessTaskIndexData,'omitnan')./sqrt(cStimSessNum');
+MeanPassIndex = mean(SessPassIndexData,'omitnan');
+SEMPassIndex = std(SessPassIndexData,'omitnan')./sqrt(cStimSessNum');
 OctFreqStrs = cellstr(num2str((2.^MeanOctaves(:))*16,'%.1f'));
 
 % fit logistic curves using everysingle data points but not mean values
@@ -709,25 +720,27 @@ hf = figure('position',[100 100 480 400]);
 hold on
 hl1 = plot(fit_Behav.curve(:,1),fit_Behav.curve(:,2),'r','linewidth',2);
 hl2 = plot(fit_TaskI.curve(:,1),fit_TaskI.curve(:,2),'b','linewidth',2);
-hl3 = plot(fit_PassI.curve(:,1),fit_PassI.curve(:,2),'k','linewidth',2);
+% hl3 = plot(fit_PassI.curve(:,1),fit_PassI.curve(:,2),'k','linewidth',2);
 % plot(fit_Behav.curve(:,1),BehavFit_ci,'r','linewidth',0.8,'linestyle','--');
 % plot(fit_TaskI.curve(:,1),TaskIFit_ci,'b','linewidth',0.8,'linestyle','--');
 % plot(fit_PassI.curve(:,1),PassIFir_ci,'k','linewidth',0.8,'linestyle','--');
 errorbar(MeanOctaves,MeanBehavs,SEMBehavs,'ro','MarkerSize',12,'linewidth',1);  %,'Marker','none'
 errorbar(MeanOctaves,MeanTaskIndex,SEMTaskIndex,'bo','MarkerSize',12,'linewidth',1);
-errorbar(MeanOctaves,MeanPassIndex,SEMPassIndex,'ko','MarkerSize',12,'linewidth',1);
+% errorbar(MeanOctaves,MeanPassIndex,SEMPassIndex,'ko','MarkerSize',12,'linewidth',1);
 set(gca,'xtick',MeanOctaves,'xticklabel',OctFreqStrs);
 xlabel('Frequency (kHz)');
 ylabel({'Right Prob.';'Nor. Selection Index'});
 set(gca,'FontSize',16);
-legend([hl1,hl2,hl3],{'BehavData','Task SelectionIndex','Pass SelectionIndex'},'FontSize',8,'Location','Northwest');
+% legend([hl1,hl2,hl3],{'BehavData','Task SelectionIndex','Pass SelectionIndex'},'FontSize',8,'Location','Northwest');
+legend([hl1,hl2],{'BehavData','Task SelectionIndex'},'FontSize',8,'Location','Northwest');
 legend('Boxoff')
-% saveas(hf,'Behavior and selection index logistic plot without CI');
-% saveas(hf,'Behavior and selection index logistic plot without CI','png');
+saveas(hf,'Behavior and selection index logistic plot without CI New');
+saveas(hf,'Behavior and selection index logistic plot without CI New','pdf');
+saveas(hf,'Behavior and selection index logistic plot without CI New','png');
 %%
-BehavCI = mean(SessBehavData(:,4:6),2) - mean(SessBehavData(:,1:3),2);
-TaskIndexCI = mean(SessTaskIndexData(:,4:6),2) - mean(SessTaskIndexData(:,1:3),2);
-PassIndexCI = mean(SessPassIndexData(:,4:6),2) - mean(SessPassIndexData(:,1:3),2);
+BehavCI = mean(SessBehavData(:,6:8),2) - mean(SessBehavData(:,1:3),2);
+TaskIndexCI = mean(SessTaskIndexData(:,6:8),2) - mean(SessTaskIndexData(:,1:3),2);
+PassIndexCI = mean(SessPassIndexData(:,6:8),2) - mean(SessPassIndexData(:,1:3),2);
 [~,TaskIndex_p] = ttest(BehavCI,TaskIndexCI);
 [~,PassIndex_p] = ttest(BehavCI,PassIndexCI);
 hhf = figure('position',[100 100 420 350]);
@@ -746,10 +759,10 @@ LegH = legend([Cir1,Cir2],{sprintf('TaskInCI,p=%.2e',TaskIndex_p),sprintf('PassI
 legend('boxoff');
 set(LegH,'position',get(LegH,'position')+[-0.1 0 0 0]);
 title('Category Index');
-saveas(hhf,'Category Index compare plot');
-saveas(hhf,'Category Index compare plot','png');
+% saveas(hhf,'Category Index compare plot');
+% saveas(hhf,'Category Index compare plot','png');
 
-%% normalize the index data according to the behabior result
+%% normalize the index data according to the behavior result
 SessNum = size(IndexTaskPassFitValues,1);
 SessOctaves = zeros(SessNum,6);
 SessTaskIndexData = zeros(SessNum,6);
@@ -930,8 +943,8 @@ LegH = legend([Cir1,Cir2],{sprintf('Task Coef %.4f, p=%.2e',TaskR(1,2),TaskIndex
 % set(LegH,'position',get(LegH,'position')+[-0.1 0 0 0]);
 % title(sprintf('Behavior Bound %.4f-%.4f',mean(BehavBound),std(BehavBound)));
 title('Boundary correlation analysis');
-saveas(hhf,'Category Index Nor2beh correlation with legh');
-saveas(hhf,'Category Index Nor2beh correlation with legh','pdf');
+% saveas(hhf,'Category Index Nor2beh correlation with legh');
+% saveas(hhf,'Category Index Nor2beh correlation with legh','pdf');
 %%
 %% Threshold comparison
 BehavThresValue = cellfun(@(x) x.v,SessFitResultAll(:,1));
