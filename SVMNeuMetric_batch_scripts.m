@@ -1,9 +1,8 @@
-clear
-clc
+cclr
 cd('E:\DataToGo\data_for_xu\Tuning_curve_plot');
 [fn,fp,~] = uigetfile('*.txt','Please select the text file contains the path of all task sessions');
 [Passfn,Passfp,~] = uigetfile('*.txt','Please select the text file contains the path of all passive sessions');
-load('E:\DataToGo\data_for_xu\SingleCell_RespType_summary\NewMethod\SessROItypeData.mat');
+% load('E:\DataToGo\data_for_xu\SingleCell_RespType_summary\NewMethod\SessROItypeData.mat');
 %%
 
 fpath = fullfile(fp,fn);
@@ -104,6 +103,9 @@ while ischar(tline)
     BehavTones = TaskNMDataStrc.Octavexfit(:);
     BehavRProbs = TaskNMDataStrc.realy(:);
     TaskNeuRProb = TaskNMDataStrc.fityAll(:);
+    SVMNeuTaskSum{nSess,1} = BehavTones;
+    SVMNeuTaskSum{nSess,2} = BehavRProbs;
+    SVMNeuTaskSum{nSess,3} = TaskNeuRProb;
     
     PassOctaves = PassNMDataStrc.Octavexfit(:);
     disp(BehavTones');
@@ -119,9 +121,7 @@ while ischar(tline)
         PassOctaves = PassOctaves(UsedInds);
         PassNeuData = PassNMDataStrc.fityAll(UsedInds);
     end
-    SVMNeuTaskSum{nSess,1} = BehavTones;
-    SVMNeuTaskSum{nSess,2} = BehavRProbs;
-    SVMNeuTaskSum{nSess,3} = TaskNeuRProb;
+    
     SVMNeuTaskSum{nSess,4} = PassNeuData;
     SVMNeuTaskSum{nSess,5} = PassOctaves;
     
@@ -134,37 +134,64 @@ end
 UsedSessIndex = ~cellfun(@isempty,SVMNeuTaskSum(:,1));
 UsedSVMNeuTaskSum = SVMNeuTaskSum(UsedSessIndex,:);
 
-BehavOctsAll = cell2mat(UsedSVMNeuTaskSum(:,1));
-BehavRProbAll = cell2mat(UsedSVMNeuTaskSum(:,2));
-TaskRProbAll = cell2mat(UsedSVMNeuTaskSum(:,3));
+BehavOctsAll = cell2mat(SVMNeuTaskSum(:,1));
+BehavRProbAll = cell2mat(SVMNeuTaskSum(:,2));
+TaskRProbAll = cell2mat(SVMNeuTaskSum(:,3));
 
 PassOctsAll = cell2mat(UsedSVMNeuTaskSum(:,5));
+PassBehavsAll = cell2mat(UsedSVMNeuTaskSum(:,2));
 PassRProbAll = cell2mat(UsedSVMNeuTaskSum(:,4));
 %%
-nUsedSess = size(UsedSVMNeuTaskSum,1);
-UsedSessBehav = zeros(nUsedSess,6);
-UsedSessTaskRProb = zeros(nUsedSess,6);
-UsedSessPassRProb = zeros(nUsedSess,6);
+nUsedSess = size(SVMNeuTaskSum,1);
+TaskSessOcts = nan(nUsedSess,8);
+UsedSessBehav = nan(nUsedSess,8);
+UsedSessTaskRProb = nan(nUsedSess,8);
+PassSessOcts = nan(nUsedSess,8);
+UsedSessPassRProb = nan(nUsedSess,8);
 for cSess = 1 : nUsedSess
-    cSessBehavTone = UsedSVMNeuTaskSum{cSess,1};
-    TaskIndexUse = abs(cSessBehavTone - 1) > 0.19;
-    UsedSessBehav(cSess,:) = UsedSVMNeuTaskSum{cSess,2}(TaskIndexUse);
-    UsedSessTaskRProb(cSess,:) = UsedSVMNeuTaskSum{cSess,3}(TaskIndexUse);
-    try
-        PassIndexUse = abs(UsedSVMNeuTaskSum{cSess,5} - 1) > 0.18;
-        UsedSessPassRProb(cSess,:) = UsedSVMNeuTaskSum{cSess,4}(PassIndexUse);
-    catch
-        disp((abs(UsedSVMNeuTaskSum{cSess,5} - 1))');
-        IndsStr = input('Please input used index for passive session:\n','s');
-        PassIndexUse = str2num(IndsStr);
-        UsedSessPassRProb(cSess,:) = UsedSVMNeuTaskSum{cSess,4}(PassIndexUse);
+    cSessBehavTone = SVMNeuTaskSum{cSess,1};
+    cSessBehav = SVMNeuTaskSum{cSess,2};
+    cSessTaskRProb = SVMNeuTaskSum{cSess,3};
+    cSessPassOcts = SVMNeuTaskSum{cSess,5};
+    cSessPassRProb = SVMNeuTaskSum{cSess,4};
+    
+    if length(cSessBehavTone) == 7
+        cUsedOctInds = [1,2,3,5,6,7];
+        cAssignInds = [1,2,3,6,7,8];
+    elseif length(cSessBehavTone) == 8
+        cUsedOctInds = 1:8;
+        cAssignInds = 1:8;
+    else
+        cUsedOctInds = 1:6;
+        cAssignInds = [1,2,3,6,7,8];
+    end
+    
+    TaskSessOcts(cSess,cAssignInds) = cSessBehavTone(cUsedOctInds);
+    UsedSessBehav(cSess,cAssignInds) = cSessBehav(cUsedOctInds);
+    UsedSessTaskRProb(cSess,cAssignInds) = cSessTaskRProb(cUsedOctInds);
+    
+    % assign passive data
+    if ~isempty(cSessPassRProb)
+        if numel(cAssignInds) == numel(cSessPassOcts)
+            PassSessOcts(cSess,cAssignInds) = cSessPassOcts;
+            UsedSessPassRProb(cSess,cAssignInds) = cSessPassRProb;
+        elseif numel(cSessPassOcts) == 7 && numel(cAssignInds) == 6
+            PassSessOcts(cSess,cAssignInds) = cSessPassOcts([1,2,3,5,6,7]);
+            UsedSessPassRProb(cSess,cAssignInds) = cSessPassRProb([1,2,3,5,6,7]);
+        end
+            
     end
 end
 %%
-Tones = [-1,-0.6,-0.2,0.2,0.6,1]+1;
-behavAvgSem = [mean(UsedSessBehav);std(UsedSessBehav)];%/sqrt(nUsedSess)
-TaskAvgSem = [mean(UsedSessTaskRProb);std(UsedSessTaskRProb)];%/sqrt(nUsedSess)
-PassAvgSem = [mean(UsedSessPassRProb);std(UsedSessPassRProb)];%/sqrt(nUsedSess)
+TaskTones = mean(TaskSessOcts,'omitnan');
+PassTones = mean(PassSessOcts,'omitnan');
+TaskPassSessNum = zeros(8,2);
+for cTone = 1 : 8
+    TaskPassSessNum(cTone,:) = [sum(~isnan(TaskSessOcts(:,cTone))),sum(~isnan(PassTones(:,cTone)))];
+end
+behavAvgSem = [mean(UsedSessBehav,'omitnan');std(UsedSessBehav,'omitnan')];%/sqrt(nUsedSess)
+TaskAvgSem = [mean(UsedSessTaskRProb,'omitnan');std(UsedSessTaskRProb,'omitnan')];%/sqrt(nUsedSess)
+PassAvgSem = [mean(UsedSessPassRProb,'omitnan');std(UsedSessPassRProb,'omitnan')];%/sqrt(nUsedSess)
 
 BehavFitData = FitPsycheCurveWH_nx(BehavOctsAll,BehavRProbAll);
 BehavCI = predint(BehavFitData.ffit,BehavFitData.curve(:,1),0.95,'functional','on');
@@ -172,28 +199,30 @@ TaskFitData = FitPsycheCurveWH_nx(BehavOctsAll,TaskRProbAll);
 TaskCI = predint(TaskFitData.ffit,TaskFitData.curve(:,1),0.95,'functional','on');
 PassFitData = FitPsycheCurveWH_nx(PassOctsAll,PassRProbAll);
 PassCI = predint(PassFitData.ffit,PassFitData.curve(:,1),0.95,'functional','on');
+
+%%
 hf = figure('position',[2000 100 380 300]);
 hold on
 plot(BehavFitData.curve(:,1),BehavFitData.curve(:,2),'Color','r','linewidth',1.6);
 plot(TaskFitData.curve(:,1),TaskFitData.curve(:,2),'Color',[1 0.7 0.2],'linewidth',1.6);
 plot(PassFitData.curve(:,1),PassFitData.curve(:,2),'Color','k','linewidth',1.6);
-errorbar(Tones,behavAvgSem(1,:),behavAvgSem(2,:),'ro','linewidth',1.4,'CapSize',0); %,'Marker','none'
-errorbar(Tones,TaskAvgSem(1,:),TaskAvgSem(2,:),'o','linewidth',1.4,'CapSize',0,'Color',[1 0.7 0.2]);
-errorbar(Tones,PassAvgSem(1,:),PassAvgSem(2,:),'ko','linewidth',1.4,'CapSize',0);
+errorbar(TaskTones,behavAvgSem(1,:),behavAvgSem(2,:),'ro','linewidth',1.4,'CapSize',0); %,'Marker','none'
+errorbar(TaskTones,TaskAvgSem(1,:),TaskAvgSem(2,:),'o','linewidth',1.4,'CapSize',0,'Color',[1 0.7 0.2]);
+errorbar(PassTones,PassAvgSem(1,:),PassAvgSem(2,:),'ko','linewidth',1.4,'CapSize',0);
 plot(BehavFitData.curve(:,1),BehavCI,'Color','r','linewidth',1.2,'linestyle','--');
 plot(TaskFitData.curve(:,1),TaskCI,'Color',[1 0.7 0.2],'linewidth',1.2,'linestyle','--');
 plot(PassFitData.curve(:,1),PassCI,'Color','k','linewidth',1.2,'linestyle','--');
 
-set(gca,'xtick',[0,2],'xticklabel',[8 32],'ytick',[0 0.5 1],'xlim',[-0.1 2.1],'ylim',[-0.1 1.1]);
+set(gca,'xtick',[0,1,2],'xticklabel',[8 16 32],'ytick',[0 0.5 1],'xlim',[-0.1 2.1],'ylim',[-0.1 1.1]);
 xlabel('Frequency(kHz)');
 ylabel('Right Prob');
 set(gca,'FontSize',14);
-saveas(gcf,'SVM neurometric curve plot save');
-saveas(gcf,'SVM neurometric curve plot save','pdf');
+saveas(hf,'SVM neurometric curve plot save');
+saveas(hf,'SVM neurometric curve plot save','pdf');
 %% category index compare plot
 BehavFitAll = cell(nUsedSess,1);
 TaskFitAll = cell(nUsedSess,1);
-PassFitAll = cell(nUsedSess,1);
+% PassFitAll = cell(nUsedSess,1);
 
 for cSess = 1 : nUsedSess
     cSessBehavTone = UsedSVMNeuTaskSum{cSess,1};
@@ -203,34 +232,34 @@ for cSess = 1 : nUsedSess
     cBehavFit = FitPsycheCurveWH_nx(cSessBehavTone,cSessBehavRProb);
     cTaskFit = FitPsycheCurveWH_nx(cSessBehavTone,cSessTaskRProb);
     
-    cSessPassTone = UsedSVMNeuTaskSum{cSess,5};
-    cSessPassRProb = UsedSVMNeuTaskSum{cSess,4};
-    cPassFit = FitPsycheCurveWH_nx(cSessPassTone,cSessPassRProb);
+%     cSessPassTone = UsedSVMNeuTaskSum{cSess,5};
+%     cSessPassRProb = UsedSVMNeuTaskSum{cSess,4};
+%     cPassFit = FitPsycheCurveWH_nx(cSessPassTone,cSessPassRProb);
     
     BehavFitAll{cSess} = cBehavFit.ffit;
     TaskFitAll{cSess} = cTaskFit.ffit;
-    PassFitAll{cSess} = cPassFit.ffit;
+%     PassFitAll{cSess} = cPassFit.ffit;
     
 end
 
 %%
 BehavBoundAll = cellfun(@(x) x.u,BehavFitAll);
 TaskBoundAll = cellfun(@(x) x.u,TaskFitAll);
-PassBoundAll = cellfun(@(x) x.u,PassFitAll);
+% PassBoundAll = cellfun(@(x) x.u,PassFitAll);
 
 BehavBound = BehavBoundAll;
 TaskNor2behvBound = TaskBoundAll;
-PassNor2behvBound = PassBoundAll;
+% PassNor2behvBound = PassBoundAll;
 [TaskR,TaskIndex_p] = corrcoef(BehavBound,TaskNor2behvBound);
-[PassR,PassIndex_p] = corrcoef(BehavBound,PassNor2behvBound);
+% [PassR,PassIndex_p] = corrcoef(BehavBound,PassNor2behvBound);
 [Taskmd,TaskCurve] = lmFunCalPlot(BehavBound,TaskNor2behvBound,0);
-[Passmd,PassCurve] = lmFunCalPlot(BehavBound,PassNor2behvBound,0);
+% [Passmd,PassCurve] = lmFunCalPlot(BehavBound,PassNor2behvBound,0);
 hhf = figure('position',[2400 100 420 350]);
 hold on
-% Cir1 = plot(BehavBound,TaskNor2behvBound,'o','MarkerSize',9,'Linewidth',2,'Color',[1 0.7 0.2]);
-Cir2 = plot(BehavBound,PassNor2behvBound,'ko','MarkerSize',9,'Linewidth',2);
-% plot(TaskCurve(:,1),TaskCurve(:,2),'Color',[0.6 0.4 0.1],'linewidth',1.8);
-plot(PassCurve(:,1),PassCurve(:,2),'Color',[0.2 0.2 0.2],'linewidth',1.8);
+Cir1 = plot(BehavBound,TaskNor2behvBound,'o','MarkerSize',9,'Linewidth',2,'Color',[1 0.7 0.2]);
+% Cir2 = plot(BehavBound,PassNor2behvBound,'ko','MarkerSize',9,'Linewidth',2);
+plot(TaskCurve(:,1),TaskCurve(:,2),'Color',[0.6 0.4 0.1],'linewidth',1.8);
+% plot(PassCurve(:,1),PassCurve(:,2),'Color',[0.2 0.2 0.2],'linewidth',1.8);
 yscales = get(gca,'ylim');
 xscales = get(gca,'xlim');
 CommonScale = [xscales;yscales];
@@ -238,9 +267,9 @@ UsedScales = [min(CommonScale(:,1)),max(CommonScale(:,2))];
 % line(UsedScales,UsedScales,'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
 line([1 1],UsedScales,'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
 line(UsedScales,[1 1],'Color',[.7 .7 .7],'linewidth',1.6,'linestyle','--');
-set(gca,'xtick',[0 1 2],'ytick',[0 1 2],'xlim',[0.4 1.6],'ylim',[0.4 1.6]);  % 'xlim',[0 1],'ylim',[0 1],
+set(gca,'xtick',[0.5 1 1.5],'ytick',[0.5 1 1.5],'xlim',[0.4 1.6],'ylim',[0.4 1.6]);  % 'xlim',[0 1],'ylim',[0 1],
 xlabel('Behaviior bound');
-ylabel('Boundary (Task & Pass)');
+ylabel('Boundary (Task)');
 set(gca,'FontSize',16)
 % LegH = legend([Cir1,Cir2],{sprintf('Task Coef %.4f, p=%.2e',TaskR(1,2),TaskIndex_p(1,2)),...
 %     sprintf('Pass Coef %.4f,p=%.2e',PassR(1,2),PassIndex_p(1,2))},...
@@ -249,8 +278,8 @@ set(gca,'FontSize',16)
 % set(LegH,'position',get(LegH,'position')+[-0.1 0 0 0]);
 % title(sprintf('Behavior Bound %.4f-%.4f',mean(BehavBound),std(BehavBound)));
 title('Boundary correlation analysis');
-saveas(gcf,'SVM neurometric curve boundary compare plot Pass');
-saveas(gcf,'SVM neurometric curve boundary compare plot Pass','pdf');
+saveas(gcf,'SVM neurometric curve boundary compare plot Task');
+saveas(gcf,'SVM neurometric curve boundary compare plot Task','pdf');
 %% Category index plot
 CISumAll = zeros(nUsedSess,3);
 for cSess = 1 : nUsedSess

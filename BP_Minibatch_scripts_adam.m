@@ -1,6 +1,12 @@
+% different from BP_test_scripts.m, using minibatch method for large data
+% set
+
 clear
 clc
-
+[X,T] = simpleclass_dataset;
+xData = X;
+yData = T;
+%%
 xData = [1,0,0,0;0,1,0,0;0,0,0,1;0,0,0,1;1,1,0,0;0,0,1,1];
 xData = xData';
 yData = [1,0,0;0,1,0;0,0,1;0,1,0;1,0,0;0,1,0];
@@ -13,18 +19,23 @@ yData = yData(:,1:3);
 %%
 clear
 clc
-cd('S:\THBI\DataSet');
+cd('P:\THBI\DataSet');
 TestIm = loadMNISTImages('t10k-images.idx3-ubyte');
 TestLabel = loadMNISTLabels('t10k-labels.idx1-ubyte');
 TrainIM = loadMNISTImages('train-images.idx3-ubyte');
 TrainLabel = loadMNISTLabels('train-labels.idx1-ubyte');
 xData = TrainIM;
-yData = TrainLabel';
+yLabelData = TrainLabel';
+
+yData = double(repmat((0:9)',1,size(yLabelData,2)) == repmat(yLabelData,10,1));
+
+xData = xData(:,1:1000);
+yData = yData(:,1:1000);
 
 %%
-HidNodesNum = [20,9];
+HidNodesNum = [20];
 nHiddenLayer = length(HidNodesNum); % 3 hidden layers
-nLearnRate = 0.6;
+nLearnRate = 0.7;
 
 % InputData = rand(10,1);
 % InputData = (TrainData(1,:))';
@@ -63,8 +74,7 @@ for nHl = 1 : nHiddenLayer+1
     
     DeltaJNodesData{nHl} = zeros(nHidNodesNum(nHl),nSamples); 
 end
-SampleWChange = cellfun(@(x) repmat(x,1,1,nSamples),HiddenLayerNodeW,'UniformOutput',false);
-SampleBiasChange = cellfun(@(x) repmat(x,1,nSamples),HiddenLBias,'UniformOutput',false);
+
 % HiddenLBias = rand(length(nHidNodesNum),1);
 OutputNetInData = zeros(nOutputNodes,nSamples);
 OutputNetOutData = zeros(nOutputNodes,nSamples);
@@ -75,44 +85,94 @@ nIters = 1;
 IterError = 1;
 IterTime = tic;
 LearnRate = [];
+
+% parameters for adam optimization
+AdamParam.LearnAlpha = 0.001;
+AdamParam.Beta_1 = 0.9;
+AdamParam.Beta_2 = 0.999;
+AdamParam.Beta_1Updates = AdamParam.Beta_1;
+AdamParam.Beta_2Updates = AdamParam.Beta_2;
+AdamParam.ThresMargin = 1e-8; % to avoid zeros diveision
+AdamParam.FirstMomentVec_W = cellfun(@(x) zeros(size(x)),HiddenLayerNodeW,'uniformOutput',false); % first moment vector
+AdamParam.FirstMomentVec_B = cellfun(@(x) zeros(size(x)),HiddenLBias,'uniformOutput',false); % first moment vector
+AdamParam.SecondMomentVec_W = cellfun(@(x) zeros(size(x)),HiddenLayerNodeW,'uniformOutput',false);  % second moment vector
+AdamParam.SecondMomentVec_B = cellfun(@(x) zeros(size(x)),HiddenLBias,'uniformOutput',false); % second moment vector
+
 %% SampleLayerInOutData = cell(nInputNodes,1); % s
 %
+nSamples = size(InputData,2); 
+IsMiniBatch = 0;
+if nSamples > 500
+    MiniRatio = 0.005;
+%     MiniBatchNums = round(nSamples*MiniRatio);
+    MiniBatchNums = 50;
+    IsMiniBatch = 1;
+    nTotalSample = nSamples;
+end
+
+MiniInputData = InputData;
+MiniOutPutData = OutputData;
+cMiniSample = nTotalSample;
+cBatchStartInds = 1;
 while (nIters < 1e6) && (IterError > 1e-3)
+    
+    if IsMiniBatch
+        if (cBatchStartInds+MiniBatchNums) > nTotalSample
+            Start2EndIndsNum = nTotalSample - cBatchStartInds;
+            ExtraStartInds = MiniBatchNums - Start2EndIndsNum;
+            
+            MiniInds = [1:ExtraStartInds,cBatchStartInds+1:nTotalSample];
+            cBatchStartInds = ExtraStartInds + 1;
+%         elseif (cBatchStartInds+MiniBatchNums) == nTotalSample
+%             MiniInds = cBatchStartInds + (0:MiniBatchNums-1);
+%             cBatchStartInds 
+        else
+            MiniInds = cBatchStartInds + (0:MiniBatchNums-1);
+        end
+        MiniInputData = InputData(:,MiniInds);
+        MiniOutPutData = OutputData(:,MiniInds);
+        cMiniSample = MiniBatchNums;
+        if nIters == 1
+            SampleWChange = cellfun(@(x) repmat(x,1,1,cMiniSample),HiddenLayerNodeW,'UniformOutput',false);
+            SampleBiasChange = cellfun(@(x) repmat(x,1,cMiniSample),HiddenLBias,'UniformOutput',false);
+        end
+    end 
+    
     % start the forward calculation
     for nHLs = 1 : nHiddenLayer
         if nHLs == 1
             FormerLayerNodes = nInputNodes;
-            FormerLayerData = InputData;
+            FormerLayerData = MiniInputData;
         else
             FormerLayerNodes = nHidNodesNum(nHLs - 1);
             FormerLayerData = LayerOutValue{nHLs - 1};
         end
         % LayerActValue  LayerOutValue
         cLayerWeights = HiddenLayerNodeW{nHLs};
-        cLayerActData = cLayerWeights * FormerLayerData + repmat(HiddenLBias{nHLs},1,nSamples);
+        cLayerActData = cLayerWeights * FormerLayerData + repmat(HiddenLBias{nHLs},1,cMiniSample);
         LayerActValue{nHLs} = cLayerActData;
         LayerOutValue{nHLs} = OutFun(cLayerActData);
         
     end
-    
-    OutputNetInData = HiddenLayerNodeW{nHiddenLayer + 1} * LayerOutValue{nHiddenLayer} + repmat(HiddenLBias{nHiddenLayer + 1},1,nSamples);
+
+    OutputNetInData = HiddenLayerNodeW{nHiddenLayer + 1} * LayerOutValue{nHiddenLayer} + repmat(HiddenLBias{nHiddenLayer + 1},1,cMiniSample);
     OutputNetOutData = OutFun(OutputNetInData);
     %
-    IterErroAll = (OutputNetOutData - OutputData).^2;
-    IterError = 0.5 * sum(IterErroAll(:))/nSamples;
+    IterErroAll = (OutputNetOutData - MiniOutPutData).^2;
+    IterError = 0.5 * sum(IterErroAll(:))/cMiniSample;
     if ~mod(nIters,50)
         fprintf(sprintf('cIterError = %.3f, Iter number %d.\n',IterError,nIters));
     end
     %
     % backpropagate the errors
     % deltaOutNodesData = zeros(nOutputNodes,1);
-    deltaOutNodesData = OutputNetOutData .* (1 - OutputNetOutData) .* (OutputNetOutData - OutputData);  % Delta K
+    deltaOutNodesData = OutputNetOutData .* (1 - OutputNetOutData) .* (OutputNetOutData - MiniOutPutData);  % Delta K
     DeltaJNodesData{nHiddenLayer + 1} = deltaOutNodesData;
     % DeltaJNodesData
     %
 %     SampleWChange = cell(nHiddenLayer+1,nSamples);
 %     SampleBiasChange = cell(nHiddenLayer+1,nSamples);
-    for cSample = 1 : nSamples
+    for cSample = 1 : cMiniSample
         %
         cSamdeltaOutPutData = deltaOutNodesData(:,cSample);
         for nHls = nHiddenLayer : -1 : 1
@@ -145,11 +205,11 @@ while (nIters < 1e6) && (IterError > 1e-3)
         for nHls = 1 : nHiddenLayer+1
 %             cnNodes = nHidNodesNum(nHls);
             if nHls == 1
-                cWeightsChange = DeltaJNodesData{nHls}(:,cSample) * (InputData(:,cSample))';
-                cSampleWChange =  (cWeightsChange * nLearnRate);
+                cWeightsChange = DeltaJNodesData{nHls}(:,cSample) * (MiniInputData(:,cSample))';
+%                 cSampleWChange =  (cWeightsChange * nLearnRate);
             else
                 cWeightsChange = DeltaJNodesData{nHls}(:,cSample) .* (LayerOutValue{nHls-1}(:,cSample))';
-                cSampleWChange =  (cWeightsChange * nLearnRate);
+%                 cSampleWChange =  (cWeightsChange * nLearnRate);
             end
 %             if cSample == 1
 %                 SampleWChange{nHls} = cSampleWChange;
@@ -159,8 +219,8 @@ while (nIters < 1e6) && (IterError > 1e-3)
 %                 SampleBiasChange{nHls} = SampleBiasChange{nHls} - DeltaJNodesData{nHls}(:,cSample) * nLearnRate;
 %             end
             
-            SampleWChange{nHls}(:,:,cSample) = cSampleWChange;
-            SampleBiasChange{nHls}(:,cSample) = DeltaJNodesData{nHls}(:,cSample) * nLearnRate;
+            SampleWChange{nHls}(:,:,cSample) = cWeightsChange;
+            SampleBiasChange{nHls}(:,cSample) = DeltaJNodesData{nHls}(:,cSample);
         end
         %
     end
@@ -169,25 +229,34 @@ while (nIters < 1e6) && (IterError > 1e-3)
    %
    
     for nHls = 1 : nHiddenLayer+1
-        TempHidenW = HiddenLayerNodeW{nHls} - AvgWChange{nHls};
-%         TempHidenW = (TempHidenW - min(TempHidenW(:)))/(max(TempHidenW(:)) - min(TempHidenW(:)));
+        AdamParam.FirstMomentVec_W{nHls} = AdamParam.Beta_1 * AdamParam.FirstMomentVec_W{nHls} + (1-AdamParam.Beta_1)*AvgWChange{nHls};
+        AdamParam.SecondMomentVec_W{nHls} = AdamParam.Beta_2 * AdamParam.SecondMomentVec_W{nHls} + (1-AdamParam.Beta_2)*((AvgWChange{nHls}).^2);
+        
+        AdamParam.FirstMomentVec_B{nHls} =AdamParam.Beta_1 * AdamParam.FirstMomentVec_B{nHls} + (1-AdamParam.Beta_1)*AvgBiasChange{nHls};
+        AdamParam.SecondMomentVec_B{nHls} = AdamParam.Beta_2 * AdamParam.SecondMomentVec_B{nHls} + (1-AdamParam.Beta_2)*((AvgBiasChange{nHls}).^2);
+        
+        m_hat_W = AdamParam.FirstMomentVec_W{nHls}/(1 - AdamParam.Beta_1Updates);
+        v_hat_W = AdamParam.SecondMomentVec_W{nHls}/(1 - AdamParam.Beta_2Updates);
+        m_hat_B = AdamParam.FirstMomentVec_B{nHls}/(1 - AdamParam.Beta_1Updates);
+        v_hat_B = AdamParam.SecondMomentVec_B{nHls}/(1 - AdamParam.Beta_2Updates);
+        
+        TempHidenW = HiddenLayerNodeW{nHls} - AdamParam.LearnAlpha.*m_hat_W./(sqrt(v_hat_W)+AdamParam.ThresMargin);
         HiddenLayerNodeW{nHls} = TempHidenW;
-        HiddenLBias{nHls} = HiddenLBias{nHls} - AvgBiasChange{nHls};
+        HiddenLBias{nHls} = HiddenLBias{nHls} - AdamParam.LearnAlpha.*m_hat_B./(sqrt(v_hat_B)+AdamParam.ThresMargin);
     end
-    
+    if mod(nIters,nTotalSample/MiniBatchNums)
+        AdamParam.Beta_1Updates = AdamParam.Beta_1Updates * AdamParam.Beta_1;
+        AdamParam.Beta_2Updates = AdamParam.Beta_2Updates * AdamParam.Beta_2;
+    end
     %
     IterErrorAll(nIters) = IterError;
     nIters = nIters + 1;
-    nLearnRate = nLearnRate * 0.9;
-    if nLearnRate < 0.001
-        nLearnRate = 0.6;
-    end
-    LearnRate(nIters) = nLearnRate;
-%     if nIters > 1000
-%         if IterError - mean(IterErrorAll(end-100)) < 1e-6
-%             break;
-%         end
+%     nLearnRate = nLearnRate * 0.9;
+%     if nLearnRate < 0.001
+%         nLearnRate = 0.6;
 %     end
+%     LearnRate(nIters) = nLearnRate;
+    cBatchStartInds = cBatchStartInds + MiniBatchNums;
 end
 
 %%

@@ -76,9 +76,9 @@ xlabel('Time (s)');
 ylabel('Accuracy');
 set(gca,'FontSize',12);
 
-saveas(hf,'MultiSession spike timeWin decoding accuracy');
-saveas(hf,'MultiSession spike timeWin decoding accuracy','png');
-saveas(hf,'MultiSession spike timeWin decoding accuracy','pdf');
+% saveas(hf,'MultiSession spike timeWin decoding accuracy');
+% saveas(hf,'MultiSession spike timeWin decoding accuracy','png');
+% saveas(hf,'MultiSession spike timeWin decoding accuracy','pdf');
 %%
 save SpikeTWinDataSum.mat TaskDataAll PassDataAll NormSessPathTask NormSessPathPass -v7.3
 
@@ -122,6 +122,64 @@ figure;
 imagesc(cROIData)
 colorbar
 
+%% calculate the half peak width
+nSess = size(TaskNanFillWinDataMtx,1);
+HalfStartEndInds = zeros(nSess,4);
+for cSess = 1 : nSess
+    %%
+    cSess = 18;
+    cSessTaskTrace = TaskNanFillWinDataMtx(cSess,:);
+    cSessPassTrace = PassNanFillWinDataMtx(cSess,:);
+    
+    cSessTaskTraceReal = 1 - cSessTaskTrace(~isnan(cSessTaskTrace));
+    cSessPassTraceReal = 1 - cSessPassTrace(~isnan(cSessPassTrace));
+    
+    [TaskPeakValue, TaskPeakInds] = max(cSessTaskTraceReal);
+    [PassPeakValue, PassPeakInds] = max(cSessPassTraceReal);
+    
+    TaskAboveHalfPeakWidth = cSessTaskTraceReal >= (TaskPeakValue/2+0.25);
+    PassAboveHalfPeakWidth = cSessPassTraceReal >= (PassPeakValue/2+0.25);
+    % Calculate task width
+    TaskHalfStartInds = find(TaskAboveHalfPeakWidth(6:end) > 0,1,'first') + 5; % exclude first five data points
+    TaskHalfendInds = find(TaskAboveHalfPeakWidth(TaskHalfStartInds+1:end) <= 0,1,'first') + TaskHalfStartInds;
+    if isempty(TaskHalfendInds)
+        TaskHalfendInds = numel(TaskAboveHalfPeakWidth);
+    end
+    
+    % Calculate Passive width
+    PassHalfStartInds = find(PassAboveHalfPeakWidth(6:end) > 0,1,'first') + 5; % exclude first five data points
+    PassHalfendInds = find(PassAboveHalfPeakWidth(PassHalfStartInds+1:end) <= 0,1,'first') + PassHalfStartInds;
+    if isempty(PassHalfendInds)
+        PassHalfendInds = numel(PassAboveHalfPeakWidth);
+    end
+    
+    HalfStartEndInds(cSess,:) = [TaskHalfStartInds,TaskHalfendInds,PassHalfStartInds,PassHalfendInds];
+    close;
+    hf = figure;
+    hold on
+    plot(cSessTaskTraceReal,'r');
+    plot(cSessPassTraceReal,'k')
+    line([TaskHalfStartInds,TaskHalfendInds],cSessTaskTraceReal([TaskHalfStartInds,TaskHalfendInds]),'Color','r','linestyle','--');
+    line([PassHalfStartInds,PassHalfendInds],cSessPassTraceReal([PassHalfStartInds,PassHalfendInds]),'Color','k','linestyle','--');
+    
+    %%
+end
 
 
+%% plot the comparison
+PassWidT = 0.1*(HalfStartEndInds(:,4) - HalfStartEndInds(:,3));
+TaskWidT = 0.1*(HalfStartEndInds(:,2) - HalfStartEndInds(:,1));
+[~,pps] = ttest(TaskWidT,PassWidT);
 
+hf = figure('position',[2000 100 320 280]);
+hold on
+plot([1,2],([TaskWidT,PassWidT])','Color',[.7 .7 .7],'linewidth',1.2);
+GroupSigIndication([1,2],max([TaskWidT,PassWidT]),pps,hf);
+set(gca,'xlim',[0.7 2.3],'xtick',[1 2],'xticklabel',{'Task','Passive'});
+ylabel('Half-Peak width');
+yscales = get(gca,'ylim');
+set(gca,'ytick',0:yscales(2));
+text([0.9 1.5],[3 2.5],{sprintf('%.4f,%.4f',mean(TaskWidT),std(TaskWidT)),sprintf('%.4f,%.4f',mean(PassWidT),std(PassWidT))});
+saveas(hf,'HalfPeakWidth compare plots');
+saveas(hf,'HalfPeakWidth compare plots','png');
+saveas(hf,'HalfPeakWidth compare plots','pdf');

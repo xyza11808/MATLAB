@@ -52,6 +52,7 @@ AllROITuns = cell(NumPaths,2);
 OverlapROITuns = cell(NumPaths,2);
 PeakPosShiftSum = zeros(NumPaths,10);
 OLPFreq_fracSummry = cell(NumPaths,8);
+NorTunDataAlls = cell(NumPaths,8);
 OverLapCoefMtxAll = cell(NumPaths,7);
 SavePath = 'E:\DataToGo\NewDataForXU\Tuning_distribution\Sess716BFDis';
 if ~isdir(SavePath)
@@ -80,8 +81,8 @@ for cPath = 1 : NumPaths
         Sess832ROITunDataStrc = load(fullfile(c832Path,'Tunning_fun_plot_New1s','TunningDataSave.mat'),'CorrTunningFun','PassTunningfun');
         Sess416ROITunDataStrc = load(fullfile(c416Path,'Tunning_fun_plot_New1s','TunningDataSave.mat'),'CorrTunningFun','PassTunningfun');
     end
-%     Sess832SigROITunInds = (max(Sess832ROITunDataStrc.CorrTunningFun) > 10)';
-%     Sess416SigROITunInds = (max(Sess416ROITunDataStrc.CorrTunningFun) > 10)';
+    Sess832SigROITunInds = (max(Sess832ROITunDataStrc.CorrTunningFun) > 10)';
+    Sess416SigROITunInds = (max(Sess416ROITunDataStrc.CorrTunningFun) > 10)';
     
     Sess832BehavStrc = load(fullfile(c832Path,'RandP_data_plots','boundary_result.mat'));
     Sess416BehavStrc = load(fullfile(c416Path,'RandP_data_plots','boundary_result.mat'));
@@ -93,6 +94,11 @@ for cPath = 1 : NumPaths
     CommonROIIndex = cSess832DataStrc.ROIIndex(1:CommonROINum) & cSess416DataStrc.ROIIndex(1:CommonROINum);
     
 %     CommonROIIndex = CommonROIIndex & Sess832SigROITunInds(1:CommonROINum) & Sess416SigROITunInds(1:CommonROINum);
+    Sess832ROITunDatas = Sess832ROITunDataStrc.CorrTunningFun(:,CommonROIIndex);
+    Sess416ROITunDatas = Sess416ROITunDataStrc.CorrTunningFun(:,CommonROIIndex);
+    Sess832ROIPassTunDatas = Sess832ROITunDataStrc.PassTunningfun(:,CommonROIIndex);
+    Sess416ROIPassTunDatas = Sess416ROITunDataStrc.PassTunningfun(:,CommonROIIndex);
+    
     % considering single neuron representation of frequency is significant
 %     % or not
 %     c832TaskCoefMtx = load(fullfile(c832Path,'SigSelectiveROIInds.mat'));
@@ -125,8 +131,8 @@ for cPath = 1 : NumPaths
     SharedOctRange = [max(c832FreqOctaveRange(1),c416FreqOctaveRange(1)),...
         min(c832FreqOctaveRange(2),c416FreqOctaveRange(2))];
     
-    c832WithinShareInds = CommonOctRange832 >= SharedOctRange(1) & CommonOctRange832 <= SharedOctRange(2);
-    c416WithinShareInds = CommonOctRange416 >= SharedOctRange(1) & CommonOctRange416 <= SharedOctRange(2);
+    c832WithinShareInds = CommonOctRange832 >= SharedOctRange(1) & CommonOctRange832 <= SharedOctRange(2)+0.01;
+    c416WithinShareInds = CommonOctRange416 >= SharedOctRange(1) & CommonOctRange416 <= SharedOctRange(2)+0.01;
     
     c832WithinShareOcts = CommonOctRange832(c832WithinShareInds);
     c416WithinShareOcts = CommonOctRange416(c416WithinShareInds);
@@ -155,6 +161,15 @@ for cPath = 1 : NumPaths
     BehavBound = [Sess832BehavStrc.boundary_result.Boundary + log2(c832FreqsTypes(1)/4000),...
         Sess416BehavStrc.boundary_result.Boundary + log2(Freqs416Types(1)/4000)];
     
+    NorTunDataAlls(cPath,:) = {Sess832ROITunDatas(c832WithinShareInds,:), Sess416ROITunDatas(c416WithinShareInds,:),...
+        Sess832ROIPassTunDatas(c832WithinShareInds,:), Sess416ROIPassTunDatas(c416WithinShareInds,:),...
+        c832WithinShareOcts,c416WithinShareOcts,BehavBound(1),BehavBound(2)};
+    if sum(c832WithinShareInds) ~= sum(c416WithinShareInds)
+        NorTunDataAlls{cPath,1}(sum(c832WithinShareInds)-1,:) = [];
+        NorTunDataAlls{cPath,3}(sum(c832WithinShareInds)-1,:) = [];
+        NorTunDataAlls{cPath,5}(sum(c832WithinShareInds)-1) = [];
+    end
+    %
     SharedOctRange = [max(c832Bins(1),c416Bins(1)),...
         min(c832Bins(end),c416Bins(end))];
 %     SharedOctRange = [-0.1,3.5]; 
@@ -256,38 +271,38 @@ for cPath = 1 : NumPaths
 %     OverLapCoefMtxAll(cPath,:) = {c832TaskOverlapCoef,c832PassOverlapCoef,c416TaskOverlapCoef,c416PassOverlapCoef,c832OverlapOcts,...
 %         c416OverlapOcts,BehavBound};
 
-    %
-    hcf = figure('position',[100 100 650 240]);
-    subplot(1,2,1)
-    hold on
-%     plot(c832OLP_Octs,c832OLP_TunDisN,'r-o','linewidth',1.4);
-%     plot(c832OLP_Octs,c832OLP_TunDisNPass,'-o','linewidth',1.4,'Color',[0.8 0.3 0.3],'linestyle','--');
-%     plot(c416OLP_Octs,c416OLP_TunDisN,'b-o','linewidth',1.4);
-%     plot(c416OLP_Octs,c416OLP_TunDisNPass,'-o','linewidth',1.4,'Color',[0.3 0.3 0.8],'linestyle','--');
-    plot(c832OLP_Octs(c832WithinShareInds),c832OLP_TunDisN(c832WithinShareInds),'r-o','linewidth',1.4);
-    plot(c832OLP_Octs(c832WithinShareInds),c832OLP_TunDisNPass(c832WithinShareInds),'-o','linewidth',1.4,'Color',[0.8 0.3 0.3],'linestyle','--');
-    plot(c416OLP_Octs(c416WithinShareInds),c416OLP_TunDisN(c416WithinShareInds),'b-o','linewidth',1.4);
-    plot(c416OLP_Octs(c416WithinShareInds),c416OLP_TunDisNPass(c416WithinShareInds),'-o','linewidth',1.4,'Color',[0.3 0.3 0.8],'linestyle','--');
-    xlim([0 3])
-    yscales = get(gca,'ylim');
-    line([BehavBound(1) BehavBound(1)],yscales,'Color','r','linestyle','--');
-    line([BehavBound(2) BehavBound(2)],yscales,'Color','b','linestyle','--');
-    title(sprintf('Session %d plots',cPath));
-    
-    subplot(1,2,2)
-    hold on
-    plot(c832WSOcts,OLPFreq_fracSummry{cPath,1},'r-o','linewidth',1.4);
-    plot(c416WSOcts,OLPFreq_fracSummry{cPath,2},'b-o','linewidth',1.4);
-    yscales = get(gca,'ylim');
-    line([BehavBound(1) BehavBound(1)],yscales,'Color','r','linestyle','--');
-    line([BehavBound(2) BehavBound(2)],yscales,'Color','b','linestyle','--');
-    set(gca,'xlim',[0 3]);
-    title('Task Passive Frac diff');
-    %
-    saveas(hcf,fullfile(SavePath,sprintf('Sess%d BF distribution plots save',cPath)));
-    saveas(hcf,fullfile(SavePath,sprintf('Sess%d BF distribution plots save',cPath)),'png');
-    close(hcf);
-    %
+% % % %     %%
+% % % %     hcf = figure('position',[100 100 650 240]);
+% % % %     subplot(1,2,1)
+% % % %     hold on
+% % % % %     plot(c832OLP_Octs,c832OLP_TunDisN,'r-o','linewidth',1.4);
+% % % % %     plot(c832OLP_Octs,c832OLP_TunDisNPass,'-o','linewidth',1.4,'Color',[0.8 0.3 0.3],'linestyle','--');
+% % % % %     plot(c416OLP_Octs,c416OLP_TunDisN,'b-o','linewidth',1.4);
+% % % % %     plot(c416OLP_Octs,c416OLP_TunDisNPass,'-o','linewidth',1.4,'Color',[0.3 0.3 0.8],'linestyle','--');
+% % % %     plot(c832OLP_Octs(c832WithinShareInds),c832OLP_TunDisN(c832WithinShareInds),'r-o','linewidth',1.4);
+% % % %     plot(c832OLP_Octs(c832WithinShareInds),c832OLP_TunDisNPass(c832WithinShareInds),'-o','linewidth',1.4,'Color',[0.8 0.3 0.3],'linestyle','--');
+% % % %     plot(c416OLP_Octs(c416WithinShareInds),c416OLP_TunDisN(c416WithinShareInds),'b-o','linewidth',1.4);
+% % % %     plot(c416OLP_Octs(c416WithinShareInds),c416OLP_TunDisNPass(c416WithinShareInds),'-o','linewidth',1.4,'Color',[0.3 0.3 0.8],'linestyle','--');
+% % % %     xlim([0 3])
+% % % %     yscales = get(gca,'ylim');
+% % % %     line([BehavBound(1) BehavBound(1)],yscales,'Color','r','linestyle','--');
+% % % %     line([BehavBound(2) BehavBound(2)],yscales,'Color','b','linestyle','--');
+% % % %     title(sprintf('Session %d plots',cPath));
+% % % %     
+% % % %     subplot(1,2,2)
+% % % %     hold on
+% % % %     plot(c832WSOcts,OLPFreq_fracSummry{cPath,1},'r-o','linewidth',1.4);
+% % % %     plot(c416WSOcts,OLPFreq_fracSummry{cPath,2},'b-o','linewidth',1.4);
+% % % %     yscales = get(gca,'ylim');
+% % % %     line([BehavBound(1) BehavBound(1)],yscales,'Color','r','linestyle','--');
+% % % %     line([BehavBound(2) BehavBound(2)],yscales,'Color','b','linestyle','--');
+% % % %     set(gca,'xlim',[0 3]);
+% % % %     title('Task Passive Frac diff');
+% % % %     %
+% % % %     saveas(hcf,fullfile(SavePath,sprintf('Sess%d BF distribution plots save',cPath)));
+% % % %     saveas(hcf,fullfile(SavePath,sprintf('Sess%d BF distribution plots save',cPath)),'png');
+% % % %     close(hcf);
+% % % %     %%
     c832WSOctDistribution = c832CommonROITuns(c832UsedInds);
     c416WSOctDistribution = c416CommonROITuns(c416UsedInds);
     
@@ -582,7 +597,73 @@ GroupSigIndication([1,2],max([TaskDataAll,PassDataAll]),pTP,hhhf);
 [~,pPB] = ttest(PassDataAll,BoundDisAll);
 GroupSigIndication([2,3],max([PassDataAll,BoundDisAll]),pPB,hhhf,1.2);
 
+%% Average the response for each session
+c832TaskTunAvg = cellfun(@(x) (mean(zscore(x),2))',NorTunDataAlls(:,1),'UniformOutput',false);
+c416TaskTunAvg = cellfun(@(x) (mean(zscore(x),2))',NorTunDataAlls(:,2),'UniformOutput',false);
+c832PassTunAvg = cellfun(@(x) (mean(zscore(x),2))',NorTunDataAlls(:,3),'UniformOutput',false);
+c416PassTunAvg = cellfun(@(x) (mean(zscore(x),2))',NorTunDataAlls(:,4),'UniformOutput',false);
+
+c832TaskTunMtx = cell2mat(c832TaskTunAvg);
+c416TaskTunMtx = cell2mat(c416TaskTunAvg);
+c832PassTunMtx = cell2mat(c832PassTunAvg);
+c416PassTunMtx = cell2mat(c416PassTunAvg);
+
+c832SessOctVec = mean(cell2mat(NorTunDataAlls(:,5)));
+c416SessOctVec = mean(cell2mat(NorTunDataAlls(:,6)));
+c832SessBounds = cell2mat(NorTunDataAlls(:,7));
+c416SessBounds = cell2mat(NorTunDataAlls(:,8));
+
+nSessions = size(c832TaskTunMtx,1);
+c832TaskSessAvg = mean(c832TaskTunMtx);
+c832TaskSessSem = std(c832TaskTunMtx)/sqrt(nSessions);
+c416TaskSessAvg = mean(c416TaskTunMtx);
+c416TaskSessSem = std(c416TaskTunMtx)/sqrt(nSessions);
+c832PassSessAvg = mean(c832PassTunMtx);
+c832PassSessSem = std(c832PassTunMtx)/sqrt(nSessions);
+c416PassSessAvg = mean(c416PassTunMtx);
+c416PassSessSem = std(c416PassTunMtx)/sqrt(nSessions);
+
+hf = figure('position',[2500 100 460 300]);
+hold on
+errorbar(c832SessOctVec,c832TaskSessAvg,c832TaskSessSem,'m-o','linewidth',2);
+errorbar(c416SessOctVec,c416TaskSessAvg,c416TaskSessSem,'b-o','linewidth',2);
+errorbar(c832SessOctVec,c832PassSessAvg,c832PassSessSem,'m-o','linewidth',2,'linestyle','--');
+errorbar(c416SessOctVec,c416PassSessAvg,c416PassSessSem,'b-o','linewidth',2,'linestyle','--');
+yscales = get(gca,'ylim');
+line([mean(c832SessBounds) mean(c832SessBounds)],yscales,'Color','m','linestyle','--')
+line([mean(c416SessBounds) mean(c416SessBounds)],yscales,'Color','b','linestyle','--')
+set(gca,'xlim',[0 3],'xtick',0:3,'ylim',yscales);
+xlabel('Freqs')
+ylabel('Response (Nor.)')
+title('AvgResp T&P')
 %%
+saveas(hf,'Sess Averaged response plots');
+saveas(hf,'Sess Averaged response plots','pdf');
+saveas(hf,'Sess Averaged response plots','png');
+%% plot the diff response line
+c832TaskPassTunDiff = cellfun(@(x,y) (mean((zscore(x) - zscore(y)),2))',...
+    NorTunDataAlls(:,1),NorTunDataAlls(:,3),'UniformOutput',false);
+c416TaskPassTunDiff = cellfun(@(x,y) (mean((zscore(x) - zscore(y)),2))',...
+    NorTunDataAlls(:,2),NorTunDataAlls(:,4),'UniformOutput',false);
+% c832PassTunAvg = cellfun(@(x) (mean(zscore(x),2))',NorTunDataAlls(:,3),'UniformOutput',false);
+% c416PassTunAvg = cellfun(@(x) (mean(zscore(x),2))',NorTunDataAlls(:,4),'UniformOutput',false);
+nSessions = length(c832TaskPassTunDiff);
+c832TaskPassDiffMtx = cell2mat(c832TaskPassTunDiff);
+c416TaskPassDiffMtx = cell2mat(c416TaskPassTunDiff);
+c832TaskPassDiffAvg = mean(c832TaskPassDiffMtx);
+c416TaskPassDiffAvg = mean(c416TaskPassDiffMtx);
+c832TaskPassDiffSEM = std(c832TaskPassDiffMtx)/sqrt(nSessions);
+c416TaskPassDiffSEM = std(c416TaskPassDiffMtx)/sqrt(nSessions);
 
-
-
+hfDiff = figure('position',[3000 100 380 300]);
+hold on
+errorbar(c832SessOctVec,c832TaskPassDiffAvg,c832TaskPassDiffSEM,'m-o','linewidth',2);
+errorbar(c416SessOctVec,c416TaskPassDiffAvg,c416TaskPassDiffSEM,'b-o','linewidth',2);
+yscales = get(gca,'ylim');
+line([mean(c832SessBounds) mean(c832SessBounds)],yscales,'Color','m','linestyle','--')
+line([mean(c416SessBounds) mean(c416SessBounds)],yscales,'Color','b','linestyle','--')
+set(gca,'xlim',[0 3],'xtick',0:3,'ylim',yscales);
+%%
+saveas(hfDiff,'Sess TaskPassDiff Averaged response plots');
+saveas(hfDiff,'Sess TaskPassDiff Averaged response plots','pdf');
+saveas(hfDiff,'Sess TaskPassDiff Averaged response plots','png');

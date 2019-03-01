@@ -1,3 +1,6 @@
+% different from BP_test_scripts.m, using minibatch method for large data
+% set
+
 clear
 clc
 
@@ -13,18 +16,29 @@ yData = yData(:,1:3);
 %%
 clear
 clc
-cd('S:\THBI\DataSet');
+[X,T] = simpleclass_dataset;
+xData = X;
+yData = T;
+
+%%
+clear
+clc
+cd('P:\THBI\DataSet');
 TestIm = loadMNISTImages('t10k-images.idx3-ubyte');
 TestLabel = loadMNISTLabels('t10k-labels.idx1-ubyte');
 TrainIM = loadMNISTImages('train-images.idx3-ubyte');
 TrainLabel = loadMNISTLabels('train-labels.idx1-ubyte');
 xData = TrainIM;
-yData = TrainLabel';
+yLabelData = TrainLabel';
 
+yData = double(repmat((0:9)',1,size(yLabelData,2)) == repmat(yLabelData,10,1));
+
+xData = xData(:,1:1000);
+yData = yData(:,1:1000);
 %%
-HidNodesNum = [20,9];
+HidNodesNum = [20];
 nHiddenLayer = length(HidNodesNum); % 3 hidden layers
-nLearnRate = 0.6;
+nLearnRate = 0.7;
 
 % InputData = rand(10,1);
 % InputData = (TrainData(1,:))';
@@ -63,8 +77,7 @@ for nHl = 1 : nHiddenLayer+1
     
     DeltaJNodesData{nHl} = zeros(nHidNodesNum(nHl),nSamples); 
 end
-SampleWChange = cellfun(@(x) repmat(x,1,1,nSamples),HiddenLayerNodeW,'UniformOutput',false);
-SampleBiasChange = cellfun(@(x) repmat(x,1,nSamples),HiddenLBias,'UniformOutput',false);
+
 % HiddenLBias = rand(length(nHidNodesNum),1);
 OutputNetInData = zeros(nOutputNodes,nSamples);
 OutputNetOutData = zeros(nOutputNodes,nSamples);
@@ -77,42 +90,66 @@ IterTime = tic;
 LearnRate = [];
 %% SampleLayerInOutData = cell(nInputNodes,1); % s
 %
+nSamples = size(InputData,2); 
+IsMiniBatch = 0;
+if nSamples > 500
+    MiniRatio = 0.1;
+    MiniBatchNums = round(nSamples*MiniRatio);
+    IsMiniBatch = 1;
+    nTotalSample = nSamples;
+end
+
+MiniInputData = InputData;
+MiniOutPutData = OutputData;
+cMiniSample = nTotalSample;
+
 while (nIters < 1e6) && (IterError > 1e-3)
+    if IsMiniBatch
+        MiniInds = randsample(nTotalSample,MiniBatchNums);
+        MiniInputData = InputData(:,MiniInds);
+        MiniOutPutData = OutputData(:,MiniInds);
+        cMiniSample = MiniBatchNums;
+        if nIters == 1
+            SampleWChange = cellfun(@(x) repmat(x,1,1,cMiniSample),HiddenLayerNodeW,'UniformOutput',false);
+            SampleBiasChange = cellfun(@(x) repmat(x,1,cMiniSample),HiddenLBias,'UniformOutput',false);
+        end
+    end 
+    
     % start the forward calculation
     for nHLs = 1 : nHiddenLayer
         if nHLs == 1
             FormerLayerNodes = nInputNodes;
-            FormerLayerData = InputData;
+            FormerLayerData = MiniInputData;
         else
             FormerLayerNodes = nHidNodesNum(nHLs - 1);
             FormerLayerData = LayerOutValue{nHLs - 1};
         end
         % LayerActValue  LayerOutValue
         cLayerWeights = HiddenLayerNodeW{nHLs};
-        cLayerActData = cLayerWeights * FormerLayerData + repmat(HiddenLBias{nHLs},1,nSamples);
+        cLayerActData = cLayerWeights * FormerLayerData + repmat(HiddenLBias{nHLs},1,cMiniSample);
         LayerActValue{nHLs} = cLayerActData;
         LayerOutValue{nHLs} = OutFun(cLayerActData);
         
     end
-    
-    OutputNetInData = HiddenLayerNodeW{nHiddenLayer + 1} * LayerOutValue{nHiddenLayer} + repmat(HiddenLBias{nHiddenLayer + 1},1,nSamples);
+
+    OutputNetInData = HiddenLayerNodeW{nHiddenLayer + 1} * LayerOutValue{nHiddenLayer} + repmat(HiddenLBias{nHiddenLayer + 1},1,cMiniSample);
     OutputNetOutData = OutFun(OutputNetInData);
     %
-    IterErroAll = (OutputNetOutData - OutputData).^2;
-    IterError = 0.5 * sum(IterErroAll(:))/nSamples;
+    IterErroAll = (OutputNetOutData - MiniOutPutData).^2;
+    IterError = 0.5 * sum(IterErroAll(:))/cMiniSample;
     if ~mod(nIters,50)
         fprintf(sprintf('cIterError = %.3f, Iter number %d.\n',IterError,nIters));
     end
     %
     % backpropagate the errors
     % deltaOutNodesData = zeros(nOutputNodes,1);
-    deltaOutNodesData = OutputNetOutData .* (1 - OutputNetOutData) .* (OutputNetOutData - OutputData);  % Delta K
+    deltaOutNodesData = OutputNetOutData .* (1 - OutputNetOutData) .* (OutputNetOutData - MiniOutPutData);  % Delta K
     DeltaJNodesData{nHiddenLayer + 1} = deltaOutNodesData;
     % DeltaJNodesData
     %
 %     SampleWChange = cell(nHiddenLayer+1,nSamples);
 %     SampleBiasChange = cell(nHiddenLayer+1,nSamples);
-    for cSample = 1 : nSamples
+    for cSample = 1 : cMiniSample
         %
         cSamdeltaOutPutData = deltaOutNodesData(:,cSample);
         for nHls = nHiddenLayer : -1 : 1
@@ -145,7 +182,7 @@ while (nIters < 1e6) && (IterError > 1e-3)
         for nHls = 1 : nHiddenLayer+1
 %             cnNodes = nHidNodesNum(nHls);
             if nHls == 1
-                cWeightsChange = DeltaJNodesData{nHls}(:,cSample) * (InputData(:,cSample))';
+                cWeightsChange = DeltaJNodesData{nHls}(:,cSample) * (MiniInputData(:,cSample))';
                 cSampleWChange =  (cWeightsChange * nLearnRate);
             else
                 cWeightsChange = DeltaJNodesData{nHls}(:,cSample) .* (LayerOutValue{nHls-1}(:,cSample))';
@@ -196,5 +233,5 @@ RealIter = nIters - 1;
 fprintf('BP stops after %d iterations, with ErrorRate = %.2e, time used is %d seconds.\n',RealIter,IterError,TrainTime);
 figure;
 plot(1:RealIter,IterErrorAll,'k-o','LineWidth',1.6);
-xlabel('Itrerations');
+xlabel('Itrerations'); 
 ylabel('Eror');

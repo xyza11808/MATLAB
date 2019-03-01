@@ -270,28 +270,29 @@ for cSess = 1 : nSession
         BehavBound = BehavBoundStrc.boundary_result.FitValue.u;
         BehavSTD = BehavBoundStrc.boundary_result.FitValue.v;
     end
+    
+    
     try
         TaskTbyTPath = fullfile(tline,'Test_anmChoice_predCROIs','NeuroCurveVSBehav.mat');
         PassTbyTPath = fullfile(Passline,'Test_anmChoice_predCROIs','NeuroCurveVSBehav.mat');
-        TaskLOODataPath = fullfile(tline,'Test_anmChoice_LOO','LOOPred_NeuroCurve.mat');
         
         TaskFitData = load(TaskTbyTPath,'CurTestScorFit','PerfFit');
         PassFitData = load(PassTbyTPath,'CurTestScorFit','PerfFit');
-        TaskLOOData = load(TaskLOODataPath);
 
         NeuroFitBound(cSess,:) = [TaskFitData.CurTestScorFit.ffit.u,TaskFitData.PerfFit.ffit.u,...
             PassFitData.CurTestScorFit.ffit.u,PassFitData.PerfFit.ffit.u,BehavBound-1];
         NeuroFitSTD(cSess,:) = [TaskFitData.CurTestScorFit.ffit.v,TaskFitData.PerfFit.ffit.v,...
             PassFitData.CurTestScorFit.ffit.v,PassFitData.PerfFit.ffit.v,BehavSTD];
-        
-        NeuroFitLOO(cSess,:) = {TaskLOOData.MdSelfPerf,TaskLOOData.BehavFit.ffit.u,TaskLOOData.BehavFit.ffit.v,...
-            TaskLOOData.PredPerfFits.ffit.u,TaskLOOData.PredPerfFits.ffit.v};
-        
+
     catch ME
         fprintf('Error for session %d.\n',cSess);
         ErrorSess = [ErrorSess,cSess];
         disp(ME);
     end
+    TaskLOODataPath = fullfile(tline,'Test_anmChoice_LOO','LOOPred_NeuroCurve.mat');
+    TaskLOOData = load(TaskLOODataPath);
+    NeuroFitLOO(cSess,:) = {TaskLOOData.MdSelfPerf,TaskLOOData.BehavFit.ffit.u,TaskLOOData.BehavFit.ffit.v,...
+            TaskLOOData.PredPerfFits.ffit.u,TaskLOOData.PredPerfFits.ffit.v};
 end
 NeuroFitBound(ErrorSess,:) = [];
 NeuroFitSTD(ErrorSess,:) = [];
