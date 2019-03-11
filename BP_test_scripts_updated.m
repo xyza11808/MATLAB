@@ -46,7 +46,7 @@ HiddenLayerNodeW = cell(nHiddenLayer+1,1);
 LayerActValue = cell(nHiddenLayer+1,1);
 LayerOutValue = cell(nHiddenLayer+1,1);
 DeltaJNodesData = cell(nHiddenLayer+1,1);
-HiddenLBias = cell(nHiddenLayer,1);
+HiddenLBias = cell(nHiddenLayer+1,1);
 for nHl = 1 : nHiddenLayer+1
     if nHl == nHiddenLayer+1
         HiddenLayerNodeW{nHl} = rand(nOutputNodes,nHidNodesNum(nHl-1)); % should be the size of nNodes(l+1) by nNodes(l)

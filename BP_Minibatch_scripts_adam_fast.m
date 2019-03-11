@@ -29,8 +29,8 @@ yLabelData = TrainLabel';
 
 yData = double(repmat((0:9)',1,size(yLabelData,2)) == repmat(yLabelData,10,1));
 
-xData = xData(:,1:10000);
-yData = yData(:,1:10000);
+% xData = xData(:,1:10000);
+% yData = yData(:,1:10000);
 
 %%
 HidNodesNum = [21];
@@ -67,11 +67,11 @@ nSamples = size(InputData,2);
 nTotalSample = nSamples;
 MiniBatchNums = nSamples;
 IsMiniBatch = 0;
-if nSamples > 500
+if nSamples > 500 && IsMiniBatch
     MiniRatio = 0.005;
 %     MiniBatchNums = round(nSamples*MiniRatio);
     MiniBatchNums = 50;
-    IsMiniBatch = 1;
+%     IsMiniBatch = 1;
     nSamples = MiniBatchNums;
 end
 
@@ -113,7 +113,8 @@ LayerParaValuesStrc.Bias_Mtx = HiddenLBias;
 % HiddenLBias = rand(length(nHidNodesNum),1);
 % OutputNetInData = zeros(nOutputNodes,nSamples);
 % OutputNetOutData = zeros(nOutputNodes,nSamples);
-
+SampleWChange = cell(nHiddenLayer+1,1);
+SampleBiasChange = cell(nHiddenLayer+1,1);
 % % % [AllVecs,ParaInds] = FeedfowardWB2Vec(LayerSizeStrc,LayerParaValuesStrc,TotalElementNum);
 % % % NewWBDataStrc = FeedfowardVec2WB(LayerSizeStrc,AllVecs,ParaInds);
 
@@ -136,7 +137,7 @@ IsShuffle = 1;
 
 cBatchStartInds = 1;
 while (nIters < 1e6) && (IterError > 1e-3)
-    %%
+    %
     if IsMiniBatch
         if (cBatchStartInds+MiniBatchNums) > nTotalSample
             Start2EndIndsNum = nTotalSample - cBatchStartInds;
@@ -161,18 +162,18 @@ while (nIters < 1e6) && (IterError > 1e-3)
         MiniInputData = InputData(:,MiniInds);
         MiniOutPutData = OutputData(:,MiniInds);
         cMiniSample = MiniBatchNums;
-        if nIters == 1
-            SampleWChange = cellfun(@(x) repmat(x,1,1,cMiniSample),HiddenLayerNodeW,'UniformOutput',false);
-            SampleBiasChange = cellfun(@(x) repmat(x,1,cMiniSample),HiddenLBias,'UniformOutput',false);
-        end
+%         if nIters == 1
+%             SampleWChange = cellfun(@(x) repmat(x,1,1,cMiniSample),HiddenLayerNodeW,'UniformOutput',false);
+%             SampleBiasChange = cellfun(@(x) repmat(x,1,cMiniSample),HiddenLBias,'UniformOutput',false);
+%         end
     else
         MiniInputData = InputData;
         MiniOutPutData = OutputData;
         cMiniSample = nTotalSample;
-        if nIters == 1
-            SampleWChange = cellfun(@(x) repmat(x,1,1,cMiniSample),HiddenLayerNodeW,'UniformOutput',false);
-            SampleBiasChange = cellfun(@(x) repmat(x,1,cMiniSample),HiddenLBias,'UniformOutput',false);
-        end
+%         if nIters == 1
+%             SampleWChange = cellfun(@(x) repmat(x,1,1,cMiniSample),HiddenLayerNodeW,'UniformOutput',false);
+%             SampleBiasChange = cellfun(@(x) repmat(x,1,cMiniSample),HiddenLBias,'UniformOutput',false);
+%         end
     end
     % start the forward calculation
     for nHLs = 1 : nHiddenLayer
@@ -193,6 +194,7 @@ while (nIters < 1e6) && (IterError > 1e-3)
 
     OutputNetInData = HiddenLayerNodeW{nHiddenLayer + 1} * LayerOutValue{nHiddenLayer} + repmat(HiddenLBias{nHiddenLayer + 1},1,cMiniSample);
     OutputNetOutData = OutFun(OutputNetInData);
+    LayerOutValue{nHiddenLayer+1} = OutputNetOutData;
     %
     IterErroAll = (OutputNetOutData - MiniOutPutData).^2;
     IterError = 0.5 * sum(IterErroAll(:))/cMiniSample;
@@ -204,67 +206,48 @@ while (nIters < 1e6) && (IterError > 1e-3)
     % deltaOutNodesData = zeros(nOutputNodes,1);
     deltaOutNodesData = OutputNetOutData .* (1 - OutputNetOutData) .* (OutputNetOutData - MiniOutPutData);  % Delta K
     DeltaJNodesData{nHiddenLayer + 1} = deltaOutNodesData;
-    % DeltaJNodesData
-    %
-%     SampleWChange = cell(nHiddenLayer+1,nSamples);
-%%     SampleBiasChange = cell(nHiddenLayer+1,nSamples);
-    for cSample = 1 : cMiniSample
-        %
-        cSamdeltaOutPutData = deltaOutNodesData(:,cSample);
-        for nHls = nHiddenLayer : -1 : 1
-    %         cHlNodes = nHidNodesNum(nHls);
-            if nHls == nHiddenLayer
-                cLayerOutData = LayerOutValue{nHls}(:,cSample);
-                cLayerCWeight = HiddenLayerNodeW{nHls + 1};
-                DeepLayerDelta = cSamdeltaOutPutData;
-                LatterPart = cLayerCWeight' * DeepLayerDelta;
-                
-                DeltaJNodesData{nHls}(:,cSample) = cLayerOutData .* (1 - cLayerOutData) .* LatterPart;
-            else
-                cLayerOutData = LayerOutValue{nHls}(:,cSample);
-                cLayerCWeight = HiddenLayerNodeW{nHls + 1};
-                DeepLayerDelta = DeltaJNodesData{nHls+1}(:,cSample);
-                LatterPart = cLayerCWeight' * DeepLayerDelta;
-                
-                DeltaJNodesData{nHls}(:,cSample) = cLayerOutData .* (1 - cLayerOutData) .* LatterPart;
-                
-%                 for nNodes = 1 : cHlNodes
-%                     cNodesOutput = LayerInOutValue{nHls}(nNodes,2);
-%                     cNodesWeights = HiddenLayerNodeW{nHls}(nNodes,:);
-%                     DeltaJNodesData{nHls}(nNodes) = cNodesOutput*(1-cNodesOutput)...
-%                         *sum((DeltaJNodesData{nHls+1}(:))' .* HiddenLayerNodeW{nHls}(nNodes,:));
-%                 end
-            end 
-            %
-        end
-        %
-        % updates the weights
-        for nHls = 1 : nHiddenLayer+1
-%             cnNodes = nHidNodesNum(nHls);
-            if nHls == 1
-                cWeightsChange = DeltaJNodesData{nHls}(:,cSample) * (MiniInputData(:,cSample))';
-%                 cSampleWChange =  (cWeightsChange * nLearnRate);
-            else
-                cWeightsChange = DeltaJNodesData{nHls}(:,cSample) .* (LayerOutValue{nHls-1}(:,cSample))';
-%                 cSampleWChange =  (cWeightsChange * nLearnRate);
-            end
-%             if cSample == 1
-%                 SampleWChange{nHls} = cSampleWChange;
-%                 SampleBiasChange{nHls} = DeltaJNodesData{nHls}(:,cSample) * (-1) * nLearnRate;
-%             else
-%                 SampleWChange{nHls} = SampleWChange{nHls} + cSampleWChange;
-%                 SampleBiasChange{nHls} = SampleBiasChange{nHls} - DeltaJNodesData{nHls}(:,cSample) * nLearnRate;
-%             end
+
+    for nHls = nHiddenLayer : -1 : 1
+        if nHls == nHiddenLayer
+%             cLayerOutData = LayerOutValue{nHls}(:,cSample);
+%             cLayerCWeight = HiddenLayerNodeW{nHls + 1};
+%             DeepLayerDelta = cSamdeltaOutPutData;
+%             LatterPart = cLayerCWeight' * DeepLayerDelta;
+            LatterPart = (HiddenLayerNodeW{nHls + 1})' * deltaOutNodesData;
+            DeltaJNodesData{nHls} = LayerOutValue{nHls} .* (1 - LayerOutValue{nHls}) .* LatterPart;
+%             DeltaJNodesData{nHls}(:,cSample) = cLayerOutData .* (1 - cLayerOutData) .* LatterPart;
+        else
+%             cLayerOutData = LayerOutValue{nHls}(:,cSample);
+%             cLayerCWeight = HiddenLayerNodeW{nHls + 1};
+%             DeepLayerDelta = DeltaJNodesData{nHls+1}(:,cSample);
+%             LatterPart = cLayerCWeight' * DeepLayerDelta;
+            LatterPart = (HiddenLayerNodeW{nHls + 1})' * (DeltaJNodesData{nHls+1});
+            DeltaJNodesData{nHls} = LayerOutValue{nHls} .* (1 - LayerOutValue{nHls}) .* LatterPart;
+%             DeltaJNodesData{nHls}(:,cSample) = cLayerOutData .* (1 - cLayerOutData) .* LatterPart;
             
-            SampleWChange{nHls}(:,:,cSample) = cWeightsChange;
-            SampleBiasChange{nHls}(:,cSample) = DeltaJNodesData{nHls}(:,cSample);
         end
-        %
     end
-    AvgWChange = cellfun(@(x) squeeze(mean(x,3)),SampleWChange,'UniformOutput',false);
+    %
+    % updates the weights
+    for nHls = 1 : nHiddenLayer+1
+        %             cnNodes = nHidNodesNum(nHls);
+        if nHls == 1
+            cWeightsChange = DeltaJNodesData{nHls} * MiniInputData';
+            %                 cSampleWChange =  (cWeightsChange * nLearnRate);
+        else
+            cWeightsChange = DeltaJNodesData{nHls} * (LayerOutValue{nHls-1})';
+            %                 cSampleWChange =  (cWeightsChange * nLearnRate);
+        end
+        
+        SampleWChange{nHls} = cWeightsChange;
+        SampleBiasChange{nHls} = DeltaJNodesData{nHls};
+    end
+    %
+    
+    AvgWChange = cellfun(@(x) x/cMiniSample,SampleWChange,'UniformOutput',false);
     AvgBiasChange = cellfun(@(x) squeeze(mean(x,2)),SampleBiasChange,'UniformOutput',false);
-   %%
-   
+    
+%
     for nHls = 1 : nHiddenLayer+1
         AdamParam.FirstMomentVec_W{nHls} = AdamParam.Beta_1 * AdamParam.FirstMomentVec_W{nHls} + (1-AdamParam.Beta_1)*AvgWChange{nHls};
         AdamParam.SecondMomentVec_W{nHls} = AdamParam.Beta_2 * AdamParam.SecondMomentVec_W{nHls} + (1-AdamParam.Beta_2)*((AvgWChange{nHls}).^2);
