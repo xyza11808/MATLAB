@@ -23,7 +23,7 @@ cd('P:\THBI\DataSet');
 TestIm = loadMNISTImages('t10k-images.idx3-ubyte');
 TestLabel = loadMNISTLabels('t10k-labels.idx1-ubyte');
 TrainIM = loadMNISTImages('train-images.idx3-ubyte');
-TrainLabel = loadMNISTLabels('train-labels.idx1-ubyte');
+TrainLabel = loadMNISTLabels('train-labels.idx1-ubyte'); 
 xData = TrainIM;
 yLabelData = TrainLabel';
 
@@ -88,14 +88,14 @@ BiasMtxSize = cell(nHiddenLayer+1,1);
 TotalElementNum = 0;
 for nHl = 1 : nHiddenLayer+1
     if nHl == nHiddenLayer+1
-        HiddenLayerNodeW{nHl} = rand(nOutputNodes,nHidNodesNum(nHl-1)); % should be the size of nNodes(l+1) by nNodes(l)
-        HiddenLBias{nHl} = rand(nHidNodesNum(nHl),1);
+        HiddenLayerNodeW{nHl} = 0.04*(rand(nOutputNodes,nHidNodesNum(nHl-1))-0.5); % should be the size of nNodes(l+1) by nNodes(l)
+        HiddenLBias{nHl} = 0.04*(rand(nHidNodesNum(nHl),1)-0.5);
     elseif nHl == 1
-        HiddenLayerNodeW{nHl} = rand(nHidNodesNum(nHl),nInputNodes);
-        HiddenLBias{nHl} = rand(nHidNodesNum(nHl),1);
+        HiddenLayerNodeW{nHl} = 0.04*(rand(nHidNodesNum(nHl),nInputNodes)-0.5);
+        HiddenLBias{nHl} = 0.04*(rand(nHidNodesNum(nHl),1)-0.5);
     else
-        HiddenLayerNodeW{nHl} = rand(nHidNodesNum(nHl),nHidNodesNum(nHl-1));
-        HiddenLBias{nHl} = rand(nHidNodesNum(nHl),1);
+        HiddenLayerNodeW{nHl} = 0.04*(rand(nHidNodesNum(nHl),nHidNodesNum(nHl-1))-0.5);
+        HiddenLBias{nHl} = 0.04*(rand(nHidNodesNum(nHl),1)-0.5);
     end
     WeightsMtxSize{nHl} = size(HiddenLayerNodeW{nHl});
     BiasMtxSize{nHl} = size(HiddenLBias{nHl});
@@ -149,7 +149,7 @@ NetParaSum.ParaVecInds = ParaInds;
 NetParaSum.TotalParaNum = TotalElementNum;
 NetParaSum.LayerActV = LayerActValue;
 NetParaSum.LayerOutV = LayerOutValue;
-NetParaSum.OutFun = OutFun;
+NetParaSum.OutFun = 'Sigmoid';
 NetParaSum.DeltaJNodesDatas = DeltaJNodesData;
 NetParaSum.FullLayerNodeNums = [size(InputData,1),NetParaSum.HiddenLayerNum,...
     size(OutputData,1)];
@@ -206,14 +206,14 @@ while scgParam.success
 %     NetParaSum.TargetData = MiniOutPutData;
 %     
 %     [IterError,NetParaSum] = NetWorkCalAndGrad(NetParaSum);
-    
+    BackscgPara = scgParam;
     if scgParam.k == 1
         NetParaSum.InputData = MiniInputData;
         NetParaSum.TargetData = MiniOutPutData;
         [IterError,NetParaSum] = NetWorkCalAndGrad(NetParaSum);
         
         scgParam.p = -NetParaSum.gradParaVec;
-%         scgParam.r = -NetParaSum.gradParaVec;
+        scgParam.r = -NetParaSum.gradParaVec;
     end
     IterErrorAll(nIters) = IterError;
     if ~mod(nIters,10)
@@ -222,12 +222,12 @@ while scgParam.success
 %     scgParam.p = -NetParaSum.gradParaVec;
     scgParam.p_square = scgParam.p' * scgParam.p;
     scgParam.sigma_k = scgParam.sigma / sqrt(scgParam.p_square);
-    scgParam.r = -NetParaSum.gradParaVec;
+%     scgParam.r = -NetParaSum.gradParaVec;
     %
     % calculate s_k
     TempNetData = NetParaSum;
-    Temp_gWB = TempNetData.AllParaVec + scgParam.sigma_k * scgParam.p;
-    TempNetData.AllParaVec = Temp_gWB;
+    Temp_WB = TempNetData.AllParaVec + scgParam.sigma_k * scgParam.p;
+    TempNetData.AllParaVec = Temp_WB;
     [~,TempNetData] = NetWorkCalAndGrad(TempNetData);
     scgParam.s_k = (TempNetData.gradParaVec - NetParaSum.gradParaVec) / scgParam.sigma_k;
     
