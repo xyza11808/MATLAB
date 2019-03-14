@@ -25,10 +25,19 @@ function [IterError,NetParaStrc] = NetWorkCalAndGrad(NetParaStrc,varargin)
 % 
 %           NetOutputValue: Layer Output values
 %
+%           IsSoftMax: whether using softmax for output
+%           SoftMaxOut: default is [], only is Softmax is used, this is the
+%                   softmax output value
+%
 %
 % currently varargin used for function calculation control
 % add support for other methods in future
 % XY, 2019-03-05
+
+if ~isfield(NetParaStrc,'IsSoftMax')
+    NetParaStrc.IsSoftMax = 0;
+end
+NetParaStrc.SoftMaxOut = [];
 
 if ~(isfield(NetParaStrc,'LayerConnWeights') || isfield(NetParaStrc,'AllParaVec'))
     error('The weights parameters should at least have one input.');
@@ -51,9 +60,11 @@ elseif isfield(NetParaStrc,'LayerConnWeights')
 end
 
 if isempty(NetParaStrc.OutFun)
+    NetParaStrc.OutFun =  'Sigmoid';
     NetParaStrc.OutFun =  @(x) 1./(1+exp(-1*x)); 
 end
-OutFun = NetParaStrc.OutFun;
+[OutFun,DerivOutFun] = ActFunCheck(NetParaStrc.OutFun);
+% OutFun = NetParaStrc.OutFun;
 
 % NetParaStrc.FullLayerNodeNums = [size(NetParaStrc.InputData,1),NetParaStrc.HiddenLayerNum,...
 %     size(NetParaStrc.TargetData,1)];
@@ -87,26 +98,48 @@ OutputNetOutData = OutFun(OutputNetInData);
 LayerOutValue{nHiddenLayer+1} = OutputNetOutData;
 NetParaStrc.NetOutputValue = OutputNetOutData;
 
-%
-IterErroAll = (OutputNetOutData - NetParaStrc.TargetData).^2;
-% IterError = sum(IterErroAll(:))/(SampleNum*NetParaStrc.FullLayerNodeNums(end)); % using MSE as error data
-IterError = 0.5 * mean(sum(IterErroAll));
-NetParaStrc.NetPerf = IterError;
+% check whether using softmax Loss for classification
+if NetParaStrc.IsSoftMax
+    OutputExp = exp(NetParaStrc.NetOutputValue);
+    SoftMaxOuts = OutputExp ./ repmat(sum(OutputExp),NetParaStrc.FullLayerNodeNums(end),1);
+    % calculate the Cross-Entropy loss function
+    nanOutData = nan(size(SoftMaxOuts));
+    TargetLabelInds = find(NetParaStrc.TargetData);
+    CEMtx = nanOutData;
+    CEMtx(TargetLabelInds) = -log(SoftMaxOuts(TargetLabelInds));
+    IterError = mean(mean(CEMtx,'omitnan'));
+%     IterError = mean(-1*sum(NetParaStrc.TargetData.*log(SoftMaxOuts)));
+    
+    NetParaStrc.NetPerf = IterError;
+    
+    % calculate the delta values
+    nPosNumSample = repmat(sum(NetParaStrc.TargetData),NetParaStrc.FullLayerNodeNums(end),1);
+    
+    LossDelta = ((SoftMaxOuts - 1) + (nPosNumSample - 1).* SoftMaxOuts)./nPosNumSample;
+    LossDelta(~NetParaStrc.TargetData) = SoftMaxOuts(~NetParaStrc.TargetData);
+    deltaOutNodesData = LossDelta; %DerivOutFun(OutputNetOutData).* (SoftMaxOuts - NetParaStrc.TargetData) 
+    NetParaStrc.SoftMaxOut = SoftMaxOuts;
+else
+    IterErroAll = (OutputNetOutData - NetParaStrc.TargetData).^2;
+    % IterError = sum(IterErroAll(:))/(SampleNum*NetParaStrc.FullLayerNodeNums(end)); % using MSE as error data
+    IterError = 0.5 * mean(mean(IterErroAll));
+    NetParaStrc.NetPerf = IterError;
 
-deltaOutNodesData = OutputNetOutData .* (1 - OutputNetOutData) .* (OutputNetOutData - NetParaStrc.TargetData);  % Delta K
+    deltaOutNodesData = DerivOutFun(OutputNetOutData) .* (OutputNetOutData - NetParaStrc.TargetData);  % Delta K
+    
+end
 DeltaJNodesData{nHiddenLayer + 1} = deltaOutNodesData;
 
 % calculate the gradient
 for nHls = nHiddenLayer : -1 : 1
     if nHls == nHiddenLayer
         LatterPart = (NetParaStrc.LayerConnWeights{nHls + 1})' * deltaOutNodesData;
-        DeltaJNodesData{nHls} = LayerOutValue{nHls} .* (1 - LayerOutValue{nHls}) .* LatterPart;
+        DeltaJNodesData{nHls} = DerivOutFun(LayerOutValue{nHls}) .* LatterPart;
 %             DeltaJNodesData{nHls}(:,cSample) = cLayerOutData .* (1 - cLayerOutData) .* LatterPart;
     else
         LatterPart = (NetParaStrc.LayerConnWeights{nHls + 1})' * (DeltaJNodesData{nHls+1});
-        DeltaJNodesData{nHls} = LayerOutValue{nHls} .* (1 - LayerOutValue{nHls}) .* LatterPart;
+        DeltaJNodesData{nHls} = DerivOutFun(LayerOutValue{nHls}) .* LatterPart;
 %             DeltaJNodesData{nHls}(:,cSample) = cLayerOutData .* (1 - cLayerOutData) .* LatterPart;
-
     end
 end
 
@@ -137,3 +170,30 @@ gradLayerParaVStrc.Bias_Mtx = AvgBiasChange;
 NetParaStrc.gradParaVec = gradAllVecs;
 
 
+
+function [ActFun, ActFunDeriv] = ActFunCheck(FunString)
+ActFun = [];
+ActFunDeriv = [];
+
+switch FunString
+    case 'Sigmoid'
+        ActFun = @(x) 1./(1+exp(-1*x));
+        ActFunDeriv = @(x) ActFun(x) .* (1 - ActFun(x));
+    case 'Tanh'
+        ActFun = @(x) (1 - exp(-2*x))/(1 + exp(-2*x));
+        ActFunDeriv = @(x) 1 - (ActFun(x)).^2;
+    case 'ReLU'
+        ActFun = @(x) max(0,x);
+        ActFunDeriv = @(x) double(x > 0);
+    case 'LeakyReLU'
+        ActFun = @(x) max(x,0.01*x);
+        ActFunDeriv = @(x) double(x > 0) + double(x <= 0)*0.01;
+    case 'SoftMax'
+        % not prepared yet
+    otherwise
+        error('Underfined activation type.');
+end
+        
+        
+        
+        

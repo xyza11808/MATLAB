@@ -15,7 +15,7 @@ if nargin > 4
         yScaleFactor = varargin{1};
     end
 end
-UppreYthres = max(y) - 1;
+UppreYthres = max(y);
 if nargin > 5
     if ~isempty(varargin{2})
         UppreYthres = varargin{2};
@@ -43,13 +43,14 @@ else
     end
 end
 TextUppSacle = 0.05;
+LineUpperScale = 0.1;
 StarLineWidth = 1;
 if p > 0.05
     Plotx = x;
     Ploty = max(y)*yScaleFactor;
 %     PlotyTickLen = max(y)*0.01;
     if Ploty < UppreYthres
-        Ploty = UppreYthres + TextUppSacle * max(y);
+        Ploty = UppreYthres + LineUpperScale * UppreYthres;
     end
     plot(Plotx,[Ploty,Ploty],'k','LineWidth',2);
 %     plot([Plotx(1),Plotx(1)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
@@ -62,7 +63,7 @@ elseif p > 0.01
     Ploty = max(y)*yScaleFactor;
 %     PlotyTickLen = max(y)*0.01;
     if Ploty < UppreYthres
-        Ploty = UppreYthres + TextUppSacle * max(y);
+        Ploty = UppreYthres + LineUpperScale * UppreYthres;
     end
     plot(Plotx,[Ploty,Ploty],'k','LineWidth',2);
 %     plot([Plotx(1),Plotx(1)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
@@ -75,7 +76,7 @@ elseif p > 0.001
     Ploty = max(y)*yScaleFactor;
 %     PlotyTickLen = max(y)*0.01;
     if Ploty < UppreYthres
-        Ploty = UppreYthres + TextUppSacle * max(y);
+        Ploty = UppreYthres + LineUpperScale * UppreYthres;
     end
     plot(Plotx,[Ploty,Ploty],'k','LineWidth',2);
 %     plot([Plotx(1),Plotx(1)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
@@ -89,7 +90,7 @@ else
     Ploty = max(y)*yScaleFactor;
 %     PlotyTickLen = max(y)*0.01;
     if Ploty < UppreYthres
-        Ploty = UppreYthres + TextUppSacle * max(y);
+        Ploty = UppreYthres + LineUpperScale * UppreYthres;
     end
     plot(Plotx,[Ploty,Ploty],'k','LineWidth',2);
 %     plot([Plotx(1),Plotx(1)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);

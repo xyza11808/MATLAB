@@ -33,8 +33,8 @@ ReshapedVectorCoef = PairedSigCoef(Matrixmask);
 ReshapedVectorCoefP = PairedSigCoefp(Matrixmask);
 
 ROIEucDis = pdist(ROIposMatrix); 
-ROIRealDis = ROIEucDis * (325/256);  % convert into real distance in macrometer form
-ROIEucDis = ROIRealDis;
+% ROIRealDis = ROIEucDis * (325/256);  % convert into real distance in macrometer form
+% ROIEucDis = ROIRealDis;
 %%
 [lmmd,hfSCDis] = lmFunCalPlot(ROIEucDis,ReshapedVectorCoef);
 [hSC_dis,pSC_dis] = corrcoef(ROIEucDis,ReshapedVectorCoef);
