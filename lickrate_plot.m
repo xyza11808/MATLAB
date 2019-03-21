@@ -6,6 +6,6 @@ function lickRate = lickrate_plot(lick_time,bins,frameTime)
 % MaxTime=ceil(max(lick_time));
 lickRaterange=1/bins:frameTime/bins:frameTime;
 bincounts=histc(lick_time,lickRaterange);
-lickRate=bincounts/(frameTime/bins);
+lickRate=bincounts/(frameTime/bins/1000);
 % figure;
 % plot(lickRaterange,lickRate);
