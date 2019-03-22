@@ -46,11 +46,37 @@ for cStep = 1 : TrainingSteps
     TimeStepMD{cStep} = TestLSTMModel;
 end
 
+%
+%% random data for swquence prediction, using matlab dataset
+cclr
+data = chickenpox_dataset;
+data = [data{:}];
+[scale01_data,MinMaxD] = Rescale0_1(data);
+if size(scale01_data,1) ~= 1
+    scale01_data = scale01_data';
+end
+%
+PredStep = 100;
+
+InputTtestData = scale01_data(:,1:PredStep);
+OutPutData = scale01_data(:,2:(PredStep+1));
+
+InputSize = size(InputTtestData,1);
+HiddenSize = 11;
+OutPutSize = size(OutPutData,1);
+TrainingSteps = PredStep;
+
+TestLSTMModel = C_LSTM(InputSize,HiddenSize,OutPutSize,TrainingSteps);
+TimeStepMD = cell(TrainingSteps,1);
+for cStep = 1 : TrainingSteps
+    TimeStepMD{cStep} = TestLSTMModel;
+end
 %%
 IterMax = 1000;
 hf = figure;
 for cIter = 1 : IterMax
 %
+%     cIter = 6;
     cStepLosss = cell(TrainingSteps,1);
     for cStep = 1 : TrainingSteps
         if cStep == 1
@@ -90,6 +116,7 @@ for cIter = 1 : IterMax
     if ~mod(cIter,20)
         fprintf('cIterError = %.5f.\n',AllTimeLoss);
     end
+    %
 end
 
 %%

@@ -11,6 +11,7 @@ classdef C_LSTM
         Weights_c
         Weights_o
         W_Softmax
+        WeightThres = 5;
         
         Bias_f
         Bias_i
@@ -150,6 +151,9 @@ classdef C_LSTM
            
            % gradient for c_old
            dc_next = this.Mtx_f .* dc;
+           if sum(isnan(dh_next)) || sum(isinf(dh_next))
+               fprintf('Nan gradient exists.\n');
+           end
            Grads = {dwf,dwi,dwc,dwo,dW_softmax,dbf,dbi,dbc,dbo,db_softmax};
            State = {dh_next,dc_next};
            
@@ -161,7 +165,8 @@ classdef C_LSTM
                     GradsAll = varargin{1};
                     LearnRate = varargin{2};
                     
-                    [dwf,dwi,dwc,dwo,dW_softmax,dbf,dbi,dbc,dbo,db_softmax] = deal(GradsAll{:});
+                    NormGrads = cellfun(@(x) gradientClip(x,this.WeightThres),GradsAll,'UniformOutput',false);
+                    [dwf,dwi,dwc,dwo,dW_softmax,dbf,dbi,dbc,dbo,db_softmax] = deal(NormGrads{:});
                     
                     this.Weights_f = this.Weights_f - dwf * LearnRate;
                     this.Weights_i = this.Weights_i - dwi * LearnRate;
@@ -179,6 +184,8 @@ classdef C_LSTM
                 case 'Adam'
                     GradsAll = varargin{1};
                     AdamParam = varargin{2};
+                    NormGrads = cellfun(@(x) gradientClip(x,this.WeightThres),GradsAll,'UniformOutput',0);
+                    
                     if isempty(AdamParam)
                         AdamParam.LearnAlpha = 0.001;
                         AdamParam.Beta_1 = 0.9;
@@ -197,9 +204,9 @@ classdef C_LSTM
                         
                     end
                     
-                    nUpdates = length(GradsAll)/2;
-                    dWeightsAll = GradsAll(1:nUpdates);
-                    dBiasAll = GradsAll((1+nUpdates):end);
+                    nUpdates = length(NormGrads)/2;
+                    dWeightsAll = NormGrads(1:nUpdates);
+                    dBiasAll = NormGrads((1+nUpdates):end);
                     WeightsAll = {this.Weights_f,this.Weights_i,this.Weights_c,this.Weights_o,this.W_Softmax};
                     BiasAll = {this.Bias_f,this.Bias_i,this.Bias_c,this.Bias_o,this.b_Softmax};
                     
@@ -236,6 +243,8 @@ classdef C_LSTM
                 otherwise
                     error('Undefined weight updates methods.');
             end
+            
+            
         end
         
     end
