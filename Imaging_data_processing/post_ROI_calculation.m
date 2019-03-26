@@ -51,7 +51,9 @@ else
     filename = InputPatas.SessDataFileName;
     cd(InputPatas.SessDataPath);
 end
-    
+if ischar(filename)
+    filename = {filename};
+end
 % files=dir('*.mat');
 for i=1:length(filename)
     RealFileName=filename{i};
@@ -83,6 +85,9 @@ for i=1:length(filename)
 end
 Ca_string=whos('CaTri*');
 eval(['CaSignal_',type,'=',Ca_string.name,';']);
+if ~exist('ROIinfo','Var')
+    eval(['ROIinfo=',Ca_string.name,'.ROIinfo;']);
+end
 if exist('cSessionExcludeInds.mat','file')
     fprintf('Trial inds excluded from analysis exists, loading as trial excluded files.\n');
     xx = load('cSessionExcludeInds.mat');

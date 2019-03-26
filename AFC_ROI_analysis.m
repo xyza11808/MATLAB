@@ -466,6 +466,7 @@ if ~isempty(radom_inds_correct)
     else
         rand_plot(behavResults,4);
     end
+    
     RandomSession=1;
     SessionDesp = 'RandomPuretone';
     %###########################################################################################
@@ -763,11 +764,21 @@ elseif str2double(continue_char)==2
 %     TrParaAll = [TrialTypes(:),trial_outcome(:),double(behavResults.Stim_toneFreq(:)),double(behavResults.Action_choice(:))];
 %     TimeCourseChoiceDecod(smooth_data,TrParaAll,start_frame,frame_rate);
     %%
-    if isfield(CaTrials_signal,'ROIstateIndic')
-        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials,[],ROIstate); % plot lick frames
+%     UsedTrInds = [];
+    if isfield(behavResults,'Block_Type')
+        Block1_Inds = behavResults.Block_Type == behavResults.Block_Type(1);
+        Block2_Inds = behavResults.Block_Type == (1 - behavResults.Block_Type(1));
+        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials,Block1_Inds,ROIstate,'Block1');
+        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials,Block2_Inds,ROIstate,'Block2');
+        
+        BlockWisePsyPlot(behavResults);
     else
-        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials);
+%     if isfield(CaTrials_signal,'ROIstateIndic')
+        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials,[],ROIstate); % plot lick frames
+%     else
+%         AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials);
     end
+    %%
     AnsTimeAlignPlot(data_aligned,behavResults,1,frame_rate,trial_outcome,1); % answer time alignment, with figure plot
     %
     if ~isdir('SpikeDataSave')

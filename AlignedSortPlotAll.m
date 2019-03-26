@@ -23,6 +23,7 @@ if nargin > 6
         IsTrIndsInput = 1;
     end
 end
+
 IsROIstatePlot = 0;
 if nargin > 7
     if ~isempty(varargin{4})
@@ -30,6 +31,16 @@ if nargin > 7
         ROIstate = varargin{4};
     end
 end
+
+IsSubfolder = 0;
+if nargin > 8
+    if ~isempty(varargin{5})
+        IsSubfolder = 1;
+        SubFolderName = varargin{5};
+    end
+end
+
+
 
 AlignLickFStrc = LickTimeStrc;
 [AllTrNum,ROInum,FrameNum] = size(RawData);
@@ -203,6 +214,12 @@ if ~isdir('./All BehavType Colorplot/')
     mkdir('./All BehavType Colorplot/');
 end
 cd('./All BehavType Colorplot/');
+if IsSubfolder
+    if ~isdir(SubFolderName)
+        mkdir(SubFolderName);
+    end
+end
+cd(SubFolderName);
 %%
 ROIMeanTraceData = cell(ROInum,NumFreq,3);
 for nROI = 1 : ROInum
@@ -434,3 +451,6 @@ end
 
 save PlotRelatedData.mat FreqTypeEventF AnsFIndsSort SessionDesp AlignLickStrc AlignedFrame SoundOffFrame Frate ROIMeanTraceData -v7.3
 cd ..;
+if IsSubfolder
+    cd ..;
+end
