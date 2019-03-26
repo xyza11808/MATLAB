@@ -185,6 +185,7 @@ classdef C_LSTM
                     GradsAll = varargin{1};
                     AdamParam = varargin{2};
                     NormGrads = cellfun(@(x) gradientClip(x,this.WeightThres),GradsAll,'UniformOutput',0);
+%                     NormGrads = GradsAll;
                     
                     if isempty(AdamParam)
                         AdamParam.LearnAlpha = 0.001;
@@ -201,7 +202,7 @@ classdef C_LSTM
                             zeros(size(this.Weights_o)),zeros(size(this.W_Softmax))};
                         AdamParam.SecondMomentVec_B = {zeros(size(this.Bias_f)),zeros(size(this.Bias_i)),zeros(size(this.Bias_c)),...
                             zeros(size(this.Bias_o)),zeros(size(this.b_Softmax))};
-                        
+                        AdamParam.IsUpdateBeta = 0;
                     end
                     
                     nUpdates = length(NormGrads)/2;
@@ -226,16 +227,20 @@ classdef C_LSTM
                         m_hat_B = AdamParam.FirstMomentVec_B{nHls}/(1 - AdamParam.Beta_1Updates);
                         v_hat_B = AdamParam.SecondMomentVec_B{nHls}/(1 - AdamParam.Beta_2Updates);
                         
-                        TempHidenW = WeightsAll{nHls} - ...
-                            AdamParam.LearnAlpha.*m_hat_W./(sqrt(v_hat_W)+AdamParam.ThresMargin);
+                        gWeightTemp = AdamParam.LearnAlpha.*m_hat_W./(sqrt(v_hat_W)+AdamParam.ThresMargin);
+                        NormGrads = gradientClip(gWeightTemp,this.WeightThres);
+                        TempHidenW = WeightsAll{nHls} - NormGrads;    
                         WeightsAll{nHls} = TempHidenW;
-                        BiasAll{nHls} = BiasAll{nHls} - ...
-                            AdamParam.LearnAlpha.*m_hat_B./(sqrt(v_hat_B)+AdamParam.ThresMargin);
+                        
+                        gBiasTemp = AdamParam.LearnAlpha.*m_hat_B./(sqrt(v_hat_B)+AdamParam.ThresMargin);
+                        NormBiasGrad = gradientClip(gBiasTemp,this.WeightThres);
+                        BiasAll{nHls} = BiasAll{nHls} - NormBiasGrad;
+                            
                     end
-                    
-                    AdamParam.Beta_1Updates = AdamParam.Beta_1Updates * AdamParam.Beta_1;
-                    AdamParam.Beta_2Updates = AdamParam.Beta_2Updates * AdamParam.Beta_2;
-                    
+                    if AdamParam.IsUpdateBeta
+                        AdamParam.Beta_1Updates = AdamParam.Beta_1Updates * AdamParam.Beta_1;
+                        AdamParam.Beta_2Updates = AdamParam.Beta_2Updates * AdamParam.Beta_2;
+                    end
                     [this.Weights_f,this.Weights_i,this.Weights_c,this.Weights_o,this.W_Softmax] = deal(WeightsAll{:});
                     [this.Bias_f,this.Bias_i,this.Bias_c,this.Bias_o,this.b_Softmax] = deal(BiasAll{:});
                     

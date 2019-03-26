@@ -73,10 +73,18 @@ for cStep = 1 : TrainingSteps
 end
 %%
 IterMax = 1000;
+LearnRate = 0.2; %
 hf = figure;
+clearvars Adam
+OptiMethod = 'Adam';
+IsAdam = 0;
+IsSGD = 1;
+LossAll = [];
+%%
 for cIter = 1 : IterMax
 %
 %     cIter = 6;
+    
     cStepLosss = cell(TrainingSteps,1);
     for cStep = 1 : TrainingSteps
         if cStep == 1
@@ -98,24 +106,59 @@ for cIter = 1 : IterMax
             dhNext = zeros(HiddenSize,1);
             dcNext = zeros(HiddenSize,1);
             dd_next = {dhNext,dcNext};
+            IsFirstStep = 1;
         else
             dd_next = States;
+            IsFirstStep = 0;
         end
-        [cLSTMMds,Grads,States] = TimeStepMD{cStep}.Backprop_cal(dd_next);
-
-        cLSTMMds = cLSTMMds.UpdateParas('SGD',Grads,0.2);
-    %     NewStepMD{cStep} = cLSTMMds;
-        TimeStepMD{cStep} = cLSTMMds;
-    end 
+        [TimeStepMD{cStep},Grads,States] = TimeStepMD{cStep}.Backprop_cal(dd_next);
+        if IsFirstStep
+            GradSum = Grads;
+        else
+            GradTempSum = cellfun(@(x,y) x+y, GradSum, Grads,'UniformOutput',0);
+            GradSum = GradTempSum;
+        end
+    end
+%     UsedGrads = cellfun(@(x) x/TrainingSteps,GradSum,'uniformOutput',false);
+    UsedGrads = GradSum;
+    switch OptiMethod
+        case 'Adam'
+            if ~exist('Adam','var')
+                Adam = [];
+            end
+            [TimeStepMD{1},Adam] = TimeStepMD{1}.UpdateParas('Adam',UsedGrads,Adam);
+            IsAdam = 1;
+        case 'SGD'
+            TimeStepMD{1} = TimeStepMD{1}.UpdateParas('SGD',UsedGrads,LearnRate);
+            IsSGD = 1;
+        otherwise
+            fprintf('Undefined optimization method.\n');
+            return;
+    end
+    for cStep = 2 : TrainingSteps
+        TimeStepMD{cStep} = CommonWeightsUpdates(TimeStepMD{1},TimeStepMD{cStep});
+    end
+    Adam.IsUpdateBeta = 0;
     %
     StepOutputAll = cellfun(@(x) x.SM_Output,TimeStepMD,'UniformOutput',false);
     StepOutData = cell2mat(StepOutputAll');
     figure(hf);
     plot(StepOutData')
+    set(gca,'ylim',[0 1]);
     pause(0.1);
-    if ~mod(cIter,20)
+    if mod(cIter,10) == 1
         fprintf('cIterError = %.5f.\n',AllTimeLoss);
+        if IsAdam
+            Adam.IsUpdateBeta = 1;
+        end
     end
+    if IsSGD
+        LearnRate = LearnRate * 0.9;
+        if LearnRate < 0.01
+            LearnRate = 0.2;
+        end
+    end
+    LossAll(cIter) = AllTimeLoss;
     %
 end
 
