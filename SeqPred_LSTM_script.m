@@ -62,7 +62,7 @@ InputTtestData = scale01_data(:,1:PredStep);
 OutPutData = scale01_data(:,2:(PredStep+1));
 
 InputSize = size(InputTtestData,1);
-HiddenSize = 11;
+HiddenSize = 21;
 OutPutSize = size(OutPutData,1);
 TrainingSteps = PredStep;
 
@@ -71,12 +71,14 @@ TimeStepMD = cell(TrainingSteps,1);
 for cStep = 1 : TrainingSteps
     TimeStepMD{cStep} = TestLSTMModel;
 end
+figure;
+plot(OutPutData)
 %%
-IterMax = 1000;
+IterMax = 10e6;
 LearnRate = 0.2; %
 hf = figure;
-clearvars Adam
-OptiMethod = 'Adam';
+clearvars Adam Nadam MomentSGD
+OptiMethod = 'MomentSGD';
 IsAdam = 0;
 IsSGD = 1;
 LossAll = [];
@@ -131,6 +133,18 @@ for cIter = 1 : IterMax
         case 'SGD'
             TimeStepMD{1} = TimeStepMD{1}.UpdateParas('SGD',UsedGrads,LearnRate);
             IsSGD = 1;
+        case 'MomentSGD'
+            if ~exist('SGD_Moment','var')
+                SGDMoment = [];
+            end
+            [TimeStepMD{1},SGDMoment] = TimeStepMD{1}.UpdateParas('SGD_Moment',UsedGrads,SGDMoment);
+            
+        case 'Nadam'
+            if ~exist('Nadam','var')
+                NAdam = [];
+            end
+            [TimeStepMD{1},NAdam] = TimeStepMD{1}.UpdateParas('Nadam',UsedGrads,NAdam);
+            IsAdam = 1;
         otherwise
             fprintf('Undefined optimization method.\n');
             return;
@@ -148,10 +162,27 @@ for cIter = 1 : IterMax
     pause(0.1);
     if mod(cIter,10) == 1
         fprintf('cIterError = %.5f.\n',AllTimeLoss);
-        if IsAdam
-            Adam.IsUpdateBeta = 1;
-        end
+%         if IsAdam
+%             Adam.IsUpdateBeta = 1;
+%         end
     end
+    if IsAdam
+        if mod(cIter,20) == 1
+            switch OptiMethod
+            case 'Adam'
+                Adam.IsUpdateBeta = 1;
+            case 'Nadam'
+                Nadam.IsUpdateBeta = 1;
+            end
+        end
+%         if mod(cIter,1000) == 1
+%             Adam.LearnAlpha = Adam.LearnAlpha * 0.8;
+%             if Adam.LearnAlpha < 0.1
+%                 Adam.LearnAlpha = 0.1;
+%             end
+%         end
+    end
+    
     if IsSGD
         LearnRate = LearnRate * 0.9;
         if LearnRate < 0.01

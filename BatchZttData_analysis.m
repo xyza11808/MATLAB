@@ -85,7 +85,7 @@ for np = 1 : DirLength
         end
         %
         save NorMatFile.mat NorData -v7.3
-        if ~isdir('ROI_resp_colorPlot');
+        if ~isdir('ROI_resp_colorPlot')
             mkdir('ROI_resp_colorPlot');
         end
         cd('ROI_resp_colorPlot');
@@ -124,13 +124,14 @@ for np = 1 : DirLength
         ROImaxResp = max(FreqRespData);
         save CellRespDataSave.mat FreqRespData FreqTypes NorData SoundArray DBuseInds -v7.3
         if ~isempty(strfind(cPATH,'anes'))
-%             if ~isdir('Across_block_resp')
+%%             if ~isdir('Across_block_resp')
                 % new section for plot the response change across time
                 nTrs = size(NorData,1);
+                nROIs = size(NorData,2);
                 RespWin = [0.2,1.2]; % 1s after stimulus onset
                 nFreqs = unique(SoundArray(:,1));
                 nDBs = unique(SoundArray(:,2));
-
+                
                 if mod(nTrs,length(nFreqs)*length(nDBs))
                     error('Uneven number of trials for all frequency and DB combination');
                 end
@@ -155,7 +156,7 @@ for np = 1 : DirLength
                 PeakRespValue = ROIbaseValue + ROIstdAll * 3;
                 ThresRespData = repmat(PeakRespValue,nTrs,1);
                 ValueAbove = double(ROImaxResp > ThresRespData);
-                
+                %%
                 RoundRepeats = nTrs/(length(nFreqs)*length(nDBs));
                 RoundTrNum = length(nFreqs)*length(nDBs);
                 if RoundRepeats > 10
@@ -189,39 +190,19 @@ for np = 1 : DirLength
                         mkdir('Across_block_resp');
                     end
                     cd('Across_block_resp');
-
-    %                 for cROI = 1 : size(NorData,2)
-    %                     %
-    %                     cROIresp = squeeze(BlockRespData(:,:,cROI));
-    %                     lineh = [];
-    %                     hf = figure;
-    %                     hold on
-    %                     for cFreq = 1 : length(nFreqs)
-    %                         hl = plot(BlockIndex,cROIresp(:,cFreq),'linewidth',1.5,'color',FreqColor(cFreq,:));
-    %                         lineh = [lineh,hl];
-    %                     end
-    %                     xlabel('Block number');
-    %                     ylabel('\DeltaF/F_0 (%)');
-    %                     title(sprintf('ROI%d',cROI));
-    %                     set(gca,'FontSize',16);
-    %                     legend(lineh,cellstr(num2str(nFreqs(:)/1000,'%.2fHz')),'FontSize',10);
-    %                     legend boxoff
-    %                     saveas(hf,sprintf('ROI%d Across block response',cROI));
-    %                     saveas(hf,sprintf('ROI%d Across block response',cROI),'png');
-    %                     close(hf);
-    %                 end
+                    
                     hf = figure;
                     plot(1 : RoundRepeats,smooth(BlockEventsCount),'k','linewidth',1.6);
                     xlabel('Blocks');
                     ylabel('Events Count');
                     set(gca,'FontSize',16);
-                    saveas(hf,'BlockEventsNum_plot');
-                    saveas(hf,'BlockEventsNum_plot','png');
-                    close(hf);
+%                     saveas(hf,'BlockEventsNum_plot');
+%                     saveas(hf,'BlockEventsNum_plot','png');
+%                     close(hf);
 
-                    save BlockRespDataSave.mat BlockRespData RoundRepeats BlockEventsCount -v7.3
-    %             end
+%                     save BlockRespDataSave.mat BlockRespData RoundRepeats BlockEventsCount -v7.3
                 end
+                %%
         end
      %
 %     catch ME
@@ -324,7 +305,11 @@ for np = 1 : DirLength
     DataPath{nUsedPath} = cPATH;
     clearvars BlockRespData RoundRepeats
     load('BlockRespDataSave.mat');
-    
+    %%
+    UsedBlockNum = 1:42;
+    BlockRespDataBP = BlockRespData;
+    BlockRespData = BlockRespData(1:42,:,:);
+    RoundRepeats = size(BlockRespData,1);
     BlockMaxResp = zeros(size(BlockRespData,1),size(BlockRespData,3));
     ZsMaxResp = zeros(size(BlockRespData,1),size(BlockRespData,3));
     for cROI = 1 : size(BlockRespData,3)
@@ -333,7 +318,8 @@ for np = 1 : DirLength
         BlockMaxResp(:,cROI) = cROImax;
         ZsMaxResp(:,cROI) = zscore(cROImax);
     end
-    %
+    
+    
     h_rawMax = figure;
     hf = plot_meanCaTrace(mean(BlockMaxResp,2),std(BlockMaxResp,[],2)./sqrt(size(BlockMaxResp,2)),1:RoundRepeats,h_rawMax,[]);
     set(hf.meanPlot,'color','k');
@@ -341,9 +327,11 @@ for np = 1 : DirLength
     ylabel('Mean max response(\DeltaF/F_0(%))');
     title('Block Max response');
     set(gca,'FontSize',16);
+    %%
     saveas(h_rawMax,'Block Popu MaxMean plot');
     saveas(h_rawMax,'Block Popu MaxMean plot','png');
-    
+    saveas(h_rawMax,'Block Popu MaxMean plot','pdf');
+    %%
     h_zsMax = figure;
     hf = plot_meanCaTrace(mean(ZsMaxResp,2),std(ZsMaxResp,[],2)./sqrt(size(ZsMaxResp,2)),1:RoundRepeats,h_zsMax,[]);
     set(hf.meanPlot,'color','k');
@@ -358,3 +346,70 @@ for np = 1 : DirLength
     close(h_zsMax);
     save PopuMaxRespSave.mat BlockMaxResp ZsMaxResp -v7.3
 end
+
+%% summarize all data together
+cclr
+clc
+[fn,fp,fi] = uigetfile('BlockResp_DataPath.txt','Please select the used data file path');
+fPath = fullfile(fp,fn);
+
+%%
+ffid = fopen(fPath);
+tline = fgetl(ffid);
+m = 1;
+BlockCounts = [];
+BlockRespTrCount = {};
+BlockMaxRespAll = {};
+BlockZSMaxRespAll = {};
+
+while ischar(tline)
+    if isempty(strfind(tline,'BlockRespDataSave.mat'))
+        tline = fgetl(ffid);
+        continue;
+    end
+    cDataPath = tline;
+    
+    clearvars BlockRespData RoundRepeats BlockEventsCount
+    load(cDataPath);
+    
+    %
+%     UsedBlockNum = 1:42;
+    BlockRespDataBP = BlockRespData;
+%     BlockRespData = BlockRespData(1:42,:,:);
+    RoundRepeats = size(BlockRespData,1);
+    BlockMaxResp = zeros(size(BlockRespData,1),size(BlockRespData,3));
+    ZsMaxResp = zeros(size(BlockRespData,1),size(BlockRespData,3));
+    for cROI = 1 : size(BlockRespData,3)
+        cROIdata = squeeze(BlockRespData(:,:,cROI));
+        cROImax = max(cROIdata,[],2);
+        BlockMaxResp(:,cROI) = cROImax;
+        ZsMaxResp(:,cROI) = zscore(cROImax);
+    end
+    BlockCounts(m) = RoundRepeats;
+    BlockRespTrCount{m} = BlockEventsCount;
+    BlockMaxRespAll{m} = mean(BlockMaxResp,2);
+    BlockZSMaxRespAll{m} = mean(ZsMaxResp,2);
+    
+    tline = fgetl(ffid);
+    m = m + 1;
+end
+
+fclose(ffid);
+%% summarize all block response 
+UsedBlockNum = min(BlockCounts);
+BlockEventsDataCell = cellfun(@(x) (x(1:UsedBlockNum))',BlockRespTrCount,'UniformOutput',false);
+BlockEventsDataMtx = cell2mat(BlockEventsDataCell');
+
+BlockAvgSigTr = mean(BlockEventsDataMtx);
+BlockSemSigTr = std(BlockEventsDataMtx)/sqrt(length(UsedBlockNum));
+
+h_Summary = figure('position',[2000 100 380 300]);
+hf = plot_meanCaTrace(BlockAvgSigTr,BlockSemSigTr*0.5,1:UsedBlockNum,h_Summary,[]);
+yscales = get(gca,'ylim');
+text(UsedBlockNum/2,yscales(2)*0.8,sprintf('n = %d',length(BlockCounts)));
+set(hf.meanPlot,'color','k');
+xlabel('Block Number');
+ylabel('Significant response trial number');
+% title('Block ZSMax response');
+set(gca,'xlim',[0 UsedBlockNum+1],'FontSize',12);
+

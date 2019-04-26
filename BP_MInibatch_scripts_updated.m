@@ -36,7 +36,7 @@ yData = double(repmat((0:9)',1,size(yLabelData,2)) == repmat(yLabelData,10,1));
 xData = xData(:,1:10000);
 yData = yData(:,1:10000);
 %%
-HidNodesNum = [20];
+HidNodesNum = [21];
 nHiddenLayer = length(HidNodesNum); % 3 hidden layers
 nLearnRate = 0.7;
 

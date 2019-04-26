@@ -149,7 +149,7 @@ NetParaSum.ParaVecInds = ParaInds;
 NetParaSum.TotalParaNum = TotalElementNum;
 NetParaSum.LayerActV = LayerActValue;
 NetParaSum.LayerOutV = LayerOutValue;
-NetParaSum.OutFun = 'Sigmoid';
+NetParaSum.OutFun = 'LeakyReLU';
 NetParaSum.DeltaJNodesDatas = DeltaJNodesData;
 NetParaSum.FullLayerNodeNums = [size(InputData,1),NetParaSum.HiddenLayerNum,...
     size(OutputData,1)];
@@ -289,7 +289,7 @@ while scgParam.success
     end
     Scalar_lamda_k(nIters) = scgParam.lamda;
     
-    if sqrt(scgParam.r'*scgParam.r) ~= 0
+    if sqrt(scgParam.r'*scgParam.r) >1e-6
         scgParam.k = scgParam.k + 1;
     else
         scgParam.success = false;
@@ -318,7 +318,7 @@ TrainTime = toc(IterTime);
 RealIter = nIters - 1;
 fprintf('BP stops after %d iterations, with ErrorRate = %.2e, time used is %d seconds.\n',RealIter,IterError,TrainTime);
 figure;
-plot(1:RealIter,IterErrorAll,'k-o','LineWidth',1.6);
+plot(IterErrorAll,'k-o','LineWidth',1.6);
 xlabel('Itrerations');
 ylabel('Eror');
 

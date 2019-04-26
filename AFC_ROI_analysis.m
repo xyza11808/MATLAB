@@ -1,5 +1,6 @@
 function AFC_ROI_analysis(data,session_date,exclude_inds,CaTrials_signal,varargin)
 %This function is used for ROI analysis conbined with 2AFC result processed
+%
 %by python
 %This function will be sited by function post_ROI_calculation, which gives
 %the input data. The vargin is just an option for future uses
@@ -768,8 +769,8 @@ elseif str2double(continue_char)==2
     if isfield(behavResults,'Block_Type')
         Block1_Inds = behavResults.Block_Type == behavResults.Block_Type(1);
         Block2_Inds = behavResults.Block_Type == (1 - behavResults.Block_Type(1));
-        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials,Block1_Inds,ROIstate,'Block1');
-        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials,Block2_Inds,ROIstate,'Block2');
+        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials,Block1_Inds,ROIstate,'Block1',1);
+        AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials,Block2_Inds,ROIstate,'Block2',1);
         
         BlockWisePsyPlot(behavResults);
     else

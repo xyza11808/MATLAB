@@ -1,6 +1,6 @@
 %% HH model
 TimeLen = 100; %ms      时间长度要合适，这样可以看到多个spike
-TimeStep = 1e-3; %ms
+TimeStep = 1e-4; %ms
 StimOnset = 1; %ms
 StimDur = 8; %ms
 
@@ -11,9 +11,9 @@ I_e = 0.1*[zeros(1,ceil(StimOnset/TimeStep)),...
     ones(1,ceil(StimDur/TimeStep))*1,...
     zeros(1,TimeStepNum - ceil(StimOnset/TimeStep) - ceil(StimDur/TimeStep))];
 %}
-%外加电流不能停
+%外加电流不能�?
 
-I_e=0.1*ones(1,TimeStepNum);    %外加电流大小要合适
+I_e=0.1*ones(1,TimeStepNum);    %外加电流大小要合�?
 
 Factor_a = 1;
 gK = 0.36*Factor_a;
@@ -28,7 +28,7 @@ V = zeros(TimeStepNum,1);
 n = zeros(TimeStepNum,1);
 m = zeros(TimeStepNum,1);
 h = zeros(TimeStepNum,1);
-V(1) = -60;
+V(1) = -70;
 % h(1) = 1;
 %
 for cStep = 2 : TimeStepNum

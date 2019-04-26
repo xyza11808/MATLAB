@@ -66,11 +66,11 @@ LearnRate = [];
 nSamples = size(InputData,2); 
 nTotalSample = nSamples;
 MiniBatchNums = nSamples;
-IsMiniBatch = 0;
+IsMiniBatch = 1;
 if nSamples > 500 && IsMiniBatch
     MiniRatio = 0.005;
 %     MiniBatchNums = round(nSamples*MiniRatio);
-    MiniBatchNums = 80;
+    MiniBatchNums = 200;
     IsMiniBatch = 1;
     nSamples = MiniBatchNums;
 end
@@ -146,9 +146,9 @@ NetParaSum.ParaVecInds = ParaInds;
 NetParaSum.TotalParaNum = TotalElementNum;
 NetParaSum.LayerActV = LayerActValue;
 NetParaSum.LayerOutV = LayerOutValue;
-NetParaSum.OutFun = 'Sigmoid';
-% NetParaSum.OutFun = 'LeakyReLU';
-NetParaSum.IsSoftMax = 0;
+% NetParaSum.OutFun = 'Sigmoid';
+NetParaSum.OutFun = 'LeakyReLU';
+NetParaSum.IsSoftMax = 1;
 NetParaSum.DeltaJNodesDatas = DeltaJNodesData;
 NetParaSum.FullLayerNodeNums = nNetNodes;
 NetParaSum.gradParaVec = zeros(numel(AllVecs),1);
@@ -156,7 +156,8 @@ NetParaSum.gradParaVec = zeros(numel(AllVecs),1);
 %% SampleLayerInOutData = cell(nInputNodes,1); % s
 
 cBatchStartInds = 1;
-while (nIters < 1e6) && (IterError > 1e-3)
+LastErr = 1;
+while (nIters < 1e6) && (LastErr > 1e-3)
     %
     if IsMiniBatch
         if (cBatchStartInds+MiniBatchNums) > nTotalSample
@@ -234,6 +235,10 @@ while (nIters < 1e6) && (IterError > 1e-3)
     %
     IterErrorAll(nIters) = IterError;
     nIters = nIters + 1;
+    
+    if nIters > 4
+        LastErr = mean(IterErrorAll(end-3:end));
+    end
 %     nLearnRate = nLearnRate * 0.9;
 %     if nLearnRate < 0.001
 %         nLearnRate = 0.6;

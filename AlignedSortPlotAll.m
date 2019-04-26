@@ -40,6 +40,12 @@ if nargin > 8
     end
 end
 
+IsBoundToneDefineRe = 0;
+if nargin > 9
+    if ~isempty(varargin{6})
+        IsBoundToneDefineRe = varargin{6};
+    end
+end
 
 
 AlignLickFStrc = LickTimeStrc;
@@ -60,6 +66,7 @@ if IsTrIndsInput
     TrStimFreq = TrStimFreq(AllTrInds);
     RewardTime = RewardTime(AllTrInds);
     RawData = RawData(AllTrInds,:,:);
+    AlignLickFStrc = AlignLickFStrc(AllTrInds);
     [AllTrNum,ROInum,FrameNum] = size(RawData);
 end
     
@@ -77,12 +84,14 @@ elseif NumFreq == 6 || NumFreq == 8
 elseif mod(NumFreq,2) == 1 && NumFreq > 1
     fprintf('Boundary Tone session with %d frequencies.\n',NumFreq);
     SessionDesp = 'BoundTone';
-    BoundFreq = FreqTypes(ceil(NumFreq/2));
-    LeftBoundFreqInds = TrStimFreq(:) == BoundFreq & TrChoice(:) == 0 & TrOutcome(:) ~= 2;
-    RBoundFreqInds = TrStimFreq(:) == BoundFreq & TrChoice(:) == 1 & TrOutcome(:) ~= 2;
-    TrOutcome(LeftBoundFreqInds) = 1;
-    TrOutcome(RBoundFreqInds) = 0;
-    RewardTime(LeftBoundFreqInds) = TrAnsTime(LeftBoundFreqInds);
+    if ~IsBoundToneDefineRe
+        BoundFreq = FreqTypes(ceil(NumFreq/2));
+        LeftBoundFreqInds = TrStimFreq(:) == BoundFreq & TrChoice(:) == 0 & TrOutcome(:) ~= 2;
+        RBoundFreqInds = TrStimFreq(:) == BoundFreq & TrChoice(:) == 1 & TrOutcome(:) ~= 2;
+        TrOutcome(LeftBoundFreqInds) = 1;
+        TrOutcome(RBoundFreqInds) = 0;
+        RewardTime(LeftBoundFreqInds) = TrAnsTime(LeftBoundFreqInds);
+    end
 else
     warning('Unknowing session type, current session have %d tones.\n');
     disp(FreqTypes);
@@ -218,9 +227,11 @@ if IsSubfolder
     if ~isdir(SubFolderName)
         mkdir(SubFolderName);
     end
+    cd(SubFolderName);
 end
-cd(SubFolderName);
+
 %%
+PointSize = 1;
 ROIMeanTraceData = cell(ROInum,NumFreq,3);
 for nROI = 1 : ROInum
     cROIdata = squeeze(AlignData(:,nROI,:));
@@ -263,8 +274,8 @@ for nROI = 1 : ROInum
                 if IsLickPlot
                     nfLeftCorrLick = AlignLickStrc{nFreq,1};
                     nfRightCorrLick = AlignLickStrc{nFreq,2};
-                    plot(nfLeftCorrLick(1,:),nfLeftCorrLick(2,:),'ro','MarkerFaceColor','r','MarkerSize',2);
-                    plot(nfRightCorrLick(1,:),nfRightCorrLick(2,:),'go','MarkerFaceColor','g','MarkerSize',2);
+                    plot(nfLeftCorrLick(1,:),nfLeftCorrLick(2,:),'ro','MarkerFaceColor','r','MarkerSize',PointSize);
+                    plot(nfRightCorrLick(1,:),nfRightCorrLick(2,:),'go','MarkerFaceColor','g','MarkerSize',PointSize);
                 end
                 set(gca,'yDir','reverse','ylim',[0.5 size(CorrTrData,1)+0.5],'xlim',[0 size(CorrTrData,2)]);
                 if nFreq == NumFreq
@@ -301,8 +312,8 @@ for nROI = 1 : ROInum
             if IsLickPlot
                 nfLeftErroLick = AlignLickStrc{nFreq,3};
                 nfRightErroLick = AlignLickStrc{nFreq,4};
-                plot(nfLeftErroLick(1,:),nfLeftErroLick(2,:),'ro','MarkerFaceColor','r','MarkerSize',2);
-                plot(nfRightErroLick(1,:),nfRightErroLick(2,:),'go','MarkerFaceColor','g','MarkerSize',2);
+                plot(nfLeftErroLick(1,:),nfLeftErroLick(2,:),'ro','MarkerFaceColor','r','MarkerSize',PointSize);
+                plot(nfRightErroLick(1,:),nfRightErroLick(2,:),'go','MarkerFaceColor','g','MarkerSize',PointSize);
             end
             set(gca,'xtick',AlignXtick,'xticklabel',AlignxtickLabel);
             set(gca,'FontSize',12);

@@ -57,7 +57,7 @@ Block2Sum.RawAcqData = RawAcqDatas(NMBlockIndsAll == Block2Type);
 
 %% plots
 close;
-hf = figure('position',[2000 200 1500 600]);
+hf = figure('position',[2000 200 1500 600]); %#ok<*NASGU>
 nPlotCols = length(PlotInds);
 
 %
@@ -91,7 +91,7 @@ for cPlot = 1 : nPlotCols
         ReshapeTrInds(cFreq,:) = {SortedTrInds,SortedTrInds(SortedTrChoice == 0),...
             SortedTrInds(SortedTrChoice == 1)};
         if ~IsWithinReveFreqs
-            NreshapedData{k,1} = cBlockROIData(SortedTrInds,:);
+            NreshapedData{k,1} = cBlockROIData(SortedTrInds,:); %#ok<*SAGROW>
             NreshapedData{k,2} = AllFreqTypes(cFreq);
             TrInds{k,1} = SortedTrInds;
         else

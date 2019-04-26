@@ -116,6 +116,7 @@ for  cFreq = 1 : length(FreqTypes)
     FreqRespData(cFreq,:) = cFreqData;
 end
 ROImaxResp = max(FreqRespData);
+%%
 save CellRespDataSave.mat FreqRespData FreqTypes NorData SoundArray DBuseInds -v7.3
 
 %% compare between awake and anes session
@@ -132,32 +133,40 @@ PassData = load(PassFilePath);
 TaskRespData = max(TaskData.FreqRespData);
 PassRespData = max(PassData.FreqRespData);
 nFreqs = TaskData.FreqTypes;
+%%
 IsPairedROI = 0;
 if size(TaskRespData,2) == size(PassRespData,2)
+    %%
     ColorPlot = jet(length(nFreqs));
     FreqLengStr = cell(1,length(nFreqs));
     FreqLengh = [];
     hf = figure;
     hold on
     for nf = 1 : length(nFreqs)
+        figure
         cHl = scatter(TaskData.FreqRespData(nf,:),PassData.FreqRespData(nf,:),50,...
             'MarkerFaceColor',ColorPlot(nf,:),'MarkerEdgeColor','none');
         FreqLengh = [FreqLengh,cHl];
         [~,p] = ttest(TaskData.FreqRespData(nf,:),PassData.FreqRespData(nf,:));
         FreqLengStr{nf} = sprintf('%.1fkHz, p=%.2e',TaskData.FreqTypes(nf)/1000,p);
+        xscales = get(gca,'xlim');
+        line(xscales,xscales,'Color',[.7 .7 .7],'Linewidth',1.4,'LineStyle','--');
+        legend(cHl,FreqLengStr{nf},'FontSize',8);
+        legend boxoff
+        xlabel('awake');
+        ylabel('anes');
     end
-    xscales = get(gca,'xlim');
-    line(xscales,xscales,'Color',[.7 .7 .7],'Linewidth',1.4,'LineStyle','--');
-    IsPairedROI = 1;
-    xlabel('awake');
-    ylabel('anes');
-    title('awake and anes response compare');
-    set(gca,'FontSize',18);
-    legend(FreqLengh,FreqLengStr,'FontSize',8);
-    legend boxoff
+    
+%     IsPairedROI = 1;
+%     title('awake and anes response compare');
+%     set(gca,'FontSize',18);
+%     legend(FreqLengh,FreqLengStr,'FontSize',8);
+%     legend boxoff
+    %%
 else
     warning('Task and passive seems to have different ROI numbers, using group wise test');
     % using only the maximum value to indicates the response value 
+    %%
     TaskResps = TaskRespData;
     PassResps = PassRespData;
     hf = figure('Paperpositionmode','auto');
@@ -170,7 +179,7 @@ else
 %     bar(2,mean(PassResps),0.4,'facecolor','c','edgeColor','None');
     scatter(ones(numel(TaskResps),1),TaskResps,20, 'MarkerFaceColor','k','MarkerEdgeColor','none');
     scatter(ones(numel(PassResps),1)*2,PassResps,20, 'MarkerFaceColor','k','MarkerEdgeColor','none');
-    p = ttest2(TaskResps,PassResps);
+    [~,p] = ttest2(TaskResps,PassResps);
     hf = GroupSigIndication([1,2],[mean(TaskResps),mean(PassResps)],p,hf,1.15);
     text([1.2,2.2],[mean(TaskResps),mean(PassResps)],{sprintf('n=%d',numel(TaskResps)),sprintf('n=%d',numel(PassResps))});
     set(gca,'xtick',[1,2],'xticklabel',{'awake','anes'},'xlim',[0.5 2.5]);
@@ -178,12 +187,13 @@ else
     ylabel('Mean Response');
     title('awake and anes response compare');
     set(gca,'FontSize',18);
+    %%
 end
 save PairedRespSave.mat TaskRespData PassRespData IsPairedROI -v7.3
 saveas(hf,'awake and anes response compare plot');
 saveas(hf,'awake and anes response compare plot','png');
 
-% after last block
+%% after last block
 if IsPairedROI
     hmaxf = figure;
     scatter(TaskRespData,PassRespData,50,'MarkerFaceColor','r','MarkerEdgeColor','none');
@@ -196,8 +206,8 @@ if IsPairedROI
     [~,p] = ttest2(TaskRespData,PassRespData);
     title(sprintf('p = %.2e',p));
     set(gca,'FontSize',16);
-    saveas(hmaxf,'awake and anes maxresponse compare plot');
-    saveas(hmaxf,'awake and anes maxresponse compare plot','png');
+%     saveas(hmaxf,'awake and anes maxresponse compare plot');
+%     saveas(hmaxf,'awake and anes maxresponse compare plot','png');
 end
 %% new section for plot the response change across time
 nTrs = size(NorData,1);

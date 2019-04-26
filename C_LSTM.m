@@ -181,6 +181,33 @@ classdef C_LSTM
                     this.b_Softmax = this.b_Softmax - db_softmax * LearnRate;
                     
                     varargout = {};
+                case 'SGD_Moment'
+                    GradsAll = varargin{1};
+                    MomentPara = varargin{2};
+                    if isempty(MomentPara)
+                        MomentPara.LearnRate = 0.1;
+                        MomentPara.Friction_Mu = 0.9;
+                        MomentPara.Velocity = cellfun(@(x) zeros(size(x)),GradsAll,'UniformOutput',false);
+                    end
+                    NormGrads = cellfun(@(x) gradientClip(x,this.WeightThres),GradsAll,'UniformOutput',false);
+                    UpdateVolocity = cellfun(@(x,y) MomentPara.Friction_Mu*x - MomentPara.LearnRate*y,...
+                        MomentPara.Velocity,NormGrads,'UniformOutput',false);
+                    MomentPara.Velocity = UpdateVolocity;
+                    [dwf,dwi,dwc,dwo,dW_softmax,dbf,dbi,dbc,dbo,db_softmax] = deal(UpdateVolocity{:});
+                    
+                    this.Weights_f = this.Weights_f + dwf;
+                    this.Weights_i = this.Weights_i + dwi;
+                    this.Weights_c = this.Weights_c + dwc;
+                    this.Weights_o = this.Weights_o + dwo;
+                    this.W_Softmax = this.W_Softmax + dW_softmax;
+
+                    this.Bias_f = this.Bias_f + dbf;
+                    this.Bias_i = this.Bias_i + dbi;
+                    this.Bias_c = this.Bias_c + dbc;
+                    this.Bias_o = this.Bias_o + dbo;
+                    this.b_Softmax = this.b_Softmax + db_softmax;
+                    
+                    varargout{1} = MomentPara;
                 case 'Adam'
                     GradsAll = varargin{1};
                     AdamParam = varargin{2};
@@ -188,12 +215,12 @@ classdef C_LSTM
 %                     NormGrads = GradsAll;
                     
                     if isempty(AdamParam)
-                        AdamParam.LearnAlpha = 0.001;
+                        AdamParam.LearnAlpha = 0.1;
                         AdamParam.Beta_1 = 0.9;
                         AdamParam.Beta_2 = 0.999;
                         AdamParam.Beta_1Updates = AdamParam.Beta_1;
                         AdamParam.Beta_2Updates = AdamParam.Beta_2;
-                        AdamParam.ThresMargin = 1e-8; % to avoid zeros diveision
+                        AdamParam.ThresMargin = 1e-4; % to avoid zeros diveision
                         AdamParam.FirstMomentVec_W = {zeros(size(this.Weights_f)),zeros(size(this.Weights_i)),zeros(size(this.Weights_c)),...
                             zeros(size(this.Weights_o)),zeros(size(this.W_Softmax))};
                         AdamParam.FirstMomentVec_B = {zeros(size(this.Bias_f)),zeros(size(this.Bias_i)),zeros(size(this.Bias_c)),...
@@ -245,6 +272,73 @@ classdef C_LSTM
                     [this.Bias_f,this.Bias_i,this.Bias_c,this.Bias_o,this.b_Softmax] = deal(BiasAll{:});
                     
                     varargout{1} = AdamParam;
+                case 'Nadam'
+                    GradsAll = varargin{1};
+                    NAdamParam = varargin{2};
+                    NormGrads = cellfun(@(x) gradientClip(x,this.WeightThres),GradsAll,'UniformOutput',0);
+%                     NormGrads = GradsAll;
+                    
+                    if isempty(NAdamParam)
+                        NAdamParam.LearnAlpha = 0.01;
+                        NAdamParam.Beta_1 = 0.9;
+                        NAdamParam.Beta_2 = 0.999;
+                        NAdamParam.Beta_1Updates = NAdamParam.Beta_1;
+                        NAdamParam.Beta_2Updates = NAdamParam.Beta_2;
+                        NAdamParam.ThresMargin = 1e-8; % to avoid zeros diveision
+                        NAdamParam.FirstMomentVec_W = {zeros(size(this.Weights_f)),zeros(size(this.Weights_i)),zeros(size(this.Weights_c)),...
+                            zeros(size(this.Weights_o)),zeros(size(this.W_Softmax))};
+                        NAdamParam.FirstMomentVec_B = {zeros(size(this.Bias_f)),zeros(size(this.Bias_i)),zeros(size(this.Bias_c)),...
+                            zeros(size(this.Bias_o)),zeros(size(this.b_Softmax))};
+                        NAdamParam.SecondMomentVec_W = {zeros(size(this.Weights_f)),zeros(size(this.Weights_i)),zeros(size(this.Weights_c)),...
+                            zeros(size(this.Weights_o)),zeros(size(this.W_Softmax))};
+                        NAdamParam.SecondMomentVec_B = {zeros(size(this.Bias_f)),zeros(size(this.Bias_i)),zeros(size(this.Bias_c)),...
+                            zeros(size(this.Bias_o)),zeros(size(this.b_Softmax))};
+                        NAdamParam.IsUpdateBeta = 0;
+                    end
+                    
+                    nUpdates = length(NormGrads)/2;
+                    dWeightsAll = NormGrads(1:nUpdates);
+                    dBiasAll = NormGrads((1+nUpdates):end);
+                    WeightsAll = {this.Weights_f,this.Weights_i,this.Weights_c,this.Weights_o,this.W_Softmax};
+                    BiasAll = {this.Bias_f,this.Bias_i,this.Bias_c,this.Bias_o,this.b_Softmax};
+                    
+                    for nHls = 1 : 5
+                        NAdamParam.FirstMomentVec_W{nHls} = NAdamParam.Beta_1 * NAdamParam.FirstMomentVec_W{nHls} + ...
+                            (1-NAdamParam.Beta_1)*dWeightsAll{nHls};
+                        NAdamParam.SecondMomentVec_W{nHls} = NAdamParam.Beta_2 * NAdamParam.SecondMomentVec_W{nHls} + ...
+                            (1-NAdamParam.Beta_2)*((dWeightsAll{nHls}).^2);
+                        
+                        NAdamParam.FirstMomentVec_B{nHls} =NAdamParam.Beta_1 * NAdamParam.FirstMomentVec_B{nHls} + ...
+                            (1-NAdamParam.Beta_1)*dBiasAll{nHls};
+                        NAdamParam.SecondMomentVec_B{nHls} = NAdamParam.Beta_2 * NAdamParam.SecondMomentVec_B{nHls} + ...
+                            (1-NAdamParam.Beta_2)*((dBiasAll{nHls}).^2);
+                        
+                        m_hat_W = NAdamParam.FirstMomentVec_W{nHls}/(1 - NAdamParam.Beta_1Updates) + ...
+                            (1 - NAdamParam.Beta_1)*dWeightsAll{nHls}/(1 - NAdamParam.Beta_1Updates);
+                        v_hat_W = NAdamParam.SecondMomentVec_W{nHls}/(1 - NAdamParam.Beta_2Updates);
+                        m_hat_B = NAdamParam.FirstMomentVec_B{nHls}/(1 - NAdamParam.Beta_1Updates) + ...
+                            (1 - NAdamParam.Beta_1)*dBiasAll{nHls}/(1 - NAdamParam.Beta_1Updates);
+                        v_hat_B = NAdamParam.SecondMomentVec_B{nHls}/(1 - NAdamParam.Beta_2Updates);
+                        
+                        gWeightTemp = NAdamParam.LearnAlpha.*m_hat_W./(sqrt(v_hat_W)+NAdamParam.ThresMargin);
+                        NormGrads = gradientClip(gWeightTemp,this.WeightThres);
+                        TempHidenW = WeightsAll{nHls} - NormGrads;    
+                        WeightsAll{nHls} = TempHidenW;
+                        
+                        gBiasTemp = NAdamParam.LearnAlpha.*m_hat_B./(sqrt(v_hat_B)+NAdamParam.ThresMargin);
+                        NormBiasGrad = gradientClip(gBiasTemp,this.WeightThres);
+                        BiasAll{nHls} = BiasAll{nHls} - NormBiasGrad;
+                            
+                    end
+                    if NAdamParam.IsUpdateBeta
+                        NAdamParam.Beta_1Updates = NAdamParam.Beta_1Updates * NAdamParam.Beta_1;
+                        NAdamParam.Beta_2Updates = NAdamParam.Beta_2Updates * NAdamParam.Beta_2;
+                    end
+                    [this.Weights_f,this.Weights_i,this.Weights_c,this.Weights_o,this.W_Softmax] = deal(WeightsAll{:});
+                    [this.Bias_f,this.Bias_i,this.Bias_c,this.Bias_o,this.b_Softmax] = deal(BiasAll{:});
+                    
+                    varargout{1} = NAdamParam;
+                    
                 otherwise
                     error('Undefined weight updates methods.');
             end
