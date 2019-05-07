@@ -19,28 +19,35 @@ RewardLickT = zeros(1,length(TrialResult));
 
 for n=1:length(SelectedTrialInds)
     LickSideV=SelectedLickTData(n).(LickSideDes{SelectedAction(n)+1});
-    TrialStimOff=SelectedOnsetTime(n);%+StimDur
+    TrialStimOff=SelectedOnsetTime(n);%+StimDur, considering licks happened within stimulus duration
 %     FLickInds=find(LickSideV>=TrialStimOff,1,'first');
     LeftLickT = SelectedLickTData(n).LickTimeLeft;
     RightLickT = SelectedLickTData(n).LickTimeRight;
     FLickIndLeft = LeftLickT(find(LeftLickT>=TrialStimOff,1,'first'));
     FLickIndRight = RightLickT(find(RightLickT>=TrialStimOff,1,'first'));
     
-    
+    cChoice = SelectedAction(n);
+    if cChoice
+        FLickT(SelectedTrialInds(n)) = FLickIndRight;
+        FLickTSide(SelectedTrialInds(n)) = 1;
+    else
+        FLickT(SelectedTrialInds(n)) = FLickIndLeft;
+        FLickTSide(SelectedTrialInds(n)) = 0;
+    end
     if isempty([FLickIndLeft,FLickIndRight])
         continue;
     end
-    if isempty(FLickIndLeft)
-        FLickT(SelectedTrialInds(n)) = FLickIndRight;
-        FLickTSide(SelectedTrialInds(n)) = 1;
-    elseif isempty(FLickIndRight)
-        FLickT(SelectedTrialInds(n)) = FLickIndLeft;
-        FLickTSide(SelectedTrialInds(n)) = 0;
-    else
-        [minV,Inds] = min([FLickIndLeft,FLickIndRight]);
-        FLickT(SelectedTrialInds(n)) = minV;
-        FLickTSide(SelectedTrialInds(n)) = Inds - 1;
-    end
+%     if isempty(FLickIndLeft)
+%         FLickT(SelectedTrialInds(n)) = FLickIndRight;
+%         FLickTSide(SelectedTrialInds(n)) = 1;
+%     elseif isempty(FLickIndRight)
+%         FLickT(SelectedTrialInds(n)) = FLickIndLeft;
+%         FLickTSide(SelectedTrialInds(n)) = 0;
+%     else
+%         [minV,Inds] = min([FLickIndLeft,FLickIndRight]);
+%         FLickT(SelectedTrialInds(n)) = minV;
+%         FLickTSide(SelectedTrialInds(n)) = Inds - 1;
+%     end
         
 %     if isempty(LickSideV(FLickInds))
 %         FLickT(SelectedTrialInds(n))=TrialStimOff;

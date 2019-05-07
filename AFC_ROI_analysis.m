@@ -367,7 +367,7 @@ end
 
 %% #############################
 % old spike deconvolution method
-%parameter struc
+% %parameter struc
 % V.Ncells = 1;
 % % V.T = size_data(3);
 % V.Npixels = 1;
@@ -375,8 +375,8 @@ end
 % P.lam = 10;
 % nTau = 1.8;
 % P.gam = 1 - V.dt/nTau; 
-% % if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
-%      nnspike = DataFluo2Spike(DataRaw,V,P); % estimated spike
+% % % if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
+%      nnspikeOld = DataFluo2Spike(DataRaw,V,P); % estimated spike
 % else
 %     load('EstimateSPsave.mat');
 % end

@@ -3,6 +3,14 @@
 if ~exist('DataRaw','var')
     load('CSessionData.mat','DataRaw');
 end
+
+load('CSessionData.mat', 'behavResults','trial_outcome');
+[lick_time_struct,Lick_bias_side]=beha_lickTime_data(behavResults,9); 
+OnsetStruct=struct('StimOnset',behavResults.Time_stimOnset,'StimDuration',300);
+
+[FLickT,~,FLickSide]=FirstLickTime(lick_time_struct,behavResults.Action_choice,trial_outcome,OnsetStruct,behavResults.Time_answer);
+
+
 % DataRaw = data;
 % try
 %     load('EstimateSPsaveNew.mat');
@@ -29,6 +37,7 @@ TrAnsTimeNM = TrAnsTimeAll(NMInds);
 TrTimeReNM = TrTimeRe(NMInds);
 TrStimOnTimeNM = TrStimOnTime(NMInds);
 TrTrTypesNM = TrTrTypes(NMInds);
+FLickTNM = FLickT(NMInds);
 NMTrNum = length(TrFreqsNM);
 if ~iscell(DataRaw)
     nROIs = size(DataRaw,2);
@@ -39,6 +48,7 @@ TrOctsNM = log2(TrFreqsNM/min(TrFreqsNM)) - 1;
 TrAnsFTimeNM = round((TrAnsTimeNM/1000)*frame_rate);
 TrFTimeReNM = round((TrTimeReNM/1000)*frame_rate);
 TrStimOnFTimeNM = round((TrStimOnTimeNM/1000)*frame_rate);
+TrFLickframeNM = round((FLickTNM/1000)*frame_rate);
 TimeWin = 0.3;%s, time window used for response calculation
 FrameWin = round(TimeWin*frame_rate);
 AnsDelayFun = [0.5,1];
@@ -51,7 +61,7 @@ if iscell(nnspike)
 else
     NMSpikeData = nnspike(NMInds,:,:);
 end
-TrEventsRespData = zeros(NMTrNum,nROIs,5+NumAnsDelayFun); % freq, answer, reward corresponded to three columns
+TrEventsRespData = zeros(NMTrNum,nROIs,6+NumAnsDelayFun); % freq, answer, reward corresponded to three columns
 for ctr = 1 : NMTrNum
     if iscell(nnspike)
         cTrSPData = NMSpikeData{ctr};
@@ -69,19 +79,22 @@ for ctr = 1 : NMTrNum
     cAnsResp = cTrSPData(:,(TrAnsFTimeNM(ctr)+1):(TrAnsFTimeNM(ctr)+1+FrameWin));
     TrEventsRespData(ctr,:,2) = mean(cAnsResp,2);
     
+    cFisrtLickResp = cTrSPData(:,(TrFLickframeNM(ctr)+1):(TrFLickframeNM(ctr)+FrameWin));
+    TrEventsRespData(ctr,:,6) = mean(cAnsResp,2);
+    
     if TrFTimeReNM(ctr)
         cReResp = cTrSPData(:,(TrFTimeReNM(ctr)+1):(TrFTimeReNM(ctr)+1+FrameWin));
         TrEventsRespData(ctr,:,3) = mean(cReResp,2);
     end
     for cAnsDelayNum = 1 : length(AnsDelayFrame)
         cAnsDelayResp = cTrSPData(:,(TrAnsFTimeNM(ctr)+1+AnsDelayFrame(cAnsDelayNum)):(TrAnsFTimeNM(ctr)+1+FrameWin+AnsDelayFrame(cAnsDelayNum)));
-        TrEventsRespData(ctr,:,5+cAnsDelayNum) = mean(cAnsDelayResp,2);
+        TrEventsRespData(ctr,:,6+cAnsDelayNum) = mean(cAnsDelayResp,2);
     end
 end
 
 % substract baseline activity for all response types
-BaseSubMtx = repmat(TrEventsRespData(:,:,5),1,1,4);
-BaseSubTrEventsResp = max(TrEventsRespData(:,:,1:4) - BaseSubMtx,0);
+BaseSubMtx = repmat(TrEventsRespData(:,:,5),1,1,5);
+BaseSubTrEventsResp = max(TrEventsRespData(:,:,[1:4,6]) - BaseSubMtx,0);
 
 %%
 FreqTypes = unique(TrOctsNM);
@@ -97,7 +110,6 @@ end
 NumParas = size(TrEventsRespData,3);
 
 AllROIData = cell(nROIs,1);
-%%
 for cROI = 1 : nROIs
     %%
     cROI = 25;
@@ -122,31 +134,35 @@ for cROI = 1 : nROIs
     IsReConsidered = 0;
     %
     if IsReConsidered
-        DataFitMtx = zeros(numel(cROIData),2*nFreqs+2+2+NumAnsDelayFun*2);
+        DataFitMtx = zeros(numel(cROIData),2*nFreqs+2+2+2+NumAnsDelayFun*2);
         DataFitMtx(1:NMTrNum,1:nFreqs) = FreqMetrix;
-        DataFitMtx((NMTrNum+1):NMTrNum*2,nFreqs+1) = AnsLMtx;
-        DataFitMtx((NMTrNum+1):NMTrNum*2,nFreqs+2) = AnsRMtx;
-        DataFitMtx((NMTrNum*2+1):NMTrNum*3,nFreqs+3) = ReLMtx;
-        DataFitMtx((NMTrNum*2+1):NMTrNum*3,nFreqs+4) = ReRMtx;
-        DataFitMtx((3*NMTrNum+1):NMTrNum*4,(nFreqs+5):(2*nFreqs+4)) = FreqMetrix;
+        DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+1) = AnsLMtx;
+        DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+2) = AnsRMtx;
+        DataFitMtx(NMTrNum*2+1:NMTrNum*3,nFreqs+3) = ReLMtx;
+        DataFitMtx(NMTrNum*2+1:NMTrNum*3,nFreqs+4) = ReRMtx;
+        DataFitMtx(NMTrNum*3+1:NMTrNum*4,(nFreqs+5):(nFreqs*2+4)) = FreqMetrix;
+        DataFitMtx(NMTrNum*4+1:NMTrNum*5,nFreqs*2+5) = AnsLMtx;
+        DataFitMtx(NMTrNum*4+1:NMTrNum*5,nFreqs*2+6) = AnsRMtx;
         for cDelayNum = 1 : NumAnsDelayFun
-            cRowStartInds = NMTrNum*4 + (cDelayNum - 1) * NMTrNum;
-            cColStartInds = 2*nFreqs + 4 + (cDelayNum - 1) * 2;
+            cRowStartInds = NMTrNum*5 + (cDelayNum - 1) * NMTrNum;
+            cColStartInds = 2*nFreqs + 6 + (cDelayNum - 1) * 2;
             
-            DataFitMtx((cRowStartInds+1):(cRowStartInds+NMTrNum),cColStartInds + 1) = AnsLMtx;
-            DataFitMtx((cRowStartInds+1):(cRowStartInds+NMTrNum),cColStartInds + 2) = AnsRMtx;
+            DataFitMtx((cRowStartInds+1):cRowStartInds+NMTrNum,cColStartInds + 1) = AnsLMtx;
+            DataFitMtx((cRowStartInds+1):cRowStartInds+NMTrNum,cColStartInds + 2) = AnsRMtx;
         end
         
         RespData = cROIData;
     else
-        DataFitMtx = zeros(numel(cROIData(:,[1,2,4,6:NumParas])),2*nFreqs+2+NumAnsDelayFun*2);
+        DataFitMtx = zeros(numel(cROIData(:,[1,2,4,6:NumParas])),2*nFreqs+4+NumAnsDelayFun*2);
         DataFitMtx(1:NMTrNum,1:nFreqs) = FreqMetrix;
         DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+1) = AnsLMtx;
         DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+2) = AnsRMtx;
         DataFitMtx(NMTrNum*2+1:NMTrNum*3,nFreqs+3:2*nFreqs+2) = FreqMetrix;
+        DataFitMtx(NMTrNum*3+1:NMTrNum*4,2*nFreqs+3)= AnsLMtx;
+        DataFitMtx(NMTrNum*3+1:NMTrNum*4,2*nFreqs+4)= AnsRMtx;
         for cDelayNum = 1 : NumAnsDelayFun
-            cRowStartInds = NMTrNum*3 + (cDelayNum - 1) * NMTrNum;
-            cColStartInds = 2*nFreqs + 2 + (cDelayNum - 1) * 2;
+            cRowStartInds = NMTrNum*4 + (cDelayNum - 1) * NMTrNum;
+            cColStartInds = 2*nFreqs + 4 + (cDelayNum - 1) * 2;
             
             DataFitMtx(cRowStartInds+1:cRowStartInds+NMTrNum,cColStartInds + 1) = AnsLMtx;
             DataFitMtx(cRowStartInds+1:cRowStartInds+NMTrNum,cColStartInds + 2) = AnsRMtx;
@@ -154,10 +170,10 @@ for cROI = 1 : nROIs
         
         RespData = cROIData(:,[1,2,4,6:NumParas]);
     end
-%     figure;
+%%     figure;
 %     imagesc(RespData)
 %     
-    %%
+    %
     options = glmnetSet;
     options.alpha = 0.9;
     options.nlambda = 110;
@@ -171,6 +187,7 @@ for cROI = 1 : nROIs
         FoldTestPred = cell(nFolds,2);
 
         for cf = 1 : nFolds
+            %
             TrainInds = find(cc.training(cf));
             BlankInds = false(NMTrNum,1);
             % TrainInds = randsample(NMTrNum,round(NMTrNum*0.7));
@@ -180,13 +197,15 @@ for cROI = 1 : nROIs
             TestRespData = reshape(RespData(~BlankInds,:),[],1);
 
             BehavParaInds = false(size(DataFitMtx,1),1);
-            BehavParaInds(TrainInds) = true;
-            BehavParaInds(TrainInds+NMTrNum) = true;
-            BehavParaInds(TrainInds+NMTrNum*2) = true;
-            
-            for cDelayN = 1 : NumAnsDelayFun
-                BehavParaInds(TrainInds+NMTrNum*(2+cDelayN)) = true;
+            NumParameters = size(DataFitMtx,1)/NMTrNum;
+            for cRowf = 1 : NumParameters %(NumParameters - NumAnsDelayFun)
+%                 BehavParaInds(TrainInds) = true;
+%                 BehavParaInds(TrainInds+NMTrNum) = true;
+                BehavParaInds(TrainInds+NMTrNum*(cRowf-1)) = true;
             end
+%             for cDelayN = 1 : NumAnsDelayFun
+%                 BehavParaInds(TrainInds+NMTrNum*(2+cDelayN)) = true;
+%             end
             BehavParaMtx = DataFitMtx(BehavParaInds,:);
             TestBehavParaMtx = DataFitMtx(~BehavParaInds,:);
             %

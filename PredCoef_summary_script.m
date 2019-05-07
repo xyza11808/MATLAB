@@ -19,17 +19,17 @@ AnsAlignDataStrc = load(AnsAlignDataPath);
 CorrROIMeanTrace = squeeze(SoundAlignDataStrc.ROIMeanTraceData(:,:,1));
 % extract stim alignment peak value
 [OnPeakAll,OffPeakAll] = cellfun(@(x) OnOffPeakValueExtract(x,round(SoundAlignDataStrc.AlignedFrame),SoundAlignDataStrc.Frate),CorrROIMeanTrace);
-% check the STD data also
-try
-    SessTunData = load(fullfile(cSessPath,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'),'CorrTunningFun','CorrTunningFunSTD');
-    SessTunLowThresInds = (SessTunData.CorrTunningFun <= SessTunData.CorrTunningFunSTD)';
-catch
-    SessTunANDColorPlotFun(cSessPath,[]);
-    SessTunData = load(fullfile(cSessPath,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'),'CorrTunningFun','CorrTunningFunSTD');
-    SessTunLowThresInds = (SessTunData.CorrTunningFun <= SessTunData.CorrTunningFunSTD)';
-end
-OnPeakAll(SessTunLowThresInds) = 0;
-OffPeakAll(SessTunLowThresInds) = 0;
+% % check the STD data also
+% try
+%     SessTunData = load(fullfile(cSessPath,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'),'CorrTunningFun','CorrTunningFunSTD');
+%     SessTunLowThresInds = (SessTunData.CorrTunningFun <= SessTunData.CorrTunningFunSTD)';
+% catch
+%     SessTunANDColorPlotFun(cSessPath,[]);
+%     SessTunData = load(fullfile(cSessPath,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'),'CorrTunningFun','CorrTunningFunSTD');
+%     SessTunLowThresInds = (SessTunData.CorrTunningFun <= SessTunData.CorrTunningFunSTD)';
+% end
+% OnPeakAll(SessTunLowThresInds) = 0;
+% OffPeakAll(SessTunLowThresInds) = 0;
 %% extract answer alignment peak value
 cAnsFrame = size(AnsAlignDataStrc.AnsAlignData,3);
 

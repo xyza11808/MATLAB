@@ -73,7 +73,7 @@ parfor cROI = 1 : nROIs
     else
         NFSignal = cROISessTraceNM;
     end 
-%     if any(isnan(NFSignal))
+%%     if any(isnan(NFSignal))
 %         NFSignal = cROISessTraceNM;
 %         warning('cTrace filtering skipped due to nan value output.\n');
 %     end
@@ -81,7 +81,7 @@ parfor cROI = 1 : nROIs
 %         fprintf('DEbug point.\n');
 %     end
     [cc2, spk2, opts_oasis2] = deconvolveCa(NFSignal,'ar2','optimize_b',true,'method','foopsi',...
-                                    'optimize_pars',true,'maxIter',100,'smin',spkmin,'window',150,'lambda',lam);
+                                    'optimize_pars',true,'maxIter',100,'smin',spkmin,'window',fr*5,'lambda',lam);
     %%
     TraceSpikeData(cROI,:) = spk2;
     TraceEstimatedTrace(cROI,:) = cc2;
