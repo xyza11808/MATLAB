@@ -1,10 +1,10 @@
 %finding the target image for alignment
-cd('W:\#members\xy\batch\batch58\20181112\anm03\test02');
-[im, ~] = load_scim_data('b58a03_test02_2x_2afc_160um_20181112_118.tif');
+cd('W:\#members\xy\batch\batch60\20190607\anm05\test03');
+[im, ~] = load_scim_data('b60a05_test02_2x_160um_rf_050.tif');
 
-selectframe=im(:,:,1:60);
+selectframe=im(:,:,1:28);
 figure('position',[100 100 480 420]);
-imagesc(mean(selectframe,3),[-10 200]);
+imagesc(mean(selectframe,3),[0 500]);
 im_reg_target = mean(selectframe,3);
 figure(gcf);
 colormap gray;
@@ -12,6 +12,14 @@ colormap gray;
 clc
 dir_imreg_src = pwd;
 save TargetImage.mat im_reg_target dir_imreg_src -v7.3
+%%
+dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
+BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
+isFileBadAlign = cellfun(@isempty,BadAlignFrame);
+cd(dir_imreg_dest);
+if sum(~isFileBadAlign)
+    save BadAlignF.mat BadAlignFrame -v7.3
+end
 
 %% delete extra raw tif files
 cellfun(@(x) delete(fullfile(x,'*.tif')),RawTifDataPath);
@@ -25,7 +33,7 @@ if ismac
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,':'))';
 elseif ispc
-    GrandPath = 'W:\#members\xy\batch\batch58';
+    GrandPath = 'W:\#members\xy\batch\batch60\20190607';
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,';'))';
 end
@@ -37,15 +45,15 @@ IsTargetIMExist = cellfun(@(x) exist(fullfile(x,'TargetImage.mat'),'file'),nameS
 UsedDataPath = nameSplit(IsTargetIMExist > 0);
 DirLength = length(UsedDataPath);
 %%
-TargetUpPath = 'F:\batch\';
+TargetUpPath = 'N:\batch60\';
 for cs = 1 : DirLength
-    tline = NewUsedPath{cs};
+    tline = UsedDataPath{cs};
     %
     cd(tline);
     clearvars im_reg_target dir_imreg_src
     %
     load(fullfile(tline,'TargetImage.mat'));
-    [StInds,EdInds] = regexp(tline,'batch58');
+    [StInds,EdInds] = regexp(tline,'batch60');
     TagPath = [TargetUpPath,tline(StInds:end)];
 %     NewStr = strrep(dir_imreg_src,'0520','0420');
 %     dir_imreg_src = NewStr;-
@@ -167,3 +175,47 @@ PosRawTifWithAlignPath = cellfun(@(x) x(1:end-15),PossDataPath(AllAlignedPInds),
 
 %%
 cellfun(@(x) delete(fullfile(x,'*.tif')),PosRawTifWithAlignPath);
+
+%% Selsect File alignment codes
+% ##############################################################################################################
+% ##############################################################################################################
+% ##############################################################################################################
+%finding the target image for alignment
+% cd('E:\tempdata\data_test_xsn\20190514'); 
+cd('K:\testsave\xnntest\test_02\anm03_20190526');
+[im, ~] = load_scim_data('anm03_field03_2x_250um_sess05_001.tif');
+%%
+selectframe=im(:,:,300:700);
+figure('position',[100 100 480 420]);
+imagesc(mean(selectframe,3),[100 1000]);
+im_reg_target = mean(selectframe,3);
+figure(gcf);
+colormap gray;
+%%
+clc
+[fn,fp,fi] = uigetfile('*.tif','Please select your alignment file','MultiSelect','on');
+
+if ~iscell(fn)
+    dir_imreg_src(1) = {fp(1:end-1)};
+    dir_imreg_src(2) = {fn};
+else
+    dir_imreg_src = cell(length(fn)+1,1);
+    dir_imreg_src{1} = fp(1:end-1);
+    dir_imreg_src(2:end) = fn;
+end
+
+%%
+AlignFSaveFold = input('Please input the savage folder name:\n','s');
+if isempty(AlignFSaveFold)
+    AlignFSaveFold = 'im_data_reg_cpu';
+end
+dir_imreg_dest = [fp filesep AlignFSaveFold];
+BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
+isFileBadAlign = cellfun(@isempty,BadAlignFrame);
+cd(dir_imreg_dest);
+if sum(~isFileBadAlign)
+    save BadAlignF.mat BadAlignFrame -v7.3
+end
+save TargetImage.mat im_reg_target dir_imreg_src -v7.3
+
+

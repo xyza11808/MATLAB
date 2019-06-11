@@ -158,7 +158,7 @@ while ischar(tline)
     nSess = nSess + 1;
     tline = fgetl(ff);
 end
-cd('E:\DataToGo\data_for_xu\BoundTun_DataSave\AmpCompare');
+cd('E:\DataToGo\data_for_xu\BoundTun_DataSave\AmpCompare\New21Sess');
 % cd('E:\DataToGo\data_for_xu\BoundTun_DataSave\AmpCompare\2-3TimeWin');
 save NearBAmpAll.mat NearBoundAmpAll TaskBFRespAmpAll PassBFRespAmpAll TaskPassMaxVAmpAll -v7.3
 
@@ -193,7 +193,7 @@ FracAboveCal = [mean(TaskUsedData < PassUsedData & SigPUsed < 0.05),mean(TaskUse
 FracBelowCal = [mean(TaskUsedData > PassUsedData & SigPUsed < 0.05),mean(TaskUsedData > PassUsedData & SigPUsed < 0.01)];
 text(400,400,sprintf('SigAbove %.3f, %.3f',FracAboveCal(1),FracAboveCal(2)),'Color','b');
 text(400,350,sprintf('SigBelow %.3f, %.3f',FracBelowCal(1),FracBelowCal(2)),'Color','b');
-
+%%
 saveas(hhhf,'BoundTunAmp compare plot');
 saveas(hhhf,'BoundTunAmp compare plot','png');
 saveas(hhhf,'BoundTunAmp compare plot','pdf');
@@ -438,6 +438,7 @@ set(gca,'xlim',[-0.1 2.1],'ylim',[-0.1 1.1],'yTick',[0 0.5 1]);
 xlabel('BF Difference');
 ylabel('Cumulative fraction');
 set(gca,'FontSize',10);
+%%
 saveas(hf,'BF Difference cumulative fraction plot');
 saveas(hf,'BF Difference cumulative fraction plot','pdf');
 saveas(hf,'BF Difference cumulative fraction plot','png');

@@ -39,16 +39,18 @@ l = 0;
 % u = -0.5;
 v = 0.2;
 
-RPreferBound = -0.5:0.1:0.5;
-LPreferBound = -0.5:0.1:0.5;
+% RPreferBound = -0.5:0.1:0.5;
+RPreferBound = [0.4 0.1];
+% LPreferBound = -0.5:0.1:0.5;
+LPreferBound = [-0.4 -0.1];
 nCategROI = length(RPreferBound);
 RPrefCategFun = cell(nCategROI,1);
 LPrefCategFun = cell(nCategROI,1);
 for cROI = 1 : nCategROI
     RPrefCategFun{cROI} = @(x) modelfunb(g,l,RPreferBound(cROI),v,x);
-    LPrefCategFun{cROI} = @(x) 1 - modelfunb(g,l,RPreferBound(cROI),v,x);
+    LPrefCategFun{cROI} = @(x) 1 - modelfunb(g,l,LPreferBound(cROI),v,x);
 end
-%% Test categorical ROI function
+% Test categorical ROI function
 xRange = linspace(-1,1,500);
 hf = figure;
 hold on
@@ -225,7 +227,8 @@ cc1 = 1;
 cc3 = 0.2;
 cc4 = 0;
 
-TuningPeakNum = 100;
+TuningPeakNum = 10;
+
 TunPeakData = linspace(-1,1,TuningPeakNum);
 TunROIFun = cell(TuningPeakNum,1);
 for cROI = 1 : TuningPeakNum
@@ -234,17 +237,25 @@ end
 
 xscales = linspace(-1,1,500);
 BaseROIRespDataAll = cell(TuningPeakNum,1);
-UsedColor = jet(TuningPeakNum);
-figure;
+UsedColor = blue2red_2(TuningPeakNum);
+% UsedColor = jet(TuningPeakNum);
+hhuf = figure('position',[2000 100 340 280]);
 hold on
 for cROI = 1 : TuningPeakNum
     cROIFun = TunROIFun{cROI};
     cROIData = cROIFun(xscales);
-    plot(xscales,cROIData,'Color',UsedColor(cROI,:),'linewidth',1.4);
+    plot(xscales,cROIData,'Color',UsedColor(cROI,:),'linewidth',1.4,'linestyle','--');
     BaseROIRespDataAll{cROI} = cROIData * sign(TunPeakData(cROI));
 end
+line([0 0],[0 1],'Color',[0 0.6 0],'linewidth',1.4,'linestyle','--')
+set(gca,'xtick',[-1 0 1],'ytick',[0 0.5 1],'xticklabel',[8 16 32]);
+xlabel('Frequency (kHz)');
+ylabel('Response');
+%%
+saveas(hhuf,'Passive tuning ROI examples');
+saveas(hhuf,'Passive tuning ROI examples','pdf');
 
-% calculate the population output, left as negtive value
+%% calculate the population output, left as negtive value
 popuOutData = sum(cell2mat(BaseROIRespDataAll));
 ScalePopuOut = (popuOutData - min(popuOutData))/(max(popuOutData) - min(popuOutData))*2-1;
 
@@ -256,4 +267,95 @@ plot(xscales,popuOutData,'Color','k','linewidth',1.5);
 yyaxis right
 plot(xscales,ScalePopuOut,'Color','r','linewidth',1.5);
 
+%%
+%% Initial categorical ROI response function
+modelfunb = @(g,l,u,v,x) g+(1-g-l)*0.5*(1+erf((x-u)/sqrt(2*v^2)));
+g = 0;
+l = 0;
+% u = -0.5;
+v = 0.2;
 
+% RPreferBound = -0.5:0.1:0.5;
+RPreferBound = [0.15 0.05];
+% LPreferBound = -0.5:0.1:0.5;
+LPreferBound = [-0.15 -0.05];
+nCategROI = length(RPreferBound);
+RPrefCategFun = cell(nCategROI,1);
+LPrefCategFun = cell(nCategROI,1);
+for cROI = 1 : nCategROI
+    RPrefCategFun{cROI} = @(x) modelfunb(g,l,RPreferBound(cROI),v,x);
+    LPrefCategFun{cROI} = @(x) 1 - modelfunb(g,l,LPreferBound(cROI),v,x);
+end
+% Test categorical ROI function
+xRange = linspace(-1,1,500);
+hMixedf = figure('position',[2000 100 340 280]);
+hold on
+for cROI = 1 : nCategROI
+    cRFun = RPrefCategFun{cROI};
+    cLFun = LPrefCategFun{cROI};
+    cRCurve = cRFun(xRange);
+    cLCurve = cLFun(xRange);
+    plot(xRange,cRCurve,'r','linewidth',1.6);
+    plot(xRange,cLCurve,'b','linewidth',1.6);
+end
+% ##################################################################################################################
+% added boundary tuning ROIs
+TunBaseModel = @(c1,c2,c3,c4,x) c1*exp((-1)*((x - c2).^2)./(2*(c3^2)))+c4;
+cc1 = 1;
+% c2 = 0;
+cc3 = 0.1;
+cc4 = 0;
+
+TuningPeakNum = 2;
+TunPeakData = linspace(-0.1,0.1,TuningPeakNum);
+TunROIFun = cell(TuningPeakNum,1);
+for cROI = 1 : TuningPeakNum
+    TunROIFun{cROI} = @(x) TunBaseModel(cc1,TunPeakData(cROI),cc3,cc4,x);
+end
+
+xscales = linspace(-1,1,500);
+BaseROIRespDataAll = cell(TuningPeakNum,1);
+WholeColor = blue2red_2(10);
+UsedColor = WholeColor([5,6],:);
+% UsedColor = jet(TuningPeakNum);
+% hhuf = figure('position',[2000 100 340 280]);
+% hold on
+for cROI = 1 : TuningPeakNum
+    cROIFun = TunROIFun{cROI};
+    cROIData = cROIFun(xscales);
+    plot(xscales,cROIData,'Color',UsedColor(cROI,:),'linewidth',1.4);
+    BaseROIRespDataAll{cROI} = cROIData * sign(TunPeakData(cROI));
+end
+
+%% ##################################################################################################################
+% added extra frequency tuning ROIs
+TunBaseModel = @(c1,c2,c3,c4,x) c1*exp((-1)*((x - c2).^2)./(2*(c3^2)))+c4;
+cc1 = 1;
+% c2 = 0;
+cc3 = 0.2;
+cc4 = 0;
+
+TuningPeakNum = 4;
+% TunPeakData = linspace(-0.1,0.1,TuningPeakNum);
+TunPeakData = [-1 -0.6 0.6 1];
+TunROIFun = cell(TuningPeakNum,1);
+for cROI = 1 : TuningPeakNum
+    TunROIFun{cROI} = @(x) TunBaseModel(cc1,TunPeakData(cROI),cc3,cc4,x);
+end
+
+xscales = linspace(-1,1,500);
+BaseROIRespDataAll = cell(TuningPeakNum,1);
+WholeColor = blue2red_2(12);
+UsedColor = WholeColor([2,3,10,11],:);
+% UsedColor = jet(TuningPeakNum);
+% hhuf = figure('position',[2000 100 340 280]);
+% hold on
+for cROI = 1 : TuningPeakNum
+    cROIFun = TunROIFun{cROI};
+    cROIData = cROIFun(xscales);
+    plot(xscales,cROIData,'Color',UsedColor(cROI,:),'linewidth',1.4,'linestyle','--');
+    BaseROIRespDataAll{cROI} = cROIData * sign(TunPeakData(cROI));
+end
+%%
+saveas(hMixedf,'Task tuning ROI examples');
+saveas(hMixedf,'Task tuning ROI examples','pdf');

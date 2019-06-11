@@ -149,9 +149,9 @@ set(gca,'xlim',[-2 2],'ylim',[0.1 0.7],'xtick',[-2 0 2],'ytick',[0 0.5 0.7],'box
 xlabel('AwayFromBoundary');
 ylabel('Response (Nor.)');
 set(gca,'FontSize',16)
-saveas(gcf,'Tuned ROIs popuAvg fit plot');
-saveas(gcf,'Tuned ROIs popuAvg fit plot','png');
-saveas(gcf,'Tuned ROIs popuAvg fit plot','pdf');
+% saveas(gcf,'Tuned ROIs popuAvg fit plot');
+% saveas(gcf,'Tuned ROIs popuAvg fit plot','png');
+% saveas(gcf,'Tuned ROIs popuAvg fit plot','pdf');
 
 %%
 CategBins = -2:0.2:2;
@@ -359,8 +359,8 @@ xlabel('AwayFromBoundary');
 ylabel('Response (Nor.)');
  title('Boundary Tuning ROIs')
 set(gca,'FontSize',16)
-saveas(gca,'Boundary tuning ROI population average')
-saveas(gca,'Boundary tuning ROI population average','pdf')
+% saveas(gca,'Boundary tuning ROI population average')
+% saveas(gca,'Boundary tuning ROI population average','pdf')
 
 
 %% fitting the constrained boundaryTuning data with a gaussian function
@@ -426,6 +426,6 @@ ylabel('Response (Nor.)');
 title('Constrained Boundary Tuning ROIs')
 set(gca,'FontSize',16)
 
-saveas(gca,'Constrained Boundary tuning ROI population average')
-saveas(gca,'Constrained Boundary tuning ROI population average','pdf')
+% saveas(gca,'Constrained Boundary tuning ROI population average')
+% saveas(gca,'Constrained Boundary tuning ROI population average','pdf')
 

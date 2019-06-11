@@ -124,7 +124,7 @@ CaSignal.h_info_fig = NaN;
 CaSignal.FrameNum = 1;
 CaSignal.imSize = [];
 CaSignal.h_img = NaN;
-CaSignal.Scale = [0 500];
+CaSignal.Scale = [0 1000];
 CaSignal.ROIsummask=[];
 % ROIinfo = {};
 % ICA_ROIs = struct;
@@ -1679,7 +1679,8 @@ catch ME
         mkdir('./TempDataSaving/');
     end
     BlockNum = 50;
-    
+    clear TempPopuMeanSave TempPopuMaxSave DataSaveStrc im F fRing dff TempCaTrials_local isTrInit;
+     
     TrBlockInds = Start_trial:BlockNum:End_trial;
     if TrBlockInds(end) < End_trial
         TrBlockInds = [TrBlockInds,End_trial];
@@ -1748,7 +1749,7 @@ catch ME
          cd('./TempDataSaving/');
         save(sprintf('TempSaveData%d.mat',nB),'TempPopuMeanSave','TempPopuMaxSave','DataSaveStrc','BlockStart',...
             'TempCaTrials_local','BlockEnd','isTrInit','-v7.3');
-        clear TempPopuMeanSave TempPopuMaxSave DataSaveStrc im F fRing dff TempCaTrials_local isTrInit;
+       
         cd ..;
     end
     %%

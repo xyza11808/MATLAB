@@ -48,3 +48,39 @@ CNODataOctaveMtx = log2(CNODataFreqMtx/14000);
 CNODataChoiceMtx = cell2mat(CNOCurveData(:,2)');
 hf = figure;
 plot(CNODataOctaveMtx',CNODataChoiceMtx,'k-o')
+
+%% session data path
+% R:\Xulab_Share_Nutstore\Zhang_Yuan\hM4D withmiss sum plot\CNO VS saline control
+
+CNOSalineDataStrc = load('R:\Xulab_Share_Nutstore\Zhang_Yuan\hM4D withmiss sum plot\CNO VS saline control\CNO_saline_sum.mat');
+
+CNO_trainData = CNOSalineDataStrc.percent_correct_traing_withdrug;
+CNO_probData = CNOSalineDataStrc.percent_correct_probe_withdrug;
+Saline_trainData = CNOSalineDataStrc.percent_correct_traing_control;
+Saline_probData = CNOSalineDataStrc.percent_correct_probe_control;
+%%
+hf = figure('position',[2000 100 680 300]);
+
+ax1 = subplot(121);
+hold on
+bar([1,2],[mean(Saline_trainData) mean(CNO_trainData)],0.5,'FaceColor',[.7 .7 .7],'EdgeColor','none');
+plot([1,2],[Saline_trainData;CNO_trainData],'Color','k','linewidth',1.2);
+
+[~,p1] = ttest(Saline_trainData,CNO_trainData);
+GroupSigIndication([1 2],[max(Saline_trainData) max(CNO_trainData)],p1,ax1);
+set(gca,'xtick',[1 2],'xticklabel',{'Saline','CNO'},'ytick',[0 0.5 1]);
+ylabel('Corect rate');
+title('Training')
+set(gca,'FontSize',10);
+
+ax2 = subplot(122);
+hold on
+bar([1,2],[mean(Saline_probData) mean(CNO_probData)],0.5,'FaceColor',[.7 .7 .7],'EdgeColor','none');
+plot([1,2],[Saline_probData;CNO_probData],'Color','k','linewidth',1.2);
+[~,p2] = ttest(Saline_probData,CNO_probData);
+GroupSigIndication([1 2],[max(Saline_probData) max(CNO_probData)],p2,ax2);
+set(gca,'xtick',[1 2],'xticklabel',{'Saline','CNO'},'ytick',[0 0.5 1])
+ylabel('Corect rate');
+title('Prob')
+set(gca,'FontSize',10);
+

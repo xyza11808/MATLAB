@@ -25,8 +25,9 @@ end
 % find the end index
 EndInds = find(RawTrace((1+Peak):end) < EndThres,1,'first');
 if isempty(EndInds)
-    EndInds = numel(RawTrace);
+    EndInds = numel(RawTrace)-Peak;
 else
     EndInds = EndInds - 1;
 end
+EndInds = Peak + EndInds;
 

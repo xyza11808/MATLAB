@@ -46,11 +46,15 @@ AnsDelayFrame = round(AnsDelayFun*frame_rate);
 NumAnsDelayFun = length(AnsDelayFrame);
 [~,FreqSortInds] = sort(TrOctsNM);
 %%
+% NewNNData = ThresSubData(nnspike);
 if iscell(nnspike)
-    NMSpikeData = nnspike(NMInds);
+%     NMSpikeData = nnspike(NMInds);
+    NMSpikeData = NewNNData(NMInds);
 else
-    NMSpikeData = nnspike(NMInds,:,:);
+%     NMSpikeData = nnspike(NMInds,:,:);
+    NMSpikeData = NewNNData(NMInds,:,:);
 end
+%%
 TrEventsRespData = zeros(NMTrNum,nROIs,5+NumAnsDelayFun); % freq, answer, reward corresponded to three columns
 for ctr = 1 : NMTrNum
     if iscell(nnspike)
@@ -99,8 +103,8 @@ NumParas = size(TrEventsRespData,3);
 AllROIData = cell(nROIs,1);
 %%
 for cROI = 1 : nROIs
-    %%
-    cROI = 25;
+    %
+%     cROI = 25;
 %     close
     cROIData = squeeze(TrEventsRespData(:,cROI,:));
     % figure('position',[200 100 800 320])
@@ -157,7 +161,7 @@ for cROI = 1 : nROIs
 %     figure;
 %     imagesc(RespData)
 %     
-    %%
+    %
     options = glmnetSet;
     options.alpha = 0.9;
     options.nlambda = 110;

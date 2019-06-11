@@ -138,9 +138,9 @@ legend([hb1,hb2],{sprintf('Avg = %.3f',mean(NEROICoefVecAll)),sprintf('p<0.05, A
 xlabel('Coefficient');
 ylabel('Counts');
 set(gca,'FontSize',16);
-saveas(hf,'BoundTun activity with slopeV coef');
-saveas(hf,'BoundTun activity with slopeV coef','png');
-saveas(hf,'BoundTun activity with slopeV coef','pdf');
+% saveas(hf,'BoundTun activity with slopeV coef');
+% saveas(hf,'BoundTun activity with slopeV coef','png');
+% saveas(hf,'BoundTun activity with slopeV coef','pdf');
 %% activity corr with slope value
 % SessBoundTunAct = cellfun(@(x) reshape((zscore(x))',[],1),SessBoundTunCorr,'uniformoutput',false);
 % SessPassCell = cellfun(@(x) reshape((zscore(x))',[],1),SessPassBoundData,'uniformoutput',false);
@@ -189,27 +189,27 @@ hold on
 scatter(SessTaskSlopeAll,SessTaskDataAll,6,'o','MarkerFaceColor',[1 0.8 0.6],'MarkerEdgeColor','none');
 el1 = errorbar(TaskNZSlopeInds,TaskNZDatas(:,1),TaskNZDatas(:,2),'-o','Color',[1 0.7 0.2],'linewidth',3);
 set(gca,'xtick',0:0.5:1,'box','off','xlim',[-0.05 1.05]);
-xlabel('Discrimination ability');
+xlabel('Distance to boundary');
 ylabel('Response');
 title(sprintf('Task,Coef %.3f, p %.3e',Taskr(2,1),Taskp(2,1)));
-set(gca,'FontSize',14);
+set(gca,'FontSize',12);
 
 subplot(122)
 hold on
 scatter(SessPassSlopeAll,SessPassDataAll,6,'o','MarkerFaceColor',[.8 .8 .8],'MarkerEdgeColor','none');
 el2 = errorbar(PassNZSlopeInds,PassNZDatas(:,1),PassNZDatas(:,2),'-o','Color','k','linewidth',3);
 set(gca,'xtick',0:0.5:1,'box','off','xlim',[-0.05 1.05]);
-xlabel('Discrimination ability');
+xlabel('Distance to boundary');
 ylabel('Response');
 title(sprintf('Pass,Coef %.3f, p %.3e',Passr(2,1),Passp(2,1)));
-set(gca,'FontSize',14);
+set(gca,'FontSize',12);
 
 
 % legend([el1,el2],{sprintf('Coef %.3f, p %.3e',Taskr(2,1),Taskp(2,1)),sprintf('Coef %.3f, p %.3e',Passr(2,1),Passp(2,1))},...
 %     'Box','off','location','NorthWest','FontSize',8);
-saveas(hhhf,'Slope with neural activity correlation plots withDots');
-saveas(hhhf,'Slope with neural activity correlation plots withDots','pdf');
-saveas(hhhf,'Slope with neural activity correlation plots withDots','png');
+% saveas(hhhf,'Slope with neural activity correlation plots withDots');
+% saveas(hhhf,'Slope with neural activity correlation plots withDots','pdf');
+% saveas(hhhf,'Slope with neural activity correlation plots withDots','png');
 %%
 SessTaskDataAll = cell2mat(cellfun(@(x) reshape((zscore(x))',[],1),SessBoundTunCorr(:,1),'uniformoutput',false));
 SessTaskSlopeAll = cell2mat(cellfun(@(x) reshape((x)',[],1),SessBoundTunCorr(:,2),'uniformoutput',false));
@@ -226,7 +226,7 @@ for cSess = 1 : nSess
         figure;
         
         cROIs = size(cSessData,2);
-        cSlope = repmat((SessBoundTunCorr{cSess,3})',1,cROIs);
+        cSlope = repmat((SessBoundTunCorr{cSess,3})',1,cROIs); 
         DataAll = [DataAll;reshape((zscore(cSessData))',[],1)];
         SlopeAll = [SlopeAll;reshape(cSlope',[],1)];
         plot(reshape(cSlope',[],1),reshape((zscore(cSessData))',[],1),'ro')

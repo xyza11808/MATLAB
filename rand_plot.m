@@ -469,10 +469,10 @@ for n = 1:fileNum
             TypeNumber(i) = sum(type_inds);
             cTrChoice = double(behavResults.Action_choice(type_inds));
             Type_choiceR(i) = mean(cTrChoice);
-            TypeBinoCI(:,i) = std(cTrChoice)/sqrt(numel(cTrChoice)) * [1 1] + mean(cTrChoice);
-%             [pHat,pCI] = binofit(sum(cTrChoice),numel(cTrChoice));
-%             Type_choiceR(i) = pHat;
-%             TypeBinoCI(:,i) = pCI;
+%             TypeBinoCI(:,i) = std(cTrChoice)/sqrt(numel(cTrChoice)) * [1 1] + mean(cTrChoice);
+            [pHat,pCI] = binofit(sum(cTrChoice),numel(cTrChoice));
+            Type_choiceR(i) = pHat;
+            TypeBinoCI(:,i) = pCI;
             
             TypeTrTypes(i) = mode(behavResults.Trial_Type(type_inds));
             TypeChoiceSEM(i) = std(double(behavResults.Action_choice(type_inds)))/sqrt(sum(TypeNumber(i)));
@@ -512,7 +512,7 @@ for n = 1:fileNum
         [~,BoundInds] = min(abs(fit_ReNewAll.curve(:,2) - 0.5));
         internal_boundary = fit_ReNewAll.curve(BoundInds,1);
         %
-        plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'color','k','LineWidth',2.4);
+%         plot(fit_ReNew.curve(:,1),fit_ReNew.curve(:,2),'color','k','LineWidth',2.4);
         plot(fit_ReNewAll.curve(:,1),fit_ReNewAll.curve(:,2),'color','r','LineWidth',2.4);
         line([fit_ReNewAll.ffit.u fit_ReNewAll.ffit.u],[0 1],'color',[.7 .7 .7],'LineWidth',1.6,'linestyle','--');
         errorbar(octave_dist,Type_choiceR,ErrorBarNegDis,ErrorBarPosDis,'ko','linewidth',2);
@@ -524,6 +524,7 @@ for n = 1:fileNum
         set(gca,'xticklabel',cellstr(num2str(Freqs(:)/1000,'%.1f')));
         xlabel('Frequency(kHz)');
         ylabel('Rightward choice');
+        set(gca,'ylim',[-0.03 1.02],'ytick',[0 0.5 1]);
         set(gca,'FontSize',10);
         %
         if exist('fn','var')

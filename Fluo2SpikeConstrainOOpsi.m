@@ -49,7 +49,7 @@ end
 TraceSpikeData = zeros(size(SessionTraceData));
 TraceEstimatedTrace = zeros(size(SessionTraceData));
 ROIFitCoefs = cell(nROIs,1);
-parfor cROI = 1 : nROIs
+for cROI = 1 : nROIs
     %%
     cROISessTrace = SessionTraceData(cROI,:)/100;
     cROISessTraceNM = cROISessTrace - min(cROISessTrace);
@@ -61,10 +61,14 @@ parfor cROI = 1 : nROIs
     [Count,Cent] = hist(cROISessTraceNM,100);
     [~,MaxInds] = max(Count);
     fBase = Cent(MaxInds);
+    %%
     if (prctile(cROISessTraceNM,99) - fBase) < 1.5  % filtering the trace when signal is low
         if fr < 35
             cDes = designfilt('lowpassfir','PassbandFrequency',1,'StopbandFrequency',5,...
                 'StopbandAttenuation', 60,'SampleRate',fr,'DesignMethod','kaiserwin');  %'ZeroPhase',true,
+            cDesNew = designfilt('bandpassfir','PassbandFrequency1',0.5,'StopbandFrequency1',0.3,...
+                'PassbandFrequency2',5,'StopbandFrequency2',6,'SampleRate',fr,'StopbandAttenuation1',60,...
+                'StopbandAttenuation2',60,'DesignMethod','kaiserwin');
         else
             cDes = designfilt('lowpassfir','PassbandFrequency',5,'StopbandFrequency',10,...
                 'StopbandAttenuation', 50,'SampleRate',fr,'DesignMethod','kaiserwin');
