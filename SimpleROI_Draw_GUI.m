@@ -22,7 +22,7 @@ function varargout = SimpleROI_Draw_GUI(varargin)
 
 % Edit the above text to modify the response to help SimpleROI_Draw_GUI
 
-% Last Modified by GUIDE v2.5 11-Jun-2019 22:35:48
+% Last Modified by GUIDE v2.5 12-Jun-2019 22:21:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -560,3 +560,54 @@ function UseMaxMean_tag_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 set(hObject,'Value',0);
+
+
+% --- Executes on button press in Load_ROI_tag.
+function Load_ROI_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to Load_ROI_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global ROIDataSummary
+if isempty(ROIDataSummary.FigHandle) || isempty(ROIDataSummary.UsedImData)
+    return;
+end
+choice = questdlg('Are you sure to load external ROIs?','confirm ROI load',...
+    'Yes','No','Cancle','Yes');
+switch choice
+    case 'Yes'
+        [fn,fp,fi] = uigetfile('*.mat','Please select the external ROI data file');
+       if ~fi
+           return;
+       end
+       fPath = fullfile(fp,fn);
+       try 
+           CData = load(fPath,'ROIInfoDatas');
+           set(handles.Message_box_tag,'String',sprintf('DLoading ROI data from %s.',fullfile(fp,fn)));
+           GivenROINum = length(CData.ROIInfoDatas);
+           if GivenROINum > 0
+               ROIDataSummary.ROIDataSum = CData.ROIInfoDatas;
+               ROIDataSummary.TotalROINum = GivenROINum;
+               ROIDataSummary.CurrentROINum = GivenROINum;
+               set(handles.TotalROINum_tag,'String',num2str(ROIDataSummary.TotalROINum));
+               set(handles.CurrentROI_tag,'String',num2str(ROIDataSummary.CurrentROINum));
+               UpdatesROIPlots(ROIDataSummary.CurrentROINum);
+           else
+               set(handles.Message_box_tag,'String','Input data file have zero ROIs');
+               return;
+           end
+       catch
+           set(handles.Message_box_tag,'String','The select file do not have target fields.');
+           return;
+       end
+       
+    case 'No'
+        return;
+        
+    case 'Cancle'
+        return;
+        
+    otherwise
+        set(handles.Message_box_tag,'String','Quit ROI deletion.');
+end
+
+
