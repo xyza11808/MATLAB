@@ -1,10 +1,10 @@
 %finding the target image for alignment
-cd('W:\#members\xy\batch\batch60\20190607\anm05\test03');
-[im, ~] = load_scim_data('b60a05_test02_2x_160um_rf_050.tif');
+cd('W:\#members\xy\batch\batch60\20190622\anm05\test03');
+[im, ~] = load_scim_data('b60a05_test03_2x_2afc_160um_20190622_124.tif');
 
-selectframe=im(:,:,1:28);
+selectframe=im(:,:,1:30);
 figure('position',[100 100 480 420]);
-imagesc(mean(selectframe,3),[0 500]);
+imagesc(mean(selectframe,3),[0 900]);
 im_reg_target = mean(selectframe,3);
 figure(gcf);
 colormap gray;
@@ -26,6 +26,7 @@ cellfun(@(x) delete(fullfile(x,'*.tif')),RawTifDataPath);
 
 %% dir_imreg_dest = [['F',dir_imreg_src(2:end)] filesep 'im_data_reg_cpu'];
 clear
+%%
 clc
 
 if ismac
@@ -33,7 +34,7 @@ if ismac
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,':'))';
 elseif ispc
-    GrandPath = 'W:\#members\xy\batch\batch60\20190607';
+    GrandPath = 'W:\#members\xy\batch\batch60\20190622';
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,';'))';
 end
@@ -43,9 +44,12 @@ end
 
 IsTargetIMExist = cellfun(@(x) exist(fullfile(x,'TargetImage.mat'),'file'),nameSplit);
 UsedDataPath = nameSplit(IsTargetIMExist > 0);
+ExPathIndex = contains(UsedDataPath,'20190607'); %cellfun(@isempty,strfind(UsedDataPath,'20190607'));
+UsedDataPath = UsedDataPath(~ExPathIndex);
 DirLength = length(UsedDataPath);
 %%
-TargetUpPath = 'N:\batch60\';
+% pause(3000);
+TargetUpPath = 'F:\batch';
 for cs = 1 : DirLength
     tline = UsedDataPath{cs};
     %
@@ -63,6 +67,7 @@ for cs = 1 : DirLength
     % dir_imreg_src = pwd;
     % save TargetImage.mat im_reg_target
     dir_imreg_dest = [TagPath filesep 'im_data_reg_cpu'];
+    dir_imreg_src = tline;
     t_total=tic;
     BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
     t=toc(t_total);

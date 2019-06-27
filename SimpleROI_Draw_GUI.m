@@ -22,7 +22,7 @@ function varargout = SimpleROI_Draw_GUI(varargin)
 
 % Edit the above text to modify the response to help SimpleROI_Draw_GUI
 
-% Last Modified by GUIDE v2.5 12-Jun-2019 22:21:17
+% Last Modified by GUIDE v2.5 21-Jun-2019 23:25:39
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -163,7 +163,13 @@ if diff(ROIDataSummary.UsedFrameScale) < 1
     ROIDataSummary.UsedFrameScale(2) = InputFrameIndex + 1;
     set(handles.UsedMaxFrame_tag,'String',num2str(ROIDataSummary.UsedFrameScale(2)));
 end
-ShowSelectImage_tag_Callback(hObject, eventdata, handles);
+
+WhetherAutoUpdate = get(handles.IsAutoUpdate_tag,'Value');
+if WhetherAutoUpdate
+    ShowSelectImage_tag_Callback(hObject, eventdata, handles);
+else
+    set(handles.Message_box_tag,'String','Please update the ROI figure mannually.');
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -189,9 +195,14 @@ global ROIDataSummary
 %        str2double(get(hObject,'String')) returns contents of UsedMaxFrame_tag as a double
 cInput = str2double(get(hObject,'String'));
 if ~isempty(cInput)
-    if cInput > ROIDataSummary.UsedFrameScale(1) && cInput < ROIDataSummary.MaxFrameScale(2)
+    if cInput > ROIDataSummary.UsedFrameScale(1) && cInput <= ROIDataSummary.MaxFrameScale(2)
         ROIDataSummary.UsedFrameScale(2) = cInput;
-        ShowSelectImage_tag_Callback(hObject, eventdata, handles);
+        WhetherAutoUpdate = get(handles.IsAutoUpdate_tag,'Value');
+        if WhetherAutoUpdate
+            ShowSelectImage_tag_Callback(hObject, eventdata, handles);
+        else
+            set(handles.Message_box_tag,'String','Please update the ROI figure mannually.');
+        end
     else
         set(handles.Message_box_tag,'String','Error input value');
         return;
@@ -545,6 +556,12 @@ save(fullfile(ROIDataSummary.SessPath,'ROIinfoData.mat'),'ROIInfoDatas','-v7.3')
 set(handles.Message_box_tag,'String',sprintf('ROI file saves in: %s.',...
     fullfile(ROIDataSummary.SessPath,'ROIinfoData.mat')));
 
+if isempty(ROIDataSummary.FigHandle) || ~ishghandle(ROIDataSummary.FigHandle)
+    ShowSelectImage_tag_Callback(hObject, eventdata, handles);
+end
+saveas(ROIDataSummary.FigHandle,fullfile(ROIDataSummary.SessPath,'WithROI_FigSave'));
+saveas(ROIDataSummary.FigHandle,fullfile(ROIDataSummary.SessPath,'WithROI_FigSave'),'png');
+
 
 % --- Executes during object creation, after setting all properties.
 function UseMeanIm_tag_CreateFcn(hObject, eventdata, handles)
@@ -611,3 +628,92 @@ switch choice
 end
 
 
+
+
+% --- Executes on button press in MultiAdd_delete_tag.
+function MultiAdd_delete_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to MultiAdd_delete_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global ROIDataSummary
+
+if ~ROIDataSummary.IsMultiAdd
+    set(handles.Message_box_tag,'String','No multi-click on add button.');
+    return;
+else
+    ROIDataSummary.TotalROINum = length(ROIDataSummary.ROIDataSum);
+    ROIDataSummary.CurrentROINum = ROIDataSummary.TotalROINum;
+    set(handles.TotalROINum_tag,'String',num2str(ROIDataSummary.TotalROINum));
+    set(handles.CurrentROI_tag,'String',num2str(ROIDataSummary.CurrentROINum));
+%     UpdatesROIPlots(ROIDataSummary.CurrentROINum);
+    ROIDataSummary.IsMultiAdd = 0;
+    
+    if isempty(ROIDataSummary.FigHandle) || isempty(ROIDataSummary.UsedImData)
+        delete(ROIDataSummary.FigHandle);
+    end
+    
+    ShowSelectImage_tag_Callback(hObject, eventdata, handles);
+end
+
+
+    
+
+
+% --- Executes on button press in IsAutoUpdate_tag.
+function IsAutoUpdate_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to IsAutoUpdate_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of IsAutoUpdate_tag
+
+
+% --- Executes during object creation, after setting all properties.
+function IsAutoUpdate_tag_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to IsAutoUpdate_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+set(hObject,'Value',0);
+
+
+% --- Executes on button press in Edit_cROI_tag.
+function Edit_cROI_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to Edit_cROI_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global ROIDataSummary
+cROI = ROIDataSummary.CurrentROINum;
+if isempty(ROIDataSummary.FigHandle) || isempty(ROIDataSummary.UsedImData)
+    ShowSelectImage_tag_Callback(hObject, eventdata, handles);
+else
+    
+    figure(ROIDataSummary.FigHandle);
+    
+    % draw ROIs
+    ROIDraw=1;
+    while ROIDraw
+        h_ROI=imfreehand;
+        h_mask=createMask(h_ROI);
+        h_position=getPosition(h_ROI);
+        choice = questdlg('confirm ROI drawing?','confirm ROI', 'Yes','Re-draw','Cancle','Yes');
+        switch choice
+            case 'Yes'
+                ROIDataSummary.ROIDataSum(cROI).ROIMask=h_mask;
+                ROIDataSummary.ROIDataSum(cROI).ROIpos=h_position;
+                delete(h_ROI);
+                ROIDraw=0;
+                UpdatesROIPlots(ROIDataSummary.CurrentROINum);
+            case 'Cancle'
+                delete(h_ROI);
+                ROIDraw=0;
+                
+            case 'Re-draw'
+                delete(h_ROI);
+            otherwise
+                set(handles.Message_box_tag,'String','Quit ROI drawing.');
+                delete(h_ROI);
+                ROIDraw=0;
+    %             close all;
+        end
+    end
+end

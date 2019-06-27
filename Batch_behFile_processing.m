@@ -1,5 +1,5 @@
 if ispc
-    GrandPath = 'X:\Lab_Members\Xin_Y\behavior_rig06_backup\behaviro_data\batch55\anm03';
+    GrandPath = 'H:\data\behavior\2p_data\behaviro_data\batch60';
     xpath = genpath(GrandPath);
     nameSplit = strsplit(xpath,';');
 elseif ismac
