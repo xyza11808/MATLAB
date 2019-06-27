@@ -157,7 +157,7 @@ CaSignal.IsROIUpdated = []; % value will be 1 if ROI was newly added or modified
 CaSignal.AllTrMeanIm = {};
 CaSignal.AllTrMaxIm = {};
 fprintf('Matlab Two-photon imaging data analysis GUI.\n');
-fprintf('           Version :  2.04.02             \n');
+fprintf('           Version :  2.04.05             \n');
 % Update handles structure
 guidata(hObject, handles);
 
@@ -562,7 +562,7 @@ roi_pos = {};
 %     end
 
 if length(CaSignal.ROIinfo) >= TrialNo
-    roi_pos = CaSignal.ROIinfo(TrialNo).ROIpos;
+    roi_pos = CaSignal.ROIinfoBack(1).ROIpos;
 end
 for i = 1:length(roi_pos) % num ROIs
     cROIstate = ROIstateAll(i,:);
@@ -796,12 +796,14 @@ if CurrentROINo > 0
     CaSignal.ROIinfo(TrialNo).ROItype(CurrentROINo) = [];
     CaSignal.ROIinfo(TrialNo).Ringmask(CurrentROINo) = [];
     CaSignal.ROIinfo(TrialNo).ROI_def_trialNo(CurrentROINo) = [];
+    CaSignal.ROIinfo(TrialNo).ROIdefinePath(CurrentROINo) = [];
     
     CaSignal.ROIinfoBack(1).ROIpos(CurrentROINo) = [];
     CaSignal.ROIinfoBack(1).ROImask(CurrentROINo) = [];
     CaSignal.ROIinfoBack(1).ROItype(CurrentROINo) = [];
     CaSignal.ROIinfoBack(1).Ringmask(CurrentROINo) = [];
     CaSignal.ROIinfoBack(1).ROI_def_trialNo(CurrentROINo) = [];
+    CaSignal.ROIinfoBack(1).ROIdefinePath(CurrentROINo) = [];
     
     CaSignal.IsROIUpdated(CurrentROINo) = [];
     CaSignal.ROIStateIndicate(CurrentROINo,:) = [];
@@ -1422,7 +1424,7 @@ Start_trial = str2double(get(handles.batchStartTrial, 'String'));
 End_trial = str2double(get(handles.batchEndTrial,'String'));
 % CaSignal.CaTrials = [];
 % h = waitbar(0, 'Start Batch Analysis ...');
-numberROIs=CaSignal.CaTrials(1).nROIs;
+numberROIs=numel(CaSignal.ROIinfoBack(1).ROImask);
 emptyROIs=[];
 ALLROImaskR=CaSignal.ROIinfoBack(1).Ringmask;
 ALLROImask = CaSignal.ROIinfoBack(1).ROImask;
@@ -1449,7 +1451,7 @@ end
 %         CaSignal.CaTrials(1).nROIs=CaSignal.CaTrials(1).nROIs-1;
 
 filenames = CaSignal.data_file_names; 
-nTROIs = CaSignal.CaTrials(1).nROIs;
+nTROIs = numberROIs;
 nTrials = length(CaSignal.CaTrials);
 
 CaTrials_local = CaSignal.CaTrials;
@@ -1575,7 +1577,6 @@ for TrialNo = Start_trial:End_trial
 %     handles = get_exp_info(hObject, eventdata, handles);
 end
 ROIinfoUsed = CaSignal.ROIinfoBack;
-TempCaTrials_local = CaTrials_local(1);
 
 CPUCores=str2num(getenv('NUMBER_OF_PROCESSORS')); %#ok<ST2NM>
 poolobj = gcp('nocreate');
@@ -1674,6 +1675,7 @@ try
     
 catch ME
     fprintf('Cannot parallel all trials becaused of the error:\n%s\n.',ME.message);
+    TempCaTrials_local = CaTrials_local(1);
     %%
     if ~isdir('./TempDataSaving/')
         mkdir('./TempDataSaving/');
