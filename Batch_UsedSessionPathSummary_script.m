@@ -5,7 +5,7 @@ if ismac
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,':'))';
 elseif ispc
-    GrandPath = 'P:\BatchData\batch55';
+    GrandPath = 'H:\F_b60_matBackup';
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,';'))';
 end
@@ -56,6 +56,42 @@ for cPosInds = 1 : sum(PossibleInds)
     NormSessPathTask{NormSessPathNum} = TaskPathline;
     NormSessPathPass{NormSessPathNum} = PassPathline;
 end
+
+%% loading file to create the NormSessPathTask variable
+% given data path in a txt file for imaging
+cclr
+
+[fn,fp,fi] = uigetfile('*.txt','Please select the used data path saved file');
+if ~fi
+    return;
+end
+fPath = fullfile(fp,fn);
+fids = fopen(fPath);
+tline = fgetl(fids);
+NormSessPathTask = {};
+NormSessPathPass = {};
+m = 1;
+
+while ischar(tline)
+    if isempty(strfind(tline,'NO_Correction\mode_f_change'))
+        tline = fgetl(fids);
+        continue;
+    end
+    
+    NormSessPathTask{m} = tline;
+    
+    [~,EndInds] = regexp(tline,'test\d{2,3}');
+    cPassDataUpperPath = fullfile(sprintf('%srf',tline(1:EndInds)),'im_data_reg_cpu','result_save');
+    
+    [~,InfoDataEndInds] = regexp(tline,'result_save');
+    PassPathline = fullfile(sprintf('%srf%s',tline(1:EndInds),tline(EndInds+1:InfoDataEndInds)),'plot_save','NO_Correction');
+    NormSessPathPass{m} = PassPathline;
+    
+    tline = fgetl(fids);
+    m = m + 1;
+end
+fclose(fids);
+
 
 %%
 nPossTaskPath = length(TaskData);
@@ -1703,7 +1739,7 @@ for css = 1 : cSessions
             SumROIcolormaskNonrp = zeros(size(SumROImask));
         end
             %
-             hColor = figure('position',[30 500 530 450]);
+            hColor = figure('position',[30 500 530 450]);
             ax1=axes;
             h_backf=imagesc(SumROIcolormask,[-1 1]);
             Cpos=get(ax1,'position');
@@ -2010,8 +2046,9 @@ clearvars -except NormSessPathPass NormSessPathTask
 %%
 nSess = length(NormSessPathPass);
 ErroSess = [];
-for css = 1 : nSess
-    
+% ErroMess = {};
+for css = 7 : nSess
+    fprintf('Processing Session %d...\n',css);
     csPath = NormSessPathPass{css};
     %
     cd(csPath);
@@ -2024,6 +2061,7 @@ for css = 1 : nSess
             PassSP_Data_script;
 %         end
         PassCoef_toMtx_script;
+        fprintf('Session %d analysis finished!\n',css);
     catch ME
         disp(ME.message);
         ErroSess = [ErroSess,css];
@@ -2037,8 +2075,9 @@ clearvars -except NormSessPathTask NormSessPathPass
 %
 nSess = length(NormSessPathTask);
 ErroSess = [];
-for css = 2 : nSess-1
-    
+ErroMess = {};
+for css = 1 : nSess
+    fprintf('Processing Session %d...\n',css);
     cSessPath = NormSessPathTask{css};
     cd(cSessPath);
     
@@ -2052,9 +2091,11 @@ for css = 2 : nSess-1
     
     try
         TrSummarization_WithStimOff_script;
-%         PredCoef_summary_script
-    catch
+        PredCoef_summary_script;
+        fprintf('Session %d analysis finished!\n',css);
+    catch ME
         ErroSess = [ErroSess,css];
+        ErroMess{css} = ME;
         sprintf('Error at session %d.\n',css);
     end
 end
@@ -2120,19 +2161,21 @@ for css = 1 : nSess
     cd(csPath);
     fprintf('Processing session %d....\n',css);
     clearvars behavResults data_aligned frame_rate UsedROIInds BehavDataStrc ROIIndex
-%     clearvars behavResults
-%     BehavDataStrc = load(fullfile(csPath,'RandP_data_plots','boundary_result.mat'));
-    if exist(fullfile(csPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'),'file')
-        load(fullfile(csPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'));
-        UsedROIInds = logical(ROIIndex);
-    end 
+% %     clearvars behavResults
+% %     BehavDataStrc = load(fullfile(csPath,'RandP_data_plots','boundary_result.mat'));
+%     if exist(fullfile(csPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'),'file')
+%         load(fullfile(csPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'));
+%         UsedROIInds = logical(ROIIndex);
+%     end 
     
     load('CSessionData.mat');
-    IsTaskSess = 1;
-%     rand_plot(behavResults,4,[],1);
-    TP_TrChoicePred_LOO_script;
-%     Partitioned_neurometric_prediction;
-%     multiCClass(data_aligned,behavResults,trial_outcome,start_frame,frame_rate,1,[]);
+    AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,0,frame_lickAllTrials,[],ROIstate); 
+    AnsTimeAlignPlot(data_aligned,behavResults,0,frame_rate,trial_outcome,1);
+%     IsTaskSess = 1;
+% %     rand_plot(behavResults,4,[],1);
+%     TP_TrChoicePred_LOO_script;
+% %     Partitioned_neurometric_prediction;
+% %     multiCClass(data_aligned,behavResults,trial_outcome,start_frame,frame_rate,1,[]);
     
 end
 
@@ -2192,7 +2235,7 @@ for css = 1:nSess
 %         clearvars -except NormSessPathTask NormSessPathPass nSess ErroSess css cSessPath
         clearvars ROIAboveThresInds ROIRespTypeCoef ROIRespType
 %         if exist('SPDataBehavCoefSaveOff.mat','file')
-            load('SPDataBehavCoefSaveOff.mat');
+            load('./SP_RespField_ana/SPDataBehavCoefSaveOff.mat');
 %         else
 %             clearvars behavResults nnspike DataRaw
 %             load('EstimateSPsaveNewMth.mat');
@@ -2207,7 +2250,10 @@ for css = 1:nSess
             
             PredCoef_summary_script
 %         end
-    
+        if ~isdir('./SP_RespField_ana/')
+            mkdir('./SP_RespField_ana/');
+        end
+        cd('./SP_RespField_ana/');
         ExtractROI_Inds_script
      %
     catch
@@ -2231,9 +2277,19 @@ for css = 1 : nSession
         clearvars TaskCoefDataStrc PassCoefDataStrc
 %
         TaskCoefPath = fullfile(cTaskPath,'SigSelectiveROIInds.mat');
-        TaskCoefDataStrc = load(TaskCoefPath);
+%         delete TaskCoefPath
+        try
+            TaskCoefDataStrc = load(TaskCoefPath);
+        catch
+            TaskCoefDataStrc = load(fullfile(cTaskPath,'SP_RespField_ana','SigSelectiveROIInds.mat'));
+        end
         PassCoefPath = fullfile(cPassPath,'ROIglmCoefSave.mat');
-        PassCoefDataStrc = load(PassCoefPath);
+%         delete PassCoefPath
+        try
+            PassCoefDataStrc = load(PassCoefPath);
+        catch
+            PassCoefDataStrc = load(fullfile(cPassPath,'SP_RespField_ana','ROIglmCoefSave.mat'));
+        end
         PassBFFileData = PassCoefDataStrc.PassBFInds;
         PassBFIndex = find(PassBFFileData);
         nFreqs = numel(PassCoefDataStrc.FreqTypes);

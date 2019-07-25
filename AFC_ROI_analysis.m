@@ -758,7 +758,7 @@ elseif str2double(continue_char)==2
     
 %     MultiTimes = {[0,0.3],[0,0.5],[0,0.8],[0,1],[0,1.3],[0,1.5]};
 %     SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1,MultiTimes);
-%     SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1);
+    SessionSumColorplot(data_aligned,start_frame,trial_outcome,behavResults.Stim_toneFreq,frame_rate,[],1);
 %     Data_pcTrace_script
 %     Partitioned_neurometric_prediction 
     
@@ -810,7 +810,7 @@ elseif str2double(continue_char)==2
              behavResults.Action_choice(NormalTrialInds),1.5,start_frame,frame_rate,16000,0);
      end
      ROIAUCcolorp(TimeCourseStrc,start_frame/frame_rate);
-     script_for_summarizedPlot;
+%%      script_for_summarizedPlot;
      return;
      %%
 %      if ~exist('nnspike','var')

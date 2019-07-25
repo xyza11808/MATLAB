@@ -27,4 +27,9 @@ for cR = 1 : RespNum
     end
 end
 %%
+if ~isdir('./SP_RespField_ana/')
+    mkdir('./SP_RespField_ana/');
+end
+cd('./SP_RespField_ana/');
 save PassCoefMtxSave.mat PassRespCoefMtx PassRespROIInds -v7.3
+cd ..;

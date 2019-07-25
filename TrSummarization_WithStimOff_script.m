@@ -48,11 +48,11 @@ NumAnsDelayFun = length(AnsDelayFrame);
 %%
 % NewNNData = ThresSubData(nnspike);
 if iscell(nnspike)
-%     NMSpikeData = nnspike(NMInds);
-    NMSpikeData = NewNNData(NMInds);
+    NMSpikeData = nnspike(NMInds);
+%     NMSpikeData = NewNNData(NMInds);
 else
-%     NMSpikeData = nnspike(NMInds,:,:);
-    NMSpikeData = NewNNData(NMInds,:,:);
+    NMSpikeData = nnspike(NMInds,:,:);
+%     NMSpikeData = NewNNData(NMInds,:,:);
 end
 %%
 TrEventsRespData = zeros(NMTrNum,nROIs,5+NumAnsDelayFun); % freq, answer, reward corresponded to three columns
@@ -77,8 +77,10 @@ for ctr = 1 : NMTrNum
         cReResp = cTrSPData(:,(TrFTimeReNM(ctr)+1):(TrFTimeReNM(ctr)+1+FrameWin));
         TrEventsRespData(ctr,:,3) = mean(cReResp,2);
     end
+    nMaxFrame = size(cTrSPData,3);
     for cAnsDelayNum = 1 : length(AnsDelayFrame)
-        cAnsDelayResp = cTrSPData(:,(TrAnsFTimeNM(ctr)+1+AnsDelayFrame(cAnsDelayNum)):(TrAnsFTimeNM(ctr)+1+FrameWin+AnsDelayFrame(cAnsDelayNum)));
+        cAnsDelayResp = cTrSPData(:,...
+            min(TrAnsFTimeNM(ctr)+1+AnsDelayFrame(cAnsDelayNum),nMaxFrame):min(TrAnsFTimeNM(ctr)+1+FrameWin+AnsDelayFrame(cAnsDelayNum),nMaxFrame));
         TrEventsRespData(ctr,:,5+cAnsDelayNum) = mean(cAnsDelayResp,2);
     end
 end
@@ -266,7 +268,12 @@ for cROI = 1 : nROIs
     ROIAboveThresInds{cROI,4} = mean(cROICoef_AllRepeats);
 end
 %%
+if ~isdir('./SP_RespField_ana/')
+    mkdir('./SP_RespField_ana/');
+end
+cd('./SP_RespField_ana/');
 save SPDataBehavCoefSaveOff.mat ROIAboveThresInds AllROIData -v7.3
+cd ..;
 %%
 % cROI = 28;
 % cROISPData = cellfun(@(x) x(cROI,:),NMSpikeData,'uniformOutput',false);

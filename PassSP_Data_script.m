@@ -219,5 +219,9 @@ for cr = 1 : nROIs
    %
 end
 %%
+if ~isdir('./SP_RespField_ana/')
+    mkdir('./SP_RespField_ana/');
+end
+cd('./SP_RespField_ana/');
 save ROIglmCoefSave.mat ROIAboveThresSummary FreqTypes PassBFInds ROICoefData ROIOnOffFResp -v7.3
-
+cd ..;

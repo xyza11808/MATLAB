@@ -5,8 +5,13 @@
 % cd(cSessPath);
 % GlmCoefDataPath = fullfile(cSessPath,'SPDataBehavCoefSaveOff.mat');
 GlmCoefDataPath = fullfile(cSessPath,'SPDataBehavCoefSaveOff.mat');
-GlmCoefDataStrc = load(GlmCoefDataPath);
-
+try
+    GlmCoefDataStrc = load(GlmCoefDataPath);
+catch
+    GlmCoefDataPath = fullfile(cSessPath,'SP_RespField_ana','SPDataBehavCoefSaveOff.mat');
+    GlmCoefDataStrc = load(GlmCoefDataPath);
+end
+    
 SoundAlignDataPath = fullfile(cSessPath,'All BehavType Colorplot','PlotRelatedData.mat');
 SoundAlignDataStrc = load(SoundAlignDataPath);
 
@@ -183,4 +188,9 @@ for cROI = 1 : nROIs
     end
 end 
 %%
+if ~isdir('./SP_RespField_ana/')
+    mkdir('./SP_RespField_ana/');
+end
+cd('./SP_RespField_ana/');
 save CoefSummarySave.mat ROIRespTypeCoef ROIRespType MaxCoefV -v7.3
+cd ..;

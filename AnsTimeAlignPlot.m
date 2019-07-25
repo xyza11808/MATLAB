@@ -65,7 +65,7 @@ if (AfterAliLen - MinAnsF) < 2*Frate
     save EarlyAnsAlignSave.mat EarlyAnsAlignData EarlyAnsOutcome EarlyAnsStimFreq MinAnsF SelectROIinds EarlyAnsChoice Frate -v7.3
 end
 
-%
+%%
 if isPlot
     xticks = 0:Frate:AfterAliLen;
     xticklabels = xticks/Frate;
@@ -88,20 +88,22 @@ if isPlot
             CorrData = cFreqData(CorrInds,:);
             MeanCorr = mean(CorrData);
             CorrAx = subplot(3,NumFreq,nf);
-            imagesc(CorrData,clim);
-            line([MinAnsF MinAnsF],[0.5,size(CorrData,1)+0.5],'color','m','linewidth',1.2);
-            set(gca,'xlim',[0.5,size(CorrData,2)+0.5],'ylim',[0.5,size(CorrData,1)+0.5]);
-            title(sprintf('Freq = %d',FreqTypes(nf)));
-            set(gca,'xtick',xticks,'xticklabel',xticklabels,'FontSize',14);
-            if nf == 1
-                ylabel('Correct Trials','Color','r');
-            end
-            if nf == NumFreq
-                AxsPos = get(CorrAx,'position');
-                hbar = colorbar;
-                set(CorrAx,'position',AxsPos);
-                barPos = get(hbar,'position');
-                set(hbar,'position',[barPos(1),barPos(2),barPos(3)*0.3,barPos(4)]);
+            if ~isempty(CorrData)
+                imagesc(CorrData,clim);
+                line([MinAnsF MinAnsF],[0.5,size(CorrData,1)+0.5],'color','m','linewidth',1.2);
+                set(gca,'xlim',[0.5,size(CorrData,2)+0.5],'ylim',[0.5,size(CorrData,1)+0.5]);
+                title(sprintf('Freq = %d',FreqTypes(nf)));
+                set(gca,'xtick',xticks,'xticklabel',xticklabels,'FontSize',14);
+                if nf == 1
+                    ylabel('Correct Trials','Color','r');
+                end
+                if nf == NumFreq
+                    AxsPos = get(CorrAx,'position');
+                    hbar = colorbar;
+                    set(CorrAx,'position',AxsPos);
+                    barPos = get(hbar,'position');
+                    set(hbar,'position',[barPos(1),barPos(2),barPos(3)*0.3,barPos(4)]);
+                end
             end
 
             % plot the error trials

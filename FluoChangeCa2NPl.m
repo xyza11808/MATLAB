@@ -146,6 +146,11 @@ if length(CaTrials)>1
             fprintf(['Trial number ' num2str(n) ' have some frames dropped during acqusition.\n']);
             continue;
         end
+        if isempty(CaTrials(n).f_raw)
+            exclude_inds=[exclude_inds;n];
+            fprintf('Empty f_raw data exists.\n');
+            continue;
+        end
         RawData(n,:,:)=CaTrials(n).f_raw;
         PreOnsetData{n}=CaTrials(n).f_raw(:,1:TrialOnsetTime(n));
         FBaseline(n,:) = mean(CaTrials(n).f_raw(:,1:TrialOnsetTime(n)),2);
@@ -177,6 +182,11 @@ else
         %%
         for n=1:TrialNum
             cRawData = CaTrials.f_raw{n};
+            if isempty(cRawData)
+                exclude_inds=[exclude_inds;n];
+                fprintf('Empty f_raw data exists.\n');
+                continue;
+            end
             cRawEndData = cRawData(:,end-5:end);
             cRawNearEndData = cRawData(:,end-15:end-11);
             if mean(cRawEndData(:)) < (mean(cRawNearEndData(:))/4) && mean(cRawNearEndData(:)) > 20

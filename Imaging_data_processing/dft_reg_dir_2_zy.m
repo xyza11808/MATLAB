@@ -322,7 +322,7 @@ else
         if max(abs((shift(1,:)))>15) || max(abs((shift(2,:)))>15)
             fprintf('the shift in this trial is over 20 pixes do rigistration again using itself as target\n');
             match=abs((shift(1,:)))<20 & abs(shift(2,:))<20;
-            FrameIsBadAlign{i} = a;
+            FrameIsBadAlign{i} = shift;
             im_tg_temp=mean(double(aa(:,:,match)),3);   % change here for the target frame
             funct=tic;
             [im_dft_reg,shift] = dft_reg(im_s, im_tg_temp);

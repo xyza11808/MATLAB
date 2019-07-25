@@ -41,27 +41,35 @@ if nargin > 3
         IsDataLoad = varargin{3};
     end
 end
-
-if strncmp('state',headerString,5) 
-    fileVersion = 3;
-    header = parseHeader(headerString);
-else
-    fileVersion = 4;
-    header = assignments2StructOrObj(headerString);
+try
+    if strncmp('state',headerString,5) 
+        fileVersion = 3;
+        header = parseHeader(headerString);
+    else
+        fileVersion = 4;
+        header = assignments2StructOrObj(headerString);
+    end
+    IsScanim = 1;
+catch
+    header = [];
+    IsScanim = 0;
 end
-
 if IsDataLoad
     %Extracts header info required by scim_openTif()
-    hdr = extractHeaderData(header,fileVersion);
+    if IsScanim
+        hdr = extractHeaderData(header,fileVersion);
 
-    % %VI120910A: Detect/handle header-only operation (don't read data)
-    % if nargout <=1 % && ~forceOutput 
-    %     return;
-    % end
-
+        % %VI120910A: Detect/handle header-only operation (don't read data)
+        % if nargout <=1 % && ~forceOutput 
+        %     return;
+        % end
+        im = zeros(hdr.numLines, hdr.numPixels, length(frame_inds), 'int16');
+    else
+        xx = info(1);
+        im = zeros(xx.Height, xx.Width, length(frame_inds), 'int16');
+    end
     hTif = Tiff(filename,'r');
-
-    im = zeros(hdr.numLines, hdr.numPixels, length(frame_inds), 'int16');
+    
     for i = 1:length(frame_inds)
         hTif.setDirectory(frame_inds(i));
         im(:,:,i) = hTif.read();

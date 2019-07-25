@@ -65,3 +65,6 @@ MIToolbox-3.0.0/LICENSE
 *.m~
 *.m~
 *.mexmaci64
+*.c
+*.html
+*.xml
