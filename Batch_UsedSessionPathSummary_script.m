@@ -2169,8 +2169,12 @@ for css = 1 : nSess
 %     end 
     
     load('CSessionData.mat');
-    AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,0,frame_lickAllTrials,[],ROIstate); 
-    AnsTimeAlignPlot(data_aligned,behavResults,0,frame_rate,trial_outcome,1);
+%     AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,0,frame_lickAllTrials,[],ROIstate); 
+%     AnsTimeAlignPlot(data_aligned,behavResults,0,frame_rate,trial_outcome,1);
+    
+    ROC_check(smooth_data,behavResults.Trial_Type,start_frame,frame_rate,1,'Stim_time_Align');
+    
+    
 %     IsTaskSess = 1;
 % %     rand_plot(behavResults,4,[],1);
 %     TP_TrChoicePred_LOO_script;

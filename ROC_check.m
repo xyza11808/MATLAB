@@ -78,7 +78,7 @@ ROIDiffmd=zeros(1,SizeData(2));
 ROIDiffmn=zeros(1,SizeData(2));
 % % ROIDiffMax=zeros(1,SizeData(2));
 MaxInput = squeeze(mean(SelectData,3));
-
+ROC_bootReal_alls = cell(SizeData(2),2);
 for n=1:SizeData(2)
     CurrentData=squeeze(MaxInput(:,n));
     DataInput=reshape(CurrentData',[],1);
@@ -103,6 +103,11 @@ for n=1:SizeData(2)
     [AllROC,~,sigvalue]=ROCSiglevelGene([DataInput,double(Trials)'],500,1,0.01);
     ROCShufflearea(n) = sigvalue;
     ROCShuffleAll(:,n) = AllROC(:);
+    
+    [Boot_realROC,BootIsRevert] = ROC_BootReal([DataInput,double(Trials)'],500,1); % using bootstrap method
+%     [Boot_realROC,BootIsRevert] = ROC_BootReal([DataInput,double(Trials)'],500,1,0); % using 0.8 fraction subsampling method
+    ROC_bootReal_alls(n,:) = {Boot_realROC,BootIsRevert};
+    
     %     ShuffleType=RandShuffle(test_data(:,2));
     %     DataShuffle=[test_data(:,1),ShuffleType];
     %     [ShuffleSummary,ShuffleStrc]=rocOnlineFoff(DataShuffle);
@@ -191,7 +196,7 @@ if isplot
 end
 %%
 %     save ROC_score.mat ROCarea RespFraction ROIDiffmd ROIDiffmn ROCRevert ROCShufflearea ROCRevertShff -v7.3
-    save ROC_score.mat ROCarea RespFraction ROIDiffmd ROIDiffmn ROCRevert ROCShufflearea ROCRevertShff -v7.3
+    save ROC_score.mat ROCarea RespFraction ROIDiffmd ROIDiffmn ROCRevert ROCShufflearea ROCRevertShff ROC_bootReal_alls -v7.3
 
     %%
     %left trials response compared with baseline levels

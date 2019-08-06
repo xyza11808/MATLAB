@@ -1,4 +1,4 @@
-function [ROCout,LabelMean]=rocFoffBstrap(varargin)
+function varargout=rocFoffBstrap(varargin)
 % ROC - Receiver Operating Characteristics.
 % The ROC graphs are a useful tecnique for organizing classifiers and
 % visualizing their performance. ROC graphs are commonly used in medical
@@ -332,9 +332,9 @@ if ubar > hbar
         Area = 1 - Area;
 end
 
-if nargout
-    ROCout = Area; %Area under the curve
-    LabelMean = ubar > hbar; %label upside down logical inds
+if nargout >= 2
+    varargout{1} = Area; %Area under the curve
+    varargout{2} = ubar > hbar; %label upside down logical inds
 %     ROCout.AUC=Area; %Area under the curve
 %     ROCout.SE=Serror; %standard error of the area
 %     ROCout.ci=ci; % 95% Confidence interval
@@ -342,4 +342,6 @@ if nargout
 %     ROCout.xr=xroc; %graphic x points
 %     ROCout.yr=yroc; %graphic y points
 %     ROCout.table=table;
+elseif nargout == 1
+    varargout{1} = [Area,ubar > hbar];
 end
