@@ -31,7 +31,7 @@ end
 
 span = 3; % frame span for moving average, to set the targe image
 t_fft=tic;
-for i=1:size(im_s,3);
+for i=1:size(im_s,3)
 %     if i <= span
 %         im_tg = mean(im_s(:,:,1:span),3);
 %     else

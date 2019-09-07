@@ -22,7 +22,7 @@ function varargout = SimpleROI_Draw_GUI(varargin)
 
 % Edit the above text to modify the response to help SimpleROI_Draw_GUI
 
-% Last Modified by GUIDE v2.5 21-Jun-2019 23:25:39
+% Last Modified by GUIDE v2.5 19-Aug-2019 20:25:54
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -61,13 +61,18 @@ ROIDataSummary.MaxFrameScale = [0,0];
 ROIDataSummary.UsedFrameScale = [0,0];
 ROIDataSummary.TotalROINum = 0;
 ROIDataSummary.CurrentROINum = 0;
-ROIDataSummary.ROIDataSum = struct('ROIpos',[],'ROIMask',[]);
+ROIDataSummary.ROIDataSum = struct('ROIpos',[],'ROIMask',[],'ROItype','');
 ROIDataSummary.TotalImData = [];
 ROIDataSummary.FigHandle = [];
 ROIDataSummary.UsedImType = [1,0];
 ROIDataSummary.UsedImData = [];
 ROIDataSummary.ImDataShowScale = [0,200];
 ROIDataSummary.IsMultiAdd = 0;
+ROIDataSummary.ROIType = 'Neu';
+% ROIDataSummary.ROITypeAlls = {};
+
+set(handles.ROIType_neu_tag,'Value',1);
+set(handles.ROItype_ast_tag,'Value',0);
 
 % Update handles structure
 guidata(hObject, handles);
@@ -260,17 +265,18 @@ if ~isempty(cInputROI)
         ROIDataSummary.CurrentROINum = cInputROI;
     end
 end
-UpdatesROIPlots(ROIDataSummary.CurrentROINum);
+UpdatesROIPlots(ROIDataSummary.CurrentROINum,handles);
 
 
 
-function UpdatesROIPlots(CurrentROI,varargin)
+function UpdatesROIPlots(CurrentROI,Handle_all,varargin)
 global ROIDataSummary
 if isempty(ROIDataSummary.FigHandle) || ~ishghandle(ROIDataSummary.FigHandle)
-    set(handles.Message_box_tag,'String','Plot the image first.');
+    set(Handle_all.Message_box_tag,'String','Plot the image first.');
 else
     figure(ROIDataSummary.FigHandle);
     clf(ROIDataSummary.FigHandle);
+    cROI = ROIDataSummary.CurrentROINum;
     imagesc(ROIDataSummary.UsedImData,ROIDataSummary.ImDataShowScale);
     colormap gray
     if ROIDataSummary.TotalROINum > 0
@@ -284,7 +290,9 @@ else
                 text(CenterPos(1),CenterPos(2),num2str(cR),'color','c','HorizontalAlignment','center','fontSize',14);
             end
         end
+        set(Handle_all.Show_ROIType_tag,'String',ROIDataSummary.ROIDataSum(cROI).ROItype);
     end
+    
 end
 
 
@@ -330,10 +338,12 @@ else
             case 'Yes'
                 ROIDataSummary.ROIDataSum(cROI).ROIMask=h_mask;
                 ROIDataSummary.ROIDataSum(cROI).ROIpos=h_position;
+                ROIDataSummary.ROIDataSum(cROI).ROItype = ROIDataSummary.ROIType;
+                set(handles.Show_ROIType_tag,'String',ROIDataSummary.ROIType);
                 delete(h_ROI);
                 ROIDataSummary.IsMultiAdd = 0;
                 ROIDraw=0;
-                UpdatesROIPlots(ROIDataSummary.CurrentROINum);
+                UpdatesROIPlots(ROIDataSummary.CurrentROINum,handles);
             case 'Cancle'
                 delete(h_ROI);
                 ROIDraw=0;
@@ -380,8 +390,9 @@ switch choice
        end
        set(handles.TotalROINum_tag,'String',num2str(ROIDataSummary.TotalROINum));
        set(handles.CurrentROI_tag,'String',num2str(ROIDataSummary.CurrentROINum));
+       set(handles.Show_ROIType_tag,'String',ROIDataSummary.ROIType{ROIDataSummary.CurrentROINum});
        set(handles.Message_box_tag,'String',sprintf('Delete ROI %d.',cROI));
-       UpdatesROIPlots(ROIDataSummary.CurrentROINum);
+       UpdatesROIPlots(ROIDataSummary.CurrentROINum,handles);
        
     case 'No'
         return;
@@ -426,7 +437,7 @@ figure(ROIDataSummary.FigHandle);
 imagesc(ROIDataSummary.UsedImData,ROIDataSummary.ImDataShowScale);
 colormap gray
 
-UpdatesROIPlots(ROIDataSummary.CurrentROINum);
+UpdatesROIPlots(ROIDataSummary.CurrentROINum,handles);
 
 
 
@@ -487,7 +498,7 @@ if ~isempty(InputData)
         ROIDataSummary.ImDataShowScale(1) = InputData;
     end
 end
-UpdatesROIPlots(ROIDataSummary.CurrentROINum);
+UpdatesROIPlots(ROIDataSummary.CurrentROINum,handles);
 
 % --- Executes during object creation, after setting all properties.
 function ImScale_min_CreateFcn(hObject, eventdata, handles)
@@ -520,7 +531,7 @@ if ~isempty(InputData)
         ROIDataSummary.ImDataShowScale(2) = InputData;
     end
 end
-UpdatesROIPlots(ROIDataSummary.CurrentROINum);
+UpdatesROIPlots(ROIDataSummary.CurrentROINum,handles);
 
 % --- Executes during object creation, after setting all properties.
 function ImScale_max_CreateFcn(hObject, eventdata, handles)
@@ -599,15 +610,23 @@ switch choice
        fPath = fullfile(fp,fn);
        try 
            CData = load(fPath,'ROIInfoDatas');
-           set(handles.Message_box_tag,'String',sprintf('DLoading ROI data from %s.',fullfile(fp,fn)));
+           set(handles.Message_box_tag,'String',sprintf('Loading ROI data from %s.',fullfile(fp,fn)));
            GivenROINum = length(CData.ROIInfoDatas);
            if GivenROINum > 0
+               if ~isfield(CData.ROIInfoDatas(1),'ROItype')
+                   for cRs = 1 : GivenROINum
+                        CData.ROIInfoDatas(cRs).ROItype = 'Neu';
+                   end
+                   fprintf('Set all ROI types as Neuron.\n');
+               end
                ROIDataSummary.ROIDataSum = CData.ROIInfoDatas;
                ROIDataSummary.TotalROINum = GivenROINum;
                ROIDataSummary.CurrentROINum = GivenROINum;
+               
                set(handles.TotalROINum_tag,'String',num2str(ROIDataSummary.TotalROINum));
                set(handles.CurrentROI_tag,'String',num2str(ROIDataSummary.CurrentROINum));
-               UpdatesROIPlots(ROIDataSummary.CurrentROINum);
+%                set(handles.Show_ROIType_tag,'String',ROIDataSummary.ROIDataSum(ROIDataSummary.CurrentROINum).ROItype);
+               UpdatesROIPlots(ROIDataSummary.CurrentROINum,handles);
            else
                set(handles.Message_box_tag,'String','Input data file have zero ROIs');
                return;
@@ -700,9 +719,10 @@ else
             case 'Yes'
                 ROIDataSummary.ROIDataSum(cROI).ROIMask=h_mask;
                 ROIDataSummary.ROIDataSum(cROI).ROIpos=h_position;
+                ROIDataSummary.ROIDataSum(cROI).ROItype = ROIDataSummary.ROIType;
                 delete(h_ROI);
                 ROIDraw=0;
-                UpdatesROIPlots(ROIDataSummary.CurrentROINum);
+                UpdatesROIPlots(ROIDataSummary.CurrentROINum,handles);
             case 'Cancle'
                 delete(h_ROI);
                 ROIDraw=0;
@@ -717,3 +737,59 @@ else
         end
     end
 end
+
+
+% --- Executes on button press in ROIType_neu_tag.
+function ROIType_neu_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to ROIType_neu_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global ROIDataSummary
+cVs = get(hObject,'Value');
+% Hint: get(hObject,'Value') returns toggle state of ROIType_neu_tag
+if cVs
+%     set(handles.ROIType_neu_tag,'Value',1);
+    set(handles.ROItype_ast_tag,'Value',0);
+    ROIDataSummary.ROIType = 'Neu';
+else
+    set(handles.ROItype_ast_tag,'Value',1);
+    ROIDataSummary.ROIType = 'Ast';
+end
+
+
+% --- Executes on button press in ROItype_ast_tag.
+function ROItype_ast_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to ROItype_ast_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global ROIDataSummary
+cVs = get(hObject,'Value');
+% Hint: get(hObject,'Value') returns toggle state of ROIType_neu_tag
+if cVs
+    set(handles.ROIType_neu_tag,'Value',0);
+    ROIDataSummary.ROIType = 'Ast';
+%     set(handles.ROItype_ast_tag,'Value',0);
+else
+    set(handles.ROIType_neu_tag,'Value',1);
+    ROIDataSummary.ROIType = 'Neu';
+end
+
+
+
+% --- Executes on button press in Update_ROI_Type_tag.
+function Update_ROI_Type_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to Update_ROI_Type_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global ROIDataSummary
+cROI = ROIDataSummary.CurrentROINum;
+if cROI > 0
+    if ~isempty(ROIDataSummary.ROIDataSum(cROI))
+        ROIDataSummary.ROIDataSum(cROI).ROItype = ROIDataSummary.ROIType;
+        set(handles.Show_ROIType_tag,'String',ROIDataSummary.ROIType);
+    else
+        warning('Empty ROI data for current ROI%d, check your input',cROI);
+    end
+end
+
+

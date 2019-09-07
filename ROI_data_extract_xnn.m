@@ -192,7 +192,7 @@ EventParas.IsPlot = 1;
 
 %%
 close all
-cROI = 40;
+cROI = 64;
 cROITrace = MoveFreedff_matrix(cROI,:);
 [FiltTrace,PeakIndex] = TraceEventDetect(cROITrace,FilterOpsAll,EventParas);
 

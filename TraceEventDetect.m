@@ -165,7 +165,7 @@ else
         MaskTraces(OnsetIndex:OffsetIndex) = 1;
         PeakDataSummary(cP,:) = [cPLocs,OnsetIndex,OffsetIndex];
     end
-    %%
+    %
     RealPeakIndex = PeakDataSummary(PeakDataSummary(:,1) > 0,:);
     % split merged peaks by using local minima index
     nMergedPeak = size(RealPeakIndex,1);
@@ -204,7 +204,7 @@ MergedEventsAll = cell2mat(MergePeakCellAll);
 if IsStartFalse && MergedEventsAll(1,2) == 1
     MergedEventsAll(1,:) = [];
 end
-
+%%
 NumEvents = size(MergedEventsAll,1);
 EventTrace = zeros(NumTrace,1);
 for cE = 1 : NumEvents
@@ -214,13 +214,13 @@ for cE = 1 : NumEvents
     if max(MaxData) < 1
         MergedEventsAll(cE,4) = 1;
     else
-        [~,locss] = findpeaks(cEventData,'MinPeakHeight',0.8*MaxData,...
+        [~,locss] = findpeaks(cEventData,'MinPeakHeight',0.75*MaxData,...
             'MinPeakDistance',round(filterOps.Fr));
         NumLocs = length(locss);
         if numel(locss) > 1
             for cLoc = 1 : (numel(locss)-1)
                 cEventLocData = cEventData(locss(cLoc):locss(cLoc+1));
-                if (max(cEventLocData) - min(cEventLocData)) < (MaxData/5)
+                if (max(cEventLocData) - min(cEventLocData)) < (MaxData/8)
                     NumLocs = NumLocs - 1;
                 end
             end
