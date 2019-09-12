@@ -154,19 +154,19 @@ end
 
 %%
 % batched ROI morph plot
-nSessPath = length(NormSessPathTask); % NormSessPathTask  NormSessPathPass
-for cSess = 1 : nSessPath
+nSessPath = length(NormSessPathPass); % NormSessPathTask  NormSessPathPass
+for cSess = 35 : nSessPath
     %
-    cSessPath = NormSessPathTask{cSess};
+    cSessPath = NormSessPathPass{cSess};
 %     [~,EndInds] = regexp(cSessPath,'result_save');
 %     tline = cSessPath(1:EndInds);
     %
     [~,EndInds] = regexp(cSessPath,'result_save');
     ROIposfilePath = cSessPath(1:EndInds); 
     cd(ROIposfilePath);
-    if exist('./ROI_morph_plot/MorphDataAll.mat','file')
-        continue;
-    end
+%     if exist('./ROI_morph_plot/MorphDataAll.mat','file')
+%         continue;
+%     end
     %     if exist(fullfile(ROIposfilePath,'ROI_morph_plot','MorphDataAll.mat'),'file')
     %         tline = fgetl(fid);
     %         continue;
@@ -276,8 +276,8 @@ for cSess = 1 : nSessPath
         
         ROISelectData = MaxDelta(yscales(1):yscales(2),xscales(1):xscales(2));
         ROImaxlim = prctile(ROISelectData(:),100)*1.05;
-        if ROImaxlim > 200
-            ROImaxlim = 150;
+        if ROImaxlim > 800
+            ROImaxlim = 600;
         end
         AdjROIpos = cROIpos - repmat([ROIedgeShift_x,ROIedgeShift_y],size(cROIpos,1),1);
         AdjROIcenter = mean(AdjROIpos);
@@ -431,7 +431,7 @@ m = 1;
 
 nSess = length(NormSessPathTask);
 for cSS = 1 : nSess
-    %%
+    %
     tline = NormSessPathTask{cSS};
 %     if isempty(strfind(tline,'NO_Correction\mode_f_change'))
 %        tline = fgetl(ff);
@@ -441,7 +441,7 @@ for cSS = 1 : nSess
         if exist(fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plotsNew','NewLog_fit_test_new','NewCurveFitsave.mat'),'file')
             continue;
         end
-        %%
+        %
         try
             SpikeDataPath = [tline,'\Tunning_fun_plot_New1s'];
             cd(SpikeDataPath);
@@ -863,7 +863,7 @@ for cSS = 1 : nSess
             ErroSessInds(m) = cSS;
             m = m + 1;
         end
-        %%
+        %
 end
 
 %% batched colormap plots
@@ -1395,7 +1395,7 @@ end
 clearvars -except NormSessPathTask NormSessPathPass
 CusMap = blue2red_2(32,0.8);
 cSessions = length(NormSessPathTask);
-for css = 1 : cSessions
+for css = 5 : cSessions
 % passive tuning frequency colormap plot
     %
     clearvars -except NormSessPathTask css cSessions CusMap
@@ -1404,10 +1404,14 @@ for css = 1 : cSessions
     load(fullfile(tline,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'));
     load(fullfile(tline,'CSessionData.mat'),'behavResults','smooth_data','start_frame','frame_rate');
     cd(fullfile(tline,'Tunning_fun_plot_New1s'));
-    
-    cTunFitDataPath = fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plots','NewLog_fit_test_new','NewCurveFitsave.mat');
-    cTunFitDataUsed = load(cTunFitDataPath,'IsTunedROI','BehavBoundResult','IsCategROI');
-    
+    try
+        cTunFitDataPath = fullfile(tline,'Tunning_fun_plot_New1s','Curve fitting plotsNew','NewLog_fit_test_new','NewCurveFitsave.mat');
+        cTunFitDataUsed = load(cTunFitDataPath,'IsTunedROI','BehavBoundResult','IsCategROI');
+    catch
+        warning('Error for session %d.\n',css);
+        continue;
+    end
+        
     [~,EndInds] = regexp(tline,'result_save');
     ROIposfilePath = tline(1:EndInds);
     ROIposfilePosi = dir(fullfile(ROIposfilePath,'ROIinfo*.mat'));

@@ -1,5 +1,6 @@
 % immport the tif file data. if there are channle label, using
 % given channel label for analysis
+cclr
 UsedChannellabel = 'Ch2';
 
 [fn,fp,fi] = uigetfile('*.tif','Please select one tif file within the data folder.');
@@ -116,7 +117,7 @@ MoveFreedff_matrix = (MoveFreeTrace - repmat(MoveFreePrcData',1,size(MoveFreeTra
     repmat(MoveFreePrcData',1,size(MoveFreeTrace,2));
 %% plots
 hf = figure;
-imagesc(MoveFreedff_matrix,[0 2]);
+imagesc(MoveFreedff_matrix,[0 5]);
 
 %% save all datas
 save SavedROIDatas.mat MoveFreeTrace MoveFreedff_matrix FrameMoveIndex fROIDataAlls -v7.3

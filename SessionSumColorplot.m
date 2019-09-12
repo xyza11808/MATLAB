@@ -159,7 +159,11 @@ for ntimes = 1 : nTimeWins
             cFreq = FreqTypes(nf);
             cFreqInds = SelectTrFreqs == cFreq;
             cFreqTrData = cROIdata(cFreqInds,:);
-            MeancFreqData = mean(cFreqTrData);
+            if size(cFreqTrData,1) == 1
+                MeancFreqData = cFreqTrData(~isnan(cFreqTrData));
+            else
+                MeancFreqData = mean(cFreqTrData);
+            end
             SigROIFreqResp(nSigROIs,nf) = max(MeancFreqData(PeakRange(1):PeakRange(2)));
             SigROIFreqTrace(nSigROIs,nf) = {MeancFreqData};
             SigSingleTrFreqData(nSigROIs,nf) = {cFreqTrData(:,PeakRange(1):PeakRange(2))};
