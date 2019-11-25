@@ -119,7 +119,7 @@ ROINum=ROINum-sum(EmptyROI);
 
 RawData=zeros(TrialNum,ROINum,TrialLen);
 RawDataBU=zeros(TrialNum,ROINum,TrialLen);
-RawRingData=zeros(TrialNum,ROINum,TrialLen);
+
 FChangeData=zeros(TrialNum,ROINum,TrialLen);
 PreOnsetData=cell(1,TrialNum);
 PreOnsetRingF=cell(1,TrialNum);
@@ -155,7 +155,7 @@ if length(CaTrials)>1
         PreOnsetData{n}=CaTrials(n).f_raw(:,1:TrialOnsetTime(n));
         FBaseline(n,:) = mean(CaTrials(n).f_raw(:,1:TrialOnsetTime(n)),2);
 %         PreOnsetDataROI = [PreOnsetDataROI,PreOnsetData{n}];
-        
+        RawRingData=zeros(TrialNum,ROINum,TrialLen);
         if isfield(CaTrials(n),'RingF')
             PreOnsetRingF{n}=CaTrials(n).RingF(:,1:TrialOnsetTime(n));
             RawRingData(n,:,:)=CaTrials(n).RingF;
@@ -240,7 +240,11 @@ if isfield(CaTrials(1),'RingF') && IsNeuropilExtract == 1
 %         FCorrectData(:,n,:)=(CROIdata-CRingdata)+RingFbase(n);
 %     end
 %     clearvars CROIdata CRingdata n
-    
+    if IsContiAcq % for continued acq
+        RawRingDataAlls = cellfun(@(x) [x,zeros(ROINum, TrialLen-size(x,2))],RawRingData,'UniformOutput',false);
+        RawRingData = permute(cat(3,RawRingDataAlls{:}),[3,1,2]);
+    end
+        
     for nRoi = 1 : ROINum
         cROIbase = baselineDataAll(nRoi,:);
         cROIring = baselineDataRing(nRoi,:);
@@ -265,7 +269,8 @@ if isfield(CaTrials(1),'RingF') && IsNeuropilExtract == 1
         FBaseline(m,:) = mean(CorrePreOnsetData{m},2);
     end
     
-elseif isfield(CaTrials(1),'SegNPdataAll') && IsNeuropilExtract == 2
+elseif isfield(CaTrials(1),'SegNPdataAll') && IsNeuropilExtract == 2 && ~IsContiAcq
+    %%
     SegmentalData=CaTrials.SegNPdataAll;
     ROISegLabel=CaTrials.ROISegLabel;
     SegROINPdata=zeros(size(RawData));
@@ -290,6 +295,7 @@ elseif isfield(CaTrials(1),'SegNPdataAll') && IsNeuropilExtract == 2
         FBaseline(TrialN,:) = mean(CorrePreOnsetData{TrialN},2);
     end
     FCorrectData = RawData - SegROINPdata + repmat(SegNPbase',TrialN,1,TrialLen);
+    %%
 else
     FCorrectData=RawData;
     CorrePreOnsetData=PreOnsetData;

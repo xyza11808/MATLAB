@@ -64,14 +64,14 @@ UsedFreqArray = SelectSArray(cSessPassTrInds);
 % figure;imagesc(ROISPData(SortInds,:))
 
 %
-Time_Win = 0.3;
+Time_Win = 0.5;
 FrameWin = round(Time_Win * frame_rate);
 
 FrameDurStrc = load('rfSelectDataSet.mat','sound_array');
 FrameDurData = round(FrameDurStrc.sound_array(:,3)/1000*frame_rate);
 
 OnsetFrame = frame_rate;
-OffsetFrame = frame_rate+FrameWin;
+OffsetFrame = frame_rate+round(0.3 * frame_rate);
 
 
 % figure;
@@ -102,15 +102,27 @@ if length(unique(FrameDurData)) > 2
 end
 ROICoefData = cell(nROIs,1);
 ROIOnOffFResp = zeros(nROIs,nFreqs*2);
+% cDes = designfilt('lowpassfir','PassbandFrequency',3,'StopbandFrequency',5,...
+%                 'StopbandAttenuation', 60,'SampleRate',frame_rate,'DesignMethod','kaiserwin');
+
 %% for loop for each ROI
 for cROI = 1 : nROIs
     %
     ROISPData = squeeze(nnspike(cSessPassTrInds,cROI,:));
     ROISPTrace = reshape(ROISPData',[],1);
-    cROIRawData = squeeze(UsedSelectDatas(:,cROI,:));
+%     ROISPNoiseThres = std(ROISPTrace(ROISPTrace>1e-6));
+%     ROISPData(ROISPData < ROISPNoiseThres) = 0;
+%     ROISPData = ROISPData * frame_rate;
+    cROIRaw = squeeze(UsedSelectDatas(:,cROI,:));
+    cROIRaw2Trace = reshape(cROIRaw',[],1);
+%     cROIRaw2TraceSM = smooth(cROIRaw2Trace,5,'sgolay',3);
+    cROIRaw2TraceSM = smooth(cROIRaw2Trace,5);
+    cROISMMtxData = (reshape(cROIRaw2TraceSM,size(cROIRaw,2),[]))';
+    cROIRawData = cROISMMtxData;
     
     OnsetTrResp = mean(ROISPData(:,OnsetFrame+1:OnsetFrame+FrameWin),2);
-    OnsetTrFReap = mean(cROIRawData(:,OnsetFrame+1:OnsetFrame+FrameWin),2);
+    OnsetTrFReap = max(cROIRawData(:,OnsetFrame+1:OnsetFrame+FrameWin),[],2) - ...
+        max(min(cROIRawData(:,OnsetFrame+1:OnsetFrame+FrameWin),[],2),0);
     if IsVariedDur
        TempRespData = zeros(nTrials,FrameWin); 
        TempFRespData = zeros(nTrials,FrameWin); 
@@ -122,7 +134,8 @@ for cROI = 1 : nROIs
        OffFTrResp = mean(TempFRespData,2);
     else
         OffTrResp = mean(ROISPData(:,OffsetFrame+1:OffsetFrame+FrameWin),2);
-        OffFTrResp = mean(cROIRawData(:,OffsetFrame+1:OffsetFrame+FrameWin),2);
+        OffFTrResp = max(cROIRawData(:,OffsetFrame+1:OffsetFrame+FrameWin),[],2) - ...
+            max(min(cROIRawData(:,OnsetFrame+1:OffsetFrame+FrameWin),[],2),0);
     end
     RespMtx = [OnsetTrResp,OffTrResp];
     %
@@ -140,13 +153,15 @@ for cROI = 1 : nROIs
     AllRepeatData = cell(nRepeats,3);
     for cRepeat = 1 : nRepeats
 
-        nFolds = 5;
-        cc = cvpartition(nTrials,'kFold',nFolds);
+        nFolds = 4;
+%         cc = cvpartition(nTrials,'kFold',nFolds);
+        FoldTrainTestIndex = ClassEvenPartitionFun(UsedFreqArray,nFolds);
         FoldCoefs = cell(nFolds,1);
         FoldDev = zeros(nFolds,1);
         FoldTestPred = cell(nFolds,2);
         for cf = 1 : nFolds
-            TrainInds = find(cc.training(cf));
+%             TrainInds = find(cc.training(cf));
+            TrainInds = FoldTrainTestIndex{1,cf};
             BlankInds = false(nTrials*2,1);
             BlankInds(TrainInds) = true;
             BlankInds(TrainInds+nTrials) = true;
@@ -176,26 +191,26 @@ for cROI = 1 : nROIs
     end
     %
     ROICoefData{cROI} = AllRepeatData;
-    
+    %
 end
 %%
 % Extract Coef Data
 ROIAboveThresSummary = cell(nROIs,2);
 PassBFInds = zeros(nROIs,1); % zeros indicates no significant tuning
 for cr = 1 : nROIs
-    %%
+    %
     crCoef = ROICoefData{cr};
     crCoefMtx = cell2mat(crCoef(:,1));
     cROIResp = ROIOnOffFResp(cr,:);
     
     AvgCoefData = mean(abs(crCoefMtx));
-    crCoefAboveThres = double(mean(abs(crCoefMtx) > 0.4) >= 0.6);
+    crCoefAboveThres = double(mean(abs(crCoefMtx) > 0.3) >= 0.3);
     crCoefAboveThres(cROIResp < 10) = 0;
     
     AvgCoefInds = mean(crCoefMtx);
     NegRespInds = AvgCoefInds < 0; % exclude negtive response value, which may just caused by negtive response
     crCoefAboveThres(NegRespInds) = 0;
-    %%
+    %
     if sum(crCoefAboveThres)
         TempCoefs = AvgCoefInds;
         TempCoefs(~crCoefAboveThres) = 0;
@@ -215,7 +230,7 @@ for cr = 1 : nROIs
         ROIAboveThresSummary{cr,2} = AboveThresIndsCoefAvg;
     end
     
-    %%
+    %
    %
 end
 %%

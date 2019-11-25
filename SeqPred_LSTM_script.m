@@ -16,8 +16,8 @@ TimeStepMD = cell(TrainingSteps,1);
 for cStep = 1 : TrainingSteps
     TimeStepMD{cStep} = TestLSTMModel;
 end
-%% random data for swquence prediction
-cclr
+%% random data for sequence prediction
+% cclr
 x = 0:200;
 y = sin(x*pi/5);
 figure;plot(x,y)

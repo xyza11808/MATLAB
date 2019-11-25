@@ -4,11 +4,12 @@
 % cSessPath = 'S:\BatchData\batch55\20180906\anm07\test06\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change';
 % cd(cSessPath);
 % GlmCoefDataPath = fullfile(cSessPath,'SPDataBehavCoefSaveOff.mat');
-GlmCoefDataPath = fullfile(cSessPath,'SPDataBehavCoefSaveOff.mat');
+
+GlmCoefDataPath = fullfile(cSessPath,'SP_RespField_ana','SPDataBehavCoefSaveOff.mat');
 try
     GlmCoefDataStrc = load(GlmCoefDataPath);
 catch
-    GlmCoefDataPath = fullfile(cSessPath,'SP_RespField_ana','SPDataBehavCoefSaveOff.mat');
+    GlmCoefDataPath = fullfile(cSessPath,'SPDataBehavCoefSaveOff.mat');
     GlmCoefDataStrc = load(GlmCoefDataPath);
 end
     
@@ -44,7 +45,11 @@ ChoiceSortAnsData = zeros(Numfreq,nROIs,cAnsFrame);
 for cf = 1 : Numfreq
     cffInds = AnsAlignDataStrc.NMStimFreq(:) == NMfreqTypes(cf) & AnsAlignDataStrc.NMOutcome(:) == 1;
     cLeftIndsData = AnsAlignDataStrc.AnsAlignData(cffInds,:,:);
-    ChoiceSortAnsData(cf,:,:) = squeeze(mean(cLeftIndsData));
+    if size(cLeftIndsData,1) == 1
+        ChoiceSortAnsData(cf,:,:) = squeeze(cLeftIndsData);
+    else
+        ChoiceSortAnsData(cf,:,:) = squeeze(mean(cLeftIndsData));
+    end
 end
 % cRIndsData = AnsAlignDataStrc.AnsAlignData(~cLeftInds,:,:);
 % ChoiceSortAnsData(2,:,:) = squeeze(mean(cRIndsData));

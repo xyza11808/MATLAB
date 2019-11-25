@@ -171,13 +171,15 @@ for cROI = 1 : nROIs
     RepeatData = cell(nRepeats,3);
     for cRepeat = 1 : nRepeats
         nFolds = 5;
-        cc = cvpartition(NMTrNum,'kFold',nFolds);
+        FoldTrainTestIndex = ClassEvenPartitionFun(TrOctsNM,nFolds);
+%         cc = cvpartition(NMTrNum,'kFold',nFolds);
         FoldCoefs = cell(nFolds,3);
         FoldDev = zeros(nFolds,1);
         FoldTestPred = cell(nFolds,2);
 
         for cf = 1 : nFolds
-            TrainInds = find(cc.training(cf));
+%             TrainInds = find(cc.training(cf));
+            TrainInds = FoldTrainTestIndex{1,cf};
             BlankInds = false(NMTrNum,1);
             % TrainInds = randsample(NMTrNum,round(NMTrNum*0.7));
             BlankInds(TrainInds) = true;

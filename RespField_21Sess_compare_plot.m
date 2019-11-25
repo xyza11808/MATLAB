@@ -1,3 +1,6 @@
+
+% 21 sessions saved path
+
 clearvars -except NormSessPathTask NormSessPathPass
 
 nSession = length(NormSessPathTask);

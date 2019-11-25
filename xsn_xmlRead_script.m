@@ -1,4 +1,5 @@
 % analysis and load all tif files
+% G:\data\20191011_xsn\20191011_field04_zoom2.2_d180_sess07-001\Aligned_datas
 cclr
 [fn,fp,fi] = uigetfile('*.xml','Please select the xml file within tif file folder');
 if ~fi
@@ -92,16 +93,16 @@ for cf = 1 : nFrames
 end
 
 warning on
-%% align tif files 
-if IsCalRef
-    RefAvgIndexScale = [200,350];
-    RefImage = squeeze(mean(AllTifDatas.Ch1_data(:,:,RefAvgIndexScale(1):RefAvgIndexScale(2)),3));
-    figure;
-    imagesc(RefImage,[0 3000]);
-    colormap gray
-    save TargetIm.mat RefImage -v7.3
-end
-%% or load from another session
+% %% align tif files 
+% if IsCalRef
+%     RefAvgIndexScale = [300,400];
+%     RefImage = squeeze(mean(AllTifDatas.Ch1_data(:,:,RefAvgIndexScale(1):RefAvgIndexScale(2)),3));
+%     figure;
+%     imagesc(RefImage,[100 4000]);
+%     colormap gray
+%     save TargetIm.mat RefImage -v7.3
+% end
+% %% or load from another session
 [Ch1_alignedData,ch1_shift] = dft_reg(AllTifDatas.Ch1_data,RefImage);
 padding = [0 0 0 0];
 Ch2_alignedData = ImageTranslation_nx(AllTifDatas.Ch2_data,ch1_shift,padding,0);

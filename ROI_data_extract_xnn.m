@@ -9,7 +9,7 @@ if ~fi
 end
 cd(fp);
 TiffileAll = dir(fullfile(fp,'*.tif'));
-IsChannelLabelExistIndex = arrayfun(@(cc) strcmpi(cc,UsedChannellabel),TiffileAll);
+IsChannelLabelExistIndex = arrayfun(@(cc) contains(cc.name,UsedChannellabel,'IgnoreCase',true),TiffileAll);
 if ~sum(IsChannelLabelExistIndex)
     fprintf('No channel label was founded, loading all tif files for data extraction.\n');
     loadedTifFile = TiffileAll;
@@ -87,9 +87,11 @@ end
 
 %% Exclude frame index from extracted data set
 MoveMentIndex = cell2mat(FrameMoveIndex(:,1));
+% IsMoveExtsts = 1;
 if ~sum(MoveMentIndex)
     fprintf('No movement exists.\n');
-    MoveFreeData = fROIDataAlls;
+    MoveFreeData = fROIDataAlls';
+%     IsMoveExtsts = 0;
 else
     MoveFreeData = cell(1,nfiles);
     for cf = 1 : nfiles
@@ -115,12 +117,28 @@ MoveFreePrcData = prctile(MoveFreeTrace',10);
 
 MoveFreedff_matrix = (MoveFreeTrace - repmat(MoveFreePrcData',1,size(MoveFreeTrace,2)))./...
     repmat(MoveFreePrcData',1,size(MoveFreeTrace,2));
+
 %% plots
 hf = figure;
-imagesc(MoveFreedff_matrix,[0 5]);
+imagesc(MoveFreedff_matrix,[0 1]);
 
 %% save all datas
 save SavedROIDatas.mat MoveFreeTrace MoveFreedff_matrix FrameMoveIndex fROIDataAlls -v7.3
+
+%%
+% cluster analysis
+[Coref,~] = corrcoef(MoveFreedff_matrix');
+zz = linkage(Coref,'complete','correlation');
+% dendrogram(zz,'ColorThreshold',Cutoff);
+Cutoff = 1.0;
+groups = cluster(zz,'cutoff',Cutoff,'criterion','distance');
+GrTypes = unique(groups);
+[~,SortInds] = sort(groups);
+figure;
+imagesc(Coref(SortInds,SortInds),[0 0.6])
+colorbar
+title(sprintf('Number clusters = %d',length(GrTypes)));
+
 
 %%
 cROI = 103;
@@ -192,7 +210,7 @@ EventParas.OffsetThres = 1;
 EventParas.IsPlot = 1;
 
 %%
-close all
+% close all
 cROI = 64;
 cROITrace = MoveFreedff_matrix(cROI,:);
 [FiltTrace,PeakIndex] = TraceEventDetect(cROITrace,FilterOpsAll,EventParas);

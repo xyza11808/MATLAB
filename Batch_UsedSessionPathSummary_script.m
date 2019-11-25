@@ -155,7 +155,7 @@ end
 %%
 % batched ROI morph plot
 nSessPath = length(NormSessPathPass); % NormSessPathTask  NormSessPathPass
-for cSess = 35 : nSessPath
+for cSess = 17 : 34
     %
     cSessPath = NormSessPathPass{cSess};
 %     [~,EndInds] = regexp(cSessPath,'result_save');
@@ -2047,11 +2047,11 @@ end
 % batched spike data analysis for passive sessions
 clearvars -except NormSessPathPass NormSessPathTask
 
-%%
+%% batched spike data analysis for passive sessions
 nSess = length(NormSessPathPass);
 ErroSess = [];
 % ErroMess = {};
-for css = 7 : nSess
+for css = 1 : nSess
     fprintf('Processing Session %d...\n',css);
     csPath = NormSessPathPass{css};
     %
@@ -2100,7 +2100,7 @@ for css = 1 : nSess
     catch ME
         ErroSess = [ErroSess,css];
         ErroMess{css} = ME;
-        sprintf('Error at session %d.\n',css);
+        fprintf('Error at session %d.\n',css);
     end
 end
 
@@ -2235,6 +2235,7 @@ for css = 1:nSess
     
     try
         %
+        fprintf('Current session %d.\n',css);
         cSessPath = NormSessPathTask{css};
         cd(cSessPath);
         %
@@ -2266,7 +2267,7 @@ for css = 1:nSess
      %
     catch
 %         ErroSess = [ErroSess,css];
-        sprintf('Error at session %d.\n',css);
+        fprintf('Error at session %d.\n',css);
     end
     %
 end
@@ -2283,35 +2284,45 @@ for css = 1 : nSession
     try
         %%
         clearvars TaskCoefDataStrc PassCoefDataStrc
-%
-        TaskCoefPath = fullfile(cTaskPath,'SigSelectiveROIInds.mat');
+        TaskCoefDataStrc = load(fullfile(cTaskPath,'SP_RespField_ana','SigSelectiveROIInds.mat'));
 %         delete TaskCoefPath
         try
             TaskCoefDataStrc = load(TaskCoefPath);
         catch
-            TaskCoefDataStrc = load(fullfile(cTaskPath,'SP_RespField_ana','SigSelectiveROIInds.mat'));
+            TaskCoefPath = fullfile(cTaskPath,'SigSelectiveROIInds.mat');
         end
-        PassCoefPath = fullfile(cPassPath,'ROIglmCoefSave.mat');
+        
+        PassCoefDataStrc = load(fullfile(cPassPath,'SP_RespField_ana','ROIglmCoefSave.mat'));
 %         delete PassCoefPath
         try
             PassCoefDataStrc = load(PassCoefPath);
         catch
-            PassCoefDataStrc = load(fullfile(cPassPath,'SP_RespField_ana','ROIglmCoefSave.mat'));
+            PassCoefPath = fullfile(cPassPath,'ROIglmCoefSave.mat');
         end
         PassBFFileData = PassCoefDataStrc.PassBFInds;
         PassBFIndex = find(PassBFFileData);
         nFreqs = numel(PassCoefDataStrc.FreqTypes);
         
+        if ~isdir('./SP_RespField_ana/')
+            mkdir('./SP_RespField_ana/');
+        end
+        cd('./SP_RespField_ana/');
+        
         % plot the task and passive BF together
         TaskBFPath = fullfile(cTaskPath,'Tuning BF distribution plots.fig');
-        ff = openfig(TaskBFPath);
+        try
+            ff = openfig(TaskBFPath);
+        catch
+            TaskBFPath = fullfile(cTaskPath,'SP_RespField_ana','Tuning BF distribution plots.fig');
+            ff = openfig(TaskBFPath);
+        end
         hold on
         [Count,edges] = histcounts(PassBFFileData(PassBFIndex),0.5:nFreqs+0.5);
         plot(1:nFreqs,Count,'k-o','linewidth',1.6);
         saveas(ff,'Task passive Tuning distribution plots');
         saveas(ff,'Task passive Tuning distribution plots','png');
         close(ff);
-        
+        %
         PassRespROIInds = cellfun(@(x) ~isempty(x),PassCoefDataStrc.ROIAboveThresSummary(:,1));
         PassRespROIIndex = find(PassRespROIInds);
         % check is extra passive tuning ROI exists in task Tuning ROIs
@@ -2410,9 +2421,10 @@ for css = 1 : nSession
         saveas(hSumf,'Task Passive Coef Summary','png');
         saveas(hSumf,'Task Passive Coef Summary');
         close(hSumf);
-        %%
-    catch
+        %
+    catch ME
         fprintf('Error for session %d.\n',css);
+        disp(ME);
     end
 end
 

@@ -11,7 +11,7 @@ fids = fopen(fPath);
 tline = fgetl(fids);
 k = 1;
 ErrorMess = {};
-DataSavagePath = 'N:\Documents\Mendeley data\Figure_calciumImaging_21Sessions\21Sessions_Data';
+DataSavagePath = 'F:\21SessionData_withraw';
 nROIsAll = [];
 %%
 while ischar(tline)
@@ -33,19 +33,19 @@ while ischar(tline)
     % load task datas
     clearvars behavResults frame_rate start_frame data_aligned nnspike SpikeAligned
     cd(tline);
-    load('CSessionData.mat','behavResults', 'data_aligned','frame_rate', 'start_frame');
+    load('CSessionData.mat','behavResults', 'data_aligned','frame_rate', 'start_frame','data');
     load('EstimateSPsaveNewMth.mat','SpikeAligned')
 %     
     save(fullfile(DataSavagePath,sprintf('Sess%d_data_save.mat',k)),'behavResults', 'data_aligned',...
-        'frame_rate', 'start_frame','SpikeAligned','-v7.3'); 
+        'frame_rate', 'start_frame','data','SpikeAligned','-v7.3'); 
     
-    % load passive datas
-    clearvars SelectData SelectSArray frame_rate nnspike
-    cd(PassPathline);
-    load('rfSelectDataSet.mat');
-    load('EstimatedSPDatafilter.mat','nnspike');
-    
-    save(fullfile(DataSavagePath,sprintf('Passive_Sess%d_data_save.mat',k)),'SelectData','SelectSArray','frame_rate','nnspike','-v7.3');
+%     % load passive datas
+%     clearvars SelectData SelectSArray frame_rate nnspike
+%     cd(PassPathline);
+%     load('rfSelectDataSet.mat');
+%     load('EstimatedSPDatafilter.mat','nnspike');
+%     
+%     save(fullfile(DataSavagePath,sprintf('Passive_Sess%d_data_save.mat',k)),'SelectData','SelectSArray','frame_rate','nnspike','-v7.3');
     
     nROIsAll = [nROIsAll,size(data_aligned,2)];
     tline = fgetl(fids);
