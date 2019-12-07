@@ -1,6 +1,18 @@
-function FieldCoefDataAlls = EventDataProcessFun(AnmPath)
+function FieldCoefDataAlls = EventDataProcessFun(AnmPath,varargin)
+MatfileName = 'AllFieldDatasNew.mat';
+if nargin > 1
+    if ~isempty(varargin{1})
+        MatfileName = varargin{1};
+    end
+end
+CorrCoefData = 'CorrCoefDataNew.mat';
+if nargin > 2
+    if ~isempty(varargin{2})
+        CorrCoefData = varargin{2};
+    end
+end
 % load All realated datas
-AllFieldData_Strc = load(fullfile(AnmPath,'AllFieldDatasNew.mat'));
+AllFieldData_Strc = load(fullfile(AnmPath,MatfileName));
 AllFieldData_cell = AllFieldData_Strc.FieldDatas_AllCell;
 FieldNum = size(AllFieldData_cell,1);
 
@@ -8,7 +20,7 @@ FieldCoefDataAlls = cell(FieldNum,2);
 FieldCoefDataAlls(:,1) = AllFieldData_cell(:,5);
 for cfield = 1 : FieldNum
     cfName = AllFieldData_cell{cfield,2};
-    cFieldROIInfo_strc = load(fullfile(AnmPath,cfName,'CorrCoefDataNew.mat'),'ROIdataStrc');
+    cFieldROIInfo_strc = load(fullfile(AnmPath,cfName,CorrCoefData),'ROIdataStrc');
     ROITypes = arrayfun(@(x) x.ROItype,cFieldROIInfo_strc.ROIdataStrc.ROIInfoDatas,'uniformOutput',false);
     FieldframeTime = repmat(size(AllFieldData_cell{cfield,1},2)/1800,numel(ROITypes),1);
     
@@ -68,4 +80,3 @@ for cfield = 1 : FieldNum
     FieldCoefDataAlls{cfield,4} = EventTimes;
     FieldCoefDataAlls{cfield,5} = ShuffleEventIndex;
 end
-        
