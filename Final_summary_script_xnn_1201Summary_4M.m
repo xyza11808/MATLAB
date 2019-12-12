@@ -8,7 +8,7 @@
 
 %% load datas for one animal types
 cclr
-SumSourPath = 'M:\data\xnn\p18_wt';
+SumSourPath = 'M:\data\xnn\4MDatas';
 WithinSourcePaths = dir(fullfile(SumSourPath,'*2019*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
 UsedTargetFolder = WithinSourcePaths(FolderIndex);
@@ -21,7 +21,6 @@ MultiSessCoefData = cell(NumFolders,1);
 SepMultiSessCoefData = cell(NumFolders,1);
 % MultiSessGenoType = cell(NumFolders,1);
 EventSyncFrac = cell(NumFolders,1);
-EventSyncFrac_EO = cell(NumFolders,1);
 MultiSessEventData = cell(NumFolders,1);
 PopuFieldSynchrony_all = cell(NumFolders,2);
 EventOnlyFieldSynchrony_all = cell(NumFolders,1);
@@ -31,71 +30,55 @@ for cfff = 1:NumFolders
     cfFullPath = FolderFullpaths{cfff};
     
     cPathFrameIndex = load(fullfile(cfFullPath,'FieldImageFrameNum.mat'));
-%     SessionFieldData =  CorrDataProcessFun(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
-%     MultiSessCoefData{cfff} = SessionFieldData;
+    SessionFieldData =  CorrDataProcessFun(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
+    MultiSessCoefData{cfff} = SessionFieldData;
     
-%     FieldEventDataAlls = EventDataProcessFun(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
-%     MultiSessEventData{cfff} = FieldEventDataAlls;
-%     
-%     FieldNum = size(FieldEventDataAlls,1);
-%     FieldRealShufIndex = cell(FieldNum,1);
-%     for cf = 1 : FieldNum
-%         Field1DataRealIndex = mean(FieldEventDataAlls{cf,4});
-%         Field1DataShufIndex = FieldEventDataAlls{cf,5};
-%         FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
-%     end
-%     EventSyncFrac{cfff} = FieldRealShufIndex;
+    FieldEventDataAlls = EventDataProcessFun(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
+    MultiSessEventData{cfff} = FieldEventDataAlls;
     
-    % processing event-only datas
-    FieldEventDataAlls_EO = EventDataProcessFun_EO(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
-%     MultiSessEventData{cfff} = FieldEventDataAlls_EO;
-    
-    FieldNum = size(FieldEventDataAlls_EO,1);
+    FieldNum = size(FieldEventDataAlls,1);
     FieldRealShufIndex = cell(FieldNum,1);
     for cf = 1 : FieldNum
-        Field1DataRealIndex = mean(FieldEventDataAlls_EO{cf,4});
-        Field1DataShufIndex = FieldEventDataAlls_EO{cf,5};
+        Field1DataRealIndex = mean(FieldEventDataAlls{cf,4});
+        Field1DataShufIndex = FieldEventDataAlls{cf,5};
         FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
     end
-    EventSyncFrac_EO{cfff} = FieldRealShufIndex;
-    % end of processing
+    EventSyncFrac{cfff} = FieldRealShufIndex;
     
-%     cPathROIDataAll = load(fullfile(cfFullPath,'AllFieldDatasNew_1201.mat'));
-%     
-%     cFieldSynIndex = cellfun(@(x) Popu_synchrony_fun(x),cPathROIDataAll.FieldDatas_AllCell(:,1));
-%     PopuFieldSynchrony_all{cfff,1} = cFieldSynIndex;
-%     
-%     [FieldCoefDataAlls,SessSynchronyIndex_All] = CorrDataProcessFun_FieldSep(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
-%     PopuFieldSynchrony_all{cfff,2} = SessSynchronyIndex_All;
-%     SepMultiSessCoefData{cfff} = FieldCoefDataAlls;
-%     
-%     [FieldCoef_EventOnly,SessSynchrony_EventOnly] = CorrDataProcessFun_EventOnly(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
-%     EventOnlyFieldSynchrony_all{cfff,1} = SessSynchrony_EventOnly;
-%     Sess_eventOnlyCoefData{cfff} = FieldCoef_EventOnly;
+    cPathROIDataAll = load(fullfile(cfFullPath,'AllFieldDatasNew_1201.mat'));
     
-%     [StartInd,EndInd] = regexp(cfName,'2019\d{4}_xsn');
-%     cPosStrName = cfName(StartInd:EndInd);
-%     cSessFolderInds = strcmpi(cPosStrName,FolderNames_Cell);
-%     MultiSessGenoType{cfff} = GenoType_Cell{cSessFolderInds};
+    cFieldSynIndex = cellfun(@(x) Popu_synchrony_fun(x),cPathROIDataAll.FieldDatas_AllCell(:,1));
+    PopuFieldSynchrony_all{cfff,1} = cFieldSynIndex;
+    
+    [FieldCoefDataAlls,SessSynchronyIndex_All] = CorrDataProcessFun_FieldSep(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
+    PopuFieldSynchrony_all{cfff,2} = SessSynchronyIndex_All;
+    SepMultiSessCoefData{cfff} = FieldCoefDataAlls;
+    
+    [FieldCoef_EventOnly,SessSynchrony_EventOnly] = CorrDataProcessFun_EventOnly(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
+    EventOnlyFieldSynchrony_all{cfff,1} = SessSynchrony_EventOnly;
+    Sess_eventOnlyCoefData{cfff} = FieldCoef_EventOnly;
+    
+    
 end
 %%
-save(fullfile(SumSourPath,'p18_wtDataSummary.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData',...
-    'PopuFieldSynchrony_all','EventOnlyFieldSynchrony_all','Sess_eventOnlyCoefData','EventSyncFrac_EO','-v7.3');
+save(fullfile(SumSourPath,'4M_tgDataSummary.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData',...
+    'PopuFieldSynchrony_all','EventOnlyFieldSynchrony_all','Sess_eventOnlyCoefData','-v7.3');
 %% compare all coef values for twe types
 % WTSessInds = strcmpi('wt',MultiSessGenoType);
 % WTSessData_Cell = MultiSessCoefData(WTSessInds);
 % TgSessData_Cell = MultiSessCoefData(~WTSessInds);
 cclr
-[WTDataFn,WTDataPath,~] = uigetfile('*wtDataSummary.mat','Select WT data');
-[TgDataFn,TgDataPath,~] = uigetfile('*tgDataSummary.mat','Select Tg data');
+[DataFn,DataPath,~] = uigetfile('*DataSummary.mat','Select 4M data');
+FolderNameStrc = load(fullfile(DataPath,'FNamesSave.mat'));
+FolderNameCells = FolderNameStrc.FolderNames;
+WTStrInds = cellfun(@(x) ~isempty(strfind(x,'wt')),FolderNameCells);
+
 %% load coef datas
-WTDataCoef = load(fullfile(WTDataPath,WTDataFn),'MultiSessCoefData','Sess_eventOnlyCoefData');
+WTDataCoef = load(fullfile(DataPath,DataFn),'MultiSessCoefData','Sess_eventOnlyCoefData');
 % WTSessData_Cell = WTDataCoef.MultiSessCoefData;
-WTSessData_Cell = WTDataCoef.Sess_eventOnlyCoefData;
+WTSessData_Cell = WTDataCoef.Sess_eventOnlyCoefData(WTStrInds,:);
 
-
-TgDataCoef = load(fullfile(TgDataPath,TgDataFn),'MultiSessCoefData','Sess_eventOnlyCoefData');
-TgSessData_Cell = TgDataCoef.Sess_eventOnlyCoefData;
+TgSessData_Cell = WTDataCoef.Sess_eventOnlyCoefData(~WTStrInds,:);
 % TgSessData_Cell = TgDataCoef.MultiSessCoefData;
 
 %%
@@ -331,12 +314,12 @@ saveas(hf,'AllNeu pair noise correlation changes','pdf');
 % end
 
 % [WTDataFn,WTDataPath,~] = uigetfile('*wtDataSummary.mat','Select WT data');
-WTDataEvent = load(fullfile(WTDataPath,WTDataFn),'MultiSessEventData','EventSyncFrac','PopuFieldSynchrony_all',...
-    'EventOnlyFieldSynchrony_all','EventSyncFrac_EO');
-WTSess_EventData_Cell = WTDataEvent.MultiSessEventData;
-WTEventIndexData_cell = WTDataEvent.EventSyncFrac_EO;
-WT_popuSynchrony_All = WTDataEvent.PopuFieldSynchrony_all;
-WT_popuSynchrony_EveOnly = WTDataEvent.EventOnlyFieldSynchrony_all;
+WTDataEvent = load(fullfile(DataPath,DataFn),'MultiSessEventData','EventSyncFrac','PopuFieldSynchrony_all',...
+    'EventOnlyFieldSynchrony_all');
+WTSess_EventData_Cell = WTDataEvent.MultiSessEventData(WTStrInds,:);
+WTEventIndexData_cell = WTDataEvent.EventSyncFrac(WTStrInds,:);
+WT_popuSynchrony_All = WTDataEvent.PopuFieldSynchrony_all(WTStrInds,:);
+WT_popuSynchrony_EveOnly = WTDataEvent.EventOnlyFieldSynchrony_all(WTStrInds,:);
 if size(WT_popuSynchrony_EveOnly,2) == 2
     WT_popuSynchrony_EveOy = WT_popuSynchrony_EveOnly(:,2);
 else
@@ -344,12 +327,12 @@ else
 end
 
 % [TgDataFn,TgDataPath,~] = uigetfile('*tgDataSummary.mat','Select Tg data');
-TgDataEvent = load(fullfile(TgDataPath,TgDataFn),'MultiSessEventData','EventSyncFrac','PopuFieldSynchrony_all',...
-    'EventOnlyFieldSynchrony_all','EventSyncFrac_EO');
-TgSess_EventData_Cell = TgDataEvent.MultiSessEventData;
-TgEventIndexData_cell = TgDataEvent.EventSyncFrac_EO;
-Tg_popuSynchrony_All = TgDataEvent.PopuFieldSynchrony_all;
-Tg_popuSynchrony_EveOnly = TgDataEvent.EventOnlyFieldSynchrony_all;
+% TgDataEvent = load(fullfile(TgDataPath,TgDataFn),'MultiSessEventData','EventSyncFrac','PopuFieldSynchrony_all',...
+%     'EventOnlyFieldSynchrony_all');
+TgSess_EventData_Cell = WTDataEvent.MultiSessEventData(~WTStrInds,:);
+TgEventIndexData_cell = WTDataEvent.EventSyncFrac(~WTStrInds,:);
+Tg_popuSynchrony_All = WTDataEvent.PopuFieldSynchrony_all(~WTStrInds,:);
+Tg_popuSynchrony_EveOnly = WTDataEvent.EventOnlyFieldSynchrony_all(~WTStrInds,:);
 if size(Tg_popuSynchrony_EveOnly,2) == 2
     Tg_popuSynchrony_EveOy = Tg_popuSynchrony_EveOnly(:,2);
 else
@@ -378,7 +361,7 @@ errorbar([1 2],PopuSynIndexMeanSEM(:,1),PopuSynIndexMeanSEM(:,2),'k.','linewidth
 GroupSigIndication([1,2],PopuSynIndexMeanSEM(:,1),p1,HSynf,1.15);
 set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'},'box','off');
 ylabel('PeakNum');
-title('p12 Popu Synchrony');
+title('4M Popu Synchrony');
 %%
 saveas(HSynf,'PopuSynchrony index compare plots save');
 saveas(HSynf,'PopuSynchrony index compare plots save','png');
@@ -403,7 +386,7 @@ errorbar([1 2],EOPopuSynIndexMeanSEM(:,1),EOPopuSynIndexMeanSEM(:,2),'k.','linew
 GroupSigIndication([1,2],EOPopuSynIndexMeanSEM(:,1),p1,HSynf_EO,1.15);
 set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'},'box','off');
 ylabel('PeakNum');
-title('p12 EventOnly Popu Synchrony');
+title('4M EventOnly Popu Synchrony');
 %% compare populational synchrony using event-only trace
 saveas(HSynf_EO,'EventOnly PopuSynchrony index compare plots save');
 saveas(HSynf_EO,'EventOnly PopuSynchrony index compare plots save','png');
@@ -452,7 +435,7 @@ legend([hwtl1,hwtl2,hwtl3,hwtl4],{'WTNeu','WTAst','TgNeu','TgAst'},'location','s
 set(gca,'xlim',[-0.2 15],'ylim',[-0.05 1.05],'box','off');
 xlabel('Events frequency (per Min.)');
 ylabel('Fraction');
-title(sprintf('p12 WT-Tg-Neu-p = %.2e',WT_Tg_Neu_p));
+title(sprintf('4M WT-Tg-Neu-p = %.2e',WT_Tg_Neu_p));
 %%
 saveas(hEventfreq,'Events frequency plots save');
 saveas(hEventfreq,'Events frequency plots save','png');
@@ -492,7 +475,7 @@ errorbar([1 2],LocsNumMeanSEM(:,1),LocsNumMeanSEM(:,2),'k.','linewidth',1.5,'Mar
 GroupSigIndication([1,2],LocsNumMeanSEM(:,1),p1,ax1,1.15);
 set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'},'box','off');
 ylabel('PeakNum');
-title('p12 Peak number');
+title('4M Peak number');
 
 ax2 = subplot(122);
 hold on;
@@ -502,15 +485,11 @@ errorbar([1 2],PeakFracValueMeanSEM(:,1),PeakFracValueMeanSEM(:,2),'k.','linewid
 GroupSigIndication([1,2],PeakFracValueMeanSEM(:,1),p2,ax2,1.15);
 set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'});
 ylabel('PeakFrac');
-title('p12 Peak sync fraction');
+title('4M Peak sync fraction');
 %%
-% saveas(HHf,'P12 Sync Peak number and fraction compare plot');
-% saveas(HHf,'P12 Sync Peak number and fraction compare plot','png');
-% saveas(HHf,'P12 Sync Peak number and fraction compare plot','pdf');
-
-saveas(HHf,'P12 EventOnly Sync Peak number and fraction compare plot');
-saveas(HHf,'P12 EventOnly Sync Peak number and fraction compare plot','png');
-saveas(HHf,'P12 EventOnly Sync Peak number and fraction compare plot','pdf');
+saveas(HHf,'M4 Sync Peak number and fraction compare plot');
+saveas(HHf,'M4 Sync Peak number and fraction compare plot','png');
+saveas(HHf,'M4 Sync Peak number and fraction compare plot','pdf');
 
 %%
 cfield = 9;

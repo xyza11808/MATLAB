@@ -49,7 +49,7 @@ for cfff = 1:NumFolders
 %     MultiSessGenoType{cfff} = GenoType_Cell{cSessFolderInds};
 end
 %
-save(fullfile(SumSourPath,'p12_tgDataSummary.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData','PopuFieldSynchrony_all','-v7.3');
+% save(fullfile(SumSourPath,'p12_tgDataSummary.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData','PopuFieldSynchrony_all','-v7.3');
 %% compare all coef values for twe types
 % WTSessInds = strcmpi('wt',MultiSessGenoType);
 % WTSessData_Cell = MultiSessCoefData(WTSessInds);

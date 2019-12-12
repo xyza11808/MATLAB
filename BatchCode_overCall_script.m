@@ -1,16 +1,18 @@
 cclr;
-SumSourPath = 'G:\data\Data_for_analysis_20191115_undone';
+SumSourPath = 'G:\cal520_imaging_4M_old_mice\';
 WithinSourcePaths = dir(fullfile(SumSourPath,'*2019*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
 UsedTargetFolder = WithinSourcePaths(FolderIndex);
 NumFolders = length(UsedTargetFolder);
 FolderFullpaths = arrayfun(@(x) fullfile(x.folder,x.name),UsedTargetFolder,'UniformOutput',false);
-FolderNames = arrayfun(@(x) x.name,UsedTargetFolder,'UniformOutput',false);
+% FolderNames = arrayfun(@(x) x.name,UsedTargetFolder,'UniformOutput',false);
+%%
 % AllFolderDatas = cell(NumFolders,1);
 for cf = 1:NumFolders
     cInputPath = FolderFullpaths{cf};
     fprintf('Processing folder:\n %s...\n',cInputPath);
-    FieldDatas_AllCell = IsFieldDataPath_LOADMAT(cInputPath);
+%     FieldDatas_All = IsFieldDataPath(cInputPath);
+    FieldDatas_AllCe = IsFieldDataPath_LOADMAT(cInputPath);
 end
 
 % cd('E:\xnn_data')

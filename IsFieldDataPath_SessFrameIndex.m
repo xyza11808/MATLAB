@@ -1,7 +1,7 @@
-function FieldDatas_AllCell = IsFieldDataPath_LOADMAT(InputPath)
+function IsFieldDataPath_SessFrameIndex(InputPath)
 % check whether input data path have field data path
 % Inputfolder = 0;
-FieldDatas_AllCell = {};
+
 if ~isfolder(InputPath)
     return;
 end
@@ -24,65 +24,50 @@ else
         cUpfoldFieldIndex = FieldSessIndexFun(fieldFoldNames,'field');
         cUpfoldExpIndex = FieldSessIndexFun(fieldFoldNames,'index');
         FieldTypes = unique(cUpfoldFieldIndex);
+        try
+            OldFieldData = load(fullfile(InputPath,'AllFieldDatasNew_1115.mat'));
+        end
+        FieldData_old = OldFieldData.FieldDatas_AllCell;
         %
         NumFields = length(FieldTypes);
-        FieldDatas_AllCell = cell(NumFields,6);
+        FieldImageFrameNum = cell(NumFields,1);
+%         FieldDatas_AllCell = cell(NumFields,6);
         for cf_field = 1 : NumFields
-            try
-                %%
-                FieldDataPath = fullfile(InputPath,sprintf('field%02d',cf_field));
-%                 if exist(fullfile(FieldDataPath,'CorrCoefDataNew.mat'),'file') > 0
-%                     continue;
-%                 end
-                
-                cf_field_Inds = cUpfoldFieldIndex == FieldTypes(cf_field);
-                cField_Index_Nums = cUpfoldExpIndex(cf_field_Inds);
-                cField_FullPaths = fileFolderFullpath(cf_field_Inds);
-                [~,C_Field_final_Index_Inds] = max(cField_Index_Nums);
-                FullROIInfoDatas = fullfile(cField_FullPaths{C_Field_final_Index_Inds},...
-                    'Aligned_datas','ROIinfoData.mat');
-                ROIdataStrc = load(FullROIInfoDatas);
-                ROICenterPos = (arrayfun(@(x) mean(x.ROIpos), ROIdataStrc.ROIInfoDatas, 'UniformOutput', false))';
-                ROICenterPosMtx = cell2mat(ROICenterPos);
-                ROIdis_mtx = squareform(pdist(ROICenterPosMtx));
+            %%
+            FieldDataPath = fullfile(InputPath,sprintf('field%02d',cf_field));
 
-                C_Field_ExpNumbers = length(cField_Index_Nums);
-                MoveFreeTraceRaw_All = cell(1,C_Field_ExpNumbers);
-                for cFieldSess = 1 : C_Field_ExpNumbers
-                    cMoveFreeMatFile_path = fullfile(cField_FullPaths{cFieldSess},...
-                        'Aligned_datas','RawROIDatas.mat');
-                    cMoveFreeMatData = load(cMoveFreeMatFile_path);
-                    MoveFreeTraceRaw_All{cFieldSess} = cMoveFreeMatData.MoveFreeTrace(:,101:end);
-                    
-                end
-                FieldDatas_AllCell{cf_field,2} = sprintf('field%02d',cf_field);
-                FieldDatas_AllCell{cf_field,3} =  cField_FullPaths;
-                FieldDatas_AllCell{cf_field,4} =  InputPath;
+            cf_field_Inds = cUpfoldFieldIndex == FieldTypes(cf_field);
+            cField_Index_Nums = cUpfoldExpIndex(cf_field_Inds);
+            cField_FullPaths = fileFolderFullpath(cf_field_Inds);
+            [~,C_Field_final_Index_Inds] = max(cField_Index_Nums);
+            FullROIInfoDatas = fullfile(cField_FullPaths{C_Field_final_Index_Inds},...
+                'Aligned_datas','ROIinfoData.mat');
+            ROIdataStrc = load(FullROIInfoDatas);
+            FieldData_old{cf_field,7} = ROIdataStrc.ROIInfoDatas;
+            
+            ROICenterPos = (arrayfun(@(x) mean(x.ROIpos), ROIdataStrc.ROIInfoDatas, 'UniformOutput', false))';
+            
+            
+            ROICenterPosMtx = cell2mat(ROICenterPos);
+            ROIdis_mtx = squareform(pdist(ROICenterPosMtx));
+            
+            C_Field_ExpNumbers = length(cField_Index_Nums);
+            MoveFreeTraceRaw_All = cell(1,C_Field_ExpNumbers);
+            for cFieldSess = 1 : C_Field_ExpNumbers
+                cMoveFreeMatFile_path = fullfile(cField_FullPaths{cFieldSess},...
+                    'Aligned_datas','RawROIDatas.mat');
+                cMoveFreeMatData = load(cMoveFreeMatFile_path);
+                MoveFreeTraceRaw_All{cFieldSess} = cMoveFreeMatData.MoveFreeTrace(:,101:end);
 
-                MoveFreeTraceRaw_Mtx = cell2mat(MoveFreeTraceRaw_All);
-                MoveFreePrcBaseData = repmat((prctile(MoveFreeTraceRaw_Mtx',8))',1,size(MoveFreeTraceRaw_Mtx,2));
-                MoveFreedff_All_Mtx = (MoveFreeTraceRaw_Mtx - MoveFreePrcBaseData)./...
-                    MoveFreePrcBaseData;
-%                 nROIs = size(MoveFreedff_All_Mtx,1);
-                SessFrameNum = cellfun(@(x) size(x,2),MoveFreeTraceRaw_All);
-                SessNum = length(SessFrameNum);
-                SessBase = 0;
-                AdJustMoveFreeData_All_mtx = zeros(size(MoveFreedff_All_Mtx));
-                for cSess = 1 : SessNum
-                    cSessInds = (SessBase+1):(SessFrameNum(cSess)+SessBase);
-                    cSessDatas = MoveFreedff_All_Mtx(:,cSessInds);
-                    cSess_baselinedata = repmat((prctile(cSessDatas',15))',1,SessFrameNum(cSess));
-                    AdJustMoveFreeData_All_mtx(:,cSessInds) = cSessDatas - cSess_baselinedata;
-                    SessBase = SessBase + SessFrameNum(cSess);
-                end
-                %
+            end
+            SessFrameNum = cellfun(@(x) size(x,2),MoveFreeTraceRaw_All);
+            FieldImageFrameNum{cf_field} = SessFrameNum;
+            %%
+            if isempty(FieldData_old{cf_field,5})
                 
-                FieldDatas_AllCell{cf_field,1} = AdJustMoveFreeData_All_mtx;
+                AdJustMoveFreeData_All_mtx = FieldData_old{cf_field,1};
                 
-                
-                % calculate the correlation and events detection
-                
-                
+
                 if ~isdir(FieldDataPath)
                     mkdir(FieldDataPath);
                 end
@@ -132,7 +117,7 @@ else
                 end
                 %
                 cd ..;
-                FieldDatas_AllCell{cf_field,5} = EventsIndsAllROI;
+                FieldData_old{cf_field,5} = EventsIndsAllROI;
                 % correlation analysis
                 
                 CorrCoefMtx = corrcoef(AdJustMoveFreeData_All_mtx');
@@ -163,7 +148,7 @@ else
                 nROIs = size(CorrCoefMtx,1);
                 ROI_Dis_coef_mask = logical(tril(ones(nROIs),-1));
                 ROI_Dis_coefData = [CorrCoefMtx(ROI_Dis_coef_mask),ROIdis_mtx(ROI_Dis_coef_mask)];
-                FieldDatas_AllCell{cf_field,6} = ROI_Dis_coefData;
+                FieldData_old{cf_field,6} = ROI_Dis_coefData;
                 BincentANDdatas = DisANDCoefplot(ROI_Dis_coefData(:,1),ROI_Dis_coefData(:,2),[]);
                 BinCenters = BincentANDdatas{2};
                 BinCoefDataAll = BincentANDdatas{1};
@@ -182,15 +167,13 @@ else
                 close(hhf);
 
                 save CorrCoefDataNew_0921.mat CorrCoefMtx ROICenterPosMtx ROIdis_mtx ROI_Dis_coefData BincentANDdatas ROIdataStrc -v7.3
-                %%
-            catch ME
-                fprintf('Adjust Error for session:\n %s\nField %02d\n',InputPath,cf_field);
-                warning(ME.message);
+                
+                %
             end
-        end 
+        end
         %
     end
 end
-                
-save(fullfile(InputPath,'AllFieldDatasNew_1115.mat'),'FieldDatas_AllCell','-v7.3');         
+% FieldDatas_AllCell = FieldData_old;
+save(fullfile(InputPath,'FieldImageFrameNum.mat'),'FieldImageFrameNum','-v7.3');         
 

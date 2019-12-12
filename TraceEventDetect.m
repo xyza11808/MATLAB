@@ -151,6 +151,7 @@ if isempty(locs)
 else
     OnsetThresValue = BaselineValue+EventStd * EventOps.OnsetThres;
     OffsetThresValue = BaselineValue+EventStd * EventOps.OffsetThres; 
+    NFData_diff = [0.1;diff(NFNew)];
     
     nPeaks = length(locs);
     MaskTraces = zeros(NumTrace,1);
@@ -175,6 +176,10 @@ else
             end
         else
             OnsetIndex = OnsetTemp_index+1;
+        end
+        NegDiffData_Inds = find(NFData_diff(OnsetIndex:cPLocs) < 0,round(filterOps.Fr/2),'last');
+        if length(NegDiffData_Inds) == round(filterOps.Fr/2)
+            OnsetIndex = NegDiffData_Inds(1)+OnsetIndex;
         end
         
         OffsetTemp_index = find(NFNew(cPLocs:end) < OffsetThresValue,1,'first');
@@ -407,15 +412,27 @@ if EventOps.IsPlot
                 
                 if (max(ccEventDatas) - min(ccEventDatas)) <  EventStd*5 || ...
                         (diff(cEventIndex) > filterOps.Fr * 20)%if the peak was low
-                    if diff(cEventIndex) > filterOps.Fr * 15  % if the event is extremly long
-                        if MergedEventsAll(cEvent,4) < 3
-                            ExcludeEvent(cEvent) = 1;
-                            NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
-                        end
-                    elseif diff(cEventIndex) > filterOps.Fr * 12  % if the event is quiet long
-                        if MergedEventsAll(cEvent,4) < 2
-                           ExcludeEvent(cEvent) = 1;
-                            NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
+                    if diff(cEventIndex) <= round(filterOps.Fr)
+                        ExcludeEvent(cEvent) = 1;
+                        NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
+                        continue;
+                    end         
+                    [~,Locs] = findpeaks(span1DiffData,'MinPeakHeight',DiffThress,...
+                         'MinPeakDistance',round(filterOps.Fr));
+                     [~,LocsForPeak] = findpeaks(span2DiffData,'MinPeakHeight',DiffThress,...
+                         'MinPeakDistance',round(filterOps.Fr));
+                     MergedEventsAll(cEvent,4) = max(numel(LocsForPeak),1);
+                    if ~(length(Locs) >= 1 && max(ccEventDatas) > EventStd*10)
+                        if diff(cEventIndex) > filterOps.Fr * 15  % if the event is extremly long
+                            if MergedEventsAll(cEvent,4) < 3
+                                ExcludeEvent(cEvent) = 1;
+                                NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
+                            end
+                        elseif diff(cEventIndex) > filterOps.Fr * 12  % if the event is quiet long
+                            if MergedEventsAll(cEvent,4) < 2
+                               ExcludeEvent(cEvent) = 1;
+                                NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
+                            end
                         end
                     end
                 end 

@@ -46,6 +46,7 @@ else
             
             ROICenterPos = (arrayfun(@(x) mean(x.ROIpos), ROIdataStrc.ROIInfoDatas, 'UniformOutput', false))';
             
+            
             ROICenterPosMtx = cell2mat(ROICenterPos);
             ROIdis_mtx = squareform(pdist(ROICenterPosMtx));
             %%
