@@ -16,7 +16,7 @@ AllFieldData_Strc = load(fullfile(AnmPath,MatfileName));
 AllFieldData_cell = AllFieldData_Strc.FieldDatas_AllCell;
 FieldNum = size(AllFieldData_cell,1);
 
-FieldCoefDataAlls = cell(FieldNum,2,4);
+FieldCoefDataAlls = cell(FieldNum,2,7);
 for cfield = 1 : FieldNum
     cfName = AllFieldData_cell{cfield,2};
     cFieldROIInfo_strc = load(fullfile(AnmPath,cfName,CorrCoefData),'ROIdataStrc');
@@ -31,32 +31,65 @@ for cfield = 1 : FieldNum
     NeuronInds = ~AstROIInds;
     ActiveNeuInds = NeuronInds(:) & WithEventROIInds(:);
     
+    % calculate the coef between Ast and neuron
+    if sum(AstROIInds)
+        Ast_AllNeu_coefs = cFCoefMtx(AstROIInds,NeuronInds);
+        Ast_AllNeu_Dis = cFDisMtx(AstROIInds,NeuronInds);
+        
+        Ast_Ast_coefs = cFCoefMtx(AstROIInds,AstROIInds);
+        Ast_Ast_Dis = cFDisMtx(AstROIInds,AstROIInds);
+        c1Mask = logical(tril(ones(size(Ast_Ast_coefs)),-1));
+        Ast_Ast_coefsVec = Ast_Ast_coefs(c1Mask);
+        Ast_Ast_DisVec = Ast_Ast_Dis(c1Mask);
+        
+        Neu_Neu_coefs = cFCoefMtx(NeuronInds,NeuronInds);
+        Neu_Neu_Dis = cFDisMtx(NeuronInds,NeuronInds);
+        c2Mask = logical(tril(ones(size(Neu_Neu_coefs)),-1));
+        Neu_Neu_coefsVec = Neu_Neu_coefs(c2Mask);
+        Neu_Neu_DisVec = Neu_Neu_Dis(c2Mask);
+    else
+        Ast_AllNeu_coefs = [];
+        Ast_AllNeu_Dis = [];
+        
+        Ast_Ast_coefsVec = [];
+        Ast_Ast_DisVec = [];
+        
+        Neu_Neu_coefsVec = [];
+        Neu_Neu_DisVec = [];
+    end
+    
     % Active Ast with All Neuron coefs
     if sum(ActiveAstInds)
-        ActAst_AllNeu_coefs = cFCoefMtx(ActiveAstInds,NeuronInds);
-        ActAst_AllNeu_Dis = cFDisMtx(ActiveAstInds,NeuronInds);
         
         ActAst_ActNeu_coefs = cFCoefMtx(ActiveAstInds,ActiveNeuInds);
         ActAst_ActNeu_Dis = cFDisMtx(ActiveAstInds,ActiveNeuInds);
         
-        NeuroCoefMtx = cFCoefMtx(NeuronInds,NeuronInds);
-        NeuroDissMtx = cFDisMtx(NeuronInds,NeuronInds);
-        MtxMask = logical(tril(ones(size(NeuroCoefMtx)),-1));
-        NeuroCoefVec = NeuroCoefMtx(MtxMask);
-        NeuroDissVec = NeuroDissMtx(MtxMask);
+        ActAst_Ast_coefs = cFCoefMtx(ActiveAstInds,ActiveAstInds);
+        ActAst_Ast_Dis = cFDisMtx(ActiveAstInds,ActiveAstInds);
+        MtxMask = logical(tril(ones(size(ActAst_Ast_coefs)),-1));
+        ActAst_AstCoefVec = ActAst_Ast_coefs(MtxMask);
+        ActAst_AstDissVec = ActAst_Ast_Dis(MtxMask);
+        
+        %Active Neu between coefs
+        ActNeuCoefMtxs = cFCoefMtx(ActiveNeuInds,ActiveNeuInds);
+        ActNeuDisMtxs = cFDisMtx(ActiveNeuInds,ActiveNeuInds);
+        ActNeuMask = logical(tril(ones(size(ActNeuCoefMtxs)),-1));
+        ActNeuroCoefVec = ActNeuCoefMtxs(ActNeuMask);
+        ActNeuroDissVec = ActNeuDisMtxs(ActNeuMask);
     else
-        ActAst_AllNeu_coefs = [];
-        ActAst_AllNeu_Dis = [];
+        ActAst_AstCoefVec = [];
+        ActAst_AstDissVec = [];
         
         ActAst_ActNeu_coefs = [];
         ActAst_ActNeu_Dis = [];
         
-        NeuroCoefVec = [];
-        NeuroDissVec = [];
+        
+        ActNeuroCoefVec = [];
+        ActNeuroDissVec = [];
     end
     
-    FieldCoefDataAlls(cfield,1,1:4) = {cFieldCoefs,ActAst_AllNeu_coefs(:),...
-        ActAst_ActNeu_coefs(:),NeuroCoefVec};
-    FieldCoefDataAlls(cfield,2,1:4) = {cFieldDis,ActAst_AllNeu_Dis(:),...
-        ActAst_ActNeu_Dis(:),NeuroDissVec};
+    FieldCoefDataAlls(cfield,1,1:7) = {cFieldCoefs,Ast_AllNeu_coefs,Ast_Ast_coefsVec,Neu_Neu_coefsVec,...
+        ActAst_ActNeu_coefs,ActAst_AstCoefVec,ActNeuroCoefVec};
+    FieldCoefDataAlls(cfield,2,1:7) = {cFieldDis,Ast_AllNeu_Dis,Ast_Ast_DisVec,Neu_Neu_DisVec,...
+        ActAst_ActNeu_Dis,ActAst_AstDissVec,ActNeuroDissVec};
 end
