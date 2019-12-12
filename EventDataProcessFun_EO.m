@@ -11,6 +11,19 @@ if nargin > 2
         CorrCoefData = varargin{2};
     end
 end
+Calculatetype = 'Neu';
+if nargin > 3
+    if ~isempty(varargin{3})
+        Calculatetype = varargin{3};
+    end
+end
+IsActiveNeuOnly = 0;
+if nargin > 4
+    if ~isempty(varargin{4})
+        IsActiveNeuOnly = varargin{4};
+    end
+end
+
 % load All realated datas
 AllFieldData_Strc = load(fullfile(AnmPath,MatfileName));
 AllFieldData_cell = AllFieldData_Strc.FieldDatas_AllCell;
@@ -23,13 +36,29 @@ for cfield = 1 : FieldNum
     cfName = AllFieldData_cell{cfield,2};
     cFieldROIInfo_strc = load(fullfile(AnmPath,cfName,CorrCoefData),'ROIdataStrc');
     ROITypes = arrayfun(@(x) x.ROItype,cFieldROIInfo_strc.ROIdataStrc.ROIInfoDatas,'uniformOutput',false);
+    switch Calculatetype
+        case 'Neu'
+            UsedROIInds = cellfun(@(x) ~isempty(strfind(x,'Neu')),ROITypes);
+        case 'Ast'
+            UsedROIInds = cellfun(@(x) ~isempty(strfind(x,'Ast')),ROITypes); 
+        case 'All'
+            UsedROIInds = true(numel(ROITypes),1);
+        otherwise
+            error('Unkonwn input ROI type');
+    end
+    if IsActiveNeuOnly
+        NeuEventsData = AllFieldData_cell{cfield,5};
+        IsROIActive = cellfun(@(x) ~isempty(x),NeuEventsData);
+        UsedROIInds = UsedROIInds(:) & IsROIActive(:);
+    end
+    
     cField_evenOnlyData = FieldEventOnlyDatas{cfield};
     FieldframeTime = repmat(size(cField_evenOnlyData,2)/1800,numel(ROITypes),1);
     
     FieldCoefDataAlls(cfield,2) = {ROITypes'};
     FieldCoefDataAlls(cfield,3) = {FieldframeTime};
     
-    cFieldDatas = cField_evenOnlyData;
+    cFieldDatas = cField_evenOnlyData(UsedROIInds,:);
     
     NumROIs = size(cFieldDatas,1);
 %     EventTimes = zeros(size(cFieldDatas));
