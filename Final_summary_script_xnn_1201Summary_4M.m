@@ -315,7 +315,7 @@ saveas(hf,'AllNeu pair noise correlation changes','pdf');
 
 % [WTDataFn,WTDataPath,~] = uigetfile('*wtDataSummary.mat','Select WT data');
 WTDataEvent = load(fullfile(DataPath,DataFn),'MultiSessEventData','EventSyncFrac','PopuFieldSynchrony_all',...
-    'EventOnlyFieldSynchrony_all');
+    'EventOnlyFieldSynchrony_all','EventSyncFrac_EO','EventSyncFrac_EONeu','EventSyncFrac_EONeuAct');
 WTSess_EventData_Cell = WTDataEvent.MultiSessEventData(WTStrInds,:);
 WTEventIndexData_cell = WTDataEvent.EventSyncFrac(WTStrInds,:);
 WT_popuSynchrony_All = WTDataEvent.PopuFieldSynchrony_all(WTStrInds,:);
@@ -387,13 +387,51 @@ GroupSigIndication([1,2],EOPopuSynIndexMeanSEM(:,1),p1,HSynf_EO,1.15);
 set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'},'box','off');
 ylabel('PeakNum');
 title('4M EventOnly Popu Synchrony');
+
 %% compare populational synchrony using event-only trace
 saveas(HSynf_EO,'EventOnly PopuSynchrony index compare plots save');
 saveas(HSynf_EO,'EventOnly PopuSynchrony index compare plots save','png');
 saveas(HSynf_EO,'EventOnly PopuSynchrony index compare plots save','pdf');
 
-
 %%
+WT_popuSynchrony_EveOyCell = cat(1,WT_popuSynchrony_EveOy{:,1});
+Tg_popuSynchrony_EveOyCell = cat(1,Tg_popuSynchrony_EveOy{:,1});
+
+SynchronyIndexTypes = {'AllROIs','AllNeu','ActNeu','AllAst','Actst'}; % 'ActROIs'
+NumSynchronyT = numel(SynchronyIndexTypes);
+for cType = 1 : NumSynchronyT
+    
+    WT_popuSynchronyVecEO = cell2mat(WT_popuSynchrony_EveOyCell(:,cType));
+    Tg_popuSynchronyVecEO = cell2mat(Tg_popuSynchrony_EveOyCell(:,cType));
+    
+    WTSessionNum = numel(WT_popuSynchronyVecEO);
+    TgSessionNum = numel(Tg_popuSynchronyVecEO);
+    
+    EOPopuSynIndexMeanSEM = [mean(WT_popuSynchronyVecEO),std(WT_popuSynchronyVecEO)/sqrt(WTSessionNum);...
+        mean(Tg_popuSynchronyVecEO),std(Tg_popuSynchronyVecEO)/sqrt(TgSessionNum)];
+
+    [~,p1] = ttest2(WT_popuSynchronyVecEO,Tg_popuSynchronyVecEO);
+
+    HSynf_EO = figure('position',[100 100 420 300]);
+    % ax1 = subplot(121);
+    hold on;
+    bar(1,EOPopuSynIndexMeanSEM(1,1),0.5,'FaceColor',[.7 .7 .7],'edgecolor','none');
+    bar(2,EOPopuSynIndexMeanSEM(2,1),0.5,'FaceColor','r','edgecolor','none');
+    errorbar([1 2],EOPopuSynIndexMeanSEM(:,1),EOPopuSynIndexMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
+    GroupSigIndication([1,2],EOPopuSynIndexMeanSEM(:,1),p1,HSynf_EO,1.15);
+    set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'},'box','off');
+    ylabel('PeakNum');
+    title('4M EventOnly Popu Synchrony');
+    % compare populational synchrony using event-only trace
+    cTypeStr = SynchronyIndexTypes{cType};
+    saveas(HSynf_EO,sprintf('%s EventOnly PopuSynchrony index compare plots save',cTypeStr));
+    saveas(HSynf_EO,sprintf('%s EventOnly PopuSynchrony index compare plots save',cTypeStr),'png');
+    saveas(HSynf_EO,sprintf('%s EventOnly PopuSynchrony index compare plots save',cTypeStr),'pdf');
+    close(HSynf_EO);
+end
+
+
+%% events frequency plots
 WTSess_EventData_all = cat(1,WTSess_EventData_Cell{:});
 TgSess_EventData_all = cat(1,TgSess_EventData_Cell{:});
 
@@ -442,6 +480,8 @@ saveas(hEventfreq,'Events frequency plots save','png');
 saveas(hEventfreq,'Events frequency plots save','pdf');
 
 %%
+%% . ################################################################
+%% . ################################################################
 % event synchrony analysis
 % EventSyncFrac
 % WTSessInds = strcmpi('wt',MultiSessGenoType);
@@ -453,9 +493,9 @@ TgEventIndexData_FieldCell = cat(1,TgEventIndexData_cell{:});
 [WTAllPeak,WTAlllocs] = cellfun(@(x) EventIndexSyncPeakNum(x,180),WTEventIndexData_FieldCell,'UniformOutput',false);
 [TgAllPeaks,TgAlllocs] = cellfun(@(x) EventIndexSyncPeakNum(x,180),TgEventIndexData_FieldCell,'UniformOutput',false);
 
-WTFieldLocsNum = cellfun(@numel,WTAlllocs);
+WTFieldLocsNum = cellfun(@(x,y) numel(x)/(size(y,1)/1800),WTAlllocs,WTEventIndexData_FieldCell);
 WTFieldPeakValue = cellfun(@mean,WTAllPeak);
-TgFieldLocsNum = cellfun(@numel,TgAlllocs);
+TgFieldLocsNum = cellfun(@(x,y) numel(x)/(size(y,1)/1800),TgAlllocs,TgEventIndexData_FieldCell);
 TgFieldPeakValue = cellfun(@mean,TgAllPeaks);
 
 [~,p1] = ttest2(WTFieldLocsNum,TgFieldLocsNum);
@@ -474,7 +514,7 @@ bar(2,LocsNumMeanSEM(2,1),0.5,'FaceColor','r','edgecolor','none');
 errorbar([1 2],LocsNumMeanSEM(:,1),LocsNumMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
 GroupSigIndication([1,2],LocsNumMeanSEM(:,1),p1,ax1,1.15);
 set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'},'box','off');
-ylabel('PeakNum');
+ylabel('PeakNum/Min');
 title('4M Peak number');
 
 ax2 = subplot(122);
@@ -487,9 +527,115 @@ set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'});
 ylabel('PeakFrac');
 title('4M Peak sync fraction');
 %%
-saveas(HHf,'M4 Sync Peak number and fraction compare plot');
-saveas(HHf,'M4 Sync Peak number and fraction compare plot','png');
-saveas(HHf,'M4 Sync Peak number and fraction compare plot','pdf');
+% saveas(HHf,'P12 Sync Peak number and fraction compare plot');
+% saveas(HHf,'P12 Sync Peak number and fraction compare plot','png');
+% saveas(HHf,'P12 Sync Peak number and fraction compare plot','pdf');
+
+saveas(HHf,'4M EventOnly Sync Peak number and fraction compare plot');
+saveas(HHf,'4M EventOnly Sync Peak number and fraction compare plot','png');
+saveas(HHf,'4M EventOnly Sync Peak number and fraction compare plot','pdf');
+
+%% Using only neurons for synchrony fraction and peak
+% event synchrony analysis
+% EventSyncFrac
+% WTSessInds = strcmpi('wt',MultiSessGenoType);
+
+WTEventIndexData_FieldCell = cat(1,WTDataEvent.EventSyncFrac_EONeu{WTStrInds});
+
+TgEventIndexData_FieldCell = cat(1,WTDataEvent.EventSyncFrac_EONeu{~WTStrInds});
+
+[WTAllPeak,WTAlllocs] = cellfun(@(x) EventIndexSyncPeakNum(x,180),WTEventIndexData_FieldCell,'UniformOutput',false);
+[TgAllPeaks,TgAlllocs] = cellfun(@(x) EventIndexSyncPeakNum(x,180),TgEventIndexData_FieldCell,'UniformOutput',false);
+
+WTFieldLocsNum = cellfun(@(x,y) numel(x)/(size(y,1)/1800),WTAlllocs,WTEventIndexData_FieldCell);
+WTFieldPeakValue = cellfun(@mean,WTAllPeak);
+TgFieldLocsNum = cellfun(@(x,y) numel(x)/(size(y,1)/1800),TgAlllocs,TgEventIndexData_FieldCell);
+TgFieldPeakValue = cellfun(@mean,TgAllPeaks);
+
+[~,p1] = ttest2(WTFieldLocsNum,TgFieldLocsNum);
+[~,p2] = ttest2(WTFieldPeakValue,TgFieldPeakValue);
+
+LocsNumMeanSEM = [mean(WTFieldLocsNum),std(WTFieldLocsNum)/sqrt(numel(WTFieldLocsNum));...
+    mean(TgFieldLocsNum),std(TgFieldLocsNum)/sqrt(numel(TgFieldLocsNum))];
+PeakFracValueMeanSEM = [mean(WTFieldPeakValue),std(WTFieldPeakValue)/sqrt(numel(WTFieldPeakValue));...
+    mean(TgFieldPeakValue),std(TgFieldPeakValue)/sqrt(numel(TgFieldPeakValue))];
+
+HHf = figure('position',[100 100 710 320]);
+ax1 = subplot(121);
+hold on;
+bar(1,LocsNumMeanSEM(1,1),0.5,'FaceColor',[.7 .7 .7],'edgecolor','none');
+bar(2,LocsNumMeanSEM(2,1),0.5,'FaceColor','r','edgecolor','none');
+errorbar([1 2],LocsNumMeanSEM(:,1),LocsNumMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
+GroupSigIndication([1,2],LocsNumMeanSEM(:,1),p1,ax1,1.15);
+set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'},'box','off');
+ylabel('PeakNum/Min');
+title('4M Peak number');
+
+ax2 = subplot(122);
+hold on;
+bar(1,PeakFracValueMeanSEM(1,1),0.5,'FaceColor',[.7 .7 .7],'edgecolor','none');
+bar(2,PeakFracValueMeanSEM(2,1),0.5,'FaceColor','r','edgecolor','none');
+errorbar([1 2],PeakFracValueMeanSEM(:,1),PeakFracValueMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
+GroupSigIndication([1,2],PeakFracValueMeanSEM(:,1),p2,ax2,1.15);
+set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'});
+ylabel('PeakFrac');
+title('4M Peak sync fraction');
+
+%%
+saveas(HHf,'4M EventOnly Sync Peak number and fraction NeuOnly plot');
+saveas(HHf,'4M EventOnly Sync Peak number and fraction NeuOnly plot','png');
+saveas(HHf,'4M EventOnly Sync Peak number and fraction NeuOnly plot','pdf');
+
+%% Using only active neurons for synchrony fraction and peak
+% event synchrony analysis
+% EventSyncFrac
+% WTSessInds = strcmpi('wt',MultiSessGenoType);
+
+WTEventIndexData_FieldCell = cat(1,WTDataEvent.EventSyncFrac_EONeuAct{WTStrInds});
+
+TgEventIndexData_FieldCell = cat(1,WTDataEvent.EventSyncFrac_EONeuAct{~WTStrInds});
+
+[WTAllPeak,WTAlllocs] = cellfun(@(x) EventIndexSyncPeakNum(x,180),WTEventIndexData_FieldCell,'UniformOutput',false);
+[TgAllPeaks,TgAlllocs] = cellfun(@(x) EventIndexSyncPeakNum(x,180),TgEventIndexData_FieldCell,'UniformOutput',false);
+
+WTFieldLocsNum = cellfun(@(x,y) numel(x)/(size(y,1)/1800),WTAlllocs,WTEventIndexData_FieldCell);
+WTFieldPeakValue = cellfun(@mean,WTAllPeak);
+TgFieldLocsNum = cellfun(@(x,y) numel(x)/(size(y,1)/1800),TgAlllocs,TgEventIndexData_FieldCell);
+TgFieldPeakValue = cellfun(@mean,TgAllPeaks);
+
+[~,p1] = ttest2(WTFieldLocsNum,TgFieldLocsNum);
+[~,p2] = ttest2(WTFieldPeakValue,TgFieldPeakValue);
+
+LocsNumMeanSEM = [mean(WTFieldLocsNum),std(WTFieldLocsNum)/sqrt(numel(WTFieldLocsNum));...
+    mean(TgFieldLocsNum),std(TgFieldLocsNum)/sqrt(numel(TgFieldLocsNum))];
+PeakFracValueMeanSEM = [mean(WTFieldPeakValue),std(WTFieldPeakValue)/sqrt(numel(WTFieldPeakValue));...
+    mean(TgFieldPeakValue),std(TgFieldPeakValue)/sqrt(numel(TgFieldPeakValue))];
+
+HHf = figure('position',[100 100 710 320]);
+ax1 = subplot(121);
+hold on;
+bar(1,LocsNumMeanSEM(1,1),0.5,'FaceColor',[.7 .7 .7],'edgecolor','none');
+bar(2,LocsNumMeanSEM(2,1),0.5,'FaceColor','r','edgecolor','none');
+errorbar([1 2],LocsNumMeanSEM(:,1),LocsNumMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
+GroupSigIndication([1,2],LocsNumMeanSEM(:,1),p1,ax1,1.15);
+set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'},'box','off');
+ylabel('PeakNum/Min');
+title('4M Peak number');
+
+ax2 = subplot(122);
+hold on;
+bar(1,PeakFracValueMeanSEM(1,1),0.5,'FaceColor',[.7 .7 .7],'edgecolor','none');
+bar(2,PeakFracValueMeanSEM(2,1),0.5,'FaceColor','r','edgecolor','none');
+errorbar([1 2],PeakFracValueMeanSEM(:,1),PeakFracValueMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
+GroupSigIndication([1,2],PeakFracValueMeanSEM(:,1),p2,ax2,1.15);
+set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'});
+ylabel('PeakFrac');
+title('4M Peak sync fraction');
+
+%%
+saveas(HHf,'4M EventOnly Sync Peak number and fraction ActiveNeuOnly plot');
+saveas(HHf,'4M EventOnly Sync Peak number and fraction ActiveNeuOnly plot','png');
+saveas(HHf,'4M EventOnly Sync Peak number and fraction ActiveNeuOnly plot','pdf');
 
 %%
 cfield = 9;
