@@ -20,7 +20,7 @@ FieldNum = size(AllFieldData_cell,1);
 FieldEventOnlyDatas = EventOnlyTrace_fun(AnmPath,MatfileName);
 
 FieldCoefDataAlls = cell(FieldNum,2,7);
-SessSynchronyIndex_All = cell(FieldNum,5);
+SessSynchronyIndex_All = cell(FieldNum,6);
 for cfield = 1 : FieldNum
     cfName = AllFieldData_cell{cfield,2};
     cFieldROIInfo_strc = load(fullfile(AnmPath,cfName,CorrCoefData),'ROIdataStrc');
@@ -45,7 +45,8 @@ for cfield = 1 : FieldNum
     SessSeqSynchronyIndex3 = Popu_synchrony_fun(cField_eventOnly_data(ActiveNeuInds,:));
     SessSynchronyIndex_All{cfield,3} = SessSeqSynchronyIndex3;
     
-    
+    SessSeqSynchronyIndex6 = Popu_synchrony_fun(cField_eventOnly_data(WithEventROIInds,:));
+    SessSynchronyIndex_All{cfield,6} = SessSeqSynchronyIndex6;
     
     % calculate the coef between Ast and neuron
     if sum(AstROIInds)
