@@ -73,6 +73,10 @@ FolderNameStrc = load(fullfile(DataPath,'FNamesSave.mat'));
 FolderNameCells = FolderNameStrc.FolderNames;
 WTStrInds = cellfun(@(x) ~isempty(strfind(x,'wt')),FolderNameCells);
 
+%%
+% cd to the correct folder path bvefore runing
+PeakAmp_compare_plot_script_4M;
+
 %% load coef datas
 WTDataCoef = load(fullfile(DataPath,DataFn),'MultiSessCoefData','Sess_eventOnlyCoefData');
 % WTSessData_Cell = WTDataCoef.MultiSessCoefData;

@@ -6,7 +6,8 @@ switch Ftype
        [~,~,raw] = xlsread(fname,sheet);
        EnvNum = raw{1,1};
        TimeLen = raw{1,end};
-       TargetFields = {'Rise (ms)','Amplitude','Decay (ms)','10-90Rise','HalfWidth','Rise50','10-90Slope'};
+       TargetFields = {'Rise (ms)','Amplitude','Decay (ms)','10-90Rise','HalfWidth',...
+           'Area','Baseline','Noise','Rise50','10-90Slope'};
        UsedFieldNum = length(TargetFields);
        DataStrc = struct();
        for cfields = 1 : UsedFieldNum

@@ -8,8 +8,8 @@
 
 %% load datas for one animal types
 cclr
-SumSourPath = '/Users/xinyu/Documents/docs/xnn/p18_wt';
-% SumSourPath = 'M:\data\xnn\p12_wt';
+% SumSourPath = '/Users/xinyu/Documents/docs/xnn/p18_wt';
+SumSourPath = 'M:\data\xnn\4MDatas';
 WithinSourcePaths = dir(fullfile(SumSourPath,'*2019*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
 UsedTargetFolder = WithinSourcePaths(FolderIndex);
@@ -494,6 +494,14 @@ GroupSigIndication([3,4],EventFreqAvgAlls(3:4),WT_Tg_Ast_p,AxInsert,1.6,[],6);
 saveas(hEventfreq,'Events frequency plots save');
 saveas(hEventfreq,'Events frequency plots save','png');
 saveas(hEventfreq,'Events frequency plots save','pdf');
+%% events amplitude plots
+% ################
+% cd to the correct folder path bvefore runing
+PeakAmp_compare_plot_script;
+%% Run this before runing former section
+cclr
+[WTDataFn,WTDataPath,~] = uigetfile('*wtDataSummary.mat','Select WT data');
+[TgDataFn,TgDataPath,~] = uigetfile('*tgDataSummary.mat','Select Tg data');
 
 %% . ################################################################
 %% . ################################################################
