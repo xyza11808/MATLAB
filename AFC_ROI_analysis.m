@@ -397,6 +397,7 @@ if iscell(nnspike)
 else
     UsedSPData = nnspike;
     SPsizeDataNew = size(UsedSPData);
+    SPDataAll = nnspike;
 end
     
 % for n=1:size_data(2)
@@ -743,7 +744,7 @@ elseif str2double(continue_char)==2
     end
     %%
 %     if  ~(exist('./SpikeDataSave/EstimateSPsave.mat','file') || exist('EstimateSPsave.mat','file'))
-         save EstimateSPsaveNewMth.mat nnspike SpikeAligned data_aligned behavResults start_frame frame_rate -v7.3
+         save EstimateSPsaveNewMth.mat nnspike SpikeAligned data_aligned behavResults start_frame SPDataAll frame_rate -v7.3
 %     else
 %         load('EstimateSPsave.mat');
 %     end
@@ -774,7 +775,7 @@ elseif str2double(continue_char)==2
         
         BlockWisePsyPlot(behavResults);
     else
-%     if isfield(CaTrials_signal,'ROIstateIndic')
+%%     if isfield(CaTrials_signal,'ROIstateIndic')
         AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials,[],ROIstate); % plot lick frames
 %     else
 %         AlignedSortPlotAll(data,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials);
@@ -782,13 +783,13 @@ elseif str2double(continue_char)==2
     %%
     AnsTimeAlignPlot(data_aligned,behavResults,1,frame_rate,trial_outcome,1); % answer time alignment, with figure plot
     %
-    if ~isdir('SpikeDataSave')
-        mkdir('SpikeDataSave');
-    end
-    cd('SpikeDataSave');
+%     if ~isdir('SpikeDataSave')
+%         mkdir('SpikeDataSave');
+%     end
+%     cd('SpikeDataSave');
     
 %     AlignedSortPlotAll(SpikeAligned,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials); % plot lick frames
-    cd ..;
+%     cd ..;
 
 %     RandNMTChoiceDecoding(smooth_data(radom_inds,:,:),behavResults,trial_outcome(radom_inds),start_frame,frame_rate,1.5);
     LRAlignedStrc = AlignedSortPLot(data_aligned(NormalTrialInds,:,:),behavResults.Time_reward(NormalTrialInds),...

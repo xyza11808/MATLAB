@@ -1416,6 +1416,28 @@ for i = 1: nROI_effective
         baseline = mean(F_mode);
         dff(i,:) = (F(i,:)- baseline)./baseline*100;
 end
+
+function LabelSegNPData = SegNPdataExtraction(im,LabelNPmask,varargin)
+%this function is used to extract segmental NP datat from Raw image and
+%passed to matlab GUI
+
+imsize=size(im);
+LabelNum=length(LabelNPmask);
+LabelNPData=zeros(LabelNum,imsize(3));
+
+for Label = 1:LabelNum
+    LabelMask = LabelNPmask{Label};
+%     PixelNum = sum(sum(LabelMask));
+    D3IMMask = logical(repmat(LabelMask,1,1,imsize(3)));
+    ExtractData = double(im(D3IMMask));
+    D3IMData = reshape(ExtractData,[],imsize(3));
+    MeanNPData = mean(D3IMData);
+    LabelNPData(Label,:) = MeanNPData;
+end
+
+LabelSegNPData = LabelNPData;
+
+
 %%
 function doBatchButton_Callback(hObject, eventdata, handles)
 global CaSignal % ROIinfo ICA_ROIs
@@ -1681,7 +1703,6 @@ catch ME
         mkdir('./TempDataSaving/');
     end
     BlockNum = 50;
-    clear TempPopuMeanSave TempPopuMaxSave DataSaveStrc im F fRing dff TempCaTrials_local isTrInit;
      
     TrBlockInds = Start_trial:BlockNum:End_trial;
     if TrBlockInds(end) < End_trial
@@ -1751,7 +1772,8 @@ catch ME
          cd('./TempDataSaving/');
         save(sprintf('TempSaveData%d.mat',nB),'TempPopuMeanSave','TempPopuMaxSave','DataSaveStrc','BlockStart',...
             'TempCaTrials_local','BlockEnd','isTrInit','-v7.3');
-       
+        clear TempPopuMeanSave TempPopuMaxSave DataSaveStrc im F fRing dff TempCaTrials_local isTrInit;
+%         clearvars TempPopuMeanSave TempPopuMaxSave DataSaveStrc TempCaTrials_local isTrInit
         cd ..;
     end
     %%
@@ -1806,9 +1828,31 @@ else
     span = 3;
 end
 mean_im = uint16(mean(double(im),3));
-Smoothim = im_mov_avg(im,span);
-max_im = max(Smoothim,[],3);
+% Smoothim = im_mov_avg(im,span);
+max_im = max(im_mov_avg(im,span),[],3);
 MAxDelta = max_im - mean_im;
+% clearvars Smoothim
+
+function im_smth = im_mov_avg(im, span)
+
+% Note, span has to be odd number
+
+% - NX 3/11/2009
+
+im = double(im);
+mean_im = mean(im,3);
+
+pad = zeros(size(im,1),size(im,2), (span-1)/2);
+for i = 1: (span-1)/2
+    pad(:,:,i) = mean_im;
+end
+temp = cat(3,pad,im,pad);
+
+im_smth = zeros(size(im),'uint16');
+
+for i = 1:size(im,3) % (span-1)/2+1 : size(im,3)+(span-1)/2
+    im_smth(:,:,i) = mean(temp(:,:,i:i+span-1), 3);
+end
 
 
 function SaveResultsButton_Callback(hObject, eventdata, handles)

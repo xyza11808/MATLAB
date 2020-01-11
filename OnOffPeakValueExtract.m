@@ -1,5 +1,5 @@
 function [OnPeakInds,OffPeakInds] = OnOffPeakValueExtract(Trace,OnFrame,fRate)
-TimeWin = 0.3;
+TimeWin = 1;
 Fwin = round(TimeWin*fRate);
 if numel(Trace) < (OnFrame+Fwin*2)
    OnPeakInds = -1;

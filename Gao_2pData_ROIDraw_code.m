@@ -22,7 +22,7 @@ function varargout = Gao_2pData_ROIDraw_code(varargin)
 
 % Edit the above text to modify the response to help Gao_2pData_ROIDraw_code
 
-% Last Modified by GUIDE v2.5 05-Sep-2019 22:34:42
+% Last Modified by GUIDE v2.5 23-Dec-2019 21:18:02
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -77,6 +77,8 @@ ROIDataSummary.SelectDffData = [];
 ROIDataSummary.LeftRightTrNum = [0,0];
 ROIDataSummary.FrameRate = 5;
 ROIDataSummary.OnsetTime = 6;
+ROIDataSummary.ROIInfoSavePath = [];
+ROIDataSummary.cSessData = [];
 
 set(handles.FrameRate_edit_tag,'String','5');
 set(handles.StimOnset_edit_tag,'String','6');
@@ -105,6 +107,12 @@ function LoadAlignData_tag_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global ROIDataSummary
+ROIDataSummary.DataPath = '';
+ROIDataSummary.DataFolder = '';
+ROIDataSummary.AlignData = {};
+ROIDataSummary.ROIData = {};
+ROIDataSummary.imFig = [];
+ROIDataSummary.PlotImData = [];
 
 [fn,fp,fi] = uigetfile('AlignedData.mat','Please select the aligned data mat file');
 if ~fi
@@ -275,7 +283,7 @@ else
         choice = questdlg('confirm ROI drawing?','confirm ROI', 'Yes','Re-draw','Cancle','Yes');
         switch choice
             case 'Yes'
-                ROIDataSummary.ROIinfo(cROI).ROIMask=h_mask;
+                ROIDataSummary.ROIinfo(cROI).ROImask=h_mask;
                 ROIDataSummary.ROIinfo(cROI).ROIpos=h_position;
                 delete(h_ROI);
                 ROIDraw=0;
@@ -478,28 +486,18 @@ function SaveROIData_tag_Callback(hObject, eventdata, handles)
 global ROIDataSummary
 % extract ROI data and save
 fprintf('Extracting ROI datas ...\n');
+
 AllSess_ROIdata = cellfun(@(x) ExtractROIDatas(x,ROIDataSummary.ROIinfo),...
     ROIDataSummary.AlignData,'UniformOutput',false);
 ROIDataSummary.ROIData = AllSess_ROIdata;
-ROISavedPath = fullfile(ROIDataSummary.DataFolder,'ROIData_save.mat');
+if isempty(ROIDataSummary.ROIInfoSavePath)
+    ROISaveDir = uigetdir(pwd,'Please select ROIinfo save path');
+    ROIDataSummary.ROIInfoSavePath = ROISaveDir;
+end
+ROISavedPath = fullfile(ROIDataSummary.ROIInfoSavePath,'ROIData_save.mat');
 ROIInfos = ROIDataSummary.ROIinfo;
 save(ROISavedPath,'AllSess_ROIdata','ROIInfos','-v7.3');
 fprintf('ROI data saved in %s.\n',ROISavedPath);
-
-
-function ROIDatas = ExtractROIDatas(RawData,ROIinfos)
-NumROIs = length(ROIinfos);
-NumFrames = size(RawData,3);
-ROIDatas = zeros(NumROIs,NumFrames);
-for cR = 1 : NumROIs
-    cRMask = ROIinfos(cR).ROImask;
-    cRMask_pixel = sum(sum(cRMask));
-    
-    ThreeD_mask = repmat(cRMask,1,1,NumFrames);
-    cRData = mean(reshape(RawData(ThreeD_mask),cRMask_pixel,[]));
-    
-    ROIDatas(cR,:) = cRData;
-end
 
 
 % --- Executes on button press in SessNumAdd_tag.
@@ -542,12 +540,12 @@ if isempty(ROIDataSummary.ROIinfo(1).ROIpos)
     warning('Empty ROIs for plot.');
 else
     if ROIDataSummary.TotalROI > 0
-        if isempty(ROIDataSummary.ROIData)
+%         if isempty(ROIDataSummary.ROIData)
             % extract ROI data first
             AllSess_ROIdata = cellfun(@(x) ExtractROIDatas(x,ROIDataSummary.ROIinfo),...
                 ROIDataSummary.AlignData,'UniformOutput',false);
             ROIDataSummary.ROIData = AllSess_ROIdata;
-        end
+%         end
         % calculate dff
         SessFrameNum = cellfun(@(x) size(x,2),ROIDataSummary.ROIData);
         SessMinFrame = min(SessFrameNum);
@@ -562,82 +560,98 @@ else
             AllROI_dffData(cROI,:,:) = cRDffMtx;
         end
         ROIDataSummary.DffData = AllROI_dffData;
-        
-        LeftTTF = contains(ROIDataSummary.SessNames,'left','IgnoreCase',true);
-        RightTTF = contains(ROIDataSummary.SessNames,'right','IgnoreCase',true);
-        ROIDataSummary.LeftRightTrNum = [sum(LeftTTF),sum(RightTTF)];
-        
-        LeftIndex = find(LeftTTF);
-        RightIndex = find(RightTTF);
-        
-        ROIDataSummary.SelectDffData = ROIDataSummary.DffData(:,[LeftIndex(:);RightIndex(:)],:);
-        
-        TotalTrNum = sum(ROIDataSummary.LeftRightTrNum);
-        
-        if ~isdir('./ROI_plot/')
-            mkdir('./ROI_plot/');
-        end
-        cd('./ROI_plot/');
+        ROIRespData = struct();
         StimOnsetFrame = ROIDataSummary.FrameRate * ROIDataSummary.OnsetTime;
-        for cR = 1 : ROIDataSummary.TotalROI
-            hf = figure('position',[100 100 850 340]);
-            cRData = squeeze(ROIDataSummary.SelectDffData(cR,:,:));
-            subplot(121)
-            imagesc(cRData,[0 max(0.5,max(cRData(:)))]);
+        if ROIDataSummary.TotalSession > 2
+            LeftTTF = contains(ROIDataSummary.SessNames,'left','IgnoreCase',true);
+            RightTTF = contains(ROIDataSummary.SessNames,'right','IgnoreCase',true);
+            ROIDataSummary.LeftRightTrNum = [sum(LeftTTF),sum(RightTTF)];
+
+            LeftIndex = find(LeftTTF);
+            RightIndex = find(RightTTF);
+
+            ROIDataSummary.SelectDffData = ROIDataSummary.DffData(:,[LeftIndex(:);RightIndex(:)],:);
+
+            TotalTrNum = sum(ROIDataSummary.LeftRightTrNum);
+
+            if ~isdir('./ROI_plot/')
+                mkdir('./ROI_plot/');
+            end
+            cd('./ROI_plot/');
+            
+            for cR = 1 : ROIDataSummary.TotalROI
+                hf = figure('position',[100 100 850 340]);
+                cRData = squeeze(ROIDataSummary.SelectDffData(cR,:,:));
+                subplot(121)
+                imagesc(cRData,[0 max(0.5,max(cRData(:)))]);
+                colorbar;
+                title(num2str(cR,'ROI%d'));
+                set(gca,'ytick',[(1+ROIDataSummary.LeftRightTrNum(1))/2,...
+                    ROIDataSummary.LeftRightTrNum(1)+ROIDataSummary.LeftRightTrNum(2)/2],...
+                    'yticklabel',{'Left','Right'});
+                line([0.5 SessMinFrame+0.5],[0.5 0.5]+ROIDataSummary.LeftRightTrNum(1),'Color','r',...
+                    'linewidth',1.8);
+
+                line([0.5 0.5]+StimOnsetFrame,[0.5 sum(ROIDataSummary.LeftRightTrNum)+0.5],'Color','c',...
+                    'linewidth',1.5);
+
+
+                subplot(122)
+                hold on
+                MeanTraceLeft = mean(cRData(1:ROIDataSummary.LeftRightTrNum(1),:));
+                SEMTraceLeft = std(cRData(1:ROIDataSummary.LeftRightTrNum(1),:))/sqrt(ROIDataSummary.LeftRightTrNum(1));
+                MeanTraceRight = mean(cRData((1+ROIDataSummary.LeftRightTrNum(1)):end,:));
+                SEMTraceRight = std(cRData((1+ROIDataSummary.LeftRightTrNum(1)):end,:))/sqrt(ROIDataSummary.LeftRightTrNum(2));
+
+                Patchx = [1:SessMinFrame,SessMinFrame:-1:1];
+                LeftPattch = [MeanTraceLeft+SEMTraceLeft,fliplr(MeanTraceLeft-SEMTraceLeft)];
+                RightPatch = [MeanTraceRight+SEMTraceRight,fliplr(MeanTraceRight-SEMTraceRight)];
+                patch(Patchx,LeftPattch,1,'Facecolor',[0.3 0.8 0.3],'edgecolor','none','facealpha',0.6);
+                patch(Patchx,RightPatch,1,'Facecolor',[0.8 0.3 0.3],'edgecolor','none','facealpha',0.6);
+                plot(1:SessMinFrame,MeanTraceLeft,'b','linewidth',1.5);
+                plot(1:SessMinFrame,MeanTraceRight,'r','linewidth',1.5);
+                yscales = get(gca,'ylim');
+                line([StimOnsetFrame StimOnsetFrame],yscales,'Color',[.5 .5 .5],'linewidth',1.5);
+                xlabel('Frames');
+                ylabel('\DeltaF/F');
+                title(num2str(cR,'ROI%d'));
+                set(gca,'Fontsize',10);
+
+                saveas(hf,sprintf('ROI%d plot save',cR));
+                saveas(hf,sprintf('ROI%d plot save',cR),'png');
+                close(hf);
+                
+            end
+            ROIRespData.MeanTraceLeft = MeanTraceLeft;
+            ROIRespData.SEMTraceLeft = SEMTraceLeft;
+            ROIRespData.MeanTraceRight = MeanTraceRight;
+            
+            cd ..;
+        else
+            ROIDataSummary.DffData = squeeze(AllROI_dffData);
+            hf = figure('position',[100 100 400 320]);
+%             imagesc(ROIDataSummary.DffData,[0 1]);
+            imagesc(ROIDataSummary.DffData,[0 max(0.2,prctile(ROIDataSummary.DffData(:),99))]);
             colorbar;
-            title(num2str(cR,'ROI%d'));
-            set(gca,'ytick',[(1+ROIDataSummary.LeftRightTrNum(1))/2,...
-                ROIDataSummary.LeftRightTrNum(1)+ROIDataSummary.LeftRightTrNum(2)/2],...
-                'yticklabel',{'Left','Right'});
-            line([0.5 SessMinFrame+0.5],[0.5 0.5]+ROIDataSummary.LeftRightTrNum(1),'Color','r',...
-                'linewidth',1.8);
             
-            line([0.5 0.5]+StimOnsetFrame,[0.5 sum(ROIDataSummary.LeftRightTrNum)+0.5],'Color','c',...
-                'linewidth',1.5);
-            
-            
-            subplot(122)
-            hold on
-            MeanTraceLeft = mean(cRData(1:ROIDataSummary.LeftRightTrNum(1),:));
-            SEMTraceLeft = std(cRData(1:ROIDataSummary.LeftRightTrNum(1),:))/sqrt(ROIDataSummary.LeftRightTrNum(1));
-            MeanTraceRight = mean(cRData((1+ROIDataSummary.LeftRightTrNum(1)):end,:));
-            SEMTraceRight = std(cRData((1+ROIDataSummary.LeftRightTrNum(1)):end,:))/sqrt(ROIDataSummary.LeftRightTrNum(2));
-            
-            Patchx = [1:SessMinFrame,SessMinFrame:-1:1];
-            LeftPattch = [MeanTraceLeft+SEMTraceLeft,fliplr(MeanTraceLeft-SEMTraceLeft)];
-            RightPatch = [MeanTraceRight+SEMTraceRight,fliplr(MeanTraceRight-SEMTraceRight)];
-            patch(Patchx,LeftPattch,1,'Facecolor',[0.3 0.8 0.3],'edgecolor','none','facealpha',0.6);
-            patch(Patchx,RightPatch,1,'Facecolor',[0.8 0.3 0.3],'edgecolor','none','facealpha',0.6);
-            plot(1:SessMinFrame,MeanTraceLeft,'b','linewidth',1.5);
-            plot(1:SessMinFrame,MeanTraceRight,'r','linewidth',1.5);
-            yscales = get(gca,'ylim');
-            line([StimOnsetFrame StimOnsetFrame],yscales,'Color',[.5 .5 .5],'linewidth',1.5);
+            line([0.5 0.5]+StimOnsetFrame,[0.5 ROIDataSummary.TotalROI+0.5],'Color','m',...
+                    'linewidth',1.5);
             xlabel('Frames');
             ylabel('\DeltaF/F');
-            title(num2str(cR,'ROI%d'));
+            title('All ROIs color plot');
             set(gca,'Fontsize',10);
-            
-            saveas(hf,sprintf('ROI%d plot save',cR));
-            saveas(hf,sprintf('ROI%d plot save',cR),'png');
-            close(hf);
         end
-        ROIRespData = struct();
+        
         ROIRespData.FrameRate = ROIDataSummary.FrameRate;
         ROIRespData.OnsetTime = ROIDataSummary.OnsetTime;
         ROIRespData.SelectData = ROIDataSummary.SelectDffData;
         ROIRespData.LRTrNum = ROIDataSummary.LeftRightTrNum;
-        ROIRespData.MeanTraceLeft = MeanTraceLeft;
-        ROIRespData.SEMTraceLeft = SEMTraceLeft;
-        ROIRespData.MeanTraceRight = MeanTraceRight;
         
+        cd(ROIDataSummary.DataFolder);
         save SelectTrData.mat ROIRespData -v7.3
         
-        cd ..;
     end
 end
-            
-
-
 
 function FrameRate_edit_tag_Callback(hObject, eventdata, handles)
 % hObject    handle to FrameRate_edit_tag (see GCBO)
@@ -701,4 +715,33 @@ function StimOnset_edit_tag_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in Load_ROIdata_tag.
+function Load_ROIdata_tag_Callback(hObject, eventdata, handles)
+% hObject    handle to Load_ROIdata_tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global ROIDataSummary
+
+% load ROI info data
+[fn,fp,fi] = uigetfile('*.mat','Please select ROIinfo data');
+if fi
+    matfilepath = fullfile(fp,fn);
+    fprintf('Loading ROIinfo data from:%s...\n',matfilepath);
+    matDataStrc = load(matfilepath);
+    if isfield(matDataStrc,'ROIInfos')
+        
+        ROIDatass = matDataStrc.ROIInfos;
+        ROIDataSummary.ROIinfo = ROIDatass;
+        ROIDataSummary.TotalROI = length(ROIDataSummary.ROIinfo);
+        ROIDataSummary.CurrentROI = ROIDataSummary.TotalROI;
+        set(handles.TotalROI_num_text_tag,'String',num2str(ROIDataSummary.TotalROI));
+        set(handles.C_ROI_edit_tag,'String',num2str(ROIDataSummary.CurrentROI));
+%         UpdatesROIPlots;
+        fprintf('Load complete!\n');
+    else
+        warning('Error selected mat file.');
+    end
 end

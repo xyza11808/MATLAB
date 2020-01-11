@@ -12,7 +12,27 @@ end
 % clearvars nnspike SpikeAligned 
 % 
 % nnspike = Fluo2SpikeConstrainOOpsi(DataRaw,[],[],frame_rate,2);
-% 
+if ~iscell(DataRaw)
+    nROIs = size(DataRaw,2);
+else
+    nROIs = size(DataRaw{1},1);
+end
+
+if iscell(DataRaw)
+    DataTrace = cell2mat(DataRaw');
+else
+    DataTrace = reshape(permute(DataRaw,[2,3,1]),nROIs,[]);  
+end
+%%
+ROIstdThres = zeros(nROIs,1);
+for cR = 1 : nROIs
+    cRTrace = DataTrace(cR,:);
+    StdUpperLowBound = prctile(cRTrace,[10 90]);
+    StdCalRange = std(cRTrace(cRTrace >= StdUpperLowBound(1) & ...
+        cRTrace <= StdUpperLowBound(2)));
+    ROIstdThres(cR) = StdCalRange;
+end
+
 % save EstimateSPsaveNewAR2.mat DataRaw behavResults frame_rate nnspike -v7.3
 %%
 TrFreqsAll = double(behavResults.Stim_toneFreq(:));
@@ -30,11 +50,7 @@ TrTimeReNM = TrTimeRe(NMInds);
 TrStimOnTimeNM = TrStimOnTime(NMInds);
 TrTrTypesNM = TrTrTypes(NMInds);
 NMTrNum = length(TrFreqsNM);
-if ~iscell(DataRaw)
-    nROIs = size(DataRaw,2);
-else
-    nROIs = size(DataRaw{1},1);
-end
+
 TrOctsNM = log2(TrFreqsNM/min(TrFreqsNM)) - 1;
 TrAnsFTimeNM = round((TrAnsTimeNM/1000)*frame_rate);
 TrFTimeReNM = round((TrTimeReNM/1000)*frame_rate);
@@ -104,8 +120,9 @@ NumParas = size(TrEventsRespData,3);
 
 AllROIData = cell(nROIs,1);
 %%
+
 for cROI = 1 : nROIs
-    %
+    %%
 %     cROI = 25;
 %     close
     cROIData = squeeze(TrEventsRespData(:,cROI,:));
@@ -167,19 +184,28 @@ for cROI = 1 : nROIs
     options = glmnetSet;
     options.alpha = 0.9;
     options.nlambda = 110;
-    nRepeats = 10;
+    nRepeats = 3;
     RepeatData = cell(nRepeats,3);
     for cRepeat = 1 : nRepeats
-        nFolds = 5;
-        FoldTrainTestIndex = ClassEvenPartitionFun(TrOctsNM,nFolds);
-%         cc = cvpartition(NMTrNum,'kFold',nFolds);
+        nFolds = 10;
+        IsRandPartition = 0;
+        try
+            FoldTrainTestIndex = ClassEvenPartitionFun(TrOctsNM,nFolds);
+        catch ME
+%             fprintf('Error partition.\n');
+            cc = cvpartition(NMTrNum,'kFold',nFolds);
+            IsRandPartition = 1;
+        end
         FoldCoefs = cell(nFolds,3);
         FoldDev = zeros(nFolds,1);
         FoldTestPred = cell(nFolds,2);
 
         for cf = 1 : nFolds
-%             TrainInds = find(cc.training(cf));
-            TrainInds = FoldTrainTestIndex{1,cf};
+            if IsRandPartition
+                TrainInds = find(cc.training(cf));
+            else
+                TrainInds = FoldTrainTestIndex{1,cf};
+            end
             BlankInds = false(NMTrNum,1);
             % TrainInds = randsample(NMTrNum,round(NMTrNum*0.7));
             BlankInds(TrainInds) = true;
@@ -244,23 +270,24 @@ for cROI = 1 : nROIs
         RepeatData{cRepeat,3} = FoldTestPred;
     end
     AllROIData{cROI} = RepeatData;
+    %%
 end
  
 %% analysis ROI coef Data 
 nROIs = length(AllROIData);
-CoefValueThres = 0.4;
-RepeatFracThres = 0.5;
+CoefValueThres = 0;
+RepeatFracThres = 0.75;
 ROIAboveThresInds = cell(nROIs,4);
 for cROI = 1 : nROIs
     %
     cROIdata = AllROIData{cROI};
     cROICoefdata = cellfun(@(x) (cell2mat((x(:,1))'))',cROIdata(:,1),'uniformOutput',false);
     cROICoef_AllRepeats = cell2mat(cROICoefdata);
-    
+    %
     cROIDev = (cell2mat((cROIdata(:,2))'))';
     cROICoef_meanV = mean(cROICoef_AllRepeats);
     PosCoefIndex = cROICoef_meanV > 0;
-    
+    %
     CoefAboveThresMeanFrac = mean(double(abs(cROICoef_AllRepeats) > CoefValueThres));
     CoefAboveThresInds = CoefAboveThresMeanFrac >= RepeatFracThres & PosCoefIndex;
     %
@@ -274,7 +301,7 @@ if ~isdir('./SP_RespField_ana/')
     mkdir('./SP_RespField_ana/');
 end
 cd('./SP_RespField_ana/');
-save SPDataBehavCoefSaveOff.mat ROIAboveThresInds AllROIData -v7.3
+save SPDataBehavCoefSaveOff_191228.mat ROIAboveThresInds AllROIData ROIstdThres -v7.3
 cd ..;
 %%
 % cROI = 28;

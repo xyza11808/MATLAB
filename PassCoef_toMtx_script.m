@@ -2,7 +2,7 @@
 
 % cPassline = 'P:\BatchData\batch55\20180818\anm07\test03rf\im_data_reg_cpu\result_save\plot_save\NO_Correction';
 % cd(cPassline);
-PassiveTunROIStrc = load(fullfile(pwd,'SP_RespField_ana','ROIglmCoefSave.mat'));
+PassiveTunROIStrc = load(fullfile(pwd,'SP_RespField_ana','ROIglmCoefSave_New.mat'));
 NumFreqs = length(PassiveTunROIStrc.FreqTypes);
 
 PassRespROIInds = find(cellfun(@(x) ~isempty(x),PassiveTunROIStrc.ROIAboveThresSummary(:,1)));
@@ -31,5 +31,5 @@ if ~isdir('./SP_RespField_ana/')
     mkdir('./SP_RespField_ana/');
 end
 cd('./SP_RespField_ana/');
-save PassCoefMtxSave.mat PassRespCoefMtx PassRespROIInds -v7.3
+save PassCoefMtxSave_New.mat PassRespCoefMtx PassRespROIInds -v7.3
 cd ..;

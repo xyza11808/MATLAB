@@ -99,6 +99,8 @@ nTrials = size(UsedSelectDatas,1);
 IsVariedDur = 0;
 if length(unique(FrameDurData)) > 2
     IsVariedDur = 1;
+else
+    StimDurs_frame = unique(FrameDurData);
 end
 ROICoefData = cell(nROIs,1);
 ROIOnOffFResp = zeros(nROIs,nFreqs*2);
@@ -106,48 +108,47 @@ ROIOnOffFResp = zeros(nROIs,nFreqs*2);
 %                 'StopbandAttenuation', 60,'SampleRate',frame_rate,'DesignMethod','kaiserwin');
 
 %% for loop for each ROI
-ROIStds = zeros(nROIs,1);
 for cROI = 1 : nROIs
     %%
     ROISPData = squeeze(nnspike(cSessPassTrInds,cROI,:));
-    ROISPTrace = reshape(ROISPData',[],1);
-%     ROISPNoiseThres = std(ROISPTrace(ROISPTrace>1e-6));
-%     ROISPData(ROISPData < ROISPNoiseThres) = 0;
-%     ROISPData = ROISPData * frame_rate;
-    cROIRaw = squeeze(UsedSelectDatas(:,cROI,:));
-    ROIStds(cROI) = mad(cROIRaw(:),1)*1.4826;
-    cROIRaw2Trace = reshape(cROIRaw',[],1);
-%     cROIRaw2TraceSM = smooth(cROIRaw2Trace,5,'sgolay',3);
-    cROIRaw2TraceSM = smooth(cROIRaw2Trace,5);
-    cROISMMtxData = (reshape(cROIRaw2TraceSM,size(cROIRaw,2),[]))';
-    cROIRawData = cROISMMtxData;
     
-    OnsetTrResp = mean(ROISPData(:,OnsetFrame+1:OnsetFrame+FrameWin),2);
-    OnsetTrFReap = max(cROIRawData(:,OnsetFrame+1:OnsetFrame+FrameWin),[],2) - ...
-        max(min(cROIRawData(:,OnsetFrame+1:OnsetFrame+FrameWin),[],2),0);
+    OnsetTrResp = mean(ROISPData(:,(OnsetFrame+1):(OnsetFrame+FrameWin)),2);
+    
+    OnsetTrFrameWin = zeros(nTrials,FrameWin+3,2);
+    OnsetTrFrameWin(:,:,1) = cROIRawData(:,(OnsetFrame-2):(OnsetFrame+FrameWin));
+    
     if IsVariedDur
        TempRespData = zeros(nTrials,FrameWin); 
-       TempFRespData = zeros(nTrials,FrameWin); 
        for cTr = 1 : nTrials
-           TempRespData(cTr,:) = ROISPData(cTr,FrameDurData(cTr)+1:FrameDurData(cTr)+FrameWin);
-           TempFRespData(cTr,:) = cROIRawData(cTr,FrameDurData(cTr)+1:FrameDurData(cTr)+FrameWin);
+           TempRespData(cTr,:) = ROISPData(cTr,(FrameDurData(cTr)+1+OnsetFrame):...
+               (FrameDurData(cTr)+FrameWin+OnsetFrame));
+           OnsetTrFrameWin(cTr,:,2) = cROIRawData(cTr,(FrameDurData(cTr)+1+OnsetFrame):...
+               (FrameDurData(cTr)+FrameWin+OnsetFrame)); % off frames response
        end
        OffTrResp = mean(TempRespData,2);
-       OffFTrResp = mean(TempFRespData,2);
+        
     else
-        OffTrResp = mean(ROISPData(:,OffsetFrame+1:OffsetFrame+FrameWin),2);
-        OffFTrResp = max(cROIRawData(:,OffsetFrame+1:OffsetFrame+FrameWin),[],2) - ...
-            max(min(cROIRawData(:,OnsetFrame+1:OffsetFrame+FrameWin),[],2),0);
+        OffTrResp = mean(ROISPData(:,(OffsetFrame+1):(OffsetFrame+FrameWin)),2);
+        OnsetTrFrameWin(:,:,2) = cROIRawData(:,(OnsetFrame-2+StimDurs_frame):(OnsetFrame+FrameWin+StimDurs_frame));
+%         OffFTrResp = max(cROIRawData(:,OffsetFrame+1:OffsetFrame+FrameWin),[],2) - ...
+%             max(min(cROIRawData(:,OnsetFrame+1:OffsetFrame+FrameWin),[],2),0);
     end
+    
     RespMtx = [OnsetTrResp,OffTrResp];
-    %
+    %%
     
     for cFreqs = 1 : nFreqs
         cFreqsInds = UsedFreqArray == FreqTypes(cFreqs);
-        ROIOnOffFResp(cROI,cFreqs) = mean(OnsetTrFReap(cFreqsInds));
-        ROIOnOffFResp(cROI,cFreqs+nFreqs) = mean(OffFTrResp(cFreqsInds));
-    end
+        cFreqOnOffRawDataAvg = squeeze(mean(OnsetTrFrameWin(cFreqsInds,:,:)));
+        cccOnResps = cFreqOnOffRawDataAvg(:,1);
+        cccOffResps = cFreqOnOffRawDataAvg(:,2);
+        cccOnRespsSmooth = smooth(cFreqOnOffRawDataAvg(:,1),5);
+        cccOffRespsSmooth = smooth(cFreqOnOffRawDataAvg(:,2),5);
         
+        ROIOnOffFResp(cROI,cFreqs) = mean(cccOnResps(4:end)) - max(cccOnRespsSmooth(3),0);
+        ROIOnOffFResp(cROI,cFreqs+nFreqs) = mean(cccOffResps(4:end)) - max(cccOffRespsSmooth(3),0);
+    end
+    %%
 %
     TotalRespMtx = RespMtx(:);
 %     TotalRespMtx = TotalRespMtx/max(TotalRespMtx);
@@ -194,7 +195,7 @@ for cROI = 1 : nROIs
     end
     %
     ROICoefData{cROI} = AllRepeatData;
-    %%
+    %
 end
 %%
 % Extract Coef Data
@@ -208,7 +209,7 @@ for cr = 1 : nROIs
     
     AvgCoefData = mean(abs(crCoefMtx));
     crCoefAboveThres = double(mean(abs(crCoefMtx) > 0.3) >= 0.3);
-    crCoefAboveThres(cROIResp < ROIStds(cr)) = 0;
+    crCoefAboveThres(cROIResp < 10) = 0;
     
     AvgCoefInds = mean(crCoefMtx);
     NegRespInds = AvgCoefInds < 0; % exclude negtive response value, which may just caused by negtive response
@@ -247,9 +248,9 @@ for cr = 1 : nROIs
     cROIResp = ROIOnOffFResp(cr,:);
     
     AvgCoefData = mean(abs(crCoefMtx));
-    crCoefAboveThres = double(mean(crCoefMtx > 1e-6) >= 0.85);
+    crCoefAboveThres = double(mean(crCoefMtx > 1e-6) >= 0.75);
     
-    crCoefAboveThres(cROIResp < ROIStds(cr)) = 0;
+    crCoefAboveThres(cROIResp < 10) = 0;
     
     AvgCoefInds = mean(crCoefMtx);
     NegRespInds = AvgCoefInds < 0; % exclude negtive response value, which may just caused by negtive response
@@ -283,5 +284,5 @@ if ~isdir('./SP_RespField_ana/')
     mkdir('./SP_RespField_ana/');
 end
 cd('./SP_RespField_ana/');
-save ROIglmCoefSave_New.mat ROIAboveThresSummary FreqTypes PassBFInds ROICoefData ROIOnOffFResp -v7.3
+save ROIglmCoefSave.mat ROIAboveThresSummary FreqTypes PassBFInds ROICoefData ROIOnOffFResp -v7.3
 cd ..;

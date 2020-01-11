@@ -1,3 +1,5 @@
+% load('./SP_RespField_ana/SPDataBehavCoefSaveOff_191228.mat');
+load(fullfile(cSessPath,'SP_RespField_ana','SPDataBehavCoefSaveOff_191228.mat'));
 
 cSessOnRespInds = logical(ROIRespType(:,1));
 cSessOffRespInds = logical(ROIRespType(:,4));

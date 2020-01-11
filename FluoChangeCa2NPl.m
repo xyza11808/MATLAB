@@ -180,6 +180,7 @@ else
         end
     else
         %%
+        IsConti_pauseTrs = zeros(TrialNum,1);
         for n=1:TrialNum
             cRawData = CaTrials.f_raw{n};
             if isempty(cRawData)
@@ -193,6 +194,9 @@ else
                 warning('Empty frames exists at trial %d',n);
                 cRawData(:,end-9:end) = [];
                 TrDataNumVec(n) = TrDataNumVec(n) - 10;
+                if n ~= TrialNum % only if the empty ends only exist in the last trial
+                    IsConti_pauseTrs(n) = 1;
+                end
             end
             RawData(n,:,1:TrDataNumVec(n)) = cRawData;
             PreOnsetData{n}=squeeze(cRawData(:,1:TrialOnsetTime(n)));
@@ -203,6 +207,9 @@ else
                 PreOnsetRingF{n}=squeeze(cRawRingData(:,1:TrialOnsetTime(n)));
                 baselineDataRing=[baselineDataRing PreOnsetRingF{n}];
             end
+        end
+        if sum(IsConti_pauseTrs)
+            save('PausedFrameInds.mat','IsConti_pauseTrs','-v7.3');
         end
         %%
     end

@@ -234,6 +234,7 @@ end
 PointSize = 1;
 ROIMeanTraceData = cell(ROInum,NumFreq,3);
 for nROI = 1 : ROInum
+    %%
     cROIdata = squeeze(AlignData(:,nROI,:));
     climMax = prctile(cROIdata(:),85);
     if climMax < 0
@@ -458,6 +459,7 @@ for nROI = 1 : ROInum
         saveas(hROI,sprintf('ROI%d all behavType color plot',nROI),'png');
         close(hROI);
     end
+    %%
 end
 
 save PlotRelatedData.mat FreqTypeEventF AnsFIndsSort SessionDesp AlignLickStrc AlignedFrame SoundOffFrame Frate ROIMeanTraceData -v7.3

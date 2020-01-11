@@ -5,7 +5,7 @@
 % cd(cSessPath);
 % GlmCoefDataPath = fullfile(cSessPath,'SPDataBehavCoefSaveOff.mat');
 
-GlmCoefDataPath = fullfile(cSessPath,'SP_RespField_ana','SPDataBehavCoefSaveOff.mat');
+GlmCoefDataPath = fullfile(cSessPath,'SP_RespField_ana','SPDataBehavCoefSaveOff_191228.mat');
 try
     GlmCoefDataStrc = load(GlmCoefDataPath);
 catch
@@ -25,6 +25,7 @@ AnsAlignDataStrc = load(AnsAlignDataPath);
 CorrROIMeanTrace = squeeze(SoundAlignDataStrc.ROIMeanTraceData(:,:,1));
 % extract stim alignment peak value
 [OnPeakAll,OffPeakAll] = cellfun(@(x) OnOffPeakValueExtract(x,round(SoundAlignDataStrc.AlignedFrame),SoundAlignDataStrc.Frate),CorrROIMeanTrace);
+OnOffRespThres = repmat(GlmCoefDataStrc.ROIstdThres(:),1,size(OnPeakAll,2));
 % % check the STD data also
 % try
 %     SessTunData = load(fullfile(cSessPath,'Tunning_fun_plot_New1s','TunningSTDDataSave.mat'),'CorrTunningFun','CorrTunningFunSTD');
@@ -56,7 +57,7 @@ end
 
 % end
 
-AnsWin = [0,0.3;0.5,0.8;1,1.3];  %s
+AnsWin = [0,1;0.5,1.5;1,2];  %s
 nWins = size(AnsWin,1);
 AnsFWin = round(AnsWin*SoundAlignDataStrc.Frate);
 AnsWinRespALL = cell(nWins,1);
@@ -72,8 +73,11 @@ for cAns = 1 : nWins
     end
     AnsWinRespALL{cAns} = AnsWinResp;
 end
+
 %%
 TrTypeInds = NMfreqTypes > min(NMfreqTypes)*2;
+LeftTypeNum = sum(~TrTypeInds);
+RightTypeNum = sum(TrTypeInds);
 AnsPeakFreqV = zeros(nWins,nROIs,Numfreq);
 AnsPeakV = zeros(nWins,nROIs,2);
 for cAnsDelay = 1 : nWins
@@ -89,22 +93,26 @@ for cAnsDelay = 1 : nWins
     end
     %
     cAnsFreqData = squeeze(AnsPeakFreqV(cAnsDelay,:,:));
-    cLAnsChoiceData = mean((cAnsFreqData(:,~TrTypeInds) > 15),2);
-    cRAnsChoiceData = mean((cAnsFreqData(:,TrTypeInds) > 15),2);
+    cLAnsChoiceData = mean((cAnsFreqData(:,~TrTypeInds) > repmat(GlmCoefDataStrc.ROIstdThres(:),1,LeftTypeNum)),2);
+    cRAnsChoiceData = mean((cAnsFreqData(:,TrTypeInds) > repmat(GlmCoefDataStrc.ROIstdThres(:),1,RightTypeNum)),2);
     AnsPeakV(cAnsDelay,:,:) = [cLAnsChoiceData,cRAnsChoiceData];
 end
-
+FracThres = 2/min(LeftTypeNum,RightTypeNum);
 %% extract Coef information
 % since glmnet also can detect the negetive peak of calcium trace, so we
 % will excluded those coefficients from detected coefs
 ROICoefAll = cell2mat(GlmCoefDataStrc.ROIAboveThresInds(:,4));
 ROICoefIndsAll = cell2mat(GlmCoefDataStrc.ROIAboveThresInds(:,1));
-
+ROIFracAlls = cell2mat(GlmCoefDataStrc.ROIAboveThresInds(:,3));
+ExtraIncludesInds = ROIFracAlls >= 0.6 & ROICoefAll >= 0.2;
+ROICoefIndsAll = ROICoefIndsAll | ExtraIncludesInds;
+ROIstdThres = GlmCoefDataStrc.ROIstdThres;
 % CoefRespPeakAll = [OnPeakAll,AnsPeakV,OffPeakAll];
 
-RespNegPeakInds = [OnPeakAll < 10,squeeze(AnsPeakV(1,:,:)) < 0.7,OffPeakAll < 10,squeeze(AnsPeakV(2,:,:)) < 0.8,...
-    squeeze(AnsPeakV(3,:,:)) < 0.8];
-CoefNegInds = ROICoefAll <= 0.4;
+RespNegPeakInds = [OnPeakAll < OnOffRespThres,squeeze(AnsPeakV(1,:,:)) < FracThres,OffPeakAll < OnOffRespThres,...
+    squeeze(AnsPeakV(2,:,:)) < FracThres,...
+    squeeze(AnsPeakV(3,:,:)) < FracThres];
+CoefNegInds = ROICoefAll < 0;
 % CoefPosInds = ROICoefAll >= 1;
 NegPeakInds = RespNegPeakInds | CoefNegInds;
 % NegPeakInds(CoefPosInds) = false;
@@ -135,11 +143,26 @@ ROIRespType = zeros(nROIs,6); % each column indicates whether ROI significantly 
 ROIRespTypeCoef = cell(nROIs,6); % store the tuning freq/freqs index 
 MaxCoefV = zeros(nROIs,1);
 FreqsAll = NMfreqTypes; % all frequency types
+LRIndsThres = ceil(numel(FreqsAll)/2);
 for cROI = 1 : nROIs
     %
     cROICoefInds = ROICoefIndsAll(cROI,:);
     cROICoefAll = ROICoefAll(cROI,:);
     if sum(cROICoefInds)
+        % left answer
+        ROIRespType(cROI,2) = cROICoefInds(LAnsInds);
+        if ROIRespType(cROI,2)
+           ROIRespTypeCoef{cROI,2} = [1,abs(cROICoefAll(LAnsInds))];
+        end
+        % right sndwer
+        ROIRespType(cROI,3) = cROICoefInds(RAnsInds);
+        if ROIRespType(cROI,3)
+           ROIRespTypeCoef{cROI,3} = [1,abs(cROICoefAll(RAnsInds))];
+        end
+        % % % % consider whether the frequency response was caused by
+        % answer response
+        
+        % onset frequency
         MaxCoefV(cROI) = max(cROICoefAll);
         FreqOnTunCoef = cROICoefInds(FreqOnTunInds);
         if sum(FreqOnTunCoef)
@@ -149,18 +172,37 @@ for cROI = 1 : nROIs
            SigCoefValues = abs(ccOnCoefAll(FreqOnTunCoef));
            [SigCoefSort,SortInds] = sort(SigCoefValues(:),'descend');
            ROIRespTypeCoef{cROI,1} = [SigCoefInds(SortInds),SigCoefSort];
+           
+           UsedCoefsIndex = true(numel(SigCoefSort),1);
+           if ROIRespType(cROI,2)
+%                AllCoef = ROIRespTypeCoef{cROI,1}(:,2);
+               if sum(ROIRespTypeCoef{cROI,1}(:,1) <= LRIndsThres)
+                   LeftSig_CoefInds = ROIRespTypeCoef{cROI,1}(:,1) <= LRIndsThres;
+                   LeftSig_CoefValues = ROIRespTypeCoef{cROI,1}(LeftSig_CoefInds,2);
+                   LAnsCoef = ROIRespTypeCoef{cROI,2}(2);
+                   L_CoefInds = LeftSig_CoefValues > LAnsCoef/2;
+                   UsedCoefsIndex(LeftSig_CoefInds) = L_CoefInds;
+               end
+           end
+           if ROIRespType(cROI,3)
+               if sum(ROIRespTypeCoef{cROI,1}(:,1) > LRIndsThres)
+                   RightSig_CoefInds = ROIRespTypeCoef{cROI,1}(:,1) > LRIndsThres;
+                   RSig_CoefValues = ROIRespTypeCoef{cROI,1}(RightSig_CoefInds,2);
+                   RAnsCoefInds = ROIRespTypeCoef{cROI,3}(2);
+                   R_CoefInds = RSig_CoefValues > RAnsCoefInds/2;
+                   UsedCoefsIndex(RightSig_CoefInds) = R_CoefInds;
+               end
+           end
+           if sum(UsedCoefsIndex) ~= numel(UsedCoefsIndex)
+               ccOnsetCoefs = ROIRespTypeCoef{cROI,1};
+               ROIRespTypeCoef{cROI,1} = ccOnsetCoefs(UsedCoefsIndex,:);
+               if isempty(ROIRespTypeCoef{cROI,1})
+                   ROIRespType(cROI,1) = 0;
+               end
+           end
         end
         
-        ROIRespType(cROI,2) = cROICoefInds(LAnsInds);
-        if ROIRespType(cROI,2)
-           ROIRespTypeCoef{cROI,2} = [1,abs(cROICoefAll(LAnsInds))];
-        end
-
-        ROIRespType(cROI,3) = cROICoefInds(RAnsInds);
-        if ROIRespType(cROI,3)
-           ROIRespTypeCoef{cROI,3} = [1,abs(cROICoefAll(RAnsInds))];
-        end
-        
+        % offset frequency response
         FreqOffTunCoef = cROICoefInds(FreqOffTunInds);
         if sum(FreqOffTunCoef)
            ROIRespType(cROI,4) = 1;
@@ -169,8 +211,38 @@ for cROI = 1 : nROIs
            SigCoefValues = abs(ccOffCoefAll(FreqOffTunCoef));
            [SigCoefSort,SortInds] = sort(SigCoefValues(:),'descend');
            ROIRespTypeCoef{cROI,4} = [SigCoefInds(SortInds),SigCoefSort];
+           
+           % exclude answer caused sound response
+           UsedCoefsIndex = true(numel(SigCoefSort),1);
+           if ROIRespType(cROI,2)
+%                AllCoef = ROIRespTypeCoef{cROI,1}(:,2);
+               if sum(ROIRespTypeCoef{cROI,4}(:,1) <= LRIndsThres)
+                   LeftSig_CoefInds = ROIRespTypeCoef{cROI,4}(:,1) <= LRIndsThres;
+                   LeftSig_CoefValues = ROIRespTypeCoef{cROI,4}(LeftSig_CoefInds,2);
+                   LAnsCoef = ROIRespTypeCoef{cROI,2}(2);
+                   L_CoefInds = LeftSig_CoefValues > LAnsCoef/2;
+                   UsedCoefsIndex(LeftSig_CoefInds) = L_CoefInds;
+               end
+           end
+           if ROIRespType(cROI,3)
+               if sum(ROIRespTypeCoef{cROI,4}(:,1) > LRIndsThres)
+                   RightSig_CoefInds = ROIRespTypeCoef{cROI,4}(:,1) > LRIndsThres;
+                   RSig_CoefValues = ROIRespTypeCoef{cROI,4}(RightSig_CoefInds,2);
+                   RAnsCoefInds = ROIRespTypeCoef{cROI,3}(2);
+                   R_CoefInds = RSig_CoefValues > RAnsCoefInds/2;
+                   UsedCoefsIndex(RightSig_CoefInds) = R_CoefInds;
+               end
+           end
+           if sum(UsedCoefsIndex) ~= numel(UsedCoefsIndex)
+               ccOnsetCoefs = ROIRespTypeCoef{cROI,4};
+               ROIRespTypeCoef{cROI,4} = ccOnsetCoefs(UsedCoefsIndex,:);
+               if isempty(ROIRespTypeCoef{cROI,4})
+                   ROIRespType(cROI,4) = 0;
+               end
+           end
+           
         end
-        
+        % Left answer delay response 
         LAnsDelayIndex = cROICoefInds(LAnsDelayInds);
         if sum(LAnsDelayIndex)
             ROIRespType(cROI,5) = 1;
@@ -180,7 +252,7 @@ for cROI = 1 : nROIs
             MergeMtx(SortCoefs == 0,:) = [];
             ROIRespTypeCoef{cROI,5} = MergeMtx;
         end
-        
+        % Right answer delay response 
         RAnsDelayIndex = cROICoefInds(RAnsDelayInds);
         if sum(RAnsDelayIndex)
             ROIRespType(cROI,6) = 1;

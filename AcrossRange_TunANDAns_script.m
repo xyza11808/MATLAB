@@ -115,8 +115,6 @@ for cPath = 1 : NumPaths
     SameTunPassBFs = CommonOctRange(PassBFInds);
     
     c832FreqOctaveRange = CommonOctRange([1,end]);
-    
-    
      % loading Ans response ROI inds
     cSess416SelectROIStrc = load(fullfile(c416Path,'SigSelectiveROIInds.mat'));
     cSess416PassROIStrc = load(fullfile(c416PassPath,'PassCoefMtxSave.mat'));
@@ -877,5 +875,105 @@ plot(Sess832FieldOct(cSess,:),Sess832CoefFChMtx(cSess,:),'r');
 plot(Sess416FieldOct(cSess,:),Sess416CoefFChMtx(cSess,:),'b');
 
 
+%% with each session data includes
+%% calculate the field change
+%% ##################################################################################################
 
+Sess832CoefFieldChange = cellfun(@(x,y) sum(x > 0) - sum(y > 0),CommonROIFieldDataAll832(:,1),CommonROIFieldDataAll832(:,2),...
+    'UniformOutput',false);
+Sess832CoefField_task = cellfun(@(x) sum(x > 0),CommonROIFieldDataAll832(:,1),...
+    'UniformOutput',false);
+Sess832CoefField_pass = cellfun(@(x) sum(x > 0),CommonROIFieldDataAll832(:,2),...
+    'UniformOutput',false);
+Sess832Oct2BoundDis = cellfun(@(x,y) x-y,CommonROIFieldDataAll832(:,3),CommonROIFieldDataAll832(:,4),'UniformOutput',false);
+Sess832CoefNormCount = cellfun(@(x) x/sum(abs(x)),Sess832CoefFieldChange,'UniformOutput',false);
+Sess832CoefNormCount_Task = cellfun(@(x) x/sum(x),Sess832CoefField_task,'UniformOutput',false);
+Sess832CoefNormCount_Pass = cellfun(@(x) x/sum(x),Sess832CoefField_pass,'UniformOutput',false);
+
+Sess832FieldOct = cell2mat(CommonROIFieldDataAll832(:,3));
+Sess832BehavBound = cell2mat(CommonROIFieldDataAll832(:,4));
+
+Sess416CoefFieldChange = cellfun(@(x,y) sum(x > 0) - sum(y > 0),CommonROIFieldDataAll416(:,1),CommonROIFieldDataAll416(:,2),...
+    'UniformOutput',false);
+Sess416CoefField_task = cellfun(@(x) sum(x > 0),CommonROIFieldDataAll416(:,1),...
+    'UniformOutput',false);
+Sess416CoefField_pass = cellfun(@(x) sum(x > 0),CommonROIFieldDataAll416(:,2),...
+    'UniformOutput',false);
+Sess416Oct2BoundDis = cellfun(@(x,y) x-y,CommonROIFieldDataAll416(:,3),CommonROIFieldDataAll416(:,4),'UniformOutput',false);
+
+Sess416CoefNormCount_Task = cellfun(@(x) x/sum(x),Sess416CoefField_task,'UniformOutput',false);
+Sess416CoefNormCount_Pass = cellfun(@(x) x/sum(x),Sess416CoefField_pass,'UniformOutput',false);
+
+Sess416FieldOct = cell2mat(CommonROIFieldDataAll416(:,3));
+Sess416BehavBound = cell2mat(CommonROIFieldDataAll416(:,4));
+
+Sess832AvgOct = mean(Sess832FieldOct);
+Sess416AvgOct = mean(Sess416FieldOct);
+Sess832AvgBound = mean(Sess832BehavBound);
+Sess416AvgBound = mean(Sess416BehavBound);
+
+% Sess832CoefFChMtx = cell2mat(Sess832CoefFieldChange);
+% Sess416CoefFChMtx = cell2mat(Sess416CoefFieldChange);
+Sess832CoefFChMtx = cell2mat(Sess832CoefNormCount);
+Sess416CoefFChMtx = cell2mat(Sess416CoefNormCount);
+Sess832OctDisMtx = cell2mat(Sess832Oct2BoundDis);
+Sess416OctDisMtx = cell2mat(Sess416Oct2BoundDis);
+Sess832Coef_taskMtx = cell2mat(Sess832CoefNormCount_Task);
+Sess832Coef_passMtx = cell2mat(Sess832CoefNormCount_Pass);
+Sess416Coef_taskMtx = cell2mat(Sess416CoefNormCount_Task);
+Sess416Coef_passMtx = cell2mat(Sess416CoefNormCount_Pass);
+
+nPaths = size(Sess832CoefFChMtx,1);
+Num832Sess = size(Sess832CoefFChMtx,1);
+Num416Sess = size(Sess416CoefFChMtx,1);
+%%
+huf = figure('position',[200 100 400 320]);
+hold on
+yyaxis left
+errorbar(Sess832AvgOct,mean(Sess832CoefFChMtx),std(Sess832CoefFChMtx)/sqrt(Num832Sess),'r');
+set(gca,'ycolor','r');
+set(gca,'ytick',[0 0.1]);
+ylabel('Sess 7-28');
+% errorbar(Sess832AvgOct,mean(Sess832CoefFChMtx),std(Sess832CoefFChMtx)/sqrt(nPaths),'r');
+yyaxis right
+% plot(Sess416AvgOct,mean(Sess416CoefFChMtx),'b');
+errorbar(Sess416AvgOct,mean(Sess416CoefFChMtx),std(Sess416CoefFChMtx)/sqrt(Num416Sess),'b');
+set(gca,'ycolor','b');
+set(gca,'ytick',[0 0.05]);
+ylabel('Sess 4-16');
+% errorbar(Sess416AvgOct,mean(Sess416CoefFChMtx),std(Sess416CoefFChMtx)/sqrt(nPaths),'b');
+yscales = get(gca,'ylim');
+line([Sess832AvgBound Sess832AvgBound],yscales,'Color','r','linestyle','--','linewidth',1.4);
+line([Sess416AvgBound Sess416AvgBound],yscales,'Color','b','linestyle','--','linewidth',1.4);
+set(gca,'xtick',0:3,'xticklabel',{'4','8','16','32'});
+xlabel('Freq (kHz)')
+
+[~,c832MaxInds] = max(Sess832CoefFChMtx,[],2);
+c832MaxOct = Sess832FieldOct(1,c832MaxInds);
+[~,c416MaxInds] = max(Sess416CoefFChMtx,[],2);
+c416MaxOct = Sess416FieldOct(1,c416MaxInds);
+[~,p] = ttest2(c416MaxOct,c832MaxOct);
+
+%%
+huf = figure('position',[600 100 400 320]);
+hold on
+yyaxis left
+plot(Sess832AvgOct,mean(Sess832Coef_taskMtx),'r','linewidth',1.5);
+plot(Sess832AvgOct,mean(Sess832Coef_passMtx),'r','linewidth',1.5,'linestyle','--');
+set(gca,'ycolor','r');
+set(gca,'ytick',[0 0.1]);
+ylabel('Sess 7-28');
+% errorbar(Sess832AvgOct,mean(Sess832CoefFChMtx),std(Sess832CoefFChMtx)/sqrt(nPaths),'r');
+yyaxis right
+plot(Sess416AvgOct,mean(Sess416Coef_taskMtx),'b','linewidth',1.5);
+plot(Sess416AvgOct,mean(Sess416Coef_passMtx),'b','linewidth',1.5,'linestyle','--');
+set(gca,'ycolor','b');
+set(gca,'ytick',[0 0.05]);
+ylabel('Sess 4-16');
+% errorbar(Sess416AvgOct,mean(Sess416CoefFChMtx),std(Sess416CoefFChMtx)/sqrt(nPaths),'b');
+yscales = get(gca,'ylim');
+line([Sess832AvgBound Sess832AvgBound],yscales,'Color','r','linestyle','--','linewidth',1.4);
+line([Sess416AvgBound Sess416AvgBound],yscales,'Color','b','linestyle','--','linewidth',1.4);
+set(gca,'xtick',0:3,'xticklabel',{'4','8','16','32'});
+xlabel('Freq (kHz)')
 

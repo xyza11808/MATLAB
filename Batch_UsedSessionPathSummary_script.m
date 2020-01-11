@@ -154,8 +154,8 @@ end
 
 %%
 % batched ROI morph plot
-nSessPath = length(NormSessPathPass); % NormSessPathTask  NormSessPathPass
-for cSess = 17 : 34
+nSessPath = length(NormSessPathTask); % NormSessPathTask  NormSessPathPass
+for cSess = 1 : nSessPath
     %
     cSessPath = NormSessPathPass{cSess};
 %     [~,EndInds] = regexp(cSessPath,'result_save');
@@ -276,8 +276,12 @@ for cSess = 17 : 34
         
         ROISelectData = MaxDelta(yscales(1):yscales(2),xscales(1):xscales(2));
         ROImaxlim = prctile(ROISelectData(:),100)*1.05;
-        if ROImaxlim > 800
-            ROImaxlim = 600;
+        if ROImaxlim > 1000
+            ROImaxlim = 1000;
+        elseif ROImaxlim > 800
+            ROImaxlim = 700;
+        elseif ROImaxlim > 600
+            ROImaxlim = 500;
         end
         AdjROIpos = cROIpos - repmat([ROIedgeShift_x,ROIedgeShift_y],size(cROIpos,1),1);
         AdjROIcenter = mean(AdjROIpos);
@@ -2076,13 +2080,14 @@ end
 %% batched spike data analysis for task sessions
 clearvars -except NormSessPathTask NormSessPathPass
 
-%
 nSess = length(NormSessPathTask);
 ErroSess = [];
 ErroMess = {};
 for css = 1 : nSess
+    
     fprintf('Processing Session %d...\n',css);
     cSessPath = NormSessPathTask{css};
+    %%
     cd(cSessPath);
     
 %     if ~exist('EstimateSPsaveNewAR2.mat','file')
@@ -2090,18 +2095,25 @@ for css = 1 : nSess
 %         continue;
 %     end
     clearvars behavResults nnspike DataRaw
-    
+    %
     load('EstimateSPsaveNewMth.mat');
     
     try
-        TrSummarization_WithStimOff_script;
+%         TrSummarization_WithStimOff_script;
         PredCoef_summary_script;
+        if ~isdir('./SP_RespField_ana/')
+            mkdir('./SP_RespField_ana/');
+        end
+        cd('./SP_RespField_ana/');
+        ExtractROI_Inds_script;
+        
         fprintf('Session %d analysis finished!\n',css);
     catch ME
         ErroSess = [ErroSess,css];
         ErroMess{css} = ME;
         fprintf('Error at session %d.\n',css);
     end
+    %%
 end
 
 %% batched stim onset alignment plots

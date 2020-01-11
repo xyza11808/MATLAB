@@ -70,6 +70,24 @@ for cfff = 1:NumFolders
 %     cSessFolderInds = strcmpi(cPosStrName,FolderNames_Cell);
 %     MultiSessGenoType{cfff} = GenoType_Cell{cSessFolderInds};
 end
+% check eventsyncFrac and color plot
+
+% % % cFold = 1;
+% % % cField = 2;
+% % % 
+% % % EventSyncDatas = EventSyncFrac_EO{cFold,1}{cField};
+% % % RearrangedData_2 = Raw2EventOnly_DataFun(FieldDatas_AllCell{cField,1},...
+% % %     FieldDatas_AllCell{cField,5});
+% % % 
+% % % figure('position',[500 50 860 900]);
+% % % subplot(211);
+% % % plot(EventSyncDatas(:,1));
+% % % hold on
+% % % plot(EventSyncDatas(:,2))
+% % % 
+% % % subplot(212)
+% % % imagesc(RearrangedData_2,[0 1])
+
 %%
 save(fullfile(SumSourPath,'Newp12_wtDataSummary.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData',...
     'PopuFieldSynchrony_all','EventOnlyFieldSynchrony_all','Sess_eventOnlyCoefData',...

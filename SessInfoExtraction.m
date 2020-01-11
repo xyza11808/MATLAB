@@ -5,7 +5,7 @@ SessStr = SessionPath;
 
 % extract session data from path string
 [StartI,EndIn] = regexp(SessStr,'\d{6,10}');  % eight consecutive numbers for pattern recognition
-YearPatt = {'2015','2016','2017','2018','2019'};
+YearPatt = {'2015','2016','2017','2018','2019','2020'};
 if isempty(StartI)
     SessDate = 'NaN';
 else

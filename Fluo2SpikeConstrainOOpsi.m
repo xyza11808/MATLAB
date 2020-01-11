@@ -98,16 +98,26 @@ if ~IsContAcq
     for cROI = 1 : nROIs
         cROItrace = TraceSpikeData(cROI,:);
         cROIFRMtx = reshape(cROItrace',nF,[]);
-%         cROIFRMtx(:,1:5) = 0;
-%         cROIFRMtx(:,end-2:end) = 0;
+        cROIFRMtx(:,1:5) = 0;
+        cROIFRMtx(:,end-2:end) = 0;
         
         SpikeData(:,cROI,:) = cROIFRMtx';
     end
 else
-    TraceSpikeData(1,1:5) = 0;
+    TraceSpikeData(1,1:round(fr/2)) = 0;
+    UpPauseFrameFiles = fullfile(pwd,'..','PausedFrameInds.mat');
+    if exist(UpPauseFrameFiles,'file')
+        PauseFrameData_strc = load(UpPauseFrameFiles);
+        PauseFrameData = PauseFrameData_strc.IsConti_pauseTrs;
+    else
+        PauseFrameData = zeros(nTrials,1);
+    end
     k = 1;
     for cTr = 1 : nTrials
         cTrData = TraceSpikeData(:,k:(k+nFrameInds(cTr)-1));
+        if cTr > 1 && PauseFrameData(cTr-1)
+            cTrData(:,1:round(fr/2)) = 0;
+        end
         SpikeData{cTr} = cTrData;
         k = k+nFrameInds(cTr);
     end
