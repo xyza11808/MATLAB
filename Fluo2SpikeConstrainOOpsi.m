@@ -98,8 +98,8 @@ if ~IsContAcq
     for cROI = 1 : nROIs
         cROItrace = TraceSpikeData(cROI,:);
         cROIFRMtx = reshape(cROItrace',nF,[]);
-        cROIFRMtx(:,1:5) = 0;
-        cROIFRMtx(:,end-2:end) = 0;
+        cROIFRMtx(1:5,:) = 0;
+        cROIFRMtx(end-2:end,:) = 0;
         
         SpikeData(:,cROI,:) = cROIFRMtx';
     end

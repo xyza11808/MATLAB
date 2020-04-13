@@ -1,9 +1,11 @@
 cclr
 %
 SessPathAll = {...
-    'H:\F_b60_matBackup\20190610\anm01\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
-    'H:\F_b60_matBackup\20190611\anm01\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
-    'H:\F_b60_matBackup\20190613\anm01\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'};
+    'S:\BatchData\batch58\20181031\anm01\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
+    'S:\BatchData\batch58\20181101\anm01\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
+    'S:\BatchData\batch58\20181102\anm01\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
+    'S:\BatchData\batch58\20181104\anm01\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change',...
+    'S:\BatchData\batch58\20181106\anm01\test01\im_data_reg_cpu\result_save\plot_save\Type5_f0_calculation\NO_Correction\mode_f_change'};
 
 NumSesss = length(SessPathAll);
 AnmInfoCell = cellfun(@(x) SessInfoExtraction(x),SessPathAll,'UniformOutput',false);
@@ -527,5 +529,157 @@ end
 %%
 saveas(gcf,'NeuTuning curve average b60a0502 save');
 saveas(gcf,'NeuTuning curve average b60a0502 save','png');
+%%
+SessFIDatas = cell(NumSesss,3);
+PassSessFIDatas = cell(NumSesss,2);
+SessBehavDatas = cell(NumSesss,1);
+for cSess = 1 : NumSesss
+    %
+    cSessPath = SessPathAll{cSess};
+    [ROIFIDatas,xValues] = NeuFisherInfoCalFun(cSessPath,[]);
+    SessFIDatas{cSess,1} = ROIFIDatas;
+    SessFIDatas{cSess,3} = xValues;
+    ROIUsedInds_path = fullfile(cSessPath,'Tunning_fun_plot_New1s','SelectROIIndex.mat'); 
+    ROIUsedInds_strc = load(ROIUsedInds_path,'ROIIndex');
+    SessFIDatas{cSess,2} = ROIUsedInds_strc.ROIIndex;
+    
+    TaskBehav_path = fullfile(cSessPath,'RandP_data_plots','boundary_result.mat');
+    TaskBehav_strc = load(TaskBehav_path);
+    SessBehavDatas{cSess} = TaskBehav_strc.boundary_result;
+    
+    cPassSess = SessPassPathAlls{cSess};
+    PassSessDataPath = fullfile(cPassSess,'rfSelectDataSet.mat');
+    PassSessData_strc = load(PassSessDataPath);
+    PassDataForCal.data_aligned = PassSessData_strc.SelectData;
+    PassDataForCal.frame_rate = PassSessData_strc.frame_rate;
+    PassDataForCal.start_frame = PassSessData_strc.frame_rate;
+    PassDataForCal.behavResults = PassSessData_strc.SelectSArray;
+    [PassFIData,PassxValues] = NeuFisherInfoCalFun(PassDataForCal,[]);
+    PassSessFIDatas{cSess,1} = PassFIData;
+    PassSessFIDatas{cSess,2} = PassxValues;
+end
+% ##########################
+MinROINums = min(cellfun(@numel,SessFIDatas(:,2)));
+CommmonUsedROIIndexCell = cellfun(@(x) x(1:MinROINums) > 0,SessFIDatas(:,2),'UniformOutput',false);
+CommmonUsedROI_Mtx = cell2mat(CommmonUsedROIIndexCell');
+CommmonUsedROIIndex = mean(CommmonUsedROI_Mtx,2) == 1;
 
+xtickstrs = {'8.0';'16.0';'32.0'};
+
+hccf = figure('position',[2400 250 1400 690]);
+for cSess = 1 : NumSesss
+    
+    cBehavDataStrc = SessBehavDatas{cSess};
+    
+    if NumSesss > 6
+       subplot(2,4,cSess);
+    else
+        subplot(2,3,cSess);
+    end
+    
+    RightwardProbs = cBehavDataStrc.StimCorr;
+    LeftStimInds = cBehavDataStrc.RevertStimRProb;
+%     RightwardProbs = BehaOctave_perf;
+    RightwardProbs(LeftStimInds) = 1 - RightwardProbs(LeftStimInds);
+    RightStimOctaves = log2(cBehavDataStrc.StimType / min(cBehavDataStrc.StimType)) - 1;
+    BehavBound = cBehavDataStrc.Boundary - 1;
+    
+    yyaxis left
+    hold on
+    plot(RightStimOctaves,RightwardProbs,'bo','markerSize',10,'linewidth',1.5);
+    plot(cBehavDataStrc.FitValue.curve(:,1)-1,cBehavDataStrc.FitValue.curve(:,2),...
+        'c','linewidth',1.5);
+    yscales = get(gca,'ylim');
+    line([BehavBound BehavBound],yscales,'linewidth',1.4,...
+        'Color',[0.2 0.6 0.2],'linestyle','--');
+    set(gca,'ylim',yscales);
+    set(gca,'ylim',[-0.05 1.05],'ytick',[0 0.5 1]);
+    ylabel('Right Prob.');
+    
+    % processing task information
+    cFisherInfoData = SessFIDatas{cSess,1}(:,CommmonUsedROIIndex);
+    xPlotValues = SessFIDatas{cSess,3}-1;
+    cFI_Avgs = mean(cFisherInfoData,2);
+    
+    FIBoots = bootstrp(1000,@mean,cFisherInfoData');
+    FI_95CI_datas = prctile(FIBoots,[2.5 97.5]);
+    Patch_x = [xPlotValues(:);flipud(xPlotValues(:))];
+    Patch_y = [FI_95CI_datas(1,:),fliplr(FI_95CI_datas(2,:))];
+    
+    % processing passive session
+    Pass_cSessFInfoData = PassSessFIDatas{cSess,1}(:,CommmonUsedROIIndex);
+    PassxValue = PassSessFIDatas{cSess,2}-1;
+    Pass_cFI_Avg = mean(Pass_cSessFInfoData,2);
+    Pass_FIBoots = bootstrp(1000,@mean,Pass_cSessFInfoData');
+    Pass_FI_95CI = prctile(Pass_FIBoots,[2.5 97.5]);
+    Pass_P_x = [PassxValue(:);flipud(PassxValue(:))];
+    Pass_P_y = [Pass_FI_95CI(1,:),fliplr(Pass_FI_95CI(2,:))];
+    
+    yyaxis right
+    hold on
+    patch(Pass_P_x,Pass_P_y,1,'FaceColor',[.7 .7 .7],'edgecolor','none',...
+        'facealpha',0.6);
+    patch(Patch_x,Patch_y,1,'FaceColor',[.8 .2 .8],'edgecolor','none',...
+        'facealpha',0.7);
+    hhl1 = plot(PassxValue,Pass_cFI_Avg,'k-','linewidth',1.6);
+    hhl2 = plot(xPlotValues,cFI_Avgs,'r-','linewidth',1.6);
+    title([AnmInfoCell{cSess}.SessionDate,'  ','60\_0101']);
+    ylabel('Fisher info.');
+    yscales_R = get(gca,'ylim');
+    legend([hhl1 hhl2],{'Pass','Task'},'location','northwest','box','off');
+    set(gca,'xlim',[min(xPlotValues)-0.05 max(xPlotValues)+0.05]);
+    set(gca,'xtick',-1:1,'xticklabel',xtickstrs);
+    xlabel('Freq (kHz)');
+end
+
+%%
+saveas(gcf,'PopuNeuron fisher information b60a0503 save');
+saveas(gcf,'PopuNeuron fisher information b60a0503 save','png');
+
+%% 
+% SessFIDatas = cell(NumSesss,3);
+% PassSessFIDatas = cell(NumSesss,2);
+% SessBehavDatas = cell(NumSesss,1);
+NumSess = size(SessFIDatas,1);
+Session_IFPerf_summary = cell(NumSess,5);
+OctIndexWidth = 0.15;  % the half size of tone step size
+for cSess = 1 : NumSess
+    cSessBehav_strc = SessBehavDatas{cSess};
+    cSess_Corr_rate = cSessBehav_strc.StimCorr;
+    AllTaskFreqs = double(cSessBehav_strc.StimType);
+    cSessOctaves = log2(AllTaskFreqs(:) / min(AllTaskFreqs)) - 1;
+    if mod(numel(cSessOctaves),2)
+        UsedTwoOctaves = cSessOctaves([4,6]);
+        UsedTwoOct_perf = cSess_Corr_rate([4,6]);
+    else
+        UsedTwoOctaves = cSessOctaves([4,5]);
+        UsedTwoOct_perf = cSess_Corr_rate([4,5]);
+    end
+    UsedTwoOct_ScaleInds = [UsedTwoOctaves,UsedTwoOctaves] + ...
+        [-OctIndexWidth/2,OctIndexWidth/2;-OctIndexWidth/2,OctIndexWidth/2];
+    
+    % calculate task infomation
+    TaskOctInds = SessFIDatas{cSess,3} - 1;
+    LeftOctScaleInds = TaskOctInds > UsedTwoOct_ScaleInds(1,1) & ...
+        TaskOctInds < UsedTwoOct_ScaleInds(1,2);
+    LeftOctScaleIF_Avg = mean(SessFIDatas{cSess,1}(LeftOctScaleInds));
+    RightOctScaleInds = TaskOctInds > UsedTwoOct_ScaleInds(2,1) & ...
+        TaskOctInds < UsedTwoOct_ScaleInds(2,2);
+    RightOctScaleIF_Avg = mean(SessFIDatas{cSess,1}(RightOctScaleInds));
+    
+    % calculate passive condition
+    PassOctInds = PassSessFIDatas{cSess,2} - 1;
+    P_LeftOctScaleInds = PassOctInds > UsedTwoOct_ScaleInds(1,1) & ...
+        PassOctInds < UsedTwoOct_ScaleInds(1,2);
+    P_LeftOctScaleIF_Avg = mean(PassSessFIDatas{cSess,1}(P_LeftOctScaleInds));
+    P_RightOctScaleInds = PassOctInds > UsedTwoOct_ScaleInds(2,1) & ...
+        PassOctInds < UsedTwoOct_ScaleInds(2,2);
+    P_RightOctScaleIF_Avg = mean(PassSessFIDatas{cSess,1}(P_RightOctScaleInds));
+    
+    Session_IFPerf_summary(cSess,:) = {UsedTwoOct_perf,LeftOctScaleIF_Avg,RightOctScaleIF_Avg,...
+        P_LeftOctScaleIF_Avg,P_RightOctScaleIF_Avg};
+end
+%%
+save('Anm0101_FIAndPerf_data,mat','Session_IFPerf_summary','SessFIDatas',...
+    'PassSessFIDatas','SessBehavDatas','-v7.3');
 

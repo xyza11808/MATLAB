@@ -1600,15 +1600,14 @@ for TrialNo = Start_trial:End_trial
 end
 ROIinfoUsed = CaSignal.ROIinfoBack;
 
-CPUCores=str2num(getenv('NUMBER_OF_PROCESSORS')); %#ok<ST2NM>
-poolobj = gcp('nocreate');
-if isempty(poolobj)
-    parpool('local',CPUCores);
-%     poolobj = gcp('nocreate');
-end
+% CPUCores=str2num(getenv('NUMBER_OF_PROCESSORS')); %#ok<ST2NM>
+% poolobj = gcp('nocreate');
+% if isempty(poolobj)
+%     parpool('local',CPUCores);
+% %     poolobj = gcp('nocreate');
+% end
 
 try
-
     %%
     PopuMeanSave = cell((End_trial - Start_trial + 1),1);
     PopuMaxSave = cell((End_trial - Start_trial + 1),1);
@@ -1725,8 +1724,8 @@ catch ME
         for nxnx = 1 : (BlockEnd - BlockStart + 1)
             TempCaTrials_local(nxnx) = CaTrials_local(1);
         end
-%         TempCaTrials_local = 
-        parfor TrialNo = 1 : (BlockEnd - BlockStart + 1)    %%%%%%%%%%%%%%%%%%%%%%%% parfor
+%%         TempCaTrials_local = 
+        for TrialNo = 1 : 2%(BlockEnd - BlockStart + 1)    %%%%%%%%%%%%%%%%%%%%%%%% parfor
             nRealTrNo = TrialNo+BlockBase;
              fname = filenames{nRealTrNo};
             if ~exist(fname,'file')
@@ -1769,6 +1768,7 @@ catch ME
             DataSaveStrc(TrialNo).SegNPdata = LabelSegNPData;
             DataSaveStrc(TrialNo).ROINPLabel = Labels;
         end
+        %%
          cd('./TempDataSaving/');
         save(sprintf('TempSaveData%d.mat',nB),'TempPopuMeanSave','TempPopuMaxSave','DataSaveStrc','BlockStart',...
             'TempCaTrials_local','BlockEnd','isTrInit','-v7.3');

@@ -33,11 +33,11 @@ for n=1:length(result_field_name)
                 behavResults.(result_field_name{n})=cellfun(@(x) x.(result_field_name{n}),SessionResults,'UniformOutput',false);
             catch err
                 if strfind(err.message,result_field_name{n})
-                   disp(['Some of the trials with no exists of field name',result_field_name{n} '\n']);
+                   disp(['Some of the trials with no exists of field name: ',result_field_name{n} '\n']);
                 end
             end
         elseif strfind(err.message,result_field_name{n})
-            disp(['Some of the trials with no exists of field name',result_field_name{n} '\n']);
+            disp(['Some of the trials with no exists of field name: ',result_field_name{n} '\n']);
             if strcmpi(result_field_name{n},'Stim_toneFreq') || strcmpi(result_field_name{n},'Stim_Probe_pureTone_freq')
                 behavResults.Stim_toneFreq = cellfun(@(x) StimFreqSearchFun(x),SessionResults);
                 fprintf('Merge field name Stim_toneFreq and Stim_Probe_pureTone_freq together into Stim_toneFreq.\n');
@@ -62,11 +62,11 @@ for n=1:length(setting_field_name)
                 behavSettings.(setting_field_name{n})=cellfun(@(x) x.(setting_field_name{n}),SessionSettings,'UniformOutput',false);
             catch err
                 if strfind(err.message,setting_field_name{n})
-                    disp(['Some of the trials with no exists of field name',setting_field_name{n} '\n']);
+                    disp(['Some of the trials with no exists of field name: ',setting_field_name{n} '\n']);
                 end
             end
         elseif strfind(err.message,setting_field_name{n})
-            disp(['Some of the trials with no exists of field name',setting_field_name{n} '\n']);
+            disp(['Some of the trials with no exists of field name: ',setting_field_name{n} '\n']);
         end
     end
 end

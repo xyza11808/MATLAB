@@ -295,6 +295,19 @@ v_noise = fminsearch(@(v) ErrorYData(v(1),v(2),v(3),v(4),x),([1 1 0 1])'); % how
 % Savitzky-Golay filter as it preserves the local maxima of the original signal better than the others
 
 % ##############################################################################
+% svd method for dimension reduction
+% Ref:  https://www.cnblogs.com/pinard/p/6251584.html
+% [u,s,v] = svd(cRespData);
+% test = u * s * v(1:3,:)';
+% Test1_datas = test(TrialUsedType == 0,:);
+% Test2_datas = test(TrialUsedType == 1,:);
+% figure;
+% plot3(Test1_datas(:,1)*30,Test1_datas(:,2)*30,Test1_datas(:,3)*30,'ro');
+% hold on
+% plot3(Test2_datas(:,1)*30,Test2_datas(:,2)*30,Test2_datas(:,3)*30,'bo');
+
+
+
 
 %% for passive session used frequency trial index finding
 

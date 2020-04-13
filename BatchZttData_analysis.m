@@ -406,10 +406,21 @@ BlockSemSigTr = std(BlockEventsDataMtx)/sqrt(length(UsedBlockNum));
 h_Summary = figure('position',[2000 100 380 300]);
 hf = plot_meanCaTrace(BlockAvgSigTr,BlockSemSigTr*0.5,1:UsedBlockNum,h_Summary,[]);
 yscales = get(gca,'ylim');
-text(UsedBlockNum/2,yscales(2)*0.8,sprintf('n = %d',length(BlockCounts)));
+text(UsedBlockNum/2,yscales(2)*0.5,sprintf('n = %d',length(BlockCounts)));
+ControlMtx = repmat(BlockEventsDataMtx(:,1),1,42);
+[hh,pp] = ttest2(BlockEventsDataMtx+0.01,ControlMtx+0.01); % in case of zeros mean values
+hold on
+YPos = yscales(2)*0.9;
+for cB = 1 : 42
+    if pp(cB) < 0.05
+        line([cB-0.5 cB+0.5],[YPos YPos],'Color','k','linewidth',2.5);
+    end
+end
+ 
 set(hf.meanPlot,'color','k');
 xlabel('Block Number');
 ylabel('Significant response trial number');
 % title('Block ZSMax response');
 set(gca,'xlim',[0 UsedBlockNum+1],'FontSize',12);
 
+% saveas(h_Summary,'Block summary plots save','png');

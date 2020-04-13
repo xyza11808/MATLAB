@@ -1,4 +1,4 @@
-function ROIFIDatas = NeuFisherInfoCalFun(InputVars,UsedROIInds)
+function [ROIFIDatas,FreqIntep_octs] = NeuFisherInfoCalFun(InputVars,UsedROIInds)
 % refed from Yong Gu's paper
 % ##############
 
@@ -18,11 +18,15 @@ else
 end
 NumROIs = size(AlignedDatas,2);
 RespTimeWin = 1; % seconds
-ExcludeTrials = AlignedDataStrc.behavResults.Action_choice == 2;
 RespFrameScale = AlignedDataStrc.start_frame + (1:round(RespTimeWin*AlignedDataStrc.frame_rate));
-RespValues = squeeze(mean(AlignedDatas(~ExcludeTrials,:,RespFrameScale),3))/100; % not in percent format
-
-UsedTrFreqs = AlignedDataStrc.behavResults.Stim_toneFreq(~ExcludeTrials);
+if isstruct(AlignedDataStrc.behavResults)
+    ExcludeTrials = AlignedDataStrc.behavResults.Action_choice == 2;
+    RespValues = squeeze(mean(AlignedDatas(~ExcludeTrials,:,RespFrameScale),3))/100; % not in percent format
+    UsedTrFreqs = AlignedDataStrc.behavResults.Stim_toneFreq(~ExcludeTrials);
+else
+    RespValues = squeeze(mean(AlignedDatas(:,:,RespFrameScale),3))/100; % All trials were used for pass
+    UsedTrFreqs = AlignedDataStrc.behavResults;
+end
 FreqTypes = double(unique(UsedTrFreqs));
 NumFreqs = numel(FreqTypes);
 FreqTypeDatas = zeros(NumFreqs,NumROIs);
@@ -37,11 +41,12 @@ FreqIntep_octs = FreqOctaves(1) : 0.01 : FreqOctaves(end);
 WithExtraXPoints = [FreqIntep_octs(1)-0.01,FreqIntep_octs,FreqIntep_octs(end)+0.01];
 %%
 WinDataNums = 5;
-std = 30;
+std = 60;
 alphas = (WinDataNums - 1)/(2*std);
 SmoothWin = gausswin(WinDataNums,alphas);
 SmoothWin = SmoothWin / sum(SmoothWin);
 %%
+FloorValue = 0.02;
 % interpolation
 IntepoData = zeros(numel(FreqIntep_octs),NumROIs);
 ROIFIDatas = zeros(numel(FreqIntep_octs),NumROIs);
@@ -50,8 +55,8 @@ for cROI = 1 : NumROIs
     
     TunDataIntep = spline(FreqOctaves,cROITunDatas,WithExtraXPoints);
     
-    if sum(TunDataIntep < 0.01)
-        TunDataIntep(TunDataIntep < 0.01) = 0.01;
+    if sum(TunDataIntep < FloorValue)
+        TunDataIntep(TunDataIntep < FloorValue) = FloorValue;
         TunDataIntep = filtfilt(SmoothWin,1,TunDataIntep);
     end
     IntepoData(:,cROI) = TunDataIntep(2:end-1); 
@@ -64,6 +69,8 @@ for cROI = 1 : NumROIs
     cRInfos = (IntepDevDatas.^2) ./ TunDataIntep(2:end-1);
     ROIFIDatas(:,cROI) = cRInfos;
 end
+
+% figure;
 
 
     
