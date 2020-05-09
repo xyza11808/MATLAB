@@ -24,26 +24,26 @@ for cRepeat = 1 : 100
         
         cRespData = cRespData(RandSelectTrInds,:);
         TrialUsedType = TrialUsedType(RandSelectTrInds);
-        
-        Type0_vectorMean = mean(cRespData(TrialUsedType == 0,:));
-        Type1_vectorMean = mean(cRespData(TrialUsedType == 1,:));
-        Type_mu_diff = (Type0_vectorMean - Type1_vectorMean)';
-        Type0_covMtx = cov(cRespData(TrialUsedType == 0,:));
-        Type1_covMtx = cov(cRespData(TrialUsedType == 1,:));
-        
-        % calculate the real data information, d^2
-        Q = (Type0_covMtx+Type1_covMtx)/2;
-%         Avg_cov_mtxInv = inv(Q);
-        dd_raw = Type_mu_diff' * inv(Q) * Type_mu_diff;
-        
-        % calculate the correlation-free population information,
-        % d_shuffle^2
-        Qd = diag(diag(Q));
-        dd_shuffle = Type_mu_diff' * inv(Qd) * Type_mu_diff;
-        
-        % calculate the diagnal population info, d_diag^2
-        
-        dd_diag = dd_shuffle.^2 / (Type_mu_diff' * inv(Qd) * Q * inv(Qd) * Type_mu_diff);
+        [dd_raw, dd_shuffle, dd_diag] = PopuFICal_fun(cRespData,TrialUsedType);
+% %         Type0_vectorMean = mean(cRespData(TrialUsedType == 0,:));
+% %         Type1_vectorMean = mean(cRespData(TrialUsedType == 1,:));
+% %         Type_mu_diff = (Type0_vectorMean - Type1_vectorMean)';
+% %         Type0_covMtx = cov(cRespData(TrialUsedType == 0,:));
+% %         Type1_covMtx = cov(cRespData(TrialUsedType == 1,:));
+% %         
+% %         % calculate the real data information, d^2
+% %         Q = (Type0_covMtx+Type1_covMtx)/2;
+% % %         Avg_cov_mtxInv = inv(Q);
+% %         dd_raw = Type_mu_diff' * inv(Q) * Type_mu_diff;
+% %         
+% %         % calculate the correlation-free population information,
+% %         % d_shuffle^2
+% %         Qd = diag(diag(Q));
+% %         dd_shuffle = Type_mu_diff' * inv(Qd) * Type_mu_diff;
+% %         
+% %         % calculate the diagnal population info, d_diag^2
+% %         
+% %         dd_diag = dd_shuffle.^2 / (Type_mu_diff' * inv(Qd) * Q * inv(Qd) * Type_mu_diff);
         
         if ~isnan(dd_raw)
             TimeBinInfo(cTimeBinInds,:) = sqrt([dd_raw, dd_shuffle, dd_diag]);

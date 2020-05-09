@@ -26,7 +26,7 @@ function [IterError,NetParaStrc] = NetWorkCalAndGrad(NetParaStrc,varargin)
 %           NetOutputValue: Layer Output values
 %
 %           IsSoftMax: whether using softmax for output
-%           SoftMaxOut: default is [], only is Softmax is used, this is the
+%           SoftMaxOut: default is [], if Softmax method is used, this is the
 %                   softmax output value
 %
 %
@@ -61,7 +61,7 @@ end
 
 if isempty(NetParaStrc.OutFun)
     NetParaStrc.OutFun =  'Sigmoid';
-    NetParaStrc.OutFun =  @(x) 1./(1+exp(-1*x)); 
+%     NetParaStrc.OutFun =  @(x) 1./(1+exp(-1*x)); 
 end
 [OutFun,DerivOutFun] = ActFunCheck(NetParaStrc.OutFun);
 % OutFun = NetParaStrc.OutFun;

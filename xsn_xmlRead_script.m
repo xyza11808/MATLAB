@@ -92,13 +92,13 @@ for cf = 1 : nFrames
     AllTifDatas.Ch2_data(:,:,cf) = cCh2_data;
 end
 
-warning on
+% % warning on
 % %% align tif files 
 % if IsCalRef
-%     RefAvgIndexScale = [300,500];
+%     RefAvgIndexScale = [800,900];
 %     RefImage = squeeze(mean(AllTifDatas.Ch1_data(:,:,RefAvgIndexScale(1):RefAvgIndexScale(2)),3));
 %     figure;
-%     imagesc(RefImage,[400 4000]);
+%     imagesc(RefImage,[500 6000]);
 %     colormap gray
 %     save TargetIm.mat RefImage -v7.3
 % end
