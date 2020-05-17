@@ -74,7 +74,7 @@ else
 end
 
 if filterOps.IsPlot
-    hhhf = figure('position',[200 100 1260 420]);
+    hhhf = figure('position',[200 100 1260 420],'visible','off');
     subplot(1,3,[1,2])
     hold on;
     plot(RawTrace,'r');
@@ -302,7 +302,7 @@ if filterOps.IsPlot
 end
 
 if EventOps.IsPlot
-    hf = figure('position',[100 30 1500 420]);
+    hf = figure('position',[100 30 1500 420],'visible','off');
     hold on
     plot(NFNew,'k','linewidth',1.2);
     

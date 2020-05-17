@@ -1,21 +1,21 @@
 function varargout = Vshuffle(Ordervector)
-%shuffled trial types
+% shuffled trial types
 
-    ShuffleType=Ordervector;
-    %#######################################
-    %stimtype shuffle section
-    TrialLength=numel(ShuffleType);
-    ShuffleIndex = 1:TrialLength;
-    for n=1:TrialLength
-        w = ceil(rand*n);
-        t = ShuffleType(w);
-        ShuffleType(w) = ShuffleType(n);
-        ShuffleType(n) = t;
-        
-        cIndex = ShuffleIndex(w);
-        ShuffleIndex(w) = ShuffleIndex(n);
-        ShuffleIndex(n) = cIndex;
-    end
+ShuffleType=Ordervector;
+% #######################################
+% stimtype shuffle section
+TrialLength=numel(ShuffleType);
+ShuffleIndex = 1:TrialLength;
+for n=1:TrialLength
+    w = ceil(rand*n);
+    t = ShuffleType(w);
+    ShuffleType(w) = ShuffleType(n);
+    ShuffleType(n) = t;
+    
+    cIndex = ShuffleIndex(w);
+    ShuffleIndex(w) = ShuffleIndex(n);
+    ShuffleIndex(n) = cIndex;
+end
 %     CorrTrialStimBU=CorrTrialStim;
 if nargout == 1
     varargout{1} = ShuffleType;

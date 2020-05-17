@@ -5,7 +5,7 @@ function IsFieldDataPath_SessFrameIndex(InputPath)
 if ~isfolder(InputPath)
     return;
 end
-cFolderFiles = dir(fullfile(InputPath,'*2019*'));
+cFolderFiles = dir(fullfile(InputPath,'*2020*'));
 if isempty(cFolderFiles)
    return;
 else
@@ -16,7 +16,7 @@ else
     else
         
         fieldFoldInds = arrayfun(@(x) contains(x.name,'field','IgnoreCase',true) & ...
-            contains(x.name,'sess','IgnoreCase',true),FolderPaths);
+            contains(x.name,'sess','IgnoreCase',true)  & ~contains(x.name,'zoom1','IgnoreCase',true),FolderPaths);
         fieldFoldNames = arrayfun(@(x) x.name,FolderPaths(fieldFoldInds),'UniformOutput',false);
         fileFolderFullpath = arrayfun(@(x) fullfile(x.folder,x.name),FolderPaths(fieldFoldInds),...
             'UniformOutput',false);

@@ -9,8 +9,8 @@
 %% load datas for one animal types
 cclr
 % SumSourPath = '/Users/xinyu/Documents/docs/xnn/p18_wt';
-SumSourPath = 'M:\data\xnn\4MDatas';
-WithinSourcePaths = dir(fullfile(SumSourPath,'*2019*'));
+SumSourPath = 'E:\xnn_data\data_202005_mats';
+WithinSourcePaths = dir(fullfile(SumSourPath,'*2020*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
 UsedTargetFolder = WithinSourcePaths(FolderIndex);
 NumFolders = length(UsedTargetFolder);
@@ -20,7 +20,7 @@ FolderNames = arrayfun(@(x) x.name,UsedTargetFolder,'UniformOutput',false);
 %% cSession correlation analysis
 MultiSessCoefData = cell(NumFolders,1);
 SepMultiSessCoefData = cell(NumFolders,1);
-% MultiSessGenoType = cell(NumFolders,1);
+MultiSessGenoType = cell(NumFolders,1);
 EventSyncFrac = cell(NumFolders,1);
 EventSyncFrac_EO = cell(NumFolders,1);
 % EventSyncFrac_EONeu = cell(NumFolders,1);
@@ -33,33 +33,33 @@ for cfff = 1:NumFolders
     cfName = FolderNames{cfff};
     cfFullPath = FolderFullpaths{cfff};
     
-    cPathFrameIndex = load(fullfile(cfFullPath,'FieldImageFrameNum.mat'));
+%     cPathFrameIndex = load(fullfile(cfFullPath,'FieldImageFrameNum.mat'));
     SessionFieldData =  CorrDataProcessFun(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
     MultiSessCoefData{cfff} = SessionFieldData;
     
-%     FieldEventDataAlls = EventDataProcessFun(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
-%     MultiSessEventData{cfff} = FieldEventDataAlls;
-%     
-%     FieldNum = size(FieldEventDataAlls,1);
-%     FieldRealShufIndex = cell(FieldNum,1);
-%     for cf = 1 : FieldNum
-%         Field1DataRealIndex = mean(FieldEventDataAlls{cf,4});
-%         Field1DataShufIndex = FieldEventDataAlls{cf,5};
-%         FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
-%     end
-%     EventSyncFrac{cfff} = FieldRealShufIndex;
+    FieldEventDataAlls = EventDataProcessFun(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
+    MultiSessEventData{cfff} = FieldEventDataAlls;
+    
+    FieldNum = size(FieldEventDataAlls,1);
+    FieldRealShufIndex = cell(FieldNum,1);
+    for cf = 1 : FieldNum
+        Field1DataRealIndex = mean(FieldEventDataAlls{cf,4});
+        Field1DataShufIndex = FieldEventDataAlls{cf,5};
+        FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
+    end
+    EventSyncFrac{cfff} = FieldRealShufIndex;
     
     
     % end of processing
     
-%     cPathROIDataAll = load(fullfile(cfFullPath,'AllFieldDatasNew_1201.mat'));
-%     
-%     cFieldSynIndex = cellfun(@(x) Popu_synchrony_fun(x),cPathROIDataAll.FieldDatas_AllCell(:,1));
-%     PopuFieldSynchrony_all{cfff,1} = cFieldSynIndex;
-%     
-%     [FieldCoefDataAlls,SessSynchronyIndex_All] = CorrDataProcessFun_FieldSep(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
-%     PopuFieldSynchrony_all{cfff,2} = SessSynchronyIndex_All;
-%     SepMultiSessCoefData{cfff} = FieldCoefDataAlls;
+    cPathROIDataAll = load(fullfile(cfFullPath,'AllFieldDatasNew_1201.mat'));
+    
+    cFieldSynIndex = cellfun(@(x) Popu_synchrony_fun(x),cPathROIDataAll.FieldDatas_AllCell(:,1));
+    PopuFieldSynchrony_all{cfff,1} = cFieldSynIndex;
+    
+    [FieldCoefDataAlls,SessSynchronyIndex_All] = CorrDataProcessFun_FieldSep(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
+    PopuFieldSynchrony_all{cfff,2} = SessSynchronyIndex_All;
+    SepMultiSessCoefData{cfff} = FieldCoefDataAlls;
 %     
     [FieldCoef_EventOnly,SessSynchrony_EventOnly] = CorrDataProcessFun_EventOnly(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
     EventOnlyFieldSynchrony_all{cfff,1} = SessSynchrony_EventOnly;
@@ -69,6 +69,13 @@ for cfff = 1:NumFolders
 %     cPosStrName = cfName(StartInd:EndInd);
 %     cSessFolderInds = strcmpi(cPosStrName,FolderNames_Cell);
 %     MultiSessGenoType{cfff} = GenoType_Cell{cSessFolderInds};
+    if ~isempty(strfind(FolderNames{cfff},'wt'))
+        MultiSessGenoType{cfff} = 'wt';
+    elseif ~isempty(strfind(FolderNames{cfff},'tg'))
+        MultiSessGenoType{cfff} = 'tg';
+    else
+        MultiSessGenoType{cfff} = 'NULL';
+    end
 end
 % check eventsyncFrac and color plot
 
@@ -89,9 +96,9 @@ end
 % % % imagesc(RearrangedData_2,[0 1])
 
 %%
-save(fullfile(SumSourPath,'Newp12_wtDataSummary.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData',...
+save(fullfile(SumSourPath,'NewAge_AllDataSummary.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData',...
     'PopuFieldSynchrony_all','EventOnlyFieldSynchrony_all','Sess_eventOnlyCoefData',...
-    'EventSyncFrac_EO','EventSyncFrac_EONeu','EventSyncFrac_EONeuAct','-v7.3');
+    'MultiSessGenoType','-v7.3');%'EventSyncFrac_EO','EventSyncFrac_EONeu','EventSyncFrac_EONeuAct',
 %% compare all coef values for twe types
 % WTSessInds = strcmpi('wt',MultiSessGenoType);
 % WTSessData_Cell = MultiSessCoefData(WTSessInds);
