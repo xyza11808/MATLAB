@@ -60,8 +60,8 @@ elseif contains(FilterTypes,'highpass','IgnoreCase',true)
     IsBaselineCorrection = 0;
 end
 % performing data filtering 
-NeededDatgapoints = 3*(length(cDesNew.Coefficients) - 1);
-ExtraRepeatsNum = ceil(NeededDatgapoints/length(RawTrace));
+NeededDatapoints = 3*(length(cDesNew.Coefficients) - 1);
+ExtraRepeatsNum = ceil(NeededDatapoints/length(RawTrace));
 RepDatas = repmat(RawTrace(:),ExtraRepeatsNum,1);
 RepNFSignal = filtfilt(cDesNew,RepDatas);
 ExtraFiltData = RepNFSignal(1:length(RawTrace));

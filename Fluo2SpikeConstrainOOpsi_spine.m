@@ -1,4 +1,4 @@
-function varargout = Fluo2SpikeConstrainOOpsi(DataRaw,varargin)
+function varargout = Fluo2SpikeConstrainOOpsi_spine(DataRaw,varargin)
 % This function is using constrained fast oopsi method to estimate spike count, and
 % output the estimated spike count for further analysis
 currentUsedInput = varargin(1:4);
@@ -55,29 +55,66 @@ for cROI = 1 : nROIs
     cROISessTrace = SessionTraceData(cROI,:)/100;
     cROISessTraceNM = cROISessTrace - min(cROISessTrace);
     
-%     lam = choose_lambda(exp(-1/(fr*DecayTime)),GetSn(cROISessTraceNM,[],[],fr),lamPr);
-    lam = choose_lambda(exp(-1/(fr*DecayTime)),GetSn(cROISessTraceNM,[],[],fr),lamPr);
-    spkmin = spkSNR*GetSn(cROISessTraceNM,[],[],fr);
-    
-    [Count,Cent] = hist(cROISessTraceNM,100);
-    [~,MaxInds] = max(Count);
-    fBase = Cent(MaxInds);
+% %     lam = choose_lambda(exp(-1/(fr*DecayTime)),GetSn(cROISessTraceNM,[],[],fr),lamPr);
+%     lam = choose_lambda(exp(-1/(fr*DecayTime)),GetSn(cROISessTraceNM),lamPr); %,[],[],fr
+%     spkmin = spkSNR*GetSn(cROISessTraceNM); %,[],[],fr
+%     
+%     [Count,Cent] = hist(cROISessTraceNM,100);
+%     [~,MaxInds] = max(Count);
+%     fBase = Cent(MaxInds);
     %%
-    if (prctile(cROISessTraceNM,99) - fBase) < 1.5  % filtering the trace when signal is low
-        if fr < 35
-            cDes = designfilt('lowpassfir','PassbandFrequency',1,'StopbandFrequency',5,...
-                'StopbandAttenuation', 60,'SampleRate',fr,'DesignMethod','kaiserwin');  %'ZeroPhase',true,
-%             cDesNew = designfilt('bandpassfir','PassbandFrequency1',0.5,'StopbandFrequency1',0.3,...
-%                 'PassbandFrequency2',5,'StopbandFrequency2',6,'SampleRate',fr,'StopbandAttenuation1',60,...
-%                 'StopbandAttenuation2',60,'DesignMethod','kaiserwin');
-        else
-            cDes = designfilt('lowpassfir','PassbandFrequency',5,'StopbandFrequency',10,...
-                'StopbandAttenuation', 50,'SampleRate',fr,'DesignMethod','kaiserwin');
-        end
-        NFSignal = filtfilt(cDes,cROISessTraceNM);
-    else
-        NFSignal = cROISessTraceNM;
-    end 
+%     if (prctile(cROISessTraceNM,99) - fBase) < 1.5  % filtering the trace when signal is low
+        % using lowpass filter design
+%         if fr < 35
+%                 
+%             cDes = designfilt('lowpassfir','PassbandFrequency',1,'StopbandFrequency',5,...
+%                 'StopbandAttenuation', 60,'SampleRate',fr,'DesignMethod','kaiserwin');  %'ZeroPhase',true,
+% %             cDesNew = designfilt('bandpassfir','PassbandFrequency1',0.5,'StopbandFrequency1',0.3,...
+% %                 'PassbandFrequency2',5,'StopbandFrequency2',6,'SampleRate',fr,'StopbandAttenuation1',60,...
+% %                 'StopbandAttenuation2',60,'DesignMethod','kaiserwin');
+%         else
+%             cDes = designfilt('lowpassfir','PassbandFrequency',5,'StopbandFrequency',10,...
+%                 'StopbandAttenuation', 50,'SampleRate',fr,'DesignMethod','kaiserwin');
+%         end
+%         
+%         % $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%         % using bandpass design
+%         filterOps.Type = 'bandpassfir';
+%         filterOps.Fr = fr;
+%         filterOps.PassBand2 = 1;
+%         filterOps.StopBand2 = 3;
+%         filterOps.PassBand1 = 0.005;
+%         filterOps.StopBand1 = 0.001;
+%         filterOps.StopAttenu1 = 60;
+%         filterOps.StopAttenu2 = 60;
+%         filterOps.DesignMethod = 'kaiserwin';
+%         filterOps.IsPlot = 0;
+%         
+%         cDesNew = designfilt(filterOps.Type,'PassbandFrequency1',filterOps.PassBand1,'StopbandFrequency1',filterOps.StopBand1,...
+%         'PassbandFrequency2',filterOps.PassBand2,'StopbandFrequency2',filterOps.StopBand2,'SampleRate',filterOps.Fr,'StopbandAttenuation1',...
+%         filterOps.StopAttenu1,'StopbandAttenuation2',filterOps.StopAttenu2,'DesignMethod',filterOps.DesignMethod);
+%         NeededDatapoints = 3*(length(cDesNew.Coefficients) - 1);
+%         ExtraRepeatsNum = ceil(NeededDatapoints/length(cROISessTraceNM));
+%         RepDatas = repmat(cROISessTraceNM(:),ExtraRepeatsNum,1);
+%         RepNFSignal = filtfilt(cDesNew,RepDatas);
+%         NFSignal = RepNFSignal(1:length(cROISessTraceNM));
+%         %%
+%         Residues = cROISessTraceNM(:) - NFSignal;
+%         SmoothData = smooth(Residues,100,'sgolay');
+%         NFSignal = NFSignal + SmoothData;
+        
+        %%
+        lam = choose_lambda(exp(-1/(fr*DecayTime)),GetSn(cROISessTraceNM),lamPr); %,[],[],fr
+        spkmin = spkSNR*GetSn(cROISessTraceNM); %,[],[],fr
+
+        [Count,Cent] = hist(cROISessTraceNM,100);
+        [~,MaxInds] = max(Count);
+        fBase = Cent(MaxInds);
+        
+%         NFSignal = filtfilt(cDes,cROISessTraceNM);
+%     else
+%         NFSignal = cROISessTraceNM;
+%     end 
 %%     if any(isnan(NFSignal))
 %         NFSignal = cROISessTraceNM;
 %         warning('cTrace filtering skipped due to nan value output.\n');
@@ -85,7 +122,7 @@ for cROI = 1 : nROIs
 %     if any(isnan(NFSignal))
 %         fprintf('DEbug point.\n');
 %     end
-    [cc2, spk2, opts_oasis2] = deconvolveCa(NFSignal,'ar2','optimize_b',true,'method','foopsi',...
+    [cc2, spk2, opts_oasis2] = deconvolveCa(cROISessTraceNM,'ar2','optimize_b',true,'method','foopsi',...
                                     'optimize_pars',true,'maxIter',100,'smin',spkmin,'window',fr*5,'lambda',lam);
     %%
     TraceSpikeData(cROI,:) = spk2;

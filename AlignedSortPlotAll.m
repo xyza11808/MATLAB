@@ -47,8 +47,9 @@ if nargin > 9
     end
 end
 
-
-AlignLickFStrc = LickTimeStrc;
+if IsLickPlot
+    AlignLickFStrc = LickTimeStrc;
+end
 [AllTrNum,ROInum,FrameNum] = size(RawData);
 TrStimOnset = double(BehavStrc.Time_stimOnset);
 TrTypes = double(BehavStrc.Trial_Type);
@@ -66,7 +67,9 @@ if IsTrIndsInput
     TrStimFreq = TrStimFreq(AllTrInds);
     RewardTime = RewardTime(AllTrInds);
     RawData = RawData(AllTrInds,:,:);
-    AlignLickFStrc = AlignLickFStrc(AllTrInds);
+    if IsLickPlot
+        AlignLickFStrc = AlignLickFStrc(AllTrInds);
+    end
     [AllTrNum,ROInum,FrameNum] = size(RawData);
 end
     
@@ -117,16 +120,18 @@ for nTr = 1 : AllTrNum
     BaseMtx = repmat(mean(cTrData(:,1:cTrBaseFrame),2),1,size(cTrData,2));
     BaseCorrectData = cTrData - BaseMtx;
     AlignData(nTr,:,:) = BaseCorrectData(:,(TrFrameDiff(nTr)+1):(TrFrameDiff(nTr)+AlignFrameLen));
-    AlignLickFStrc(nTr).Action_LeftLick_frame = AlignLickFStrc(nTr).Action_LeftLick_frame - LickFrameDiff(nTr);
-    AlignLickFStrc(nTr).Action_RightLick_frame = AlignLickFStrc(nTr).Action_RightLick_frame - LickFrameDiff(nTr);
-    if ~isempty(AlignLickFStrc(nTr).Action_LeftLick_frame)
-        ExcludeInds = (AlignLickFStrc(nTr).Action_LeftLick_frame < 1) | (AlignLickFStrc(nTr).Action_LeftLick_frame > AlignFrameLen);
-        AlignLickFStrc(nTr).Action_LeftLick_frame(ExcludeInds) = [];
+    if IsLickPlot
+        AlignLickFStrc(nTr).Action_LeftLick_frame = AlignLickFStrc(nTr).Action_LeftLick_frame - LickFrameDiff(nTr);
+        AlignLickFStrc(nTr).Action_RightLick_frame = AlignLickFStrc(nTr).Action_RightLick_frame - LickFrameDiff(nTr);
+        if ~isempty(AlignLickFStrc(nTr).Action_LeftLick_frame)
+            ExcludeInds = (AlignLickFStrc(nTr).Action_LeftLick_frame < 1) | (AlignLickFStrc(nTr).Action_LeftLick_frame > AlignFrameLen);
+            AlignLickFStrc(nTr).Action_LeftLick_frame(ExcludeInds) = [];
+        end
+        if ~isempty(AlignLickFStrc(nTr).Action_RightLick_frame)
+           ExcludeInds = (AlignLickFStrc(nTr).Action_RightLick_frame < 1) | (AlignLickFStrc(nTr).Action_RightLick_frame > AlignFrameLen);
+            AlignLickFStrc(nTr).Action_RightLick_frame(ExcludeInds) = [];
+        end 
     end
-    if ~isempty(AlignLickFStrc(nTr).Action_RightLick_frame)
-       ExcludeInds = (AlignLickFStrc(nTr).Action_RightLick_frame < 1) | (AlignLickFStrc(nTr).Action_RightLick_frame > AlignFrameLen);
-        AlignLickFStrc(nTr).Action_RightLick_frame(ExcludeInds) = [];
-    end 
 end
 AlignedFrame = (MinStimOnsetTime/1000*Frate);
 SoundOffFrame = ((MinStimOnsetTime/1000)+0.3)*Frate;
@@ -141,7 +146,9 @@ for cFreqType = 1 : NumFreq
     cFreqOutcome = TrOutcome(cFreqInds);
     cFreqAnsF = AnsAdjFrame(cFreqInds);
     cFreqReF = RewardAdjFrame(cFreqInds);
-    cFreqLickStrc = AlignLickFStrc(cFreqInds);
+    if IsLickPlot
+        cFreqLickStrc = AlignLickFStrc(cFreqInds);
+    end
     
     ErrorOutAnsF = cFreqAnsF(cFreqOutcome == 0);
     CorrOutAnsF = cFreqAnsF(cFreqOutcome == 1);
@@ -150,8 +157,10 @@ for cFreqType = 1 : NumFreq
 %     LeftLickStrcErroF = AlignLickFStrc(cFreqOutcome == 0).Action_LeftLick_frame;
 %     RightLickStrcCorrF = AlignLickFStrc(cFreqOutcome == 1).Action_RightLick_frame;
 %     RightLickStrcErroF = AlignLickFStrc(cFreqOutcome == 0).Action_RightLick_frame;
-    CorrLickStrc = cFreqLickStrc(cFreqOutcome == 1);
-    ErroLickStrc = cFreqLickStrc(cFreqOutcome == 0);
+    if IsLickPlot
+        CorrLickStrc = cFreqLickStrc(cFreqOutcome == 1);
+        ErroLickStrc = cFreqLickStrc(cFreqOutcome == 0);
+    end
     
     [ErrorOutAnsF,ErrorAnsIndsSort] = sort(ErrorOutAnsF);
     [CorrOutAnsF,corrAnsIndsSort] = sort(CorrOutAnsF);
@@ -172,36 +181,38 @@ for cFreqType = 1 : NumFreq
 %     SortRightLickStrcCorrF = RightLickStrcCorrF(corrAnsIndsSort);
 %     SortLeftLickStrcErroF = LeftLickStrcErroF(ErrorAnsIndsSort);
 %     SortRightLickStrcErroF = RightLickStrcErroF(ErrorAnsIndsSort);
-    SortCorrLickStrc = CorrLickStrc(corrAnsIndsSort);
-    SortErroLickStrc = ErroLickStrc(ErrorAnsIndsSort);
-    
-    LeftCorrLick = [0;0];
-    RightCorrLick = [0;0];
-    for ncCorrTr = 1 : CorrTrIndsNum
-        cTrLeftLick = SortCorrLickStrc(ncCorrTr).Action_LeftLick_frame;
-        cTrRightLick = SortCorrLickStrc(ncCorrTr).Action_RightLick_frame;
-        if ~isempty(cTrLeftLick)
-            AddLeftLick = [(cTrLeftLick(:))';ncCorrTr*ones(1,length(cTrLeftLick))];
-            LeftCorrLick = [LeftCorrLick,AddLeftLick];
+    if IsLickPlot
+        SortCorrLickStrc = CorrLickStrc(corrAnsIndsSort);
+        SortErroLickStrc = ErroLickStrc(ErrorAnsIndsSort);
+
+        LeftCorrLick = [0;0];
+        RightCorrLick = [0;0];
+        for ncCorrTr = 1 : CorrTrIndsNum
+            cTrLeftLick = SortCorrLickStrc(ncCorrTr).Action_LeftLick_frame;
+            cTrRightLick = SortCorrLickStrc(ncCorrTr).Action_RightLick_frame;
+            if ~isempty(cTrLeftLick)
+                AddLeftLick = [(cTrLeftLick(:))';ncCorrTr*ones(1,length(cTrLeftLick))];
+                LeftCorrLick = [LeftCorrLick,AddLeftLick];
+            end
+            if ~isempty(cTrRightLick)
+                AddRightLick = [(cTrRightLick(:))';ncCorrTr*ones(1,length(cTrRightLick))];
+                RightCorrLick = [RightCorrLick,AddRightLick];
+            end
         end
-        if ~isempty(cTrRightLick)
-            AddRightLick = [(cTrRightLick(:))';ncCorrTr*ones(1,length(cTrRightLick))];
-            RightCorrLick = [RightCorrLick,AddRightLick];
-        end
-    end
-    
-    LeftErroLick = [0;0];
-    RightErroLick = [0;0];
-    for ncErroTr = 1 : ErroTrIndsNum
-        cTrLeftLick = SortErroLickStrc(ncErroTr).Action_LeftLick_frame;
-        cTrRightLick = SortErroLickStrc(ncErroTr).Action_RightLick_frame;
-        if ~isempty(cTrLeftLick)
-            AddLeftLick = [(cTrLeftLick(:))';ncErroTr*ones(1,length(cTrLeftLick))];
-            LeftErroLick = [LeftErroLick,AddLeftLick];
-        end
-        if ~isempty(cTrRightLick)
-            AddRightLick = [(cTrRightLick(:))';ncErroTr*ones(1,length(cTrRightLick))];
-            RightErroLick = [RightErroLick,AddRightLick];
+
+        LeftErroLick = [0;0];
+        RightErroLick = [0;0];
+        for ncErroTr = 1 : ErroTrIndsNum
+            cTrLeftLick = SortErroLickStrc(ncErroTr).Action_LeftLick_frame;
+            cTrRightLick = SortErroLickStrc(ncErroTr).Action_RightLick_frame;
+            if ~isempty(cTrLeftLick)
+                AddLeftLick = [(cTrLeftLick(:))';ncErroTr*ones(1,length(cTrLeftLick))];
+                LeftErroLick = [LeftErroLick,AddLeftLick];
+            end
+            if ~isempty(cTrRightLick)
+                AddRightLick = [(cTrRightLick(:))';ncErroTr*ones(1,length(cTrRightLick))];
+                RightErroLick = [RightErroLick,AddRightLick];
+            end
         end
     end
 %     CorrTrReFXData(CorrSortReF == 0,1:2) = nan;
@@ -211,11 +222,12 @@ for cFreqType = 1 : NumFreq
     FreqTypeEventF{cFreqType,3} = [ErrorTrXData,ErrorTrYData];
     FreqTypeEventF{cFreqType,1} = [CorrTrAnsFXData,CorrTrAnsFYData];
     FreqTypeEventF{cFreqType,2} = [CorrTrReFXData,CorrTrReFYData];
-    
-    AlignLickStrc{cFreqType,1} = LeftCorrLick(:,2:end);
-    AlignLickStrc{cFreqType,2} = RightCorrLick(:,2:end);
-    AlignLickStrc{cFreqType,3} = LeftErroLick(:,2:end);
-    AlignLickStrc{cFreqType,4} = RightErroLick(:,2:end);
+    if IsLickPlot
+        AlignLickStrc{cFreqType,1} = LeftCorrLick(:,2:end);
+        AlignLickStrc{cFreqType,2} = RightCorrLick(:,2:end);
+        AlignLickStrc{cFreqType,3} = LeftErroLick(:,2:end);
+        AlignLickStrc{cFreqType,4} = RightErroLick(:,2:end);
+    end
 end
     
 %% plot all dataset
