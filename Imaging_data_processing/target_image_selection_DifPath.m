@@ -1,20 +1,23 @@
 %finding the target image for alignment
-cd('T:\batch\batch70\20200605\anm06\test02_2afc');
-[im, ~] = load_scim_data('b70a06_test02_rf_220um_20200605_191.tif');
+SourcePath = 'Z:\Lab_Members\Xin_Y\behavior_rig06_backup\behaviro_data\Batch_70\batch70';
+TargetPath = '20200529\anm06\test02_rf';
+cd([SourcePath,filesep,TargetPath]);
 
-selectframe=im(:,:,120:190);
+[im, ~] = load_scim_data('b70a06_test01_rf_2x_110um_20200529_045.tif');
+
+selectframe=im(:,:,1:28);
 figure;
 imagesc(mean(selectframe,3),[-20 1000]);
 im_reg_target = mean(selectframe,3);
 figure(gcf);
 colormap gray;
 %%
+TargUpperPath = 'E:\xnn_data\Batch_70\batch70';
 clc
 dir_imreg_src = pwd;
-save TargetImage.mat im_reg_target dir_imreg_src -v7.3 
-%%
-% dir_imreg_dest = [['F',dir_imreg_src(2:end)] filesep 'im_data_reg_cpu'];
-dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
+save TargetImage.mat im_reg_target
+dir_imreg_dest = [TargUpperPath filesep TargetPath filesep 'im_data_reg_cpu'];
+% % dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
 t_total=tic;
 BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
 t=toc(t_total);
@@ -27,33 +30,41 @@ end
 % save TargetImage.mat im_reg_target
 %
 % % 
-% load('P:\BatchData\batch52\20180423\anm05\test01\TargetImage.mat','im_reg_target');
-dir_imreg_src = 'E:\xnn_data\Batch_70\anm05\test01_spont';
+% % % load('P:\BatchData\batch52\20180423\anm05\test01\TargetImage.mat','im_reg_target');
+TargetPath = '20200529\anm06\test01_spon';
+dir_imreg_src = [SourcePath filesep TargetPath];
 cd(dir_imreg_src);
-dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
+% dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
+dir_imreg_dest = [TargUpperPath filesep TargetPath filesep 'im_data_reg_cpu'];
 BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
 isFileBadAlign = cellfun(@isempty,BadAlignFrame);
 if sum(~isFileBadAlign)
     save BadAlignF.mat BadAlignFrame -v7.3
 end
 
-dir_imreg_src = 'E:\xnn_data\Batch_70\anm05\test03_spontAF';
+% % % dir_imreg_src = 'E:\xnn_data\Batch_70\anm05\test03_spontAF';
+TargetPath = '20200529\anm06\test03_AFalterspon';
+dir_imreg_src = [SourcePath filesep TargetPath];
 cd(dir_imreg_src);
-dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
+% dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
+dir_imreg_dest = [TargUpperPath filesep TargetPath filesep 'im_data_reg_cpu'];
 BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
 isFileBadAlign = cellfun(@isempty,BadAlignFrame);
 if sum(~isFileBadAlign)
     save BadAlignF.mat BadAlignFrame -v7.3
 end
 
-dir_imreg_src = 'E:\xnn_data\Batch_70\anm05\test04_spont10minsAF';
-cd(dir_imreg_src);
-dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
-BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
-isFileBadAlign = cellfun(@isempty,BadAlignFrame);
-if sum(~isFileBadAlign)
-    save BadAlignF.mat BadAlignFrame -v7.3
-end
+% % % dir_imreg_src = 'E:\xnn_data\Batch_70\anm05\test04_spont10minsAF';
+% TargetPath = '20200528\anm03\test03sp_afterAlter_4k32k';
+% dir_imreg_src = [SourcePath filesep TargetPath];
+% cd(dir_imreg_src);
+% % dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
+% dir_imreg_dest = [TargUpperPath filesep TargetPath filesep 'im_data_reg_cpu'];
+% BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
+% isFileBadAlign = cellfun(@isempty,BadAlignFrame);
+% if sum(~isFileBadAlign)
+%     save BadAlignF.mat BadAlignFrame -v7.3
+% end
 
 % %
 % 

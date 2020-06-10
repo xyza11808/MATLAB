@@ -11,7 +11,7 @@ for cStim = 1 : numel(Stims)
         SampleIndex = randsample(TypeTrNum(cStim),nCorrTypeNum);
         cAllTypes(SampleIndex) = 1;
     else
-        SampleIndex = randsample(TypeTrNum(cStim),TypeTrNum(cStim) - nCorrTypeNum);
+        SampleIndex = randsample(TypeTrNum(cStim), TypeTrNum(cStim) - nCorrTypeNum);
         cAllTypes(SampleIndex) = 1;
     end
     

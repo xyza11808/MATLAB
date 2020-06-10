@@ -1,4 +1,5 @@
-function [SoftChoiceProbs,TargetSoftProb,QValues] = DFRL_model_Cal(ModelParas)
+function [SoftChoiceProbs,TargetSoftProb,Q_SWP_Context_Values] = ...
+    RL_Confidence_model_Cal(ModelParas)
 % reference: "Orbitofrontal Circuits Control Multiple Reinforcement-Learning
 % Processes"
 
@@ -13,6 +14,12 @@ function [SoftChoiceProbs,TargetSoftProb,QValues] = DFRL_model_Cal(ModelParas)
 % ModelParas.Neg_delta_value = 0;
 % ModelParas.Chose_decay = 0.6;
 % ModelParas.UnChose_decay = 0.5;
+% ModelParas.Step_Delta = 0.5; % used for boundary position shiftment
+% ModelParas.Context_indices = 0.5; % -1 or 1, used for block type indication
+% ModelParas.SwitchProb_Thres = 0.5;
+% ModelParas.SwitchProb_decay = 0.5;
+% ModelParas.SwitchProb_delta = 0.5;
+
 % ModelParas.
 if length(unique(ModelParas.Tr_Types)) == 2
     BinaryTrTypes = ModelParas.Tr_Types;
@@ -43,6 +50,13 @@ if ~isfield(ModelParas,'Q_Values')
 else
     QValues = ModelParas.Q_Values;
 end
+
+if ~isfield(ModelParas,'Switch_prob')
+    Switch_Probs = zeros(1,TrNum);
+else
+    Switch_Probs = ModelParas.Switch_prob;
+end
+
 SoftChoiceProbs = zeros(size(QValues));
 TargetSoftProb = zeros(1,TrNum);
 
@@ -60,21 +74,36 @@ if numel(Action_Type) ~= numel(Assumed_TrType)
 end
 TrOutcome = double(Action_Type == Assumed_TrType);
 Tr_Used_Decay = [Neg_delta_value,Pos_delta_value];
+SwitchProb_UsedOutcome = TrOutcome;
+SwitchProb_UsedOutcome(TrOutcome == 0) = -1;
 
+Tr_Context = zeros(1,TrNum);
+Tr_Context(1) = ModelParas.Context_indices;
 for cTr = 2 : TrNum
     cActIndex = double(ChoiceType == Action_Type(cTr)); 
     cTrOutcome = TrOutcome(cTr);
+    HyperStims = UsedFrameScale(cTr) + ModelParas.Step_Delta * ModelParas.Context_indices;
+    HyperStims = min(1,abs(HyperStims)) * sign(HyperStims);
+    
     for cN_choice = 1 : NumChoiceTypes
         if cActIndex(cN_choice) % update same action side Q values
             QValues(cN_choice,cTr) = Chose_decay * QValues(cN_choice,cTr-1) + ...
-                Tr_Used_Decay(cTrOutcome + 1)*UsedFrameScale(cN_choice);
+                Tr_Used_Decay(cTrOutcome + 1)*HyperStims;
         else % update different action side Q values
             QValues(cN_choice,cTr) = UnChose_decay * QValues(cN_choice,cTr-1);
         end
     end
+    Switch_Probs(cTr) = exp(Switch_Probs(cTr - 1)*ModelParas.SwitchProb_decay + ...
+        SwitchProb_UsedOutcome(cTr) * HyperStims * ModelParas.SwitchProb_delta);
+    if Switch_Probs(cTr) > ModelParas.SwitchProb_Thres
+        Switch_Probs(cTr) = 0;
+        ModelParas.Context_indices = ModelParas.Context_indices * -1;
+    end
+    Tr_Context(cTr) = ModelParas.Context_indices;
+    
     SoftChoiceProbs(:,cTr) = SoftMaxFun(QValues(:,cTr));
     TargetSoftProb(cTr) = SoftChoiceProbs(logical(cActIndex),cTr);
 end
 
-
+Q_SWP_Context_Values = {QValues, Switch_Probs, Tr_Context};
 

@@ -39,6 +39,15 @@ if nargin < 2 || isempty(cm), cm =flipud(bone); end;
 
 n = size(P,1);
 assert(ismatrix(P) && size(P,2) == n,'input must be a square 2D matrix');
+if n >100
+    step = 20;
+elseif n > 50
+    step = 10;
+elseif n > 10
+    step = 5;
+else
+    step = 1;
+end
 
 colormap(cm);
 maxP = max(P(:));
@@ -47,7 +56,7 @@ imagesc(P,[0 maxP]);
 axis('square');
 xlabel('from');
 ylabel('to');
-set(gca,'XTick',1:n);
-set(gca,'XTickLabel',1:n);
-set(gca,'YTick',1:n);
-set(gca,'YTickLabel',1:n);
+set(gca,'XTick',1:step:n);
+set(gca,'XTickLabel',1:step:n);
+set(gca,'YTick',1:step:n);
+set(gca,'YTickLabel',1:step:n);

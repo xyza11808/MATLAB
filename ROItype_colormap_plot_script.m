@@ -4,7 +4,7 @@
 clear
 clc
 
-[fn,fp,fi] = uigetfile('*.txt','Please select the session pathsave file');
+[fn,fp,fi] = uigetfile('*.txt','Please select the session path save file');
 if ~fi
     return;
 end

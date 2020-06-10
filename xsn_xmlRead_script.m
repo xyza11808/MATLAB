@@ -6,7 +6,7 @@ if ~fi
     return;
 end
 cd(fp);
-%%
+%
 cDoc = xmlread(fullfile(fp,fn));
 cc = parseChildNodes(cDoc);
 ccChildrens = cc.Children;
@@ -96,10 +96,10 @@ end
 
 % %% align tif files 
 % if IsCalRef
-%     RefAvgIndexScale = [800,900];
+%     RefAvgIndexScale = [700,800];
 %     RefImage = squeeze(mean(AllTifDatas.Ch1_data(:,:,RefAvgIndexScale(1):RefAvgIndexScale(2)),3));
 %     figure;
-%     imagesc(RefImage,[100 4000]);
+%     imagesc(RefImage,[100 6000]);
 %     colormap gray
 %     save TargetIm.mat RefImage -v7.3
 % end

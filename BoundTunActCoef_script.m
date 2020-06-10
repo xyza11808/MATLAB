@@ -13,6 +13,7 @@ fpath = fullfile(fp,fn);
 ff = fopen(fpath);
 tline = fgetl(ff);
 % PassLine = fgetl(PassFid);
+PassUsedInds = {};
 cSess = 1;
 SessBoundTunCorr = {};
 % ROICoefAll = {};
@@ -25,7 +26,7 @@ while ischar(tline)
 %        PassLine = fgetl(PassFid);
         continue;
     end
-    %%
+    %
     BehavDatas = load(fullfile(tline,'RandP_data_plots','boundary_result.mat'));
     BehavCorr = BehavDatas.boundary_result.StimCorr;
     GroupStimsNum = floor(length(BehavCorr)/2);
@@ -40,7 +41,7 @@ while ischar(tline)
     DerivativeFun = diff(FitBehavFunc,xx);
     DeriveValue = double(subs(DerivativeFun,BehavOctaves));
     DeriveValueNor = DeriveValue/max(DeriveValue);
-    %%
+    %
     TuningDataPath = fullfile(tline,'Tunning_fun_plot_New1s','TunningDataSave.mat');
     TunData = load(TuningDataPath);
     
@@ -50,7 +51,7 @@ while ischar(tline)
     WithinBoundInds = abs(PassOctave) < 1.1;
     WBPassOct = PassOctave(WithinBoundInds);
     WBPassData = TunData.PassTunningfun(WithinBoundInds,:);
-    %%
+    %
     disp(TunData.TaskFreqOctave);
     disp(WBPassOct');
     UsedIndsTr = input('Please select pass octave used inds:\n','s');
@@ -58,12 +59,14 @@ while ischar(tline)
     if ~isempty(UsedInds)
         UsedPassData = WBPassData(UsedInds,:);
         UsedPassOct = WBPassOct(UsedInds,:);
+        PassUsedInds{cSess} = UsedInds;
     else
         tline = fgetl(ff);
         cSess = cSess + 1;
+        PassUsedInds{cSess} = UsedInds;
 %         continue;
     end
-    %%
+    %
     PassOctSlope = double(subs(DerivativeFun,UsedPassOct));
     PassOctSlopeNor = PassOctSlope / max(PassOctSlope);
     %
@@ -107,6 +110,7 @@ while ischar(tline)
     tline = fgetl(ff);
     cSess = cSess + 1;
 end
+%%
 cd('E:\DataToGo\data_for_xu\BoundTun_DataSave\TunValueSlopeVCoef');
 % save BoundTunCoefAll.mat SessBoundTunCorr ROICoefAll ROIPvalueAll -v7.3
 save BoundTunDataSlopeAll.mat SessBoundTunCorr SessPassBoundData -v7.3

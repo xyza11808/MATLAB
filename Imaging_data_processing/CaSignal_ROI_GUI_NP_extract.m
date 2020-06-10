@@ -1616,69 +1616,139 @@ try
     RingFAll = cell(End_trial - Start_trial + 1,1);
     SegNPdataAll = cell(End_trial - Start_trial + 1,1);
     ROINPlabelAll = cell(End_trial - Start_trial + 1,1);
-    parfor TrialNo = Start_trial:End_trial   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   parfor
-        fname = filenames{TrialNo};
-        if ~exist(fname,'file')
-            [fname, pathname] = uigetfile('*.tif', 'Select Image Data file');
-            cd(pathname);
-        end
-        msg_str1 = sprintf('Batch analyzing %d of total %d trials with %d ROIs...', ...
-            TrialNo, End_trial-Start_trial+1, nTROIs);  
-    %     disp(['Batch analyzing ' num2str(TrialNo) ' of total ' num2str(End_trial-Start_trial+1) ' trials...']);
-        disp(msg_str1);
-    %     waitbar((TrialNo-Start_trial+1)/(End_trial-Start_trial+1), h, msg_str1);
-    %     set(handles.msgBox, 'String', msg_str1);
-        [im, ~] = load_scim_data(fname);
-        if isempty(im)
-            disp(['Empty image data for trial  ' num2str(TrialNo) '...']);
-            continue;
-        end
-        [mean_im,MAxDelta] = FigMeanMaxFrame(im);
-        PopuMeanSave{TrialNo} = mean_im;
-        PopuMaxSave{TrialNo} = MAxDelta;
-    %     set(handles.CurrentTrialNo,'String', int2str(TrialNo));
-        % if isempty(ROIinfo{TrialNo})
+    if abs(Start_trial - End_trial) > 20 
+        parfor TrialNo = Start_trial:End_trial   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   parfor
+            fname = filenames{TrialNo};
+            if ~exist(fname,'file')
+                [fname, pathname] = uigetfile('*.tif', 'Select Image Data file');
+                cd(pathname);
+            end
+            msg_str1 = sprintf('Batch analyzing %d of total %d trials with %d ROIs...', ...
+                TrialNo, End_trial-Start_trial+1, nTROIs);  
+        %     disp(['Batch analyzing ' num2str(TrialNo) ' of total ' num2str(End_trial-Start_trial+1) ' trials...']);
+            disp(msg_str1);
+        %     waitbar((TrialNo-Start_trial+1)/(End_trial-Start_trial+1), h, msg_str1);
+        %     set(handles.msgBox, 'String', msg_str1);
+            [im, ~] = load_scim_data(fname);
+            if isempty(im)
+                disp(['Empty image data for trial  ' num2str(TrialNo) '...']);
+                continue;
+            end
+            [mean_im,MAxDelta] = FigMeanMaxFrame(im);
+            PopuMeanSave{TrialNo} = mean_im;
+            PopuMaxSave{TrialNo} = MAxDelta;
+        %     set(handles.CurrentTrialNo,'String', int2str(TrialNo));
+            % if isempty(ROIinfo{TrialNo})
 
-        % end
-    %     update_image_axes(handles,im);
-    %     CalculatePlotButton_Callback(handles.figure1, eventdata, handles, im, ROIinfo_local(TrialNo), 0);
-        [F, fRing,dff] = extract_roi_fluo(im, ROIinfoUsed, 0);
-        LabelSegNPData = SegNPdataExtraction(im,LabelNPmask);
-    %     disp(['Currently calculated trial number ' num2str(TrialNo) '...']);
-        if isempty(F)
-            disp(['Empty fluo data for trial  ' num2str(TrialNo) '...']);
+            % end
+        %     update_image_axes(handles,im);
+        %     CalculatePlotButton_Callback(handles.figure1, eventdata, handles, im, ROIinfo_local(TrialNo), 0);
+            [F, fRing,dff] = extract_roi_fluo(im, ROIinfoUsed, 0);
+            LabelSegNPData = SegNPdataExtraction(im,LabelNPmask);
+        %     disp(['Currently calculated trial number ' num2str(TrialNo) '...']);
+            if isempty(F)
+                disp(['Empty fluo data for trial  ' num2str(TrialNo) '...']);
+            end
+
+
+            DffAll{TrialNo} = dff;
+            FRawAll{TrialNo} = F;
+            RingFAll{TrialNo} = fRing;
+            SegNPdataAll{TrialNo} = LabelSegNPData;
+            ROINPlabelAll{TrialNo} = Labels;
+
+        %     handles = update_projection_images(handles);
+        %     handles = get_exp_info(hObject, eventdata, handles);
+        %     CaSignal.CaTrials(TrialNo).meanImage = mean(im,3);
+        %     close(CaSignal.h_CaTrace_fig);
+        %     set(handles.CurrentTrialNo, 'String', int2str(TrialNo));
+        %     set(handles.CurrentImageFilenameText,'String',fname);
+        %     set(handles.nROIsText,'String',int2str(length(ROIinfo{TrialNo}.ROIpos)));
+        end
+
+            %##########################################################################
+        %% initialize catrials for each trials
+        ftime = tic;
+        parfor TrialNo = Start_trial:End_trial    %%%%%%%%%%%%%%%%%% parfor
+            fname = filenames{TrialNo};
+             [~,header] = load_scim_data(fname,[],[],0);
+            if (nTrials < TrialNo || isempty( CaTrials_local(TrialNo).FileName))
+                    trial_init = init_CaTrial(filenames{TrialNo},TrialNo,header);
+                    CaTrials_local(TrialNo) = trial_init;
+                    CaTrials_local(TrialNo).nROIs = nTROIs;
+                    CaTrials_local(TrialNo).ROIstateIndic = TotalStateIndic;
+            %         disp('Initial of Casignal Struct.\n');
+            end
+        end
+    else
+        for TrialNo = Start_trial:End_trial   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   parfor
+            fname = filenames{TrialNo};
+            if ~exist(fname,'file')
+                [fname, pathname] = uigetfile('*.tif', 'Select Image Data file');
+                cd(pathname);
+            end
+            msg_str1 = sprintf('Batch analyzing %d of total %d trials with %d ROIs...', ...
+                TrialNo, End_trial-Start_trial+1, nTROIs);  
+        %     disp(['Batch analyzing ' num2str(TrialNo) ' of total ' num2str(End_trial-Start_trial+1) ' trials...']);
+            disp(msg_str1);
+        %     waitbar((TrialNo-Start_trial+1)/(End_trial-Start_trial+1), h, msg_str1);
+        %     set(handles.msgBox, 'String', msg_str1);
+            [im, ~] = load_scim_data(fname);
+            if isempty(im)
+                disp(['Empty image data for trial  ' num2str(TrialNo) '...']);
+                continue;
+            end
+            [mean_im,MAxDelta] = FigMeanMaxFrame(im);
+            PopuMeanSave{TrialNo} = mean_im;
+            PopuMaxSave{TrialNo} = MAxDelta;
+        %     set(handles.CurrentTrialNo,'String', int2str(TrialNo));
+            % if isempty(ROIinfo{TrialNo})
+
+            % end
+        %     update_image_axes(handles,im);
+        %     CalculatePlotButton_Callback(handles.figure1, eventdata, handles, im, ROIinfo_local(TrialNo), 0);
+            [F, fRing,dff] = extract_roi_fluo(im, ROIinfoUsed, 0);
+            LabelSegNPData = SegNPdataExtraction(im,LabelNPmask);
+        %     disp(['Currently calculated trial number ' num2str(TrialNo) '...']);
+            if isempty(F)
+                disp(['Empty fluo data for trial  ' num2str(TrialNo) '...']);
+            end
+
+
+            DffAll{TrialNo} = dff;
+            FRawAll{TrialNo} = F;
+            RingFAll{TrialNo} = fRing;
+            SegNPdataAll{TrialNo} = LabelSegNPData;
+            ROINPlabelAll{TrialNo} = Labels;
+
+        %     handles = update_projection_images(handles);
+        %     handles = get_exp_info(hObject, eventdata, handles);
+        %     CaSignal.CaTrials(TrialNo).meanImage = mean(im,3);
+        %     close(CaSignal.h_CaTrace_fig);
+        %     set(handles.CurrentTrialNo, 'String', int2str(TrialNo));
+        %     set(handles.CurrentImageFilenameText,'String',fname);
+        %     set(handles.nROIsText,'String',int2str(length(ROIinfo{TrialNo}.ROIpos)));
+        end
+
+        % ##########################################################################
+        % initialize catrials for each trials
+        ftime = tic;
+        for TrialNo = Start_trial:End_trial    %%%%%%%%%%%%%%%%%% parfor
+            fname = filenames{TrialNo};
+             [~,header] = load_scim_data(fname,[],[],0);
+            if (nTrials < TrialNo || isempty( CaTrials_local(TrialNo).FileName))
+                    trial_init = init_CaTrial(filenames{TrialNo},TrialNo,header);
+                    CaTrials_local(TrialNo) = trial_init;
+                    CaTrials_local(TrialNo).nROIs = nTROIs;
+                    CaTrials_local(TrialNo).ROIstateIndic = TotalStateIndic;
+            %         disp('Initial of Casignal Struct.\n');
+            end
         end
         
-        
-        DffAll{TrialNo} = dff;
-        FRawAll{TrialNo} = F;
-        RingFAll{TrialNo} = fRing;
-        SegNPdataAll{TrialNo} = LabelSegNPData;
-        ROINPlabelAll{TrialNo} = Labels;
-        
-    %     handles = update_projection_images(handles);
-    %     handles = get_exp_info(hObject, eventdata, handles);
-    %     CaSignal.CaTrials(TrialNo).meanImage = mean(im,3);
-    %     close(CaSignal.h_CaTrace_fig);
-    %     set(handles.CurrentTrialNo, 'String', int2str(TrialNo));
-    %     set(handles.CurrentImageFilenameText,'String',fname);
-    %     set(handles.nROIsText,'String',int2str(length(ROIinfo{TrialNo}.ROIpos)));
     end
     
-        %##########################################################################
-    %% initialize catrials for each trials
-    ftime = tic;
-    parfor TrialNo = Start_trial:End_trial    %%%%%%%%%%%%%%%%%% parfor
-        fname = filenames{TrialNo};
-         [~,header] = load_scim_data(fname,[],[],0);
-        if (nTrials < TrialNo || isempty( CaTrials_local(TrialNo).FileName))
-                trial_init = init_CaTrial(filenames{TrialNo},TrialNo,header);
-                CaTrials_local(TrialNo) = trial_init;
-                CaTrials_local(TrialNo).nROIs = nTROIs;
-                CaTrials_local(TrialNo).ROIstateIndic = TotalStateIndic;
-        %         disp('Initial of Casignal Struct.\n');
-        end
-    end
+    
+    
     t = toc(ftime);
     fprintf('Header reading ends up in %.4f.\n',t);
     %##########################################################################
@@ -1872,12 +1942,17 @@ if exist('BadAlignF.mat','file')
     BADAlignFStrc = load('BadAlignF.mat');
     if iscell(BADAlignFStrc.BadAlignFrame)
         isFileBadAlign = cellfun(@isempty,BADAlignFStrc.BadAlignFrame);
+        BadFileIndex = find(~isFileBadAlign);
         BadAlignFile = BADAlignFStrc.BadAlignFrame(~isFileBadAlign);
         nfiles = length(BadAlignFile);
         nBadInds = zeros(nfiles,1);
         for nfff = 1 : nfiles
             cfilename = BadAlignFile{nfff};
-            nBadInds(nfff) = str2num(cfilename(end-6:end-4));
+            if isnumeric(cfilename)
+                nBadInds(nfff) = BadFileIndex(nfff);
+            else
+                nBadInds(nfff) = str2num(cfilename(end-6:end-4));
+            end
         end
     else
         nBadInds = BADAlignFStrc.BadAlignFrame > 0;

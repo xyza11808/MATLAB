@@ -56,15 +56,15 @@ end
 
 fprintf('Output path: %s\n', save_path);
 if iscell(src_dir)
-   RawDataPath = src_dir{1};
-   datafiles = struct('name','','path','');
-   nFiles = length(src_dir) - 1;
-   for cf = 1 : nFiles
-       datafiles(cf).name = src_dir{cf+1};
-       datafiles(cf).path = src_dir{1};
-   end
-   InputSrcBack = src_dir;
-   src_dir = RawDataPath;
+    RawDataPath = src_dir{1};
+    datafiles = struct('name','','path','');
+    nFiles = length(src_dir) - 1;
+    for cf = 1 : nFiles
+        datafiles(cf).name = src_dir{cf+1};
+        datafiles(cf).path = src_dir{1};
+    end
+    InputSrcBack = src_dir;
+    src_dir = RawDataPath;
 else
     datafiles = dir(fullfile(src_dir,[main_fname,'*.tif']));
     fprintf('total data files %d\n', length(datafiles));
@@ -92,10 +92,10 @@ MeanDataAll = cell(1,length(datafiles));
 MaxDataAll = cell(1,length(datafiles));
 fNameAll = cell(1,length(datafiles));
 if length(datafiles) > 4
-    CPUCores=str2num(getenv('NUMBER_OF_PROCESSORS')); %#ok<ST2NM>
+%     CPUCores=str2num(getenv('NUMBER_OF_PROCESSORS')); %#ok<ST2NM>
     poolobj = gcp('nocreate');
     if isempty(poolobj)
-        parpool('local',CPUCores);
+        parpool('local');
     end
     parfor i = 1:length(datafiles)
         %   for i = 1:length(datafiles)

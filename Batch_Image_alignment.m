@@ -223,4 +223,50 @@ if sum(~isFileBadAlign)
 end
 save TargetImage.mat im_reg_target dir_imreg_src -v7.3
 
+%%
+clc
 
+if ismac
+    GrandPath = '/Volumes/XIN-Yu-potable-disk/batch53_data';
+    xpath = genpath(GrandPath);
+    nameSplit = (strsplit(xpath,':'))';
+elseif ispc
+    GrandPath = 'T:\batch\batch70';
+    xpath = genpath(GrandPath);
+    nameSplit = (strsplit(xpath,';'))';
+end
+if isempty(nameSplit{end})
+    nameSplit(end) = [];
+end
+
+IsTargetIMExist = cellfun(@(x) exist(fullfile(x,'TargetImage.mat'),'file'),nameSplit);
+UsedDataPath = nameSplit(IsTargetIMExist > 0);
+ExPathIndex = contains(UsedDataPath,'20190607'); %cellfun(@isempty,strfind(UsedDataPath,'20190607'));
+UsedDataPath = UsedDataPath(~ExPathIndex);
+DirLength = length(UsedDataPath);
+%% batched image alignment within raw tif folder
+% 
+
+for cs = 1 : DirLength
+    tline = UsedDataPath{cs};
+    %
+    cd(tline);
+    clearvars im_reg_target dir_imreg_src
+    %
+    load(fullfile(tline,'TargetImage.mat'));
+    
+%     dir_imreg_src = tline;
+    dir_imreg_dest = [dir_imreg_src filesep 'im_data_reg_cpu'];
+    
+    t_total=tic;
+    BadAlignFrame = dft_reg_dir_2_zy(dir_imreg_src, dir_imreg_dest, [], im_reg_target);
+    t=toc(t_total);
+    disp(t);
+    isFileBadAlign = cellfun(@isempty,BadAlignFrame);
+    cd(dir_imreg_dest);
+    if sum(~isFileBadAlign)
+        save BadAlignF.mat BadAlignFrame -v7.3
+    end
+    
+end
+%

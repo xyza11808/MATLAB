@@ -1,8 +1,8 @@
-function varargout = TraceEventDetect(RawTrace,filterOps,EventOps,varargin)
+function varargout = TraceEventDetectNew(RawTrace,filterOps,EventOps,varargin)
 % function used for events detection, based on filtering result
 % using input parameters for filtering and events detection
 % for filter options, includes following structures
-%    filterOps: 
+%    filterOps:
 %         Type:         filter type; lowpass,bandpass,highpass
 %         Fr:           raw data frame rate
 %         PassBand1:    used for firstpart of bandpass or for the low pass
@@ -27,7 +27,7 @@ function varargout = TraceEventDetect(RawTrace,filterOps,EventOps,varargin)
 % The output can be filtered trace and detected events
 
 % will not check thether the input parameters is valid or not
-% if not,just pop out with an error 
+% if not,just pop out with an error
 if numel(RawTrace) ~= length(RawTrace)
     error('The input raw trace must be one row or column');
 end
@@ -67,7 +67,7 @@ if ~IsSmTraceGiven
             filterOps.StopAttenu1,'DesignMethod',filterOps.DesignMethod);
         IsBaselineCorrection = 0;
     end
-    % performing data filtering 
+    % performing data filtering
     NeededDatapoints = 3*(length(cDesNew.Coefficients) - 1);
     ExtraRepeatsNum = ceil(NeededDatapoints/length(RawTrace));
     RepDatas = repmat(RawTrace(:),ExtraRepeatsNum,1);
@@ -88,8 +88,8 @@ if filterOps.IsPlot
     hold on;
     plot(RawTrace,'r');
     plot(NFNew,'k','linewidth',1.2);
-%     title(sprintf('Pass %.4f Stop %.4f',PassBand,StopBand));
-
+    %     title(sprintf('Pass %.4f Stop %.4f',PassBand,StopBand));
+    
     subplot(133)
     hold on
     plot(Residues,'b');
@@ -114,8 +114,8 @@ if max(ResStd,MadStd) > min(ResStd,MadStd) * 2
     EventStd = min(ResStd,MadStd);
     warning('Correct for std values.\n');
 end
-    
-IsStartFalse = 0; 
+
+IsStartFalse = 0;
 if EventOps.BaselinePrc >= 20
     warning('The baseline calculation prctile was larger than usual condition.\n');
 elseif EventOps.BaselinePrc < 1
@@ -159,15 +159,20 @@ if isempty(locs)
     return;
 else
     OnsetThresValue = BaselineValue+EventStd * EventOps.OnsetThres;
-    OffsetThresValue = BaselineValue+EventStd * EventOps.OffsetThres; 
+    OffsetThresValue = BaselineValue+EventStd * EventOps.OffsetThres;
     NFData_diff = [0.1;diff(NFNew)];
     
     nPeaks = length(locs);
     MaskTraces = zeros(NumTrace,1);
     PeakDataSummary = zeros(nPeaks,3);
+    
+    stdThres = prctile(NFNew,[10 90 8]);
+    CalStd = std(NFNew(NFNew > stdThres(1) & NFNew < stdThres(2)));
+    PeakValueThresNew = CalStd * 3 + stdThres(3);
+    
     for cP = 1 : nPeaks
         cPLocs = locs(cP);
-        if MaskTraces(cPLocs)
+        if MaskTraces(cPLocs) || cPLocs < PeakValueThresNew
             continue;
         end
         
@@ -197,7 +202,7 @@ else
         else
             OffsetIndex = cPLocs + OffsetTemp_index - 1;
             if pks(cP) < 0.15 % exclude small value events
-                if (OffsetIndex - cPLocs) <  (cPLocs - OnsetIndex) % must be a asymmetric peak
+                if (OffsetIndex - cPLocs) <  (cPLocs - OnsetIndex)*2 % must be a asymmetric peak
                     continue;
                 end
             end
@@ -269,7 +274,7 @@ if ~isempty(MergePeakCellAll)
     if IsStartFalse && MergedEventsAll(1,2) == 1
         MergedEventsAll(1,:) = [];
     end
-
+    
     %
     NumEvents = size(MergedEventsAll,1);
     EventTrace = zeros(NumTrace,1);
@@ -324,180 +329,189 @@ if EventOps.IsPlot
     hl3 = plot(Span3DiffData,'m');
     % yscales = get(gca,'ylim');
     legend([hl1,hl2,hl3],{'0.2s','0.3s','0.5s'},'box','off','AutoUpdate','off','location','northwest');
-    
-    if ~isempty(MergedEventsAll)
+end
+
+if ~isempty(MergedEventsAll)
     %     NumRealPeaks = size(RealPeakIndex,1);
-        NumEvents = size(MergedEventsAll,1);
-        ExcludeEvent = zeros(NumEvents,1);
-        LMFitSqr = zeros(NumEvents,1);
-        NewEventTrace  = EventTrace;
-        warning off
-        for cEvent = 1 : NumEvents
-            cEventIndex = MergedEventsAll(cEvent,[2,3]);
-            span1DiffData = Span1DiffData(cEventIndex(1):cEventIndex(2));
-            span2DiffData = Span2DiffData(cEventIndex(1):cEventIndex(2));
-            span3DiffData = Span3DiffData(cEventIndex(1):cEventIndex(2));
-            ccEventDatas = NFNew(cEventIndex(1):cEventIndex(2));
-            Fitx = (1 : numel(ccEventDatas))';
-            fittb = fitlm(Fitx,ccEventDatas);
-            LMFitSqr(cEvent) = fittb.Rsquared.Adjusted*sign(fittb.Coefficients.Estimate(2));
-            if ~(max(span1DiffData) > DiffThress && max(span2DiffData) > DiffThress && max(span3DiffData) > DiffThress)
-                % not all diff values are above threshold
-%                 ccEventDatas = NFNew(cEventIndex(1):cEventIndex(2));
-                PeakData = NFNew(MergedEventsAll(cEvent,1));
-                if max(span2DiffData) > DiffThress && max(span3DiffData) > DiffThress && max(ccEventDatas) > 0.1
-                    if diff(cEventIndex) > round(filterOps.Fr)
-                        [~,Locs] = findpeaks(span3DiffData,'MinPeakHeight',DiffThress,...
-                             'MinPeakDistance',round(filterOps.Fr));
-                        MergedEventsAll(cEvent,4) = max(numel(Locs),1);
-                    else
-                        MergedEventsAll(cEvent,4) = 1;
-                    end
-                elseif ccEventDatas(1) > PeakValueThres && PeakData > 0.1
-                    DiffDatas = [0;diff(ccEventDatas)];
-                    PeakRelateInds = MergedEventsAll(cEvent,1) - cEventIndex(1);
-                    if PeakRelateInds < filterOps.Fr
-                        if mean(DiffDatas(1:PeakRelateInds)) == 1
-                            if diff(cEventIndex) > round(filterOps.Fr)
-                                [~,Locs] = findpeaks(span3DiffData,'MinPeakHeight',DiffThress,...
-                                     'MinPeakDistance',round(filterOps.Fr));
-                                MergedEventsAll(cEvent,4) = max(numel(Locs),1);
-                            else
-                                MergedEventsAll(cEvent,4) = 1;
-                            end
-                        end
-                    else
-                        if sum(DiffDatas((PeakRelateInds - filterOps.Fr+1):PeakRelateInds)) == filterOps.Fr
-                            if diff(cEventIndex) > round(filterOps.Fr)
-                                [~,Locs] = findpeaks(span3DiffData,'MinPeakHeight',DiffThress,...
-                                     'MinPeakDistance',round(filterOps.Fr));
-                                MergedEventsAll(cEvent,4) = max(numel(Locs),1);
-                            else
-                                MergedEventsAll(cEvent,4) = 1;
-                            end
-                        end
-                    end
-                else
-                    ExcludeEvent(cEvent) = 1;
-                    NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
-                end
-            else
-                if diff(cEventIndex) < round(2*filterOps.Fr)
-                    % the events is too short to be real, check the diff
-                    % ratio
-                    if max(span1DiffData) < std(Residues)*2 % sharp increase
-                        ExcludeEvent(cEvent) = 1;
-                        NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
-                    else
-                        MergedEventsAll(cEvent,4) = 1;
-                    end
-                else
-                    if diff(cEventIndex) > round(filterOps.Fr)
-                        [~,Locs] = findpeaks(span3DiffData,'MinPeakHeight',DiffThress,...
-                             'MinPeakDistance',round(filterOps.Fr));
-                        MergedEventsAll(cEvent,4) = max(numel(Locs),1);
-                    else
-                        MergedEventsAll(cEvent,4) = 1;
-                    end
-                end
+    NumEvents = size(MergedEventsAll,1);
+    ExcludeEvent = zeros(NumEvents,1);
+    LMFitSqr = zeros(NumEvents,1);
+    NewEventTrace  = EventTrace;
+    warning off
+    for cEvent = 1 : NumEvents
+        cEventIndex = MergedEventsAll(cEvent,[2,3]);
+        span1DiffData = Span1DiffData(cEventIndex(1):cEventIndex(2));
+        span2DiffData = Span2DiffData(cEventIndex(1):cEventIndex(2));
+        span3DiffData = Span3DiffData(cEventIndex(1):cEventIndex(2));
+        ccEventDatas = NFNew(cEventIndex(1):cEventIndex(2));
+        Fitx = (1 : numel(ccEventDatas))';
+        fittb = fitlm(Fitx,ccEventDatas);
+        LMFitSqr(cEvent) = fittb.Rsquared.Adjusted*sign(fittb.Coefficients.Estimate(2));
+        % if not all diff values are above threshold
+        if ~(max(span1DiffData) > DiffThress && max(span2DiffData) > DiffThress && max(span3DiffData) > DiffThress)
+            
+            if max(span3DiffData) < DiffThress % if the maximum raise slope is low, skip following estimation
+                ExcludeEvent(cEvent) = 1;
+                NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
+                continue;
             end
-            if ~ExcludeEvent(cEvent)
+            
+            PeakData = NFNew(MergedEventsAll(cEvent,1));
+            if max(span2DiffData) > DiffThress && max(span3DiffData) > DiffThress && max(ccEventDatas) > PeakValueThresNew
                 if diff(cEventIndex) > round(filterOps.Fr)
                     [~,Locs] = findpeaks(span3DiffData,'MinPeakHeight',DiffThress,...
-                         'MinPeakDistance',round(filterOps.Fr));
+                        'MinPeakDistance',round(filterOps.Fr));
                     MergedEventsAll(cEvent,4) = max(numel(Locs),1);
                 else
                     MergedEventsAll(cEvent,4) = 1;
                 end
-                 
-                UpperThres = BaselineValue+EventStd * 3;% number of response above thres
-                LengthThres = round(0.5*filterOps.Fr);
-                EventDatas = NFNew(cEventIndex(1):cEventIndex(2));
-                ContinueAboveInds = smooth(EventDatas > UpperThres, LengthThres);
-                if isempty(find(ContinueAboveInds > (1-1/LengthThres), 1)) % no continued time length data above threshold
-                    ExcludeEvent(cEvent) = 1;
-                    NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
-                end
-                
-                if (max(ccEventDatas) - min(ccEventDatas)) <  EventStd*5 || ...
-                        (diff(cEventIndex) > filterOps.Fr * 20)%if the peak was low
-                    if diff(cEventIndex) <= round(filterOps.Fr)
-                        ExcludeEvent(cEvent) = 1;
-                        NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
-                        continue;
-                    end         
-                    [~,Locs] = findpeaks(span1DiffData,'MinPeakHeight',DiffThress,...
-                         'MinPeakDistance',round(filterOps.Fr));
-                     [~,LocsForPeak] = findpeaks(span2DiffData,'MinPeakHeight',DiffThress,...
-                         'MinPeakDistance',round(filterOps.Fr));
-                     MergedEventsAll(cEvent,4) = max(numel(LocsForPeak),1);
-                    if ~(length(Locs) >= 1 && max(ccEventDatas) > EventStd*10)
-                        if diff(cEventIndex) > filterOps.Fr * 15  % if the event is extremly long
-                            if MergedEventsAll(cEvent,4) < 3
-                                ExcludeEvent(cEvent) = 1;
-                                NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
-                            end
-                        elseif diff(cEventIndex) > filterOps.Fr * 12  % if the event is quiet long
-                            if MergedEventsAll(cEvent,4) < 2
-                               ExcludeEvent(cEvent) = 1;
-                                NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
-                            end
+            elseif ccEventDatas(1) > PeakValueThres && PeakData > PeakValueThresNew
+                DiffDatas = [0;diff(ccEventDatas)];
+                PeakRelateInds = MergedEventsAll(cEvent,1) - cEventIndex(1);
+                if PeakRelateInds < filterOps.Fr
+                    if mean(DiffDatas(1:PeakRelateInds)) == 1
+                        if diff(cEventIndex) > round(filterOps.Fr)
+                            [~,Locs] = findpeaks(span3DiffData,'MinPeakHeight',DiffThress,...
+                                'MinPeakDistance',round(filterOps.Fr));
+                            MergedEventsAll(cEvent,4) = max(numel(Locs),1);
+                        else
+                            MergedEventsAll(cEvent,4) = 1;
                         end
                     end
-                end 
-                % linear fitting condition for flat response
-                if ~ExcludeEvent(cEvent)
-                    if max(span1DiffData) < DiffThress % whether a sharp increase was existed
-                       IsEventExclude = 0;
-                        % If not,check the r-square values
-                       if LMFitSqr(cEvent) < 0
-                            if MergedEventsAll(cEvent,4) == 1
-                               RsquareThres = 0.05;
-                               if abs(LMFitSqr(cEvent)) < RsquareThres
-                                   IsEventExclude = 1;
-                               end
-                           elseif MergedEventsAll(cEvent,4) > 1
-                               RsquareThres = 0.01;
-                               if abs(LMFitSqr(cEvent)) < RsquareThres
-                                   IsEventExclude = 1;
-                               end
-                            end
-                       else
-                          IsEventExclude = 1; 
-                       end
-                       
-                       if IsEventExclude
-                           ExcludeEvent(cEvent) = 1;
-                           NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
-                       end
-
+                else
+                    if sum(DiffDatas((PeakRelateInds - filterOps.Fr+1):PeakRelateInds)) == filterOps.Fr
+                        if diff(cEventIndex) > round(filterOps.Fr)
+                            [~,Locs] = findpeaks(span3DiffData,'MinPeakHeight',DiffThress,...
+                                'MinPeakDistance',round(filterOps.Fr));
+                            MergedEventsAll(cEvent,4) = max(numel(Locs),1);
+                        else
+                            MergedEventsAll(cEvent,4) = 1;
+                        end
                     end
-                    
+                end
+            else
+                ExcludeEvent(cEvent) = 1;
+                NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
+            end
+        else
+            if diff(cEventIndex) < round(2*filterOps.Fr)
+                % the events is too short to be real, check the diff
+                % ratio
+                if max(span1DiffData) < std(Residues)*2 % sharp increase
+                    ExcludeEvent(cEvent) = 1;
+                    NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
+                else
+                    MergedEventsAll(cEvent,4) = 1;
+                end
+            else
+                if diff(cEventIndex) > round(filterOps.Fr)
+                    [~,Locs] = findpeaks(span3DiffData,'MinPeakHeight',DiffThress,...
+                        'MinPeakDistance',round(filterOps.Fr));
+                    MergedEventsAll(cEvent,4) = max(numel(Locs),1);
+                else
+                    MergedEventsAll(cEvent,4) = 1;
                 end
             end
         end
-        warning on
-        
-        MergedEventsAll(logical(ExcludeEvent),:) = [];
-        LMFitSqr(logical(ExcludeEvent)) = [];
-        EventData = nan(NumTrace,1);
-        EventData(logical(EventTrace)) = NFNew(logical(EventTrace));
+        if ~ExcludeEvent(cEvent)
+            if diff(cEventIndex) > round(filterOps.Fr)
+                [~,Locs] = findpeaks(span3DiffData,'MinPeakHeight',DiffThress,...
+                    'MinPeakDistance',round(filterOps.Fr));
+                MergedEventsAll(cEvent,4) = max(numel(Locs),1);
+            else
+                MergedEventsAll(cEvent,4) = 1;
+            end
+            
+            UpperThres = BaselineValue+EventStd * 3;% number of response above thres
+            LengthThres = round(0.5*filterOps.Fr);
+            EventDatas = NFNew(cEventIndex(1):cEventIndex(2));
+            ContinueAboveInds = smooth(EventDatas > UpperThres, LengthThres);
+            if isempty(find(ContinueAboveInds > (1-1/LengthThres), 1)) % no continued time length data above threshold
+                ExcludeEvent(cEvent) = 1;
+                NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
+            end
+            
+            if (max(ccEventDatas) - min(ccEventDatas)) <  EventStd*5 || ...
+                    (diff(cEventIndex) > filterOps.Fr * 20)%if the peak was low
+                if diff(cEventIndex) <= round(filterOps.Fr)
+                    ExcludeEvent(cEvent) = 1;
+                    NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
+                    continue;
+                end
+                [~,Locs] = findpeaks(span1DiffData,'MinPeakHeight',DiffThress,...
+                    'MinPeakDistance',round(filterOps.Fr));
+                [~,LocsForPeak] = findpeaks(span2DiffData,'MinPeakHeight',DiffThress,...
+                    'MinPeakDistance',round(filterOps.Fr));
+                MergedEventsAll(cEvent,4) = max(numel(LocsForPeak),1);
+                if ~(length(Locs) >= 1 && max(ccEventDatas) > EventStd*10)
+                    if diff(cEventIndex) > filterOps.Fr * 15  % if the event is extremly long
+                        if MergedEventsAll(cEvent,4) < 3
+                            ExcludeEvent(cEvent) = 1;
+                            NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
+                        end
+                    elseif diff(cEventIndex) > filterOps.Fr * 12  % if the event is quiet long
+                        if MergedEventsAll(cEvent,4) < 2
+                            ExcludeEvent(cEvent) = 1;
+                            NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
+                        end
+                    end
+                end
+            end
+            % linear fitting condition for flat response
+            if ~ExcludeEvent(cEvent)
+                if max(span1DiffData) < DiffThress % whether a sharp increase was existed
+                    IsEventExclude = 0;
+                    % If not,check the r-square values
+                    if LMFitSqr(cEvent) < 0
+                        if MergedEventsAll(cEvent,4) == 1
+                            RsquareThres = 0.2;
+                            if abs(LMFitSqr(cEvent)) < RsquareThres
+                                IsEventExclude = 1;
+                            end
+                        elseif MergedEventsAll(cEvent,4) > 1
+                            RsquareThres = 0.1;
+                            if abs(LMFitSqr(cEvent)) < RsquareThres
+                                IsEventExclude = 1;
+                            end
+                        end
+                    else
+                        IsEventExclude = 1;
+                    end
+                    
+                    if IsEventExclude
+                        ExcludeEvent(cEvent) = 1;
+                        NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
+                    end
+                    
+                end
+                
+            end
+        end
+    end
+    warning on
+    
+    MergedEventsAll(logical(ExcludeEvent),:) = [];
+    LMFitSqr(logical(ExcludeEvent)) = [];
+    EventData = nan(NumTrace,1);
+    EventData(logical(EventTrace)) = NFNew(logical(EventTrace));
+    
+    if EventOps.IsPlot
         plot(EventData,'r','linewidth',1.2);
         
         if ~isempty(MergedEventsAll)
-        
+            
             NewEventData = nan(NumTrace,1);
             NewEventData(logical(NewEventTrace)) = NFNew(logical(NewEventTrace));
-
-
+            
+            
             plot(NewEventData,'Color',[1 0.7 0.2],'linewidth',1.2);
-
+            
             line([1 numel(EventData)],[BaselineValue BaselineValue],'Color','k','linestyle','--');
-
-
+            
+            
             xxxx = 1 : NumTrace;
             plot(xxxx(MergedEventsAll(:,1)),NFNew(MergedEventsAll(:,1)),'co');
-
+            
             yscales = get(gca,'ylim');
             plot(([MergedEventsAll(:,2),MergedEventsAll(:,2)])'-1,yscales,'Color','m','linestyle','--','linewidth',1.2);
             plot(([MergedEventsAll(:,3),MergedEventsAll(:,3)])'+1,yscales,'Color','b','linestyle','--','linewidth',1.2);
@@ -506,20 +520,20 @@ if EventOps.IsPlot
             set(gca,'xlim',[0 length(NFNew)+1]);
         end
     end
-    
 end
+
 
 % Tau_on = 0.01; %s
 % Tau_off = 0.5; %s
 % A = 1;
 % t_0 = 0;
 % t_index = 0:0.02:10;
-% 
+%
 % CalEventsFun = @(x) A*(1 - exp(-(x - t_0)/Tau_on)) .* exp(-(x - t_0)/Tau_off);
-% 
+%
 % CalEvents = CalEventsFun(t_index);
 % %%
-% 
+%
 % Tau_off_Vec = 1:0.5:5;
 % nTau_off = numel(Tau_off_Vec);
 % Tau_on_Vec = 0.1:0.05:1;
@@ -536,5 +550,5 @@ elseif nargout == 3
     varargout{2} = MergedEventsAll;
     varargout{3} = PlotHandles;
 end
-    
+
 

@@ -263,7 +263,7 @@ if isfield(CaTrials(1),'RingF') && IsNeuropilExtract == 1
         end
         CROIdata=squeeze(RawData(:,nRoi,:));
         CRingdata=squeeze(RawRingData(:,nRoi,:));
-        FCorrectData(:,nRoi,:) = (CROIdata - NPSubFactor*CRingdata);
+        FCorrectData(:,nRoi,:) = (CROIdata - NPSubFactor*CRingdata + NPSubFactor*mean(cROIring));
         NPSubFactors(nRoi) = NPSubFactor;
     end
     save ROISubFactor.mat NPSubFactors -v7.3
@@ -272,6 +272,8 @@ if isfield(CaTrials(1),'RingF') && IsNeuropilExtract == 1
         NPOnsetData=PreOnsetRingF{m};
         CurrentdDataSize=size(RawOnsetData);
         SavedNPbase=repmat(NPSubFactors,1,CurrentdDataSize(2));
+        % maybe error for baseline correction at this position
+        testtt;
         CorrePreOnsetData(m)={RawOnsetData - SavedNPbase.*NPOnsetData};
         FBaseline(m,:) = mean(CorrePreOnsetData{m},2);
     end
