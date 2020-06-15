@@ -247,7 +247,7 @@ DirLength = length(UsedDataPath);
 %% batched image alignment within raw tif folder
 % 
 
-for cs = 1 : DirLength
+for cs = 83 : DirLength
     tline = UsedDataPath{cs};
     %
     cd(tline);

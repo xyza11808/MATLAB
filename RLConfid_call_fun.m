@@ -11,7 +11,7 @@ MdParas.SwitchProb_decay = md(5); %switch prob decay;
 MdParas.SwitchProb_delta = md(6); %switch prob delta;
 MdParas.SwitchProb_Thres = md(7); %switch prob threshold;
 MdParas.Step_Delta = md(8);
-MdParas.Context_indices = InitialContext; % initial block context indication
+MdParas.Context_indices = InitialContext; % initial block context indication, or all trial context inds
 
 [SoftChoiceProbs,TarChoiceProb,~] = RL_Confidence_model_Cal(MdParas);
 

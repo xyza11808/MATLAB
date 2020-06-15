@@ -77,12 +77,24 @@ Tr_Used_Decay = [Neg_delta_value,Pos_delta_value];
 SwitchProb_UsedOutcome = TrOutcome;
 SwitchProb_UsedOutcome(TrOutcome == 0) = -1;
 
-Tr_Context = zeros(1,TrNum);
-Tr_Context(1) = ModelParas.Context_indices;
+if numel(ModelParas.Context_indices) ~= TrNum
+    % if only the initial value was given
+    InitialContextOnly = 1;
+    Tr_Context = zeros(1,TrNum);
+    Tr_Context(1) = ModelParas.Context_indices;
+else
+    Tr_Context = ModelParas.Context_indices; % low bound is -1 and high-bound is 1
+    InitialContextOnly = 0;
+end
+
 for cTr = 2 : TrNum
     cActIndex = double(ChoiceType == Action_Type(cTr)); 
     cTrOutcome = TrOutcome(cTr);
-    HyperStims = UsedFrameScale(cTr) + ModelParas.Step_Delta * ModelParas.Context_indices;
+    if InitialContextOnly
+        HyperStims = UsedFrameScale(cTr) - ModelParas.Step_Delta * ModelParas.Context_indices;
+    else
+        HyperStims = UsedFrameScale(cTr) - ModelParas.Step_Delta * Tr_Context(cTr);
+    end
     HyperStims = min(1,abs(HyperStims)) * sign(HyperStims);
     
     for cN_choice = 1 : NumChoiceTypes
@@ -93,13 +105,16 @@ for cTr = 2 : TrNum
             QValues(cN_choice,cTr) = UnChose_decay * QValues(cN_choice,cTr-1);
         end
     end
-    Switch_Probs(cTr) = exp(Switch_Probs(cTr - 1)*ModelParas.SwitchProb_decay + ...
-        SwitchProb_UsedOutcome(cTr) * HyperStims * ModelParas.SwitchProb_delta);
-    if Switch_Probs(cTr) > ModelParas.SwitchProb_Thres
-        Switch_Probs(cTr) = 0;
-        ModelParas.Context_indices = ModelParas.Context_indices * -1;
+    
+    if InitialContextOnly
+       Switch_Probs(cTr) = exp(Switch_Probs(cTr - 1)*ModelParas.SwitchProb_decay + ...
+            SwitchProb_UsedOutcome(cTr) * HyperStims * ModelParas.SwitchProb_delta); 
+        if Switch_Probs(cTr) > ModelParas.SwitchProb_Thres
+            Switch_Probs(cTr) = 0;
+            ModelParas.Context_indices = ModelParas.Context_indices * -1;
+        end
+        Tr_Context(cTr) = ModelParas.Context_indices;
     end
-    Tr_Context(cTr) = ModelParas.Context_indices;
     
     SoftChoiceProbs(:,cTr) = SoftMaxFun(QValues(:,cTr));
     TargetSoftProb(cTr) = SoftChoiceProbs(logical(cActIndex),cTr);

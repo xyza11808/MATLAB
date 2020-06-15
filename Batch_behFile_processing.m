@@ -25,7 +25,7 @@ ErrorNum = 0;
 for n = 1 : DirLength
     cPATH = nameSplit{n};
     if ispc
-        systemstr = ['ipython H:\Python\save_behavData_2_mat_batch.py ',cPATH];
+            systemstr = ['ipython N:\Documents\Python\save_behavData_2_mat_batch.py ',cPATH];
     elseif ismac
         systemstr = ['python /Users/xinyu/Documents/extraCode/python_code/Python/save_behavData_2_mat_batch.py ',cPATH];
     end
@@ -34,7 +34,14 @@ for n = 1 : DirLength
         fprintf('Folder path %s have no .beh files indside.\n',cPATH);
         continue;
     end
+    
     [status,~] = system(systemstr);
+    
+    if ~status && ispc % try to rerun the python code with base status
+        system('conda activate base');
+        [status,~] = system(systemstr);
+    end
+        
     matlist = dir([cPATH,filesep,'*.mat']);
     matFileLength = length(matlist);
     cd(cPATH);
