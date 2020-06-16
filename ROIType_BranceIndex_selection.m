@@ -169,14 +169,14 @@ function ROI_Index_edit_Callback(hObject, eventdata, handles)
 global ROIAndBranchInfoData
 % Hints: get(hObject,'String') returns contents of ROI_Index_edit as text
 %        str2double(get(hObject,'String')) returns contents of ROI_Index_edit as a double
-InputNum = str2double(get(hObject,'String'));
+InputNum = str2num(get(hObject,'String'));
 if isnumeric(InputNum)
-    if InputNum <= 0 || InputNum >=  ROIAndBranchInfoData.TotalROINum
+    if min(InputNum) <= 0 || max(InputNum) >=  ROIAndBranchInfoData.TotalROINum
         warning('Input ROI index out of range');
         return;
     end
 %     ROIAndBranchInfoData.cROIExtraInfo.ROIIndex = InputNum;
-    set(handles.ROI_Index_edit,'String',num2str(InputNum));
+%     set(handles.ROI_Index_edit,'String',num2str(InputNum));
     
 end
 
@@ -315,9 +315,15 @@ function Save_ROI_InputInfo_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global ROIAndBranchInfoData
-ROIAndBranchInfoData.cROIExtraInfo.ROIIndex = str2num(get(handles.ROI_Index_edit,'string'));
+CInput_ROIIndex = str2num(get(handles.ROI_Index_edit,'string'));
+if numel(CInput_ROIIndex) > 1
+    fprintf('Multiple ROIs was given, given same respose type and branch index values.\n');
+end
+for cInR = 1 : numel(CInput_ROIIndex)
+    cInR_Index = CInput_ROIIndex(cInR); % get current ROI real index
+    ROIAndBranchInfoData.cROIExtraInfo.ROIIndex = cInR_Index;
 
-if ROIAndBranchInfoData.ROIInputNum > 0
+    if ROIAndBranchInfoData.ROIInputNum > 0
         ExistROIRealInds = arrayfun(@(x) x.ROIIndex, ROIAndBranchInfoData.ROIExtraInfo);
         if sum(ExistROIRealInds == ROIAndBranchInfoData.cROIExtraInfo.ROIIndex)
             Answer = questdlg('The input ROI index have already exist, do you want to modify old info?',...
@@ -328,7 +334,7 @@ if ROIAndBranchInfoData.ROIInputNum > 0
                     ROIAndBranchInfoData.IsOldReplace = 1;
                 case 'No'
                     ROIAndBranchInfoData.IsOldReplace = 0;
-                    
+
                     return;
                 case 'Cancel'
                     ROIAndBranchInfoData.IsOldReplace = 0;
@@ -338,39 +344,40 @@ if ROIAndBranchInfoData.ROIInputNum > 0
                     return;
             end
         end
-end
-    
+    end
 
-if ROIAndBranchInfoData.IsOldReplace
-    AllROI_realIndex = arrayfun(@(x) x.ROIIndex, ROIAndBranchInfoData.ROIExtraInfo);
-    ROIAndBranchInfoData.ROIInputNum = find(AllROI_realIndex ==  ROIAndBranchInfoData.cROIExtraInfo.ROIIndex);
-else
-    ROIAndBranchInfoData.ROIInputNum = ROIAndBranchInfoData.ROIInputNum + 1;
-end
 
-AllMenuString = get(handles.ROI_RespType_menu,'string');
-MenuListInds = get(handles.ROI_RespType_menu,'value');
-ROIAndBranchInfoData.cROIExtraInfo.ROI_RespType = AllMenuString{MenuListInds};
-ROIAndBranchInfoData.cROIExtraInfo.ROI_BranchIndex = str2num(get(handles.BranchIndex_edit,'string'));
+    if ROIAndBranchInfoData.IsOldReplace
+        AllROI_realIndex = arrayfun(@(x) x.ROIIndex, ROIAndBranchInfoData.ROIExtraInfo);
+        ROIAndBranchInfoData.ROIInputNum = find(AllROI_realIndex ==  ROIAndBranchInfoData.cROIExtraInfo.ROIIndex);
+    else
+        ROIAndBranchInfoData.ROIInputNum = ROIAndBranchInfoData.ROIInputNum + 1;
+    end
 
-fprintf('Add ROI%d infomation data into summary dataset index %d...\n', ...
-    ROIAndBranchInfoData.cROIExtraInfo.ROIIndex, ROIAndBranchInfoData.ROIInputNum);
-ROIAndBranchInfoData.cROIExtraInfo.ROIMask = ROIAndBranchInfoData.ROIinfoData.ROImask{ROIAndBranchInfoData.cROIExtraInfo.ROIIndex};
-ROIAndBranchInfoData.cROIExtraInfo.ROIPos = ROIAndBranchInfoData.ROIinfoData.ROIpos{ROIAndBranchInfoData.cROIExtraInfo.ROIIndex};
+    AllMenuString = get(handles.ROI_RespType_menu,'string');
+    MenuListInds = get(handles.ROI_RespType_menu,'value');
+    ROIAndBranchInfoData.cROIExtraInfo.ROI_RespType = AllMenuString{MenuListInds};
+    ROIAndBranchInfoData.cROIExtraInfo.ROI_BranchIndex = str2num(get(handles.BranchIndex_edit,'string'));
 
-ROIAndBranchInfoData.ROIExtraInfo(ROIAndBranchInfoData.ROIInputNum) = ...
-    ROIAndBranchInfoData.cROIExtraInfo;
+    fprintf('Add ROI%d infomation data into summary dataset index %d...\n', ...
+        ROIAndBranchInfoData.cROIExtraInfo.ROIIndex, ROIAndBranchInfoData.ROIInputNum);
+    ROIAndBranchInfoData.cROIExtraInfo.ROIMask = ROIAndBranchInfoData.ROIinfoData.ROImask{ROIAndBranchInfoData.cROIExtraInfo.ROIIndex};
+    ROIAndBranchInfoData.cROIExtraInfo.ROIPos = ROIAndBranchInfoData.ROIinfoData.ROIpos{ROIAndBranchInfoData.cROIExtraInfo.ROIIndex};
 
-if ROIAndBranchInfoData.ROIInputNum == 1
-    ROIAndBranchInfoData.ROIMaskMerged = ROIAndBranchInfoData.cROIExtraInfo.ROIMask;
-else
-    ROIAndBranchInfoData.ROIMaskMerged = ROIAndBranchInfoData.cROIExtraInfo.ROIMask ...
-        + ROIAndBranchInfoData.ROIMaskMerged;
-    ROIAndBranchInfoData.ROIMaskMerged = ROIAndBranchInfoData.ROIMaskMerged > 0;
-end
-if ROIAndBranchInfoData.IsOldReplace
-    ROIAndBranchInfoData.IsOldReplace = 0;
-    ROIAndBranchInfoData.ROIInputNum = length(ROIAndBranchInfoData.ROIExtraInfo);
+    ROIAndBranchInfoData.ROIExtraInfo(ROIAndBranchInfoData.ROIInputNum) = ...
+        ROIAndBranchInfoData.cROIExtraInfo;
+
+    if ROIAndBranchInfoData.ROIInputNum == 1
+        ROIAndBranchInfoData.ROIMaskMerged = ROIAndBranchInfoData.cROIExtraInfo.ROIMask;
+    else
+        ROIAndBranchInfoData.ROIMaskMerged = ROIAndBranchInfoData.cROIExtraInfo.ROIMask ...
+            + ROIAndBranchInfoData.ROIMaskMerged;
+        ROIAndBranchInfoData.ROIMaskMerged = ROIAndBranchInfoData.ROIMaskMerged > 0;
+    end
+    if ROIAndBranchInfoData.IsOldReplace
+        ROIAndBranchInfoData.IsOldReplace = 0;
+        ROIAndBranchInfoData.ROIInputNum = length(ROIAndBranchInfoData.ROIExtraInfo);
+    end
 end
 
 % --- Executes on button press in Mean_im_button.
