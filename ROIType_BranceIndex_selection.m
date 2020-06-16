@@ -22,7 +22,7 @@ function varargout = ROIType_BranceIndex_selection(varargin)
 
 % Edit the above text to modify the response to help ROIType_BranceIndex_selection
 
-% Last Modified by GUIDE v2.5 16-Jun-2020 01:29:20
+% Last Modified by GUIDE v2.5 16-Jun-2020 11:45:49
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -177,28 +177,7 @@ if isnumeric(InputNum)
     end
 %     ROIAndBranchInfoData.cROIExtraInfo.ROIIndex = InputNum;
     set(handles.ROI_Index_edit,'String',num2str(InputNum));
-    if ROIAndBranchInfoData.ROIInputNum > 0
-        ExistROIRealInds = arrayfun(@(x) x.ROIIndex, ROIAndBranchInfoData.ROIExtraInfo);
-        if sum(ExistROIRealInds == InputNum)
-            Answer = questdlg('The input ROI index have already exist, do you want to modify old info?',...
-                'Input confirm','Yes','No','cancel','No');
-            switch Answer
-                case 'Yes'
-                    fprintf('Change the old ROI values.\n');
-                    ROIAndBranchInfoData.IsOldReplace = 1;
-                case 'No'
-                    ROIAndBranchInfoData.IsOldReplace = 0;
-                    
-                    return;
-                case 'Cancel'
-                    ROIAndBranchInfoData.IsOldReplace = 0;
-                    set(handles.ROI_Index_edit,'string','');
-                    return;
-                otherwise
-                    return;
-            end
-        end
-    end
+    
 end
 
 
@@ -236,7 +215,7 @@ function ROI_RespType_menu_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-set(hObject, 'String', {'Sensory', 'Choice', 'Mixed', 'Others', 'NoActivity'});
+set(hObject, 'String', {'Sensory', 'Choice', 'Mixed', 'Task', 'Others'});
 
 % --- Executes on selection change in Branch_Index_menu.
 function Branch_Index_menu_Callback(hObject, eventdata, handles)
@@ -295,6 +274,8 @@ else
     ROIAndBranchInfoData.FigHandle = figure('position',[100 100 540 400]);
 end
 imagesc(MaxV_Image, ROIAndBranchInfoData.ImageScale);
+TypeStrs =  {'Sensory', 'Choice', 'Mixed', 'Task', 'Others'};
+TypeColors = {[0.1 0.8 0.1], 'b', 'r', [1 0.7 0.2], 'm'}; % dark-green; blue; red; brown; magenta
 colormap gray
 if ROIAndBranchInfoData.ROIInputNum > 0
     % added ROI lines
@@ -306,10 +287,13 @@ if ROIAndBranchInfoData.ROIInputNum > 0
         cR_realIndex = ROIAndBranchInfoData.ROIExtraInfo(cR).ROIIndex;
         cR_Branch = ROIAndBranchInfoData.ROIExtraInfo(cR).ROI_BranchIndex;
         cR_pos = ROIAndBranchInfoData.ROIExtraInfo(cR).ROIPos;
+        cR_RespType = ROIAndBranchInfoData.ROIExtraInfo(cR).ROI_RespType;
+        cR_RespType_Inds = strcmpi(cR_RespType, TypeStrs);
+        cR_lineColor = TypeColors{cR_RespType_Inds};
         cR_center = mean(cR_pos);
         cBranch_colorInds = cR_Branch == BranchIndexType;
-        line(cR_pos(:,1), cR_pos(:,2), 'Color', BranchColors(cBranch_colorInds,:), 'linewidth', 1.4);
-        text(cR_center(1), cR_center(2), num2str(cR_realIndex),'Color','c','FontSize',10);
+        line(cR_pos(:,1), cR_pos(:,2), 'Color', cR_lineColor, 'linewidth', 2.4);
+        text(cR_center(1), cR_center(2), num2str(cR_realIndex),'Color',BranchColors(cBranch_colorInds,:),'FontSize',12);
     end
 end
 
@@ -332,6 +316,30 @@ function Save_ROI_InputInfo_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global ROIAndBranchInfoData
 ROIAndBranchInfoData.cROIExtraInfo.ROIIndex = str2num(get(handles.ROI_Index_edit,'string'));
+
+if ROIAndBranchInfoData.ROIInputNum > 0
+        ExistROIRealInds = arrayfun(@(x) x.ROIIndex, ROIAndBranchInfoData.ROIExtraInfo);
+        if sum(ExistROIRealInds == ROIAndBranchInfoData.cROIExtraInfo.ROIIndex)
+            Answer = questdlg('The input ROI index have already exist, do you want to modify old info?',...
+                'Input confirm','Yes','No','cancel','No');
+            switch Answer
+                case 'Yes'
+                    fprintf('Change the old ROI values.\n');
+                    ROIAndBranchInfoData.IsOldReplace = 1;
+                case 'No'
+                    ROIAndBranchInfoData.IsOldReplace = 0;
+                    
+                    return;
+                case 'Cancel'
+                    ROIAndBranchInfoData.IsOldReplace = 0;
+                    set(handles.ROI_Index_edit,'string','');
+                    return;
+                otherwise
+                    return;
+            end
+        end
+end
+    
 
 if ROIAndBranchInfoData.IsOldReplace
     AllROI_realIndex = arrayfun(@(x) x.ROIIndex, ROIAndBranchInfoData.ROIExtraInfo);
@@ -542,3 +550,10 @@ saveas(ROIAndBranchInfoData.FigHandle, 'ROIType_branchIndex_plot', 'pdf');
 
     
     
+
+
+% --- Executes during object creation, after setting all properties.
+function figure1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
