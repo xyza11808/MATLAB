@@ -1,12 +1,12 @@
 % preprocessing
 
-%  [behavResults,behavSettings] = behav_cell2struct(SessionResults,SessionSettings);
+ [behavResults,behavSettings] = behav_cell2struct(SessionResults,SessionSettings);
  ActionType = double(behavResults.Action_choice(:));
 %  Assumed_TrType = double(behavResults.Stim_toneFreq(:));
 % Assumed_Tr_Octs = log2(Assumed_TrType / min(Assumed_TrType)) - 1;
 Assumed_TrType = double(behavResults.Trial_Type(:));
- 
- 
+Assumed_TrFreqs = double(behavResults.Stim_toneFreq(:));
+Assumed_Tr_Octs = log2(Assumed_TrFreqs / min(Assumed_TrFreqs)) - 1;
 
 NonMissInds = ActionType ~= 2;
 NmAction_choice = ActionType(NonMissInds);
@@ -16,8 +16,9 @@ NmTrType = Assumed_TrType(NonMissInds);
 % NmInds_lowBlock = double(inds_Low(NonMissInds));
 % NmInds_lowBlock(~NmInds_lowBlock) = -1;
 % NmInds_lowBlock = NmInds_lowBlock' * -1; 
-
-
+NmOutcomes = double(NmTrType == NmAction_choice);
+NmTrial_octs = Assumed_Tr_Octs(NonMissInds);
+% NmOutcomes(NmOutcomes == 0) = -1; % set as neg-values for error trials
 %%
 % DFRL model calculation
 options = optimset('Display','iter','PlotFcns',@optimplotfval,'TolFun',1e-8,'MaxIter',5000);

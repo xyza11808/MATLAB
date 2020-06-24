@@ -11,7 +11,7 @@
 %
 %% Set toolbox version
 
-global mvgc_version;
+% global mvgc_version;
 mvgc_version.major = 1;
 mvgc_version.minor = 0;
 

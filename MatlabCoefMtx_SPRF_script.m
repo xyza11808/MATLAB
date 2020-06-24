@@ -14,12 +14,74 @@ RingSub_Base = prctile(RingSub_data',15);
 RingSub_BaseMtx = repmat(RingSub_Base',1,size(ROIRawDatas,2));
 Dff_RingSub_Mtx = (RingSub_data - RingSub_BaseMtx ) ./ RingSub_BaseMtx;
 
+%%
+NumROIs = size(Dff_RingSub_Mtx,1);
+MoveFreeDataMtx = zeros(size(Dff_RingSub_Mtx));
+for cR = 1 : NumROIs
+    RawTrace = Dff_RingSub_Mtx(cR,:);
+    [MoveFreetrace, MoveInds, ResidueSTD] =  PossibleMoveArtifactRemoveFun(RawTrace);
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    NumFindPeaks = size(MoveInds,1);
+    Possi_FP_Arts = zeros(NumFindPeaks, 1);
+    NewMoveFreeTrace = MoveFreetrace;
+    for cP = 1 : NumFindPeaks
+        cP_EndPointData = RawTrace([min(MoveInds{cP,1}),max(MoveInds{cP,1})]);
+        cP_rawData = RawTrace(MoveInds{cP,1});
+        if (diff(cP_EndPointData)) > ResidueSTD * 4 && ((min(cP_EndPointData) - min(cP_rawData)) < ResidueSTD*2)
+            Possi_FP_Arts(cP) = 1;
+            cFP_Inds_scale = MoveInds{cP,1};
+            NewMoveFreeTrace(cFP_Inds_scale) = RawTrace(cFP_Inds_scale);
+%             plot(MoveInds{cP,1}, RawTrace(MoveInds{cP,1}),'r');
+        end
+    end
+    [MoveFreeBaseAdj,~]=BLSubStract(NewMoveFreeTrace',8,800);
+    [MoveFreetrace2, MoveInds2, ResidueSTD2] =  PossibleMoveArtifactRemoveFun(MoveFreeBaseAdj);
+%     figure('position',[1920 80 1750 420]);
+%     hold on
+%     plot(MoveFreeBaseAdj,'k')
+%     plot(MoveFreetrace2,'r')
+    % correct for the sharp increase peak again
+    NumFindPeaks = size(MoveInds2,1);
+    Possi_FP_Arts = zeros(NumFindPeaks, 1);
+    NewMoveFreeTrace2 = MoveFreetrace2;
+    for cP = 1 : NumFindPeaks
+        cP_EndPointData = MoveFreeBaseAdj([min(MoveInds2{cP,1}),max(MoveInds2{cP,1})]);
+        cP_rawData = RawTrace(MoveInds2{cP,1});
+        if (diff(cP_EndPointData)) > ResidueSTD2 * 4 && ((min(cP_EndPointData) - min(cP_rawData)) < ResidueSTD2*2)
+            Possi_FP_Arts(cP) = 1;
+            cFP_Inds_scale = MoveInds2{cP,1};
+            NewMoveFreeTrace2(cFP_Inds_scale) = MoveFreeBaseAdj(cFP_Inds_scale);
+%             plot(MoveInds2{cP,1}, MoveFreeBaseAdj(MoveInds2{cP,1}),'c');
+        end
+    end
+    MoveFreeDataMtx(cR,:) = NewMoveFreeTrace2;
+end
+%%
+options = statset('UseParallel',1);
+
+myFunc = @(x, k) kmeans(x,k,'Distance','correlation',...
+    'Options',options,'MaxIter',5000,'Display','final');
+
+eva = evalclusters(MoveFreeDataMtx,myFunc,'silhouette',...
+    'klist',[1:20]);
+CorrMtx = corrcoef(MoveFreeDataMtx');
+%%
+MormRespMtx = zscore(MoveFreeDataMtx');
+zz = linkage(UsedDAta','average','squaredeuclidean');
+cutoff = median(zz(end-15:end-1,3))
+groups = cluster(zz,'cutoff',cutoff, 'criterion','distance');
+unique(groups);
+[~,Inds] = sort(groups);
+
+figure;
+% imagesc(CorrMtx(Inds,Inds))
 
 %%
 close
 close
-cR = 15;
-figure('position',[2000 650 1860 370]);
+close
+cR = 172;
+figure('position',[200 650 1860 370]);
 hold on
 % yyaxis left
 % plot(ROIRawDatas(cR,:));
@@ -37,15 +99,73 @@ plot([1 NumFrames],[DiffThres DiffThres],'c','linewidth',1.5,'linestyle','--');
 plot([1 NumFrames],[NegDiffThres NegDiffThres],'c','linewidth',1.5,'linestyle','--');
 
 RawTrace = Dff_RingSub_Mtx(cR,:);
-[MoveFreetrace, MoveInds] =  PossibleMoveArtifactRemoveFun(RawTrace);
-figure('position', [2100 50 1710 420]);
+[MoveFreetrace, MoveInds, ResidueSTD] =  PossibleMoveArtifactRemoveFun(RawTrace);
+figure('position', [210 50 1710 420]);
 hold on
 plot(RawTrace,'k')
 plot(MoveFreetrace,'c')
 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+NumFindPeaks = size(MoveInds,1);
+Possi_FP_Arts = zeros(NumFindPeaks, 1);
+NewMoveFreeTrace = MoveFreetrace;
+for cP = 1 : NumFindPeaks
+    cP_EndPointData = RawTrace([min(MoveInds{cP,1}),max(MoveInds{cP,1})]);
+    cP_rawData = RawTrace(MoveInds{cP,1});
+    if (diff(cP_EndPointData)) > ResidueSTD * 4 && ((min(cP_EndPointData) - min(cP_rawData)) < ResidueSTD*2)
+        Possi_FP_Arts(cP) = 1;
+        cFP_Inds_scale = MoveInds{cP,1};
+        NewMoveFreeTrace(cFP_Inds_scale) = RawTrace(cFP_Inds_scale);
+        plot(MoveInds{cP,1}, RawTrace(MoveInds{cP,1}),'r');
+    end
+end
+% BaselineFitTb = lmFunCalPlot([],MoveFreetrace,0);
+% BaselineFits = predict(BaselineFitTb,(1:numel(MoveFreetrace))');
+% MoveFreeBaseAdj = MoveFreetrace' - BaselineFits + median(BaselineFits);
+[MoveFreeBaseAdj,~]=BLSubStract(NewMoveFreeTrace',8,800);
+plot(MoveFreeBaseAdj,'r')
+% plot(BaselineFits, 'Color', [0.1 0.7 0.1])
+% plot(NewMoveFreeTrace,'r')
+
+[MoveFreetrace2, MoveInds2, ResidueSTD2] =  PossibleMoveArtifactRemoveFun(MoveFreeBaseAdj);
+figure('position',[1920 80 1750 420]);
+hold on
+plot(MoveFreeBaseAdj,'k')
+plot(MoveFreetrace2,'r')
+% correct for the sharp increase peak again
+NumFindPeaks = size(MoveInds2,1);
+Possi_FP_Arts = zeros(NumFindPeaks, 1);
+NewMoveFreeTrace2 = MoveFreetrace2;
+for cP = 1 : NumFindPeaks
+    cP_EndPointData = MoveFreeBaseAdj([min(MoveInds2{cP,1}),max(MoveInds2{cP,1})]);
+    cP_rawData = RawTrace(MoveInds2{cP,1});
+    if (diff(cP_EndPointData)) > ResidueSTD2 * 4 && ((min(cP_EndPointData) - min(cP_rawData)) < ResidueSTD2*2)
+        Possi_FP_Arts(cP) = 1;
+        cFP_Inds_scale = MoveInds2{cP,1};
+        NewMoveFreeTrace2(cFP_Inds_scale) = MoveFreeBaseAdj(cFP_Inds_scale);
+        plot(MoveInds2{cP,1}, MoveFreeBaseAdj(MoveInds2{cP,1}),'c');
+    end
+end
+%
+
 %% find assumed movement signal and then replace the artifact
-
-
+% NArt = size(MoveInds,1);
+% AllFits = cell(NArt,1);
+% for cArti = 1 : NArt
+%     cAtrData = MoveInds{cArti, 2};
+%     lmfits = lmFunCalPlot([],cAtrData,0);
+%     AllFits{cArti} = lmfits;
+% end
+% RSq_adj = cellfun(@(x) x.Rsquared.Adjusted,AllFits);
+% CenterInds = cellfun(@mean, MoveInds(:,1));
+% RSFitSlope = cellfun(@(x) x.Coefficients.Estimate(2),AllFits);
+% FalsePositiveInds = find(RSq_adj > 0.5 & RSFitSlope > 0);
+% NumFP_peaks = length(FalsePositiveInds);
+% for cP = 1 : NumFP_peaks
+%     cP_Inds = MoveInds{FalsePositiveInds(cP), 1};
+%     cP_IndsRawdata = RawTrace(cP_Inds);
+%     plot(cP_Inds,cP_IndsRawdata,'r');
+% end
 
 
 %%

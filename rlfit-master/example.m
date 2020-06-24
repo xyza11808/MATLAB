@@ -3,7 +3,7 @@
 
 % load up data
 load testdata
-
+%%
 % model has only one parameter, the learning rate, between 0 and 1
 % in general, there will be one of these for each parameter (excluding the
 % softmax parameter)
@@ -18,8 +18,8 @@ ub = [1, ub];
 Qfun = add_perseveration(@Q_model);
 
 % now optmize to fit model
-numiter = 10;
-[beta, LL, Q] = rlfit(Qfun, choice, outcome, lb, ub, numiter);
-
+numiter = 2;
+% [beta, LL, Q] = rlfit(Qfun, choice, outcome, lb, ub, numiter);
+ [beta, LL, Q] = rlfit(Qfun, NmAction_choice+1, NmOutcomes, lb, ub, numiter);
 % plot results
 plot(Q)

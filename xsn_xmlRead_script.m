@@ -19,6 +19,8 @@ IsCalRef = 1;
 [ffn,ffp,ffi] = uigetfile('TargetIm.mat','Please select same FOV ref data');
 if fi
     load(fullfile(ffp,ffn));
+else
+    return;
 end
 save TargetIm.mat RefImage -v7.3
 IsCalRef = 0;
@@ -93,13 +95,13 @@ for cf = 1 : nFrames
 end
 
 % % warning on
-
+% 
 % %% align tif files 
 % if IsCalRef
-%     RefAvgIndexScale = [700,800];
+%     RefAvgIndexScale = [300,400];
 %     RefImage = squeeze(mean(AllTifDatas.Ch1_data(:,:,RefAvgIndexScale(1):RefAvgIndexScale(2)),3));
 %     figure;
-%     imagesc(RefImage,[100 6000]);
+%     imagesc(RefImage,[1000 8000]);
 %     colormap gray
 %     save TargetIm.mat RefImage -v7.3
 % end

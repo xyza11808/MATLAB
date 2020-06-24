@@ -1,11 +1,12 @@
-function [MoveFreeTrace, PeakScaleInds] = PossibleMoveArtifactRemoveFun(RawTrace)
+function [MoveFreeTrace, PeakScaleInds, ResidueSTD] = PossibleMoveArtifactRemoveFun(RawTrace)
 % this function finds possible movement artifactfact and remove it from raw
 % trace
 
 MoveFreeTrace = RawTrace;
 PeakScaleInds = {};
 k = 1;
-SMTrace = smooth(RawTrace(:),7,'sgolay',3);
+% SMTrace = smooth(RawTrace(:),7,'sgolay',3);
+SMTrace = smooth(RawTrace(:),4);
 
 SMResidues = RawTrace(:) - SMTrace(:);
 ResidueSTD = std(SMResidues);
@@ -18,12 +19,15 @@ if ~isempty(RawNegLocs)
     RawNumPeaks = length(UsedRawLocs);
     for cRawNegP = 1 : RawNumPeaks
         cRawNegLocc = UsedRawLocs(cRawNegP);
-        ccLocsScale = cRawNegLocc + [-3 3]; % extend to the outline position
+        ccLocsScale = cRawNegLocc + [-2 2]; % extend to the outline position
         [AdInds, AdValues] = MoveFreeFun(SMTrace, ccLocsScale, ResidueSTD);
         MoveFreeTrace(AdInds) = AdValues;
-        PeakScaleInds{k,1} = AdInds;
-        PeakScaleInds{k,2} = AdValues;
-        k = k + 1;
+        if ~isempty(AdInds)
+            PeakScaleInds{k,1} = AdInds;
+            PeakScaleInds{k,2} = AdValues;
+            PeakScaleInds{k,3} = cRawNegLocc; % peak or valley position
+            k = k + 1;
+        end
     end
     
     SMTrace = smooth(MoveFreeTrace(:),7,'sgolay',3);
@@ -53,9 +57,9 @@ NumPosPeaks = length(pks);
 % % NumMoveMents = 1;
 for cPosPeak = 1 : NumPosPeaks
     cPosLoc = locs(cPosPeak);
-    if find(abs(Neglocs - cPosLoc) < FrameDiffInds & abs(Neglocs - cPosLoc) > 1) 
+    if find(abs(Neglocs - cPosLoc) < FrameDiffInds ) %& abs(Neglocs - cPosLoc) > 1
         % whether there is a negtive peak exists, its highly to be a movement artifact
-        NerghborNegLocsInds = find(abs(Neglocs - cPosLoc) < FrameDiffInds & abs(Neglocs - cPosLoc) > 1);
+        NerghborNegLocsInds = find(abs(Neglocs - cPosLoc) < FrameDiffInds); %& abs(Neglocs - cPosLoc) > 1);
         if length(NerghborNegLocsInds) > 1 % whether a "W" shaped artifact exists
             if pks(cPosPeak) > RawDiff_waveThres*5/3 && max(Negpks(NerghborNegLocsInds)) < RawDiff_waveThres
                 continue;
@@ -75,8 +79,12 @@ for cPosPeak = 1 : NumPosPeaks
             Neglocs(NerghborNegLocsInds) = [];
             Negpks(NerghborNegLocsInds)  = [];
             MoveFreeTrace(AdInds) = AdValues;
-            PeakScaleInds{k,1} = AdInds;
-            PeakScaleInds{k,2} = AdValues;
+            if ~isempty(AdInds)
+                PeakScaleInds{k,1} = AdInds;
+                PeakScaleInds{k,2} = AdValues;
+                PeakScaleInds{k,3} = cPosLoc;
+                k = k + 1;
+            end
 %             NumMoveMents = NumMoveMents + 1;
         else
             if pks(cPosPeak) > RawDiff_waveThres*5/3 && max(Negpks(NerghborNegLocsInds)) < RawDiff_waveThres
@@ -91,11 +99,16 @@ for cPosPeak = 1 : NumPosPeaks
                 AllPeakLocs(2) = max(AllPeakLocs(2), NearPosPeak);
             end
             [AdInds, AdValues] = MoveFreeFun(SMTrace, AllPeakLocs, ResidueSTD);
+            
             Neglocs(NerghborNegLocsInds) = [];
             Negpks(NerghborNegLocsInds)  = [];
             MoveFreeTrace(AdInds) = AdValues;
-            PeakScaleInds{k,1} = AdInds;
-            PeakScaleInds{k,2} = AdValues;
+            if ~isempty(AdInds)
+                PeakScaleInds{k,1} = AdInds;
+                PeakScaleInds{k,2} = AdValues;
+                PeakScaleInds{k,3} = cPosLoc;
+                k = k + 1;
+            end
 %             NumMoveMents = NumMoveMents + 1;
         end
     end
@@ -110,17 +123,40 @@ for cRP = 1  :  NumRestPeks
     cRPlocScale = cRPksLoc + [-2 2];
     [AdInds, AdValues] = MoveFreeFun(SMTrace, cRPlocScale, ResidueSTD);
     MoveFreeTrace(AdInds) = AdValues;
-    PeakScaleInds{k,1} = AdInds;
-    PeakScaleInds{k,2} = AdValues;
-    k = k + 1;
+    if ~isempty(AdInds)
+        PeakScaleInds{k,1} = AdInds;
+        PeakScaleInds{k,2} = AdValues;
+        PeakScaleInds{k,3} = cRPksLoc;
+        k = k + 1;
+    end
+end
+
+% find the remained negtive peaks with wide width 
+[wideNegPks, wideNegLocs,wideLocWidth,~] = findpeaks(-MoveFreeTrace,'MinPeakHeight', ResidueSTD * 5,...
+    'MinPeakWidth', 10,'MaxPeakWidth', 40);
+NumRestPeks = length(wideNegLocs);
+for cRP = 1  :  NumRestPeks
+    cRPksLoc = wideNegLocs(cRP);
+    PeakWidthRange = floor(wideLocWidth(cRP)/2);
+    cRPlocScale = cRPksLoc + [-PeakWidthRange PeakWidthRange];
+    [AdInds, AdValues] = MoveFreeFun(SMTrace, cRPlocScale, ResidueSTD);
+    MoveFreeTrace(AdInds) = AdValues;
+    if ~isempty(AdInds)
+        PeakScaleInds{k,1} = AdInds;
+        PeakScaleInds{k,2} = AdValues;
+        PeakScaleInds{k,3} = cRPksLoc;
+        k = k + 1;
+    end
 end
 
 
+disp('End');
+
 function [AdjustInds, AdjustValue] = MoveFreeFun(RawSMTrace, MoveScaleInds, NoiseLevel)
 try
-    AdjustScaleInds = [MoveScaleInds(1) + [-4, -3], MoveScaleInds(2) + [3, 4]] ;
+    AdjustScaleInds = [MoveScaleInds(1) + [-3, -2], MoveScaleInds(2) + [2, 3]] ;
     ScaleSMValue = RawSMTrace(AdjustScaleInds);
-    InterScaleInds = (MoveScaleInds(1) - 3):(MoveScaleInds(2) + 3);
+    InterScaleInds = (MoveScaleInds(1) - 2):(MoveScaleInds(2) + 2);
 
     InterpValues = interp1(AdjustScaleInds, ScaleSMValue, InterScaleInds);
     ExtraNoise = randn(numel(InterScaleInds) ,1) * NoiseLevel;

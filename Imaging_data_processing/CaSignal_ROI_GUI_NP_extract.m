@@ -157,7 +157,7 @@ CaSignal.IsROIUpdated = []; % value will be 1 if ROI was newly added or modified
 CaSignal.AllTrMeanIm = {};
 CaSignal.AllTrMaxIm = {};
 fprintf('Matlab Two-photon imaging data analysis GUI.\n');
-fprintf('           Version :  2.04.05             \n');
+fprintf('           Version :  2.04.10             \n');
 % Update handles structure
 guidata(hObject, handles);
 
@@ -1363,35 +1363,54 @@ if nROI_effective == 0
 end
 ROImask = ROIinfo.ROImask;
 ROIringMask = ROIinfo.Ringmask;
-
-F = zeros(nROI_effective, size(im,3));
-RingF = zeros(nROI_effective, size(im,3));
+NumFrames = size(im,3);
+F = zeros(nROI_effective, NumFrames);
+RingF = zeros(nROI_effective, NumFrames);
 dff = zeros(size(F));
-
+%%
+% t1 = tic;
 for i = 1: nROI_effective
-    mask = repmat(ROImask{i}, [1 1 size(im,3)]); % reproduce masks for every frame
-    % Using indexing and reshape function to increase speed
-    nPix = sum(sum(ROImask{i}));
-    % Using reshape to partition into different trials.
-    roi_img = reshape(im(mask), nPix, []);
-    % Raw intensity averaged from pixels of the ROI in each trial.
-    if nPix == 0
-        F(i,:) = 0;
-    else
-        F(i,:) = mean(roi_img, 1);
-    end
-    %neurual puil extraction
-    Ringmask = repmat(ROIringMask{i}, [1 1 size(im,3)]); % reproduce masks for every frame
-    % Using indexing and reshape function to increase speed
-    nPix_ring = sum(sum(ROIringMask{i}));
-    % Using reshape to partition into different trials.
-    roi_img_ring = reshape(im(Ringmask), nPix_ring, []);
-    % Raw intensity averaged from pixels of the ROI in each trial.
-    if nPix_ring == 0
-        RingF(i,:) = 0;
-    else
-        RingF(i,:) = mean(roi_img_ring, 1);
-    end
+%     % old method
+%     mask = repmat(ROImask{i}, [1 1 NumFrames]); % reproduce masks for every frame
+%     % Using indexing and reshape function to increase speed
+%     nPix = sum(sum(ROImask{i}));
+%     % Using reshape to partition into different trials.
+%     roi_img = reshape(im(mask), nPix, []);
+%     % Raw intensity averaged from pixels of the ROI in each trial.
+%     if nPix == 0
+%         F(i,:) = 0;
+%     else
+%         F(i,:) = mean(roi_img, 1);
+%     end
+%     %neurual puil extraction
+%     Ringmask = repmat(ROIringMask{i}, [1 1 size(im,3)]); % reproduce masks for every frame
+%     % Using indexing and reshape function to increase speed
+%     nPix_ring = sum(sum(ROIringMask{i}));
+%     % Using reshape to partition into different trials.
+%     roi_img_ring = reshape(im(Ringmask), nPix_ring, []);
+%     % Raw intensity averaged from pixels of the ROI in each trial.
+%     if nPix_ring == 0
+%         RingF(i,:) = 0;
+%     else
+%         RingF(i,:) = mean(roi_img_ring, 1);
+%     end
+%     for i = 1: nROI_effective
+        cRMaskInds = find(ROImask{i});
+        cRRingMask = find(ROIringMask{i});
+        if ~isempty(cRMaskInds)
+            for cTrFrame = 1 : NumFrames
+                cimFrame = squeeze(im(:,:,cTrFrame));
+                F(i , cTrFrame) = mean(cimFrame(cRMaskInds));
+                RingF(i, cTrFrame) = mean(cimFrame(cRRingMask)); %#ok<FNDSB>
+            end
+        end
+        BG = 0;
+        [N,X] = hist(F(i,:));
+        F_mode = X((N==max(N)));
+        baseline = mean(F_mode);
+        dff(i,:) = (F(i,:)- baseline)./baseline*100;
+%     end
+    
     %%%%%%%%%%%%% Obsolete slower method to compute ROI pixel intensity %%%%%%%
     %     roi_img = mask .* double(im);                                       %
     %                                                                         %
@@ -1399,24 +1418,27 @@ for i = 1: nROI_effective
     %    % F(:,i) = nanmean(nanmean(roi_img));                                %
     %     F(i,:) = nanmean(nanmean(roi_img));                                 %
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if ~isempty(ROIinfo.BGmask)
-        BGmask = repmat(ROIinfo.BGmask,[1 1 size(im,3)]) ;
-        BG_img = BGmask.*double(im);
-        BG_img(BG_img==0) = NaN;
-        BG = reshape(nanmean(nanmean(BG_img)),1,[]); % 1-by-nFrames array
-    else
-        BG = 0;
-    end
+%     if ~isempty(ROIinfo.BGmask)
+%         BGmask = repmat(ROIinfo.BGmask,[1 1 size(im,3)]) ;
+%         BG_img = BGmask.*double(im);
+%         BG_img(BG_img==0) = NaN;
+%         BG = reshape(nanmean(nanmean(BG_img)),1,[]); % 1-by-nFrames array
+%     else
+%         BG = 0;
+%     end
     
-    if opt_subBG == 1
-        F(i,:) = F(i,:) - BG;
-    end
-        [N,X] = hist(F(i,:));
-        F_mode = X((N==max(N)));
-        baseline = mean(F_mode);
-        dff(i,:) = (F(i,:)- baseline)./baseline*100;
+%     if opt_subBG == 1
+%         F(i,:) = F(i,:) - BG;
+%     end
+%         [N,X] = hist(F(i,:));
+%         F_mode = X((N==max(N)));
+%         baseline = mean(F_mode);
+%         dff(i,:) = (F(i,:)- baseline)./baseline*100;
 end
+% t2 = toc(t1);
+% disp(t2);
 
+%%
 function LabelSegNPData = SegNPdataExtraction(im,LabelNPmask,varargin)
 %this function is used to extract segmental NP datat from Raw image and
 %passed to matlab GUI
@@ -1426,13 +1448,20 @@ LabelNum=length(LabelNPmask);
 LabelNPData=zeros(LabelNum,imsize(3));
 
 for Label = 1:LabelNum
-    LabelMask = LabelNPmask{Label};
-%     PixelNum = sum(sum(LabelMask));
-    D3IMMask = logical(repmat(LabelMask,1,1,imsize(3)));
-    ExtractData = double(im(D3IMMask));
-    D3IMData = reshape(ExtractData,[],imsize(3));
-    MeanNPData = mean(D3IMData);
-    LabelNPData(Label,:) = MeanNPData;
+%     LabelMask = LabelNPmask{Label};
+% %     PixelNum = sum(sum(LabelMask));
+%     D3IMMask = logical(repmat(LabelMask,1,1,imsize(3)));
+%     ExtractData = double(im(D3IMMask));
+%     D3IMData = reshape(ExtractData,[],imsize(3));
+%     MeanNPData = mean(D3IMData);
+%     LabelNPData(Label,:) = MeanNPData;
+    
+    LabelMaskInds = find(LabelNPmask{Label});
+    for cImInds = 1 : imsize(3)
+        cImData = squeeze(im(:,:,cImInds));
+        LabelNPData(Label,cImInds) = mean(cImData(LabelMaskInds)); %#ok<*FNDSB>
+    end
+    
 end
 
 LabelSegNPData = LabelNPData;
@@ -1616,7 +1645,7 @@ try
     RingFAll = cell(End_trial - Start_trial + 1,1);
     SegNPdataAll = cell(End_trial - Start_trial + 1,1);
     ROINPlabelAll = cell(End_trial - Start_trial + 1,1);
-    if abs(Start_trial - End_trial) > 20 
+    if abs(Start_trial - End_trial) > 10
         parfor TrialNo = Start_trial:End_trial   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   parfor
             fname = filenames{TrialNo};
             if ~exist(fname,'file')

@@ -1,7 +1,10 @@
 function varargout = lmFunCalPlot(x,y,varargin)
 % using linear regression method to do the regression and plot the final
 % result, extracting model data from linear regression output
-
+if isempty(x) && ~isempty(y)
+    x = 1:numel(y);
+end
+    
 isplot = 1;
 if ~isempty(varargin)
     isplot = varargin{1};

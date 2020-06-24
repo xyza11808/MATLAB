@@ -48,7 +48,7 @@ end
 outmean = mean(outcome(:));
 outstd = std(outcome(:));
 z = bsxfun(@minus, outcome, outmean)/outstd;
-
+%%
 % first, define a log likelihood function that takes as its input a vector
 % of parameters, the first of which is the inverse temperature of the
 % softmax
@@ -64,7 +64,7 @@ fitfun = @(beta)(-1)*sum(LLfun(beta, choice, z));
 lb = [1e-5, lb]; %lower bounds
 ub = [10, ub]; %upper bounds
 
-% optmize to fit model
+%% optmize to fit model
 w = warning ('off','all');
 options = optimset('Display', 'off');
 [beta,fval]=multmin(fitfun, lb, ub, niter, options);
