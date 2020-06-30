@@ -54,7 +54,7 @@ xTimes = (1:size(Testdata,3))/frame_rate;
 StartTime = start_frame/frame_rate;
 
 %%
-[lambda,psi,T,stats,F] = factoran(Data2Matrix',15);
+[lambda,psi,T,stats,F] = factoran(Data2Matrix',20);
 
 %%
 FScoreData = reshape(F',15,size(Testdata,3),size(Testdata,1));

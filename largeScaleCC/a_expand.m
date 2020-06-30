@@ -60,4 +60,15 @@ while 1
     NL = numel(NL);
 end
 
+% [gt w] = MakeSynthAff(100, [1 3 5 2], 10, .5, .1); % creates a synthetic sparse affinity matrix
+% plotWl(w,gt);     % plot the matrix ordered according to the ground-truth labeling
+% %%
+% el = a_expand(w); % CC optimization using expand&explore
+% plotWl(w,el);     % visualize the result
+% sl = ab_swap(w);  % CC optimization using swap&explore
+% plotWl(w,sl);     % visualize the result
+% il = AL_ICM(w);   % CC optimization using adaptive-label ICM
+% plotWl(w,il);     % visualize the result
+% [CCEnergy(w,gt) CCEnergy(w,el) CCEnergy(w,sl) CCEnergy(w,il)], % output CC objective values for the different partitions.
+
 

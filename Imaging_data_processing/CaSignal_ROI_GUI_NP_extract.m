@@ -796,15 +796,19 @@ if CurrentROINo > 0
     CaSignal.ROIinfo(TrialNo).ROItype(CurrentROINo) = [];
     CaSignal.ROIinfo(TrialNo).Ringmask(CurrentROINo) = [];
     CaSignal.ROIinfo(TrialNo).ROI_def_trialNo(CurrentROINo) = [];
-    CaSignal.ROIinfo(TrialNo).ROIdefinePath(CurrentROINo) = [];
+    
     
     CaSignal.ROIinfoBack(1).ROIpos(CurrentROINo) = [];
     CaSignal.ROIinfoBack(1).ROImask(CurrentROINo) = [];
     CaSignal.ROIinfoBack(1).ROItype(CurrentROINo) = [];
     CaSignal.ROIinfoBack(1).Ringmask(CurrentROINo) = [];
     CaSignal.ROIinfoBack(1).ROI_def_trialNo(CurrentROINo) = [];
-    CaSignal.ROIinfoBack(1).ROIdefinePath(CurrentROINo) = [];
-    
+    try
+        CaSignal.ROIinfoBack(1).ROIdefinePath(CurrentROINo) = [];
+        CaSignal.ROIinfo(TrialNo).ROIdefinePath(CurrentROINo) = [];
+    catch
+        fprintf('ROIdefPath unknow for delete.\n');
+    end
     CaSignal.IsROIUpdated(CurrentROINo) = [];
     CaSignal.ROIStateIndicate(CurrentROINo,:) = [];
     

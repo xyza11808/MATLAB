@@ -243,7 +243,7 @@ save DataMtxAndCorrMtx.mat DffMtx_10AF_test04 DffMtx_AF_test03 DffMtx_BF_test01 
     BF_test01_CorrMtx RF_test02_CorrMtx AF_test03_CorrMtx AF10mins_test04_CorrMtx -v7.3
 
 %%
-zz = linkage(BF_test01_CorrMtx,'complete','correlation');
+zz = linkage(BF_test01_CorrMtx,'average','correlation');
 figure('position',[600 100 420 350]);
 dendrogram(zz)
 groups = cluster(zz,'cutoff',0.9,'criterion','distance');
@@ -385,3 +385,28 @@ xlabel('x1');
 ylabel('x2');
 zlabel('x3');
 
+%%
+
+corrs = corrcoef(MoveFreeDataMtx');
+CorMtx_mask = logical(tril(ones(size(corrs)),-1));
+MaskInds = find(CorMtx_mask);
+MaskIndsCoefs = corrs(MaskInds);
+UsedCoefIndex = MaskIndsCoefs > 0.3;
+
+MaskInds_used = MaskInds(UsedCoefIndex);
+MaskCoef_used = MaskIndsCoefs(UsedCoefIndex);
+[Rows, Cols] = ind2sub(size(CorMtx_mask), MaskInds_used);
+Gnets = graph(Cols, Rows, MaskCoef_used);
+
+%%
+figure; 
+pp = plot(Gnets);
+Gnets.Nodes.NodeColors = degree(Gnets);
+pp.NodeCData = Gnets.Nodes.NodeColors;
+pp.NodeFontSize = Gnets.Nodes.NodeColors+1;
+colorbar
+
+Gnets.Edges.LWidths = 7*Gnets.Edges.Weight/max(Gnets.Edges.Weight);
+pp.LineWidth = Gnets.Edges.LWidths;
+layout(pp,'force3')
+view(3)

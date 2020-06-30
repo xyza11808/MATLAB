@@ -273,7 +273,7 @@ if isfield(CaTrials(1),'RingF') && IsNeuropilExtract == 1
         CurrentdDataSize=size(RawOnsetData);
         SavedNPbase=repmat(NPSubFactors,1,CurrentdDataSize(2));
         % maybe error for baseline correction at this position
-        testtt;
+%         testtt;
         CorrePreOnsetData(m)={RawOnsetData - SavedNPbase.*NPOnsetData};
         FBaseline(m,:) = mean(CorrePreOnsetData{m},2);
     end
