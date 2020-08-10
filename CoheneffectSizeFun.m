@@ -2,6 +2,7 @@ function ESize = CoheneffectSizeFun(ExpData, ControlData, varargin)
 % function used for calculation of effect size
 % Ref: https://www.simplypsychology.org/effect-size.html
 % 2020.08.10
+
 % % A effect size less than 0.2 indicates small change size
 % % A effect size less than 0.5 but large than 0.2 indicates medium change size
 % % A effect size less than 0.8 but large than 0.5 indicates large change size
@@ -14,6 +15,7 @@ function ESize = CoheneffectSizeFun(ExpData, ControlData, varargin)
 
 ExpData = ExpData(:);
 ControlData = ControlData(:);
+ESize = [];
 
 if sum(isnan(ExpData)) || sum(isnan(ControlData))
     warning('nan data exists, excluded those values');
