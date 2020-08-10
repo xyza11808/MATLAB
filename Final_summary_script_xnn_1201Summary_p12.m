@@ -9,7 +9,7 @@
 %% load datas for one animal types
 cclr
 % SumSourPath = '/Users/xinyu/Documents/docs/xnn/p18_wt';
-SumSourPath = 'E:\xnn_data\data_202005_mats';
+SumSourPath = 'F:\high_gap27_align';
 WithinSourcePaths = dir(fullfile(SumSourPath,'*2020*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
 UsedTargetFolder = WithinSourcePaths(FolderIndex);
@@ -23,8 +23,8 @@ SepMultiSessCoefData = cell(NumFolders,1);
 MultiSessGenoType = cell(NumFolders,1);
 EventSyncFrac = cell(NumFolders,1);
 EventSyncFrac_EO = cell(NumFolders,1);
-% EventSyncFrac_EONeu = cell(NumFolders,1);
-% EventSyncFrac_EONeuAct = cell(NumFolders,1);
+EventSyncFrac_EONeu = cell(NumFolders,1);
+EventSyncFrac_EONeuAct = cell(NumFolders,1);
 MultiSessEventData = cell(NumFolders,1);
 PopuFieldSynchrony_all = cell(NumFolders,2);
 EventOnlyFieldSynchrony_all = cell(NumFolders,1);
@@ -37,6 +37,7 @@ for cfff = 1:NumFolders
     SessionFieldData =  CorrDataProcessFun(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
     MultiSessCoefData{cfff} = SessionFieldData;
     
+    % raw synchrony peak number and fraction calculation
     FieldEventDataAlls = EventDataProcessFun(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
     MultiSessEventData{cfff} = FieldEventDataAlls;
     
@@ -49,6 +50,44 @@ for cfff = 1:NumFolders
     end
     EventSyncFrac{cfff} = FieldRealShufIndex;
     
+    % event-only trace synchrony peak number and fraction calculation
+    FieldEventDataAlls = EventDataProcessFun_EO(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat','All');
+    MultiSessEventData{cfff} = FieldEventDataAlls;
+    
+    FieldNum = size(FieldEventDataAlls,1);
+    FieldRealShufIndex = cell(FieldNum,1);
+    for cf = 1 : FieldNum
+        Field1DataRealIndex = mean(FieldEventDataAlls{cf,4});
+        Field1DataShufIndex = FieldEventDataAlls{cf,5};
+        FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
+    end
+    EventSyncFrac_EO{cfff} = FieldRealShufIndex;
+    
+    % processing event-only datas
+    FieldEventData_EONeu = EventDataProcessFun_EO(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
+%     MultiSessEventData{cfff} = FieldEventDataAlls_EO;
+    
+    FieldNum = size(FieldEventData_EONeu,1);
+    FieldRealShufIndex = cell(FieldNum,1);
+    for cf = 1 : FieldNum
+        Field1DataRealIndex = mean(FieldEventData_EONeu{cf,4});
+        Field1DataShufIndex = FieldEventData_EONeu{cf,5};
+        FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
+    end
+    EventSyncFrac_EONeu{cfff} = FieldRealShufIndex;
+    
+    % processing event-only datas
+    FieldEventDataAlls_EOAct = EventDataProcessFun_EO(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat',[],1);
+%     MultiSessEventData{cfff} = FieldEventDataAlls_EO;
+    
+    FieldNum = size(FieldEventDataAlls_EOAct,1);
+    FieldRealShufIndex = cell(FieldNum,1);
+    for cf = 1 : FieldNum
+        Field1DataRealIndex = mean(FieldEventDataAlls_EOAct{cf,4});
+        Field1DataShufIndex = FieldEventDataAlls_EOAct{cf,5};
+        FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
+    end
+    EventSyncFrac_EONeuAct{cfff} = FieldRealShufIndex;
     
     % end of processing
     
@@ -97,8 +136,8 @@ end
 
 %%
 save(fullfile(SumSourPath,'NewAge_AllDataSummary.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData',...
-    'PopuFieldSynchrony_all','EventOnlyFieldSynchrony_all','Sess_eventOnlyCoefData',...
-    'MultiSessGenoType','-v7.3');%'EventSyncFrac_EO','EventSyncFrac_EONeu','EventSyncFrac_EONeuAct',
+    'PopuFieldSynchrony_all','EventOnlyFieldSynchrony_all','Sess_eventOnlyCoefData','EventSyncFrac_EO',...
+    'MultiSessGenoType','FolderNames', 'EventSyncFrac_EONeu', 'EventSyncFrac_EONeuAct', '-v7.3');%,'EventSyncFrac_EONeu','EventSyncFrac_EONeuAct',
 %% compare all coef values for twe types
 % WTSessInds = strcmpi('wt',MultiSessGenoType);
 % WTSessData_Cell = MultiSessCoefData(WTSessInds);
@@ -476,8 +515,8 @@ WTAst_EventFreq_Min = WTSess_EventData_FreqMin(~WTSess_EventData_NeuInds);
 [WTNeu_EventFreq_Avgs,WTNeu_EventFreq_SEMs] = AvgSEMCalcu_Fun(WTNeu_EventFreq_Min);
 [WTAst_EventFreq_Avgs,WTAst_EventFreq_SEMs] = AvgSEMCalcu_Fun(WTAst_EventFreq_Min);
 
-TgNeu_EventFreq_Min = TgSess_EventData_EventNum(TgSess_EventData_NeuInds);
-TgAst_EventFreq_Min = TgSess_EventData_EventNum(~TgSess_EventData_NeuInds);
+TgNeu_EventFreq_Min = TgSess_EventData_FreqMin(TgSess_EventData_NeuInds);
+TgAst_EventFreq_Min = TgSess_EventData_FreqMin(~TgSess_EventData_NeuInds);
 [TgNeu_EventFreqy,TgNeu_EventFreqx] = ecdf(TgNeu_EventFreq_Min);
 [TgAst_EventFreqy,TgAst_EventFreqx] = ecdf(TgAst_EventFreq_Min);
 [TgNeu_EventFreq_Avgs,TgNeu_EventFreq_SEMs] = AvgSEMCalcu_Fun(TgNeu_EventFreq_Min);
@@ -486,6 +525,9 @@ TgAst_EventFreq_Min = TgSess_EventData_EventNum(~TgSess_EventData_NeuInds);
 EventFreqAvgAlls = [WTNeu_EventFreq_Avgs,TgNeu_EventFreq_Avgs,WTAst_EventFreq_Avgs,TgAst_EventFreq_Avgs];
 EventFreqSEMAlls = [WTNeu_EventFreq_SEMs,TgNeu_EventFreq_SEMs,WTAst_EventFreq_SEMs,TgAst_EventFreq_SEMs];
 TypeStrs = {'WTNeu','TgNeu','WTAst','TgAst'};
+
+BoxPlotAllData = {WTNeu_EventFreq_Min, WTAst_EventFreq_Min, TgNeu_EventFreq_Min, TgAst_EventFreq_Min};
+
 %%
 WT_Tg_Neu_p = ranksum(WTNeu_EventFreq_Min,TgNeu_EventFreq_Min);
 WT_Tg_Ast_p = ranksum(WTAst_EventFreq_Min,TgAst_EventFreq_Min);
@@ -506,7 +548,9 @@ AxInsert = axes('position',[GcaPos(1)+GcaPos(3)*2/3,GcaPos(2)+0.1,GcaPos(3)/3,Gc
 hold(AxInsert, 'on');
 Colors = {[.4 .4 .4],[1 0 0],[.7 .7 .7],[0.7 0.4 0.4]};
 for cBar = 1 : 4
-    bar(cBar,EventFreqAvgAlls(cBar),0.6,'EdgeColor','none','FaceColor',Colors{cBar});
+%     bar(cBar,EventFreqAvgAlls(cBar),0.6,'EdgeColor','none','FaceColor',Colors{cBar});
+    cRawDatas = BoxPlotAllData{cBar};
+    boxplot(cBar*ones(size(cRawDatas)), cRawDatas, 'Labels', TypeStrs{cBar}, 'Color', Colors{cBar},'widths',0.2);
 end
 errorbar(1:4,EventFreqAvgAlls,EventFreqSEMAlls,'k.','linewidth',1.4,'Marker','none');
 set(AxInsert,'xtick',1:4,'xticklabel',TypeStrs','box','off','FontSize',8);

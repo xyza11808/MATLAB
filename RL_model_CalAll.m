@@ -55,6 +55,11 @@ switch ModelType
         if mean(ContainFs) ~= 1
             error('The input DFQL model parameter is not sufficient for calculation.');
         end
+        
+    case 'PH' % pearce-Hall reinforcement learning models.
+        
+        
+        
     otherwise
         error('Unsupported learning model for now');
 end

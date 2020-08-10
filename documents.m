@@ -147,6 +147,10 @@
 % plot(t,mdFun(t))
 % https://en.wikipedia.org/wiki/Exponential_decay
 
+% ########################################################
+% function 'fitcdiscr' can be used to train a LDA classifier
+
+
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % reset color scale for multiple subplots
 h = gcf; %current figure handle

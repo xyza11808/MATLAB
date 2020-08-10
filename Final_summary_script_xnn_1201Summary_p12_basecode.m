@@ -8,9 +8,9 @@
 
 %% load datas for one animal types
 cclr
-SumSourPath = 'M:\data\xnn\4MDatas';
+SumSourPath = 'F:\data_202005_mats';
 % SumSourPath = 'M:\data\xnn\p12_wt';
-WithinSourcePaths = dir(fullfile(SumSourPath,'*2019*'));
+WithinSourcePaths = dir(fullfile(SumSourPath,'*2020*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
 UsedTargetFolder = WithinSourcePaths(FolderIndex);
 NumFolders = length(UsedTargetFolder);
@@ -23,8 +23,8 @@ SepMultiSessCoefData = cell(NumFolders,1);
 % MultiSessGenoType = cell(NumFolders,1);
 EventSyncFrac = cell(NumFolders,1);
 EventSyncFrac_EO = cell(NumFolders,1);
-EventSyncFrac_EONeu = cell(NumFolders,1);
-EventSyncFrac_EONeuAct = cell(NumFolders,1);
+% EventSyncFrac_EONeu = cell(NumFolders,1);
+% EventSyncFrac_EONeuAct = cell(NumFolders,1);
 MultiSessEventData = cell(NumFolders,1);
 PopuFieldSynchrony_all = cell(NumFolders,2);
 EventOnlyFieldSynchrony_all = cell(NumFolders,1);
@@ -49,31 +49,43 @@ for cfff = 1:NumFolders
 %     end
 %     EventSyncFrac{cfff} = FieldRealShufIndex;
     
-    % processing event-only datas
-    FieldEventData_EONeu = EventDataProcessFun_EO(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
-%     MultiSessEventData{cfff} = FieldEventDataAlls_EO;
-    
-    FieldNum = size(FieldEventData_EONeu,1);
-    FieldRealShufIndex = cell(FieldNum,1);
-    for cf = 1 : FieldNum
-        Field1DataRealIndex = mean(FieldEventData_EONeu{cf,4});
-        Field1DataShufIndex = FieldEventData_EONeu{cf,5};
-        FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
-    end
-    EventSyncFrac_EONeu{cfff} = FieldRealShufIndex;
-    
-    % processing event-only datas
-    FieldEventDataAlls_EOAct = EventDataProcessFun_EO(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat',[],1);
-%     MultiSessEventData{cfff} = FieldEventDataAlls_EO;
-    
-    FieldNum = size(FieldEventDataAlls_EOAct,1);
-    FieldRealShufIndex = cell(FieldNum,1);
-    for cf = 1 : FieldNum
-        Field1DataRealIndex = mean(FieldEventDataAlls_EOAct{cf,4});
-        Field1DataShufIndex = FieldEventDataAlls_EOAct{cf,5};
-        FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
-    end
-    EventSyncFrac_EONeuAct{cfff} = FieldRealShufIndex;
+        FieldEventDataAlls = EventDataProcessFun_EO(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat','All');
+        MultiSessEventData{cfff} = FieldEventDataAlls;
+        
+        FieldNum = size(FieldEventDataAlls,1);
+        FieldRealShufIndex = cell(FieldNum,1);
+        for cf = 1 : FieldNum
+            Field1DataRealIndex = mean(FieldEventDataAlls{cf,4});
+            Field1DataShufIndex = FieldEventDataAlls{cf,5};
+            FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
+        end
+        EventSyncFrac_EO{cfff} = FieldRealShufIndex;
+
+%     % processing event-only datas
+%     FieldEventData_EONeu = EventDataProcessFun_EO(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
+% %     MultiSessEventData{cfff} = FieldEventDataAlls_EO;
+%     
+%     FieldNum = size(FieldEventData_EONeu,1);
+%     FieldRealShufIndex = cell(FieldNum,1);
+%     for cf = 1 : FieldNum
+%         Field1DataRealIndex = mean(FieldEventData_EONeu{cf,4});
+%         Field1DataShufIndex = FieldEventData_EONeu{cf,5};
+%         FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
+%     end
+%     EventSyncFrac_EONeu{cfff} = FieldRealShufIndex;
+%     
+%     % processing event-only datas
+%     FieldEventDataAlls_EOAct = EventDataProcessFun_EO(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat',[],1);
+% %     MultiSessEventData{cfff} = FieldEventDataAlls_EO;
+%     
+%     FieldNum = size(FieldEventDataAlls_EOAct,1);
+%     FieldRealShufIndex = cell(FieldNum,1);
+%     for cf = 1 : FieldNum
+%         Field1DataRealIndex = mean(FieldEventDataAlls_EOAct{cf,4});
+%         Field1DataShufIndex = FieldEventDataAlls_EOAct{cf,5};
+%         FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
+%     end
+%     EventSyncFrac_EONeuAct{cfff} = FieldRealShufIndex;
     
     
     % end of processing
@@ -97,9 +109,9 @@ for cfff = 1:NumFolders
 %     MultiSessGenoType{cfff} = GenoType_Cell{cSessFolderInds};
 end
 %%
-save(fullfile(SumSourPath,'New4M_DataSummary.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData',...
+save(fullfile(SumSourPath,'NewAge_AllDataSummary0710.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData',...
     'PopuFieldSynchrony_all','EventOnlyFieldSynchrony_all','Sess_eventOnlyCoefData',...
-    'EventSyncFrac_EO','EventSyncFrac_EONeu','EventSyncFrac_EONeuAct','-v7.3');
+    'EventSyncFrac_EO','EventSyncFrac_EONeu','EventSyncFrac_EONeuAct','EventSyncFrac','MultiSessGenoType','-v7.3');
 %% compare all coef values for twe types
 % WTSessInds = strcmpi('wt',MultiSessGenoType);
 % WTSessData_Cell = MultiSessCoefData(WTSessInds);

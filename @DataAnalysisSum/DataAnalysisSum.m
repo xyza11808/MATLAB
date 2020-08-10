@@ -1,13 +1,15 @@
 classdef DataAnalysisSum
     properties
-        SmoothData
+        AlignedData
+        SmoothData = [];
         TrialStims
         AlignedF
         FrameRate
         TimeWin = 1.5
         RespCalFun = 'Mean'
         ZscoreMethod = 'Modified'
-        
+        BehavStrc
+        TrialIsOpto = [];
         %additional properties for classification analysis
         TrialOutcome
         NeuroCLFStrc = struct();
@@ -27,8 +29,14 @@ classdef DataAnalysisSum
             if nargin < 4
                 error('Not enough input.');
             end
-            [this.SmoothData,this.TrialStims,this.AlignedF,this.FrameRate] = deal(varargin{1:4});
-            this.TrialStims = double(this.TrialStims);
+            [this.AlignedData,this.BehavStrc,this.AlignedF,this.FrameRate] = deal(varargin{1:4});
+            this.TrialStims = double(this.BehavStrc.TrialStims);
+            if isfield(this.BehavStrc,'Trial_isOpto') 
+                if sum(this.BehavStrc.Trial_isOpto)
+                    this.TrialIsOpto = this.BehavStrc.Trial_isOpto;
+                end
+            end
+            
             if nargin > 4
                 if ~isempty(varargin{5})
                     this.TimeWin = varargin{5};
@@ -46,6 +54,33 @@ classdef DataAnalysisSum
             end
         end
         %         DataPreProcessing(this.TimeWin,this.RespCalFun);
+        
+        function NoiseCorrMtx = optopopuZSCorr(this,varargin)
+           % function for calculate opto and control trial noise correlation coefficient
+           NoiseCorrMtx = [];
+           if isempty(this.TrialIsOpto)
+                warning('Session contains no optical trials.\n');
+                return;
+            end
+            ContTrInds = this.TrialIsOpto == 0;
+            
+            if nargin > 1
+                ContInputChoices = varargin;
+                OptoInputChoices = varargin;
+                ContInputChoices{5} = 0;
+                OptoInputChoices{5} = 0;
+                ContInputChoices{6} = ContTrInds;
+                OptoInputChoices{6} = ~ContTrInds;
+                
+            else
+                ContInputChoices = {[],[],[],[],0,ContTrInds};
+                OptoInputChoices = {[],[],[],[],0,~ContTrInds};
+            end
+            ContNoiseCorr = this.popuZscoredCorr(ContInputChoices{:});
+            OptoNoiseCorr = this.popuZscoredCorr(OptoInputChoices{:});
+            NoiseCorrMtx = {ContNoiseCorr, OptoNoiseCorr};
+            
+        end
         
         % population noise correlation coefficience calculation
         function varargout = popuZscoredCorr(this,varargin)
@@ -83,9 +118,15 @@ classdef DataAnalysisSum
                     isfilesave = varargin{5};
                 end
             end
+            UsedTrInds = true(numel(this.TrialStims),1);
+            if nargin > 6
+                if ~isempty(varargin{6})
+                    UsedTrInds = varargin{6};
+                end
+            end
             
-            cTrStimsall = this.TrialStims;
-            cSessiondata = this.RespMatData;
+            cTrStimsall = this.TrialStims(UsedTrInds);
+            cSessiondata = this.RespMatData(UsedTrInds,:);
             
 %             TrialStim = double(cTrStimsall);
             StimTypes = unique(cTrStimsall);
@@ -187,8 +228,33 @@ classdef DataAnalysisSum
             end
         end
         
+        % function for signal correlation calculation if given optal trials
+        function SigCorrMtx = OptopopuSignalCorr(this,varargin)
+            % return the signal correlation value for control and opto
+            % types
+            SigCorrMtx = [];
+            if isempty(this.TrialIsOpto)
+                warning('Session contains no optical trials.\n');
+                return;
+            end
+            ContTrInds = this.TrialIsOpto == 0;
+            
+            if nargin > 1
+                ContInputChoices = varargin;
+                OptoInputChoices = varargin;
+                ContInputChoices{3} = ContTrInds;
+                OptoInputChoices{3} = ~ContTrInds;
+            else
+                ContInputChoices = {[],[],ContTrInds};
+                OptoInputChoices = {[],[],~ContTrInds};
+            end
+            ContSignalCorr = this.popuSignalCorrFun(ContInputChoices{:});
+            OptoSignalCorr = this.popuSignalCorrFun(OptoInputChoices{:});
+            SigCorrMtx = {ContSignalCorr, OptoSignalCorr};
+        end
+        
         % function to calculate the signal correlation of neuron pairs
-        function popuSignalCorr(this,varargin)
+        function varargout = popuSignalCorrFun(this,varargin)
             TimeWind = this.TimeWin;
             if nargin > 1
                 if ~isempty(varargin{1})
@@ -203,29 +269,38 @@ classdef DataAnalysisSum
                 end
             end
             
-            IsBoostrap = 0;
+            UsedTrInds = true(numel(this.TrialStims),1);
+            IsPlot = 1;
             if nargin > 3
                 if ~isempty(varargin{3})
-                    IsBoostrap = varargin{3};
+                    UsedTrInds = varargin{3};
+                    IsPlot = 0;
+                end
+            end
+            
+            IsBoostrap = 0;
+            if nargin > 4
+                if ~isempty(varargin{4})
+                    IsBoostrap = varargin{4};
                 end
             end
             
             IsStdCorrect = 1;
-            if nargin > 4
-                if ~isempty(varargin{4})
-                    IsStdCorrect = varargin{4};
+            if nargin > 5
+                if ~isempty(varargin{5})
+                    IsStdCorrect = varargin{5};
                 end
             end
             
             this = this.DataPreProcessing(TimeWind,RespCallFunction);
-            StimAll = this.TrialStims;
-            RespDataMatrix = this.RespMatData; % nTrials-by-nROI matrix
+            StimAll = this.TrialStims(UsedTrInds);
+            RespDataMatrix = this.RespMatData(UsedTrInds,:); % nTrials-by-nROI matrix
             StimTypes = unique(StimAll);
             nStims = length(StimTypes);
             nROIs = size(RespDataMatrix,2);
             ROIStimRespMatrix = zeros(nStims,nROIs);
             if IsStdCorrect
-                ROIstdss = this.RawDataStd(this.SmoothData,'mad');
+                ROIstdss = this.RawDataStd(this.AlignedData(UsedTrInds,:,:),'mad');
             end
             
             if IsBoostrap
@@ -327,43 +402,55 @@ classdef DataAnalysisSum
             PairedROISigcorr = PopuSignalCorr(Matrixmask);
             PairedSCpvalue = SCp(Matrixmask);
             
-            if ~isdir('./Popu_signalCorr_Plot/')
-                mkdir('./Popu_signalCorr_Plot/');
-            end
-            cd('./Popu_signalCorr_Plot/');
-            
-            [SCCount,SCCenter] = hist(PairedROISigcorr,30);
-            SCSigInds = PairedSCpvalue < 0.05;
-            PairedSigCoef = PairedROISigcorr(SCSigInds);
-            if ~isempty(PairedSigCoef)
-                [SCCountSig,SCCenterSig] = hist(PairedSigCoef,30);
-            end
-            h_signalCorr = figure('position',[200 200 800 600]);
-            hold on
-            bar(SCCenter,SCCount/sum(SCCount),'k');
-            alpha(0.3);
-             if ~isempty(PairedSigCoef)
-                bar(SCCenterSig,SCCountSig/sum(SCCount),'k');
-             end
-            xlabel('Coef value');
-            ylabel('Pair Fraction');
-            title(sprintf('Mean Corrcoef value = %.4f',mean(PairedROISigcorr)));
-            set(gca,'FontSize',20);
-            if IsBoostrap
-                saveas(h_signalCorr,'Signal_correlation_of_current_session_Boot');
-                saveas(h_signalCorr,'Signal_correlation_of_current_session_Boot','png');
+            if IsPlot
+                if ~isdir('./Popu_signalCorr_Plot/')
+                    mkdir('./Popu_signalCorr_Plot/');
+                end
+                cd('./Popu_signalCorr_Plot/');
+
+                [SCCount,SCCenter] = hist(PairedROISigcorr,30);
+                SCSigInds = PairedSCpvalue < 0.05;
+                PairedSigCoef = PairedROISigcorr(SCSigInds);
+                if ~isempty(PairedSigCoef)
+                    [SCCountSig,SCCenterSig] = hist(PairedSigCoef,30);
+                end
+                h_signalCorr = figure('position',[200 200 800 600]);
+                hold on
+                bar(SCCenter,SCCount/sum(SCCount),'k');
+                alpha(0.3);
+                 if ~isempty(PairedSigCoef)
+                    bar(SCCenterSig,SCCountSig/sum(SCCount),'k');
+                 end
+                xlabel('Coef value');
+                ylabel('Pair Fraction');
+                title(sprintf('Mean Corrcoef value = %.4f',mean(PairedROISigcorr)));
+                set(gca,'FontSize',20);
+                if IsBoostrap
+                    saveas(h_signalCorr,'Signal_correlation_of_current_session_Boot');
+                    saveas(h_signalCorr,'Signal_correlation_of_current_session_Boot','png');
+                else
+                    saveas(h_signalCorr,'Signal_correlation_of_current_session');
+                    saveas(h_signalCorr,'Signal_correlation_of_current_session','png');
+                end
+                close(h_signalCorr);
+
+                if ~IsBoostrap
+                    save SignalCorrSave.mat PairedROISigcorr PairedSCpvalue ROIStimRespMatrix -v7.3
+                else
+                    save SignalCorrSaveBoot.mat PairedROISigcorr PairedSCpvalue BootStimRespMatrix BootStimRespValue -v7.3
+                end
+                cd ..;
             else
-                saveas(h_signalCorr,'Signal_correlation_of_current_session');
-                saveas(h_signalCorr,'Signal_correlation_of_current_session','png');
+               if nargin == 1
+                   varargout{1} = PopuSignalCorr;
+               else
+                   if ~IsBoostrap
+                       varargout = {PopuSignalCorr,SCp,ROIStimRespMatrix};
+                   else
+                       varargout = {PopuSignalCorr,SCp,BootStimRespMatrix,BootStimRespValue};
+                   end
+               end
             end
-            close(h_signalCorr);
-            
-            if ~IsBoostrap
-                save SignalCorrSave.mat PairedROISigcorr PairedSCpvalue ROIStimRespMatrix -v7.3
-            else
-                save SignalCorrSaveBoot.mat PairedROISigcorr PairedSCpvalue BootStimRespMatrix BootStimRespValue -v7.3
-            end
-            cd ..;
         end
         % Paired stimulus ROC analysis
         function varargout = PairedAUCCal(this,varargin)
@@ -440,6 +527,15 @@ classdef DataAnalysisSum
                 varargout{1} = ROIwisedAUC;
             end
         end
+        function OptoAlignDataColorplot(this,varargin)
+            Isplot = [];
+            if nargin > 1
+                if ~isempty(varargin{1})
+                    Isplot = varargin{1};
+                end
+            end
+            AlignedSortPlotOpto(this.AlignedData,this.BehavStrc,this.FrameRate,Isplot);
+        end
         
         function TbyTAllROIclf(this,Troutcome,varargin)
             % Trial by trial result
@@ -465,7 +561,7 @@ classdef DataAnalysisSum
                 else
                     fprintf('ROI auc data file unavailuable, calculate it first...\n');
                     
-                    AUCvalue = ROC_check(this.SmoothData,TrTypes,this.AlignedF,this.FrameRate,this.TimeWin,'Stim_time_Align');
+                    AUCvalue = ROC_check(this.AlignedData,TrTypes,this.AlignedF,this.FrameRate,this.TimeWin,'Stim_time_Align');
                 end
                 this.AUCvalueABS = AUCvalue;
             end
@@ -475,7 +571,7 @@ classdef DataAnalysisSum
                     TrOutOption = varargin{1};
                 end
             end
-            FracTbyTPlot(this.SmoothData,TrTypes,TrOutcomes,this.AlignedF,this.FrameRate,AUCvalue,this.TimeWin,TrOutOption);
+            FracTbyTPlot(this.AlignedData,TrTypes,TrOutcomes,this.AlignedF,this.FrameRate,AUCvalue,this.TimeWin,TrOutOption);
         end
         
         function MultiClfCal(this,TrOutcomes,TimeStep,varargin)
@@ -483,7 +579,7 @@ classdef DataAnalysisSum
                 TimeStep = 0.1;
             end
             this = ClfParaParser(this,varargin{:});
-            MultiTimeWinClf(this.SmoothData,this.TrialStims,TrOutcomes,this.AlignedF,this.FrameRate,this.NeuroCLFStrc,TimeStep);
+            MultiTimeWinClf(this.AlignedData,this.TrialStims,TrOutcomes,this.AlignedF,this.FrameRate,this.NeuroCLFStrc,TimeStep);
         end
          
          
@@ -491,7 +587,7 @@ classdef DataAnalysisSum
     methods(Access = 'private')
         function this = DataPreProcessing(this,TimeWin,RespCalFun)
             % preprocessing of input data
-            nFrame = size(this.SmoothData,3);
+            nFrame = size(this.AlignedData,3);
             if length(TimeWin) == 1
                 FrameScale = sort([(this.AlignedF+1),(this.AlignedF + round(TimeWin*this.FrameRate))]);
             elseif length(TimeWin) == 2
@@ -515,9 +611,16 @@ classdef DataAnalysisSum
             
             switch RespCalFun
                 case 'Mean'
-                    RespMatrix = mean(this.SmoothData(:,:,FrameScale(1):FrameScale(2)),3);
+                    RespMatrix = mean(this.AlignedData(:,:,FrameScale(1):FrameScale(2)),3);
                     RespMatrix = squeeze(RespMatrix);
                 case 'Max'
+                    [Trs,ROIs,~] = size(this.AlignedData);
+                    this.SmoothData = zeros(size(this.AlignedData));
+                    for cTr = 1 : Trs
+                        for cR = 1 : ROIs
+                            this.SmoothData(cTr,cR,:) = smooth(squeeze(this.AlignedData(cTr,cR,:)),5);
+                        end
+                    end
                     RespMatrix = max(this.SmoothData(:,:,FrameScale(1):FrameScale(2)),[],3);
                 otherwise
                     error('Error response calculation function.');
@@ -565,7 +668,7 @@ classdef DataAnalysisSum
             addRequired(p,'this',@isobject);
             defaultIsshuffle = 0;
             defaultIsmodelload = 0;
-            defaultIspartialROI = true(size(this.SmoothData,2),1);
+            defaultIspartialROI = true(size(this.AlignedData,2),1);
             defaultTroutcome = 1;
             defaultisDataOutput = 0;
             defaultisErrorCal = 0;

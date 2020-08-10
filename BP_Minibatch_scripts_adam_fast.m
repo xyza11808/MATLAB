@@ -278,6 +278,9 @@ while (nIters < 1e6) && (IterError > 1e-3)
     if nIters > 4
         LastErr = mean(IterErrorAll(end-3:end));
     end
+    if mean(abs(diff(IterErrorAll(end-500:end))) < 1e-3) > 0.9
+        break;
+    end
 %     nLearnRate = nLearnRate * 0.9;
 %     if nLearnRate < 0.001
 %         nLearnRate = 0.6;
@@ -294,3 +297,35 @@ figure;
 plot(1:RealIter,IterErrorAll,'k-o','LineWidth',1.6);
 xlabel('Itrerations');
 ylabel('Eror');
+
+%% calculate the test data output
+TestInput = TestOnOffData;
+TestOutput = TestOnOffLabel;
+LayerOutValue = cell(nHiddenLayer+1,1);
+cMiniSample = size(TestInput, 2);
+%%
+% start the forward calculation
+    for nHLs = 1 : nHiddenLayer
+        if nHLs == 1
+            FormerLayerNodes = nInputNodes;
+            FormerLayerData = TestInput;
+        else
+            FormerLayerNodes = nHidNodesNum(nHLs - 1);
+            FormerLayerData = LayerOutValue{nHLs - 1};
+        end
+        % LayerActValue  LayerOutValue
+        cLayerWeights = HiddenLayerNodeW{nHLs};
+        cLayerActData = cLayerWeights * FormerLayerData + repmat(HiddenLBias{nHLs},1,cMiniSample);
+        LayerActValue{nHLs} = cLayerActData;
+        LayerOutValue{nHLs} = OutFun(cLayerActData);
+        
+    end
+
+    OutputNetInData = HiddenLayerNodeW{nHiddenLayer + 1} * LayerOutValue{nHiddenLayer} + repmat(HiddenLBias{nHiddenLayer + 1},1,cMiniSample);
+    OutputNetOutData = OutFun(OutputNetInData);
+    LayerOutValue{nHiddenLayer+1} = OutputNetOutData;
+
+TestErroAll = (OutputNetOutData - TestOutput).^2;
+AvgTestError = 0.5 * sum(TestErroAll(:))/cMiniSample;
+fprintf('Test Dataset error is %.4f.\n', AvgTestError);
+

@@ -33,7 +33,7 @@ yData = double(repmat((0:9)',1,size(yLabelData,2)) == repmat(yLabelData,10,1));
 % yData = yData(:,1:10000);
 
 %%
-HidNodesNum = [21];
+HidNodesNum = [20];
 nHiddenLayer = length(HidNodesNum); % hidden layers
 nLearnRate = 0.7;
 InputData = xData; % rows as number of observation, columns as number of samples
@@ -53,8 +53,8 @@ nSamples = size(InputData,2);  % samples to be trained
 nHidNodesNum = [HidNodesNum,nOutputNodes];
 nNetNodes = [nInputNodes,HidNodesNum,nOutputNodes];
 
-OutFun = @(x) 1./(1+exp(-1*x)); % so that (OutFun)' = OutFun*(1-OutFun);
-deltaFun = @(k,t) (OutFun(k) - t) .* OutFun(k) .*(1 - OutFun(k)); % used for weight derivative calculation
+% OutFun = @(x) 1./(1+exp(-1*x)); % so that (OutFun)' = OutFun*(1-OutFun);
+% deltaFun = @(k,t) (OutFun(k) - t) .* OutFun(k) .*(1 - OutFun(k)); % used for weight derivative calculation
 
 %%
 IterErrorAll = [];
@@ -66,11 +66,22 @@ LearnRate = [];
 nSamples = size(InputData,2); 
 nTotalSample = nSamples;
 MiniBatchNums = nSamples;
-IsMiniBatch = 1;
-if nSamples > 500 && IsMiniBatch
+IsMiniBatch = 0;
+IsClassEvenSample = 1;
+if ~exist('TrainClasses', 'var')
+    TrainClasses = [];
+end
+
+if nSamples > 500
     MiniRatio = 0.005;
 %     MiniBatchNums = round(nSamples*MiniRatio);
     MiniBatchNums = 200;
+    IsMiniBatch = 1;
+    nSamples = MiniBatchNums;
+elseif nSamples > 100 
+%     MiniRatio = 0.005;
+%     MiniBatchNums = round(nSamples*MiniRatio);
+    MiniBatchNums = 30;
     IsMiniBatch = 1;
     nSamples = MiniBatchNums;
 end
@@ -126,7 +137,7 @@ NAdamParam.Beta_1 = 0.9;
 NAdamParam.Beta_2 = 0.999;
 NAdamParam.Beta_1Updates = NAdamParam.Beta_1;
 NAdamParam.Beta_2Updates = NAdamParam.Beta_2;
-NAdamParam.ThresMargin = 1e-8; % to avoid zeros diveision
+NAdamParam.ThresMargin = 1e-8; %1e-8; % to avoid zeros diveision
 NAdamParam.FirstMomentVec_W = cellfun(@(x) zeros(size(x)),HiddenLayerNodeW,'uniformOutput',false); % first moment vector
 NAdamParam.FirstMomentVec_B = cellfun(@(x) zeros(size(x)),HiddenLBias,'uniformOutput',false); % first moment vector
 NAdamParam.SecondMomentVec_W = cellfun(@(x) zeros(size(x)),HiddenLayerNodeW,'uniformOutput',false);  % second moment vector
@@ -153,36 +164,58 @@ NetParaSum.DeltaJNodesDatas = DeltaJNodesData;
 NetParaSum.FullLayerNodeNums = nNetNodes;
 NetParaSum.gradParaVec = zeros(numel(AllVecs),1);
 
-%% SampleLayerInOutData = cell(nInputNodes,1); % s
+%% SampleLayerInOutData = cell(nInputNodes,1);
 
 cBatchStartInds = 1;
 LastErr = 1;
+cFold = 1;
 while (nIters < 1e6) && (LastErr > 1e-3)
     %
     if IsMiniBatch
-        if (cBatchStartInds+MiniBatchNums) > nTotalSample
-            Start2EndIndsNum = nTotalSample - cBatchStartInds;
-            ExtraStartInds = MiniBatchNums - Start2EndIndsNum;
-            
-            MiniInds = [1:ExtraStartInds,cBatchStartInds+1:nTotalSample];
-            cBatchStartInds = ExtraStartInds + 1;
-            
-            % Performing shuffle is given option
-            if IsShuffle
-                TotalInds = 1 : nTotalSample;
-                ShufTotalInds = Vshuffle(TotalInds);
-                InputData = InputData(:,ShufTotalInds);
-                OutputData = OutputData(:,ShufTotalInds);
+        if IsClassEvenSample && ~isempty(TrainClasses)
+            % seperate training dataset according to the class label, so
+            % that the sample fraction for each class will be even
+            nFolds = floor(nTotalSample/MiniBatchNums);
+            if nFolds < 2
+                warning('The batch size is too large for total sample size, using all training instead.');
+                break;
             end
-%         elseif (cBatchStartInds+MiniBatchNums) == nTotalSample
-%             MiniInds = cBatchStartInds + (0:MiniBatchNums-1);
-%             cBatchStartInds 
+            FoldTrainTestIndex = ClassEvenPartitionFun(TrainClasses,nFolds);
+            cUsedInds = FoldTrainTestIndex{1,cFold};
+            MiniInputData = InputData(:, cUsedInds);
+            MiniOutPutData = OutputData(:, cUsedInds);
+            cMiniSample = size(MiniInputData, 2);
+            if cFold < nFolds
+                cFold = cFold + 1;
+            else
+                FoldTrainTestIndex = ClassEvenPartitionFun(TrainClasses,nFolds);
+                cFold = 1;
+            end
         else
-            MiniInds = cBatchStartInds + (0:MiniBatchNums-1);
+            if (cBatchStartInds+MiniBatchNums) > nTotalSample
+                Start2EndIndsNum = nTotalSample - cBatchStartInds;
+                ExtraStartInds = MiniBatchNums - Start2EndIndsNum;
+
+                MiniInds = [1:ExtraStartInds,cBatchStartInds+1:nTotalSample];
+                cBatchStartInds = ExtraStartInds + 1;
+
+                % Performing shuffle if asked
+                if IsShuffle
+                    TotalInds = 1 : nTotalSample;
+                    ShufTotalInds = Vshuffle(TotalInds);
+                    InputData = InputData(:,ShufTotalInds);
+                    OutputData = OutputData(:,ShufTotalInds);
+                end
+    %         elseif (cBatchStartInds+MiniBatchNums) == nTotalSample
+    %             MiniInds = cBatchStartInds + (0:MiniBatchNums-1);
+    %             cBatchStartInds 
+            else
+                MiniInds = cBatchStartInds + (0:MiniBatchNums-1);
+            end
+            MiniInputData = InputData(:,MiniInds);
+            MiniOutPutData = OutputData(:,MiniInds);
+            cMiniSample = MiniBatchNums;
         end
-        MiniInputData = InputData(:,MiniInds);
-        MiniOutPutData = OutputData(:,MiniInds);
-        cMiniSample = MiniBatchNums;
 %         if nIters == 1
 %             SampleWChange = cellfun(@(x) repmat(x,1,1,cMiniSample),HiddenLayerNodeW,'UniformOutput',false);
 %             SampleBiasChange = cellfun(@(x) repmat(x,1,cMiniSample),HiddenLBias,'UniformOutput',false);
@@ -223,8 +256,17 @@ while (nIters < 1e6) && (LastErr > 1e-3)
         v_hat_B = NAdamParam.SecondMomentVec_B{nHls}/(1 - NAdamParam.Beta_2Updates);
         
         TempHidenW = NetParaSum.LayerConnWeights{nHls} - NAdamParam.LearnAlpha.*m_hat_W./(sqrt(v_hat_W)+NAdamParam.ThresMargin);
+        if sum(isnan(TempHidenW(:)))
+            disp('Nan weights exists 1.');
+            break;
+        end
         NetParaSum.LayerConnWeights{nHls} = TempHidenW;
         NetParaSum.LayerConnBias{nHls} = NetParaSum.LayerConnBias{nHls} - NAdamParam.LearnAlpha.*m_hat_B./(sqrt(v_hat_B)+NAdamParam.ThresMargin);
+        
+        if sum(isnan(NetParaSum.LayerConnWeights{nHls}(:))) || sum(isnan(NetParaSum.LayerConnBias{nHls}(:)))
+            disp('Nan weights exists 2.');
+            break;
+        end
     end
     if mod(nIters,nTotalSample/MiniBatchNums)
         NAdamParam.Beta_1Updates = NAdamParam.Beta_1Updates * NAdamParam.Beta_1;
@@ -238,8 +280,8 @@ while (nIters < 1e6) && (LastErr > 1e-3)
     IterErrorAll(nIters) = IterError;
     nIters = nIters + 1;
     
-    if nIters > 4
-        LastErr = mean(IterErrorAll(end-3:end));
+    if nIters > 51
+        LastErr = mean(IterErrorAll(end-50:end));
     end
 %     nLearnRate = nLearnRate * 0.9;
 %     if nLearnRate < 0.001
@@ -256,4 +298,35 @@ fprintf('BP stops after %d iterations, with ErrorRate = %.2e, time used is %d se
 figure;
 plot(1:RealIter,IterErrorAll,'k-o','LineWidth',1.6);
 xlabel('Itrerations');
-ylabel('Eror');
+ylabel('Error');
+%% calculate the test data output
+TestInput = TestOnOffData;
+TestOutput = TestOnOffLabel;
+LayerOutValue = cell(nHiddenLayer+1,1);
+cMiniSample = size(TestInput, 2);
+
+%% another test data set for write digits recognition
+TestInput = TestIm(~EmptyInputData,:);
+% TestOutput = TestLabel;
+yLabelData = TestLabel';
+TestOutput = double(repmat((0:9)',1,size(yLabelData,2)) == repmat(yLabelData,10,1));
+LayerOutValue = cell(nHiddenLayer+1,1);
+cMiniSample = size(TestInput, 2);
+
+
+%%
+TestNetParaSum = NetParaSum;
+TestNetParaSum.InputData = TestInput;
+TestNetParaSum.TargetData = TestOutput;
+
+[IterError,TestNetParaSum] = NetWorkCalAndGrad(TestNetParaSum);
+fprintf('Test Dataset error is %.4f.\n', IterError);
+
+%%
+NetSoftMaxOut = TestNetParaSum.SoftMaxOut;
+[PredOutProb, PredOutInds] = max(NetSoftMaxOut);
+[~,targetOutInds] = max(TestOutput);
+disp(mean(PredOutInds == targetOutInds))
+
+
+

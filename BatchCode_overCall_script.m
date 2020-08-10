@@ -1,5 +1,5 @@
 cclr;
-SumSourPath = 'E:\xnn_data\data_202005_mats';
+SumSourPath = 'F:\high_gap27_align';
 cd(SumSourPath);
 WithinSourcePaths = dir(fullfile(SumSourPath,'*2020*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
@@ -10,7 +10,7 @@ FolderFullpaths = arrayfun(@(x) fullfile(x.folder,x.name),UsedTargetFolder,'Unif
 % FolderNames = arrayfun(@(x) x.name,UsedTargetFolder,'UniformOutput',false);
 %%
 % AllFolderDatas = cell(NumFolders,1);
-for cf = 6:6
+for cf = 1:NumFolders
     cInputPath = FolderFullpaths{cf};
     fprintf('Processing folder:\n %s...\n',cInputPath);
 %     FieldDatas_All = IsFieldDataPath(cInputPath);
@@ -29,14 +29,17 @@ end
 % FolderFullpaths = arrayfun(@(x) fullfile(x.folder,x.name),UsedTargetFolder,'UniformOutput',false);
 % FolderNames = arrayfun(@(x) x.name,UsedTargetFolder,'UniformOutput',false);
 % AllFolderDatas = cell(NumFolders,1);
-for cf = 6:6
+for cf = 1:NumFolders
     cInputPath = FolderFullpaths{cf};
     FieldDatas_AllCell = IsFieldDataPath_LOADMAT(cInputPath);
 end
-% 
+%
 % cd('E:\xnn_data')
 % save OverAllDatas.mat AllFolderDatas -v7.3
-
+for cf = 1:NumFolders
+    cInputPath = FolderFullpaths{cf};
+    IsFieldDataPath_AddROIInfo(cInputPath);
+end
 %%
 
 for cf = 1:NumFolders

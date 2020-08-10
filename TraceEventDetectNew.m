@@ -404,7 +404,7 @@ if ~isempty(MergedEventsAll)
                     MergedEventsAll(cEvent,4) = 1;
                 end
             else
-                if diff(cEventIndex) > round(filterOps.Fr)
+                if diff(cEventIndex) > round(filterOps.Fr*5)
                     [~,Locs] = findpeaks(span3DiffData,'MinPeakHeight',DiffThress,...
                         'MinPeakDistance',round(filterOps.Fr));
                     MergedEventsAll(cEvent,4) = max(numel(Locs),1);
@@ -414,7 +414,7 @@ if ~isempty(MergedEventsAll)
             end
         end
         if ~ExcludeEvent(cEvent)
-            if diff(cEventIndex) > round(filterOps.Fr)
+            if diff(cEventIndex) > round(filterOps.Fr*5)
                 [~,Locs] = findpeaks(span3DiffData,'MinPeakHeight',DiffThress,...
                     'MinPeakDistance',round(filterOps.Fr));
                 MergedEventsAll(cEvent,4) = max(numel(Locs),1);
@@ -426,12 +426,12 @@ if ~isempty(MergedEventsAll)
             LengthThres = round(0.5*filterOps.Fr);
             EventDatas = NFNew(cEventIndex(1):cEventIndex(2));
             ContinueAboveInds = smooth(EventDatas > UpperThres, LengthThres);
-            if isempty(find(ContinueAboveInds > (1-1/LengthThres), 1)) % no continued time length data above threshold
+            if isempty(find(ContinueAboveInds > (1-1/LengthThres), 1)) &&  max(span3DiffData) < DiffThress % no continued time length data above threshold
                 ExcludeEvent(cEvent) = 1;
                 NewEventTrace(cEventIndex(1):cEventIndex(2)) = 0;
             end
             
-            if (max(ccEventDatas) - min(ccEventDatas)) <  EventStd*5 || ...
+            if (max(ccEventDatas) - min(ccEventDatas)) <  EventStd*4 || ...
                     (diff(cEventIndex) > filterOps.Fr * 20)%if the peak was low
                 if diff(cEventIndex) <= round(filterOps.Fr)
                     ExcludeEvent(cEvent) = 1;

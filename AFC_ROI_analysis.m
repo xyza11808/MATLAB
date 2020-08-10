@@ -850,13 +850,13 @@ elseif str2double(continue_char)==2
 %     popuROIpairCorr(smooth_data,behavResults.Stim_toneFreq,start_frame,frame_rate,[],'Max');
    %%
     % class define session and class based analysis
-    DataAnaObj = DataAnalysisSum(data_aligned,behavResults.Stim_toneFreq,start_frame,frame_rate,1);  % smooth_data
+    DataAnaObj = DataAnalysisSum(data_aligned,behavResults,start_frame,frame_rate,1);  % smooth_data
 %     if RandomSession
 %         DataAnaObj.PairedAUCCal(1.5);
 %     end
-    DataAnaObj.popuZscoredCorr(1.5,'Mean');
-%     DataAnaObj.popuSignalCorr(1,'Mean',1);  % boot-strap signal correlation
-%     DataAnaObj.popuSignalCorr(1,'Mean');  % normal methods
+    DataAnaObj.popuZscoredCorrFun(1,'Mean');
+%     DataAnaObj.popuSignalCorrFun(1,'Mean',[],1);  % boot-strap signal correlation
+%     DataAnaObj.popuSignalCorrFun(1,'Mean');  % normal methods
     
     %%
     if ~isdir('./spikeData/')

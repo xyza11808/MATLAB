@@ -123,7 +123,7 @@ AllROIData = cell(nROIs,1);
 
 for cROI = 1 : nROIs
     %%
-%     cROI = 25;
+    cROI = 13;
 %     close
     cROIData = squeeze(TrEventsRespData(:,cROI,:));
     % figure('position',[200 100 800 320])
@@ -180,13 +180,15 @@ for cROI = 1 : nROIs
 %     figure;
 %     imagesc(RespData)
 %     
-    %
+    %%
     options = glmnetSet;
     options.alpha = 0.9;
     options.nlambda = 110;
     nRepeats = 3;
     RepeatData = cell(nRepeats,3);
+    %%
     for cRepeat = 1 : nRepeats
+        %%
         nFolds = 10;
         IsRandPartition = 0;
         try
@@ -199,8 +201,9 @@ for cROI = 1 : nROIs
         FoldCoefs = cell(nFolds,3);
         FoldDev = zeros(nFolds,1);
         FoldTestPred = cell(nFolds,2);
-
+%%
         for cf = 1 : nFolds
+            %%
             if IsRandPartition
                 TrainInds = find(cc.training(cf));
             else
@@ -231,7 +234,7 @@ for cROI = 1 : nROIs
                 FoldCoefs{cf,1} = CoefUseds(2:end);
                 FoldDev(cf) = max(cvmdfit.glmnet_fit.dev);
 
-                %
+                %%
             %     figure
             %     hist(TrainRespDataMtx,20)
 

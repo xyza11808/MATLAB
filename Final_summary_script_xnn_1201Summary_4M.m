@@ -8,8 +8,8 @@
 
 %% load datas for one animal types
 cclr
-SumSourPath = 'M:\data\xnn\4MDatas';
-WithinSourcePaths = dir(fullfile(SumSourPath,'*2019*'));
+SumSourPath = 'E:\xnn_data\data_202005_mats';
+WithinSourcePaths = dir(fullfile(SumSourPath,'*2020*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
 UsedTargetFolder = WithinSourcePaths(FolderIndex);
 NumFolders = length(UsedTargetFolder);
@@ -463,8 +463,8 @@ WTAst_EventFreq_Min = WTSess_EventData_FreqMin(~WTSess_EventData_NeuInds);
 [WTNeu_EventFreq_Avgs,WTNeu_EventFreq_SEMs] = AvgSEMCalcu_Fun(WTNeu_EventFreq_Min);
 [WTAst_EventFreq_Avgs,WTAst_EventFreq_SEMs] = AvgSEMCalcu_Fun(WTAst_EventFreq_Min);
 
-TgNeu_EventFreq_Min = TgSess_EventData_EventNum(TgSess_EventData_NeuInds);
-TgAst_EventFreq_Min = TgSess_EventData_EventNum(~TgSess_EventData_NeuInds);
+TgNeu_EventFreq_Min = TgSess_EventData_FreqMin(TgSess_EventData_NeuInds);
+TgAst_EventFreq_Min = TgSess_EventData_FreqMin(~TgSess_EventData_NeuInds);
 [TgNeu_EventFreqy,TgNeu_EventFreqx] = ecdf(TgNeu_EventFreq_Min);
 [TgAst_EventFreqy,TgAst_EventFreqx] = ecdf(TgAst_EventFreq_Min);
 [TgNeu_EventFreq_Avgs,TgNeu_EventFreq_SEMs] = AvgSEMCalcu_Fun(TgNeu_EventFreq_Min);
@@ -483,7 +483,7 @@ hwtl2 = plot(WTAst_EventFreqx,WTAst_EventFreqy,'Color','k','linewidth',1.4,'line
 hwtl3 = plot(TgNeu_EventFreqx,TgNeu_EventFreqy,'Color','r','linewidth',1.4);
 hwtl4 = plot(TgAst_EventFreqx,TgAst_EventFreqy,'Color','r','linewidth',1.4,'linestyle','--');
 legend([hwtl1,hwtl2,hwtl3,hwtl4],{'WTNeu','WTAst','TgNeu','TgAst'},'location','southwest','box','off');
-set(gca,'xlim',[-0.2 15],'ylim',[-0.05 1.05],'box','off');
+set(gca,'xlim',[-0.2 10],'ylim',[-0.05 1.05],'box','off');
 xlabel('Events frequency (per Min.)');
 ylabel('Fraction');
 title(sprintf('p18 WT-Tg-Neu-p = %.2e',WT_Tg_Neu_p));

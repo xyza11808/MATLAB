@@ -193,12 +193,12 @@ EventParas.OnsetThres = 1;
 EventParas.OffsetThres = 1;
 EventParas.IsPlot = 1;
 EventParas.ABSPeakValue = 0.2;
-
+%%
 % [~,EventIndex,ROIPlots] = TraceEventDetectNew(Dff_RingSub_Mtx(cR,:),FilterOpsAll,EventParas);
-nROIs = size(Dff_RingSub_Mtx,1);
+nROIs = size(test01_dffData,1);
 parfor cROI = 1 : nROIs
 %     cROITrace = AdJustMoveFreeData_All_mtx(cROI,:);
-    [~,EventIndex,ROIPlots] = TraceEventDetectNew(Dff_RingSub_Mtx(cROI,:),FilterOpsAll,EventParas);
+    [~,EventIndex,ROIPlots] = TraceEventDetectNew(test01_dffData(cROI,:),FilterOpsAll,EventParas);
     EventsIndsAllROI{cROI} = EventIndex;
     if ishandle(ROIPlots{2})
         title(num2str(cROI,'ROI%d'));
@@ -337,9 +337,11 @@ RF_MeanSubMtx = DffMtx_rf_test02_Trans - repmat(mean(DffMtx_rf_test02_Trans),...
 RF_2_BF_scores = RF_MeanSubMtx *  coeff;
 
 %%
+Test02_corrs = Test02_corrs - diag(ones(size(Test02_corrs,1),1));
+[~,RF_2_BF_scores,~] = pca(Test02_corrs);
 
-[~,RF_2_BF_scores,~] = pca(DffMtx_rf_test02_Trans);
 
+%%
 RF_frame_info = cellfun(@(x) size(x,2), SavedCaTrials.f_raw);
 UsedFrameLen = min(RF_frame_info);
 Trace_2_Mtx = zeros(length(RF_frame_info), size(coeff,1), UsedFrameLen);

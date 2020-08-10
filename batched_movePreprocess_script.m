@@ -4,7 +4,7 @@ if ismac
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,':'))';
 elseif ispc
-    GrandPath = 'T:\batch\batch70\20200528';
+    GrandPath = 'T:\batch\batch70\20200528\anm04';
     xpath = genpath(GrandPath);
     nameSplit = (strsplit(xpath,';'))';
 end

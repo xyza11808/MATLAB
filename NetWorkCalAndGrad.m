@@ -97,16 +97,27 @@ OutputNetInData = NetParaStrc.LayerConnWeights{nHiddenLayer + 1} * ...
 OutputNetOutData = OutFun(OutputNetInData);
 LayerOutValue{nHiddenLayer+1} = OutputNetOutData;
 NetParaStrc.NetOutputValue = OutputNetOutData;
-
+if sum(isnan(OutputNetOutData(:))) || sum(isinf(OutputNetOutData(:)))
+    disp('Nan weights exists.');
+end
 % check whether using softmax Loss for classification
 if NetParaStrc.IsSoftMax
-    OutputExp = exp(NetParaStrc.NetOutputValue);
+    if strcmpi(NetParaStrc.OutFun,'ReLU') || strcmpi(NetParaStrc.OutFun,'LeakyReLU')
+        % in case of overflow or underflow, which will cause a NaN error
+        % while update weights
+        MaxCorrection = NetParaStrc.NetOutputValue - max(0, repmat(max(NetParaStrc.NetOutputValue), ...
+            size(NetParaStrc.NetOutputValue,1),1));
+        MaxCorrection(MaxCorrection < -50) = -50; % marginal value correction
+    else
+        MaxCorrection = NetParaStrc.NetOutputValue;
+    end
+    OutputExp = exp(MaxCorrection);
     SoftMaxOuts = OutputExp ./ repmat(sum(OutputExp),NetParaStrc.FullLayerNodeNums(end),1);
     % calculate the Cross-Entropy loss function
     nanOutData = nan(size(SoftMaxOuts));
     TargetLabelInds = find(NetParaStrc.TargetData);
     CEMtx = nanOutData;
-    CEMtx(TargetLabelInds) = -log(SoftMaxOuts(TargetLabelInds));
+    CEMtx(TargetLabelInds) = -log(SoftMaxOuts(TargetLabelInds) + 1e-15); % avoid near zeros values
     IterError = mean(mean(CEMtx,'omitnan'));
 %     IterError = mean(-1*sum(NetParaStrc.TargetData.*log(SoftMaxOuts)));
     
@@ -161,6 +172,7 @@ end
 AvgWChange = cellfun(@(x) x/SampleNum,SampleWChange,'UniformOutput',false);
 AvgBiasChange = cellfun(@(x) squeeze(mean(x,2)),SampleBiasChange,'UniformOutput',false);
 
+
 % convert the cell vector into single numeric vector
 gradLayerParaVStrc.Weights_Mtx = AvgWChange;
 gradLayerParaVStrc.Bias_Mtx = AvgBiasChange;
@@ -168,6 +180,8 @@ gradLayerParaVStrc.Bias_Mtx = AvgBiasChange;
         gradLayerParaVStrc,NetParaStrc.TotalParaNum);
 
 NetParaStrc.gradParaVec = gradAllVecs;
-        
+if sum(isnan(gradAllVecs))
+    disp('Nan value exists 3.');
+end
         
         
