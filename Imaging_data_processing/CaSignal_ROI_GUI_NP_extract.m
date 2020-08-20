@@ -248,7 +248,10 @@ if ~exist('filename', 'var')
         return
     end
     cd(pathName);
-    FileName_prefix = filename(1:end-7);
+    % incase of more than 1000 trials
+    [StartInds, endInds] = regexp(filename, '_\d{3,4}.tif');
+    FileName_prefix = filename(1:StartInds);
+%     FileName_prefix = filename(1:StartInds-1);
     CaSignal.data_files = dir([FileName_prefix '*.tif']);
     CaSignal.IsTrialExcluded = false(length(CaSignal.data_files),1);  % default all trials will be used for future analysis
     CaSignal.ROIdefineTr = zeros(length(CaSignal.data_files),1);  % define of ROI defined trials
@@ -945,9 +948,6 @@ end
 update_ROI_plot(handles);
 handles = update_projection_images(handles);
 guidata(hObject, handles);
-
-
-function ROI_del_all_Callback(hObject, eventdata, handles)
 
 
 function CurrentROINoEdit_Callback(hObject, eventdata, handles)
