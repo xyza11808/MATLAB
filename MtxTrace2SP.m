@@ -8,7 +8,7 @@ ROIFitCoefs = cell(nROIs,1);
 if max(SessionTraceData(:)) > 50
     SessionTraceData = SessionTraceData/100;
 end
-for cROI = 1 : nROIs
+parfor cROI = 1 : nROIs
     %%
     cROISessTrace = SessionTraceData(cROI,:);
     cROISessTraceNM = cROISessTrace - min(cROISessTrace);

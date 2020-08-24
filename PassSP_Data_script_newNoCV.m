@@ -9,7 +9,7 @@
 % if exist('EstimatedSPDataAR2.mat','file')  && exist('ROIglmCoefSave.mat','file')
 % %     return;
 % end
-load('rfSelectDataSet.mat','SelectData','frame_rate');
+load('rfSelectDataSet.mat','SelectData','frame_rate', 'sound_array', 'SelectInds');
 if exist('EstimatedSPDatafilter.mat','file')
     load('EstimatedSPDatafilter.mat');
 else
@@ -17,7 +17,18 @@ else
     save EstimatedSPDatafilter.mat nnspike SelectData SelectSArray frame_rate -v7.3
 end
 % load('EstimatedSPDatafilter.mat');
-
+SelectSoundArray = sound_array(SelectInds,:);
+SelectSoundIntensity = SelectSoundArray(:,2);
+SoundIntensityType = unique(SelectSoundIntensity);
+if numel(SoundIntensityType) > 1
+    IsMultiDB = 1;
+    IntensityTypeMtx = zeros(numel(SelectSoundIntensity), numel(SoundIntensityType));
+    for cIntensity = 1 : numel(SoundIntensityType)
+        IntensityTypeMtx(:, cIntensity) = double(SelectSoundIntensity == SoundIntensityType(cIntensity));
+    end
+else
+    IsMultiDB = 0;
+end
 cSessPassTrInds = true(numel(SelectSArray),1);
 if exist('PassFreqUsedInds.mat','file')
     UsedTrIndsStrc = load('PassFreqUsedInds.mat');
@@ -64,14 +75,14 @@ UsedFreqArray = SelectSArray(cSessPassTrInds);
 % figure;imagesc(ROISPData(SortInds,:))
 
 %
-Time_Win = 0.3;
+Time_Win = 0.5;
 FrameWin = round(Time_Win * frame_rate);
 
 FrameDurStrc = load('rfSelectDataSet.mat','sound_array');
 FrameDurData = round(FrameDurStrc.sound_array(:,3)/1000*frame_rate);
 
 OnsetFrame = frame_rate;
-OffsetFrame = frame_rate+round(0.3 * frame_rate);
+OffsetFrame = frame_rate+FrameDurData;
 
 
 % figure;
@@ -81,11 +92,18 @@ OffsetFrame = frame_rate+round(0.3 * frame_rate);
 nTrials = length(UsedFreqArray);
 FreqTypes = unique(UsedFreqArray);
 nFreqs = length(FreqTypes);
+FreqTrNums = zeros(nFreqs, 1);
+for cf = 1 : nFreqs
+    FreqTrNums(cf) = sum(UsedFreqArray == FreqTypes(cf));
+end
+UsedFolds = min(FreqTrNums);
 FreqMtxInds = double(repmat(UsedFreqArray,1,nFreqs) == repmat(FreqTypes',nTrials,1));
 FreqMtxOnOffMtx = zeros(nTrials*2,nFreqs*2);
 FreqMtxOnOffMtx(1:nTrials,1:nFreqs) = FreqMtxInds;
 FreqMtxOnOffMtx((1:nTrials)+nTrials,(1:nFreqs)+nFreqs) = FreqMtxInds;
-
+if IsMultiDB
+    FreqMtxOnOffMtx = [FreqMtxOnOffMtx, [IntensityTypeMtx;IntensityTypeMtx]];
+end
 %
 %     close
 %     figure;
@@ -93,6 +111,7 @@ FreqMtxOnOffMtx((1:nTrials)+nTrials,(1:nFreqs)+nFreqs) = FreqMtxInds;
 options = glmnetSet;
 options.alpha = 0.9;
 options.nlambda = 110;
+options.standardize = false;
 
 UsedSelectDatas = SelectData(cSessPassTrInds,:,:);
 nROIs = size(UsedSelectDatas,2);
@@ -110,6 +129,7 @@ ROIOnOffFResp = zeros(nROIs,nFreqs*2);
 ROIStds = zeros(nROIs,1);
 for cROI = 1 : nROIs
     %%
+    cROI = 45;
     ROISPData = squeeze(nnspike(cSessPassTrInds,cROI,:));
     ROISPTrace = reshape(ROISPData',[],1);
 %     ROISPNoiseThres = std(ROISPTrace(ROISPTrace>1e-6));
@@ -157,11 +177,11 @@ for cROI = 1 : nROIs
     AllRepeatData = cell(nRepeats,3);
     for cRepeat = 1 : nRepeats
 
-        nFolds = 5;
+        nFolds = UsedFolds;
 %         cc = cvpartition(nTrials,'kFold',nFolds);
         FoldTrainTestIndex = ClassEvenPartitionFun(UsedFreqArray,nFolds);
         FoldCoefs = cell(nFolds,1);
-        FoldDev = zeros(nFolds,1);
+        FoldDev = zeros(nFolds,2); % the first column is real dev, the second is null dev
         FoldTestPred = cell(nFolds,2);
         for cf = 1 : nFolds
 %             TrainInds = find(cc.training(cf));
@@ -175,12 +195,29 @@ for cROI = 1 : nROIs
             TestFreqParas = FreqMtxOnOffMtx(~BlankInds,:);
             TestRespVec = TotalRespMtx(~BlankInds);
             
-            cvmdfit = cvglmnet(TrainFreqParas,TrainRespVec,'poisson',options,[],size(TrainFreqParas,1));
-            CoefUseds = cvglmnetCoef(cvmdfit,'lambda_1se');
-            FoldCoefs{cf} = (CoefUseds(2:end))';
-            FoldDev(cf) = max(cvmdfit.glmnet_fit.dev);
+%             TrainRespVec = TrainRespVec / max(1e-5, std(TrainRespVec));
+            mdfit = glmnet(TrainFreqParas,TrainRespVec,'poisson',options);
+            
+            PredTestData = glmnetPredict(mdfit,TestFreqParas,[],'response'); %,[],log(mean(TestRespVec))
 
-            PredTestData = cvglmnetPredict(cvmdfit,TestFreqParas,'lambda_1se','response');
+            TestRespMtx = repmat(TestRespVec, 1, size(PredTestData, 2));
+            SquareErrors = sum((TestRespMtx - PredTestData).^2);
+%             figure;plot(SquareErrors)
+            [~,minInds] = min(SquareErrors);
+            CoefUseds = glmnetCoef(mdfit, mdfit.lambda(minInds));
+            PredDatas = PredTestData(:, minInds);
+            FoldDev(cf, 1) = mdfit.dev(minInds);
+            FoldDev(cf, 2) = mdfit.nulldev;
+%             if minInds == numel(SquareErrors)
+%                 CoefUseds = zeros(size(CoefUseds));
+%                 PredDatas = zeros(size(PredDatas));
+%             end
+            
+%             cvmdfit = cvglmnet(TrainFreqParas,TrainRespVec,'poisson',options,[],size(TrainFreqParas,1));
+%             CoefUseds = cvglmnetCoef(cvmdfit,'lambda_1se');
+            FoldCoefs{cf} = (CoefUseds(2:end))';
+            
+%             PredTestData = cvglmnetPredict(cvmdfit,TestFreqParas,'lambda_1se','response');
             FoldTestPred{cf,1} = PredTestData;
             FoldTestPred{cf,2} = TestRespVec;
         end
@@ -195,6 +232,7 @@ for cROI = 1 : nROIs
     end
     %
     ROICoefData{cROI} = AllRepeatData;
+    AllCoefs = cell2mat(AllRepeatData(:,1));
     %%
 end
 %%

@@ -52,26 +52,27 @@ end
 
 %% 孃伏方象
 cclr
-% Year =  {'1999定','2000定','2001定','2002定','2003定','2004定','2005定','2006定',...
-%         '2007定','2008定','2009定','2010定','2011定','2012定','2013定','2014定','2015定',...
-%         '2016定','2017定','2018定','2019定'};
+Year =  {'1999定','2000定','2001定','2002定','2003定','2004定','2005定','2006定',...
+        '2007定','2008定','2009定','2010定','2011定','2012定','2013定','2014定','2015定',...
+        '2016定','2017定','2018定','2019定','2020定'};
 % YearsNum = length(Year);
-% Total_data = [12,20,14,22,26,24,27,27,27,28,33,35,33,35,34,35,41,39,40,40,40];
-% Weilai_data = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,8];   
-% MS_data = [0,0,0,0,0,0,0,0,0,0,0,2,1,1,2,0,2,2,2,2,7];
-% Waibo_data = [0,0,0,0,6,6,5,5,6,7,5,4,2,2,4,3,3,8,3,5,2];
-% 
-% DataSums = [Total_data;MS_data;Waibo_data;Weilai_data];
-% LengStrs = {'liandu','zhuanshuo','waibo','zhibo'};
+Liandu_data = [12,20,14,22,26,24,27,27,27,28,33,35,33,35,34,35,41,39,40,40,40,40];
+Zhibo_data = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,8,8];   
+Zhuanshuo_data = [0,0,0,0,0,0,0,0,0,0,0,2,1,1,2,0,2,2,2,2,7,7];
+Waibo_data = [0,0,0,0,6,6,5,5,6,7,5,4,2,2,4,3,3,8,3,5,2,7];
+Xueshuo_data = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1];
 
-Year = {'2017定','2018定','2019定'};
+DataSums = [Liandu_data;Zhuanshuo_data;Waibo_data;Zhibo_data;Xueshuo_data];
+LengStrs = {'liandu','zhuanshuo','waibo','zhibo','xueshuo'};
+
+% Year = {'2017定','2018定','2019定'};
 % University_985 = [219,225,281];
 % University_Other = [246,266,276];
-University_985 = [95,129,177];
-University_Other = [90,115,129];
+% University_985 = [95,129,177];
+% University_Other = [90,115,129];
 
-DataSums = [University_985;University_Other];
-LengStrs = {'985 schools','other schools'};
+% DataSums = [University_985;University_Other];
+% LengStrs = {'985 schools','other schools'};
 YearsNum = length(Year);
 DataTotalNums = sum(DataSums);
 %%
@@ -89,13 +90,15 @@ for cData = 1 : NumTypes
     PlotInds = cDataNumbers > 0;
     PlotNumbers = cDataNumbers(PlotInds);
     if cData == 1
-        text(xInds(PlotInds),CYData(PlotInds)-20,num2str(PlotNumbers(:),'%d'),'Color','w','FontSize',12,'HorizontalAlignment','center');
+        text(xInds(PlotInds),CYData(PlotInds)-2,num2str(PlotNumbers(:),'%d'),'Color','w','FontSize',10,'HorizontalAlignment','center');
+    else
+        text(xInds(PlotInds),CYData(PlotInds)-1,num2str(PlotNumbers(:),'%d'),'Color','w','FontSize',10,'HorizontalAlignment','center');
     end
 end
-text(xInds,DataTotalNums+20,num2str(DataTotalNums(:),'%d'),'Color','k','FontSize',14,'HorizontalAlignment','center');
+text(xInds,DataTotalNums+2,num2str(DataTotalNums(:),'%d'),'Color','r','FontSize',12,'HorizontalAlignment','center');
 set(gca,'box','off','xtick',xInds,'xticklabel',Year','xlim',[0.5 YearsNum+0.5]);
 % xlabel('years');
-ylabel('繁方');
+ylabel('孃伏方朕');
 set(gca,'FontSize',12)
 legend(hbar,LengStrs,'Location','Northwest','Box','off','FontSize',10);
 
@@ -108,21 +111,24 @@ saveas(gcf,'Summer school number_2 bar plot','pdf')
 xInds = 1 : YearsNum;
 hlinef = figure;
 hold on
-% lineCs = [0,0.445,0.738;0.848,0.324,0.098;0.956,0.691,0.125;0.492,0.184,0.555];
-lineCs = [0,0.445,0.738;0.848,0.324,0.098];
+lineCs = [0,0.445,0.738;0.848,0.324,0.098;0.956,0.691,0.125;0.492,0.184,0.555;0.4648,0.6719,0.1875];
+% lineCs = [0,0.445,0.738;0.848,0.324,0.098];
 hl = [];
 for cline = 1 : NumTypes
-    lll = plot(xInds,DataSums(cline,:),'-o','Color',lineCs(cline,:),'linewidth',1.6,...
-        'MarkerSize',10,'MarkerEdgeColor','none','MarkerFaceColor',lineCs(cline,:));
+    cLineData = DataSums(cline,:);
+    UsedInds = cLineData > 0;
+    lll = plot(xInds(UsedInds),cLineData(UsedInds),'-o','Color',lineCs(cline,:),'linewidth',1.6,...
+        'MarkerSize',8,'MarkerEdgeColor','none','MarkerFaceColor',lineCs(cline,:));
     hl = [hl;lll];
 end
 Totall = plot(xInds,sum(DataSums),'-o','Color','k','linewidth',1.6,...
         'MarkerSize',10,'MarkerEdgeColor','none','MarkerFaceColor','k');
 hl = [hl;Totall];
 legend(hl,[LengStrs(:)',{'Total'}],'Location','Northwest','Box','off','FontSize',10);
-set(gca,'box','off','xtick',xInds,'xticklabel',Year');
-xlabel('years');
-ylabel('Number');
+YearNumstr = cellfun(@(x) x(1:end-1), Year, 'Uniformoutput',false);
+set(gca,'box','off','xtick',xInds,'xticklabel',YearNumstr');
+xlabel('定芸');
+ylabel('孃伏方朕');
 set(gca,'FontSize',12);
 %%
 saveas(gcf,'Summer school number_2 line plot')
