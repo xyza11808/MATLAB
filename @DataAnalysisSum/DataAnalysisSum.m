@@ -1,11 +1,12 @@
 classdef DataAnalysisSum
     properties
         AlignedData
+        AlignedSPData = [];
         SmoothData = [];
         TrialStims
         AlignedF
         FrameRate
-        TimeWin = 1.5
+        TimeWin = 1
         RespCalFun = 'Mean'
         ZscoreMethod = 'Modified'
         BehavStrc
@@ -55,6 +56,7 @@ classdef DataAnalysisSum
         end
         %         DataPreProcessing(this.TimeWin,this.RespCalFun);
         
+        % ########################################################################
         function NoiseCorrMtx = optopopuZSCorr(this,varargin)
            % function for calculate opto and control trial noise correlation coefficient
            NoiseCorrMtx = [];
@@ -82,6 +84,7 @@ classdef DataAnalysisSum
             
         end
         
+        % ########################################################################
         % population noise correlation coefficience calculation
         function varargout = popuZscoredCorr(this,varargin)
             TimeWind = this.TimeWin;
@@ -228,6 +231,7 @@ classdef DataAnalysisSum
             end
         end
         
+        % ########################################################################
         % function for signal correlation calculation if given optal trials
         function SigCorrMtx = OptopopuSignalCorr(this,varargin)
             % return the signal correlation value for control and opto
@@ -253,6 +257,7 @@ classdef DataAnalysisSum
             SigCorrMtx = {ContSignalCorr, OptoSignalCorr};
         end
         
+        % ########################################################################
         % function to calculate the signal correlation of neuron pairs
         function varargout = popuSignalCorrFun(this,varargin)
             TimeWind = this.TimeWin;
@@ -373,7 +378,7 @@ classdef DataAnalysisSum
                     NewShufDataMatrix(ROIlowRespInds) = ShufLowRespdata;
                     NewShufDataMatrix = reshape(NewShufDataMatrix,nStims,nROIs);
                     ROIStimRespMatrix = NewShufDataMatrix;
-                    %%
+                    %
     %                 % ######################
     %                 % another method is to use random Assignment of a
     %                 % gaussian distribution data set to replace old
@@ -452,6 +457,191 @@ classdef DataAnalysisSum
                end
             end
         end
+        
+        % ########################################################################
+        % returns the tuning curve for each ROI
+        function TunCurveStrc = ROITunFun(this,varargin)
+            TimeWind = this.TimeWin;
+            if nargin > 1
+                if ~isempty(varargin{1})
+                    TimeWind = varargin{1};
+                end
+            end
+            
+            RespCallFunction = this.RespCalFun;
+            if nargin > 2
+                if ~isempty(varargin{2})
+                    RespCallFunction = varargin{2};
+                end
+            end
+            this = this.DataPreProcessing(TimeWind,RespCallFunction);
+            nROIs = size(this.RespMatData,2);
+            nmChoiceInds = this.BehavStrc.Action_choice ~= 2;
+            cFreqRespData = this.RespMatData(nmChoiceInds,:);
+            if isfield(this.BehavStrc,'Trial_isOpto') && sum(this.BehavStrc.Trial_isOpto)
+                IsOptoTrialExists = 1;
+                NMIsOptoTrials = this.BehavStrc.Trial_isOpto(nmChoiceInds);
+            else
+                IsOptoTrialExists = 0;
+            end
+            NMTrfreqs = this.BehavStrc.Stim_toneFreq(nmChoiceInds);
+            NMTrOutcomes = this.BehavStrc.Outcomes(nmChoiceInds);
+            StimulusTypes = unique(NMTrfreqs);
+            NumStims = length(StimulusTypes);
+            FreqInds = cell(NumStims, 4); % first column is corr&erro, the second column is correct only, the last two colums is opto trials
+            for cf = 1 : NumStims
+                if IsOptoTrialExists
+                    FreqInds{cf, 1} = NMTrfreqs(:) == StimulusTypes(cf) & NMIsOptoTrials(:) == 0;
+                    FreqInds{cf, 2} = NMTrOutcomes(:) & FreqInds{cf, 1};
+                    FreqInds{cf, 3} = NMTrfreqs(:) == StimulusTypes(cf) & NMIsOptoTrials(:) == 1;
+                    FreqInds{cf, 4} = NMTrOutcomes(:) & FreqInds{cf, 3};
+                    
+                else
+                    FreqInds{cf, 1} = NMTrfreqs(:) == StimulusTypes(cf);
+    %                 cfOutcomeData = NMTrOutcomes(FreqInds{cf});
+                    FreqInds{cf, 2} = NMTrOutcomes(:) & FreqInds{cf, 1}(:);
+                end
+            end
+            
+            TunCurveStrc.TunCurve_corr_cont = [];
+            TunCurveStrc.TunCurve_CE_cont = [];
+            TunCurveStrc.TunCurve_corr_opto = [];
+            TunCurveStrc.TunCurve_CE_opto = [];
+            
+            OnlyCorrTunData = zeros(nROIs, NumStims, 3);
+            CorrErroTunData = zeros(nROIs, NumStims, 3);
+            if IsOptoTrialExists
+                OnlyCorrTunDataOpto = zeros(nROIs, NumStims, 3);
+                CorrErroTunDataOpto = zeros(nROIs, NumStims, 3);
+            end
+            for cR = 1 : nROIs
+                cRRespData = cFreqRespData(:,cR);
+                for cf = 1 : NumStims
+                    crcfCorrData = cRRespData(FreqInds{cf, 2}); % correct data only
+                    OnlyCorrTunData(cR, cf, :) = [mean(crcfCorrData), std(crcfCorrData)/sqrt(numel(crcfCorrData)), mean(crcfCorrData)/std(crcfCorrData)];
+                    
+                    crcfCEData = cRRespData(FreqInds{cf, 1}); % correct data only
+                    CorrErroTunData(cR, cf, :) = [mean(crcfCEData), std(crcfCEData)/sqrt(numel(crcfCEData)), mean(crcfCEData)/std(crcfCEData)];
+                    
+                    if IsOptoTrialExists
+                        crcfCorrDataOpto = cRRespData(FreqInds{cf, 4}); % correct data only, for opto trials
+                        OnlyCorrTunDataOpto(cR, cf, :) = [mean(crcfCorrDataOpto), std(crcfCorrDataOpto)/sqrt(numel(crcfCorrDataOpto)), ...
+                            mean(crcfCorrDataOpto)/std(crcfCorrDataOpto)];
+
+                        crcfCEDataOpto = cRRespData(FreqInds{cf, 3}); % correct data only, for opto trials
+                        CorrErroTunDataOpto(cR, cf, :) = [mean(crcfCEDataOpto), std(crcfCEDataOpto)/sqrt(numel(crcfCEDataOpto)), ...
+                            mean(crcfCEDataOpto)/std(crcfCEDataOpto)];
+                    end
+                end
+            end
+            TunCurveStrc.TunCurve_corr_cont = OnlyCorrTunData;
+            TunCurveStrc.TunCurve_CE_cont = CorrErroTunData;
+            if IsOptoTrialExists
+                TunCurveStrc.TunCurve_corr_opto = OnlyCorrTunDataOpto;
+                TunCurveStrc.TunCurve_CE_opto = CorrErroTunDataOpto;
+            end
+        end
+        % ########################################################################
+        % same frequency different choice AUC calculation
+        function varargout = SameStimChoiceDis(this,Frequency,varargin)
+            TimeWind = this.TimeWin;
+            if nargin > 1
+                if ~isempty(varargin{1})
+                    TimeWind = varargin{1};
+                end
+            end
+            
+            RespCallFunction = this.RespCalFun;
+            if nargin > 2
+                if ~isempty(varargin{2})
+                    RespCallFunction = varargin{2};
+                end
+            end
+            this = this.DataPreProcessing(TimeWind,RespCallFunction);
+            varargout = {};
+            
+            nROIs = size(this.RespMatData,2);
+            StimulusTypes = unique(this.BehavStrc.Stim_toneFreq);
+%             StimNumber = length(StimulusTypes);
+            if ~sum(StimulusTypes == Frequency)
+                error(sprintf('The input frequency %d doesn''t match any exist frequency types',Frequency));
+            end
+            CurrentFreqTrInds = this.BehavStrc.Stim_toneFreq == Frequency;
+            CurrentFreqChoices = this.BehavStrc.Action_choice(CurrentFreqTrInds);
+            cFreqRespData = this.RespMatData;
+            cMissInds = CurrentFreqChoices == 2;
+            % check whether opto trial exists
+            if isfield(this.BehavStrc,'Trial_isOpto') && sum(this.BehavStrc.Trial_isOpto)
+                IsOptoTrialExists = 1;
+                cFreqIsOptoTrials = this.BehavStrc.Trial_isOpto(CurrentFreqTrInds);
+                cFreqIsOptoTrials = cFreqIsOptoTrials(:);
+            else
+                IsOptoTrialExists = 0;
+            end
+            
+            cFreqNMChoices = CurrentFreqChoices(~cMissInds);
+            cFreqNMRespData = cFreqRespData(~cMissInds, :);
+            if IsOptoTrialExists
+                cFreqNMOptos = cFreqIsOptoTrials(~cMissInds);
+                LeftChoiceInds = cFreqNMChoices(:) == 0 & cFreqNMOptos == 0;
+                RightChoiceInds = cFreqNMChoices(:) == 1 & cFreqNMOptos == 0;
+                % optical trials
+                LeftChoiceIndsOpto = cFreqNMChoices(:) == 0 & cFreqNMOptos == 1;
+                RightChoiceIndsOpto = cFreqNMChoices(:) == 1 & cFreqNMOptos == 1;
+                LR_ChoiceTrNumOpto = [sum(LeftChoiceIndsOpto),sum(RightChoiceIndsOpto)];
+            else
+                LeftChoiceInds = cFreqNMChoices == 0;
+                RightChoiceInds = cFreqNMChoices == 1;
+            end
+%             if abs(sum(LeftChoiceInds)-sum(RightChoiceInds)) > 20 || ...
+%                     min(sum(LeftChoiceInds),sum(RightChoiceInds)) < 10
+%                 warning('The two choices have very different trial number or not enough trials');
+%                 varargout = {{[],[],[]}};
+%                 return;
+%             end
+            LR_ChoiceTrNum = [sum(LeftChoiceInds),sum(RightChoiceInds)];
+            nROIChoiceAUC = zeros(nROIs, 3);
+            if IsOptoTrialExists
+                nROIChoiceAUCOpto = zeros(nROIs, 3);
+            end
+            for cROI = 1 : nROIs
+                cROIData = cFreqNMRespData(:,cROI);
+%                 nStimNegInds = StimsAll == StimulusTypes(nStimNeg);
+%                 nStimPosInds = StimsAll == StimulusTypes(nStimPos);
+                NegInputData = [cROIData(LeftChoiceInds),zeros(sum(LeftChoiceInds),1)];
+                PosInputData = [cROIData(RightChoiceInds),ones(sum(RightChoiceInds),1)];
+                [ROCSummary,LabelMeanS]=rocOnlineFoff([NegInputData;PosInputData]);
+                
+                nROIChoiceAUC(cROI,1:2) = [ROCSummary, double(LabelMeanS)];
+                [~,~,sigvalue]=ROCSiglevelGene([NegInputData;PosInputData],500,1,0.01);
+                nROIChoiceAUC(cROI,3) = sigvalue;
+%                 nROIChoiceAUC(cROI,2) = double(LabelMeanS);
+                if IsOptoTrialExists
+                    NegInputDataOpto = [cROIData(LeftChoiceInds),zeros(sum(LeftChoiceInds),1)];
+                    PosInputDataOpto = [cROIData(RightChoiceInds),ones(sum(RightChoiceInds),1)];
+                    [ROCSummary,LabelMeanS]=rocOnlineFoff([NegInputDataOpto;PosInputDataOpto]);
+
+                    nROIChoiceAUCOpto(cROI,1:2) = [ROCSummary, double(LabelMeanS)];
+                    [~,~,sigvalue]=ROCSiglevelGene([NegInputDataOpto;PosInputDataOpto],500,1,0.01);
+                    nROIChoiceAUCOpto(cROI,3) = sigvalue;
+                    
+                end
+            end
+            FreqChoiceAUCStrc.ContROIChoiceAUC = nROIChoiceAUC;
+            FreqChoiceAUCStrc.Freqs = Frequency;
+            FreqChoiceAUCStrc.ContLRTrNums = LR_ChoiceTrNum;
+            if IsOptoTrialExists
+                FreqChoiceAUCStrc.OptoROIChoiceAUC = nROIChoiceAUCOpto;
+                FreqChoiceAUCStrc.OptoLRTrNums = LR_ChoiceTrNumOpto;
+            else
+                FreqChoiceAUCStrc.OptoROIChoiceAUC = [];
+                FreqChoiceAUCStrc.OptoLRTrNums = [];
+            end
+            varargout = {FreqChoiceAUCStrc};
+            
+        end
+        
+        % ########################################################################
         % Paired stimulus ROC analysis
         function varargout = PairedAUCCal(this,varargin)
             TimeWind = this.TimeWin;
@@ -527,6 +717,8 @@ classdef DataAnalysisSum
                 varargout{1} = ROIwisedAUC;
             end
         end
+        
+        % ########################################################################
         function OptoAlignDataColorplot(this,varargin)
             Isplot = [];
             if nargin > 1
@@ -534,16 +726,25 @@ classdef DataAnalysisSum
                     Isplot = varargin{1};
                 end
             end
-            AlignedSortPlotOpto(this.AlignedData,this.BehavStrc,this.FrameRate,Isplot);
+            
+            IsCellTypeGiven = [];
+            if nargin > 2
+                if ~isempty(varargin{2})
+                    IsCellTypeGiven = varargin{2};
+                end
+            end
+            
+            AlignedSortPlotOpto(this.AlignedData,this.BehavStrc,this.FrameRate,Isplot,IsCellTypeGiven);
         end
         
+        % ########################################################################
         function TbyTAllROIclf(this,Troutcome,varargin)
             % Trial by trial result
             this = ClfParaParser(this,varargin{:});
             this.TrialOutcome = Troutcome; %vector indicates the trial outcomes for each trial
             TbyTAllROIclfIPForclass(this);
         end
-        
+        % ########################################################################
         function FracROIclf(this,isLoadROIAUC,TrOutcomes,varargin)
             if length(unique(this.TrialStims)) > 2
                         StimTypes = unique(this.TrialStims);
@@ -573,7 +774,7 @@ classdef DataAnalysisSum
             end
             FracTbyTPlot(this.AlignedData,TrTypes,TrOutcomes,this.AlignedF,this.FrameRate,AUCvalue,this.TimeWin,TrOutOption);
         end
-        
+        % ########################################################################
         function MultiClfCal(this,TrOutcomes,TimeStep,varargin)
             if isempty(TimeStep)
                 TimeStep = 0.1;
@@ -585,8 +786,22 @@ classdef DataAnalysisSum
          
     end
     methods(Access = 'private')
-        function this = DataPreProcessing(this,TimeWin,RespCalFun)
+        % ########################################################################
+        function this = DataPreProcessing(this,TimeWin,RespCalFun, varargin)
             % preprocessing of input data
+            IsFluoDataUsing = 1;
+            if nargin > 3
+                % using fluorescence data or deconvolved spike data
+                if ~isempty(varargin{1})
+                    IsFluoDataUsing = varargin{1};
+                end
+            end
+            if IsFluoDataUsing
+                ProcessedData = this.AlignedData;
+            else
+                ProcessedData = this.AlignedSPData;
+            end
+            
             nFrame = size(this.AlignedData,3);
             if length(TimeWin) == 1
                 FrameScale = sort([(this.AlignedF+1),(this.AlignedF + round(TimeWin*this.FrameRate))]);
@@ -611,14 +826,14 @@ classdef DataAnalysisSum
             
             switch RespCalFun
                 case 'Mean'
-                    RespMatrix = mean(this.AlignedData(:,:,FrameScale(1):FrameScale(2)),3);
+                    RespMatrix = mean(ProcessedData(:,:,FrameScale(1):FrameScale(2)),3);
                     RespMatrix = squeeze(RespMatrix);
                 case 'Max'
-                    [Trs,ROIs,~] = size(this.AlignedData);
-                    this.SmoothData = zeros(size(this.AlignedData));
+                    [Trs,ROIs,~] = size(ProcessedData);
+                    this.SmoothData = zeros(size(ProcessedData));
                     for cTr = 1 : Trs
                         for cR = 1 : ROIs
-                            this.SmoothData(cTr,cR,:) = smooth(squeeze(this.AlignedData(cTr,cR,:)),5);
+                            this.SmoothData(cTr,cR,:) = smooth(squeeze(ProcessedData(cTr,cR,:)),5);
                         end
                     end
                     RespMatrix = max(this.SmoothData(:,:,FrameScale(1):FrameScale(2)),[],3);
@@ -628,6 +843,7 @@ classdef DataAnalysisSum
             this.RespMatData = RespMatrix;
         end
         
+        % ########################################################################
         function ROIwisedAUC = PairedAUCplot(this,RawAUC,ROCRevert,NumStim)
 %             nROIpairedAUC = zeros(nROIs,PairedNum);
                 ROCABS = RawAUC;
@@ -640,6 +856,7 @@ classdef DataAnalysisSum
                     ROIwisedAUC(nnn,:,:) = MatrixAUC;
                 end
         end
+        % ########################################################################
         function ROIstds = RawDataStd(this,RawData,Method)
             nROIs = size(RawData,2);
             ROIstds = zeros(nROIs,1);
@@ -661,6 +878,7 @@ classdef DataAnalysisSum
             end
                 
         end
+        % ########################################################################
         function this = ClfParaParser(this,varargin)
             % this function is specifically used for parsing of
             % classification input parameters

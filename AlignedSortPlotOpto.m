@@ -8,6 +8,20 @@ if nargin > 3
         IsPlot = varargin{1};
     end
 end
+
+IsCellType = {};
+if nargin > 4
+    if ~isempty(varargin{2})
+        IsCellType = varargin{2};
+    end
+end
+GivenCellTypeStr = 0;
+if ~isempty(IsCellType)
+   DespStr =  IsCellType{1};
+   ROITypeIndex = IsCellType{2};
+   GivenCellTypeStr = 1;
+end
+
 OptoTrs = double(BehavStrc.Trial_isOpto);
 if ~sum(OptoTrs)
     warning('No optical trial exists, considering using another function for plots.\n');
@@ -241,9 +255,16 @@ for nROI = 1 : ROInum
            line(MeanPlotAxes(cF),[SoundOffFrame SoundOffFrame],ComYScale,'Color',[.7 .7 .7],'LineWidth',1.2,'linestyle','--');
         end
         
+        if GivenCellTypeStr && sum(nROI == ROITypeIndex)
+%             DespStr =  IsCellType{1};
+%             ROITypeIndex = IsCellType{2};
+            annotation('textbox',[0.45,0.685,0.3,0.3],'String',[DespStr, ' ROI',num2str(nROI)],'FitBoxToText','on','EdgeColor',...
+                       'none','FontSize',14,'Color', 'r');
+        else
             annotation('textbox',[0.49,0.685,0.3,0.3],'String',['ROI' num2str(nROI)],'FitBoxToText','on','EdgeColor',...
                        'none','FontSize',14);
-                   
+        end
+        
         saveas(hROI,sprintf('ROI%d opto session color plot',nROI));
         saveas(hROI,sprintf('ROI%d opto session color plot',nROI),'png');
         close(hROI);

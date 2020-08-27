@@ -14,6 +14,7 @@ nROIs = size(Data,2);
 DataMeanValues = zeros(nTypes,nROIs);
 DataSEMValue = zeros(nTypes,nROIs);
 DataSTDValue = zeros(nTypes,nROIs);
+DataESValue = zeros(nTypes,nROIs); % effect size
 ROITypeIndsData = cell(nTypes,nROIs);
 TypeIndsNum = zeros(nTypes,1);
  for cType = 1 : nTypes
@@ -25,6 +26,7 @@ TypeIndsNum = zeros(nTypes,1);
              cROItypeData = cROItypeData';
              cROItypeMean = (smooth(cROItypeData,5))';
              cROItypeSEM = zeros(size(cROItypeData));
+             cROItypeEffectSize = zeros(size(cROItypeData));
              cROItypeSTD = zeros(size(cROItypeData));
          else
             cROItypeMean = mean(cROItypeData);
@@ -33,6 +35,7 @@ TypeIndsNum = zeros(nTypes,1);
             end
             cROItypeSEM = std(cROItypeData)/sqrt(size(cROItypeData,1));
             cROItypeSTD = std(cROItypeData);
+            cROItypeEffectSize = cROItypeMean/cROItypeSTD;
             if IsMinMaxOut
                 SingleTrRespValue = mean(cROItypeData(:,FrameScale(1):FrameScale(2)),2);
                 if length(SingleTrRespValue) > 9 % more than ten trials
@@ -48,8 +51,10 @@ TypeIndsNum = zeros(nTypes,1);
          
          [cMaxvalue,cMaxInds] = max(cROItypeMean(FrameScale(1):FrameScale(2)));
          cMaxSEM = cROItypeSEM(cMaxInds+FrameScale(1)-1);
+         cMaxEffectSize = cROItypeEffectSize(cMaxInds+FrameScale(1)-1);
          DataMeanValues(cType,cROI) = cMaxvalue;
          DataSEMValue(cType,cROI) = cMaxSEM;
+         DataESValue(cType,cROI) = cMaxEffectSize;
          DataSTDValue(cType,cROI) = cROItypeSTD(cMaxInds+FrameScale(1)-1);
          
          cROIMaxIndsData = cROItypeData(:,cMaxInds+FrameScale(1)-1);
@@ -62,6 +67,7 @@ TypeIndsNum = zeros(nTypes,1);
  DataStrc.MaxIndsDataAll = ROITypeIndsData;
  DataStrc.CurrentTypes = TrTypeAll;
  DataStrc.TypeNumber = TypeIndsNum;
+ DataStrc.EffectSizeData = DataESValue;
 %          
 %      cTypedData = Data(cTypeInds,:,:);
 %      cTypeMean = squeeze(mean(cTypedData));

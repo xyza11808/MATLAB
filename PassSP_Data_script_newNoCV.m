@@ -9,7 +9,7 @@
 % if exist('EstimatedSPDataAR2.mat','file')  && exist('ROIglmCoefSave.mat','file')
 % %     return;
 % end
-load('rfSelectDataSet.mat','SelectData','frame_rate', 'sound_array', 'SelectInds');
+load('rfSelectDataSet.mat','SelectData','frame_rate', 'sound_array', 'SelectInds','SelectSArray');
 if exist('EstimatedSPDatafilter.mat','file')
     load('EstimatedSPDatafilter.mat');
 else
@@ -75,7 +75,7 @@ UsedFreqArray = SelectSArray(cSessPassTrInds);
 % figure;imagesc(ROISPData(SortInds,:))
 
 %
-Time_Win = 0.5;
+Time_Win = 0.3;
 FrameWin = round(Time_Win * frame_rate);
 
 FrameDurStrc = load('rfSelectDataSet.mat','sound_array');
@@ -129,7 +129,7 @@ ROIOnOffFResp = zeros(nROIs,nFreqs*2);
 ROIStds = zeros(nROIs,1);
 for cROI = 1 : nROIs
     %%
-    cROI = 45;
+%     cROI = 242;
     ROISPData = squeeze(nnspike(cSessPassTrInds,cROI,:));
     ROISPTrace = reshape(ROISPData',[],1);
 %     ROISPNoiseThres = std(ROISPTrace(ROISPTrace>1e-6));
@@ -324,3 +324,65 @@ end
 cd('./SP_RespField_ana/');
 save ROIglmCoefSave_New.mat ROIAboveThresSummary FreqTypes PassBFInds ROICoefData ROIOnOffFResp -v7.3
 cd ..;
+
+%% following code used for test code prediction effects
+% ########################################################
+
+% 
+% options = glmnetSet;
+% options.alpha = 0.9;
+% options.nlambda = 110;
+% % options.offset = log(mean(TrainRespVec));
+% mdfit = glmnet(TrainFreqParas,TrainRespVec,'poisson',options);
+% 
+% %%
+% 
+% PredTestData = glmnetPredict(mdfit,TestFreqParas,[],'response'); %,[],log(mean(TestRespVec))
+% 
+% TestRespMtx = repmat(TestRespVec, 1, size(PredTestData, 2));
+% SquareErrors = sum((TestRespMtx - PredTestData).^2);
+% figure;plot(SquareErrors)
+% [~,minInds] = min(SquareErrors);
+% 
+% %%
+% 
+% usedCoef = glmnetCoef(mdfit, mdfit.lambda(minInds));
+% PredDatas = PredTestData(:, minInds);
+% figure;
+% plot(TestRespVec,'k');
+% % yyaxis right
+% hold on
+% plot(PredDatas,'r')
+% 
+% %%
+% 
+% PredFitData = glmnetPredict(mdfit,TrainFreqParas,[],'response'); %,[],log(mean(TestRespVec))
+% 
+% TrainedRespMtx = repmat(TrainRespVec, 1, size(PredFitData, 2));
+% TrainedSquareErrors = sum((TrainedRespMtx - PredFitData).^2);
+% figure;plot(TrainedSquareErrors)
+% [~,minInds] = min(TrainedSquareErrors);
+% 
+% 
+% %%
+% figure;hold on
+% plot(TrainRespVec,'k')
+% plot(PredFitData(:, minInds),'r');
+% 
+% %%
+% cROI = 61;
+% %%
+% 
+% AllCoefs = cell2mat(AllRepeatData(:,1));
+% 
+% %%
+% 
+% figure;
+% plot(TestRespVec,'k');
+% % yyaxis right
+% hold on
+% plot(PredTestData(:, minInds),'r')
+% 
+% 
+
+
