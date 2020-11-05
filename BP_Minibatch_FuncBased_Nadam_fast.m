@@ -163,6 +163,10 @@ NetParaSum.IsSoftMax = 1;
 NetParaSum.DeltaJNodesDatas = DeltaJNodesData;
 NetParaSum.FullLayerNodeNums = nNetNodes;
 NetParaSum.gradParaVec = zeros(numel(AllVecs),1);
+NetParaSum.penaltyLamda = 0.1; % using Ridge (L2) or Lasso (L1) for regulization
+% if lamda = 0, only using Lasso; if lamda = 1, only using Ridge; else will
+% using both terms. value must between 0 and 1
+
 
 %% SampleLayerInOutData = cell(nInputNodes,1);
 

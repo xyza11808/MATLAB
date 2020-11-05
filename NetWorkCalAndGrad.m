@@ -28,7 +28,12 @@ function [IterError,NetParaStrc] = NetWorkCalAndGrad(NetParaStrc,varargin)
 %           IsSoftMax: whether using softmax for output
 %           SoftMaxOut: default is [], if Softmax method is used, this is the
 %                   softmax output value
-%
+
+%           ##################################
+%           #### extra functions to be added ###############
+%           penaltyLamda = 0.1; % using Ridge (L2) or Lasso (L1) for regulization
+%               if lamda = 0, only using Lasso; if lamda = 1, only using Ridge; else will
+%               using both terms. value must between 0 and 1
 %
 % currently varargin used for function calculation control
 % add support for other methods in future

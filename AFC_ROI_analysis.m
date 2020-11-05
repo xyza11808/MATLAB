@@ -788,7 +788,7 @@ elseif str2double(continue_char)==2
 %     end
 %     cd('SpikeDataSave');
     
-%     AlignedSortPlotAll(SpikeAligned,behavResults,frame_rate,FRewardLickT,frame_lickAllTrials); % plot lick frames
+%     AlignedSortPlotAll(SpikeAligned,behavResults,frame_rate,FRewardLickT,[],frame_lickAllTrials); % plot lick frames
 %     cd ..;
 
 %     RandNMTChoiceDecoding(smooth_data(radom_inds,:,:),behavResults,trial_outcome(radom_inds),start_frame,frame_rate,1.5);

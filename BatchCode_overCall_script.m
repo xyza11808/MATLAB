@@ -1,5 +1,5 @@
 cclr;
-SumSourPath = 'F:\high_gap27_align';
+SumSourPath = 'F:\新建文件夹';
 cd(SumSourPath);
 WithinSourcePaths = dir(fullfile(SumSourPath,'*2020*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);

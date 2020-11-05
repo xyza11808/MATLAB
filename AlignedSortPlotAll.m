@@ -248,13 +248,13 @@ ROIMeanTraceData = cell(ROInum,NumFreq,3);
 for nROI = 1 : ROInum
     %%
     cROIdata = squeeze(AlignData(:,nROI,:));
-    climMax = prctile(cROIdata(:),85);
-    if climMax < 0
-        climMax = 10;
-    elseif climMax == 0
-        climMax = 1;
-    end
-    clim = [0,climMax];
+    climMax = prctile(cROIdata(:),99);
+%     if climMax < 0
+%         climMax = 10;
+%     elseif climMax == 0
+%         climMax = 1;
+%     end
+    clim = [min(cROIdata(:)),climMax];
     if clim(2) > 400
         clim(2) = 200;
     end

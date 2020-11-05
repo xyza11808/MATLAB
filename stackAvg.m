@@ -1,14 +1,18 @@
-function stackAvg
+function stackAvg(varargin)
 %this function is used to avarage stack imaging result and output a tiff
 %file for imageJ to do the threeD reconstruction
+FrameInds = [];
+if nargin > 0 && ~isempty(varargin{1})
+    FrameInds = varargin{1};
+end
 
 [filename,filepath,fileindex]=uigetfile('*.tif','Select your stack imaging data file');
 if ~fileindex
     return;
 else
     cd(filepath);
-    disp(['loading file' filename '...\n']);
-    [imdata,imheader]=load_scim_data(filename);
+    disp(['loading file' filename '...']);
+    [imdata,imheader]=load_scim_data(filename, FrameInds);
 end
 
 framesize=size(imdata);

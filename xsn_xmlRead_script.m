@@ -1,5 +1,5 @@
 % analysis and load all tif files
-% G:\data\20191011_xsn\20191011_field04_zoom2.2_d180_sess07-001\Aligned_datas
+% F:\20200806_xsn\20200806_field01_zoom2.2_d210_sess02-002\Aligned_datas
 cclr
 [fn,fp,fi] = uigetfile('*.xml','Please select the xml file within tif file folder');
 if ~fi
@@ -15,16 +15,16 @@ SeqIndex = find(arrayfun(@(x) strcmpi(x.Name,'Sequence'),ccChildrens));
 UsedStrc = ccChildrens(SeqIndex).Children;
 FrameIndex = find(arrayfun(@(x) strcmpi(x.Name,'Frame'),UsedStrc));
 IsCalRef = 1;
-%% or load existed ref images from another session for alignment
-[ffn,ffp,ffi] = uigetfile('TargetIm.mat','Please select same FOV ref data');
-if fi
-    load(fullfile(ffp,ffn));
-else
-    return;
-end
-save TargetIm.mat RefImage -v7.3
-IsCalRef = 0;
-%%
+% %% or load existed ref images from another session for alignment
+% [ffn,ffp,ffi] = uigetfile('TargetIm.mat','Please select same FOV ref data');
+% if fi
+%     load(fullfile(ffp,ffn));
+% else
+%     return;
+% end
+% save TargetIm.mat RefImage -v7.3
+% IsCalRef = 0;
+% %%
 nFrames = length(FrameIndex);
 IndexAndFileAll = cell(nFrames*2,4);
 for cf = 1 : nFrames
@@ -98,9 +98,9 @@ end
 % 
 %% align tif files 
 if IsCalRef
-    RefAvgIndexScale = [700,800];
+    RefAvgIndexScale = [700, 800];
     RefImage = squeeze(mean(AllTifDatas.Ch1_data(:,:,RefAvgIndexScale(1):RefAvgIndexScale(2)),3));
-    figure;
+    figure('position',[2000 100 450 380]);
     imagesc(RefImage,[100 4000]);
     colormap gray
     save TargetIm.mat RefImage -v7.3

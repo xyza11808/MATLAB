@@ -134,3 +134,52 @@ set(gca,'FontSize',12);
 saveas(gcf,'Summer school number_2 line plot')
 saveas(gcf,'Summer school number_2 line plot','png')
 saveas(gcf,'Summer school number_2 line plot','pdf')
+
+%% PI ages bar plot
+
+FilePath = 'T:\ztt_zhaosheng_plot\PIAges.xlsx';
+%%
+Datacells = readcell(FilePath); 
+ageEdges = [0,31,36,41,46,51,100];
+BinStrs = {'<30','31-35','36-40','41-45','46-50','>50'};
+AllAges = cell2mat(Datacells(2:end,2));
+
+[N, Edges] = histcounts(AllAges, ageEdges);
+xs = 1 : numel(N);
+hf = figure;
+bar(xs, N, 0.6,'EdgeColor','none');
+text(xs,N-0.3,num2str(N(:),'%d'),'Color','w','FontSize',10,'HorizontalAlignment','center');
+set(gca,'box','off','xtick',xs,'xticklabel',BinStrs);
+xlabel('Age');
+ylabel('Counts');
+yscales = get(gca,'ylim');
+title(sprintf('AvgAges = %.1f',mean(AllAges)));
+text(1,yscales(2)*0.9,num2str(mean(AllAges),'Mean=%.1f'),'FontSize',10,'HorizontalAlignment','center')
+%% PI age distribution
+saveas(hf,'Age distribution plot');
+saveas(hf,'Age distribution plot','png');
+saveas(hf,'Age distribution plot','pdf');
+%%
+huf = figure;
+hold on
+% [Count, center] = hist(AllAges,15);
+h = histogram(AllAges,15);
+BinCenterX = h.BinEdges(1:end-1) + h.BinWidth/2;
+BinDataY = h.BinCounts;
+h.EdgeColor = 'none';
+h.FaceAlpha = 0.5;
+h.FaceColor = [0.2 0.2 0.7];
+plot(BinCenterX, BinDataY, 'r-o','linewidth',1.5);
+yscales = get(gca,'ylim');
+line([mean(AllAges) mean(AllAges)],yscales,'Color',[0.1 0.6 0.1],'linewidth',3);
+text(mean(AllAges),yscales(2)*0.9,num2str(mean(AllAges),'Mean=%.1f'),'FontSize',10,'Color','r');
+xlabel('Age');
+ylabel('Counts');
+
+%%
+
+saveas(huf,'Age distribution lineplot');
+saveas(huf,'Age distribution lineplot','png');
+saveas(huf,'Age distribution lineplot','pdf');
+
+

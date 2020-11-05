@@ -383,6 +383,100 @@ cd ..;
 % hold on
 % plot(PredTestData(:, minInds),'r')
 % 
-% 
+%%
+StepROICoefData = cell(nROIs,1);
+ROIStds = zeros(nROIs,1);
+for cROI = 1 : nROIs
+    %%
+    cROI = 10;
+    ROISPData = squeeze(nnspike(cSessPassTrInds,cROI,:));
+    ROISPTrace = reshape(ROISPData',[],1);
+%     ROISPNoiseThres = std(ROISPTrace(ROISPTrace>1e-6));
+%     ROISPData(ROISPData < ROISPNoiseThres) = 0;
+%     ROISPData = ROISPData * frame_rate;
+    cROIRaw = squeeze(UsedSelectDatas(:,cROI,:));
+    ROIStds(cROI) = mad(cROIRaw(:),1)*1.4826;
+    cROIRaw2Trace = reshape(cROIRaw',[],1);
+%     cROIRaw2TraceSM = smooth(cROIRaw2Trace,5,'sgolay',3);
+    cROIRaw2TraceSM = smooth(cROIRaw2Trace,5);
+    cROISMMtxData = (reshape(cROIRaw2TraceSM,size(cROIRaw,2),[]))';
+    cROIRawData = cROISMMtxData;
+    
+    OnsetTrResp = mean(ROISPData(:,OnsetFrame+1:OnsetFrame+FrameWin),2);
+    OnsetTrFReap = max(cROIRawData(:,OnsetFrame+1:OnsetFrame+FrameWin),[],2) - ...
+        max(min(cROIRawData(:,OnsetFrame+1:OnsetFrame+FrameWin),[],2),0);
+    if IsVariedDur
+       TempRespData = zeros(nTrials,FrameWin); 
+       TempFRespData = zeros(nTrials,FrameWin); 
+       for cTr = 1 : nTrials
+           TempRespData(cTr,:) = ROISPData(cTr,FrameDurData(cTr)+1:FrameDurData(cTr)+FrameWin);
+           TempFRespData(cTr,:) = cROIRawData(cTr,FrameDurData(cTr)+1:FrameDurData(cTr)+FrameWin);
+       end
+       OffTrResp = mean(TempRespData,2);
+       OffFTrResp = mean(TempFRespData,2);
+    else
+        OffTrResp = mean(ROISPData(:,OffsetFrame+1:OffsetFrame+FrameWin),2);
+        OffFTrResp = max(cROIRawData(:,OffsetFrame+1:OffsetFrame+FrameWin),[],2) - ...
+            max(min(cROIRawData(:,OnsetFrame+1:OffsetFrame+FrameWin),[],2),0);
+    end
+    RespMtx = [OnsetTrResp,OffTrResp];
+    %
+    
+    for cFreqs = 1 : nFreqs
+        cFreqsInds = UsedFreqArray == FreqTypes(cFreqs);
+        ROIOnOffFResp(cROI,cFreqs) = mean(OnsetTrFReap(cFreqsInds));
+        ROIOnOffFResp(cROI,cFreqs+nFreqs) = mean(OffFTrResp(cFreqsInds));
+    end
+        
+%
+    TotalRespMtx = RespMtx(:);
+%     TotalRespMtx = TotalRespMtx/max(TotalRespMtx);
+    
+    nRepeats = 2;
+    StepRepeatData = cell(nRepeats,3);
+    for cRepeat = 1 : nRepeats
+
+        nFolds = UsedFolds;
+%         cc = cvpartition(nTrials,'kFold',nFolds);
+        FoldTrainTestIndex = ClassEvenPartitionFun(UsedFreqArray,nFolds);
+        FoldCoefs = cell(nFolds,1);
+        FoldDev = zeros(nFolds,2); % the first column is real dev, the second is null dev
+        FoldTestPred = cell(nFolds,3);
+        for cf = 1 : nFolds
+%             TrainInds = find(cc.training(cf));
+            TrainInds = FoldTrainTestIndex{1,cf};
+            BlankInds = false(nTrials*2,1);
+            BlankInds(TrainInds) = true;
+            BlankInds(TrainInds+nTrials) = true;
+
+            TrainFreqParas = FreqMtxOnOffMtx(BlankInds,:);
+            TrainRespVec = TotalRespMtx(BlankInds);
+            TestFreqParas = FreqMtxOnOffMtx(~BlankInds,:);
+            TestRespVec = TotalRespMtx(~BlankInds);
+            
+%             TrainRespVec = TrainRespVec / max(1e-5, std(TrainRespVec));
+            
+            mddl = stepwiseglm(TrainFreqParas,TrainRespVec,'linear','Distribution','poisson','CategoricalVars',true(size(TrainFreqParas,2),1));
+            ypred= predict(mddl, TestFreqParas);
+
+%             PredTestData = cvglmnetPredict(cvmdfit,TestFreqParas,'lambda_1se','response');
+            FoldTestPred{cf,1} = ypred;
+            FoldTestPred{cf,2} = TestRespVec;
+            FoldTestPred{cf,3} = mddl;
+        end
+
+%         StepRepeatData{cRepeat,1} = mddl;
+%         StepRepeatData{cRepeat,2} = FoldDev;
+        StepRepeatData{cRepeat,1} = FoldTestPred;
+
+    %     FoldCoefMtx = cell2mat(FoldCoefs);
+    %     figure;
+    %     imagesc(abs(FoldCoefMtx))
+    end
+    %
+    StepROICoefData{cROI} = StepRepeatData;
+%     StepAllCoefs = cell2mat(StepRepeatData(:,1));
+    %%
+end
 
 

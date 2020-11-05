@@ -9,7 +9,7 @@
 %% load datas for one animal types
 cclr
 % SumSourPath = '/Users/xinyu/Documents/docs/xnn/p18_wt';
-SumSourPath = 'F:\high_gap27_align';
+SumSourPath = 'F:\';
 WithinSourcePaths = dir(fullfile(SumSourPath,'*2020*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
 UsedTargetFolder = WithinSourcePaths(FolderIndex);

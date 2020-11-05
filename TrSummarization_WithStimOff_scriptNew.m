@@ -103,8 +103,8 @@ end
 
 % substract baseline activity for all response types
 BaseSubMtx = repmat(TrEventsRespData(:,:,5),1,1,4);
-BaseSubTrEventsResp = max(TrEventsRespData(:,:,1:4) - BaseSubMtx,0);
-
+% BaseSubTrEventsResp = mean(TrEventsRespData(:,:,1:4) - BaseSubMtx,0);
+BaseSubTrEventsResp = mean(TrEventsRespData(:,:,1:4));
 %%
 FreqTypes = unique(TrOctsNM);
 nFreqs = numel(FreqTypes);
@@ -119,11 +119,15 @@ end
 NumParas = size(TrEventsRespData,3);
 
 AllROIData = cell(nROIs,1);
-%%
+
+options = glmnetSet;
+    options.alpha = 0.9;
+    options.nlambda = 110;
+%% using glmnet analysis, unable to use parpool while using this function
 
 for cROI = 1 : nROIs
-    %%
-    cROI = 13;
+    %
+%     cROI = 48;
 %     close
     cROIData = squeeze(TrEventsRespData(:,cROI,:));
     % figure('position',[200 100 800 320])
@@ -180,15 +184,14 @@ for cROI = 1 : nROIs
 %     figure;
 %     imagesc(RespData)
 %     
-    %%
-    options = glmnetSet;
-    options.alpha = 0.9;
-    options.nlambda = 110;
+    %
+    
     nRepeats = 2;
     RepeatData = cell(nRepeats,3);
-    %%
+% %     StepRepeatFitCells = cell(nRepeats,1);
+    %
     for cRepeat = 1 : nRepeats
-        %%
+        %
         nFolds = 10;
         IsRandPartition = 0;
         try
@@ -201,9 +204,9 @@ for cROI = 1 : nROIs
         FoldCoefs = cell(nFolds,3);
         FoldDev = zeros(nFolds,1);
         FoldTestPred = cell(nFolds,2);
-%%
+        StepFitCell = cell(nFolds,3);
         for cf = 1 : nFolds
-            %%
+            %
             if IsRandPartition
                 TrainInds = find(cc.training(cf));
             else
@@ -228,18 +231,28 @@ for cROI = 1 : nROIs
             TestBehavParaMtx = DataFitMtx(~BehavParaInds,:);
             %
 %             if ~sum(TrainRespDataMtx)
-                cvmdfit = cvglmnet(BehavParaMtx,TrainRespDataMtx,'poisson',options,[],20);
-                CoefUseds = cvglmnetCoef(cvmdfit,'lambda_1se');
-
-                FoldCoefs{cf,1} = CoefUseds(2:end);
-                FoldDev(cf) = max(cvmdfit.glmnet_fit.dev);
-
-                %%
-            %     figure
-            %     hist(TrainRespDataMtx,20)
-
-                PredTestData = cvglmnetPredict(cvmdfit,TestBehavParaMtx,'lambda_1se','response');
+%                 cvmdfit = cvglmnet(BehavParaMtx,TrainRespDataMtx,'poisson',options,[],20);
+%                 CoefUseds = cvglmnetCoef(cvmdfit,'lambda_1se');
+               %
+                mdfit = glmnet(BehavParaMtx,TrainRespDataMtx,'poisson',options);
+                PredTestData = glmnetPredict(mdfit,TestBehavParaMtx,[],'response'); %,[],log(mean(TestRespVec))
+                TestRespMtx = repmat(TestRespData, 1, size(PredTestData, 2));
+                SquareErrors = sum((TestRespMtx - PredTestData).^2);
                 
+% %                 mddl = stepwiseglm(BehavParaMtx,TrainRespDataMtx,'linear','Distribution','poisson','CategoricalVars',true(size(BehavParaMtx,2),1));
+% %                 ypred= predict(mddl, TestBehavParaMtx);
+                
+                %
+    %             figure;plot(SquareErrors)
+                [~,minInds] = min(SquareErrors);
+                minInds = min(minInds, 10);
+                CoefUseds = glmnetCoef(mdfit, mdfit.lambda(minInds));
+                PredDatas = PredTestData(:, minInds);
+            
+                FoldCoefs{cf,1} = (CoefUseds(2:end))';
+                FoldDev(cf,1) = mdfit.dev(minInds);
+                FoldDev(cf,2) = mdfit.nulldev;
+
                 CoefAbsAll = abs(CoefUseds(2:end));
                 [CoefSort,SortInds] = sort(CoefAbsAll,'descend');
                 DevExplained = 100*CoefSort/sum(CoefSort);
@@ -258,6 +271,10 @@ for cROI = 1 : nROIs
             FoldTestPred{cf,1} = PredTestData;
             FoldTestPred{cf,2} = TestRespData;
             
+% %             StepFitCell{cf,1} = mddl;
+% %             StepFitCell{cf,2} = ypred;
+% %             StepFitCell{cf,3} = TestRespData;
+            
         %     figure('position',[1000 100 800 320]);
         %     subplot(121)
         %     hold on
@@ -271,11 +288,147 @@ for cROI = 1 : nROIs
         RepeatData{cRepeat,1} = FoldCoefs;
         RepeatData{cRepeat,2} = FoldDev;
         RepeatData{cRepeat,3} = FoldTestPred;
+        
+% %         StepRepeatFitCells{cRepeat} = StepFitCell;
+        
     end
+    AllCoefsCell = RepeatData{:,1};
+    AllCoefsMtx = cell2mat(AllCoefsCell(:,1));
     AllROIData{cROI} = RepeatData;
-    %%
 end
- 
+
+%%
+AllROI_StepwiseCoefData = cell(nROIs,2);
+
+%%  using stepwiseglm function, using parpool for speed
+parfor cROI = 1 : nROIs
+    %%
+    cROI = 9;
+%     close
+    cROIData = squeeze(TrEventsRespData(:,cROI,:));
+    % figure('position',[200 100 800 320])
+    % subplot(121)
+    % imagesc(cROIData(FreqSortInds,:),[0 min(max(cROIData(:)),0.05)]);  %
+
+    cRData = zeros(nFreqs,2);
+    for ccf = 1 : nFreqs
+        cRData(ccf,1) = mean(cROIData(FreqInds{ccf},1));
+        cRData(ccf,2) = std(cROIData(FreqInds{ccf},1));
+    end
+    % subplot(122)
+    % errorbar((1:nFreqs)',cRData(:,1),cRData(:,2),'k-o','linewidth',2)
+    FreqMetrix = double(repmat(FreqTypes',NMTrNum,1) == repmat(TrOctsNM,1,nFreqs)); 
+    AnsLMtx = 1 - TrChoiceNM;
+    AnsRMtx = TrChoiceNM;
+    ReLMtx = TrTrTypesNM == 0 & TrTrTypesNM == TrChoiceNM;
+    ReRMtx = TrTrTypesNM == 1 & TrTrTypesNM == TrChoiceNM;
+    IsReConsidered = 0;
+    %
+    if IsReConsidered
+        DataFitMtx = zeros(numel(cROIData),2*nFreqs+2+2+NumAnsDelayFun*2);
+        DataFitMtx(1:NMTrNum,1:nFreqs) = FreqMetrix;
+        DataFitMtx((NMTrNum+1):NMTrNum*2,nFreqs+1) = AnsLMtx;
+        DataFitMtx((NMTrNum+1):NMTrNum*2,nFreqs+2) = AnsRMtx;
+        DataFitMtx((NMTrNum*2+1):NMTrNum*3,nFreqs+3) = ReLMtx;
+        DataFitMtx((NMTrNum*2+1):NMTrNum*3,nFreqs+4) = ReRMtx;
+        DataFitMtx((3*NMTrNum+1):NMTrNum*4,(nFreqs+5):(2*nFreqs+4)) = FreqMetrix;
+        for cDelayNum = 1 : NumAnsDelayFun
+            cRowStartInds = NMTrNum*4 + (cDelayNum - 1) * NMTrNum;
+            cColStartInds = 2*nFreqs + 4 + (cDelayNum - 1) * 2;
+            
+            DataFitMtx((cRowStartInds+1):(cRowStartInds+NMTrNum),cColStartInds + 1) = AnsLMtx;
+            DataFitMtx((cRowStartInds+1):(cRowStartInds+NMTrNum),cColStartInds + 2) = AnsRMtx;
+        end
+        
+        RespData = cROIData;
+    else
+        DataFitMtx = zeros(numel(cROIData(:,[1,2,4,6:NumParas])),2*nFreqs+2+NumAnsDelayFun*2);
+        DataFitMtx(1:NMTrNum,1:nFreqs) = FreqMetrix;
+        DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+1) = AnsLMtx;
+        DataFitMtx(NMTrNum+1:NMTrNum*2,nFreqs+2) = AnsRMtx;
+        DataFitMtx(NMTrNum*2+1:NMTrNum*3,nFreqs+3:2*nFreqs+2) = FreqMetrix;
+        for cDelayNum = 1 : NumAnsDelayFun
+            cRowStartInds = NMTrNum*3 + (cDelayNum - 1) * NMTrNum;
+            cColStartInds = 2*nFreqs + 2 + (cDelayNum - 1) * 2;
+            
+            DataFitMtx(cRowStartInds+1:cRowStartInds+NMTrNum,cColStartInds + 1) = AnsLMtx;
+            DataFitMtx(cRowStartInds+1:cRowStartInds+NMTrNum,cColStartInds + 2) = AnsRMtx;
+        end
+        
+        RespData = cROIData(:,[1,2,4,6:NumParas]);
+    end
+    figure;
+    hist(RespData(RespData > 1e-8),50)
+    RespData(RespData < 1e-9) = 1e-9;
+%     
+    %%
+    
+    nRepeats = 2;
+    StepRepeatFitCells = cell(nRepeats,1);
+    %
+    for cRepeat = 1 : nRepeats
+        %
+        nFolds = 10;
+        IsRandPartition = 0;
+        try
+            FoldTrainTestIndex = ClassEvenPartitionFun(TrOctsNM,nFolds);
+        catch ME
+%             fprintf('Error partition.\n');
+            cc = cvpartition(NMTrNum,'kFold',nFolds);
+            IsRandPartition = 1;
+        end
+        FoldCoefs = cell(nFolds,3);
+        FoldDev = zeros(nFolds,1);
+        FoldTestPred = cell(nFolds,2);
+        StepFitCell = cell(nFolds,3);
+        for cf = 1 : nFolds
+            %
+            if IsRandPartition
+                TrainInds = find(cc.training(cf));
+            else
+                TrainInds = FoldTrainTestIndex{1,cf};
+            end
+            BlankInds = false(NMTrNum,1);
+            % TrainInds = randsample(NMTrNum,round(NMTrNum*0.7));
+            BlankInds(TrainInds) = true;
+
+            TrainRespDataMtx = reshape(RespData(BlankInds,:),[],1);
+            TestRespData = reshape(RespData(~BlankInds,:),[],1);
+
+            BehavParaInds = false(size(DataFitMtx,1),1);
+            BehavParaInds(TrainInds) = true;
+            BehavParaInds(TrainInds+NMTrNum) = true;
+            BehavParaInds(TrainInds+NMTrNum*2) = true;
+            
+            for cDelayN = 1 : NumAnsDelayFun
+                BehavParaInds(TrainInds+NMTrNum*(2+cDelayN)) = true;
+            end
+            BehavParaMtx = DataFitMtx(BehavParaInds,:);
+            TestBehavParaMtx = DataFitMtx(~BehavParaInds,:);
+                
+                mddl = stepwiseglm(BehavParaMtx,TrainRespDataMtx,'linear','Distribution','gamma','CategoricalVars',true(size(BehavParaMtx,2),1));
+                ypred= predict(mddl, TestBehavParaMtx);
+                
+                %
+
+            StepFitCell{cf,1} = mddl;
+            StepFitCell{cf,2} = ypred;
+            StepFitCell{cf,3} = TestRespData;
+
+        end
+
+        StepRepeatFitCells{cRepeat} = StepFitCell;
+        
+    end
+
+    StepFitCoefsCell = StepRepeatFitCells{:};
+    StepFitCoefs = cellfun(@(x) x.Formula.InModel,StepFitCoefsCell(:,1),'Uniformoutput',false);
+%%
+    AllROI_StepwiseCoefData(cROI, :) = {StepFitCoefsCell, StepFitCoefs};
+    
+end
+
+
 %% analysis ROI coef Data 
 nROIs = length(AllROIData);
 CoefValueThres = 0;

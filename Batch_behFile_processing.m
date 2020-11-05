@@ -1,5 +1,5 @@
 if ispc
-    GrandPath = 'H:\data\behavior\2p_data\behaviro_data\batch60';
+    GrandPath = 'T:\behaviorData\batch70';
     xpath = genpath(GrandPath);
     nameSplit = strsplit(xpath,';');
 elseif ismac
@@ -24,23 +24,23 @@ ErrorNum = 0;
 
 for n = 1 : DirLength
     cPATH = nameSplit{n};
-    if ispc
-            systemstr = ['ipython N:\Documents\Python\save_behavData_2_mat_batch.py ',cPATH];
-    elseif ismac
-        systemstr = ['python /Users/xinyu/Documents/extraCode/python_code/Python/save_behavData_2_mat_batch.py ',cPATH];
-    end
-    list = dir([cPATH,filesep,'*.beh']);
-    if isempty(list)
-        fprintf('Folder path %s have no .beh files indside.\n',cPATH);
-        continue;
-    end
-    
-    [status,~] = system(systemstr);
-    
-    if ~status && ispc % try to rerun the python code with base status
-        system('conda activate base');
-        [status,~] = system(systemstr);
-    end
+%     if ispc
+%             systemstr = ['ipython N:\Documents\Python\save_behavData_2_mat_batch.py ',cPATH];
+%     elseif ismac
+%         systemstr = ['python /Users/xinyu/Documents/extraCode/python_code/Python/save_behavData_2_mat_batch.py ',cPATH];
+%     end
+%     list = dir([cPATH,filesep,'*.beh']);
+%     if isempty(list)
+%         fprintf('Folder path %s have no .beh files indside.\n',cPATH);
+%         continue;
+%     end
+%     
+%     [status,~] = system(systemstr);
+%     
+%     if ~status && ispc % try to rerun the python code with base status
+%         system('conda activate base');
+%         [status,~] = system(systemstr);
+%     end
         
     matlist = dir([cPATH,filesep,'*.mat']);
     matFileLength = length(matlist);
@@ -68,9 +68,9 @@ for n = 1 : DirLength
 %             ErrorFname{ErrorNum} = cfPath;
 %         end
     end
-    if status
-        fprintf('!!!!Folder path %s error exist!!!!\n',cPATH);
-    end
+%     if status
+%         fprintf('!!!!Folder path %s error exist!!!!\n',cPATH);
+%     end
 end
 
 %%

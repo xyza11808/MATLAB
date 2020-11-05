@@ -793,7 +793,7 @@ if CurrentROINo > 0
     %         ROIinfo{TrialNo}.ROIType(CurrentROINo) = [];
     %         CaSignal.CaTrials(TrialNo).nROIs = CaSignal.CaTrials(TrialNo).nROIs - 1;
     %         CaSignal.CaTrials(TrialNo).ROIinfo = ROIinfo{TrialNo};
-    %     end
+    %%     end
     CaSignal.ROIinfo(TrialNo).ROIpos(CurrentROINo) = [];
     CaSignal.ROIinfo(TrialNo).ROImask(CurrentROINo) = [];
     CaSignal.ROIinfo(TrialNo).ROItype(CurrentROINo) = [];
@@ -814,7 +814,7 @@ if CurrentROINo > 0
     end
     CaSignal.IsROIUpdated(CurrentROINo) = [];
     CaSignal.ROIStateIndicate(CurrentROINo,:) = [];
-    
+    %%
     CaSignal.CaTrials(TrialNo).nROIs = CaSignal.CaTrials(TrialNo).nROIs - 1;
     CaSignal.CaTrials(TrialNo).ROIinfo = CaSignal.ROIinfo(TrialNo);
     set(handles.nROIsText, 'String', num2str(CaSignal.CaTrials(TrialNo).nROIs));
@@ -1081,7 +1081,7 @@ end
 CaSignal.ROIsummask=ROIsum;
 CaSignal.ROIinfo(TrialNo).Ringmask{CurrentROINo} = RingMask;
 CaSignal.ROIinfo(TrialNo).ROItype{CurrentROINo} = ROIType;
-CaSignal.ROIinfo(TrialNo).ROI_def_trialNo(CurrentROINo) = TrialNo;
+CaSignal.ROIinfo(TrialNo).ROI_def_trialNo(CurrentROINo) = TrialNo; 
 CaSignal.CaTrials(TrialNo).nROIs = length(CaSignal.ROIinfo(TrialNo).ROIpos);
 
 %backUp ROI info
