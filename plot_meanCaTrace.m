@@ -1,4 +1,4 @@
-function H = plot_meanCaTrace(mean_trace, se_trace, ts, h_fig, opt,varargin)
+function H = plot_meanCaTrace(mean_trace, se_trace, ts, h_fig, opt,linestyle, varargin)
 
 if ~isempty(varargin)
     SecondYData=varargin{1};
@@ -21,12 +21,18 @@ if ~isempty(opt)
         patchPlot=1;
     end
 end
+if ~isempty(linestyle)
+    plotstyle = linestyle;
+else
+    plotstyle = {'r','linewidth',1.5};
+end
+
 mean_trace = (mean_trace(:))';
 se_trace = (se_trace(:))';
 uE =  mean_trace + se_trace;
 lE =  mean_trace - se_trace;
 yP=[lE,fliplr(uE)];
-xP=[ts,fliplr(ts)];
+xP=[ts(:);flipud(ts(:))];
 patchColor = [.8 .8 .8];
 faceAlpha = 0.6;
 
@@ -45,7 +51,7 @@ elseif isfield(opt,'isPatchPlot')
 end
 
 if ~issceondY
-    H.meanPlot = plot(ts, mean_trace,'r','linewidth',1.5);
+    H.meanPlot = plot(ts, mean_trace,plotstyle{:});
 else
     [hax,hlineL,hlineR]=plotyy(ts,mean_trace,ts,SecondYData);
     H.meanPlot = hlineL;

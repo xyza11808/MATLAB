@@ -1,6 +1,10 @@
-Fs = 40;% sampling frequency
-x = 0:(1/Fs):4;% time domain
-y = [sin(2 * pi * 5 * x(x <= 2)), sin(2 * pi * 10 * x(x > 2))];% signal
+function [f,freqpowers] = spectrogram_test(trace, Fs, varargin)
+
+% Fs = 40;% sampling frequency
+% x = 0:(1/Fs):4;% time domain
+x = (1/Fs):(1/Fs):(numel(trace)/Fs);% time domain
+% y = [sin(2 * pi * 5 * x(x <= 2)), sin(2 * pi * 10 * x(x > 2))];% signal
+y = trace;
 
     N = length(x);                     % Length of signal
 
@@ -9,7 +13,7 @@ y = [sin(2 * pi * 5 * x(x <= 2)), sin(2 * pi * 10 * x(x > 2))];% signal
     f = Fs/2*linspace(0,1,NFFT/2+1);
 
     % Generate the plot, title and labels.
-    fh = figure(1);
+    fh = figure;
     % set(fh,'color','white','visible','off');
     subplot(311);
     plot(x,y,'k');
@@ -19,7 +23,8 @@ y = [sin(2 * pi * 5 * x(x <= 2)), sin(2 * pi * 10 * x(x > 2))];% signal
 
     % # Frequency domain plots
     subplot(312);
-    plot(f,2*abs(Y(1:NFFT/2+1))) 
+    freqpowers = 2*abs(Y(1:NFFT/2+1));
+    plot(f,freqpowers) 
     xlabel('Frequency (cycles/second)','FontName','Times New Roman','fontsize',10);
     ylabel('Amplitude','FontName','Times New Roman','fontsize',10);
     set(gca,'FontName','Times New Roman','fontsize',10);
