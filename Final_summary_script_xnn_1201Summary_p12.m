@@ -9,7 +9,7 @@
 %% load datas for one animal types
 cclr
 % SumSourPath = '/Users/xinyu/Documents/docs/xnn/p18_wt';
-SumSourPath = 'F:\';
+SumSourPath = 'F:\新建文件夹 (2)';
 WithinSourcePaths = dir(fullfile(SumSourPath,'*2020*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
 UsedTargetFolder = WithinSourcePaths(FolderIndex);
@@ -135,7 +135,7 @@ end
 % % % imagesc(RearrangedData_2,[0 1])
 
 %%
-save(fullfile(SumSourPath,'NewAge_AllDataSummary.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData',...
+save(fullfile(SumSourPath,'NewAge_AllDataSummaryMerge.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData',...
     'PopuFieldSynchrony_all','EventOnlyFieldSynchrony_all','Sess_eventOnlyCoefData','EventSyncFrac_EO',...
     'MultiSessGenoType','FolderNames', 'EventSyncFrac_EONeu', 'EventSyncFrac_EONeuAct', '-v7.3');%,'EventSyncFrac_EONeu','EventSyncFrac_EONeuAct',
 %% compare all coef values for twe types

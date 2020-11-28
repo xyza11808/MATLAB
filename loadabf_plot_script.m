@@ -1,7 +1,7 @@
 % cclr
-abffile1 = '2018_07_30_0005_epsc.abf';
+% abffile1 = '2018_08_07_0041_ipsc.abf';
 [d,si,h] = abfload(abffile1);
-% cd(abffile1(1:end-4));
+cd(abffile1(1:end-4));
 %%
 fRate = 10000; % sample rate
 excludedTime = 0.5; % seconds, the data before this time will be excluded
@@ -41,9 +41,9 @@ plot(Neu2Traceraw,'color','k');
 plot(Neu2Trace,'r','linewidth',1.5);
 title('Raw record trace2');
 
-% saveas(hf,'Raw trace plot save');
-% saveas(hf,'Raw trace plot save','png');
-% close(hf);
+saveas(hf,'Raw trace plot save');
+saveas(hf,'Raw trace plot save','png');
+close(hf);
 %%
 if mean(Neu1Trace) < 0
     [Neu1_SubtrendData,~]=BLSubStract(-Neu1Trace,8,2000);
@@ -52,7 +52,7 @@ else
     [Neu1_SubtrendData,~]=BLSubStract(Neu1Trace,8,2000);
     [Neu2_SubtrendData,~]=BLSubStract(Neu2Trace,8,2000);
 end 
-% save abfDatas.mat d Neu1_SubtrendData Neu2_SubtrendData Neu1Trace Neu2Trace Neu2Traceraw Neu1Traceraw -v7.3
+% 
 %%
 if mean(Neu1Trace) < 0
     IsEPSC = 1;
@@ -63,6 +63,7 @@ else
     Neu1_zsData = zscore(Neu1_SubtrendData);
     Neu2_zsData = zscore(Neu2_SubtrendData);
 end
+save abfDatas.mat d Neu1_SubtrendData Neu2_SubtrendData Neu1Trace Neu2Trace Neu1_zsData Neu2_zsData -v7.3
 if IsEPSC % negtive curve
     PeakThres_neu1 = prctile(Neu1_zsData,20);
     PeakThres_neu2 = prctile(Neu2_zsData,20);
@@ -81,7 +82,7 @@ plot(Neu2_zsData,'r')
 line([1 numel(Neu2_zsData)],[PeakThres_neu2 PeakThres_neu2],'Color','m','linestyle','--',...
     'linewidth',1.2);
 title('Base corrected trace')
-%%
+%
 [r,lag] = xcorr(Neu1_zsData,Neu2_zsData,10000,'Coeff');
 subplot(132)
 hold on
@@ -90,7 +91,8 @@ set(gca,'ylim',[0 1]);
 title('time-lagged coef')
 [Maxcorr, maxinds] = max(r);
 MaxCorrlags = lag(maxinds);
-shufCorrs = crosscoefthresFun(([Neu1_zsData(:),Neu2_zsData(:)])',10000);
+% shufCorrs = crosscoefthresFun(([Neu1_zsData(:),Neu2_zsData(:)])',10000);
+shufCorrs = Eventscaleshuf(Neu1_zsData, PeakThres_neu1, fRate*2,Neu2_zsData);
 MaxLagThres = prctile(shufCorrs(:,maxinds),95);
 line([-10000,10000],[MaxLagThres MaxLagThres],'Color',[.6 .6 .6],'linewidth',1,...
     'linestyle','--');
@@ -150,50 +152,50 @@ close(hhf);
 % end
 % 
 %%
-NumSessions = size(laggedcorr,1);
-EPSCdats = zeros(NumSessions,4);
-IPSCdats = zeros(NumSessions,4);
-for cf = 1 : NumSessions
-    cf_disstrs = laggedcorr{cf,1};
-    [st, et] = regexp(cf_disstrs,'\d{2,3}.\d{2}');
-    
-    cfolderDis = str2double(cf_disstrs(st:et));
-    
-    withinfilenames = laggedcorr{cf,2}(:,2);
-    CorrAndlagdata = laggedcorr{cf,2}(:,1);
-    
-    EPSCinds = ~cellfun(@isempty,strfind(withinfilenames,'epsc'));
-    
-    EPSCdats(cf,:) = [cfolderDis, CorrAndlagdata{EPSCinds}];
-    IPSCdats(cf,:) = [cfolderDis, CorrAndlagdata{~EPSCinds}];
-    
-end
-    
-
-%%
-% UsedCoefthres = 0.2;
-EPSCUsedInds = EPSCdats(:,2) > EPSCdats(:,4);
-IPSCUsedInds = IPSCdats(:,2) > IPSCdats(:,4);
-
-EPSC_dis_Vec = EPSCdats(EPSCUsedInds, 1);
-EPSC_peaklag_Vec = abs(EPSCdats(EPSCUsedInds, 3)/10); % ms
-
-IPSC_dis_Vec = IPSCdats(EPSCUsedInds, 1);
-IPSC_peaklag_Vec = abs(IPSCdats(EPSCUsedInds, 3)/10); % ms
-
-% hf = figure('position',[100 100,1000,400]);
-[er, ep] = corrcoef(EPSC_dis_Vec, EPSC_peaklag_Vec);
-lmFunCalPlot(EPSC_dis_Vec,EPSC_peaklag_Vec);
-
-title(sprintf('EPSC r=%.3f, p = %.2e',er(1,2), ep(1,2)));
-xlabel('Distance');
-ylabel('Time lag (ms)');
-% ipsc
-[ir, ip] = corrcoef(IPSC_dis_Vec, IPSC_peaklag_Vec);
-lmFunCalPlot(IPSC_dis_Vec,IPSC_peaklag_Vec);
-
-title(sprintf('IPSC r=%.3f, p = %.2e',ir(1,2), ip(1,2)));
-xlabel('Distance');
-ylabel('Time lag (ms)');
+% NumSessions = size(laggedcorr,1);
+% EPSCdats = zeros(NumSessions,4);
+% IPSCdats = zeros(NumSessions,4);
+% for cf = 1 : NumSessions
+%     cf_disstrs = laggedcorr{cf,1};
+%     [st, et] = regexp(cf_disstrs,'\d{2,3}.\d{2}');
+%     
+%     cfolderDis = str2double(cf_disstrs(st:et));
+%     
+%     withinfilenames = laggedcorr{cf,2}(:,2);
+%     CorrAndlagdata = laggedcorr{cf,2}(:,1);
+%     
+%     EPSCinds = ~cellfun(@isempty,strfind(withinfilenames,'epsc'));
+%     
+%     EPSCdats(cf,:) = [cfolderDis, CorrAndlagdata{EPSCinds}];
+%     IPSCdats(cf,:) = [cfolderDis, CorrAndlagdata{~EPSCinds}];
+%     
+% end
+%     
+% 
+% %%
+% % UsedCoefthres = 0.2;
+% EPSCUsedInds = EPSCdats(:,2) > EPSCdats(:,4);
+% IPSCUsedInds = IPSCdats(:,2) > IPSCdats(:,4);
+% 
+% EPSC_dis_Vec = EPSCdats(EPSCUsedInds, 1);
+% EPSC_peaklag_Vec = abs(EPSCdats(EPSCUsedInds, 3)/10); % ms
+% 
+% IPSC_dis_Vec = IPSCdats(EPSCUsedInds, 1);
+% IPSC_peaklag_Vec = abs(IPSCdats(EPSCUsedInds, 3)/10); % ms
+% 
+% % hf = figure('position',[100 100,1000,400]);
+% [er, ep] = corrcoef(EPSC_dis_Vec, EPSC_peaklag_Vec);
+% lmFunCalPlot(EPSC_dis_Vec,EPSC_peaklag_Vec);
+% 
+% title(sprintf('EPSC r=%.3f, p = %.2e',er(1,2), ep(1,2)));
+% xlabel('Distance');
+% ylabel('Time lag (ms)');
+% % ipsc
+% [ir, ip] = corrcoef(IPSC_dis_Vec, IPSC_peaklag_Vec);
+% lmFunCalPlot(IPSC_dis_Vec,IPSC_peaklag_Vec);
+% 
+% title(sprintf('IPSC r=%.3f, p = %.2e',ir(1,2), ip(1,2)));
+% xlabel('Distance');
+% ylabel('Time lag (ms)');
 
 

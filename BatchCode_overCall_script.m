@@ -1,5 +1,5 @@
 cclr;
-SumSourPath = 'F:\新建文件夹';
+SumSourPath = 'F:\新建文件夹 (2)';
 cd(SumSourPath);
 WithinSourcePaths = dir(fullfile(SumSourPath,'*2020*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
@@ -40,7 +40,7 @@ for cf = 1:NumFolders
     cInputPath = FolderFullpaths{cf};
     IsFieldDataPath_AddROIInfo(cInputPath);
 end
-%%
+%
 
 for cf = 1:NumFolders
     cInputPath = FolderFullpaths{cf};
