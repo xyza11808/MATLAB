@@ -1,7 +1,7 @@
 % cclr
-% abffile1 = '2018_08_07_0043_ipsc.abf';
+abffile1 = '2018_07_30_0005_epsc.abf';
 [d,si,h] = abfload(abffile1);
-cd(abffile1(1:end-4));
+% cd(abffile1(1:end-4));
 %%
 fRate = 10000; % sample rate
 excludedTime = 0.5; % seconds, the data before this time will be excluded
@@ -41,9 +41,9 @@ plot(Neu2Traceraw,'color','k');
 plot(Neu2Trace,'r','linewidth',1.5);
 title('Raw record trace2');
 
-saveas(hf,'Raw trace plot save');
-saveas(hf,'Raw trace plot save','png');
-close(hf);
+% saveas(hf,'Raw trace plot save');
+% saveas(hf,'Raw trace plot save','png');
+% close(hf);
 %%
 if mean(Neu1Trace) < 0
     [Neu1_SubtrendData,~]=BLSubStract(-Neu1Trace,8,2000);
@@ -52,22 +52,36 @@ else
     [Neu1_SubtrendData,~]=BLSubStract(Neu1Trace,8,2000);
     [Neu2_SubtrendData,~]=BLSubStract(Neu2Trace,8,2000);
 end 
-save abfDatas.mat d Neu1_SubtrendData Neu2_SubtrendData Neu1Trace Neu2Trace Neu2Traceraw Neu1Traceraw -v7.3
+% save abfDatas.mat d Neu1_SubtrendData Neu2_SubtrendData Neu1Trace Neu2Trace Neu2Traceraw Neu1Traceraw -v7.3
 %%
 if mean(Neu1Trace) < 0
+    IsEPSC = 1;
     Neu1_zsData = zscore(-Neu1_SubtrendData);
     Neu2_zsData = zscore(-Neu2_SubtrendData);
 else
+    IsEPSC = 0;
     Neu1_zsData = zscore(Neu1_SubtrendData);
     Neu2_zsData = zscore(Neu2_SubtrendData);
 end
+if IsEPSC % negtive curve
+    PeakThres_neu1 = prctile(Neu1_zsData,20);
+    PeakThres_neu2 = prctile(Neu2_zsData,20);
+else
+    PeakThres_neu1 = prctile(Neu1_zsData,80);
+    PeakThres_neu2 = prctile(Neu2_zsData,80);
+end
+
 hhf = figure('position',[150,400,1280,420]);
 subplot(131)
 hold on
 plot(Neu1_zsData,'k')
+line([1 numel(Neu1_zsData)],[PeakThres_neu1 PeakThres_neu1],'Color','g','linestyle','--',...
+    'linewidth',1.2);
 plot(Neu2_zsData,'r')
+line([1 numel(Neu2_zsData)],[PeakThres_neu2 PeakThres_neu2],'Color','m','linestyle','--',...
+    'linewidth',1.2);
 title('Base corrected trace')
-%
+%%
 [r,lag] = xcorr(Neu1_zsData,Neu2_zsData,10000,'Coeff');
 subplot(132)
 hold on
