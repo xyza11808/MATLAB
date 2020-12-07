@@ -98,15 +98,15 @@ MaxLagThres = prctile(shufCorrs(:,maxinds),95);
 line([-10000,10000],[MaxLagThres MaxLagThres],'Color',[.6 .6 .6],'linewidth',1,...
     'linestyle','--');
 
-% later half datas
-halfstartInds = min(length(Neu1_zsData)/2, 2E6);
-Neu1data_lasthalf = Neu1_zsData(halfstartInds:end);
-Neu2data_lasthalf = Neu2_zsData(halfstartInds:end);
-[r2,lag2] = xcorr(Neu1data_lasthalf,Neu2data_lasthalf,10000,'Coeff');
-subplot(133)
-plot(lag2,r2)
-set(gca,'ylim',[0 1]);
-title('second half crosscoef')
+% % later half datas
+% halfstartInds = min(length(Neu1_zsData)/2, 2E6);
+% Neu1data_lasthalf = Neu1_zsData(halfstartInds:end);
+% Neu2data_lasthalf = Neu2_zsData(halfstartInds:end);
+% [r2,lag2] = xcorr(Neu1data_lasthalf,Neu2data_lasthalf,10000,'Coeff');
+% subplot(133)
+% plot(lag2,r2)
+% set(gca,'ylim',[0 1]);
+% title('second half crosscoef')
 
 %%
 saveas(hhf,'Crosscoef plot save')
@@ -199,4 +199,44 @@ close(hhf);
 % xlabel('Distance');
 % ylabel('Time lag (ms)');
 
+%%
 
+% cclr
+% sourcefolderpath = 'E:\xnn_data\neuron_distance_vs_laged_time';
+% cd(sourcefolderpath);
+% Folderswithin = dir(sourcefolderpath);
+% foldNameLens = arrayfun(@(x) length(x.name),Folderswithin);
+% isfolder = arrayfun(@(x) x.isdir,Folderswithin);
+% Usedfoldersinds = foldNameLens(:) > 2 & isfolder(:) > 0;
+% UsedfolderStrc = Folderswithin(Usedfoldersinds);
+% Numusedfolders = length(UsedfolderStrc);
+% %%
+% laggedcorr = cell(Numusedfolders,2);
+% for cfold = 1 : Numusedfolders
+%     cfoldName = UsedfolderStrc(cfold).name;
+%     cd(cfoldName);
+%     
+%     abffiles = dir('*.abf');
+%     numabfs = length(abffiles);
+%     abfDatas = cell(numabfs,4);
+%     for cabf = 1 : numabfs
+%         cabfname = abffiles(cabf).name;
+%         if ~isdir(cabfname(1:end-4))
+%             mkdir(cabfname(1:end-4));
+%         end
+%         abffile1 = cabfname;
+%         loadabf_plot_script;
+%         
+%         abfDatas{cabf,1} = [Maxcorr, MaxCorrlags,MaxLagThres];
+%         abfDatas{cabf,2} = cabfname(1:end-4);
+%         abfDatas{cabf,3} = Neu1_zsData;
+%         abfDatas{cabf,4} = Neu2_zsData;
+%         clearvars Neu1_SubtrendData Neu2_SubtrendData Maxcorr MaxCorrlags
+%         
+%         cd ..;
+%     end
+%     
+%      laggedcorr(cfold,:) = {cfoldName, abfDatas};
+%      cd ..;
+% end
+% save Analysissummarydatas.mat laggedcorr -v7.3
