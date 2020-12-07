@@ -1,15 +1,15 @@
 % cclr
-% abffile1 = '2018_08_07_0041_ipsc.abf';
+abffile1 = '2018_08_07_0041_ipsc.abf';
 [d,si,h] = abfload(abffile1);
-cd(abffile1(1:end-4));
+% cd(abffile1(1:end-4));
 %%
 fRate = 10000; % sample rate
 excludedTime = 0.5; % seconds, the data before this time will be excluded
 Used_datas = d(((excludedTime*fRate+1):end),:,:);
 Nsweep = 1;
 
-sweepData = squeeze(Used_datas(:,:,Nsweep));
-
+% sweepData = squeeze(Used_datas(:,:,Nsweep));
+sweeplen = size(Used_datas,1);
 
 %
 %%
@@ -39,18 +39,19 @@ subplot(122)
 hold on
 plot(Neu2Traceraw,'color','k');
 plot(Neu2Trace,'r','linewidth',1.5);
+plot(Neu2_SubtrendData,'b','linewidth',1.5);
 title('Raw record trace2');
 
-saveas(hf,'Raw trace plot save');
-saveas(hf,'Raw trace plot save','png');
-close(hf);
+% saveas(hf,'Raw trace plot save');
+% saveas(hf,'Raw trace plot save','png');
+% close(hf);
 %%
 if mean(Neu1Trace) < 0
-    [Neu1_SubtrendData,~]=BLSubStract(-Neu1Trace,8,2000);
-    [Neu2_SubtrendData,~]=BLSubStract(-Neu2Trace,8,2000);
+    [Neu1_SubtrendData,~]=BLSubStract(-Neu1Trace,8,20000);
+    [Neu2_SubtrendData,~]=BLSubStract(-Neu2Trace,8,20000);
 else
-    [Neu1_SubtrendData,~]=BLSubStract(Neu1Trace,8,2000);
-    [Neu2_SubtrendData,~]=BLSubStract(Neu2Trace,8,2000);
+    [Neu1_SubtrendData,~]=BLSubStract(Neu1Trace,8,20000);
+    [Neu2_SubtrendData,~]=BLSubStract(Neu2Trace,8,20000);
 end 
 % 
 %%
