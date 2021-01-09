@@ -61,7 +61,7 @@ Zhibo_data = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,8,8];
 Zhuanshuo_data = [0,0,0,0,0,0,0,0,0,0,0,2,1,1,2,0,2,2,2,2,7,7];
 Waibo_data = [0,0,0,0,6,6,5,5,6,7,5,4,2,2,4,3,3,8,3,5,2,7];
 Xueshuo_data = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1];
-
+%%
 DataSums = [Liandu_data;Zhuanshuo_data;Waibo_data;Zhibo_data;Xueshuo_data];
 LengStrs = {'liandu','zhuanshuo','waibo','zhibo','xueshuo'};
 

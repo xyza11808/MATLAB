@@ -243,7 +243,7 @@ MaxUsefulSPData = cellfun(@(x,y) x(:,1:y),UsedSpikeData,MaxUsefullcellData,'Unif
 MaxUsefulFitpara = cellfun(@(x,y) x(1:y,:),TrTaskParaAll,MaxUsefullcellData,'UniformOutput',false);
 %%
 tt=tic;
-parfor croi = 1 : nROIs
+for croi = 1 : nROIs
     %%
     cRdatacell = cellfun(@(x) (x(croi,:))',MaxUsefulSPData,'UniformOutput',false);
 %     squeeze(nnspike(:,croi,:));

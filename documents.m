@@ -163,6 +163,11 @@ for cA = 1 : nAxes
     end
 end
 
+%%
+% Get parts of file name
+[filepath,name,ext] = fileparts(filename);
+% the filepath is empty if only the file name is included in the string
+
 
 %% %%%%% ##################################################################
 %extract data from fig file

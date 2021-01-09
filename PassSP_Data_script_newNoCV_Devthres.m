@@ -110,7 +110,7 @@ end
 %     plot(CoefUseds(2:end),'ko','linewidth',1.6)
 options = glmnetSet;
 options.alpha = 0.9;
-options.nlambda = 110;
+options.nlambda = 300;
 options.standardize = false;
 
 UsedSelectDatas = SelectData(cSessPassTrInds,:,:);
@@ -189,22 +189,54 @@ for cROI = 1 : nROIs
             BlankInds = false(nTrials*2,1);
             BlankInds(TrainInds) = true;
             BlankInds(TrainInds+nTrials) = true;
-
+            %
             TrainFreqParas = FreqMtxOnOffMtx(BlankInds,:);
             TrainRespVec = TotalRespMtx(BlankInds);
+            TrainRespVecNorm = TrainRespVec / mean(TrainRespVec); % normalize the mean value to 1 
             TestFreqParas = FreqMtxOnOffMtx(~BlankInds,:);
             TestRespVec = TotalRespMtx(~BlankInds);
+            TestRespVecNorm = TestRespVec/mean(TestRespVec);
             
 %             TrainRespVec = TrainRespVec / max(1e-5, std(TrainRespVec));
-            mdfit = glmnet(TrainFreqParas,TrainRespVec,'poisson',options);
+            mdfit = glmnet(TrainFreqParas,TrainRespVecNorm,'poisson',options);
             
             PredTestData = glmnetPredict(mdfit,TestFreqParas,[],'response'); %,[],log(mean(TestRespVec))
-
+            
+            cvmdfit = cvglmnet(TrainFreqParas,TrainRespVecNorm,'poisson',options);
+            CoefUseds = cvglmnetCoef(cvmdfit,'lambda_1se');
+            %%
+            PredTestData = PredTestData + 1e-10;
+            TestRespVecNorm = TestRespVecNorm + 1e-10;
+            Dev_model = 2*sum(TestRespVecNorm.*log(TestRespVecNorm ./ PredTestData) - (TestRespVecNorm - PredTestData));
+            Dev_null = 2*sum(TestRespVecNorm.*log(TestRespVecNorm) - (TestRespVecNorm - 1)); %
+            DV_explain = 1 - Dev_model/Dev_null;
+            [MaxExplainV,Maxexplaininds] = max(DV_explain);
+            
+           %%
+           NshufRepeat = 500;
+           optionsshuf = options;
+           optionsshuf.lambda = mdfit.lambda;
+           shuf_maxinds_explain = zeros(NshufRepeat,1);
+           for cshuf = 1 : NshufRepeat
+               RespShuf = Vshuffle(TrainRespVecNorm);
+               mdfitshuf = glmnet(TrainFreqParas,RespShuf,'poisson',optionsshuf);
+               PredTestData = glmnetPredict(mdfitshuf,TestFreqParas,[],'response'); %,[],log(mean(TestRespVec))
+               PredTestData = PredTestData + 1e-10;
+               TestRespVecNorm = TestRespVecNorm + 1e-10;
+               Dev_model = 2*sum(TestRespVecNorm.*log(TestRespVecNorm ./ PredTestData) - (TestRespVecNorm - PredTestData));
+               Dev_null = 2*sum(TestRespVecNorm.*log(TestRespVecNorm) - (TestRespVecNorm - 1)); %
+               DV_explain = 1 - Dev_model/Dev_null;
+               shuf_maxinds_explain(cshuf) = DV_explain(Maxexplaininds);
+           end
+           
+           
+           %%
+            
             TestRespMtx = repmat(TestRespVec, 1, size(PredTestData, 2));
             SquareErrors = sum((TestRespMtx - PredTestData).^2);
 %             figure;plot(SquareErrors)
             [~,minInds] = min(SquareErrors);
-            CoefUseds = glmnetCoef(mdfit, mdfit.lambda(minInds));
+            CoefUseds = glmnetCoef(mdfit, mdfit.lambda(Maxexplaininds));
             PredDatas = PredTestData(:, minInds);
             FoldDev(cf, 1) = mdfit.dev(minInds);
             FoldDev(cf, 2) = mdfit.nulldev;
