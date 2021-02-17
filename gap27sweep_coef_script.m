@@ -1,7 +1,7 @@
 % cclr
-% abffile1 = '2018_09_12_0053_before_-70mv.abf';
+abffile1 = '2018_09_12_0053_before_-70mv.abf';
 [d,si,h] = abfload(abffile1);
-cd(abffile1(1:end-4));
+% cd(abffile1(1:end-4));
 %%
 fRate = 10000; % sample rate
 excludedTime = 0.5; % seconds, the data before this time will be excluded
@@ -71,6 +71,27 @@ SIC_shufcorrrs = prctile(shufCorrsSIC,[2.5,97.5]);
 
 save laggedCorrDatas.mat r lag r_SIC lag_SIC shufCorrs shufCorrsSIC ...
     SPEvent_shufcorrrs SIC_shufcorrrs -v7.3
+
+%% plot codes
+patchlags = lag(:)/fRate;
+huf = figure('position',[100 200 500 360]);
+hold on
+patch([patchlags;flipud(patchlags)],...
+    [SPEvent_shufcorrrs(1,:),fliplr(SPEvent_shufcorrrs(2,:))],1,...
+    'Facecolor',[1 0.4 0.4],'edgecolor','none','Facealpha',0.5);
+patch([patchlags;flipud(patchlags)],...
+    [SIC_shufcorrrs(1,:),fliplr(SIC_shufcorrrs(2,:))],1,...
+    'Facecolor',[0.4 0.4 1],'edgecolor','none','Facealpha',0.5);
+plot(lag,r,'r','linewidth',1.2);
+plot(lag_SIC,r_SIC,'b','linewidth',1.2);
+xlabel('Times(s)');
+ylabel('Coefs');
+title('time-lagged correlation');
+
+saveas(huf,'Time lagged correlation and shuf plots');
+saveas(huf,'Time lagged correlation and shuf plots','png');
+saveas(huf,'Time lagged correlation and shuf plots','pdf');
+close(huf);
 
 %% batched codes
 
