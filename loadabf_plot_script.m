@@ -1,5 +1,5 @@
-% cclr
-abffile1 = '2018_08_07_0041_ipsc.abf';
+cclr
+abffile1 = '2018_09_12_0053_before_-70mv.abf';
 [d,si,h] = abfload(abffile1);
 % cd(abffile1(1:end-4));
 %%
@@ -39,7 +39,7 @@ subplot(122)
 hold on
 plot(Neu2Traceraw,'color','k');
 plot(Neu2Trace,'r','linewidth',1.5);
-plot(Neu2_SubtrendData,'b','linewidth',1.5);
+% plot(Neu2_SubtrendData,'b','linewidth',1.5);
 title('Raw record trace2');
 
 % saveas(hf,'Raw trace plot save');

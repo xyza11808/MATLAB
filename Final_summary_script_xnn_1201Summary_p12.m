@@ -9,7 +9,7 @@
 %% load datas for one animal types
 cclr
 % SumSourPath = '/Users/xinyu/Documents/docs/xnn/p18_wt';
-SumSourPath = 'F:\ÐÂ½¨ÎÄ¼þ¼Ð (2)';
+SumSourPath = 'F:\ï¿½Â½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ (2)';
 WithinSourcePaths = dir(fullfile(SumSourPath,'*2020*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
 UsedTargetFolder = WithinSourcePaths(FolderIndex);
@@ -548,9 +548,9 @@ AxInsert = axes('position',[GcaPos(1)+GcaPos(3)*2/3,GcaPos(2)+0.1,GcaPos(3)/3,Gc
 hold(AxInsert, 'on');
 Colors = {[.4 .4 .4],[1 0 0],[.7 .7 .7],[0.7 0.4 0.4]};
 for cBar = 1 : 4
-%     bar(cBar,EventFreqAvgAlls(cBar),0.6,'EdgeColor','none','FaceColor',Colors{cBar});
-    cRawDatas = BoxPlotAllData{cBar};
-    boxplot(cBar*ones(size(cRawDatas)), cRawDatas, 'Labels', TypeStrs{cBar}, 'Color', Colors{cBar},'widths',0.2);
+    bar(cBar,EventFreqAvgAlls(cBar),0.6,'EdgeColor','none','FaceColor',Colors{cBar});
+%     cRawDatas = BoxPlotAllData{cBar};
+%     boxplot(cBar*ones(size(cRawDatas)), cRawDatas, 'Labels', TypeStrs{cBar}, 'Color', Colors{cBar},'widths',0.2);
 end
 errorbar(1:4,EventFreqAvgAlls,EventFreqSEMAlls,'k.','linewidth',1.4,'Marker','none');
 set(AxInsert,'xtick',1:4,'xticklabel',TypeStrs','box','off','FontSize',8);

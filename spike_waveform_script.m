@@ -1,5 +1,6 @@
 
-Datafile_path = 'I:\20210104\xy1_20210104_g0\xy1_20210104_g0_imec0';
+% Datafile_path = 'I:\20210104\xy1_20210104_g0\xy1_20210104_g0_imec0';
+Datafile_path = pwd;
 File_name = 'xy1_20210104_g0_t0.imec0.ap.bin';
 
 fullpaths = fullfile(Datafile_path,File_name);
@@ -29,7 +30,7 @@ cgsFile = 'cluster_info.tsv';
 NumGoodClus = length(UsedIDs_clus);
 
 %%
-PlotClu = 3;
+PlotClu = 4;
 Clu_index = UsedIDs_clus(PlotClu);
 Channel_index = Channel_idUseds(PlotClu);
 SpikeTime_Alls = SpikeTimes(SpikeClusters == Clu_index);

@@ -10,6 +10,7 @@ end
 
 switch MethodType
     case 1 % using calculation method from wiki
+        % http://www.scholarpedia.org/article/Neuronal_synchrony_measures
         AvgTrace = mean(ROidatas);
         ROIAvgStd = std(AvgTrace);
 

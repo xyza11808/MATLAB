@@ -1,16 +1,16 @@
-% 
-% FieldRawDataAlls = cell(NumFolders,1);
-% for cfff = 1:NumFolders
-%     cfName = FolderNames{cfff};
-%     cfFullPath = FolderFullpaths{cfff};
-%     
-%     FieldDatas = load(fullfile(cfFullPath,'AllFieldDatasNew_1201.mat'));
-%     FieldRawDataAlls{cfff} = FieldDatas.FieldDatas_AllCell(:,1);
-%     
-% end
-% 
-% %%
-% save FieldRawDataSummary.mat FieldRawDataAlls -v7.3
+
+FieldRawDataAlls = cell(NumFolders,1);
+for cfff = 1:NumFolders
+    cfName = FolderNames{cfff};
+    cfFullPath = FolderFullpaths{cfff};
+    
+    FieldDatas = load(fullfile(cfFullPath,'AllFieldDatasNew_1201.mat'));
+    FieldRawDataAlls{cfff} = FieldDatas.FieldDatas_AllCell(:,1);
+    
+end
+
+%%
+save FieldRawDataSummary.mat FieldRawDataAlls -v7.3
 
 %%
 WTDataEvent = load(fullfile(DataPath,DataFn),'MultiSessEventData');
