@@ -68,3 +68,5 @@ MIToolbox-3.0.0/LICENSE
 *.c
 *.html
 *.xml
+sortingcode/Kilosort2/
+sortingcode/neuropixel-utils/
