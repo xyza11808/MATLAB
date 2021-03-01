@@ -26,7 +26,7 @@ end
 
 %%
 % spike event filter
-cDes_spevent = designfilt('lowpassfir','PassbandFrequency',10,'StopbandFrequency',400,...
+cDes_spevent = designfilt('lowpassfir','PassbandFrequency',1,'StopbandFrequency',400,...
              'StopbandAttenuation', 60,'SampleRate',fRate,'DesignMethod','kaiserwin'); 
 
 Neu1Tracefilt = filtfilt(cDes_spevent,Neu1_SubtrendData);
@@ -58,10 +58,11 @@ else
     PeakThres_neu1 = prctile(Neu1_zsData,80);
     PeakThres_neu1SIC = prctile(Neu1_SICData,80);
 end
+%%
 save abfdatas.mat Neu1_SubtrendData Neu2_SubtrendData Neu1Trace Neu2Trace -v7.3
-
+%%
 [r,lag] = xcorr(Neu1_zsData,Neu2_zsData,10000,'Coeff');
-[r_SIC,lag_SIC] = xcorr(Neu1_SICData,Neu1_SICData,10000,'Coeff');
+[r_SIC,lag_SIC] = xcorr(Neu1_SICData,Neu2_SICData,10000,'Coeff');
 
 shufCorrs = Eventscaleshuf(Neu1_zsData, PeakThres_neu1, fRate*2,Neu2_zsData);
 shufCorrsSIC = Eventscaleshuf(Neu1_SICData, PeakThres_neu1, fRate*2,Neu2_SICData);

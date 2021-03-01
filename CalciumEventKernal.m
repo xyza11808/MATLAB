@@ -1,17 +1,18 @@
 function TimeTrace = CalciumEventKernal(time,FBase,Ft0,Ftau_on,Ftau_1,Ftau_2,FA1,FA2)
-
+time = time(:);
 AfterStartInds = time > Ft0;
 AfterStartTime = time(AfterStartInds);
-
+CurveBase = rand(numel(time),1)*sqrt(0.02*FA1);
 % AfterStartFun = @(x,FBase,Ft0,Ftau_on,Ftau_1,Ftau_2,FA1,FA2) (1 - exp(-(x - Ft0)/Ftau_on)).*(...
 %     FA1.*exp(-(x - Ft0)/Ftau_1) + FA2 .* exp(-(x - Ft0)/Ftau_1)) + FBase;
 AfterStartFun = @(x) (1 - exp(-(x - Ft0)/Ftau_on)).*(...
-    FA1.*exp(-(x - Ft0)/Ftau_1) + FA2 .* exp(-(x - Ft0)/Ftau_2)) + FBase;
+    FA1.*exp(-(x - Ft0)/Ftau_1) + FA2 .* exp(-(x - Ft0)/Ftau_2));
 
 AfterStartTrace = AfterStartFun(AfterStartTime);
 
 TimeTrace = zeros(numel(time),1) + FBase;
 TimeTrace(AfterStartInds) = AfterStartTrace;
+TimeTrace = TimeTrace + CurveBase;
 
 
 % x = Times(:);

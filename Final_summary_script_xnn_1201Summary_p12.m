@@ -158,7 +158,7 @@ TgSessData_Cell = TgDataCoef.Sess_eventOnlyCoefData;
 %%
 CoefTypeStrs = {'AllAstNeu','AstAst','NeuNeu','ActiveAstNeu','ActiveAstAst','ActiveNeuNeu'};
 nTypes = length(CoefTypeStrs);
-for cT = 1 : nTypes
+for cT = 2:2 %1 : nTypes
     WTSessAllCoefData = cellfun(@(x) squeeze(x(:,1,cT+1)),WTSessData_Cell,'uniformoutput',false);
     WTSessAllDissData = cellfun(@(x) squeeze(x(:,2,cT+1)),WTSessData_Cell,'uniformoutput',false);
 
@@ -220,12 +220,12 @@ for cT = 1 : nTypes
     legend([hl1,hl2],{'WT','Tg'},'location','SouthWest','box','off');
     xlabel('Distance (um)');
     ylabel('Noise coefficient');
-    title('p18 old')
+    title('p12')
     %
-    saveas(hf,sprintf('%s NC EventOnly',CoefTypeStrs{cT}));
-    saveas(hf,sprintf('%s NC EventOnly',CoefTypeStrs{cT}),'png');
-    saveas(hf,sprintf('%s NC EventOnly',CoefTypeStrs{cT}),'pdf');
-    close(hf);
+%     saveas(hf,sprintf('%s NC EventOnly',CoefTypeStrs{cT}));
+%     saveas(hf,sprintf('%s NC EventOnly',CoefTypeStrs{cT}),'png');
+%     saveas(hf,sprintf('%s NC EventOnly',CoefTypeStrs{cT}),'pdf');
+%     close(hf);
 end
 %% active Ast correlation
 % WTSessInds = strcmpi('wt',MultiSessGenoType);
