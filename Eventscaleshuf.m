@@ -33,6 +33,12 @@ parfor cRepeat = 1 : nShufRepeats
     [r, ~] = xcorr(ShufEventTrace, RefTrace,10000,'Coeff');
     ShufCorrs(cRepeat,:) = r;
 end
+
+if nargout == 1
+    varargout = {ShufCorrs};
+elseif nargout == 2
+    varargout(:) = {ShufCorrs, PeakscaleInds};
+end
 %%
 % figure;
 % hold on

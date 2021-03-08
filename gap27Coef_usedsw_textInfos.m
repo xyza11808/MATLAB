@@ -5,7 +5,8 @@ k = 1;
 txtfids =  fopen(filename(1).name);
 tline = fgetl(txtfids);
 while ischar(tline)
-    if contains(tline,'before') || contains(tline,'after') || contains(tline,'aftre')
+    if contains(tline,'before') || contains(tline,'after') || contains(tline,'aftre') || ...
+         contains(tline,'-70mv')   
         TextInfo{k,1} = tline;
         
         tline = fgetl(txtfids); % get next line
@@ -33,5 +34,5 @@ while ischar(tline)
     end
     tline = fgetl(txtfids); % get next line
 end
-
+fclose(txtfids);
     

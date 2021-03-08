@@ -50,6 +50,7 @@ if IsEPSC
     
     PeakThres_neu1 = prctile(Neu1_zsData,20);
     PeakThres_neu1SIC = prctile(Neu1_SICData,20);
+    PeakThres_neu1SIC2 = prctile(Neu2_SICData,20);
 else
     Neu1_zsData = zscore(Neu1Tracefilt);
     Neu2_zsData = zscore(Neu2Tracefilt);
@@ -59,15 +60,24 @@ else
     
     PeakThres_neu1 = prctile(Neu1_zsData,80);
     PeakThres_neu1SIC = prctile(Neu1_SICData,80);
+    PeakThres_neu1SIC2 = prctile(Neu2_SICData,80);
 end
 %%
 save abfdatas_30sw.mat Neu1_SubtrendData Neu2_SubtrendData Neu1Trace Neu2Trace cfUsedsw -v7.3
 %%
-[r,lag] = xcorr(Neu1_zsData,Neu2_zsData,10000,'Coeff');
-[r_SIC,lag_SIC] = xcorr(Neu1_SICData,Neu2_SICData,10000,'Coeff');
 
+[r_SIC,lag_SIC] = xcorr(Neu1_SICData,Neu2_SICData,10000,'Coeff');
+% peaks for trace1
+[shufCorrsSIC,SICPeaks] = Eventscaleshuf(Neu1_SICData, PeakThres_neu1SIC, fRate*2,Neu2_SICData);
+% peaks for trace2
+[~, PeakscaleInds2] = findSigEventsscale(Neu2_SICData, PeakThres_neu1SIC2, 3500);
+SICSubTrace1 = Neu1_zsData;
+SICSubTrace2 = Neu2_zsData;
+% substrace event trace using smoothed trace with large timewin than spike
+% event
+
+[r,lag] = xcorr(Neu1_zsData,Neu2_zsData,10000,'Coeff');
 shufCorrs = Eventscaleshuf(Neu1_zsData, PeakThres_neu1, fRate*2,Neu2_zsData);
-shufCorrsSIC = Eventscaleshuf(Neu1_SICData, PeakThres_neu1, fRate*2,Neu2_SICData);
 
 SPEvent_shufcorrrs = prctile(shufCorrs,[2.5,97.5]);
 SIC_shufcorrrs = prctile(shufCorrsSIC,[2.5,97.5]);
