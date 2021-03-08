@@ -2,11 +2,11 @@ function coefinfos = folderCoefExtraction(folderpath)
 
 ss = load(fullfile(folderpath,'laggedCorrDatas.mat'));
 
-smooth_r = smooth(ss.r,15);
-smooth_r_sic = smooth(ss.r_SIC,15);
+smooth_r = smooth(ss.r,0.005,'rloess');
+smooth_r_sic = smooth(ss.r_SIC,0.005,'rloess');
 
-[~,r_maxIndex] = max(smooth_r);
-[~,rsic_maxIndex] = max(smooth_r_sic);
+[rMaxCoef,r_maxIndex] = max(smooth_r);
+[rsicMaxCoef,rsic_maxIndex] = max(smooth_r_sic);
 r_maxInds = ss.lag(r_maxIndex);
 rsic_maxInds = ss.lag_SIC(rsic_maxIndex);
 % align timelagged coef values into max inds
@@ -20,9 +20,11 @@ coefinfos = struct();
 coefinfos.rPeakInds = r_maxInds;
 coefinfos.align_rlags = Align_rlag;
 coefinfos.rCoefs = ss.r;
+coefinfos.rMaxCoef = rMaxCoef;
 coefinfos.rsicPeakInds = rsic_maxInds;
 coefinfos.align_rsiclags = Align_rsiclag;
 coefinfos.rSICCoefs = ss.r_SIC;
+coefinfos.rMaxCoefSIC = rsicMaxCoef;
 coefinfos.shufr_coefs = shuf95rs;
 coefinfos.shufrsic_coefs = shuf95rSICs;
 

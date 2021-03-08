@@ -1,11 +1,13 @@
 % cclr
-abffile1 = '2018_09_12_0053_before_-70mv.abf';
+abffile1 = '2018_09_25_0001_before_-70mv.abf';
+CurrentFileInds = strcmp(abffile1(1:end-4),UsedSWDataStrc.TextInfo(:,1));
+cfUsedsw = UsedSWDataStrc.TextInfo{CurrentFileInds,2};
 [d,si,h] = abfload(abffile1);
 % cd(abffile1(1:end-4));
 %%
 fRate = 10000; % sample rate
 excludedTime = 0.5; % seconds, the data before this time will be excluded
-Used_datas = d(((excludedTime*fRate+1):end),:,:);
+Used_datas = d(((excludedTime*fRate+1):end),:,cfUsedsw);
 %%
 Neu1Datas = squeeze(Used_datas(:,1,:));
 Neu2Datas = squeeze(Used_datas(:,2,:));
@@ -59,7 +61,7 @@ else
     PeakThres_neu1SIC = prctile(Neu1_SICData,80);
 end
 %%
-save abfdatas.mat Neu1_SubtrendData Neu2_SubtrendData Neu1Trace Neu2Trace -v7.3
+save abfdatas_30sw.mat Neu1_SubtrendData Neu2_SubtrendData Neu1Trace Neu2Trace cfUsedsw -v7.3
 %%
 [r,lag] = xcorr(Neu1_zsData,Neu2_zsData,10000,'Coeff');
 [r_SIC,lag_SIC] = xcorr(Neu1_SICData,Neu2_SICData,10000,'Coeff');
@@ -70,7 +72,7 @@ shufCorrsSIC = Eventscaleshuf(Neu1_SICData, PeakThres_neu1, fRate*2,Neu2_SICData
 SPEvent_shufcorrrs = prctile(shufCorrs,[2.5,97.5]);
 SIC_shufcorrrs = prctile(shufCorrsSIC,[2.5,97.5]);
 
-save laggedCorrDatas.mat r lag r_SIC lag_SIC shufCorrs shufCorrsSIC ...
+save laggedCorrDatas_30sw.mat r lag r_SIC lag_SIC shufCorrs shufCorrsSIC ...
     SPEvent_shufcorrrs SIC_shufcorrrs -v7.3
 
 %% plot codes
@@ -114,6 +116,7 @@ for cfold = 1 : Numusedfolders
     abffiles = dir('*.abf');
     numabfs = length(abffiles);
     abfDatas = cell(numabfs,3);
+    UsedSWDataStrc = load('UsedSweepdata.mat');
     for cabf = 1 : numabfs
         cabfname = abffiles(cabf).name;
         if ~isdir(cabfname(1:end-4))
