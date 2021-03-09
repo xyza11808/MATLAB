@@ -20,12 +20,12 @@ end
 % analysis EPSC datas
 
 % before folder
-EPBeforeFDInds = EPSCAndBADatas(:,1) == 0 & EPSCAndBADatas(:,2) == -1;
+EPBeforeFDInds = EPSCAndBADatas(:,1) == 1 & EPSCAndBADatas(:,2) == -1;
 EPBeforeFD = fullfile(pwd,filenames{EPBeforeFDInds});
 EPBfcoefinfos = folderCoefExtraction(EPBeforeFD);
 
 % after folder
-EPAfterFDInds = EPSCAndBADatas(:,1) == 0 & EPSCAndBADatas(:,2) == 1;
+EPAfterFDInds = EPSCAndBADatas(:,1) == 1 & EPSCAndBADatas(:,2) == 1;
 EPAfterFD = fullfile(pwd,filenames{EPAfterFDInds});
 EPAfcoefinfos = folderCoefExtraction(EPAfterFD);
 

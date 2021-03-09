@@ -211,7 +211,7 @@ if IsBoundshiftSess
    hf = figure('position',[100 100 400 300]);
    hold on
    NumBlocks = length(BlockSectionInfo.BlockTypes);
-   BlockPerfs = cell(NumBlocks,3);
+   BlockPerfs = cell(NumBlocks,4);
    for cB = 1 : NumBlocks
        cBScales = BlockSectionInfo.BlockTrScales(cB,:);
        cBTrFreqs = TrFreqUseds(cBScales(1):cBScales(2));
@@ -240,34 +240,187 @@ if IsBoundshiftSess
        ParaBoundLim = ([UL;SP;LM]);
        cBTrFreqOcts = log2(cBTrFreqsNM/min(SessFreqTypes));
        fit_curveAll = FitPsycheCurveWH_nx(cBTrFreqOcts,cBTrChoiceNM,ParaBoundLim);
+       fit_curveAvg = FitPsycheCurveWH_nx(SessFreqOcts,ChoiceProbs,ParaBoundLim);
        
        if ~BlockSectionInfo.BlockTypes(cB) % low bound session
-          plot(fit_curveAll.curve(:,1),fit_curveAll.curve(:,2),'color',[.45 .8 0.4],'LineWidth',1.6);
+          plot(fit_curveAvg.curve(:,1),fit_curveAvg.curve(:,2),'color',[.45 .8 0.4],'LineWidth',1.6);
           plot(SessFreqOcts,ChoiceProbs,'o','Color',[.45 .8 0.4],'MarkerSize',5,'linewidth',1.2);
        else
-           plot(fit_curveAll.curve(:,1),fit_curveAll.curve(:,2),'color',[0.94 0.72 0.2],'LineWidth',1.6);
+           plot(fit_curveAvg.curve(:,1),fit_curveAvg.curve(:,2),'color',[0.94 0.72 0.2],'LineWidth',1.6);
            plot(SessFreqOcts,ChoiceProbs,'d','Color',[0.94 0.72 0.2],'MarkerSize',5,'linewidth',1.2);
        end
        CurveBounds = fit_curveAll.ffit.u;
        BlockPerfs{cB,2} = fit_curveAll;
        BlockPerfs{cB,3} = CurveBounds;
-       
+       BlockPerfs{cB,4} = fit_curveAvg;
    end
 
 end
+%%
+saveas(gcf,fullfile(fp,[fn(1:end-4),'_Boundshift_plot']));
+saveas(gcf,fullfile(fp,[fn(1:end-4),'_Boundshift_plot']),'png');
 
 %%
 
-TrFreqUseds = double(behavResults.Stim_toneFreq(:));
-TrTypes = double(behavResults.Trial_Type(:));
-Freqs = unique(TrFreqUseds);
-FreqNums = zeros(length(Freqs),1);
-FreqTrTypes = zeros(length(Freqs),2);
-for cf = 1 : length(Freqs)
-    FreqInds = TrFreqUseds == Freqs(cf);
-    FreqNums(cf) = sum(FreqInds);
-    FreqTypes = TrTypes(FreqInds);
-    FreqTrTypes(cf,1) = sum(FreqTypes == 0);
-    FreqTrTypes(cf,2) = sum(FreqTypes == 1);
+% TrFreqUseds = double(behavResults.Stim_toneFreq(:));
+% TrTypes = double(behavResults.Trial_Type(:));
+% Freqs = unique(TrFreqUseds);
+% FreqNums = zeros(length(Freqs),1);
+% FreqTrTypes = zeros(length(Freqs),2);
+% for cf = 1 : length(Freqs)
+%     FreqInds = TrFreqUseds == Freqs(cf);
+%     FreqNums(cf) = sum(FreqInds);
+%     FreqTypes = TrTypes(FreqInds);
+%     FreqTrTypes(cf,1) = sum(FreqTypes == 0);
+%     FreqTrTypes(cf,2) = sum(FreqTypes == 1);
+% end
+cclr;
+[fn,fp,fi] = uigetfile('*.mat','Please select session analized mat file');
+if ~fi
+    return;
 end
+cd(fp);
+
+load(fullfile(fp,fn));
+
+BlockSectionInfo = Bev2blockinfoFun(behavResults);
+if isempty(BlockSectionInfo)
+    return;
+end
+TrTypes = double(behavResults.Trial_Type(:));
+TrActionChoice = double(behavResults.Action_choice(:));
+TrFreqUseds = double(behavResults.Stim_toneFreq(:));
+TrStimOnsets = double(behavResults.Time_stimOnset(:));
+TrTimeAnswer = double(behavResults.Time_answer(:));
+TrTimeReward = double(behavResults.Time_reward(:));
+TrManWaters = double(behavResults.ManWater_choice(:));
+
+%% choice prob compare plot at different block positions
+
+% Blocksegments_early = [50,100,120];
+Blocksegments_early = [20,50,70];
+EarlySegNum = length(Blocksegments_early);
+% Blocksegments_late = [50,100,120];
+Blocksegments_late = [30,50,70];
+LateSegNum = length(Blocksegments_late);
+
+RevFreqs = BlockSectionInfo.BlockFreqTypes(logical(BlockSectionInfo.IsFreq_asReverse));
+NumRevFreqs = length(RevFreqs);
+
+EarlySegChoices = zeros(BlockSectionInfo.NumBlocks,EarlySegNum,2);
+LateSegChoices = zeros(BlockSectionInfo.NumBlocks,LateSegNum,2);
+for cB = 1 : BlockSectionInfo.NumBlocks
+    cBInds = BlockSectionInfo.BlockTrScales(cB,:);
+    cBTrTypes = TrTypes(cBInds(1):cBInds(2));
+    cBTrChoices = TrActionChoice(cBInds(1):cBInds(2));
+    cBRevfreqInds = BlockSectionInfo.RevFreqTrInds(cBInds(1):cBInds(2));
+    
+    for cEInds = 1 : EarlySegNum
+        cUsedTrInds = 1:Blocksegments_early(cEInds);
+        cUsedChoice = cBTrChoices(cUsedTrInds);
+        cRevChoice = cUsedChoice(cUsedChoice ~= 2 & cBRevfreqInds(cUsedTrInds));
+        EarlySegChoices(cB,cEInds,:) = [mean(cRevChoice),numel(cRevChoice)];
+    end
+    
+    BlockLen = BlockSectionInfo.BlockLens(cB);
+    for cEInds = 1 : LateSegNum
+        cUsedTrInds = (BlockLen - Blocksegments_late(cEInds)+1):BlockLen;
+        cUsedChoice = cBTrChoices(cUsedTrInds);
+        cRevChoice = cUsedChoice(cUsedChoice ~= 2 & cBRevfreqInds(cUsedTrInds));
+%         LateRevChoices(cEInds,:) = [mean(cRevChoice),numel(cRevChoice)];
+        LateSegChoices(cB,cEInds,:) = [mean(cRevChoice),numel(cRevChoice)];
+    end
+
+end
+
+%% 
+LowBoundBlockInds = BlockSectionInfo.BlockTypes == 0;
+HighBoundBlockInds = BlockSectionInfo.BlockTypes == 1;
+
+LowBoundEarlyChoices = EarlySegChoices(LowBoundBlockInds,:,:);
+LowBoundLateChoices = LateSegChoices(LowBoundBlockInds,:,:);
+HighBoundEarlyChoices = EarlySegChoices(HighBoundBlockInds,:,:);
+HighBoundLateChoices = LateSegChoices(HighBoundBlockInds,:,:);
+LowBoundNum = sum(LowBoundBlockInds);
+HighBoundNum = sum(HighBoundBlockInds);
+%
+hcf = figure('position',[200 200 1100 320]);
+EarlySegNum = numel(Blocksegments_early);
+for cEInds = 1 : EarlySegNum
+    ax = subplot(1,EarlySegNum,cEInds);
+    hold on
+    % early choice plot
+    plot(ones(LowBoundNum,1)+(rand(LowBoundNum,1)-0.5)*0.2, squeeze(LowBoundEarlyChoices(:,cEInds,1)),...
+        'ko','MarkerSize',6);
+    plot(ones(HighBoundNum,1)+(rand(HighBoundNum,1)-0.5)*0.2+1, squeeze(HighBoundEarlyChoices(:,cEInds,1)),...
+        'mo','MarkerSize',6);
+    
+    % late choice plot
+    plot(ones(LowBoundNum,1)+(rand(LowBoundNum,1)-0.5)*0.2+3, squeeze(LowBoundLateChoices(:,cEInds,1)),...
+        'ko','MarkerSize',6);
+    plot(ones(HighBoundNum,1)+(rand(HighBoundNum,1)-0.5)*0.2+4, squeeze(HighBoundLateChoices(:,cEInds,1)),...
+        'mo','MarkerSize',6);
+    set(ax,'xtick',[1.5 4.5],'xticklabel',{'Early','Late'},'xlim',[0 6],'ylim',[-0.1 1.1]);
+    ylabel(ax,'Right Prob.');
+    title(sprintf('SegTrNum = %d',Blocksegments_early(cEInds)));
+    
+end
+%%
+saveas(hcf,fullfile(fp,[fn(1:end-4),'_BlockswPerf_plot']));
+saveas(hcf,fullfile(fp,[fn(1:end-4),'_BlockswPerf_plot']),'png');
+
+
+
+%%
+save data1.mat LowBoundEarlyChoices LowBoundLateChoices HighBoundEarlyChoices HighBoundLateChoices LowBoundNum HighBoundNum Blocksegments_early -v7.3
+
+
+%% random puretone psy curve plot
+
+TrTypes = double(behavResults.Trial_Type(:));
+TrActionChoice = double(behavResults.Action_choice(:));
+try 
+    TrFreqUseds = double(behavResults.Stim_toneFreq(:));
+catch
+    TrFreqUseds = double(behavResults.Stim_Type(:));
+end
+TrStimOnsets = double(behavResults.Time_stimOnset(:));
+TrTimeAnswer = double(behavResults.Time_answer(:));
+TrTimeReward = double(behavResults.Time_reward(:));
+TrManWaters = double(behavResults.ManWater_choice(:));
+
+NMTrInds = TrActionChoice ~= 2;
+NMTrTypes = TrTypes(NMTrInds);
+NMTrChoices = TrActionChoice(NMTrInds);
+NMTrFreqs = TrFreqUseds(NMTrInds);
+
+FreqTypesAll = unique(NMTrFreqs);
+FreqAllOcts = log2(NMTrFreqs/min(FreqTypesAll));
+FreqTypeOcts = log2(FreqTypesAll/min(FreqTypesAll));
+
+NumFreqs = numel(FreqTypesAll);
+FreqChoiceProbs = zeros(NumFreqs,1);
+for cf = 1 : NumFreqs
+    cfInds = NMTrFreqs == FreqTypesAll(cf);
+    FreqChoiceProbs(cf) = mean(NMTrChoices(cfInds));
+end
+
+UL = [0.5, 0.5, max(FreqTypeOcts), 100];
+SP = [min(FreqChoiceProbs),1 - max(FreqChoiceProbs)-min(FreqChoiceProbs), mean(FreqTypeOcts), 1];
+LM = [0, 0, min(FreqTypeOcts), 0];
+ParaBoundLim = ([UL;SP;LM]);
+
+fit_curveAll = FitPsycheCurveWH_nx(FreqAllOcts,NMTrChoices,ParaBoundLim);
+fit_curveAvg = FitPsycheCurveWH_nx(FreqTypeOcts,FreqChoiceProbs,ParaBoundLim);
+hf = figure;
+hold on
+plot(fit_curveAll.curve(:,1),fit_curveAll.curve(:,2),'color','k','LineWidth',1.6);
+plot(FreqTypeOcts,FreqChoiceProbs,'o','Color','k','MarkerSize',5,'linewidth',1.2);
+
+    
+    
+
+
+
+
 

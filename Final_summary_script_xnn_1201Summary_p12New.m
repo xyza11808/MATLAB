@@ -8,8 +8,7 @@
 
 %% load datas for one animal types
 cclr
-% SumSourPath = '/Users/xinyu/Documents/docs/xnn/p18_wt';
-SumSourPath = 'F:\';
+SumSourPath = 'C:\Users\tinyt\Desktop\4MDatas';
 WithinSourcePaths = dir(fullfile(SumSourPath,'*2021*done'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
 UsedTargetFolder = WithinSourcePaths(FolderIndex);
@@ -20,11 +19,8 @@ FolderNames = arrayfun(@(x) x.name,UsedTargetFolder,'UniformOutput',false);
 %% cSession correlation analysis
 MultiSessCoefData = cell(NumFolders,1);
 SepMultiSessCoefData = cell(NumFolders,1);
-MultiSessGenoType = cell(NumFolders,1);
+% MultiSessGenoType = cell(NumFolders,1);
 EventSyncFrac = cell(NumFolders,1);
-EventSyncFrac_EO = cell(NumFolders,1);
-EventSyncFrac_EONeu = cell(NumFolders,1);
-EventSyncFrac_EONeuAct = cell(NumFolders,1);
 MultiSessEventData = cell(NumFolders,1);
 PopuFieldSynchrony_all = cell(NumFolders,2);
 EventOnlyFieldSynchrony_all = cell(NumFolders,1);
@@ -33,11 +29,10 @@ for cfff = 1:NumFolders
     cfName = FolderNames{cfff};
     cfFullPath = FolderFullpaths{cfff};
     
-%     cPathFrameIndex = load(fullfile(cfFullPath,'FieldImageFrameNum.mat'));
+    cPathFrameIndex = load(fullfile(cfFullPath,'FieldImageFrameNum.mat'));
     SessionFieldData =  CorrDataProcessFun(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
     MultiSessCoefData{cfff} = SessionFieldData;
     
-    % raw synchrony peak number and fraction calculation
     FieldEventDataAlls = EventDataProcessFun(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
     MultiSessEventData{cfff} = FieldEventDataAlls;
     
@@ -50,47 +45,6 @@ for cfff = 1:NumFolders
     end
     EventSyncFrac{cfff} = FieldRealShufIndex;
     
-    % event-only trace synchrony peak number and fraction calculation
-    FieldEventDataAlls = EventDataProcessFun_EO(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat','All');
-    MultiSessEventData{cfff} = FieldEventDataAlls;
-    
-    FieldNum = size(FieldEventDataAlls,1);
-    FieldRealShufIndex = cell(FieldNum,1);
-    for cf = 1 : FieldNum
-        Field1DataRealIndex = mean(FieldEventDataAlls{cf,4});
-        Field1DataShufIndex = FieldEventDataAlls{cf,5};
-        FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
-    end
-    EventSyncFrac_EO{cfff} = FieldRealShufIndex;
-    
-    % processing event-only datas
-    FieldEventData_EONeu = EventDataProcessFun_EO(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
-%     MultiSessEventData{cfff} = FieldEventDataAlls_EO;
-    
-    FieldNum = size(FieldEventData_EONeu,1);
-    FieldRealShufIndex = cell(FieldNum,1);
-    for cf = 1 : FieldNum
-        Field1DataRealIndex = mean(FieldEventData_EONeu{cf,4});
-        Field1DataShufIndex = FieldEventData_EONeu{cf,5};
-        FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
-    end
-    EventSyncFrac_EONeu{cfff} = FieldRealShufIndex;
-    
-    % processing event-only datas
-    FieldEventDataAlls_EOAct = EventDataProcessFun_EO(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat',[],1);
-%     MultiSessEventData{cfff} = FieldEventDataAlls_EO;
-    
-    FieldNum = size(FieldEventDataAlls_EOAct,1);
-    FieldRealShufIndex = cell(FieldNum,1);
-    for cf = 1 : FieldNum
-        Field1DataRealIndex = mean(FieldEventDataAlls_EOAct{cf,4});
-        Field1DataShufIndex = FieldEventDataAlls_EOAct{cf,5};
-        FieldRealShufIndex{cf} = [Field1DataRealIndex(:),Field1DataShufIndex(:)];
-    end
-    EventSyncFrac_EONeuAct{cfff} = FieldRealShufIndex;
-    
-    % end of processing
-    
     cPathROIDataAll = load(fullfile(cfFullPath,'AllFieldDatasNew_1201.mat'));
     
     cFieldSynIndex = cellfun(@(x) Popu_synchrony_fun(x),cPathROIDataAll.FieldDatas_AllCell(:,1));
@@ -99,66 +53,46 @@ for cfff = 1:NumFolders
     [FieldCoefDataAlls,SessSynchronyIndex_All] = CorrDataProcessFun_FieldSep(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
     PopuFieldSynchrony_all{cfff,2} = SessSynchronyIndex_All;
     SepMultiSessCoefData{cfff} = FieldCoefDataAlls;
-%     
+    
     [FieldCoef_EventOnly,SessSynchrony_EventOnly] = CorrDataProcessFun_EventOnly(cfFullPath,'AllFieldDatasNew_1201.mat','CorrCoefDataNew_0921.mat');
     EventOnlyFieldSynchrony_all{cfff,1} = SessSynchrony_EventOnly;
     Sess_eventOnlyCoefData{cfff} = FieldCoef_EventOnly;
     
-%     [StartInd,EndInd] = regexp(cfName,'2019\d{4}_xsn');
-%     cPosStrName = cfName(StartInd:EndInd);
-%     cSessFolderInds = strcmpi(cPosStrName,FolderNames_Cell);
-%     MultiSessGenoType{cfff} = GenoType_Cell{cSessFolderInds};
-    if ~isempty(strfind(FolderNames{cfff},'wt'))
-        MultiSessGenoType{cfff} = 'wt';
-    elseif ~isempty(strfind(FolderNames{cfff},'tg'))
-        MultiSessGenoType{cfff} = 'tg';
-    else
-        MultiSessGenoType{cfff} = 'NULL';
-    end
+    
 end
-% check eventsyncFrac and color plot
-
-% % % cFold = 1;
-% % % cField = 2;
-% % % 
-% % % EventSyncDatas = EventSyncFrac_EO{cFold,1}{cField};
-% % % RearrangedData_2 = Raw2EventOnly_DataFun(FieldDatas_AllCell{cField,1},...
-% % %     FieldDatas_AllCell{cField,5});
-% % % 
-% % % figure('position',[500 50 860 900]);
-% % % subplot(211);
-% % % plot(EventSyncDatas(:,1));
-% % % hold on
-% % % plot(EventSyncDatas(:,2))
-% % % 
-% % % subplot(212)
-% % % imagesc(RearrangedData_2,[0 1])
-
-%
-save(fullfile(SumSourPath,'NewAge_AllDataSummaryMerge.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData',...
-    'PopuFieldSynchrony_all','EventOnlyFieldSynchrony_all','Sess_eventOnlyCoefData','EventSyncFrac_EO',...
-    'MultiSessGenoType','FolderNames', 'EventSyncFrac_EONeu', 'EventSyncFrac_EONeuAct', '-v7.3');%,'EventSyncFrac_EONeu','EventSyncFrac_EONeuAct',
+%%
+save(fullfile(SumSourPath,'4M_tgDataSummary_0318.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData',...
+    'PopuFieldSynchrony_all','EventOnlyFieldSynchrony_all','Sess_eventOnlyCoefData','-v7.3');
 %% compare all coef values for twe types
 % WTSessInds = strcmpi('wt',MultiSessGenoType);
 % WTSessData_Cell = MultiSessCoefData(WTSessInds);
 % TgSessData_Cell = MultiSessCoefData(~WTSessInds);
 cclr
-[WTDataFn,WTDataPath,~] = uigetfile('*wtDataSummary.mat','Select WT data');
-[TgDataFn,TgDataPath,~] = uigetfile('*tgDataSummary.mat','Select Tg data');
+[DataFn,DataPath,~] = uigetfile('NewAge_AllDataSummary*.mat','Select new p12 data');
+FNameData  = load(fullfile(DataPath,DataFn),'FolderNames');
+% FolderNameStrc = load(fullfile(DataPath,'FNamesSave.mat'));
+%% FolderNameCells = FolderNameStrc.FolderNames;
+WTStrInds = cellfun(@(x) ~isempty(strfind(x,'tg')) & ~isempty(strfind(x,'dmso')),FNameData.FolderNames); %ctrl
+TgStrInds = cellfun(@(x) ~isempty(strfind(x,'tg')) & ~isempty(strfind(x,'gap27')),FNameData.FolderNames); %drug
+% WTStrInds = Vshuffle(WTStrInds);
+%%
+% cd to the correct folder path bvefore runing
+PeakAmp_compare_plot_script_4M;
+
 %% load coef datas
-WTDataCoef = load(fullfile(WTDataPath,WTDataFn),'MultiSessCoefData','Sess_eventOnlyCoefData');
+WTDataCoef = load(fullfile(DataPath,DataFn),'MultiSessCoefData','Sess_eventOnlyCoefData');
 % WTSessData_Cell = WTDataCoef.MultiSessCoefData;
-WTSessData_Cell = WTDataCoef.Sess_eventOnlyCoefData;
+WTSessData_Cell = WTDataCoef.Sess_eventOnlyCoefData(WTStrInds,:);
 
-
-TgDataCoef = load(fullfile(TgDataPath,TgDataFn),'MultiSessCoefData','Sess_eventOnlyCoefData');
-TgSessData_Cell = TgDataCoef.Sess_eventOnlyCoefData;
+TgSessData_Cell = WTDataCoef.Sess_eventOnlyCoefData(TgStrInds,:);
 % TgSessData_Cell = TgDataCoef.MultiSessCoefData;
 
 %%
 CoefTypeStrs = {'AllAstNeu','AstAst','NeuNeu','ActiveAstNeu','ActiveAstAst','ActiveNeuNeu'};
 nTypes = length(CoefTypeStrs);
-for cT = 2:2 %1 : nTypes
+plotdatas = cell(nTypes,4);
+for cT = 3:3%1 : nTypes
+    %
     WTSessAllCoefData = cellfun(@(x) squeeze(x(:,1,cT+1)),WTSessData_Cell,'uniformoutput',false);
     WTSessAllDissData = cellfun(@(x) squeeze(x(:,2,cT+1)),WTSessData_Cell,'uniformoutput',false);
 
@@ -185,6 +119,8 @@ for cT = 2:2 %1 : nTypes
 
     [WTBinMeanSEMData, WTBinAllCoef] = All2BinDatas(WTSessAllCoef_sum_Vec,WTSessAllDiss_sum_Vec,50);
     [TgBinMeanSEMData, TgBinAllCoef]  = All2BinDatas(TgSessAllCoef_sum_Vec,TgSessAllDiss_sum_Vec,50);
+    plotdatas(cT,:) = {WTSessAllCoef_sum_Vec,WTSessAllDiss_sum_Vec,...
+        TgSessAllCoef_sum_Vec,TgSessAllDiss_sum_Vec};
     %
     hf = figure('position',[100 100 1100 420]);
     subplot(121);
@@ -195,8 +131,7 @@ for cT = 2:2 %1 : nTypes
     cl2 = plot(Tg_x,Tg_y,'r','linewidth',1.4);
     Overp = ranksum(WTSessAllCoef_sum_Vec,TgSessAllCoef_sum_Vec);
     title(sprintf('p = %.2e',Overp));
-    legend([cl1,cl2],{'WT','Tg'},'location','NorthWest','boxoff');
-
+    legend([cl1,cl2],{'ctrl','drug'},'location','NorthWest','box','off');
     subplot(122);
     hold on
     hl1 = errorbar(WTBinMeanSEMData(:,3),WTBinMeanSEMData(:,1),WTBinMeanSEMData(:,2),'Color','k','linewidth',1.5);
@@ -217,16 +152,81 @@ for cT = 2:2 %1 : nTypes
         end
         pValues(cBin) = pp;
     end
-    legend([hl1,hl2],{'WT','Tg'},'location','SouthWest','box','off');
+    legend([hl1,hl2],{'ctrl','drug'},'location','SouthWest','box','off');
     xlabel('Distance (um)');
     ylabel('Noise coefficient');
-    title('p12')
+    title(CoefTypeStrs{cT})
     %
-%     saveas(hf,sprintf('%s NC EventOnly',CoefTypeStrs{cT}));
-%     saveas(hf,sprintf('%s NC EventOnly',CoefTypeStrs{cT}),'png');
-%     saveas(hf,sprintf('%s NC EventOnly',CoefTypeStrs{cT}),'pdf');
+%     saveas(hf,sprintf('adult TG %s NC EventOnly',CoefTypeStrs{cT}));
+%     saveas(hf,sprintf('adult TG %s NC EventOnly',CoefTypeStrs{cT}),'png');
+%     saveas(hf,sprintf('adult TG %s NC EventOnly',CoefTypeStrs{cT}),'pdf');
 %     close(hf);
 end
+
+
+%%
+WTSessAllCoefData = cellfun(@(x) squeeze(x(:,1,1)),WTSessData_Cell,'uniformoutput',false);
+WTSessAllDissData = cellfun(@(x) squeeze(x(:,2,1)),WTSessData_Cell,'uniformoutput',false);
+
+TgSessAllCoefData = cellfun(@(x) squeeze(x(:,1,1)),TgSessData_Cell,'uniformoutput',false);
+TgSessAllDissData = cellfun(@(x) squeeze(x(:,2,1)),TgSessData_Cell,'uniformoutput',false);
+
+WTSessAllCoef_sum_cell = cat(1, WTSessAllCoefData{:});
+WTSessAllCoef_sum_Vec = cell2mat(WTSessAllCoef_sum_cell);
+TgSessAllCoef_sum_cell = cat(1, TgSessAllCoefData{:});
+TgSessAllCoef_sum_Vec = cell2mat(TgSessAllCoef_sum_cell);
+
+WTSessAllDiss_sum_cell = cat(1, WTSessAllDissData{:});
+WTSessAllDiss_sum_Vec = cell2mat(WTSessAllDiss_sum_cell); 
+TgSessAllDiss_sum_cell = cat(1, TgSessAllDissData{:});
+TgSessAllDiss_sum_Vec = cell2mat(TgSessAllDiss_sum_cell);
+
+WTMeanCoefValues = cellfun(@mean,WTSessAllCoef_sum_cell);
+TgMeanCoefValues = cellfun(@mean,TgSessAllCoef_sum_cell);
+
+[WTBinMeanSEMData, WTBinAllCoef] = All2BinDatas(WTSessAllCoef_sum_Vec,WTSessAllDiss_sum_Vec,50);
+[TgBinMeanSEMData, TgBinAllCoef]  = All2BinDatas(TgSessAllCoef_sum_Vec,TgSessAllDiss_sum_Vec,50);
+%%
+hf = figure('position',[100 100 1100 420]);
+subplot(121);
+hold on
+[WT_y,WT_x] = ecdf(WTSessAllCoef_sum_Vec);
+[Tg_y,Tg_x] = ecdf(TgSessAllCoef_sum_Vec);
+cl1 = plot(WT_x,WT_y,'k','linewidth',1.4);
+cl2 = plot(Tg_x,Tg_y,'r','linewidth',1.4);
+Overp = ranksum(WTSessAllCoef_sum_Vec,TgSessAllCoef_sum_Vec);
+title(sprintf('p = %.2e',Overp));
+legend([cl1,cl2],{'WT','Tg'},'location','NorthWest','box','off');
+
+subplot(122);
+hold on
+hl1 = errorbar(WTBinMeanSEMData(:,3),WTBinMeanSEMData(:,1),WTBinMeanSEMData(:,2),'Color','k','linewidth',1.5);
+hl2 = errorbar(TgBinMeanSEMData(:,3),TgBinMeanSEMData(:,1),TgBinMeanSEMData(:,2),'Color','r','linewidth',1.5);
+yscales = get(gca,'ylim');
+PlotNum = min(length(WTBinAllCoef),length(TgBinAllCoef));
+pValues = zeros(PlotNum,1);
+for cBin = 1 : PlotNum
+    [~,pp] = ttest2(WTBinAllCoef{cBin},TgBinAllCoef{cBin});
+    if pp >= 0.05
+        text(WTBinMeanSEMData(cBin,3),0.95*yscales(2),num2str(pp,'%.2f'),'HorizontalAlignment','center');
+    elseif pp< 0.05 && pp >= 0.01
+        text(WTBinMeanSEMData(cBin,3),0.95*yscales(2),'*','FontSize',18,'HorizontalAlignment','center');
+    elseif pp< 0.01 && pp >= 0.001
+        text(WTBinMeanSEMData(cBin,3),0.95*yscales(2),'**','FontSize',18,'HorizontalAlignment','center');
+    elseif pp < 0.001
+        text(WTBinMeanSEMData(cBin,3),0.95*yscales(2),'***','FontSize',18,'HorizontalAlignment','center');
+    end
+    pValues(cBin) = pp;
+end
+legend([hl1,hl2],{'WT','Tg'},'location','SouthWest','box','off');
+xlabel('Distance (um)');
+ylabel('Noise coefficient');
+title('p12 new ')
+%%
+saveas(hf,'All pair noise correlation changes EventOnly');
+saveas(hf,'All pair noise correlation changes EventOnly','png');
+saveas(hf,'All pair noise correlation changes EventOnly','pdf');
+
 %% active Ast correlation
 % WTSessInds = strcmpi('wt',MultiSessGenoType);
 % WTSessData_Cell = MultiSessCoefData(WTSessInds);
@@ -330,9 +330,10 @@ title(sprintf('p = %.2e',Overp));
 legend([cl1,cl2],{'WT','Tg'},'location','NorthWest','box','off');
 
 subplot(122);
+%
 hold on
-hl1 = errorbar(WTBinMeanSEMData(:,3),WTBinMeanSEMData(:,1),WTBinMeanSEMData(:,2),'Color','k','linewidth',1.5);
-hl2 = errorbar(TgBinMeanSEMData(:,3),TgBinMeanSEMData(:,1),TgBinMeanSEMData(:,2),'Color','r','linewidth',1.5);
+hl1 = errorbar(WTBinMeanSEMData(:,3),WTBinMeanSEMData(:,1),WTBinMeanSEMData(:,2),'Color','k','linewidth',1.5,'linestyle','--');
+hl2 = errorbar(TgBinMeanSEMData(:,3),TgBinMeanSEMData(:,1),TgBinMeanSEMData(:,2),'Color','r','linewidth',1.5,'linestyle','--');
 yscales = get(gca,'ylim');
 PlotNum = min(length(WTBinAllNeu),length(TgBinAllNeu));
 pValuesAllNeu = zeros(PlotNum,1);
@@ -349,16 +350,16 @@ for cBin = 1 : PlotNum
     end
     pValuesAllNeu(cBin) = pp;
 end
-legend([hl1,hl2],{'WT','Tg'},'location','SouthWest','box','off');
+% legend([hl1,hl2],{'WT','Tg'},'location','SouthWest','box','off');
 xlabel('Distance (um)');
 ylabel('Noise coefficient');
-title('p12 old AllNeu')
+% title('p12 new AllNeu')
 %%
 saveas(hf,'AllNeu pair noise correlation changes');
 saveas(hf,'AllNeu pair noise correlation changes','png');
 saveas(hf,'AllNeu pair noise correlation changes','pdf');
 
-%% pcocessing events frequency data for each individual neuron
+%% processing events frequency data for each individual neuron
 
 % %% load datas for one animal types
 % SumSourPath = 'E:\xnn_data\4Mdata_summary';
@@ -397,12 +398,13 @@ saveas(hf,'AllNeu pair noise correlation changes','pdf');
 % end
 
 % [WTDataFn,WTDataPath,~] = uigetfile('*wtDataSummary.mat','Select WT data');
-WTDataEvent = load(fullfile(WTDataPath,WTDataFn),'MultiSessEventData','EventSyncFrac','PopuFieldSynchrony_all',...
-    'EventOnlyFieldSynchrony_all','EventSyncFrac_EO','EventSyncFrac_EONeu','EventSyncFrac_EONeuAct');
-WTSess_EventData_Cell = WTDataEvent.MultiSessEventData;
-WTEventIndexData_cell = WTDataEvent.EventSyncFrac_EO;
-WT_popuSynchrony_All = WTDataEvent.PopuFieldSynchrony_all;
-WT_popuSynchrony_EveOnly = WTDataEvent.EventOnlyFieldSynchrony_all;
+WTDataEvent = load(fullfile(DataPath,DataFn),'MultiSessEventData','EventSyncFrac','PopuFieldSynchrony_all',...
+    'EventOnlyFieldSynchrony_all','MultiSessGenoType','EventSyncFrac_EO','EventSyncFrac_EONeu',...
+    'EventSyncFrac_EONeuAct');
+WTSess_EventData_Cell = WTDataEvent.MultiSessEventData(WTStrInds,:);
+WTEventIndexData_cell = WTDataEvent.EventSyncFrac(WTStrInds,:);
+WT_popuSynchrony_All = WTDataEvent.PopuFieldSynchrony_all(WTStrInds,:);
+WT_popuSynchrony_EveOnly = WTDataEvent.EventOnlyFieldSynchrony_all(WTStrInds,:);
 if size(WT_popuSynchrony_EveOnly,2) == 2
     WT_popuSynchrony_EveOy = WT_popuSynchrony_EveOnly(:,2);
 else
@@ -410,12 +412,12 @@ else
 end
 
 % [TgDataFn,TgDataPath,~] = uigetfile('*tgDataSummary.mat','Select Tg data');
-TgDataEvent = load(fullfile(TgDataPath,TgDataFn),'MultiSessEventData','EventSyncFrac','PopuFieldSynchrony_all',...
-    'EventOnlyFieldSynchrony_all','EventSyncFrac_EO','EventSyncFrac_EONeu','EventSyncFrac_EONeuAct');
-TgSess_EventData_Cell = TgDataEvent.MultiSessEventData;
-TgEventIndexData_cell = TgDataEvent.EventSyncFrac_EO;
-Tg_popuSynchrony_All = TgDataEvent.PopuFieldSynchrony_all;
-Tg_popuSynchrony_EveOnly = TgDataEvent.EventOnlyFieldSynchrony_all;
+% TgDataEvent = load(fullfile(TgDataPath,TgDataFn),'MultiSessEventData','EventSyncFrac','PopuFieldSynchrony_all',...
+%     'EventOnlyFieldSynchrony_all');
+TgSess_EventData_Cell = WTDataEvent.MultiSessEventData(TgStrInds,:);
+TgEventIndexData_cell = WTDataEvent.EventSyncFrac(TgStrInds,:);
+Tg_popuSynchrony_All = WTDataEvent.PopuFieldSynchrony_all(TgStrInds,:);
+Tg_popuSynchrony_EveOnly = WTDataEvent.EventOnlyFieldSynchrony_all(TgStrInds,:);
 if size(Tg_popuSynchrony_EveOnly,2) == 2
     Tg_popuSynchrony_EveOy = Tg_popuSynchrony_EveOnly(:,2);
 else
@@ -442,15 +444,44 @@ bar(1,PopuSynIndexMeanSEM(1,1),0.5,'FaceColor',[.7 .7 .7],'edgecolor','none');
 bar(2,PopuSynIndexMeanSEM(2,1),0.5,'FaceColor','r','edgecolor','none');
 errorbar([1 2],PopuSynIndexMeanSEM(:,1),PopuSynIndexMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
 GroupSigIndication([1,2],PopuSynIndexMeanSEM(:,1),p1,HSynf,1.15);
-set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'},'box','off');
-ylabel('PeakNum');
-title('p12 Popu Synchrony');
+set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'ctrl','Drug'},'box','off');
+ylabel('All Neu SyncIndex');
+title('AdultWT Popu SynchronyIndex');
 %%
 saveas(HSynf,'PopuSynchrony index compare plots save');
 saveas(HSynf,'PopuSynchrony index compare plots save','png');
 saveas(HSynf,'PopuSynchrony index compare plots save','pdf');
 
 %% compare populational synchrony using event-only trace
+ROITypeStrs = {'AllROI','AllNeu','ActNeu','AllAst','ActAst','ActROIs'};
+
+WT_popuSynchronyVecEO = cell2mat(cat(1,WT_popuSynchrony_EveOy{:,1}));
+Tg_popuSynchronyVecEO = cell2mat(cat(1,Tg_popuSynchrony_EveOy{:,1}));
+AnaInds = 2; % 2 indecates all neurons
+EOPopuSynIndexMeanSEM = [mean(WT_popuSynchronyVecEO(:,AnaInds)),std(WT_popuSynchronyVecEO(:,AnaInds))/sqrt(size(WT_popuSynchronyVecEO,1));...
+    mean(Tg_popuSynchronyVecEO(:,AnaInds)),std(Tg_popuSynchronyVecEO(:,AnaInds))/sqrt(size(Tg_popuSynchronyVecEO,1))];
+
+[~,p1] = ttest2(WT_popuSynchronyVecEO(:,AnaInds),Tg_popuSynchronyVecEO(:,AnaInds));
+
+HSynf_EO = figure('position',[100 100 420 300]);
+% ax1 = subplot(121);
+hold on;
+bar(1,EOPopuSynIndexMeanSEM(1,1),0.5,'FaceColor',[.7 .7 .7],'edgecolor','none');
+bar(2,EOPopuSynIndexMeanSEM(2,1),0.5,'FaceColor','r','edgecolor','none');
+errorbar([1 2],EOPopuSynIndexMeanSEM(:,1),EOPopuSynIndexMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
+GroupSigIndication([1,2],EOPopuSynIndexMeanSEM(:,1),p1,HSynf_EO,1.15);
+set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'Ctrl','Drug'},'box','off');
+yscales = get(gca,'ylim');
+text(0.8,yscales(2)*0.85,sprintf('p = %.4f',p1),'HorizontalAlignment','center');
+ylabel('Sync Index');
+title(sprintf('Adult WT %s EventOnly SynchronyIndex',ROITypeStrs{AnaInds}));
+
+%% compare populational synchrony using event-only trace
+saveas(HSynf_EO,'WT Allneu EventOnly PopuSynchrony index compare plots save');
+saveas(HSynf_EO,'WT Allneu EventOnly PopuSynchrony index compare plots save','png');
+saveas(HSynf_EO,'WT Allneu EventOnly PopuSynchrony index compare plots save','pdf');
+
+%%
 WT_popuSynchrony_EveOyCell = cat(1,WT_popuSynchrony_EveOy{:,1});
 Tg_popuSynchrony_EveOyCell = cat(1,Tg_popuSynchrony_EveOy{:,1});
 
@@ -477,8 +508,8 @@ for cType = 1 : NumSynchronyT
     errorbar([1 2],EOPopuSynIndexMeanSEM(:,1),EOPopuSynIndexMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
     GroupSigIndication([1,2],EOPopuSynIndexMeanSEM(:,1),p1,HSynf_EO,1.15);
     set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'},'box','off');
-    ylabel('PeakNum');
-    title('p12 EventOnly Popu Synchrony');
+    ylabel('Sync Index');
+    title('p12New EventOnly SynchronyIndex');
     % compare populational synchrony using event-only trace
     cTypeStr = SynchronyIndexTypes{cType};
     saveas(HSynf_EO,sprintf('%s EventOnly PopuSynchrony index compare plots save',cTypeStr));
@@ -487,7 +518,8 @@ for cType = 1 : NumSynchronyT
     close(HSynf_EO);
 end
 
-%% . event frequenct cumulative plot
+
+%% events frequency plots
 WTSess_EventData_all = cat(1,WTSess_EventData_Cell{:});
 TgSess_EventData_all = cat(1,TgSess_EventData_Cell{:});
 
@@ -506,10 +538,18 @@ TgSess_EventData_FrameTime = cat(1,TgSess_EventData_all{:,3});
 WTSess_EventData_FreqMin = WTSess_EventData_EventNum(:) ./ WTSess_EventData_FrameTime(:);
 TgSess_EventData_FreqMin = TgSess_EventData_EventNum(:) ./ TgSess_EventData_FrameTime(:);
 
+IsActivePnly = 1;
+
 % processing WT data
 % EventNum = 
 WTNeu_EventFreq_Min = WTSess_EventData_FreqMin(WTSess_EventData_NeuInds);
 WTAst_EventFreq_Min = WTSess_EventData_FreqMin(~WTSess_EventData_NeuInds);
+WTNeu_active_Index = WTNeu_EventFreq_Min > 0;
+WTAst_active_Index = WTAst_EventFreq_Min > 0;
+if IsActivePnly
+    WTNeu_EventFreq_Min = WTNeu_EventFreq_Min(WTNeu_EventFreq_Min~=0);
+    WTAst_EventFreq_Min = WTAst_EventFreq_Min(WTAst_EventFreq_Min~=0);
+end
 [WTNeu_EventFreqy,WTNeu_EventFreqx] = ecdf(WTNeu_EventFreq_Min);
 [WTAst_EventFreqy,WTAst_EventFreqx] = ecdf(WTAst_EventFreq_Min);
 [WTNeu_EventFreq_Avgs,WTNeu_EventFreq_SEMs] = AvgSEMCalcu_Fun(WTNeu_EventFreq_Min);
@@ -517,6 +557,12 @@ WTAst_EventFreq_Min = WTSess_EventData_FreqMin(~WTSess_EventData_NeuInds);
 
 TgNeu_EventFreq_Min = TgSess_EventData_FreqMin(TgSess_EventData_NeuInds);
 TgAst_EventFreq_Min = TgSess_EventData_FreqMin(~TgSess_EventData_NeuInds);
+TgNeu_active_Index = TgNeu_EventFreq_Min > 0;
+TgAst_active_Index = TgAst_EventFreq_Min > 0;
+if IsActivePnly
+    TgNeu_EventFreq_Min = TgNeu_EventFreq_Min(TgNeu_EventFreq_Min~=0);
+    TgAst_EventFreq_Min = TgAst_EventFreq_Min(TgAst_EventFreq_Min~=0);
+end
 [TgNeu_EventFreqy,TgNeu_EventFreqx] = ecdf(TgNeu_EventFreq_Min);
 [TgAst_EventFreqy,TgAst_EventFreqx] = ecdf(TgAst_EventFreq_Min);
 [TgNeu_EventFreq_Avgs,TgNeu_EventFreq_SEMs] = AvgSEMCalcu_Fun(TgNeu_EventFreq_Min);
@@ -524,54 +570,111 @@ TgAst_EventFreq_Min = TgSess_EventData_FreqMin(~TgSess_EventData_NeuInds);
 
 EventFreqAvgAlls = [WTNeu_EventFreq_Avgs,TgNeu_EventFreq_Avgs,WTAst_EventFreq_Avgs,TgAst_EventFreq_Avgs];
 EventFreqSEMAlls = [WTNeu_EventFreq_SEMs,TgNeu_EventFreq_SEMs,WTAst_EventFreq_SEMs,TgAst_EventFreq_SEMs];
+% TypeStrs = {'TGctrlNeu','TGdrugNeu','TGctrlAst','TGdrugAst'};
+% TypeStrs = {'WTctrlNeu','WTdrugNeu','WTctrlAst','WTdrugAst'};
 TypeStrs = {'WTNeu','TgNeu','WTAst','TgAst'};
-
-BoxPlotAllData = {WTNeu_EventFreq_Min, WTAst_EventFreq_Min, TgNeu_EventFreq_Min, TgAst_EventFreq_Min};
-
 %%
+
+% [~,WT_Tg_Neu_p] = ttest2(WTNeu_EventFreq_Min,TgNeu_EventFreq_Min);
+% [~,WT_Tg_Ast_p] = ttest2(WTAst_EventFreq_Min,TgAst_EventFreq_Min);
+
 WT_Tg_Neu_p = ranksum(WTNeu_EventFreq_Min,TgNeu_EventFreq_Min);
 WT_Tg_Ast_p = ranksum(WTAst_EventFreq_Min,TgAst_EventFreq_Min);
+
+EventFreqAllData = [WTNeu_EventFreq_Min;TgNeu_EventFreq_Min;...
+    WTAst_EventFreq_Min;TgAst_EventFreq_Min]+0.01;
+Grsigmaxvalue = [max(WTNeu_EventFreq_Min),max(TgNeu_EventFreq_Min),...
+    max(WTAst_EventFreq_Min),max(TgAst_EventFreq_Min)];
+GroupIndex = [ones(size(WTNeu_EventFreq_Min,1),1) ;...
+    ones(size(TgNeu_EventFreq_Min,1),1) * 2; ...
+    ones(size(WTAst_EventFreq_Min,1),1) * 3; ...
+    ones(size(TgAst_EventFreq_Min,1),1) * 4];
+
 hEventfreq = figure('position',[100 100 460 380]);
 hold on
 hwtl1 = plot(WTNeu_EventFreqx,WTNeu_EventFreqy,'Color','k','linewidth',1.4);
 hwtl2 = plot(WTAst_EventFreqx,WTAst_EventFreqy,'Color','k','linewidth',1.4,'linestyle','--');
 hwtl3 = plot(TgNeu_EventFreqx,TgNeu_EventFreqy,'Color','r','linewidth',1.4);
 hwtl4 = plot(TgAst_EventFreqx,TgAst_EventFreqy,'Color','r','linewidth',1.4,'linestyle','--');
-legend([hwtl1,hwtl2,hwtl3,hwtl4],{'WTNeu','WTAst','TgNeu','TgAst'},'location','southwest','box','off');
-set(gca,'xlim',[-0.2 15],'ylim',[-0.05 1.05],'box','off');
+legend([hwtl1,hwtl2,hwtl3,hwtl4],{'WTNeu','WTAst','TgNeu','TgAst'},'location','northeast','box','off');
+set(gca,'xlim',[-0.2 10],'ylim',[-0.05 1.05],'box','off');
 xlabel('Events frequency (per Min.)');
 ylabel('Fraction');
-title(sprintf('p12 WT-Tg-Neu-p = %.2e',WT_Tg_Neu_p));
-
+if IsActivePnly
+    title(sprintf('p12WT ActiveNeu-RSp = %.2e',WT_Tg_Neu_p));
+else
+    title(sprintf('p12New WT-Tg-Neu-RSp = %.2e',WT_Tg_Neu_p));
+end
 GcaPos = get(gca,'position');
 AxInsert = axes('position',[GcaPos(1)+GcaPos(3)*2/3,GcaPos(2)+0.1,GcaPos(3)/3,GcaPos(4)/2]);
 hold(AxInsert, 'on');
-Colors = {[.4 .4 .4],[1 0 0],[.7 .7 .7],[0.7 0.4 0.4]};
+Colors = {[.4 .4 .4];[1 0 0];[.7 .7 .7];[0.7 0.4 0.4]};
 for cBar = 1 : 4
     bar(cBar,EventFreqAvgAlls(cBar),0.6,'EdgeColor','none','FaceColor',Colors{cBar});
-%     cRawDatas = BoxPlotAllData{cBar};
-%     boxplot(cBar*ones(size(cRawDatas)), cRawDatas, 'Labels', TypeStrs{cBar}, 'Color', Colors{cBar},'widths',0.2);
 end
 errorbar(1:4,EventFreqAvgAlls,EventFreqSEMAlls,'k.','linewidth',1.4,'Marker','none');
+
+% boxplot(EventFreqAllData,GroupIndex,'widths',0.2,...
+%     'Colors',cell2mat(Colors),'Whisker',100);
 set(AxInsert,'xtick',1:4,'xticklabel',TypeStrs','box','off','FontSize',8);
-xtickangle(AxInsert,-45);
+% xtickangle(AxInsert,-45);
 ylabel(AxInsert,'Number/Min');
+% GroupSigIndication([1,2],Grsigmaxvalue(1:2),WT_Tg_Neu_p,AxInsert,1.1,[],6);
+% GroupSigIndication([3,4],Grsigmaxvalue(3:4),WT_Tg_Ast_p,AxInsert,1.1,[],6);
 GroupSigIndication([1,2],EventFreqAvgAlls(1:2),WT_Tg_Neu_p,AxInsert,1.1,[],6);
 GroupSigIndication([3,4],EventFreqAvgAlls(3:4),WT_Tg_Ast_p,AxInsert,1.6,[],6);
+% set(AxInsert,'ylim',[0 max(Grsigmaxvalue)*1.2]);
+%%
+saveas(hEventfreq,'WT ctrl and drug eventrate compare ranksump box');
+saveas(hEventfreq,'WT ctrl and drug eventrate compare ranksump box','png');
+saveas(hEventfreq,'WT ctrl and drug eventrate compare ranksump box','pdf');
+%%
+% mkdir('NewEventfreqplot');
+% cd('NewEventfreqplot');
+if IsActivePnly
+    saveas(hEventfreq,'ActiveCell Events frequency plots save');
+    saveas(hEventfreq,'ActiveCell Events frequency plots save','png');
+    saveas(hEventfreq,'ActiveCell Events frequency plots save','pdf');
+else
+    saveas(hEventfreq,'Events frequency plots save');
+    saveas(hEventfreq,'Events frequency plots save','png');
+    saveas(hEventfreq,'Events frequency plots save','pdf');
+end
+%% field-wise event frequency plot
+Fieldwise_eventFreq_plot;
+%%
+saveas(hf,'FieldWise event frequency plot');
+saveas(hf,'FieldWise event frequency plot','png');
+saveas(hf,'FieldWise event frequency plot','pdf');
+
+
+%% active cell fraction plot save
+p_Neu = ChiSqureProbTest(WTNeu_active_Index,TgNeu_active_Index);
+p_Ast = ChiSqureProbTest(WTAst_active_Index,TgAst_active_Index);
+Neu_ActiveFrac = [mean(WTNeu_active_Index),1-mean(WTNeu_active_Index);mean(TgNeu_active_Index),1-mean(TgNeu_active_Index)];
+Ast_ActiveFrac = [mean(WTAst_active_Index),1-mean(WTAst_active_Index);mean(TgAst_active_Index),1-mean(TgAst_active_Index)];
+hFracf = figure('position',[200 200 900 420]);
+hold on
+hb = bar([1,2],Neu_ActiveFrac,0.5,'stacked');
+bar([3,4],Ast_ActiveFrac,0.5,'stacked');
+text([1,2],[1,1],cellstr(num2str(Neu_ActiveFrac(:,1),'%.2f')),'HorizontalAlignment','center','FontSize',10);
+text([3,4],[1,1],cellstr(num2str(Ast_ActiveFrac(:,1),'%.2f')),'HorizontalAlignment','center','FontSize',10);
+text(1:4,[0.1 0.1 0.1 0.1],{num2str(numel(WTNeu_active_Index)),num2str(numel(TgNeu_active_Index)),...
+    num2str(numel(WTAst_active_Index)),num2str(numel(TgAst_active_Index))},...
+    'HorizontalAlignment','center','FontSize',10,'Color','m');
+GroupSigIndication([1,2],[1 1],p_Neu,hFracf,1.05,[],6);
+GroupSigIndication([3,4],[1 1],p_Ast,hFracf,1.05,[],6);
+
+% set(gca,'xlim',[0.5 4.5],'ylim',[0 1.1],'ytick',[0 0.5 1],'xtick',1:4,'xticklabel',{'WT\_N','Tg\_N','WT\_A','Tg\_A'});
+set(gca,'xlim',[0.5 4.5],'ylim',[0 1.1],'ytick',[0 0.5 1],'xtick',1:4,'xticklabel',{'WTctrl\_N','WTdrug\_N','WTctrl\_A','WTdrug\_A'});
+ylabel('Fraction')
+legend(hb,{'Active','Inactive'},'box','off','Location','Northeastoutside')
+set(gca,'FontSize',14);
 
 %%
-saveas(hEventfreq,'Events frequency plots save');
-saveas(hEventfreq,'Events frequency plots save','png');
-saveas(hEventfreq,'Events frequency plots save','pdf');
-%% events amplitude plots
-% ################
-% cd to the correct folder path bvefore runing
-PeakAmp_compare_plot_script;
-%% Run this before runing former section
-cclr
-[WTDataFn,WTDataPath,~] = uigetfile('*wtDataSummary.mat','Select WT data');
-[TgDataFn,TgDataPath,~] = uigetfile('*tgDataSummary.mat','Select Tg data');
-
+saveas(hFracf,'p12NewWT_inactivity_fraction');
+saveas(hFracf,'p12NewWT_inactivity_fraction','png');
+saveas(hFracf,'p12NewWT_inactivity_fraction','pdf');
 %% . ################################################################
 %% . ################################################################
 % event synchrony analysis
@@ -589,8 +692,7 @@ WTFieldLocsNum = cellfun(@(x,y) numel(x)/(size(y,1)/1800),WTAlllocs,WTEventIndex
 WTFieldPeakValue = cellfun(@mean,WTAllPeak);
 TgFieldLocsNum = cellfun(@(x,y) numel(x)/(size(y,1)/1800),TgAlllocs,TgEventIndexData_FieldCell);
 TgFieldPeakValue = cellfun(@mean,TgAllPeaks);
-% WTFieldPeakValueAll = cell2mat(WTAllPeak);
-% TgFieldPeakValueAll = cell2mat(TgAllPeaks);
+TgFieldPeakValue(isnan(TgFieldPeakValue)) = [];
 
 [~,p1] = ttest2(WTFieldLocsNum,TgFieldLocsNum);
 [~,p2] = ttest2(WTFieldPeakValue,TgFieldPeakValue);
@@ -606,10 +708,12 @@ hold on;
 bar(1,LocsNumMeanSEM(1,1),0.5,'FaceColor',[.7 .7 .7],'edgecolor','none');
 bar(2,LocsNumMeanSEM(2,1),0.5,'FaceColor','r','edgecolor','none');
 errorbar([1 2],LocsNumMeanSEM(:,1),LocsNumMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
-GroupSigIndication([1,2],LocsNumMeanSEM(:,1),p1,ax1,1.1);
-set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'},'box','off');
-ylabel('PeakNum/Min');
-title('p12 Peak number');
+GroupSigIndication([1,2],LocsNumMeanSEM(:,1),p1,ax1,1.15);
+text(1.5,min(LocsNumMeanSEM(:,1)),sprintf('n=%d/%d',numel(WTFieldLocsNum),numel(TgFieldLocsNum)),...
+    'HorizontalAlignment','center');
+set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'Ctrl','Drug'},'box','off');
+ylabel('sync.PeakNum/Min');
+title('WTp12 syncPeak number');
 
 ax2 = subplot(122);
 hold on;
@@ -617,26 +721,28 @@ bar(1,PeakFracValueMeanSEM(1,1),0.5,'FaceColor',[.7 .7 .7],'edgecolor','none');
 bar(2,PeakFracValueMeanSEM(2,1),0.5,'FaceColor','r','edgecolor','none');
 errorbar([1 2],PeakFracValueMeanSEM(:,1),PeakFracValueMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
 GroupSigIndication([1,2],PeakFracValueMeanSEM(:,1),p2,ax2,1.15);
-set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'});
-ylabel('PeakFrac');
-title('p12 Peak sync fraction');
+text(1.5,min(PeakFracValueMeanSEM(:,1)),sprintf('n=%d/%d',numel(WTFieldPeakValue),numel(TgFieldPeakValue)),...
+    'HorizontalAlignment','center');
+set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'Ctrl','Drug'});
+ylabel('Sync.Peak Frac');
+title('WTp12 Peak sync fraction');
 %%
 % saveas(HHf,'P12 Sync Peak number and fraction compare plot');
 % saveas(HHf,'P12 Sync Peak number and fraction compare plot','png');
 % saveas(HHf,'P12 Sync Peak number and fraction compare plot','pdf');
 
-saveas(HHf,'P18 EventOnly Sync Peak number and fraction compare plot');
-saveas(HHf,'P18 EventOnly Sync Peak number and fraction compare plot','png');
-saveas(HHf,'P18 EventOnly Sync Peak number and fraction compare plot','pdf');
+saveas(HHf,'AdultWT EventOnly Sync Peak number and fraction compare plot');
+saveas(HHf,'AdultWT EventOnly Sync Peak number and fraction compare plot','png');
+saveas(HHf,'AdultWT EventOnly Sync Peak number and fraction compare plot','pdf');
 
 %% Using only neurons for synchrony fraction and peak
 % event synchrony analysis
 % EventSyncFrac
 % WTSessInds = strcmpi('wt',MultiSessGenoType);
 
-WTEventIndexData_FieldCell = cat(1,WTDataEvent.EventSyncFrac_EONeu{:});
+WTEventIndexData_FieldCell = cat(1,WTDataEvent.EventSyncFrac_EONeu{WTStrInds});
 
-TgEventIndexData_FieldCell = cat(1,TgDataEvent.EventSyncFrac_EONeu{:});
+TgEventIndexData_FieldCell = cat(1,WTDataEvent.EventSyncFrac_EONeu{TgStrInds});
 
 [WTAllPeak,WTAlllocs] = cellfun(@(x) EventIndexSyncPeakNum(x,60,1),WTEventIndexData_FieldCell,'UniformOutput',false);
 [TgAllPeaks,TgAlllocs] = cellfun(@(x) EventIndexSyncPeakNum(x,60,1),TgEventIndexData_FieldCell,'UniformOutput',false);
@@ -644,9 +750,12 @@ TgEventIndexData_FieldCell = cat(1,TgDataEvent.EventSyncFrac_EONeu{:});
 WTFieldLocsNum = cellfun(@(x,y) numel(x)/(size(y,1)/1800),WTAlllocs,WTEventIndexData_FieldCell);
 WTFieldPeakValue = cellfun(@mean,WTAllPeak);
 WTFieldPeakValue(isnan(WTFieldPeakValue)) = [];
+WTFieldLocsNum(isnan(WTFieldPeakValue)) = [];
+
 TgFieldLocsNum = cellfun(@(x,y) numel(x)/(size(y,1)/1800),TgAlllocs,TgEventIndexData_FieldCell);
 TgFieldPeakValue = cellfun(@mean,TgAllPeaks);
 TgFieldPeakValue(isnan(TgFieldPeakValue)) = [];
+TgFieldLocsNum(isnan(TgFieldPeakValue)) = [];
 
 [~,p1] = ttest2(WTFieldLocsNum,TgFieldLocsNum);
 [~,p2] = ttest2(WTFieldPeakValue,TgFieldPeakValue);
@@ -663,9 +772,11 @@ bar(1,LocsNumMeanSEM(1,1),0.5,'FaceColor',[.7 .7 .7],'edgecolor','none');
 bar(2,LocsNumMeanSEM(2,1),0.5,'FaceColor','r','edgecolor','none');
 errorbar([1 2],LocsNumMeanSEM(:,1),LocsNumMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
 GroupSigIndication([1,2],LocsNumMeanSEM(:,1),p1,ax1,1.15);
-set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'},'box','off');
-ylabel('PeakNum/Min');
-title('p18 Peak number');
+text(1.5,min(LocsNumMeanSEM(:,1)),sprintf('n=%d/%d',numel(WTFieldLocsNum),numel(TgFieldLocsNum)),...
+    'HorizontalAlignment','center');
+set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'Ctrl','Drug'},'box','off');
+ylabel('sync.PeakNum/Min');
+title('WTp12New syncPeak number');
 
 ax2 = subplot(122);
 hold on;
@@ -673,33 +784,33 @@ bar(1,PeakFracValueMeanSEM(1,1),0.5,'FaceColor',[.7 .7 .7],'edgecolor','none');
 bar(2,PeakFracValueMeanSEM(2,1),0.5,'FaceColor','r','edgecolor','none');
 errorbar([1 2],PeakFracValueMeanSEM(:,1),PeakFracValueMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
 GroupSigIndication([1,2],PeakFracValueMeanSEM(:,1),p2,ax2,1.15);
-set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'});
-ylabel('PeakFrac');
-title('p18 Peak sync fraction');
+text(1.5,min(PeakFracValueMeanSEM(:,1)),sprintf('n=%d/%d',numel(WTFieldPeakValue),numel(TgFieldPeakValue)),...
+    'HorizontalAlignment','center');
+set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'Ctrl','Drug'});
+ylabel('sync.Peak Frac');
+title('WTp12New syncPeak fraction');
 
 %%
-saveas(HHf,'P18 EventOnly Sync Peak number and fraction NeuOnly plot');
-saveas(HHf,'P18 EventOnly Sync Peak number and fraction NeuOnly plot','png');
-saveas(HHf,'P18 EventOnly Sync Peak number and fraction NeuOnly plot','pdf');
+saveas(HHf,'p12WT EventOnly Sync Peak number and fraction NeuOnly plot');
+saveas(HHf,'p12WT EventOnly Sync Peak number and fraction NeuOnly plot','png');
+saveas(HHf,'p12WT EventOnly Sync Peak number and fraction NeuOnly plot','pdf');
 
 %% Using only active neurons for synchrony fraction and peak
 % event synchrony analysis
 % EventSyncFrac
 % WTSessInds = strcmpi('wt',MultiSessGenoType);
 
-WTEventIndexData_FieldCell = cat(1,WTDataEvent.EventSyncFrac_EONeuAct{:});
+WTEventIndexData_FieldCell = cat(1,WTDataEvent.EventSyncFrac_EONeuAct{WTStrInds});
 
-TgEventIndexData_FieldCell = cat(1,TgDataEvent.EventSyncFrac_EONeuAct{:});
+TgEventIndexData_FieldCell = cat(1,WTDataEvent.EventSyncFrac_EONeuAct{TgStrInds});
 
 [WTAllPeak,WTAlllocs] = cellfun(@(x) EventIndexSyncPeakNum(x,60,1),WTEventIndexData_FieldCell,'UniformOutput',false);
 [TgAllPeaks,TgAlllocs] = cellfun(@(x) EventIndexSyncPeakNum(x,60,1),TgEventIndexData_FieldCell,'UniformOutput',false);
 
 WTFieldLocsNum = cellfun(@(x,y) numel(x)/(size(y,1)/1800),WTAlllocs,WTEventIndexData_FieldCell);
 WTFieldPeakValue = cellfun(@mean,WTAllPeak);
-WTFieldPeakValue(isnan(WTFieldPeakValue)) = [];
 TgFieldLocsNum = cellfun(@(x,y) numel(x)/(size(y,1)/1800),TgAlllocs,TgEventIndexData_FieldCell);
 TgFieldPeakValue = cellfun(@mean,TgAllPeaks);
-TgFieldPeakValue(isnan(TgFieldPeakValue)) = [];
 
 [~,p1] = ttest2(WTFieldLocsNum,TgFieldLocsNum);
 [~,p2] = ttest2(WTFieldPeakValue,TgFieldPeakValue);
@@ -716,25 +827,30 @@ bar(1,LocsNumMeanSEM(1,1),0.5,'FaceColor',[.7 .7 .7],'edgecolor','none');
 bar(2,LocsNumMeanSEM(2,1),0.5,'FaceColor','r','edgecolor','none');
 errorbar([1 2],LocsNumMeanSEM(:,1),LocsNumMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
 GroupSigIndication([1,2],LocsNumMeanSEM(:,1),p1,ax1,1.15);
-set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'},'box','off');
-ylabel('PeakNum/Min');
-title('p18 Peak number');
+text(1.5,min(LocsNumMeanSEM(:,1)),sprintf('n=%d/%d',numel(WTFieldLocsNum),numel(TgFieldLocsNum)),...
+    'HorizontalAlignment','center');
+set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'Ctrl','drug'},'box','off');
+ylabel('sync.PeakNum/Min');
+title('p12WT syncPeak number');
 
 ax2 = subplot(122);
 hold on;
 bar(1,PeakFracValueMeanSEM(1,1),0.5,'FaceColor',[.7 .7 .7],'edgecolor','none');
 bar(2,PeakFracValueMeanSEM(2,1),0.5,'FaceColor','r','edgecolor','none');
 errorbar([1 2],PeakFracValueMeanSEM(:,1),PeakFracValueMeanSEM(:,2),'k.','linewidth',1.5,'Marker','none');
-GroupSigIndication([1,2],PeakFracValueMeanSEM(:,1),p2,ax2,1.1);
-set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'WT','tg'});
-ylabel('PeakFrac');
-title('p18 Peak sync fraction');
+GroupSigIndication([1,2],PeakFracValueMeanSEM(:,1),p2,ax2,1.15);
+text(1.5,min(PeakFracValueMeanSEM(:,1)),sprintf('n=%d/%d',numel(WTFieldPeakValue),numel(TgFieldPeakValue)),...
+    'HorizontalAlignment','center');
+set(gca,'xlim',[0.4 2.6],'xtick',[1,2],'xticklabel',{'Ctrl','drug'});
+ylabel('sync.Peak Frac');
+title('p12WT Peak sync fraction');
 
 %%
-saveas(HHf,'P18 EventOnly Sync Peak number and fraction ActiveNeuOnly plot');
-saveas(HHf,'P18 EventOnly Sync Peak number and fraction ActiveNeuOnly plot','png');
-saveas(HHf,'P18 EventOnly Sync Peak number and fraction ActiveNeuOnly plot','pdf');
+saveas(HHf,'p12WT EventOnly Sync Peak number and fraction ActiveNeuOnly plot');
+saveas(HHf,'p12WT EventOnly Sync Peak number and fraction ActiveNeuOnly plot','png');
+saveas(HHf,'p12WT EventOnly Sync Peak number and fraction ActiveNeuOnly plot','pdf');
 
+%%
 %% High-synchrony-events number across session
 WTEventIndexData_FieldCell = cat(1,WTEventIndexData_cell{:});
 TgEventIndexData_FieldCell = cat(1,TgEventIndexData_cell{:});
@@ -747,7 +863,7 @@ WTFieldPeakValue = cellfun(@mean,WTAllPeak);
 TgFieldLocsNum = cellfun(@(x,y) numel(x)/(size(y,1)/1800),TgAlllocs,TgEventIndexData_FieldCell);
 TgFieldPeakValue = cellfun(@mean,TgAllPeaks);
 
-SynchroFracThres = 0.8;
+SynchroFracThres = 0.9;
 WTField_AboveThres_value = cellfun(@(x) x(x>SynchroFracThres),WTAllPeak,'UniformOutput',false);
 TGField_AboveThres_value = cellfun(@(x) x(x>SynchroFracThres),TgAllPeaks,'UniformOutput',false);
 
@@ -772,3 +888,19 @@ saveas(hccf,sprintf('Above threshold %d cumu plot',SynchroFracThres*100));
 saveas(hccf,sprintf('Above threshold %d cumu plot',SynchroFracThres*100),'png');
 saveas(hccf,sprintf('Above threshold %d cumu plot',SynchroFracThres*100),'pdf');
 
+
+%%
+cfield = 9;
+close;
+IndexData = TgEventIndexData_FieldCell{cfield};
+RealIndex = IndexData(:,1);
+BaseValue = mean(IndexData(:,2));
+% RealIndex(RealIndex < BaseValue) = BaseValue;
+% RealIndex = smooth(RealIndex,5);
+[Peaks,locs] = findpeaks(RealIndex,'MinPeakDistance',240,'MinPeakHeight',BaseValue*1.1);
+
+hf = figure;
+hold 
+plot(IndexData(:,1),'c')
+plot(RealIndex,'k');
+text(locs,Peaks,'o','Color','r','linewidth',2);

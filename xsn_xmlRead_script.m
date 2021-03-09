@@ -15,16 +15,18 @@ SeqIndex = find(arrayfun(@(x) strcmpi(x.Name,'Sequence'),ccChildrens));
 UsedStrc = ccChildrens(SeqIndex).Children;
 FrameIndex = find(arrayfun(@(x) strcmpi(x.Name,'Frame'),UsedStrc));
 IsCalRef = 1;
-%% or load existed ref images from another session for alignment
-[ffn,ffp,ffi] = uigetfile('TargetIm.mat','Please select same FOV ref data');
-if fi
-    load(fullfile(ffp,ffn));
-else
-    return;
-end
-save TargetIm.mat RefImage -v7.3
-IsCalRef = 0;
-%%
+
+% %% or load existed ref images from another session for alignment
+% [ffn,ffp,ffi] = uigetfile('TargetIm.mat','Please select same FOV ref data');
+% if fi
+%     load(fullfile(ffp,ffn));
+% else
+%     return;
+% end
+% save TargetIm.mat RefImage -v7.3
+% IsCalRef = 0;
+% %%
+
 nFrames = length(FrameIndex);
 IndexAndFileAll = cell(nFrames*2,4);
 for cf = 1 : nFrames
@@ -97,14 +99,14 @@ end
 % % warning on
 
 %% align tif files 
-if IsCalRef
-    RefAvgIndexScale = [300, 400];
+% if IsCalRef
+    RefAvgIndexScale = [700, 800];
     RefImage = squeeze(mean(AllTifDatas.Ch1_data(:,:,RefAvgIndexScale(1):RefAvgIndexScale(2)),3));
     figure('position',[2000 100 450 380]);
-    imagesc(RefImage,[100 2000]);
+    imagesc(RefImage,[100 4000]);
     colormap gray
     save TargetIm.mat RefImage -v7.3
-end
+% end
 %% or load from another session
 
 [Ch1_alignedData,ch1_shift] = dft_reg(AllTifDatas.Ch1_data,RefImage);

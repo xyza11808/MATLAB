@@ -24,8 +24,7 @@ WTNeuNeuCoefDataStrc = ...
     load('/Users/xinyu/Documents/dataAll/Documents/xnnData_20201107/WT_ctrl_drug_com/WTNeuNeu_wtCtrltgDrug.mat');
 TgNeuNeuCoefDataStrc = ...
     load('/Users/xinyu/Documents/dataAll/Documents/xnnData_20201107/TG_ctrl_drug_com/TGNeuNeu_wtCtrltgDrug.mat');
-
-%%
+%
 [WT_ctrlBinMeanSEMData, WT_ctrlBinAllCoef] = All2BinDatas(...
     WTNeuNeuCoefDataStrc.WTSessAllCoef_sum_Vec,...
     WTNeuNeuCoefDataStrc.WTSessAllDiss_sum_Vec,50);
@@ -39,7 +38,32 @@ TgNeuNeuCoefDataStrc = ...
 [TG_drugBinMeanSEMData, TG_drugBinAllCoef]  = All2BinDatas(...
     TgNeuNeuCoefDataStrc.TgSessAllCoef_sum_Vec,...
     TgNeuNeuCoefDataStrc.TgSessAllDiss_sum_Vec,50);
+
 %%
+CoefTypeStrs = {'AllAstNeu','AstAst','NeuNeu','ActiveAstNeu','ActiveAstAst','ActiveNeuNeu'};
+WTNeuNeuCoefDataStrc = ...
+    load('F:\wt_coefPlots\adultWTCoefDatas.mat');
+TgNeuNeuCoefDataStrc = ...
+    load('F:\tg_coefplots\adultTGCoefDatas.mat');
+UsedDataType = 6; %2 indicates All Asts, 3 indicates All neurons
+TypeStrs = CoefTypeStrs{UsedDataType};
+WTDatas = WTNeuNeuCoefDataStrc.plotdatas(UsedDataType,:);
+TgDatas = TgNeuNeuCoefDataStrc.plotdatas(UsedDataType,:);
+%
+[WT_ctrlBinMeanSEMData, WT_ctrlBinAllCoef] = All2BinDatas(...
+    WTDatas{1},...
+    WTDatas{2},50);
+[WT_drugBinMeanSEMData, WT_drugBinAllCoef]  = All2BinDatas(...
+    WTDatas{3},...
+    WTDatas{4},50);
+
+[TG_ctrlBinMeanSEMData, TG_ctrlBinAllCoef] = All2BinDatas(...
+    TgDatas{1},...
+    TgDatas{2},50);
+[TG_drugBinMeanSEMData, TG_drugBinAllCoef]  = All2BinDatas(...
+    TgDatas{3},...
+    TgDatas{4},50);
+%
 hf = figure;
 hold on
 hl1 = errorbar(WT_ctrlBinMeanSEMData(:,3),WT_ctrlBinMeanSEMData(:,1),...
@@ -54,7 +78,12 @@ hl4 = errorbar(TG_drugBinMeanSEMData(:,3),TG_drugBinMeanSEMData(:,1),...
 legend([hl1,hl2,hl3,hl4],{'WTCtrl','WTDrug','TgCtrl','TgDrug'},'location','SouthWest','box','off');
 xlabel('Distance (um)');
 ylabel('Noise coefficient');
-title('p12ActAst-Neu coef')
+title([TypeStrs,' coef'])
+%%
+
+saveas(hf,['Four condition ',TypeStrs,' 1SEM coef shadow plot']);
+saveas(hf,['Four condition ',TypeStrs,' 1SEM coef shadow plot'],'png');
+saveas(hf,['Four condition ',TypeStrs,' 1SEM coef shadow plot'],'pdf');
 
 %%
 huf = figure;
@@ -137,5 +166,65 @@ title('Astcoef')
 saveas(hfall,'Across group 1SEM coef plot');
 saveas(hfall,'Across group 1SEM coef plot','png');
 saveas(hfall,'Across group 1SEM coef plot','pdf');
+
+%% event only population synchrony index plot
+
+WTDatas = load('F:\wt_coefPlots\WTsynchronyDataEveO.mat');
+TgDatas = load('F:\tg_coefplots\TgsynchronyDataEveO.mat');
+%%
+ROITypes = WTDatas.ROITypeStrs;
+UsedTypeInds = 6;
+TypeStr = ROITypes{UsedTypeInds};
+
+WT_ctrl_Das = WTDatas.WT_popuSynchronyVecEO(:,UsedTypeInds);
+WT_drug_Das = WTDatas.Tg_popuSynchronyVecEO(:,UsedTypeInds);
+
+Tg_ctrl_Das = TgDatas.WT_popuSynchronyVecEO(:,UsedTypeInds);
+Tg_drug_Das = TgDatas.Tg_popuSynchronyVecEO(:,UsedTypeInds);
+Tg_drug_Das(isnan(Tg_drug_Das)) = [];
+
+PlotAvgs = [mean(WT_ctrl_Das),mean(Tg_ctrl_Das),...
+    mean(WT_drug_Das),mean(Tg_drug_Das)];
+Plotfieldnums = [numel(WT_ctrl_Das),numel(Tg_ctrl_Das),...
+    numel(WT_drug_Das),numel(Tg_drug_Das)];
+
+PlotSEMs = [std(WT_ctrl_Das)/sqrt(Plotfieldnums(1)),...
+    std(Tg_ctrl_Das)/sqrt(Plotfieldnums(2)),...
+    std(WT_drug_Das)/sqrt(Plotfieldnums(3)),...
+    std(Tg_drug_Das)/sqrt(Plotfieldnums(4))];
+
+[~,ctrl_p] = ttest2(WT_ctrl_Das,Tg_ctrl_Das);
+[~,drug_p] = ttest2(WT_drug_Das,Tg_drug_Das);
+
+[~,wt_p] = ttest2(WT_ctrl_Das,WT_drug_Das);
+[~,tg_p] = ttest2(Tg_ctrl_Das,Tg_drug_Das);
+
+hsynf = figure('position',[100 100 450 320]);
+hold on
+colors = {[0.2 0.2 0.2],[0.9 0.1 0.1],[0.6 0.6 0.6],[0.6 0.2 0.2]};
+for ccp = 1 : 4
+    bar(ccp,PlotAvgs(ccp),0.6,'edgecolor','none','Facecolor',colors{ccp});
+end
+errorbar(1:4,PlotAvgs,PlotSEMs,'k.','Marker','none','linewidth',1.2);
+
+text(1:4,PlotAvgs*0.8,cellstr(num2str(Plotfieldnums(:),'%d')),...
+    'HorizontalAlignment','center','Fontsize',8,'color','c');
+
+GroupSigIndication([1,2],PlotAvgs(1:2),ctrl_p,hsynf,1.2,[],6);
+GroupSigIndication([3,4],PlotAvgs(3:4),drug_p,hsynf,1.2,[],6);
+
+GroupSigIndication([1,3],PlotAvgs([1,3]),wt_p,hsynf,1.4,[],6);
+GroupSigIndication([2,4],PlotAvgs([2,4]),tg_p,hsynf,1.6,[],6);
+
+
+set(gca,'xtick',1:4,'xticklabel',{'WTctrl','Tgctrl','WTdrug','Tgdrug'},'xlim',[0 5]);
+ylabel('Synchrony index');
+title(TypeStr);
+
+%
+saveas(hsynf,['Four condition ',TypeStr,' SynchronyIndex compare plot']);
+saveas(hsynf,['Four condition ',TypeStr,' SynchronyIndex compare plot'],'png');
+saveas(hsynf,['Four condition ',TypeStr,' SynchronyIndex compare plot'],'pdf');
+
 
 
