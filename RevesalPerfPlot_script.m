@@ -211,7 +211,7 @@ if IsBoundshiftSess
    hf = figure('position',[100 100 400 300]);
    hold on
    NumBlocks = length(BlockSectionInfo.BlockTypes);
-   BlockPerfs = cell(NumBlocks,4);
+   BlockPerfs = cell(NumBlocks,5);
    for cB = 1 : NumBlocks
        cBScales = BlockSectionInfo.BlockTrScales(cB,:);
        cBTrFreqs = TrFreqUseds(cBScales(1):cBScales(2));
@@ -253,6 +253,7 @@ if IsBoundshiftSess
        BlockPerfs{cB,2} = fit_curveAll;
        BlockPerfs{cB,3} = CurveBounds;
        BlockPerfs{cB,4} = fit_curveAvg;
+       BlockPerfs{cB,5} = fit_curveAvg.ffit.u;
    end
 
 end

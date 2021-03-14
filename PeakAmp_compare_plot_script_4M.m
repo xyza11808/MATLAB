@@ -1,12 +1,12 @@
 % find all target mats and load the data path
 
-upperfoldpath = {'/Volumes/Seagate Backup Plus Drive/invivo_imaging_data_xnn_20191224_update20201110/p18_tg'};
+upperfoldpath = {'F:\'};
 NumUpperPath = length(upperfoldpath);
 AllTargpathCell = cell(NumUpperPath,1);
 for cpath = 1 : NumUpperPath
     ccpath = upperfoldpath{cpath};
     cd(ccpath);
-    pathtargetpaths = dir('2021*xsn*done');
+    pathtargetpaths = dir('2021*adult*done');
     Numtargetfile = length(pathtargetpaths);
     targfilecells = cell(Numtargetfile,3);
     for cNumtargpath = 1 : Numtargetfile
@@ -56,7 +56,7 @@ for cfff = 1:NumFolders
 end
 
 %%
-save FieldRawDataSummary_24sess.mat FieldRawDataAlls FolderFullpaths -v7.3
+save FieldRawDataSummary.mat FieldRawDataAlls FolderFullpaths -v7.3
 
 %% for wt and tg co-saved folders
 cclr
@@ -66,7 +66,7 @@ FolderNameCells = FolderNameStrc.FolderNames;
 WTStrInds = cellfun(@(x) ~isempty(strfind(x,'wt')),FolderNameCells);
 %%
 WTDataEvent = load(fullfile(DataPath,DataFn),'MultiSessEventData');
-Data_Raw = load(fullfile(DataPath,'FieldRawDataSummary_24sess.mat'));
+Data_Raw = load(fullfile(DataPath,'FieldRawDataSummary.mat'));
 
 WTSess_EventData_Cell = WTDataEvent.MultiSessEventData(WTStrInds,:);
 WTData_Raw = Data_Raw.FieldRawDataAlls(WTStrInds);
@@ -101,12 +101,12 @@ cclr
 FNameData  = load(fullfile(DataPath,DataFn),'FolderNames');
 % FolderNameStrc = load(fullfile(DataPath,'FNamesSave.mat'));
 % for drug and control analysis
-WTStrInds = cellfun(@(x) ~isempty(strfind(x,'wt')) & isempty(strfind(x,'drug')),FNameData.FolderNames); %ctrl
-TgStrInds = cellfun(@(x) ~isempty(strfind(x,'wt')) & ~isempty(strfind(x,'drug')),FNameData.FolderNames); %drug
+WTStrInds = cellfun(@(x) ~isempty(strfind(x,'tg')) & ~isempty(strfind(x,'dmso')),FNameData.FolderNames); %ctrl
+TgStrInds = cellfun(@(x) ~isempty(strfind(x,'tg')) & ~isempty(strfind(x,'gap27')),FNameData.FolderNames); %drug
 %
 
 WTDataEvent = load(fullfile(DataPath,DataFn),'MultiSessEventData');
-Data_Raw = load(fullfile(DataPath,'FieldRawDataSummary_merge.mat'));
+Data_Raw = load(fullfile(DataPath,'FieldRawDataSummary.mat'));
 
 WTSess_EventData_Cell = WTDataEvent.MultiSessEventData(WTStrInds,:);
 WTData_Raw = Data_Raw.FieldRawDataAlls(WTStrInds);

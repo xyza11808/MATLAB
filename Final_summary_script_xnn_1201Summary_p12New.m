@@ -72,9 +72,11 @@ cclr
 FNameData  = load(fullfile(DataPath,DataFn),'FolderNames');
 % FolderNameStrc = load(fullfile(DataPath,'FNamesSave.mat'));
 %% FolderNameCells = FolderNameStrc.FolderNames;
-WTStrInds = cellfun(@(x) ~isempty(strfind(x,'tg')) & ~isempty(strfind(x,'dmso')),FNameData.FolderNames); %ctrl
-TgStrInds = cellfun(@(x) ~isempty(strfind(x,'tg')) & ~isempty(strfind(x,'gap27')),FNameData.FolderNames); %drug
+WTStrInds = cellfun(@(x) ~isempty(strfind(x,'wt')) & ~isempty(strfind(x,'dmso')),FNameData.FolderNames); %ctrl
+TgStrInds = cellfun(@(x) ~isempty(strfind(x,'wt')) & ~isempty(strfind(x,'gap27')),FNameData.FolderNames); %drug
 % WTStrInds = Vshuffle(WTStrInds);
+WTFolderNames = FNameData.FolderNames(WTStrInds);
+TgFolderNames = FNameData.FolderNames(TgStrInds);
 %%
 % cd to the correct folder path bvefore runing
 PeakAmp_compare_plot_script_4M;
@@ -91,7 +93,8 @@ TgSessData_Cell = WTDataCoef.Sess_eventOnlyCoefData(TgStrInds,:);
 CoefTypeStrs = {'AllAstNeu','AstAst','NeuNeu','ActiveAstNeu','ActiveAstAst','ActiveNeuNeu'};
 nTypes = length(CoefTypeStrs);
 plotdatas = cell(nTypes,4);
-for cT = 3:3%1 : nTypes
+plotfieldWiseDatas = cell(nTypes,4);
+for cT = 1:1% : nTypes
     %
     WTSessAllCoefData = cellfun(@(x) squeeze(x(:,1,cT+1)),WTSessData_Cell,'uniformoutput',false);
     WTSessAllDissData = cellfun(@(x) squeeze(x(:,2,cT+1)),WTSessData_Cell,'uniformoutput',false);
@@ -100,6 +103,7 @@ for cT = 3:3%1 : nTypes
     TgSessAllDissData = cellfun(@(x) squeeze(x(:,2,cT+1)),TgSessData_Cell,'uniformoutput',false);
 
     WTSessAllCoef_sum_cell = cat(1, WTSessAllCoefData{:});
+    WTSessFieldNums = cellfun(@length,WTSessAllCoefData);
     WTSessAllCoef_sum_cell = cellfun(@(x) x(:),WTSessAllCoef_sum_cell,'UniformOutput',0);
     WTSessAllCoef_sum_Vec = cell2mat(WTSessAllCoef_sum_cell);
     TgSessAllCoef_sum_cell = cat(1, TgSessAllCoefData{:});
@@ -111,6 +115,7 @@ for cT = 3:3%1 : nTypes
     WTSessAllDiss_sum_Vec = cell2mat(WTSessAllDiss_sum_cell); 
     
     TgSessAllDiss_sum_cell = cat(1, TgSessAllDissData{:});
+    TgSessFieldNums = cellfun(@length,TgSessAllCoefData);
     TgSessAllDiss_sum_cell = cellfun(@(x) x(:),TgSessAllDiss_sum_cell,'UniformOutput',0);
     TgSessAllDiss_sum_Vec = cell2mat(TgSessAllDiss_sum_cell);
 
@@ -121,6 +126,8 @@ for cT = 3:3%1 : nTypes
     [TgBinMeanSEMData, TgBinAllCoef]  = All2BinDatas(TgSessAllCoef_sum_Vec,TgSessAllDiss_sum_Vec,50);
     plotdatas(cT,:) = {WTSessAllCoef_sum_Vec,WTSessAllDiss_sum_Vec,...
         TgSessAllCoef_sum_Vec,TgSessAllDiss_sum_Vec};
+    plotfieldWiseDatas(cT,:) = {WTSessAllCoef_sum_cell,WTSessAllDiss_sum_cell,...
+        TgSessAllCoef_sum_cell,TgSessAllDiss_sum_cell};
     %
     hf = figure('position',[100 100 1100 420]);
     subplot(121);
@@ -160,7 +167,7 @@ for cT = 3:3%1 : nTypes
 %     saveas(hf,sprintf('adult TG %s NC EventOnly',CoefTypeStrs{cT}));
 %     saveas(hf,sprintf('adult TG %s NC EventOnly',CoefTypeStrs{cT}),'png');
 %     saveas(hf,sprintf('adult TG %s NC EventOnly',CoefTypeStrs{cT}),'pdf');
-%     close(hf);
+    close(hf);
 end
 
 

@@ -158,7 +158,7 @@ TgSessData_Cell = TgDataCoef.Sess_eventOnlyCoefData;
 %%
 CoefTypeStrs = {'AllAstNeu','AstAst','NeuNeu','ActiveAstNeu','ActiveAstAst','ActiveNeuNeu'};
 nTypes = length(CoefTypeStrs);
-for cT = 2:2 %1 : nTypes
+for cT = 1 : nTypes
     WTSessAllCoefData = cellfun(@(x) squeeze(x(:,1,cT+1)),WTSessData_Cell,'uniformoutput',false);
     WTSessAllDissData = cellfun(@(x) squeeze(x(:,2,cT+1)),WTSessData_Cell,'uniformoutput',false);
 
