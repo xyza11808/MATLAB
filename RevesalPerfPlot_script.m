@@ -255,7 +255,15 @@ if IsBoundshiftSess
        BlockPerfs{cB,4} = fit_curveAvg;
        BlockPerfs{cB,5} = fit_curveAvg.ffit.u;
    end
-
+   text(median(SessFreqOcts)+0.1,0.4,num2str(abs(BlockPerfs{1,3}-BlockPerfs{2,3}),'First2BoundDiff=%.3f'));
+   LowBoundInds = BlockSectionInfo.BlockTypes == 0;
+   MeanLowBound = mean(cell2mat(BlockPerfs(LowBoundInds,3)));
+   MeanHighBound = mean(cell2mat(BlockPerfs(~LowBoundInds,3)));
+   text(median(SessFreqOcts)+0.1,0.2,num2str(MeanHighBound-MeanLowBound,'AvgBoundDiff=%.3f'));
+   xlabel('Octaves');
+   ylabel('Rightward prob.');
+   set(gca,'ylim',[-0.05 1.05]);
+   title(strrep(fn(1:end-4),'_','\_'));
 end
 %%
 saveas(gcf,fullfile(fp,[fn(1:end-4),'_Boundshift_plot']));

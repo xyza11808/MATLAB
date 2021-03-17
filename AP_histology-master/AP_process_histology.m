@@ -13,7 +13,7 @@ function AP_process_histology(im_path,resize_factor,slice_images)
 % Andy Peters (peters.andrew.j@gmail.com)
 
 % Get and sort image files
-im_path_dir = dir([im_path filesep '*.tif*']);
+im_path_dir = dir(fullfile(im_path,'*.tif'));
 im_fn = natsortfiles(cellfun(@(path,fn) [path filesep fn], ...
     {im_path_dir.folder},{im_path_dir.name},'uni',false));
 

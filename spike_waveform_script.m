@@ -1,7 +1,7 @@
 
 % Datafile_path = 'I:\20210104\xy1_20210104_g0\xy1_20210104_g0_imec2\3b2_output';
 Datafile_path = pwd;
-File_name = 'xy1_20210104_g0_t0.imec1.ap.bin';
+File_name = 'AuD_PASSIVE_TEST_g0_t0.imec0.ap.bin';
 
 fullpaths = fullfile(Datafile_path,File_name);
 fileinfo = dir(fullpaths);
@@ -33,7 +33,7 @@ UsedChannelDepth = ChannelDepth(UsedIDs_inds);
 %%
 % ClusterTypes = unique(UsedIDs_clus);
 NumGoodClus = length(UsedIDs_clus);
-
+fprintf('Totally %d number of good units were find.\n',NumGoodClus);
 %%
 close;
 PlotClu = 62;
@@ -172,7 +172,7 @@ for cInds = 1 : Num_sp_inds
     c_clu_sp = SpikeTimes(c_clu_inds);
     [psth_center,psth_data] = st2binfun(c_clu_sp,10,50,TotalTimeLen);
     psth_dataHz = psth_data/(10/1000); % in Hz format
-    SingleUnit_st(cInds,:) = {c_clu_sp,numel(c_clu_sp),psth_dataHz,psth_center};
+    SingleUnit_st(cInds,:) = {c_clu_sp,numel(c_clu_sp)/TotalTimeLen,psth_dataHz,psth_center};
     
 end
 

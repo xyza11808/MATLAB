@@ -24,16 +24,20 @@ slice_im_pad = ...
 
 % Draw line to indicate midline for rotation
 rotation_fig = figure;
-
+%%
 align_axis = nan(2,2,length(slice_im));
+% ImageShowscales = zeros(length(slice_im),2);
 for curr_im = 1:length(slice_im)
     imshow(slice_im_pad(:,:,:,curr_im));
+%     waitfor(imcontrast(hh));
+%     [cmin,cmax] = caxis;
+%     ImageShowscales(curr_im,:) = [cmin,cmax];
     title('Click and drag reference line (e.g. midline)')
     curr_line = imline;
     align_axis(:,:,curr_im) = curr_line.getPosition;  
 end
 close(rotation_fig);
-
+%%
 % NOTE FOR FUTURE: make target angle either vert or horiz for whatever's
 % closest to the average reference? then switch dx vs dy below
 target_angle = 90;
