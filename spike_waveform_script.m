@@ -197,7 +197,43 @@ for cInds = 1 : 10%Num_sp_inds
     plot(UsedSt,cInds*ones(numel(UsedSt),1),'ko','markersize',1);
 end
 
-%%
+%% raw channel waveform plot aligned to trigger times
+% plot trigger time wavefrom of all raw channel datas
+% UsedSPTime = 6;
+TriggerWins = spikeStruct.sample_rate*2/1000;
+TrigVarValues = zeros(length(NPprocess.UsedTrigOnTime),3);
+for UsedSPTime = 1 : length(NPprocess.UsedTrigOnTime)
+    SpikeTimeInds = round(NPprocess.UsedTrigOnTime(UsedSPTime)*spikeStruct.sample_rate);
+    BeforeAfInds = [-0.02,0.05]*spikeStruct.sample_rate;
+    UsedTimeWin = SpikeTimeInds+BeforeAfInds;
+    
+    PlotData = mmf.Data.x(:,UsedTimeWin(1):UsedTimeWin(2));
+     
+    TrigWinIndex = abs(BeforeAfInds(1))+[1,TriggerWins];
+    TrigData = mean(PlotData(1:384,TrigWinIndex(1):TrigWinIndex(2)));
+    
+    BefTrigData = mean(PlotData(1:384,1:(abs(BeforeAfInds(1))-5)));
+    AfTrigData = mean(PlotData(1:384,(TrigWinIndex(2)+5):end));
+    
+    TrigVarValues(UsedSPTime,:) = [var(TrigData),var(BefTrigData),var(AfTrigData)];
+end
+%%     
+UsedSPTime = 352;
+SpikeTimeInds = round(NPprocess.UsedTrigOnTime(UsedSPTime)*spikeStruct.sample_rate);
+    BeforeAfInds = [-0.02,0.05]*spikeStruct.sample_rate;
+    UsedTimeWin = SpikeTimeInds+BeforeAfInds;
+    
+    PlotData = mmf.Data.x(:,UsedTimeWin(1):UsedTimeWin(2));
+
+    figure;
+    hold on
+    plot(PlotData','Color',[.7 .7 .7])
+    yscales = get(gca,'ylim');
+    line([abs(BeforeAfInds(1)) abs(BeforeAfInds(1))],yscales,'Color','m','linewidth',1)
+
+    %
+
+    plot(mean(PlotData(1:384,:)),'k','linewidth',1.8)
 
 
 

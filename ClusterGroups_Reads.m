@@ -6,7 +6,7 @@ if isempty(filepath)
     filepath = pwd;
 end
 if strcmpi(ext,'.tsv')
-    copyfile(fullfile(filepath,filename),fullfile(filepath,[name,'.csv']));
+    copyfile(fullfile(filepath,[name,ext]),fullfile(filepath,[name,'.csv']));
 end
 
 raw = readcell(fullfile(filepath,[name,'.csv']));

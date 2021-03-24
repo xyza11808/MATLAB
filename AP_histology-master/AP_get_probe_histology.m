@@ -91,6 +91,8 @@ switch eventdata.Key
             min(gui_data.curr_slice + 1,length(gui_data.slice_im));
         guidata(gui_fig,gui_data);
         update_slice(gui_fig);
+    case 'e' 
+        
         
     % Number: add coordinates for the numbered probe
     case [cellfun(@num2str,num2cell(1:9),'uni',false),cellfun(@(x) ['numpad' num2str(x)],num2cell(1:9),'uni',false)]
