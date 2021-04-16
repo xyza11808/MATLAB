@@ -36,7 +36,7 @@ NumGoodClus = length(UsedIDs_clus);
 fprintf('Totally %d number of good units were find.\n',NumGoodClus);
 %%
 close;
-PlotClu = 62;
+PlotClu = 2;
 Clu_index = UsedIDs_clus(PlotClu);
 Channel_index = Channel_idUseds(PlotClu);
 SpikeTime_Alls = SpikeTimeSample(SpikeClusters == Clu_index);

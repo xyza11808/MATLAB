@@ -207,13 +207,14 @@ if length(SessFreqTypes) > 3
 end
 SessFreqOcts = log2(SessFreqTypes/min(SessFreqTypes));
 NumFreqs = length(SessFreqTypes);
+BlockStartNotUsedTrs = 0; % number of trals not used after block switch
 if IsBoundshiftSess 
    hf = figure('position',[100 100 400 300]);
    hold on
    NumBlocks = length(BlockSectionInfo.BlockTypes);
    BlockPerfs = cell(NumBlocks,5);
    for cB = 1 : NumBlocks
-       cBScales = BlockSectionInfo.BlockTrScales(cB,:);
+       cBScales = BlockSectionInfo.BlockTrScales(cB,:) + [BlockStartNotUsedTrs,0];
        cBTrFreqs = TrFreqUseds(cBScales(1):cBScales(2));
        cBTrChoices = TrActionChoice(cBScales(1):cBScales(2));
        cBTrPerfs = TrTypes(cBScales(1):cBScales(2)) == cBTrChoices;

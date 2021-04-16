@@ -4,6 +4,10 @@ if ~isfield(behavResults,'BlockType')
     warning('There is no block type filed in current behavior data');
     return;
 end
+if length(unique(behavResults.BlockType)) < 2
+   warning('There is no more than two blocks for current behavior session');
+    return;
+end 
 
 TotalTrNum = numel(behavResults.BlockType);
 BlocktypeIndex = double(behavResults.BlockType(:));
@@ -30,7 +34,7 @@ BlockType_useds(FullBlockTypes < 0) = [];
 BlockStartInds_useds(FullBlockTypes < 0) = [];
 
 BlockLens = [diff(BlockStartInds_useds);TotalTrNum-BlockStartInds_useds(end)+1];
-if BlockLens(end) < 100 % if the last block length is to short
+if BlockLens(end) < 50 % if the last block length is to short
     BlockType_useds(end) = [];
     BlockStartInds_useds(end) = [];
     BlockLens(end) = [];

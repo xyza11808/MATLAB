@@ -63,8 +63,9 @@ gui_data.histology_ax_title = title(gui_data.histology_ax,'','FontSize',14);
 % Initialize probe points
 gui_data.probe_color = lines(gui_data.n_probes);
 gui_data.probe_points_histology = cell(length(gui_data.slice_im),gui_data.n_probes);
+gui_data.probe_Endpoints_histology = cell(length(gui_data.slice_im),gui_data.n_probes);
 gui_data.probe_lines = gobjects(gui_data.n_probes,1);
-
+gui_data.probe_Endpoints = gobjects(gui_data.n_probes,1);
 % Upload gui data
 guidata(gui_fig,gui_data);
 
@@ -77,7 +78,7 @@ function keypress(gui_fig,eventdata)
 
 % Get guidata
 gui_data = guidata(gui_fig);
-
+EndPoint2probmap = {'q','w','e','r','t','y','u','i','o','p'}; % corresponded to 1 to 10 probs
 switch eventdata.Key
     
     % left/right: move slice
@@ -91,7 +92,38 @@ switch eventdata.Key
             min(gui_data.curr_slice + 1,length(gui_data.slice_im));
         guidata(gui_fig,gui_data);
         update_slice(gui_fig);
-    case 'e' 
+    case EndPoint2probmap
+        % add end points for each prob, characters corrsponded to prob nums
+        curr_probe = find(strcmpi(eventdata.Key(end),EndPoint2probmap));
+        if curr_probe > gui_data.n_probes
+           disp(['Probe ' eventdata.Key ' selected, only ' num2str(gui_data.n_probes) ' available']);
+           return
+        end
+        set(gui_data.histology_ax_title,'String',['Click to place end points for prob ' num2str(curr_probe)]);
+        curr_point = impoint;
+        pointConfirm = questdlg('Confirm current point?','confirm click','Yes','No','Yes');
+        if strcmpi(pointConfirm,'Yes')
+            gui_data.probe_Endpoints_histology{gui_data.curr_slice,curr_probe} = ...
+                curr_point.getPosition;
+            set(gui_data.histology_ax_title,'String', ...
+                ['Arrows to move, Number to draw probe [' num2str(1:gui_data.n_probes) '], Esc to save/quit']);
+            
+        else
+            set(gui_data.histology_ax_title,'String', ...
+                ['Arrows to move, Number to draw probe [' num2str(1:gui_data.n_probes) '], Esc to save/quit']);
+            curr_point.delete;
+            return;
+        end
+        
+        % Delete movable points, draw point object
+        curr_point.delete;
+        gui_data.probe_Endpoints(curr_probe) = ...
+            plot(gui_data.probe_Endpoints_histology{gui_data.curr_slice,curr_probe}(1), ...
+            gui_data.probe_Endpoints_histology{gui_data.curr_slice,curr_probe}(2), 'o',...
+            'linewidth',2,'MarkerEdgeColor',[1 0.8 0.2],'MarkerSize',10);
+        
+        % Upload gui data
+        guidata(gui_fig,gui_data);
         
         
     % Number: add coordinates for the numbered probe
@@ -105,16 +137,21 @@ switch eventdata.Key
         
         set(gui_data.histology_ax_title,'String',['Draw probe ' eventdata.Key]);
         curr_line = imline;
-        % If the line is just a click, don't include
-        curr_line_length = sqrt(sum(abs(diff(curr_line.getPosition,[],1)).^2));
-        if curr_line_length == 0
-            return
+        pointConfirm = questdlg('Confirm current line?','confirm click','Yes','No','Yes');
+        if strcmpi(pointConfirm,'Yes') 
+            % If the line is just a click, don't include
+            curr_line_length = sqrt(sum(abs(diff(curr_line.getPosition,[],1)).^2));
+            if curr_line_length == 0
+                return
+            end
+            gui_data.probe_points_histology{gui_data.curr_slice,curr_probe} = ...
+                curr_line.getPosition;
+            set(gui_data.histology_ax_title,'String', ...
+                ['Arrows to move, Number to draw probe [' num2str(1:gui_data.n_probes) '], Esc to save/quit']);
+        else
+            curr_line.delete;
+            return;
         end
-        gui_data.probe_points_histology{gui_data.curr_slice,curr_probe} = ...
-            curr_line.getPosition;
-        set(gui_data.histology_ax_title,'String', ...
-            ['Arrows to move, Number to draw probe [' num2str(1:gui_data.n_probes) '], Esc to save/quit']);
-        
         % Delete movable line, draw line object
         curr_line.delete;
         gui_data.probe_lines(curr_probe) = ...
@@ -135,7 +172,9 @@ switch eventdata.Key
             probe_ccf = struct( ...
                 'points',cell(gui_data.n_probes,1), ...
                 'trajectory_coords',cell(gui_data.n_probes,1), ....
-                'trajectory_areas',cell(gui_data.n_probes,1));
+                'trajectory_areas',cell(gui_data.n_probes,1),...
+                'endpoints',cell(gui_data.n_probes,1),...
+                'EndpointAreas',cell(gui_data.n_probes,1));
             
             % Convert probe points to CCF points by alignment and save                     
             for curr_probe = 1:gui_data.n_probes             
@@ -171,7 +210,34 @@ switch eventdata.Key
                             probe_points_atlas_x(curr_point));
                         probe_ccf(curr_probe).points = ...
                             vertcat(probe_ccf(curr_probe).points,[ccf_ap,ccf_dv,ccf_ml]);
-                    end              
+                    end
+                    
+                    % align end point position to CCF atlas
+                    if ~isempty(gui_data.probe_Endpoints_histology{curr_slice,curr_probe})
+                        % if find endpoint data at current slice
+                        % Transform and round to nearest index
+                        [endpoints_atlas_x,endpoints_atlas_y] = ...
+                            transformPointsForward(tform, ...
+                            gui_data.probe_Endpoints_histology{curr_slice,curr_probe}(1), ...
+                            gui_data.probe_Endpoints_histology{curr_slice,curr_probe}(2));
+
+                        endpoints_atlas_x = round(endpoints_atlas_x);
+                        endpoints_atlas_y = round(endpoints_atlas_y);
+                        
+                        ccf_ap_ed = gui_data.histology_ccf(curr_slice). ...
+                            plane_ap(endpoints_atlas_y, ...
+                            endpoints_atlas_x);
+                        ccf_ml_ed = gui_data.histology_ccf(curr_slice). ...
+                            plane_ml(endpoints_atlas_y, ...
+                            endpoints_atlas_x);
+                        ccf_dv_ed = gui_data.histology_ccf(curr_slice). ...
+                            plane_dv(endpoints_atlas_y, ...
+                            endpoints_atlas_x);
+                        probe_ccf(curr_probe).endpoints = ...
+                            [ccf_ap_ed,ccf_dv_ed,ccf_ml_ed];
+                        
+                    end
+                    
                 end
                 
                 % Sort probe points by DV (probe always top->bottom)
@@ -186,6 +252,7 @@ switch eventdata.Key
                 % Get best fit line through points as probe trajectory
                 r0 = mean(probe_ccf(curr_probe).points,1);
                 xyz = bsxfun(@minus,probe_ccf(curr_probe).points,r0);
+                Endxyz = probe_ccf(curr_probe).endpoints - r0;
                 [~,~,V] = svd(xyz,0);
                 histology_probe_direction = V(:,1);
                 % (make sure the direction goes down in DV - flip if it's going up)
@@ -195,8 +262,8 @@ switch eventdata.Key
                 
                 line_eval = [-1000,1000];
                 probe_fit_line = bsxfun(@plus,bsxfun(@times,line_eval',histology_probe_direction'),r0)';
-                
-                % Get the positions of the probe trajectory
+                prob_end_point = round((Endxyz' .*  histology_probe_direction)'+r0);
+                %% Get the positions of the probe trajectory
                 trajectory_n_coords = max(abs(diff(probe_fit_line,[],2)));
                 [trajectory_ap_ccf,trajectory_dv_ccf,trajectory_ml_ccf] = deal( ...
                     round(linspace(probe_fit_line(1,1),probe_fit_line(1,2),trajectory_n_coords)), ...
@@ -216,8 +283,9 @@ switch eventdata.Key
                     trajectory_coords(:,1),trajectory_coords(:,2),trajectory_coords(:,3));
                 
                 trajectory_areas_uncut = gui_data.av(trajectory_coords_idx)';
+                Traj_end_area = gui_data.av(prob_end_point(1),prob_end_point(2),prob_end_point(3));
                 
-                % Get rid of NaN's and start/end 1's (non-parsed)
+                %% Get rid of NaN's and start/end 1's (non-parsed)
                 trajectory_areas_parsed = find(trajectory_areas_uncut > 1);
                 use_trajectory_areas = trajectory_areas_parsed(1): ...
                     trajectory_areas_parsed(end);
@@ -225,7 +293,8 @@ switch eventdata.Key
                 
                 probe_ccf(curr_probe).trajectory_coords = double(trajectory_coords(use_trajectory_areas,:));
                 probe_ccf(curr_probe).trajectory_areas = double(trajectory_areas);
-                
+                probe_ccf(curr_probe).trajectory_Ends = prob_end_point;
+                probe_ccf(curr_probe).EndpointAreas = Traj_end_area;
             end
             
             % Save probe CCF points
@@ -273,7 +342,7 @@ end
 
 function plot_probe(gui_data,probe_ccf)
 
-% Plot probe trajectories
+%% Plot probe trajectories
 figure('Name','Probe trajectories');
 axes_atlas = axes;
 [~, brain_outline] = plotBrainGrid([],axes_atlas);
@@ -288,9 +357,9 @@ ylim([-10,ml_max+10])
 zlim([-10,dv_max+10])
 h = rotate3d(gca);
 h.Enable = 'on';
-
+%%
 for curr_probe = 1:length(probe_ccf)
-    % Plot points and line of best fit
+    %% Plot points and line of best fit
     r0 = mean(probe_ccf(curr_probe).points,1);
     xyz = bsxfun(@minus,probe_ccf(curr_probe).points,r0);
     [~,~,V] = svd(xyz,0);
@@ -302,12 +371,18 @@ for curr_probe = 1:length(probe_ccf)
     
     line_eval = [-1000,1000];
     probe_fit_line = bsxfun(@plus,bsxfun(@times,line_eval',histology_probe_direction'),r0);
+    probe_fit_endpoint = ((probe_ccf(curr_probe).trajectory_Ends - r0)' .* histology_probe_direction) + r0';
     plot3(probe_ccf(curr_probe).points(:,1), ...
         probe_ccf(curr_probe).points(:,3), ...
         probe_ccf(curr_probe).points(:,2), ...
         '.','color',gui_data.probe_color(curr_probe,:),'MarkerSize',20);
+    plot3(probe_fit_endpoint(1),...
+        probe_fit_endpoint(3),...
+        probe_fit_endpoint(2),...
+        'o','MarkerEdgeColor','r','MarkerFaceColor',[1 0.7 0.2],'MarkerSize',20,'linewidth',4);
     line(probe_fit_line(:,1),probe_fit_line(:,3),probe_fit_line(:,2), ...
-        'color',gui_data.probe_color(curr_probe,:),'linewidth',2)
+        'color',gui_data.probe_color(curr_probe,:),'linewidth',2);
+    
 end
 
 % Plot probe areas
@@ -323,7 +398,7 @@ for curr_probe = 1:length(probe_ccf)
         [1;find(diff(probe_ccf(curr_probe).trajectory_areas) ~= 0);length(probe_ccf(curr_probe).trajectory_areas)];    
     trajectory_area_centers = trajectory_area_boundaries(1:end-1) + diff(trajectory_area_boundaries)/2;
     trajectory_area_labels = gui_data.st.safe_name(probe_ccf(curr_probe).trajectory_areas(round(trajectory_area_centers)));
-      
+    
     image(probe_ccf(curr_probe).trajectory_areas);
     colormap(curr_axes,cmap);
     caxis([1,size(cmap,1)])

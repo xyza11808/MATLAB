@@ -170,7 +170,7 @@ classdef NPspikeDataMining
             trigLen = trigTime_ms/1000*obj.SpikeStrc.sample_rate;
             TrigWaveAll_lens = TrigwaveScales(:,2) - TrigwaveScales(:,1);
             
-            TrigWaveAll_lensEquals = abs(TrigWaveAll_lens - trigLen) < 2;
+            TrigWaveAll_lensEquals = abs(TrigWaveAll_lens - trigLen) < trigTime_ms;
             
             obj.UsedTrigOnTime = TrigwaveScales(TrigWaveAll_lensEquals,1)/obj.SpikeStrc.sample_rate+trigTime_ms/1000; % in seconds
             fprintf('Totally %d number of triggers were detected.\n',length(obj.UsedTrigOnTime));
@@ -282,7 +282,7 @@ classdef NPspikeDataMining
             if isempty(obj.TrTrigSpikeTimes)
                 obj = TrigPSTH(obj,[],[]);
             end
-            if size(EventsDelay) == 1
+            if size(EventsDelay,1) == 1
                 EventsDelay = EventsDelay';
             end
             if size(obj.TrTrigSpikeTimes,2) ~= size(EventsDelay,1)
@@ -590,7 +590,7 @@ classdef NPspikeDataMining
         end
         
         
-        function EventsPSTHplot(obj,EventsDelay,AlignEvent,RepeatTypes,RepeatStr)
+        function EventsPSTHplot(obj,EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors)
             % EventsDelay should be a n-by-p matrix, in milisecond format. n is the number of
             % trials, which should be the same as trigger number; p is the
             % number of events types. for example, the passive listening
@@ -602,7 +602,9 @@ classdef NPspikeDataMining
             % event
             
             % RepeatTypes is the repeat values for different trials, which
-            % should includes stimulus or stimulus and choices
+            % should includes stimulus or stimulus and choices.
+            
+            % EventColors indicates the plot color for each events
             
             if isempty(obj.TrigData_Bin) || isempty(obj.UsedTrigOnTime) 
                 obj = TrigPSTH(obj,[],[]);
@@ -613,24 +615,30 @@ classdef NPspikeDataMining
             if length(obj.UsedTrigOnTime) ~= size(EventsDelay,1)
                 error('The input event size isn''t fit with trigger event numbers.');
             end
+            if size(EventsDelay,2) ~= length(EventColors)
+                error('Event column number is different from dscription color str numbers.');
+            end
             if isempty(AlignEvent)
                 AlignEvent = 1;
             end
             if AlignEvent > size(EventsDelay,2)
                 error('The aligned event index (%d) should less than total events types (%d).',AlignEvent,size(EventsDelay,2));
             end
-            
+            RepeatDespStr = RepeatStr;
+            EventDespStrs = EventColors(1,:);
+            EventPlotColors = EventColors(2,:);
             % after trigget event bin
             BinWidth = obj.USedbin(2);
             EventBinLength = ceil((EventsDelay/1000)/BinWidth);
             
             % sort and align the binned data according to the event times
-            SMBinDataMtx = permute(cat(3,obj.TrigData_Bin{:,2}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+            SMBinDataMtx = permute(cat(3,obj.TrigData_Bin{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
             [TrNum, unitNum, BinNum] = size(SMBinDataMtx);
             AlignedEvents = EventBinLength(:,AlignEvent);
             TrShifts = AlignedEvents - min(AlignedEvents); % bin number to be shifted for each trial
             AllEvent_shifts = EventBinLength - repmat(TrShifts,1,size(EventBinLength,2)); % All event shifts according to aligned event
-            
+            NumPlotEvents = size(AllEvent_shifts,2);
+            %%
             UsedBinLength = min(AlignedEvents) + BinNum - max(AlignedEvents);
             if size(EventBinLength,2) == 1
                 % no need to sort the original trial sequence
@@ -651,7 +659,7 @@ classdef NPspikeDataMining
                     [~,SortEventInds] = sort(SortEvents);
                     AlignedSortDatas = AlignedData(SortEventInds,:,:);
                     AlignedEventOnBin = min(AlignedEvents);
-                    AlignSortEventsBin = AllEvent_shifts;
+                    AlignSortEventsBin = AllEvent_shifts(SortEventInds,:);
                 elseif AlignEvent == 2 % choice align or sound offset align, sorted by the first events
                     SortEvents = max(0,AllEvent_shifts(:,2) - AllEvent_shifts(:,1));
                     AlignedData = zeros(TrNum, unitNum, UsedBinLength);
@@ -661,7 +669,7 @@ classdef NPspikeDataMining
                     [~,SortEventInds] = sort(SortEvents);
                     AlignedSortDatas = AlignedData(SortEventInds,:,:);
                     AlignedEventOnBin = min(AlignedEvents);
-                    AlignSortEventsBin = AllEvent_shifts;
+                    AlignSortEventsBin = AllEvent_shifts(SortEventInds,:);
                 else
                     SortEvents = max(0,AllEvent_shifts(:,AlignEvent) - AllEvent_shifts(:,1));
                     AlignedData = zeros(TrNum, unitNum, UsedBinLength);
@@ -671,12 +679,12 @@ classdef NPspikeDataMining
                     [~,SortEventInds] = sort(SortEvents);
                     AlignedSortDatas = AlignedData(SortEventInds,:,:);
                     AlignedEventOnBin = min(AlignedEvents);
-                    AlignSortEventsBin = AllEvent_shifts;
+                    AlignSortEventsBin = AllEvent_shifts(SortEventInds,:);
                 end
                 
             end
             SortRepeats = RepeatTypes(SortEventInds,:);
-            
+            %%
             if size(RepeatTypes,2) == 2
                 SegNums = 2;
                 Seg1_types = unique(SortRepeats(:,1));
@@ -686,36 +694,194 @@ classdef NPspikeDataMining
                     warning('Two much segments for the second repeat type, the figure will be too large to be displayed.\n');
                     return;
                 end
+                % calculate the segments inds
+                SegTypeInds = cell(numel(Seg1_types),numel(Seg2_types));
+                for cSeg1 = 1 : numel(Seg1_types)
+                    for cSeg2 = 1:numel(Seg2_types)
+                        SegTypeInds{cSeg1,cSeg2} = find(SortRepeats(:,1) == Seg1_types(cSeg1) & ...
+                            SortRepeats(:,2) == Seg2_types(cSeg2));
+                    end
+                end
+                
             elseif size(SortRepeats,2) == 1
                 SegNums = 1;
                 Seg1_types = unique(SortRepeats(:,1));
                 Seg2TypeNum = 1;
+                Seg2_types = unique(SortRepeats(:,2));
+                
+                SegTypeInds = cell(numel(Seg1_types),1);
+                for cSeg1 = 1 : numel(Seg1_types)
+                    SegTypeInds{cSeg1,1} = find(SortRepeats(:,1) == Seg1_types(Seg1_types(cSeg1)));
+                end
+                
             else
                 error('Unsupported segments numbers, please check your inputs.');
             end
-            
+            %%
             NumSingleUnits = size(obj.TrigData_Bin,1);
-            for cUnit = 1 : NumSingleUnits
-                cUnitData = squeeze(AlignedSortDatas(cUnit,:,:));
+            xTs = obj.psthTimeWin(1):obj.USedbin(2):(obj.psthTimeWin(2)-obj.USedbin(2));
+            xTs = xTs + obj.USedbin(2)/2; % convert to bin center
+            for cUnit = 18 : NumSingleUnits
+                cUnitData = squeeze(AlignedSortDatas(:,cUnit,:)); % sorted by events time
+                UnitPlotScale = [0 prctile(cUnitData(:),99)];
+                
                 hcf = figure('position',[100 100 1450 300]); %,'visible','off'
-                for c1Seg = 1 : length(Seg1_types) % for stimulus segments
-                    c1SegInds = SortRepeats(:,1) == Seg1_types(c1Seg);
-                    c1SegTypeStr = RepeatStr{1};
+                Seg1TypeNum = length(Seg1_types);
+                for c1Seg = 1 :Seg1TypeNum  % normally stimulus segments
+%                     c1SegInds = SortRepeats(:,1) == Seg1_types(c1Seg);
                     if Seg2TypeNum > 1
                         set(hcf,'position',[100 100 1450 300*Seg2TypeNum]);
                     end
-                    for c2Seg = 1 : Seg2TypeNum % for choice segments
-                        c2Seg_Inds = SortRepeats(:,2) == Seg2_types(c2Seg);
-                        cComSeg_datas = cUnitData(c1SegInds & c2Seg_Inds,:);
-                        cComSeg_Events = 1;
-
+                    for c2Seg = 1 : Seg2TypeNum % normally choice segments
+%                         c2Seg_Inds = SortRepeats(:,2) == Seg2_types(c2Seg);
+                        cComSeg_datas = cUnitData(SegTypeInds{c1Seg,c2Seg},:);
+                        cComSeg_Events = AlignSortEventsBin(SegTypeInds{c1Seg,c2Seg},:);
+                        cComSeg_TrNums = size(cComSeg_Events,1);
+                        
+%                         c2SegTypeStr = RepeatDespStr{2};
+%                         c2SegPlotColor = EventPlotColors{2};
+                        %
+                        ax = subplot(Seg2TypeNum,Seg1TypeNum,(c2Seg-1)*Seg1TypeNum+c1Seg);
+                        hold on
+                        imagesc(ax,xTs,1:cComSeg_TrNums,cComSeg_datas,UnitPlotScale);
+                        if c1Seg == 1 && c2Seg == 1
+                           hlAll = []; 
+                        end
+                        for cEvent = 1 : NumPlotEvents
+                           % plot all events
+                           cEventBins = (cComSeg_Events(:,cEvent))'* BinWidth;
+                           PlotMtx_x = [cEventBins;cEventBins;nan(1,cComSeg_TrNums)];
+                           Plot_x = PlotMtx_x(:);
+                           PlotMtx_y = [(1:cComSeg_TrNums)-0.5;(1:cComSeg_TrNums)+0.5;nan(1,cComSeg_TrNums)];
+                           Plot_y = PlotMtx_y(:);
+                           hl = plot(ax,Plot_x,Plot_y,'Color',EventPlotColors{cEvent},'linewidth',1.2);
+                           if c1Seg == 1 && c2Seg == 1
+                               hlAll = [hlAll,hl]; 
+                            end
+                        end
+                        set(ax,'xlim',obj.psthTimeWin,'ylim',[0.5 cComSeg_TrNums+0.5]);
+                        set(ax,'YDir','reverse');
+                        %
+                        if c1Seg == 1
+                           ylabel(ax,sprintf('%d\n # Trials',Seg2_types(c2Seg))); 
+                        end
+                        if c2Seg == Seg2TypeNum
+                            xlabel(ax,'Times(s)');
+                        end
+                        if c2Seg == 1
+                           title(sprintf('%d',Seg1_types(c1Seg))); 
+                        end
+                        if c1Seg == Seg1TypeNum && c2Seg == Seg2TypeNum
+                           haxisPos = get(ax,'position');
+                           hbar = colorbar;
+                           cBarPos = get(hbar,'position');
+                           set(hbar,'position',cBarPos+[0.05 0 cBarPos(3)*2 0.1*cBarPos(4)]);
+                           set(ax,'position',haxisPos);
+                           
+                           leg = legend(hlAll,EventDespStrs,'location','Southwest','box','off');
+                           oldLegPos = get(leg,'position');
+                           set(leg,'position',[0.02 0.05 oldLegPos(3) oldLegPos(4)]);
+                        end
+                        
                     end
                     
                 end
+                annotation(hcf,'textbox',[0.475,0.68,0.3,0.3],'String',sprintf('Unit %d, Chn %d',...
+                    obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit)),'FitBoxToText','on','EdgeColor',...
+                       'none','FontSize',12);
+              %%
+                % add a mean trace plot for current unit, aligned to
+                % aligned event time
+                hMeanf = figure('position',[100 100 1450 300],'visible','off'); %,'visible','off'
+                yaxisScales = zeros(Seg1TypeNum,2);
+                hlAlls = [];
+                TraceAxess = [];
+                for cSeg1Inds = 1 :Seg1TypeNum  % normally stimulus segments
+                    ax = subplot(1,Seg1TypeNum,cSeg1Inds);
+                    hold on;
+                    TraceColors = jet(Seg2TypeNum);
+                    SegMeanTraces = cell(Seg1TypeNum,Seg2TypeNum,2);
+                    for cSeg2Inds = 1 : Seg2TypeNum
+                        cComSeg_datas = cUnitData(SegTypeInds{cSeg1Inds,cSeg2Inds},:);
+                        cComNums = size(cComSeg_datas,1);
+                        if cComNums > 2
+                            SegTraceMean = (mean(cComSeg_datas));
+                            SegTraceSem = (std(cComSeg_datas)/sqrt(cComNums));
+                            
+                            patch_x = [xTs,fliplr(xTs)];
+                            patch_y = [SegTraceMean-SegTraceSem,fliplr(SegTraceMean+SegTraceSem)];
+                            patch(ax,patch_x,patch_y,1,'FaceColor',[.8 .8 .8],'EdgeColor','none');
+                            
+                            hl = plot(ax,xTs,SegTraceMean,'Color',TraceColors(cSeg2Inds,:),'linewidth',1);
+                            if cSeg1Inds == 1
+                                hlAlls = [hlAlls,hl];
+                            end
+                            
+                        else
+                            SegTraceMean = NaN;
+                            SegTraceSem = NaN;
+                        end
+                        SegMeanTraces{cSeg1Inds,cSeg2Inds,1} = SegTraceMean;
+                        SegMeanTraces{cSeg1Inds,cSeg2Inds,2} = SegTraceSem;
+                        
+                    end
+                    yaxisScales(cSeg1Inds,:) = get(ax,'ylim');
+                    TraceAxess = [TraceAxess,ax];
+                    if cSeg1Inds == 1
+                        ylabel(sprintf('Unit %d, Chn %d',obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit)));
+                    else
+                       set(ax,'yticklabel',{}); 
+                    end
+                    if cSeg1Inds == Seg1TypeNum
+                        legend(ax,hlAlls,EventDespStrs,'location','northeast','box','off','autoupdate','off');
+                    end
+                end
+                
+                CommonYScales = [max(min(yaxisScales(:,1)),0),max(yaxisScales(:,2))];
+                for cSeg1Inds = 1 :Seg1TypeNum
+                   
+                   set(TraceAxess(cSeg1Inds),'ylim',CommonYScales); 
+                   line(TraceAxess(cSeg1Inds),[AlignedEventOnBin,AlignedEventOnBin]*BinWidth,...
+                       CommonYScales,'Color','k','linewidth',0.8,'linestyle','--'); 
+                end
+                annotation(hMeanf,'textbox',[0.50,0.71,0.3,0.3],'String',sprintf('Unit %d, Chn %d',...
+                    obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit)),'FitBoxToText','on','EdgeColor',...
+                       'none','FontSize',12);
+                
+            %
+                 if ~isdir(fullfile(obj.ksFolder,'EventAlignPlot'))
+                     mkdir(fullfile(obj.ksFolder,'EventAlignPlot'));
+                 end
+                 cd(fullfile(obj.ksFolder,'EventAlignPlot'));
+                 ColorSaveName = sprintf('Unit%3d Eventaligned color plots',obj.UsedClus_IDs(cUnit));
+                 saveas(hcf,ColorSaveName);
+                 saveas(hcf,ColorSaveName,'png');
+                 set(hcf,'paperpositionmode','manual');
+                 print(hcf,'-dpdf',ColorSaveName,'-painters');
+
+                 AvgSaveName = sprintf('Unit%3d Eventaligned meantrace plots',obj.UsedClus_IDs(cUnit));
+                 saveas(hMeanf,AvgSaveName);
+                 saveas(hMeanf,AvgSaveName,'png');
+                 set(hMeanf,'paperpositionmode','manual');
+                 print(hMeanf,'-dpdf',AvgSaveName,'-painters');
+
+                 close(hcf);
+                 close(hMeanf);
             end
             
             
         end
+        
+        function obj = SpikeWaveFeature(obj,varargins)
+            % function used to analysis single unit waveform features
+            % the wave form features may includes firerate, peak-to-trough
+            % width, refraction peak and so on
+            
+            
+            
+        end
+        
+        
     end
     
 end
