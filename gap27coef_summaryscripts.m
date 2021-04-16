@@ -26,11 +26,19 @@ for cpInds = 1 : NumPaths
 end
 
 %%
-EPSC_BF_rcoefs = cellfun(@(x) x.rMaxCoef,GroupEPSCDatas(:,1));
-EPSC_BF_rSICcoefs = cellfun(@(x) x.rMaxCoefSIC,GroupEPSCDatas(:,1));
+WTInds = cellfun(@isempty,GroupEPSCDatas(:,2)); % WT data inds
+EPSC_BF_rcoefs = cellfun(@(x) x.rMaxCoef,GroupEPSCDatas(~WTInds,1));
+EPSC_BF_rSICcoefs = cellfun(@(x) x.rMaxCoefSIC,GroupEPSCDatas(~WTInds,1));
+EPSC_BF_rSICSubCoef = cellfun(@(x) x.rMaxCoefSICRm,GroupEPSCDatas(~WTInds,1));
 
-EPSC_AF_rcoefs = cellfun(@(x) x.rMaxCoef,GroupEPSCDatas(:,2));
-EPSC_AF_rSICcoefs = cellfun(@(x) x.rMaxCoefSIC,GroupEPSCDatas(:,2));
+EPSC_AF_rcoefs = cellfun(@(x) x.rMaxCoef,GroupEPSCDatas(~WTInds,2));
+EPSC_AF_rSICcoefs = cellfun(@(x) x.rMaxCoefSIC,GroupEPSCDatas(~WTInds,2));
+EPSC_AF_rSICSubCoef = cellfun(@(x) x.rMaxCoefSICRm,GroupEPSCDatas(~WTInds,2));
+
+WT_EPSC_rcoef = cellfun(@(x) x.rMaxCoef,GroupEPSCDatas(WTInds,1));
+WT_EPSC_rSICSubcoef = cellfun(@(x) x.rMaxCoefSICRm,GroupEPSCDatas(WTInds,1));
+
+%%
 
 EPSCr_AB_coefs = [EPSC_BF_rcoefs,EPSC_AF_rcoefs];
 [~,EPSCr_p] = ttest(EPSC_BF_rcoefs,EPSC_AF_rcoefs);
@@ -91,4 +99,47 @@ for cpInds = 1 : NumPaths
     clearvars TextInfo
     
 end
+
+%% ranksum test
+[EPSC_BF_ry,EPSC_BF_rx] = ecdf(EPSC_BF_rcoefs);
+[EPSC_BF_rSICRMy,EPSC_BF_rSICRMx] = ecdf(EPSC_BF_rSICSubCoef);
+
+[EPSC_AF_ry,EPSC_AF_rx] = ecdf(EPSC_AF_rcoefs);
+[EPSC_AF_rSICRMy,EPSC_AF_rSICRMx] = ecdf(EPSC_AF_rSICSubCoef);
+
+[EPSC_WT_ry,EPSC_WT_rx] = ecdf(WT_EPSC_rcoef);
+[EPSC_WT_rSICRMy,EPSC_WT_rSICRMx] = ecdf(WT_EPSC_rSICSubcoef);
+
+Colors = {'k','r','b'};
+hf = figure('position',[100 100 420 340]);
+hold on
+hl1 = plot(EPSC_BF_rx,EPSC_BF_ry,'Color',Colors{1},'linewidth',1.5);
+hl2 = plot(EPSC_BF_rSICRMx,EPSC_BF_rSICRMy,'Color',Colors{1},...
+    'linewidth',1.5,'linestyle','--');
+hl3 = plot(EPSC_AF_rx,EPSC_AF_ry,'Color',Colors{2},'linewidth',1.5);
+% hl4 = plot(EPSC_AF_rSICRMx,EPSC_AF_rSICRMy,'Color',Colors{2},...
+%     'linewidth',1.5,'linestyle','--');
+hl5 = plot(EPSC_WT_rx,EPSC_WT_ry,'Color',Colors{3},'linewidth',1.5);
+hl6 = plot(EPSC_WT_rSICRMx,EPSC_WT_rSICRMy,'Color',Colors{3},...
+    'linewidth',1.5,'linestyle','--');
+
+legend([hl1,hl2,hl3,hl5,hl6],{'TGBFr','TGBFSICsub','TGAFr','WTr','WTSICsub'},...
+    'location','southeast','box','off');
+xlabel('correlation coefficient');
+ylabel('fraction');
+
+pvalues = struct();
+pvalues.EPSC_AFr_BFr_P = ranksum(EPSC_BF_rcoefs,EPSC_AF_rcoefs);
+pvalues.EPSC_AFr_AFrsub_P = ranksum(EPSC_AF_rSICSubCoef,EPSC_AF_rcoefs);
+pvalues.EPSC_BFr_BFrsub_P = ranksum(EPSC_BF_rSICSubCoef,EPSC_BF_rcoefs);
+pvalues.EPSC_AFrsub_BFrsub_P = ranksum(EPSC_BF_rSICSubCoef,EPSC_AF_rSICSubCoef);
+pvalues.EPSC_AFr_BFrsub_P = ranksum(EPSC_BF_rSICSubCoef,EPSC_AF_rcoefs);
+pvalues.EPSC_BFr_wtr_P = ranksum(EPSC_BF_rcoefs,WT_EPSC_rcoef);
+pvalues.EPSC_BFrsub_wtrsub_P = ranksum(EPSC_BF_rSICSubCoef,WT_EPSC_rSICSubcoef);
+
+
+%%
+saveas(gcf, 'EPSC_cumuplot_save');
+saveas(gcf, 'EPSC_cumuplot_save','png');
+saveas(gcf, 'EPSC_cumuplot_save','pdf');
 

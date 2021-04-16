@@ -42,8 +42,8 @@ else
         error('Invalid input handle');
     end
 end
-TextUppSacle = 0.1;
-LineUpperScale = 0.1;
+TextUppSacle = 0.15;
+LineUpperScale = 0.02;
 StarLineWidth = 1;
 if p > 0.05
     Plotx = x;
@@ -70,7 +70,8 @@ elseif p > 0.01
 %     plot([Plotx(2),Plotx(2)],[Ploty, Ploty - PlotyTickLen],'k','LineWidth',2);
     StarPosx = mean(x);
     StarPosy = Ploty + max(y)*TextUppSacle;
-    plot(StarPosx,StarPosy,'k*','MarkerSize',MarkSize,'Linewidth',StarLineWidth);
+%     plot(StarPosx,StarPosy,'k*','MarkerSize',MarkSize,'Linewidth',StarLineWidth);
+    text(StarPosx,StarPosy,sprintf('p = %.4f',p),'HorizontalAlignment','center');
 elseif p > 0.001
     Plotx = x;
     Ploty = max(y)*yScaleFactor;
@@ -84,7 +85,8 @@ elseif p > 0.001
     InterspaceInds = linspace(x(1),x(2),8);
 %     StarPosy = max(y)*yScaleFactor;
     StarPosy = Ploty + max(y)*TextUppSacle;
-    plot(InterspaceInds([4,5]),[StarPosy StarPosy],'k*','MarkerSize',MarkSize,'Linewidth',StarLineWidth);
+%     plot(InterspaceInds([4,5]),[StarPosy StarPosy],'k*','MarkerSize',MarkSize,'Linewidth',StarLineWidth);
+    text(mean(x),StarPosy,sprintf('p = %.3e',p),'HorizontalAlignment','center');
 else
     Plotx = x;
     Ploty = max(y)*yScaleFactor;
@@ -98,5 +100,6 @@ else
     InterspaceInds = linspace(x(1),x(2),9);
 %     StarPosy = max(y)*yScaleFactor;
     StarPosy = Ploty + max(y)*TextUppSacle;
-    plot(InterspaceInds([4,5,6]),[StarPosy StarPosy StarPosy],'k*','MarkerSize',MarkSize,'Linewidth',StarLineWidth);
+%     plot(InterspaceInds([4,5,6]),[StarPosy StarPosy StarPosy],'k*','MarkerSize',MarkSize,'Linewidth',StarLineWidth);
+    text(mean(x),StarPosy,sprintf('p = %.3e',p),'HorizontalAlignment','center');
 end

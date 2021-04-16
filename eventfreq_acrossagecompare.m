@@ -256,13 +256,16 @@ for cp = 1 : NumPlots
         std(Tg_NEU_Das(:,1))/sqrt(Plotfieldnums(2)),...
         std(WT_AST_Das(:,1))/sqrt(Plotfieldnums(3)),...
         std(Tg_AST_Das(:,1))/sqrt(Plotfieldnums(4))];
+    AllDatas = {WT_NEU_Das(:,1),Tg_NEU_Das(:,1),WT_AST_Das(:,1),Tg_AST_Das(:,1)};
     
-    
-    [~,Neu_p] = ttest2(WT_NEU_Das(:,1),Tg_NEU_Das(:,1),'Vartype','unequal');
-    [~,Ast_p] = ttest2(WT_AST_Das(:,1),Tg_AST_Das(:,1),'Vartype','unequal');
+%     [~,Neu_p] = ttest2(WT_NEU_Das(:,1),Tg_NEU_Das(:,1));
+%     [~,Ast_p] = ttest2(WT_AST_Das(:,1),Tg_AST_Das(:,1));
+    Neu_p = ranksum(WT_NEU_Das(:,1),Tg_NEU_Das(:,1));
+    Ast_p = ranksum(WT_AST_Das(:,1),Tg_AST_Das(:,1));
     
     for ccp = 1 : 4
         bar(ccp,PlotAvgs(ccp),0.6,'edgecolor','none','Facecolor',colors{ccp});
+        plot((rand(Plotfieldnums(ccp),1)-0.5)*0.2+ccp,AllDatas{ccp},'ko','MarkerSize',4);
     end
     errorbar(1:4,PlotAvgs,PlotSEMs,'k.','Marker','none','linewidth',1.2);
     
@@ -475,23 +478,29 @@ M4dataStrc = load('M4fieldwiseAmpData.mat');
 
 %%
 % wt datas
-[p12_wt_Neu_Ampdats,p12_wt_Ast_Ampdats] = cellfun(@(x,y) fieldwiseAmpCalFun(x,y),...
+[p12_wt_Neu_Ampdats,p12_wt_Ast_Ampdats,p12_wt_NeuAllAmp,p12_wt_AstAllAmp] ...
+    = cellfun(@(x,y) fieldwiseAmpCalFun(x,y),...
     p12dataStrc.WT_EventPeak_Alls,...
     p12dataStrc.WTSess_EventData_all(:,2),'UniformOutput',false);
-[p18_wt_Neu_Ampdats,p18_wt_Ast_Ampdats] = cellfun(@(x,y) fieldwiseAmpCalFun(x,y),...
+[p18_wt_Neu_Ampdats,p18_wt_Ast_Ampdats,p18_wt_NeuAllAmp,p18_wt_AstAllAmp] ...
+    = cellfun(@(x,y) fieldwiseAmpCalFun(x,y),...
     p18dataStrc.WT_EventPeak_Alls,...
     p18dataStrc.WTSess_EventData_all(:,2),'UniformOutput',false);
-[M4_wt_Neu_Ampdats,M4_wt_Ast_Ampdats] = cellfun(@(x,y) fieldwiseAmpCalFun(x,y),...
+[M4_wt_Neu_Ampdats,M4_wt_Ast_Ampdats,M4_wt_NeuAllAmp,M4_wt_AstAllAmp] ...
+    = cellfun(@(x,y) fieldwiseAmpCalFun(x,y),...
     M4dataStrc.WT_EventPeak_Alls,...
     M4dataStrc.WTSess_EventData_all(:,2),'UniformOutput',false);
 % tg datas
-[p12_tg_Neu_Ampdats,p12_tg_Ast_Ampdats] = cellfun(@(x,y) fieldwiseAmpCalFun(x,y),...
+[p12_tg_Neu_Ampdats,p12_tg_Ast_Ampdats,p12_tg_NeuAllAmp,p12_tg_AstAllAmp] ...
+    = cellfun(@(x,y) fieldwiseAmpCalFun(x,y),...
     p12dataStrc.Tg_EventPeak_Alls,...
     p12dataStrc.TgSess_EventData_all(:,2),'UniformOutput',false);
-[p18_tg_Neu_Ampdats,p18_tg_Ast_Ampdats] = cellfun(@(x,y) fieldwiseAmpCalFun(x,y),...
+[p18_tg_Neu_Ampdats,p18_tg_Ast_Ampdats,p18_tg_NeuAllAmp,p18_tg_AstAllAmp] ...
+    = cellfun(@(x,y) fieldwiseAmpCalFun(x,y),...
     p18dataStrc.Tg_EventPeak_Alls,...
     p18dataStrc.TgSess_EventData_all(:,2),'UniformOutput',false);
-[M4_tg_Neu_Ampdats,M4_tg_Ast_Ampdats] = cellfun(@(x,y) fieldwiseAmpCalFun(x,y),...
+[M4_tg_Neu_Ampdats,M4_tg_Ast_Ampdats,M4_tg_NeuAllAmp,M4_tg_AstAllAmp] ...
+    = cellfun(@(x,y) fieldwiseAmpCalFun(x,y),...
     M4dataStrc.Tg_EventPeak_Alls,...
     M4dataStrc.TgSess_EventData_all(:,2),'UniformOutput',false);
 
@@ -616,5 +625,126 @@ saveas(hcf,'Same type across age amplitude compare fieldwise');
 saveas(hcf,'Same type across age amplitude compare fieldwise','png');
 saveas(hcf,'Same type across age amplitude compare fieldwise','pdf');
 
+%% same genotype compare between ages box plot
+% bet age compare plots
+% ######
+% AstUsedStrs = {'p12_wt_Ast','p18_wt_Ast','M4_wt_Ast','p12_tg_Ast','p18_tg_Ast','M4_tg_Ast'};
+% NeuUsedStrs = {'p12_wt_Neu','p18_wt_Neu','M4_wt_Neu','p12_tg_Neu','p18_tg_Neu','M4_tg_Neu'};
+% NPlots = length(NeuUsedStrs);
+% TypeColors = {'k',[.3 .3 .3],[.6 .6 .6],'r',[1 0.8 0.3],[0.7 0.4 0.1]};
+% ######
+AstUsedStrs = {'p12_wt_Ast','p12_tg_Ast','p18_wt_Ast','p18_tg_Ast','M4_wt_Ast','M4_tg_Ast'};
+NeuUsedStrs = {'p12_wt_Neu','p12_tg_Neu','p18_wt_Neu','p18_tg_Neu','M4_wt_Neu','M4_tg_Neu'};
+NPlots = length(NeuUsedStrs);
+TypeColors = {'k','r',[.3 .3 .3],[1 0.8 0.3],[.6 .6 .6],[0.7 0.4 0.1]};
+
+
+hls = [];
+NeuDataANDInds = [];
+AstDataANDInds = [];
+hcf = figure('position',[100 100 780 320]);
+ax1 = subplot(121);
+hold on;
+ax2 = subplot(122);
+hold on;
+for csub = 1 : NPlots
+    
+    
+    eval(['Neu_Das = ',NeuUsedStrs{csub},'AllAmp;']);% All ROI amp datas
+    eval(['Ast_Das = ',AstUsedStrs{csub},'AllAmp;']);
+    
+    eval(['NeuAvg_Das = ',NeuUsedStrs{csub},'_AmpMtx;']);% field averaged amp datas
+    eval(['AstAvg_Das = ',AstUsedStrs{csub},'_AmpMtx;']);
+    
+    [NeuAmpData, NeuAmpBins, NeuAmpBinCenters] = ...
+        AmpValue2Bins(Neu_Das,0.2,3);
+    [AstAmpData, AstAmpBins, AstAmpBinCenters] = ...
+        AmpValue2Bins(Ast_Das,0.2,3);
+    
+    NeuAmpDataMtx = cell2mat(NeuAmpData(:,1));
+    NeuAmpAvg = mean(NeuAmpDataMtx,'omitnan');
+    NeuAmpSEM = std(NeuAmpDataMtx,'omitnan')./sqrt(sum(~isnan(NeuAmpDataMtx)));
+    Neupatch_x = [NeuAmpBinCenters,fliplr(NeuAmpBinCenters)];
+    Neupatch_y = [NeuAmpAvg - NeuAmpSEM*0.4,fliplr(NeuAmpAvg + NeuAmpSEM*0.4)];
+    
+    AstAmpDataMtx = cell2mat(AstAmpData(:,1));
+    AstAmpAvg = mean(AstAmpDataMtx,'omitnan');
+    AstAmpSEM = std(AstAmpDataMtx,'omitnan')./sqrt(sum(~isnan(AstAmpDataMtx)));
+    Astpatch_x = [AstAmpBinCenters,fliplr(AstAmpBinCenters)];
+    Astpatch_y = [AstAmpAvg - AstAmpSEM*0.4,fliplr(AstAmpAvg + AstAmpSEM*0.4)];
+    
+    patch(ax1,Neupatch_x,Neupatch_y,1,'EdgeColor','none','FaceColor',[.8 .8 .8],'facealpha',0.4);
+    patch(ax2,Astpatch_x,Astpatch_y,1,'EdgeColor','none','FaceColor',[.8 .8 .8],'facealpha',0.4);
+    
+    
+%     Neu_DataVec = cell2mat(Neu_Das);
+%     Ast_DataVec = cell2mat(Ast_Das);
+%     [Neu_y,Neu_x] = ecdf(Neu_DataVec);
+%     [Ast_y,Ast_x] = ecdf(Ast_DataVec);
+    
+    hl = plot(ax1,NeuAmpBinCenters,NeuAmpAvg,'Color',TypeColors{csub},'linewidth',1.4);
+    plot(ax2,AstAmpBinCenters,AstAmpAvg,'Color',TypeColors{csub},'linewidth',1.4);
+    hls = [hls,hl];
+%     hl = plot(ax1,Neu_x,Neu_y,'Color',TypeColors{csub},'linewidth',1.4);
+%     plot(ax2,Ast_x,Ast_y,'Color',TypeColors{csub},'linewidth',1.4);
+%     hls = [hls,hl];
+    
+    NeuFieldNums = size(NeuAvg_Das,1);
+    AstFieldNums = size(AstAvg_Das,1);
+    NeuDataANDInds = [NeuDataANDInds;[NeuAvg_Das(:,1),ones(NeuFieldNums,1)+csub]];
+    AstDataANDInds = [AstDataANDInds;[AstAvg_Das(:,1),ones(AstFieldNums,1)+csub]];
+end
+xlabel(ax1,'Amplitude/dff');
+xlabel(ax2,'Amplitude/dff');
+ylabel(ax1,'Cumu. frac.');
+ylabel(ax2,'Cumu. frac.');
+title(ax1,'Neu');
+title(ax2,'Ast');
+legend(ax1,hls,strrep(NeuUsedStrs,'_','-'),'location','Southeast','box','off');
+%%
+huuf = figure('position',[100 500 980 320]);
+ax1 = subplot(121);
+boxplot(ax1,NeuDataANDInds(:,1),NeuDataANDInds(:,2),'labels',...
+    strrep(NeuUsedStrs,'_',''));
+title('Neus');
+ylabel('dff');
+
+ax2 = subplot(122);
+boxplot(ax2,AstDataANDInds(:,1),AstDataANDInds(:,2),'labels',...
+    strrep(AstUsedStrs,'_',''));
+title('Asts');
+ylabel('dff');
+
+Neups = zeros(15,3);
+Astps = zeros(15,3);
+k = 1;
+for cData = 1 : 6
+    for ccomdata = (cData+1) : 6
+        eval(['NeuData1 = ',NeuUsedStrs{cData},'_AmpMtx;']);
+        eval(['NeuData2 = ',NeuUsedStrs{ccomdata},'_AmpMtx;']);
+        Neups(k,:) = [cData,ccomdata,AssumpTest(NeuData1(:,1),NeuData2(:,1))];
+        
+        eval(['AstData1 = ',AstUsedStrs{cData},'_AmpMtx;']);
+        eval(['AstData2 = ',AstUsedStrs{ccomdata},'_AmpMtx;']);
+        Astps(k,:) = [cData,ccomdata,AssumpTest(AstData1(:,1),AstData2(:,1))];
+        k = k + 1;
+    end
+end
+%%
+save ampcompareps.mat Neups Astps NeuUsedStrs AstUsedStrs -v7.3
+
+%%
+
+savename = sprintf('Threeage amplitude boxplot fieldwise');
+set(huuf,'paperpositionmode','manual');
+saveas(huuf,savename);
+saveas(huuf,savename,'png');
+print(huuf,'-dpdf',savename,'-painters');
+
+savename = sprintf('Threeage amplitude ROI fieldwise cumulative plots');
+set(hcf,'paperpositionmode','manual');
+saveas(hcf,savename);
+saveas(hcf,savename,'png');
+print(hcf,'-dpdf',savename,'-painters');
 
 

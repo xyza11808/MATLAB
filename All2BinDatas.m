@@ -9,9 +9,9 @@ for cBin = 1 : length(BinCenters)
     cBinInds = AllDis >= BinEdges(cBin) & AllDis < BinEdges(cBin+1);
     cBinCoefData = AllCoefs(cBinInds);
     BinAllDatas{cBin} = cBinCoefData;
-    if numel(cBinCoefData) < 50
-        ExcludedInds(cBin) = 1;
-    end
+%     if numel(cBinCoefData) < 30
+%         ExcludedInds(cBin) = 1;
+%     end
     
     BinMeanSEMData(cBin,1) = mean(cBinCoefData);
     BinMeanSEMData(cBin,2) = std(cBinCoefData)/sqrt(numel(cBinCoefData));

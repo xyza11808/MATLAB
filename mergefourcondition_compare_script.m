@@ -24,7 +24,8 @@ WTNeuNeuCoefDataStrc = ...
     load('/Users/xinyu/Documents/dataAll/Documents/xnnData_20201107/WT_ctrl_drug_com/WTNeuNeu_wtCtrltgDrug.mat');
 TgNeuNeuCoefDataStrc = ...
     load('/Users/xinyu/Documents/dataAll/Documents/xnnData_20201107/TG_ctrl_drug_com/TGNeuNeu_wtCtrltgDrug.mat');
-%
+
+%%
 [WT_ctrlBinMeanSEMData, WT_ctrlBinAllCoef] = All2BinDatas(...
     WTNeuNeuCoefDataStrc.WTSessAllCoef_sum_Vec,...
     WTNeuNeuCoefDataStrc.WTSessAllDiss_sum_Vec,50);
@@ -38,75 +39,7 @@ TgNeuNeuCoefDataStrc = ...
 [TG_drugBinMeanSEMData, TG_drugBinAllCoef]  = All2BinDatas(...
     TgNeuNeuCoefDataStrc.TgSessAllCoef_sum_Vec,...
     TgNeuNeuCoefDataStrc.TgSessAllDiss_sum_Vec,50);
-
 %%
-CoefTypeStrs = {'AllAstNeu','AstAst','NeuNeu','ActiveAstNeu','ActiveAstAst','ActiveNeuNeu'};
-WTNeuNeuCoefDataStrc = ...
-    load('F:\wt_coefPlots\adultWTCoefDatasNew.mat');
-TgNeuNeuCoefDataStrc = ...
-    load('F:\tg_coefplots\adultTGCoefDatasNew.mat');
-
-%% added excluded fields if exists
-ExFieldsData = load('F:\excludedFields.mat');
-UsedDataType = 3; %2 indicates All Asts, 3 indicates All neurons
-TypeStrs = CoefTypeStrs{UsedDataType};
-WTDatas = WTNeuNeuCoefDataStrc.plotfieldWiseDatas(UsedDataType,:);
-TgDatas = TgNeuNeuCoefDataStrc.plotfieldWiseDatas(UsedDataType,:);
-
-WT_ctrlnames = WTNeuNeuCoefDataStrc.WTFolderNames;
-WT_drugnames = WTNeuNeuCoefDataStrc.TgFolderNames;
-Tg_ctrlnames = TgNeuNeuCoefDataStrc.WTFolderNames;
-Tg_drugnames = TgNeuNeuCoefDataStrc.TgFolderNames;
-
-[WT_ctrl_used,WT_ctrl_NotUsedInds] = ExFielddataSelect(WT_ctrlnames,WTDatas{1},...
-    WTNeuNeuCoefDataStrc.WTSessFieldNums,ExFieldsData.Excludedfields,WTDatas{2});
-
-[WT_drug_used,WT_drug_NotUsedInds] = ExFielddataSelect(WT_drugnames,WTDatas{3},...
-    WTNeuNeuCoefDataStrc.TgSessFieldNums,ExFieldsData.Excludedfields,WTDatas{4});
-
-[Tg_ctrl_used,Tg_ctrl_NotUsedInds] = ExFielddataSelect(Tg_ctrlnames,TgDatas{1},...
-    TgNeuNeuCoefDataStrc.WTSessFieldNums,ExFieldsData.Excludedfields,TgDatas{2});
-
-[Tg_drug_used,Tg_drug_NotUsedInds] = ExFielddataSelect(Tg_drugnames,TgDatas{3},...
-    TgNeuNeuCoefDataStrc.TgSessFieldNums,ExFieldsData.Excludedfields,TgDatas{4});
-%%
-
-[WT_ctrlBinMeanSEMData, WT_ctrlBinAllCoef] = All2BinDatas(...
-    cell2mat(WT_ctrl_used(:,1)),...
-    cell2mat(WT_ctrl_used(:,2)),50);
-[WT_drugBinMeanSEMData, WT_drugBinAllCoef]  = All2BinDatas(...
-    cell2mat(WT_drug_used(:,1)),...
-    cell2mat(WT_drug_used(:,2)),50);
-
-[TG_ctrlBinMeanSEMData, TG_ctrlBinAllCoef] = All2BinDatas(...
-    cell2mat(Tg_ctrl_used(:,1)),...
-    cell2mat(Tg_ctrl_used(:,2)),50);
-[TG_drugBinMeanSEMData, TG_drugBinAllCoef]  = All2BinDatas(...
-    cell2mat(Tg_drug_used(:,1)),...
-    cell2mat(Tg_drug_used(:,2)),50);
-%%
-% UsedDataType = 2; %2 indicates All Asts, 3 indicates All neurons
-% TypeStrs = CoefTypeStrs{UsedDataType};
-% WTDatas = WTNeuNeuCoefDataStrc.plotdatas(UsedDataType,:);
-% TgDatas = TgNeuNeuCoefDataStrc.plotdatas(UsedDataType,:);
-%
-% [WT_ctrlBinMeanSEMData, WT_ctrlBinAllCoef] = All2BinDatas(...
-%     WTDatas{1},...
-%     WTDatas{2},50);
-% [WT_drugBinMeanSEMData, WT_drugBinAllCoef]  = All2BinDatas(...
-%     WTDatas{3},...
-%     WTDatas{4},50);
-% 
-% [TG_ctrlBinMeanSEMData, TG_ctrlBinAllCoef] = All2BinDatas(...
-%     TgDatas{1},...
-%     TgDatas{2},50);
-% [TG_drugBinMeanSEMData, TG_drugBinAllCoef]  = All2BinDatas(...
-%     TgDatas{3},...
-%     TgDatas{4},50);
-%%
-
-
-%
 hf = figure;
 hold on
 hl1 = errorbar(WT_ctrlBinMeanSEMData(:,3),WT_ctrlBinMeanSEMData(:,1),...
@@ -121,12 +54,7 @@ hl4 = errorbar(TG_drugBinMeanSEMData(:,3),TG_drugBinMeanSEMData(:,1),...
 legend([hl1,hl2,hl3,hl4],{'WTCtrl','WTDrug','TgCtrl','TgDrug'},'location','SouthWest','box','off');
 xlabel('Distance (um)');
 ylabel('Noise coefficient');
-title([TypeStrs,' coef'])
-%%
-
-saveas(hf,['Four condition ',TypeStrs,' 1SEM coef shadow plot']);
-saveas(hf,['Four condition ',TypeStrs,' 1SEM coef shadow plot'],'png');
-saveas(hf,['Four condition ',TypeStrs,' 1SEM coef shadow plot'],'pdf');
+title('p12ActAst-Neu coef')
 
 %%
 huf = figure;
@@ -165,7 +93,9 @@ saveas(huf,'Four condition NeuNeu 1SEM coef shadow plot','pdf');
 p12Datastrc = load('p12CoefDisData.mat');
 p18Datastrc = load('p18CoefDisData.mat');
 M4Datastrc = load('4MCoefDisData.mat');
-UsedDataTypes = 2; %{'AllAstNeu','AstAst','NeuNeu','ActiveAstNeu','ActiveAstAst','ActiveNeuNeu'};
+UsedDataTypes = 3; 
+TypeStrAll = {'AllAstNeu','AstAst','NeuNeu','ActiveAstNeu','ActiveAstAst','ActiveNeuNeu'};
+UsedTypeStr = TypeStrAll{UsedDataTypes};
 %%
 prefixs = {'p12','p18','M4'};
 for cf = 1 : 3
@@ -186,7 +116,7 @@ end
 %%
 AllPrefix = [prefix_WTAll,prefix_TgAll];
 % Colors = linspecer(length(AllPrefix));
-Colors = [0,0,0;0.3,0.3,0.3;0.7,0.7,.7;1,0,0;0.8,0.3,0;0.7,0.3,0.3];
+ 
 hlAll = [];
 hfall = figure;
 hold on
@@ -202,7 +132,7 @@ legend(hlAll,...
     'location','Northeast','box','off');
 xlabel('Distance (um)');
 ylabel('Noise coefficient');
-title('Astcoef')
+title(UsedTypeStr)
 
 %%
 
@@ -210,64 +140,93 @@ saveas(hfall,'Across group 1SEM coef plot');
 saveas(hfall,'Across group 1SEM coef plot','png');
 saveas(hfall,'Across group 1SEM coef plot','pdf');
 
-%% event only population synchrony index plot
+%% three age group cumulative plot
 
-WTDatas = load('F:\wt_coefPlots\WTsynchronyDataEveO.mat');
-TgDatas = load('F:\tg_coefplots\TgsynchronyDataEveO.mat');
-%%
-ROITypes = WTDatas.ROITypeStrs;
-UsedTypeInds = 6;
-TypeStr = ROITypes{UsedTypeInds};
+[p12WT_y,p12WT_x] = ecdf(p12PlotData{1});
+[p12Tg_y,p12Tg_x] = ecdf(p12PlotData{3});
+[p18WT_y,p18WT_x] = ecdf(p18PlotData{1});
+[p18Tg_y,p18Tg_x] = ecdf(p18PlotData{3});
+[M4WT_y,M4WT_x] = ecdf(M4PlotData{1});
+[M4Tg_y,M4Tg_x] = ecdf(M4PlotData{3});
 
-WT_ctrl_Das = WTDatas.WT_popuSynchronyVecEO(:,UsedTypeInds);
-WT_drug_Das = WTDatas.Tg_popuSynchronyVecEO(:,UsedTypeInds);
+prefix_WTAll = {'p12WT','p18WT','M4WT','p12Tg','p18Tg','M4Tg'};
 
-Tg_ctrl_Das = TgDatas.WT_popuSynchronyVecEO(:,UsedTypeInds);
-Tg_drug_Das = TgDatas.Tg_popuSynchronyVecEO(:,UsedTypeInds);
-Tg_drug_Das(isnan(Tg_drug_Das)) = [];
-
-PlotAvgs = [mean(WT_ctrl_Das),mean(Tg_ctrl_Das),...
-    mean(WT_drug_Das),mean(Tg_drug_Das)];
-Plotfieldnums = [numel(WT_ctrl_Das),numel(Tg_ctrl_Das),...
-    numel(WT_drug_Das),numel(Tg_drug_Das)];
-
-PlotSEMs = [std(WT_ctrl_Das)/sqrt(Plotfieldnums(1)),...
-    std(Tg_ctrl_Das)/sqrt(Plotfieldnums(2)),...
-    std(WT_drug_Das)/sqrt(Plotfieldnums(3)),...
-    std(Tg_drug_Das)/sqrt(Plotfieldnums(4))];
-
-[~,ctrl_p] = ttest2(WT_ctrl_Das,Tg_ctrl_Das);
-[~,drug_p] = ttest2(WT_drug_Das,Tg_drug_Das);
-
-[~,wt_p] = ttest2(WT_ctrl_Das,WT_drug_Das);
-[~,tg_p] = ttest2(Tg_ctrl_Das,Tg_drug_Das);
-
-hsynf = figure('position',[100 100 450 320]);
+Colors = [0,0,0;0.3,0.3,0.3;0.7,0.7,.7;1,0,0;1,0.6,0.4;0.5,0,0];
+hf = figure('position',[100,200,420,340]);
 hold on
-colors = {[0.2 0.2 0.2],[0.9 0.1 0.1],[0.6 0.6 0.6],[0.6 0.2 0.2]};
-for ccp = 1 : 4
-    bar(ccp,PlotAvgs(ccp),0.6,'edgecolor','none','Facecolor',colors{ccp});
+hhl = [];
+for cf = 1 : 6
+    eval(sprintf('hl1 = plot(%s_x,%s_y,''Color'',Colors(cf,:),''linewidth'',1.2);',...
+        prefix_WTAll{cf},prefix_WTAll{cf}));
+    hhl = [hhl,hl1];
 end
-errorbar(1:4,PlotAvgs,PlotSEMs,'k.','Marker','none','linewidth',1.2);
+legend(hhl,prefix_WTAll','box','off','location','SouthEast');
+set(gca,'ylim',[-0.02 1.02])
+xlabel('Correlation coeeficient');
+ylabel('Cumulative fraction');
+title(UsedTypeStr);
 
-text(1:4,PlotAvgs*0.8,cellstr(num2str(Plotfieldnums(:),'%d')),...
-    'HorizontalAlignment','center','Fontsize',8,'color','c');
+%%
 
-GroupSigIndication([1,2],PlotAvgs(1:2),ctrl_p,hsynf,1.2,[],6);
-GroupSigIndication([3,4],PlotAvgs(3:4),drug_p,hsynf,1.2,[],6);
+saveas(hf,sprintf('Cumulative correlation plot %s',UsedTypeStr));
 
-GroupSigIndication([1,3],PlotAvgs([1,3]),wt_p,hsynf,1.4,[],6);
-GroupSigIndication([2,4],PlotAvgs([2,4]),tg_p,hsynf,1.6,[],6);
+saveas(hf,sprintf('Cumulative correlation plot %s',UsedTypeStr),'png');
+saveas(hf,sprintf('Cumulative correlation plot %s',UsedTypeStr),'pdf');
+
+%%
+GrDataInds = [ones(numel(p12PlotData{1}),1);ones(numel(p18PlotData{1}),1)+1;ones(numel(M4PlotData{1}),1)+2];
+GrDatas = [p12PlotData{1};p18PlotData{1};M4PlotData{1}];
+figure;
+boxplot(GrDatas,GrDataInds,'Labels',{'p12WT','p18WT','M4WT'})
 
 
-set(gca,'xtick',1:4,'xticklabel',{'WTctrl','Tgctrl','WTdrug','Tgdrug'},'xlim',[0 5]);
-ylabel('Synchrony index');
-title(TypeStr);
+
+%% p12 drug field corf cumulative plots
+cclr
+p12WTDataStrc = load('p12drugWTCoefDatas.mat');
+p12TgDataStrc = load('p12drugTgCoefDatas.mat');
+%%
+CellTypeStrs = p12WTDataStrc.CoefTypeStrs;
+PlotTypeIndex = 2; %2 indicates All Asts, 3 indicates All neurons
+UsedTypeStr = CellTypeStrs{PlotTypeIndex};
 
 %
-saveas(hsynf,['Four condition ',TypeStr,' SynchronyIndex compare plot']);
-saveas(hsynf,['Four condition ',TypeStr,' SynchronyIndex compare plot'],'png');
-saveas(hsynf,['Four condition ',TypeStr,' SynchronyIndex compare plot'],'pdf');
+p12WTData = p12WTDataStrc.plotdatas(PlotTypeIndex,:);
+p12TgData = p12TgDataStrc.plotdatas(PlotTypeIndex,:);
+
+p12WT_ctrlData = p12WTData{1};
+p12WT_drugData = p12WTData{3};
+
+p12Tg_ctrlData = p12TgData{1};
+p12Tg_drugData = p12TgData{3};
+
+%%
+
+[p12WTctrl_y,p12WTctrl_x] = ecdf(p12WT_ctrlData);
+[p12Tgctrl_y,p12Tgctrl_x] = ecdf(p12Tg_ctrlData);
+[p12WTdrug_y,p12WTdrug_x] = ecdf(p12WT_drugData);
+[p12Tgdrug_y,p12Tgdrug_x] = ecdf(p12Tg_drugData);
 
 
+prefix_WTAll = {'WTctrl','WTdrug','Tgctrl','Tgdrug'};
 
+Colors = [0,0,0;0.7,0.7,.7;1,0,0;0.5,0,0];
+huf = figure('position',[100,200,420,340]);
+hold on
+hhl = [];
+for cf = 1 : 4
+    eval(sprintf('hl1 = plot(p12%s_x,p12%s_y,''Color'',Colors(cf,:),''linewidth'',1.2);',...
+        prefix_WTAll{cf},prefix_WTAll{cf}));
+    hhl = [hhl,hl1];
+end
+legend(hhl,prefix_WTAll','box','off','location','SouthEast');
+set(gca,'ylim',[-0.02 1.02])
+xlabel('Correlation coeeficient');
+ylabel('Cumulative fraction');
+title(UsedTypeStr);
+
+%%
+saveas(huf,sprintf('p12drug Cumulative correlation plot %s',UsedTypeStr));
+
+saveas(huf,sprintf('p12drug Cumulative correlation plot %s',UsedTypeStr),'png');
+saveas(huf,sprintf('p12drug Cumulative correlation plot %s',UsedTypeStr),'pdf');

@@ -5,9 +5,10 @@ NeuInds = cellfun(@(x) strcmpi(x,'Neu'),fieldROItypes);
 EventNums = cellfun(@(x) size(x,1),fieldEvents);
 EventFreqs = EventNums(:) ./ traceTimes(:);
 
-Neuactivefrac = mean(EventFreqs(NeuInds) > 0);
-Astactivefrac = mean(EventFreqs(~NeuInds) > 0);
-
+% Neuactivefrac = mean(EventFreqs(NeuInds) > 0);
+% Astactivefrac = mean(EventFreqs(~NeuInds) > 0);
+Neuactivefrac = mean(EventFreqs(NeuInds));
+Astactivefrac = mean(EventFreqs(~NeuInds));
 if isactiveOnly
     UsedROIInds = EventFreqs == 0;
     NeuInds(UsedROIInds) = [];
