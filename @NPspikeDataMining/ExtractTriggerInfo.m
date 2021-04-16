@@ -14,7 +14,7 @@ if GUIprocess
 else
     % function was called in a ks script
     DataPath = obj.ksFolderPath;
-    fnames = dir(fullfile(DataPath,'*.bin'));
+    fnames = dir(fullfile(DataPath,'*.ap.bin'));
     fullbinfile = fullfile(DataPath,fnames(1).name);
     bytes       = get_file_size(ops.fbinary); % size in bytes of raw binary
     nTimepoints = floor(bytes/ops.NchanTOT/2); % number of total timepoints
@@ -43,14 +43,25 @@ end
 if GUIprocess
     % calculate the time interval for each square wave
     TriggerEventLen = (TriggerEvents(:,2) - TriggerEvents(:,1))/obj.ops.fs;
+    ExcludeInds = TriggerEventLen<0.0005; % make sure the trigger len is larger than 0.5ms
+    if sum(ExcludeInds)
+        TriggerEventLen(ExcludeInds) = [];
+        TriggerEvents(ExcludeInds,:) = [];
+    end    
     TriggerLenTypes = unique(TriggerEventLen);
     TrgTypeNum = length(TriggerLenTypes);
     save(fullfile(obj.ops.saveDir,'TriggerDatas.mat'),'TriggerEvents',...
         'TriggerLenTypes','TrgTypeNum','-v7.3');
 else
     TriggerEventLen = (TriggerEvents(:,2) - TriggerEvents(:,1))/obj.fs;
+    ExcludeInds = TriggerEventLen<0.0005; % make sure the trigger len is larger than 0.5ms
+    if sum(ExcludeInds)
+        TriggerEventLen(ExcludeInds) = [];
+        TriggerEvents(ExcludeInds,:) = [];
+    end    
     TriggerLenTypes = unique(TriggerEventLen);
     TrgTypeNum = length(TriggerLenTypes);
+    
     save(fullfile(obj.ksFolderPath,'TriggerDatas.mat'),'TriggerEvents',...
         'TriggerLenTypes','TrgTypeNum','-v7.3');
 end

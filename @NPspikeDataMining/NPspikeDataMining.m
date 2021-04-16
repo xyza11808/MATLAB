@@ -63,22 +63,27 @@ classdef NPspikeDataMining
             obj.SpikeTimes = double(obj.SpikeTimeSample)/obj.SpikeStrc.sample_rate;
             obj.chnMaps = readNPY(fullfile(FolderPath, 'channel_map.npy'));
             
-            if exist(fullfile(FolderPath,'cluster_info.tsv'),'file')
-                % sorted data have been processed by phy
-                % cluster include criteria: good, not noise, fr >=1
-                cgsFile = fullfile(FolderPath,'cluster_info.tsv');
-                [obj.UsedClus_IDs,obj.ChannelUseds_id,obj.UsedClusinds,...
-                    obj.ClusterInfoAll] = ClusterGroups_Reads(cgsFile);
-                
-                ChannelDepth = cell2mat(obj.ClusterInfoAll(2:end,7));
-                obj.UsedChnDepth = ChannelDepth(obj.UsedClusinds);
-                NumGoodClus = length(obj.UsedClus_IDs);
-                fprintf('Totally %d number of good units were find.\n',NumGoodClus);
-            else
-                warning('Unbale to locate phy processed file.');
-                return;
+            if ~exist(fullfile(FolderPath,'cluster_info.tsv'),'file')
+
+                FolderPath = obj.ksFolder;
+                binfilepath = fullpaths;
+                SR = obj.SpikeStrc.sample_rate;
+                disp('constructing cluster info files...\n');
+                ks3_Result2Info_script;
+%                 warning('Unbale to locate phy processed file.');
+%                 return;
             end
             
+            % sorted data have been processed by phy
+            % cluster include criteria: good, not noise, fr >=1
+            cgsFile = fullfile(FolderPath,'cluster_info.tsv');
+            [obj.UsedClus_IDs,obj.ChannelUseds_id,obj.UsedClusinds,...
+                obj.ClusterInfoAll] = ClusterGroups_Reads(cgsFile);
+
+            ChannelDepth = cell2mat(obj.ClusterInfoAll(2:end,7));
+            obj.UsedChnDepth = ChannelDepth(obj.UsedClusinds);
+            NumGoodClus = length(obj.UsedClus_IDs);
+            fprintf('Totally %d number of good units were find.\n',NumGoodClus);
             
         end
         
@@ -169,7 +174,7 @@ classdef NPspikeDataMining
             
             trigLen = trigTime_ms/1000*obj.SpikeStrc.sample_rate;
             TrigWaveAll_lens = TrigwaveScales(:,2) - TrigwaveScales(:,1);
-            
+            TrigWaveAll_lens(TrigWaveAll_lens < 0.0005) = []; % exclude some unknowed zeros trigger events
             TrigWaveAll_lensEquals = abs(TrigWaveAll_lens - trigLen) < trigTime_ms;
             
             obj.UsedTrigOnTime = TrigwaveScales(TrigWaveAll_lensEquals,1)/obj.SpikeStrc.sample_rate+trigTime_ms/1000; % in seconds

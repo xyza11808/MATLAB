@@ -33,11 +33,15 @@ TrgWaveStart = find(TrgChnNorm > 0.95,1,'first');
 while ~isempty(TrgWaveStart)
     % StartSearchInds = TrgWaveStart;
     TrgwaveEndInds = find(TrgChnNorm(TrgWaveStart:end) < 0.95,1,'first');
-
+    if TrgwaveEndInds == 1
+        TrgWaveStart = find(TrgChnNorm((TrgWaveStart+TrgwaveEndInds):end) > 0.95,1,'first')+...
+            TrgWaveStart+TrgwaveEndInds;
+        continue;
+    end
     TriggerEvents(k,:) = [TrgWaveStart,TrgWaveStart+TrgwaveEndInds-1];
     
     TrgWaveStart = find(TrgChnNorm((TrgWaveStart+TrgwaveEndInds):end) > 0.95,1,'first')+TrgWaveStart+TrgwaveEndInds;
-    k = k +1;
+    k = k + 1;
 end
 
 if GUIprocess
