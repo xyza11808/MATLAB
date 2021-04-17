@@ -7,7 +7,8 @@ classdef NPspikeDataMining
     
     properties (SetAccess = public)
         ksFolder = '';
-        RawDataFilename = '';
+        binfilePath = ''
+        RawDataFilename = ''
         NumChn = 385; % the last channel index is the trigger channel recording
         Numsamp = [];
         Datatype = 'int16';
@@ -42,8 +43,16 @@ classdef NPspikeDataMining
         function obj = NPspikeDataMining(FolderPath)
             binfileInfo = dir(fullfile(FolderPath,'*.ap.bin'));
             if isempty(binfileInfo)
-                warning('Unable to find target bin file.');
-                return;
+                % looking in parent folders, in case of ks3 outputs
+                binfileInfo = dir(fullfile(FolderPath,'..','*.ap.bin'));
+                if isempty(binfileInfo)
+                    warning('Unable to find target bin file.');
+                    return;
+                else
+                    obj.binfilePath = fullfile(FolderPath,'..');
+                end
+            else
+                obj.binfilePath = FolderPath;
             end
             
             obj.RawDataFilename = binfileInfo(1).name;
@@ -51,7 +60,7 @@ classdef NPspikeDataMining
             
             dataTypeNBytes = numel(typecast(cast(0, obj.Datatype), 'uint8')); % determine number of bytes per sample
             obj.Numsamp = binfileInfo(1).bytes/(dataTypeNBytes*obj.NumChn);
-            fullpaths = fullfile(FolderPath, obj.RawDataFilename);
+            fullpaths = fullfile(obj.binfilePath, obj.RawDataFilename);
             obj.mmf = memmapfile(fullpaths, 'Format', {obj.Datatype, [obj.NumChn obj.Numsamp], 'x'});
             
             % spike data info reading
@@ -68,7 +77,7 @@ classdef NPspikeDataMining
                 FolderPath = obj.ksFolder;
                 binfilepath = fullpaths;
                 SR = obj.SpikeStrc.sample_rate;
-                disp('constructing cluster info files...\n');
+                disp('Constructing cluster info files...\n');
                 ks3_Result2Info_script;
 %                 warning('Unbale to locate phy processed file.');
 %                 return;
@@ -590,12 +599,10 @@ classdef NPspikeDataMining
 %                 saveas(hcf,sprintf('ROI%03d raw spike change color plot',cUnit));
             end
             
-            
-            
         end
         
         
-        function EventsPSTHplot(obj,EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors)
+        function EventsPSTHplot(obj,EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,varargin)
             % EventsDelay should be a n-by-p matrix, in milisecond format. n is the number of
             % trials, which should be the same as trigger number; p is the
             % number of events types. for example, the passive listening
@@ -611,12 +618,26 @@ classdef NPspikeDataMining
             
             % EventColors indicates the plot color for each events
             
+            % if varargin isn't empty, some extra input can be given for
+            % specific plots 
+            
+            
             if isempty(obj.TrigData_Bin) || isempty(obj.UsedTrigOnTime) 
                 obj = TrigPSTH(obj,[],[]);
             end
-            if size(EventsDelay) == 1
+            if size(EventsDelay,1) < size(EventsDelay,2)
                 EventsDelay = EventsDelay';
             end
+            
+            PlotTrInds = true(size(EventsDelay,1),1);
+            if ~isempty(varargin)
+                if ~isempty(varargin{1})
+                     PlotTrInds = varargin{1};
+                end
+            end
+            EventsDelay = EventsDelay(PlotTrInds,:);
+            RepeatTypes = RepeatTypes(PlotTrInds,:);
+            
             if length(obj.UsedTrigOnTime) ~= size(EventsDelay,1)
                 error('The input event size isn''t fit with trigger event numbers.');
             end
@@ -637,7 +658,9 @@ classdef NPspikeDataMining
             EventBinLength = ceil((EventsDelay/1000)/BinWidth);
             
             % sort and align the binned data according to the event times
-            SMBinDataMtx = permute(cat(3,obj.TrigData_Bin{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+            % only input trials will be plotted
+            SMBinDataMtx = permute(cat(3,obj.TrigData_Bin{PlotTrInds,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+            
             [TrNum, unitNum, BinNum] = size(SMBinDataMtx);
             AlignedEvents = EventBinLength(:,AlignEvent);
             TrShifts = AlignedEvents - min(AlignedEvents); % bin number to be shifted for each trial

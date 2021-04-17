@@ -1,7 +1,7 @@
 
 
 % NPspikeDataMining processing pipeline
-NPprocessks3 = NPspikeDataMining('G:\AuD_PASSIVE_TEST_g0\kilosort3'); % input the ks analysis folder path as start
+NPprocessks3 = NPspikeDataMining('N:\NPDatas\b103a04_20210410_NPSess02_g0\b103a04_20210410_NPSess02_g0_imec0\kilosort3'); % input the ks analysis folder path as start
 
 %% load trigger onset times
 NPprocessks3 = NPprocessks3.triggerOnsetTime([],2);  % 2 is the trigger duration, in ms

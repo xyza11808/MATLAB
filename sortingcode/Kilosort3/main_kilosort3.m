@@ -2,8 +2,8 @@
 % cclr
 % addpath(genpath('D:\GitHub\Kilosort2')) % path to kilosort folder
 % addpath('D:\GitHub\npy-matlab') % for converting to Phy
-rootZ = 'N:\NPDatas\b103a04_20210408_NPSess01_g0\b103a04_20210408_NPSess01_g0_imec0'; % the raw data binary file is in this folder
-rootH = 'N:\NPDatas\b103a04_20210408_NPSess01_g0\b103a04_20210408_NPSess01_g0_imec0/temp'; % path to temporary binary file (same size as data, should be on fast SSD)
+rootZ = 'N:\NPDatas\b103a04_20210410_NPSess02_g0\b103a04_20210410_NPSess02_g0_imec0'; % the raw data binary file is in this folder
+rootH = 'N:\NPDatas\b103a04_20210410_NPSess02_g0\b103a04_20210410_NPSess02_g0_imec0/temp'; % path to temporary binary file (same size as data, should be on fast SSD)
 if ~isdir(rootH)
     mkdir(rootH);
 end
@@ -54,7 +54,14 @@ rez                = find_merges(rez, 1);
 
 rootZ = fullfile(rootZ, 'kilosort3');
 mkdir(rootZ)
-save(fullfile(rootZ,'rezdata.mat'),'rez','-v7.3');
+% save(fullfile(rootZ,'rezdata.mat'),'rez','-v7.3');
 rezToPhy2(rez, rootZ);
-
+%%
+rezCPU = rez;
+rezCPU.iC = gather(rezCPU.iC);
+rezCPU.F0 = gather(rezCPU.F0);
+rezCPU.F0m = gather(rezCPU.F0m);
+rezCPU.dWU = gather(rezCPU.dWU);
+rezCPU.nsp = gather(rezCPU.nsp);
+save(fullfile(rootZ,'rezdata.mat'),'rez','rezCPU','-v7.3');
 %% 
