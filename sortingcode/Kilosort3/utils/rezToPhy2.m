@@ -143,9 +143,10 @@ if ~isempty(savePath)
         [ClusterTypes,ClusterBestChn] = templateChnCal(spikeClusters-1,spikeTemplates-1,MaxChnInds-1); % -1 for zero indexing
     else
         writeNPY(uint32(spikeTemplates-1), fullfile(savePath, 'spike_clusters.npy')); % -1 for zero indexing
-        [ClusterTypes,ClusterBestChn] = templateChnCal(spikeClusters-1,spikeTemplates-1,MaxChnInds-1);
+        [ClusterTypes,ClusterBestChn] = templateChnCal(spikeTemplates-1,spikeTemplates-1,MaxChnInds-1);
     end
     writeNPY(amplitudes, fullfile(savePath, 'amplitudes.npy'));
+    writeNPY(tempAmpsUnscaled, fullfile(savePath, 'ampUnscales.npy'));
     writeNPY(templates, fullfile(savePath, 'templates.npy'));
     writeNPY(templatesInds, fullfile(savePath, 'templates_ind.npy'));
 

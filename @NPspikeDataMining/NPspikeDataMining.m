@@ -35,6 +35,7 @@ classdef NPspikeDataMining
         TrigDataBin_FRSub = {};
         TrTrigSpikeTimes = {};
         psthTimeWin = [];
+        TrigAlignType = ''; % could either be "trigger" or "stim", which indicates the events used for binned data extraction
         
     end
     
@@ -75,7 +76,7 @@ classdef NPspikeDataMining
             if ~exist(fullfile(FolderPath,'cluster_info.tsv'),'file')
 
                 FolderPath = obj.ksFolder;
-                binfilepath = fullpaths;
+                binfilepath = obj.binfilePath;
                 SR = obj.SpikeStrc.sample_rate;
                 disp('Constructing cluster info files...\n');
                 ks3_Result2Info_script;
@@ -177,21 +178,42 @@ classdef NPspikeDataMining
             end
             
             if isempty(TrigwaveScales)
-                trigScaleStrc = load(fullfile(obj.ksFolder,'TriggerDatas.mat'),'TriggerEvents');
+                try
+                    trigScaleStrc = load(fullfile(obj.ksFolder,'TriggerDatas.mat'),'TriggerEvents');
+                catch
+                    trigScaleStrc = load(fullfile(obj.ksFolder,'..','TriggerDatas.mat'),'TriggerEvents');
+                end
                 TrigwaveScales = trigScaleStrc.TriggerEvents;
             end
             
             trigLen = trigTime_ms/1000*obj.SpikeStrc.sample_rate;
             TrigWaveAll_lens = TrigwaveScales(:,2) - TrigwaveScales(:,1);
-            TrigWaveAll_lens(TrigWaveAll_lens < 0.0005) = []; % exclude some unknowed zeros trigger events
-            TrigWaveAll_lensEquals = abs(TrigWaveAll_lens - trigLen) < trigTime_ms;
+            TrigWaveAll_lens(TrigWaveAll_lens < 0.0005*obj.SpikeStrc.sample_rate) = []; % exclude some unknowed zeros trigger events
             
-            obj.UsedTrigOnTime = TrigwaveScales(TrigWaveAll_lensEquals,1)/obj.SpikeStrc.sample_rate+trigTime_ms/1000; % in seconds
+            if length(trigLen) > 1
+               % for task condition, the first 10 trial will have different trigger durations 
+                Trig_InitSeg_durs = (abs(TrigWaveAll_lens - trigLen(1)) < 2);
+                Trig_InitSeg_consec = consecTRUECount(Trig_InitSeg_durs);
+                Trig_Init_TrialEnd = find(Trig_InitSeg_consec == 10,1,'first'); % used the first 10 tirals
+                if isempty(Trig_Init_TrialEnd)
+                    warning('Failed to find enough lengthed consecutive trials.\n Please check your trigger duration data or input value.\n')
+                end
+                SessionTrStartInds = find(abs(TrigWaveAll_lens((Trig_Init_TrialEnd(1)+1):end) - trigLen(2)) < 2)+Trig_Init_TrialEnd(1);
+                TrigWaveAll_lensEquals = [((Trig_Init_TrialEnd-9):Trig_Init_TrialEnd)';SessionTrStartInds];
+                
+                obj.UsedTrigOnTime = TrigwaveScales(TrigWaveAll_lensEquals,1)/obj.SpikeStrc.sample_rate+trigTime_ms/1000; % in seconds
+            else
+                % for passive condition, unique trigger duration
+                TrigWaveAll_lensEquals = abs(TrigWaveAll_lens - trigLen) < 2;
+                obj.UsedTrigOnTime = TrigwaveScales(TrigWaveAll_lensEquals,1)/obj.SpikeStrc.sample_rate+trigTime_ms/1000; % in seconds
+            end
+            
+            
             fprintf('Totally %d number of triggers were detected.\n',length(obj.UsedTrigOnTime));
             
         end
         
-        function obj = TrigPSTH(obj,timeWin,smoothbin)
+        function obj = TrigPSTH(obj,timeWin,smoothbin,varargin)
             % smoothbin should be a [a,b] vector, a must be larger than b,
             % indicating the smoothed bin steps
             
@@ -203,6 +225,13 @@ classdef NPspikeDataMining
             if timeWin(1) >=0
                 warning('There should be baseline period before each trigger time.');
                 return;
+            end
+            IsEventDataGiven = 0;
+            if length(varargin) > 0
+               if ~isempty(varargin{1})
+                  StimEventTime = varargin{1}/1000; % convert into seconds
+                  IsEventDataGiven = 1;
+               end
             end
             obj.psthTimeWin = timeWin;
             if isempty(smoothbin)
@@ -216,14 +245,27 @@ classdef NPspikeDataMining
                 trigScaleStrc = load(fullfile(obj.ksFolder,'TriggerDatas.mat'),'TriggerEvents');
                 obj = obj.triggerOnsetTime(trigScaleStrc.TriggerEvents,[]);
             end
-            
+            if IsEventDataGiven
+               if  length(StimEventTime) ~= length(obj.UsedTrigOnTime)
+                   error('The input event time length %d is different from trigger trial number %d.',...
+                       length(StimEventTime),length(obj.UsedTrigOnTime));
+               end
+            end
             
             TrigNums = length(obj.UsedTrigOnTime);
             TrigBinDatas = cell(TrigNums,2);
             NumUsedClus = length(obj.UsedClus_IDs);
             cTrig_TrialSPtimes = cell(NumUsedClus,TrigNums);
             for ctrig = 1 : TrigNums
-                cTrigTime = obj.UsedTrigOnTime(ctrig); % in seconds
+                if IsEventDataGiven
+                    % Select data range according to the event time
+                    cTrigTime = obj.UsedTrigOnTime(ctrig)+StimEventTime(ctrig); % in seconds
+                    obj.TrigAlignType = 'stim'; % ZerosBin is stimulus
+                else
+                    % Select data range according to the trigger time
+                    cTrigTime = obj.UsedTrigOnTime(ctrig); % in seconds
+                    obj.TrigAlignType = 'trigger'; % zeros Bin is trigger
+                end
                 cTrigTimeWin = cTrigTime + timeWin;
                 WithinTimewinInds = obj.SpikeTimes > cTrigTimeWin(1) & obj.SpikeTimes < cTrigTimeWin(2);
                 cTrigWin_spTimes = obj.SpikeTimes(WithinTimewinInds);
@@ -606,8 +648,12 @@ classdef NPspikeDataMining
             % EventsDelay should be a n-by-p matrix, in milisecond format. n is the number of
             % trials, which should be the same as trigger number; p is the
             % number of events types. for example, the passive listening
-            % session should have p=1; the task session should have p >
-            % 2,which includes events like stim, choice, reward and so on
+            % session usually have p=2, which is the sound onset and offset
+            % time; the task session should have p >=2, 
+            % which includes events like stim, choice, reward and so on
+            
+            % DUE TO THE BINNED DATA CREATION METHOD, THE FIRST COLUMN MUST
+            % BE STIMULUS ONSET TIME.
             
             % AlignEvent indicate which of the event(s) will be used for
             % alignment, the default value is 1, which usually is the stim
@@ -619,11 +665,12 @@ classdef NPspikeDataMining
             % EventColors indicates the plot color for each events
             
             % if varargin isn't empty, some extra input can be given for
-            % specific plots 
+            % tiral specific plots, the second input can be the foldername str that the user wants to use 
             
             
             if isempty(obj.TrigData_Bin) || isempty(obj.UsedTrigOnTime) 
                 obj = TrigPSTH(obj,[],[]);
+                obj.TrigAlignType = 'trigger';
             end
             if size(EventsDelay,1) < size(EventsDelay,2)
                 EventsDelay = EventsDelay';
@@ -638,7 +685,25 @@ classdef NPspikeDataMining
             EventsDelay = EventsDelay(PlotTrInds,:);
             RepeatTypes = RepeatTypes(PlotTrInds,:);
             
-            if length(obj.UsedTrigOnTime) ~= size(EventsDelay,1)
+            SaveFolderNames = 'EventAlignPlot';
+            if length(varargin) > 1
+                if ~isempty(varargin{2})
+                     SaveFolderNames = varargin{2};
+                end
+            end
+            
+            IsLickPlot = 0;
+            if length(varargin) > 2
+                if ~isempty(varargin{3})
+                     IsLickPlot = 1;
+                     LickTimeStrc = varargin{3};
+                end
+            end
+            if IsLickPlot
+                UsedLickStrc = LickTimeStrc(PlotTrInds);
+            end
+            
+            if length(obj.UsedTrigOnTime(PlotTrInds)) ~= size(EventsDelay,1)
                 error('The input event size isn''t fit with trigger event numbers.');
             end
             if size(EventsDelay,2) ~= length(EventColors)
@@ -655,63 +720,107 @@ classdef NPspikeDataMining
             EventPlotColors = EventColors(2,:);
             % after trigget event bin
             BinWidth = obj.USedbin(2);
-            EventBinLength = ceil((EventsDelay/1000)/BinWidth);
             
             % sort and align the binned data according to the event times
             % only input trials will be plotted
-            SMBinDataMtx = permute(cat(3,obj.TrigData_Bin{PlotTrInds,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
-            
+            SMBinDataMtx = permute(cat(3,obj.TrigData_Bin{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+            SMBinDataMtx = SMBinDataMtx(PlotTrInds,:,:);
             [TrNum, unitNum, BinNum] = size(SMBinDataMtx);
-            AlignedEvents = EventBinLength(:,AlignEvent);
-            TrShifts = AlignedEvents - min(AlignedEvents); % bin number to be shifted for each trial
-            AllEvent_shifts = EventBinLength - repmat(TrShifts,1,size(EventBinLength,2)); % All event shifts according to aligned event
-            NumPlotEvents = size(AllEvent_shifts,2);
-            %%
-            UsedBinLength = min(AlignedEvents) + BinNum - max(AlignedEvents);
-            if size(EventBinLength,2) == 1
-                % no need to sort the original trial sequence
-                AlignedSortDatas = zeros(TrNum, unitNum, UsedBinLength);
-                for cTr = 1 : TrNum %AllEvent_shifts(:,1)
-                    AlignedSortDatas(cTr,:,:) =  SMBinDataMtx(cTr,:,TrShifts(cTr)+(1:UsedBinLength));
+            
+            % firstly excluded zeros time events
+            ExcludeInds = sum(EventsDelay < 1e-4, 2);
+            if sum(ExcludeInds)
+                EventBinLength(ExcludeInds,:) = [];
+                TrNum = TrNum - sum(ExcludeInds);
+                SMBinDataMtx(ExcludeInds,:,:) = [];
+                RepeatTypes(ExcludeInds,:) = [];
+                UsedLickStrc(ExcludeInds) = [];
+            end
+            
+            if strcmpi(obj.TrigAlignType,'trigger')
+                % exclude some long-delayed onset bins
+                ZeroPointBin = obj.TriggerStartBin;
+                EventBinLength = ceil((EventsDelay/1000)/BinWidth)+ZeroPointBin; % aligned to trigger onset time, plus trigger onset time bin
+                OutlierEventBins = sum(EventBinLength > (BinNum - 1),2);
+                if sum(OutlierEventBins)
+                    ExcludeInds = OutlierEventBins > 0;
+                    EventBinLength(ExcludeInds,:) = [];
+                    TrNum = TrNum - sum(ExcludeInds);
+                    SMBinDataMtx(ExcludeInds,:,:) = [];
+                    RepeatTypes(ExcludeInds,:) = [];
+                    UsedLickStrc(ExcludeInds) = [];
                 end
-                AlignedEventOnBin = min(AlignedEvents);
-                AlignSortEventsBin = [];
-                SortEventInds = 1:TrNum;
-            elseif size(EventBinLength,2) > 1
-                if AlignEvent == 1 % sorted with the second events, which is usually choice event
-                    SortEvents = max(AllEvent_shifts(:,2) - AllEvent_shifts(:,AlignEvent),0); % in case of no choice time events
-                    AlignedData = zeros(TrNum, unitNum, UsedBinLength);
-                    for cTr = 1 : TrNum 
-                        AlignedData(cTr,:,:) =  SMBinDataMtx(cTr,:,TrShifts(cTr)+(1:UsedBinLength));
-                    end
-                    [~,SortEventInds] = sort(SortEvents);
-                    AlignedSortDatas = AlignedData(SortEventInds,:,:);
-                    AlignedEventOnBin = min(AlignedEvents);
-                    AlignSortEventsBin = AllEvent_shifts(SortEventInds,:);
-                elseif AlignEvent == 2 % choice align or sound offset align, sorted by the first events
-                    SortEvents = max(0,AllEvent_shifts(:,2) - AllEvent_shifts(:,1));
-                    AlignedData = zeros(TrNum, unitNum, UsedBinLength);
-                    for cTr = 1 : TrNum 
-                        AlignedData(cTr,:,:) =  SMBinDataMtx(cTr,:,TrShifts(cTr)+(1:UsedBinLength));
-                    end
-                    [~,SortEventInds] = sort(SortEvents);
-                    AlignedSortDatas = AlignedData(SortEventInds,:,:);
-                    AlignedEventOnBin = min(AlignedEvents);
-                    AlignSortEventsBin = AllEvent_shifts(SortEventInds,:);
-                else
-                    SortEvents = max(0,AllEvent_shifts(:,AlignEvent) - AllEvent_shifts(:,1));
-                    AlignedData = zeros(TrNum, unitNum, UsedBinLength);
-                    for cTr = 1 : TrNum 
-                        AlignedData(cTr,:,:) =  SMBinDataMtx(cTr,:,TrShifts(cTr)+(1:UsedBinLength));
-                    end
-                    [~,SortEventInds] = sort(SortEvents);
-                    AlignedSortDatas = AlignedData(SortEventInds,:,:);
-                    AlignedEventOnBin = min(AlignedEvents);
-                    AlignSortEventsBin = AllEvent_shifts(SortEventInds,:);
+                AlignedEvents = EventBinLength(:,AlignEvent);
+                TrShifts = AlignedEvents - min(AlignedEvents); % bin number to be shifted for each trial
+                AllEvent_shifts = max(1,bsxfun(@minus,EventBinLength,TrShifts)); % memory friendly way
+    %             AllEvent_shifts = EventBinLength - repmat(TrShifts,1,size(EventBinLength,2)); % All event shifts according to aligned event
+                NumPlotEvents = size(AllEvent_shifts,2);
+                
+            elseif strcmpi(obj.TrigAlignType,'stim')
+                % align all events to stim events at first, as the data was
+                % extracted based on stimulus onset time
+                EventBinLength = ceil((EventsDelay/1000)/BinWidth);
+                ComUsedEventBin = min(EventBinLength(:,1));
+                TrEventAligned = bsxfun(@minus,EventBinLength, EventBinLength(:,1)-ComUsedEventBin) - ComUsedEventBin; % zero time to aligned to stimOnset time
+                ZeroPointBin = ComUsedEventBin;
+                EventBinLengthBack = EventBinLength; % for debug, not used 
+                EventBinLength = TrEventAligned + obj.TriggerStartBin; % Event time bin relative to matrix start inds
+                
+                OutlierEventBins = sum(EventBinLength > (BinNum - 1),2);
+                if sum(OutlierEventBins)
+                    ExcludeInds = OutlierEventBins > 0;
+                    EventBinLength(ExcludeInds,:) = [];
+                    TrNum = TrNum - sum(ExcludeInds);
+                    SMBinDataMtx(ExcludeInds,:,:) = [];
+                    RepeatTypes(ExcludeInds,:) = [];
+                    UsedLickStrc(ExcludeInds) = [];
                 end
+                AlignedEvents = EventBinLength(:,AlignEvent);
+                TrShifts = AlignedEvents - min(AlignedEvents); % bin number to be shifted for each trial
+                AllEvent_shifts = max(1,bsxfun(@minus,EventBinLength,TrShifts)); % memory friendly way, reset to 1if there are negtive values
+    %             AllEvent_shifts = EventBinLength - repmat(TrShifts,1,size(EventBinLength,2)); % All event shifts according to aligned event
+                NumPlotEvents = size(AllEvent_shifts,2);
                 
             end
+            %%
+            if IsLickPlot
+                LRLick_alignBins = cell(TrNum,2);
+                % align lick times
+                for cTr = 1 : TrNum
+                    cTrLeftLick = UsedLickStrc(cTr).LickTimeLeft;
+                    if ~isempty(cTrLeftLick)
+                        LeftTimeBin = ceil((cTrLeftLick/1000)/BinWidth);
+                        if strcmpi(obj.TrigAlignType,'trigger')
+                            LRLick_alignBins{cTr,1} = LeftTimeBin(:) - TrShifts(cTr) - 1 + obj.TriggerStartBin; % correct to matrix start
+                        else
+                            LRLick_alignBins{cTr,1} = LeftTimeBin(:) - TrShifts(cTr) - 1 + obj.TriggerStartBin - ZeroPointBin; 
+                        end
+                    end
+
+                    cTrRightLick = UsedLickStrc(cTr).LickTimeRight;
+                    if ~isempty(cTrRightLick)
+                       RightTimeBin = ceil((cTrRightLick/1000)/BinWidth);
+                       if strcmpi(obj.TrigAlignType,'trigger')
+                           LRLick_alignBins{cTr,2} = RightTimeBin(:) - TrShifts(cTr) - 1 + obj.TriggerStartBin;
+                       else
+                           LRLick_alignBins{cTr,2} = RightTimeBin(:) - TrShifts(cTr) - 1 + obj.TriggerStartBin - ZeroPointBin; 
+                       end
+                    end
+
+                end
+            end
+            %%
+            if BinNum < max(AlignedEvents)
+                error('The maximum event time length is longer than binned data length.');
+            end
+            
+            [SortEventInds,AlignedSortDatas,AlignedEventOnBin,AlignSortEventsBin,UsedBinLength] = obj.AlignANDsortInds(SMBinDataMtx,...
+                AlignedEvents,EventBinLength,AlignEvent,AllEvent_shifts,TrShifts);
+            
             SortRepeats = RepeatTypes(SortEventInds,:);
+            if IsLickPlot
+                LRLick_alignBinsSort = LRLick_alignBins(SortEventInds,:);
+            end
             %%
             if size(RepeatTypes,2) == 2
                 SegNums = 2;
@@ -747,13 +856,15 @@ classdef NPspikeDataMining
             end
             %%
             NumSingleUnits = size(obj.TrigData_Bin,1);
-            xTs = obj.psthTimeWin(1):obj.USedbin(2):(obj.psthTimeWin(2)-obj.USedbin(2));
+%             xTs = obj.psthTimeWin(1):obj.USedbin(2):(obj.psthTimeWin(2)-obj.USedbin(2));
+            
+            xTs = ((1:UsedBinLength) - AlignedEventOnBin)*obj.USedbin(2);
             xTs = xTs + obj.USedbin(2)/2; % convert to bin center
-            for cUnit = 18 : NumSingleUnits
+            for cUnit = 1 : NumSingleUnits
                 cUnitData = squeeze(AlignedSortDatas(:,cUnit,:)); % sorted by events time
-                UnitPlotScale = [0 prctile(cUnitData(:),99)];
+                UnitPlotScale = [0 max(prctile(cUnitData(:),99),1)];
                 
-                hcf = figure('position',[100 100 1450 300]); %,'visible','off'
+                hcf = figure('position',[100 100 1450 300],'visible','off'); %,'visible','off'
                 Seg1TypeNum = length(Seg1_types);
                 for c1Seg = 1 :Seg1TypeNum  % normally stimulus segments
 %                     c1SegInds = SortRepeats(:,1) == Seg1_types(c1Seg);
@@ -763,8 +874,21 @@ classdef NPspikeDataMining
                     for c2Seg = 1 : Seg2TypeNum % normally choice segments
 %                         c2Seg_Inds = SortRepeats(:,2) == Seg2_types(c2Seg);
                         cComSeg_datas = cUnitData(SegTypeInds{c1Seg,c2Seg},:);
+                        if isempty(cComSeg_datas)
+                            if c1Seg == 1
+                                ax = subplot(Seg2TypeNum,Seg1TypeNum,(c2Seg-1)*Seg1TypeNum+c1Seg);
+                                ylabel(ax,sprintf('%d\n # Trials',Seg2_types(c2Seg))); 
+                            end
+                            continue;
+                        end
                         cComSeg_Events = AlignSortEventsBin(SegTypeInds{c1Seg,c2Seg},:);
                         cComSeg_TrNums = size(cComSeg_Events,1);
+                        if IsLickPlot
+                           cSegLicks_L =  LRLick_alignBinsSort(SegTypeInds{c1Seg,c2Seg},1);
+                           LIndexedPlotVec = obj.Cell2indexPlots(cSegLicks_L);
+                           cSegLicks_R =  LRLick_alignBinsSort(SegTypeInds{c1Seg,c2Seg},2);
+                           RIndexedPlotVec = obj.Cell2indexPlots(cSegLicks_R);
+                        end
                         
 %                         c2SegTypeStr = RepeatDespStr{2};
 %                         c2SegPlotColor = EventPlotColors{2};
@@ -777,7 +901,7 @@ classdef NPspikeDataMining
                         end
                         for cEvent = 1 : NumPlotEvents
                            % plot all events
-                           cEventBins = (cComSeg_Events(:,cEvent))'* BinWidth;
+                           cEventBins = (cComSeg_Events(:,cEvent)-AlignedEventOnBin)'* BinWidth;
                            PlotMtx_x = [cEventBins;cEventBins;nan(1,cComSeg_TrNums)];
                            Plot_x = PlotMtx_x(:);
                            PlotMtx_y = [(1:cComSeg_TrNums)-0.5;(1:cComSeg_TrNums)+0.5;nan(1,cComSeg_TrNums)];
@@ -787,7 +911,22 @@ classdef NPspikeDataMining
                                hlAll = [hlAll,hl]; 
                             end
                         end
-                        set(ax,'xlim',obj.psthTimeWin,'ylim',[0.5 cComSeg_TrNums+0.5]);
+                        if IsLickPlot
+                            if ~isempty(LIndexedPlotVec)
+%                                 LeftLickInds_x = ([LIndexedPlotVec(:,1),LIndexedPlotVec(:,1),nan(numel(LIndexedPlotVec),1)])';
+%                                 LeftLickInds_y = ([LIndexedPlotVec(:,2)-0.5,LIndexedPlotVec(:,2)+0.5,nan(numel(LIndexedPlotVec),1)])';
+%                                 LeftLick_x = LeftLickInds_x(:);
+%                                 LeftLick_y = LeftLickInds_y(:);
+                                plot((LIndexedPlotVec(:,1) - AlignedEventOnBin)*BinWidth,LIndexedPlotVec(:,2),'c.','MarkerSize',4);
+                            end
+                            
+                            if ~isempty(RIndexedPlotVec)
+                                 plot((RIndexedPlotVec(:,1) - AlignedEventOnBin)*BinWidth,RIndexedPlotVec(:,2),'.','color',[1,.7,.2],'MarkerSize',4);
+                            end
+                            
+                        end
+                        
+                        set(ax,'xlim',[xTs(1) xTs(end)],'ylim',[0.5 cComSeg_TrNums+0.5],'xtick',0:floor(xTs(end)));
                         set(ax,'YDir','reverse');
                         %
                         if c1Seg == 1
@@ -822,18 +961,25 @@ classdef NPspikeDataMining
                 % aligned event time
                 hMeanf = figure('position',[100 100 1450 300],'visible','off'); %,'visible','off'
                 yaxisScales = zeros(Seg1TypeNum,2);
-                hlAlls = [];
+                IsLegendExist = 0;
                 TraceAxess = [];
                 for cSeg1Inds = 1 :Seg1TypeNum  % normally stimulus segments
                     ax = subplot(1,Seg1TypeNum,cSeg1Inds);
                     hold on;
                     TraceColors = jet(Seg2TypeNum);
                     SegMeanTraces = cell(Seg1TypeNum,Seg2TypeNum,2);
+                    hlAlls = [];
+                    
                     for cSeg2Inds = 1 : Seg2TypeNum
                         cComSeg_datas = cUnitData(SegTypeInds{cSeg1Inds,cSeg2Inds},:);
+                        if isempty(cComSeg_datas)
+                            continue;
+                        end
+                        
                         cComNums = size(cComSeg_datas,1);
                         if cComNums > 2
-                            SegTraceMean = (mean(cComSeg_datas));
+%                             SegTraceMean = (mean(cComSeg_datas));
+                            SegTraceMean = (smooth(mean(cComSeg_datas),5))';
                             SegTraceSem = (std(cComSeg_datas)/sqrt(cComNums));
                             
                             patch_x = [xTs,fliplr(xTs)];
@@ -841,10 +987,10 @@ classdef NPspikeDataMining
                             patch(ax,patch_x,patch_y,1,'FaceColor',[.8 .8 .8],'EdgeColor','none');
                             
                             hl = plot(ax,xTs,SegTraceMean,'Color',TraceColors(cSeg2Inds,:),'linewidth',1);
-                            if cSeg1Inds == 1
+                            if ~IsLegendExist
                                 hlAlls = [hlAlls,hl];
                             end
-                            
+                            set(ax,'xlim',[xTs(1) xTs(end)],'xtick',0:floor(xTs(end)));
                         else
                             SegTraceMean = NaN;
                             SegTraceSem = NaN;
@@ -860,34 +1006,38 @@ classdef NPspikeDataMining
                     else
                        set(ax,'yticklabel',{}); 
                     end
-                    if cSeg1Inds == Seg1TypeNum
-                        legend(ax,hlAlls,EventDespStrs,'location','northeast','box','off','autoupdate','off');
+                    if length(hlAlls) == Seg2TypeNum
+                        LegStrs = num2str(Seg2_types(:),[RepeatStr{2},'=%d']);
+                        legend(ax,hlAlls,LegStrs,'location','northeast','box','off','autoupdate','off');
+                        IsLegendExist = 1;
+                        hlAlls = [];
                     end
                 end
                 
                 CommonYScales = [max(min(yaxisScales(:,1)),0),max(yaxisScales(:,2))];
                 for cSeg1Inds = 1 :Seg1TypeNum
-                   
                    set(TraceAxess(cSeg1Inds),'ylim',CommonYScales); 
-                   line(TraceAxess(cSeg1Inds),[AlignedEventOnBin,AlignedEventOnBin]*BinWidth,...
+                   line(TraceAxess(cSeg1Inds),[0 0],...
                        CommonYScales,'Color','k','linewidth',0.8,'linestyle','--'); 
                 end
                 annotation(hMeanf,'textbox',[0.50,0.71,0.3,0.3],'String',sprintf('Unit %d, Chn %d',...
                     obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit)),'FitBoxToText','on','EdgeColor',...
                        'none','FontSize',12);
                 
-            %
-                 if ~isdir(fullfile(obj.ksFolder,'EventAlignPlot'))
-                     mkdir(fullfile(obj.ksFolder,'EventAlignPlot'));
+            %%
+                 if ~isdir(fullfile(obj.ksFolder,SaveFolderNames))
+                     mkdir(fullfile(obj.ksFolder,SaveFolderNames));
                  end
-                 cd(fullfile(obj.ksFolder,'EventAlignPlot'));
+%                  cd(fullfile(obj.ksFolder,SaveFolderNames));
                  ColorSaveName = sprintf('Unit%3d Eventaligned color plots',obj.UsedClus_IDs(cUnit));
+                 ColorSaveName = fullfile(obj.ksFolder,SaveFolderNames,ColorSaveName);
                  saveas(hcf,ColorSaveName);
                  saveas(hcf,ColorSaveName,'png');
                  set(hcf,'paperpositionmode','manual');
                  print(hcf,'-dpdf',ColorSaveName,'-painters');
 
                  AvgSaveName = sprintf('Unit%3d Eventaligned meantrace plots',obj.UsedClus_IDs(cUnit));
+                 AvgSaveName = fullfile(obj.ksFolder,SaveFolderNames,AvgSaveName);
                  saveas(hMeanf,AvgSaveName);
                  saveas(hMeanf,AvgSaveName,'png');
                  set(hMeanf,'paperpositionmode','manual');
@@ -909,6 +1059,118 @@ classdef NPspikeDataMining
             
         end
         
+        
+    end
+    
+    methods(Access = private)
+        function [SortEventInds,AlignedSortDatas,AlignedEventOnBin,AlignSortEventsBin,UsedBinLength] = ...
+                AlignANDsortInds(obj,SMBinDataMtx,AlignedEvents,EventBinLength,AlignEvent,AllEvent_shifts,TrShifts)
+            
+            [TrNum, unitNum, BinNum] = size(SMBinDataMtx);
+            if strcmpi(obj.TrigAlignType,'trigger')
+                
+                UsedBinLength = min(AlignedEvents) + BinNum - max(AlignedEvents);
+                if size(EventBinLength,2) == 1
+                    % no need to sort the original trial sequence
+                    AlignedSortDatas = zeros(TrNum, unitNum, UsedBinLength);
+                    for cTr = 1 : TrNum %AllEvent_shifts(:,1)
+                        AlignedSortDatas(cTr,:,:) =  SMBinDataMtx(cTr,:,TrShifts(cTr)+(1:UsedBinLength));
+                    end
+                    AlignedEventOnBin = min(AlignedEvents);
+                    AlignSortEventsBin = [];
+                    SortEventInds = 1:TrNum;
+                elseif size(EventBinLength,2) > 1
+                    if AlignEvent == 1 % sorted with the second events, which is usually choice event
+                        SortEvents = max(AllEvent_shifts(:,2) - AllEvent_shifts(:,AlignEvent),0); % in case of no choice time events
+                        AlignedData = zeros(TrNum, unitNum, UsedBinLength);
+                        for cTr = 1 : TrNum
+                            AlignedData(cTr,:,:) =  SMBinDataMtx(cTr,:,TrShifts(cTr)+(1:UsedBinLength));
+                        end
+                        [~,SortEventInds] = sort(SortEvents);
+                        AlignedSortDatas = AlignedData(SortEventInds,:,:);
+                        AlignedEventOnBin = min(AlignedEvents);
+                        AlignSortEventsBin = AllEvent_shifts(SortEventInds,:);
+                    elseif AlignEvent == 2 % choice align or sound offset align, sorted by the first events
+                        SortEvents = max(0,AllEvent_shifts(:,2) - AllEvent_shifts(:,1));
+                        AlignedData = zeros(TrNum, unitNum, UsedBinLength);
+                        for cTr = 1 : TrNum
+                            AlignedData(cTr,:,:) =  SMBinDataMtx(cTr,:,TrShifts(cTr)+(1:UsedBinLength));
+                        end
+                        [~,SortEventInds] = sort(SortEvents);
+                        AlignedSortDatas = AlignedData(SortEventInds,:,:);
+                        AlignedEventOnBin = min(AlignedEvents);
+                        AlignSortEventsBin = AllEvent_shifts(SortEventInds,:);
+                    else
+                        SortEvents = max(0,AllEvent_shifts(:,AlignEvent) - AllEvent_shifts(:,1));
+                        AlignedData = zeros(TrNum, unitNum, UsedBinLength);
+                        for cTr = 1 : TrNum
+                            AlignedData(cTr,:,:) =  SMBinDataMtx(cTr,:,TrShifts(cTr)+(1:UsedBinLength));
+                        end
+                        [~,SortEventInds] = sort(SortEvents);
+                        AlignedSortDatas = AlignedData(SortEventInds,:,:);
+                        AlignedEventOnBin = min(AlignedEvents);
+                        AlignSortEventsBin = AllEvent_shifts(SortEventInds,:);
+                    end
+
+                end
+            else
+                % if binned data is use stimonset as zeros time point
+                if size(EventBinLength,2) == 1 % only the stim onset event is given
+                    % no need to sort the original trial sequence
+                    %         AlignedSortDatas = zeros(TrNum, unitNum, UsedBinLength);
+                    %         for cTr = 1 : TrNum %AllEvent_shifts(:,1)
+                    %             AlignedSortDatas(cTr,:,:) =  SMBinDataMtx(cTr,:,TrShifts(cTr)+(1:UsedBinLength));
+                    %         end
+                    AlignedSortDatas = SMBinDataMtx;
+                    AlignedEventOnBin = obj.TriggerStartBin;
+                    AlignSortEventsBin = [];
+                    SortEventInds = 1:TrNum;
+                    UsedBinLength = size(AlignedSortDatas,3);
+                else
+                    if AlignEvent == 1 % already aligned to stim event, sorted with choice (2nd events)
+                        SortEvents = max(AllEvent_shifts(:,2) - AllEvent_shifts(:,1),0);
+                        [~,SortEventInds] = sort(SortEvents);
+                        AlignedSortDatas = SMBinDataMtx(SortEventInds,:,:);
+                        AlignedEventOnBin = obj.TriggerStartBin;
+                        AlignSortEventsBin = AllEvent_shifts(SortEventInds,:);
+                        UsedBinLength = size(AlignedSortDatas,3);
+                    else % need aligned to other events
+                        BinNum = size(SMBinDataMtx,3);
+                        UsedBinLength = min(AlignedEvents) + BinNum - max(AlignedEvents);
+                        AlignedData = zeros(TrNum, unitNum, UsedBinLength);
+                        for cTr = 1 : TrNum
+                            AlignedData(cTr,:,:) =  SMBinDataMtx(cTr,:,...
+                                (TrShifts(cTr) + 1):(TrShifts(cTr) + UsedBinLength));
+                        end
+                        SortEvents = AllEvent_shifts(:,1);
+                        [~,SortEventInds] = sort(SortEvents);
+                        AlignedSortDatas = AlignedData(SortEventInds,:,:);
+                        AlignedEventOnBin = min(AlignedEvents);
+                        AlignSortEventsBin = AllEvent_shifts(SortEventInds,:);
+
+
+                    end
+
+                end
+            end
+
+        end
+        
+        function IndexedPlotVec = Cell2indexPlots(obj,CellData)
+            % convert cell data into index data for quick plot
+            NumofRows = length(CellData);
+            IndexedPlotCell = cell(NumofRows,2);
+            for cRow = 1 : NumofRows
+                cRData = CellData{cRow};
+                if ~isempty(cRData)
+                    IndexedPlotCell{cRow,1} = cRData(:);
+                    IndexedPlotCell{cRow,2} = cRow*ones(numel(cRData),1);
+                end
+            end
+
+            IndexedPlotVec = cell2mat(IndexedPlotCell);
+
+        end
         
     end
     
