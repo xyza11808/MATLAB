@@ -1,14 +1,14 @@
 
 
-if ~(exist('FolderPath','var') && exist('binfilepath','var'))
+if exist('FolderPath','var') && exist('binfilepath','var')
     FolderPath = pwd;
     binfilepath = fullfile(FolderPath,'..');
     SR = 30000;
 end
 %%
 NumofChannels = 385; % last channel is the trigger channel data
-% fnames = dir(fullfile(binfilepath,'*.ap.bin'));
-fullbinfile = fullpaths; %fullfile(binfilepath,fnames(1).name);
+fnames = dir(fullfile(binfilepath,'*.ap.bin'));
+fullbinfile = fullfile(binfilepath,fnames(1).name);
 bytes       = get_file_size(fullbinfile); % size in bytes of raw binary
 TotalTimes = floor(bytes/NumofChannels/2)/SR;  % total recording times
 %%
@@ -23,7 +23,7 @@ tempMaxChn = readNPY(fullfile(FolderPath, 'templates_maxChn.npy'));
 tempAmplitudes = readNPY(fullfile(FolderPath, 'amplitudes.npy'));
 
 %% load cluster channel data
-ClusMaxChnData = load(fullfile(FolderPath,'ClusterTypeANDchn.mat'));
+ClusMaxChnData = load('ClusterTypeANDchn.mat');
 ClusIndex = ClusMaxChnData.ClusterTypes;
 ClusBestChn = ClusMaxChnData.ClusterBestChn;
 % ClusterTypes = unique(SpikeClus);
@@ -48,13 +48,13 @@ for Clus = 1:NumberClusters
 end
 
 %% load kslabel data
-ksLabels = readtable(fullfile(FolderPath,'cluster_group.tsv'),'FileType','text',...
+ksLabels = readtable('cluster_group.tsv','FileType','text',...
     'ReadVariableNames',true,'Format','%d%s');
 % ksLabelInds = cell2mat(ksLabelCells);
-ks_contampcts = readtable(fullfile(FolderPath,'cluster_ContamPct.tsv'),'FileType','text',...
+ks_contampcts = readtable('cluster_ContamPct.tsv','FileType','text',...
     'ReadVariableNames',true,'Format','%d%f');
 
-ks_clusAmplitude = readtable(fullfile(FolderPath,'cluster_Amplitude.tsv'),'FileType','text',...
+ks_clusAmplitude = readtable('cluster_Amplitude.tsv','FileType','text',...
     'ReadVariableNames',true,'Format','%d%f');
 
 ClusChnDpth = chnposition(ClusBestChn+1,2);
