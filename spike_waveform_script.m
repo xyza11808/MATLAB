@@ -1,9 +1,10 @@
 
 % Datafile_path = 'I:\20210104\xy1_20210104_g0\xy1_20210104_g0_imec2\3b2_output';
 Datafile_path = pwd;
-File_name = 'AuD_PASSIVE_TEST_g0_t0.imec0.ap.bin';
+% File_name = 'AuD_PASSIVE_TEST_g0_t0.imec0.ap.bin';
 
-fullpaths = fullfile(Datafile_path,File_name);
+% fullpaths = fullfile(Datafile_path,File_name);
+fullpaths = 'N:\NPDatas\b103a04_20210408_NPSess01_g0\b103a04_20210408_NPSess01_g0_imec0\temp\temp_wh.dat';
 fileinfo = dir(fullpaths);
 Numchannels = 385;
 Datatypes = 'int16';

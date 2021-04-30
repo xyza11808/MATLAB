@@ -23,17 +23,26 @@ else
     TriggerChnData = mmf.Data.x(obj.NchanTOT,:);
 end
 
-TrgChnNorm = TriggerChnData/max(TriggerChnData);
+TrgChnNorm = TriggerChnData/min(64,max(TriggerChnData));
+% clearvars TriggerChnData
 
+%%
 TriggerEvents = [];
 k = 1;
-
-TrgWaveStart = find(TrgChnNorm > 0.95,1,'first');
+IsInitInput = 1;
+TrgWaveStart = find(TrgChnNorm(30000*60*5:end) > 0.95,1,'first');
 
 while ~isempty(TrgWaveStart)
     % StartSearchInds = TrgWaveStart;
+    if IsInitInput
+        TrgWaveStart = TrgWaveStart + 30000*60*5 - 1;
+        IsInitInput = 0;
+    end
     TrgwaveEndInds = find(TrgChnNorm(TrgWaveStart:end) < 0.95,1,'first');
-    if TrgwaveEndInds < 3 % 100us
+    if isempty(TrgwaveEndInds)
+        break;
+    end
+    if TrgwaveEndInds < 15 % 500us
         TrgWaveStart = find(TrgChnNorm((TrgWaveStart+TrgwaveEndInds):end) > 0.95,1,'first')+...
             TrgWaveStart+TrgwaveEndInds;
         continue;
@@ -43,7 +52,7 @@ while ~isempty(TrgWaveStart)
     TrgWaveStart = find(TrgChnNorm((TrgWaveStart+TrgwaveEndInds):end) > 0.95,1,'first')+TrgWaveStart+TrgwaveEndInds;
     k = k + 1;
 end
-
+%%
 if GUIprocess
     % calculate the time interval for each square wave
     TriggerEventLen = (TriggerEvents(:,2) - TriggerEvents(:,1))/obj.ops.fs;

@@ -2,8 +2,8 @@
 % cclr
 % addpath(genpath('D:\GitHub\Kilosort2')) % path to kilosort folder
 % addpath('D:\GitHub\npy-matlab') % for converting to Phy
-rootZ = 'N:\NPDatas\b103a04_20210410_NPSess02_g0\b103a04_20210410_NPSess02_g0_imec0'; % the raw data binary file is in this folder
-rootH = 'N:\NPDatas\b103a04_20210410_NPSess02_g0\b103a04_20210410_NPSess02_g0_imec0/temp'; % path to temporary binary file (same size as data, should be on fast SSD)
+rootZ = 'N:\NPDatas\b104a03_20210428_NPSess02_g0\b104a03_20210428_NPSess02_g0_imec0'; % the raw data binary file is in this folder
+rootH = 'N:\NPDatas\b104a03_20210428_NPSess02_g0\b104a03_20210428_NPSess02_g0_imec0/temp'; % path to temporary binary file (same size as data, should be on fast SSD)
 if ~isdir(rootH)
     mkdir(rootH);
 end

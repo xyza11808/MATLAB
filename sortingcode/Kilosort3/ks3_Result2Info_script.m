@@ -20,20 +20,20 @@ temInds = readNPY(fullfile(FolderPath, 'templates_ind.npy'));
 SpikeClus = readNPY(fullfile(FolderPath, 'spike_clusters.npy'));
 SpikeTimeSample = readNPY(fullfile(FolderPath, 'spike_times.npy'));
 tempMaxChn = readNPY(fullfile(FolderPath, 'templates_maxChn.npy'));
-tempAmplitudes = readNPY(fullfile(FolderPath, 'amplitudes.npy'));
-
+% tempAmplitudes = readNPY(fullfile(FolderPath, 'amplitudes.npy'));
+TemplateAmps = readNPY(fullfile(FolderPath, 'ampUnscales.npy'));
 %% load cluster channel data
 ClusMaxChnData = load(fullfile(FolderPath,'ClusterTypeANDchn.mat'));
 ClusIndex = ClusMaxChnData.ClusterTypes;
 ClusBestChn = ClusMaxChnData.ClusterBestChn;
 % ClusterTypes = unique(SpikeClus);
 NumberClusters = length(ClusIndex);
-ClusAvgAmps = zeros(NumberClusters,1); % amplitude for each cluster
+% ClusAvgAmps = zeros(NumberClusters,1); % amplitude for each cluster
 ClusFRs = zeros(NumberClusters,1); % overall firing rate for each clusters
 for Clus = 1:NumberClusters
     Clus_SPIds = (SpikeClus == ClusIndex(Clus));
-    clus_sp_amplitude = tempAmplitudes(Clus_SPIds);
-    ClusAvgAmps(Clus) = mean(clus_sp_amplitude);
+%     clus_sp_amplitude = tempAmplitudes(Clus_SPIds);
+%     ClusAvgAmps(Clus) = mean(clus_sp_amplitude);
     
     ClusFRs(Clus) = sum(Clus_SPIds)/TotalTimes; % over spike rate
 %     [temps,tempcount] = uniAndcount(clus_sp_templates);
@@ -92,7 +92,7 @@ for cClus = 1 : NumberClusters
     fprintf(fileIDInfo,'%s%s',clus_kslabels{cClus}, char(9)); 
     
     % add amps
-    fprintf(fileIDInfo,'%.4f%s',ClusAvgAmps(cClus), char(9)); 
+    fprintf(fileIDInfo,'%.4f%s',TemplateAmps(cClus), char(9)); 
     
     % add ch Index
     fprintf(fileIDInfo,'%d%s',ClusBestChn(cClus), char(9)); 
