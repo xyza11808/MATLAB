@@ -8,11 +8,11 @@
 % * remember to run one cell at a time, instead of the whole script at once *
 
 % directory of histology images
-image_folder = 'E:\data\NeuropixelData\anatomy_data\firstTest_anatomy\20210116-xy\prob_poseriorLeft\red\8bit';
+image_folder = 'E:\data\NeuropixelData\anatomy_data\20210316_passiveTest\20210319lqx\tiff_files';
 
 % directory to save the processed images -- can be the same as the above image_folder
 % results will be put inside a new folder called 'processed' inside of this image_folder
-save_folder = 'E:\data\NeuropixelData\anatomy_data\firstTest_anatomy\20210116-xy\prob_poseriorLeft\red\8bit\outs';
+save_folder = fullfile(image_folder,'outs');% 'E:\data\NeuropixelData\anatomy_data\firstTest_anatomy\20210116-xy\prob_poseriorLeft\red\8bit\outs';
 
 % name of images, in order anterior to posterior or vice versa
 % once these are downsampled they will be named ['original name' '_processed.tif']
@@ -30,7 +30,7 @@ use_already_downsampled_image = false;
 % pixel size parameters: microns_per_pixel of large images in the image
 % folder (if use_already_downsampled_images is set to false);
 % microns_per_pixel_after_downsampling should typically be set to 10 to match the atlas
-microns_per_pixel = 2.6;
+microns_per_pixel = 11686.4/2247;
 microns_per_pixel_after_downsampling = 10;
 
 

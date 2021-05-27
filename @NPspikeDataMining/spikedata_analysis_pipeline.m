@@ -4,7 +4,7 @@
 NPprocessks3_pass = NPspikeDataMining('G:\AuD_PASSIVE_TEST_g0\kilosort3'); % input the ks analysis folder path as start
 
 %% load trigger onset times
-NPprocessks3_pass = NPprocessks3_pass.triggerOnsetTime([],2);  % 2 is the trigger duration, in ms
+NPprocessks3_pass = NPprocessks3_pass.triggerOnsetTime([],4);  % 4 is the trigger duration, in ms
 
 %% given trigger time windows, and then calculate trigger onset PSTHs
 TimeWin = [-0.4,1.8]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds

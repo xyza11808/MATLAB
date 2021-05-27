@@ -2,15 +2,15 @@
 
 if ~(exist('FolderPath','var') && exist('binfilepath','var'))
     FolderPath = pwd;
-    binfilepath = fullfile(FolderPath,'..');
+%     binfilepath = fullfile(FolderPath,'..');
     SR = 30000;
 end
 %%
 NumofChannels = 385; % last channel is the trigger channel data
 % fnames = dir(fullfile(binfilepath,'*.ap.bin'));
-fullbinfile = fullpaths; %fullfile(binfilepath,fnames(1).name);
-bytes       = get_file_size(fullbinfile); % size in bytes of raw binary
-TotalTimes = floor(bytes/NumofChannels/2)/SR;  % total recording times
+% fullbinfile = fullpaths; %fullfile(binfilepath,fnames(1).name);
+% bytes       = get_file_size(fullbinfile); % size in bytes of raw binary
+TotalTimes = obj.Numsamp/SR;  % total recording times
 %%
 chnMaps = readNPY(fullfile(FolderPath, 'channel_map.npy'));
 chnposition = readNPY(fullfile(FolderPath, 'channel_positions.npy'));
@@ -20,8 +20,7 @@ temInds = readNPY(fullfile(FolderPath, 'templates_ind.npy'));
 SpikeClus = readNPY(fullfile(FolderPath, 'spike_clusters.npy'));
 SpikeTimeSample = readNPY(fullfile(FolderPath, 'spike_times.npy'));
 tempMaxChn = readNPY(fullfile(FolderPath, 'templates_maxChn.npy'));
-% tempAmplitudes = readNPY(fullfile(FolderPath, 'amplitudes.npy'));
-TemplateAmps = readNPY(fullfile(FolderPath, 'ampUnscales.npy'));
+
 %% load cluster channel data
 ClusMaxChnData = load(fullfile(FolderPath,'ClusterTypeANDchn.mat'));
 ClusIndex = ClusMaxChnData.ClusterTypes;
@@ -45,6 +44,12 @@ for Clus = 1:NumberClusters
 %     end
 %     ClusChannel(Clus) = tempMaxChn(UsedTemplate)-1;
 %     
+end
+
+try
+    TemplateAmps = readNPY(fullfile(FolderPath, 'ampUnscales.npy'));
+catch
+    TemplateAmps = zeros(NumberClusters,1);
 end
 
 %% load kslabel data

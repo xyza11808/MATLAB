@@ -7,14 +7,14 @@
 
 
 % directory of histology
-processed_images_folder = 'E:\data\NeuropixelData\anatomy_data\firstTest_anatomy\20210116-xy\prob_poseriorLeft\red\outs\processed'; 
+processed_images_folder = fullfile(save_folder,'processed');%'E:\data\NeuropixelData\anatomy_data\firstTest_anatomy\20210116-xy\prob_poseriorLeft\red\outs\processed'; 
 
 % name the saved probe points, to avoid overwriting another set of probes going in the same folder
-probe_save_name_suffix = 'test3_2'; 
+probe_save_name_suffix = 'testAudprob'; 
 
 % directory of reference atlas files
 annotation_volume_location = 'E:\MatCode\AllentemplateData\annotation_volume_10um_by_index.npy';
-structure_tree_location = 'E:\MatCode\MATLAB\allenCCF-master\structure_tree_safe_2017.csv';
+structure_tree_location = 'E:\MatCode\AllentemplateData\structure_tree_safe_2017.csv';
 template_volume_location = 'E:\MatCode\AllentemplateData\template_volume_10um.npy';
 
 % plane to view ('coronal', 'sagittal', 'transverse')
@@ -58,9 +58,9 @@ sliceBrowser(slice_figure_browser, processed_images_folder, f, reference_size);
 f = AtlasTransformBrowser(f, tv_plot, av_plot, st, slice_figure_browser, processed_images_folder, probe_save_name_suffix, plane);
 
 
-% use the simpler version, which does not interface with processed slice images
-% just run these two lines instead of the previous 5 lines of code
-% 
+% % use the simpler version, which does not interface with processed slice images
+% % just run these two lines instead of the previous 5 lines of code
+% % 
 %  save_location = processed_images_folder;
 %  f = allenAtlasBrowser(f, tv_plot, av_plot, st, save_location, probe_save_name_suffix, plane);
 

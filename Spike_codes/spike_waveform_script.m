@@ -4,7 +4,8 @@ Datafile_path = pwd;
 % File_name = 'AuD_PASSIVE_TEST_g0_t0.imec0.ap.bin';
 
 % fullpaths = fullfile(Datafile_path,File_name);
-fullpaths = 'N:\NPDatas\b103a04_20210408_NPSess01_g0\b103a04_20210408_NPSess01_g0_imec0\temp\temp_wh.dat';
+% fullpaths = 'N:\NPDatas\b103a04_20210408_NPSess01_g0\b103a04_20210408_NPSess01_g0_imec0\temp\temp_wh.dat';
+fullpaths = 'N:\NPDatas\b103a04_20210408_NPSess01_g0\b103a04_20210408_NPSess01_g0_imec0\b103a04_20210408_NPSess01_g0_t0.imec0.ap.bin';
 fileinfo = dir(fullpaths);
 Numchannels = 385;
 Datatypes = 'int16';
@@ -35,6 +36,71 @@ UsedChannelDepth = ChannelDepth(UsedIDs_inds);
 % ClusterTypes = unique(UsedIDs_clus);
 NumGoodClus = length(UsedIDs_clus);
 fprintf('Totally %d number of good units were find.\n',NumGoodClus);
+
+%%
+ftempid = fopen(fullpaths);
+% startTime = 15000;
+% offsets = 385*startTime*2;
+% status = fseek(ftempid,offsets,bof);
+% AsNew= fread(ftempid,[385 15000],'int16');
+NumofUnit = length(UsedIDs_clus);
+UnitDatas = cell(NumofUnit,1);
+UnitFeatures = cell(NumofUnit,3);
+for cUnit = 1 : NumofUnit
+% cUnit = 137;
+% close;
+    cClusInds = UsedIDs_clus(cUnit);
+    cClusChannel = Channel_idUseds(cUnit);
+    cClus_Sptimes = SpikeTimeSample(SpikeClusters == cClusInds);
+    if numel(cClus_Sptimes) < 2000
+        UsedSptimes = cClus_Sptimes;
+        SPNums = length(UsedSptimes);
+    else
+        UsedSptimes = cClus_Sptimes(randsample(numel(cClus_Sptimes),2000));
+        SPNums = 2000;
+    end
+    cspWaveform = nan(SPNums,diff(WaveWinSamples));
+    for csp = 1 : SPNums
+        cspTime = UsedSptimes(csp);
+        cspStartInds = cspTime+WaveWinSamples(1);
+        cspEndInds = cspTime+WaveWinSamples(2);
+        offsetTimeSample = cspStartInds - 1;
+        if offsetTimeSample < 0 || cspEndInds > Numsamp
+            continue;
+        end
+        offsets = 385*(cspStartInds-1)*2; 
+        status = fseek(ftempid,offsets,'bof');
+        if ~status
+           % correct offset value is set
+           AllChnDatas = fread(ftempid,[385 diff(WaveWinSamples)],'int16');
+           cspWaveform(csp,:) = AllChnDatas(cClusChannel,:);
+    %        cspWaveform(csp,:) = mean(AllChnDatas);
+        end
+    end
+
+    huf = figure('visible','off');
+    AvgWaves = mean(cspWaveform);
+    UnitDatas{cUnit} = cspWaveform;
+    
+    plot(AvgWaves);
+    [isabnorm,isUsedVec] = iswaveformatypical(AvgWaves,WaveWinSamples,false);
+    title([num2str(cClusChannel,'chn=%d'),'  ',num2str(1-isabnorm,'Ispass = %d')]);
+    wavefeature = SPwavefeature(AvgWaves,WaveWinSamples);
+    text(6,0.8*max(AvgWaves),{sprintf('tough2peak = %d',wavefeature.tough2peakT);...
+        sprintf('posthyper = %d',wavefeature.postHyperT)},'FontSize',8);
+
+    if wavefeature.IsPrePosPeak
+        text(50,0.5*max(AvgWaves),{sprintf('pre2postpospeakratio = %.3f',wavefeature.pre2post_peakratio)},'color','r','FontSize',8);
+    end
+    UnitFeatures(cUnit,:) = {wavefeature,isabnorm,isUsedVec};
+    %
+    saveName = sprintf('Unit%d waveform plot save',cUnit);
+    saveas(huf,saveName);
+    saveas(huf,saveName,'png');
+    
+    close(huf);
+    
+end
 %%
 close;
 PlotClu = 2;
@@ -137,20 +203,21 @@ title(sprintf('clu=%d, channel=%d',Clu_index,Channel_index));
 
 %% #########################################################################
 % website methods for wave plots
-myKsDir_output = 'E:\tempdata\Neuropixeldata_temp\3b2_outs';
+myKsDir_output = 'N:\NPDatas\b103a04_20210408_NPSess01_g0\b103a04_20210408_NPSess01_g0_imec0\kilosort3';
 % Rawdatadir = 'I:\20210104\xy1_20210104_g0\xy1_20210104_g0_imec1';
 sp = loadKSdir(myKsDir_output);
-
+%%
 gwfparams.dataDir = myKsDir_output;    % KiloSort/Phy output folder
 % gwfparams.Rawdatapath = Rawdatadir;
-apD = dir(fullfile(myKsDir_output, '*ap*.bin')); % AP band file from spikeGLX specifically
+apD = dir(fullfile(myKsDir_output,'..', '*ap*.bin')); % AP band file from spikeGLX specifically
 gwfparams.fileName = apD(1).name;         % .dat file containing the raw 
 gwfparams.dataType = 'int16';            % Data type of .dat file (this should be BP filtered)
 gwfparams.nCh = 385;                      % Number of channels that were streamed to disk in .dat file
-gwfparams.wfWin = [-40 41];              % Number of samples before and after spiketime to include in waveform
+gwfparams.wfWin = [-30 51];              % Number of samples before and after spiketime to include in waveform
 gwfparams.nWf = 1000;                    % Number of waveforms per unit to pull out
-gwfparams.spikeTimes = ceil(sp.st(sp.clu==37)*30000); % Vector of cluster spike times (in samples) same length as .spikeClusters
-gwfparams.spikeClusters = sp.clu(sp.clu==37);
+ClusIns = 0;
+gwfparams.spikeTimes = ceil(sp.st(sp.clu==ClusIns)*30000); % Vector of cluster spike times (in samples) same length as .spikeClusters
+gwfparams.spikeClusters = sp.clu(sp.clu==ClusIns);
 
 %%
 wf = getWaveForms(gwfparams);

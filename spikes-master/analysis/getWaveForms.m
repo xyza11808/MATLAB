@@ -31,7 +31,7 @@ function wf = getWaveForms(gwfparams)
 if ~isfield(gwfparams,'Rawdatapath')
     gwfparams.Rawdatapath = gwfparams.dataDir;
 end
-fileName = fullfile(gwfparams.Rawdatapath,gwfparams.fileName);           
+fileName = fullfile(gwfparams.Rawdatapath,'..',gwfparams.fileName);           
 filenamestruct = dir(fileName);
 dataTypeNBytes = numel(typecast(cast(0, gwfparams.dataType), 'uint8')); % determine number of bytes per sample
 nSamp = filenamestruct.bytes/(gwfparams.nCh*dataTypeNBytes);  % Number of samples per channel

@@ -2,7 +2,7 @@ classdef NPspikeDataMining
     properties (SetAccess = private)
         NumOfWaves = 2000;
         WaveWinSamples = [-30,51];
-        
+        SessTypeStrs = {'Task','Passive'};
     end
     
     properties (SetAccess = public)
@@ -27,42 +27,73 @@ classdef NPspikeDataMining
         UsedChnDepth
         
         % for triggered PSTH 
-        UsedTrigOnTime = []; % trigger onset time, in seconds format
-        TrigData_Bin = {};
-        BinCenters = [];
-        TriggerStartBin = [];
-        USedbin
-        TrigDataBin_FRSub = {};
-        TrTrigSpikeTimes = {};
-        psthTimeWin = [];
-        TrigAlignType = ''; % could either be "trigger" or "stim", which indicates the events used for binned data extraction
+        UsedTrigOnTime = {[],[]}; % trigger onset time, in seconds format
+        TrigData_Bin = {[],[]};
+        CurrentSessInds = []
+        BinCenters = {[],[]};
+        TriggerStartBin = {[],[]};
+        USedbin = [];
+        TrigDataBin_FRSub = {[],[]};
+        TrTrigSpikeTimes = {[],[]};
+        psthTimeWin = {[],[]};
+        TrigAlignType = {'',''}; % could either be "trigger" or "stim", which indicates the events used for binned data extraction
+        
+        % waveform datas
+        UnitWaves = {};
+        UnitWaveFeatures = {};
         
     end
     
     
     methods
-        function obj = NPspikeDataMining(FolderPath)
-            binfileInfo = dir(fullfile(FolderPath,'*.ap.bin'));
-            if isempty(binfileInfo)
-                % looking in parent folders, in case of ks3 outputs
-                binfileInfo = dir(fullfile(FolderPath,'..','*.ap.bin'));
-                if isempty(binfileInfo)
-                    warning('Unable to find target bin file.');
-                    return;
+        function obj = NPspikeDataMining(FolderPath, SessTypeStr)
+            % session str type must be task or passive, and must be given
+            SessTypeInds = strcmpi(SessTypeStr,obj.SessTypeStrs);
+            if ~sum(SessTypeInds)
+               error('Unknowed trigger session type.'); 
+            end
+            obj.CurrentSessInds = SessTypeInds;
+            % if add another session to same recording file's spike sorting
+            % outputs
+            if isempty(FolderPath)
+                if isempty(obj.ksFolder)
+                    error('The ksfolder path is not defined!');
                 else
-                    obj.binfilePath = fullfile(FolderPath,'..');
+                    FolderPath = obj.ksFolder;
                 end
-            else
-                obj.binfilePath = FolderPath;
             end
             
-            obj.RawDataFilename = binfileInfo(1).name;
-            obj.ksFolder = FolderPath;
+            if ~exist(fullfile(FolderPath,'*.ap.bin'),'file') && ~exist(fullfile(FolderPath,'..','*.ap.bin'),'file')
+                warning('Unable to find target bin file.');
+                obj.ksFolder = FolderPath;
+                obj.binfilePath = [];
+                obj.RawDataFilename = [];
+                if ~exist(fullfile(FolderPath,'rezdata.mat'),'file')
+                    error('Unable to locate *.bin file location or rez.mat file location, which is needed for further analysis.');
+                else
+                    fprintf('Load sample number from rez.mat file.\n');
+                    RezStrc = load(fullfile(FolderPath,'rezdata.mat'));
+                    obj.Numsamp = RezStrc.rez.ops.sampsToRead;
+                    obj.mmf = [];
+                end
+            else
+                if exist(fullfile(FolderPath,'*.ap.bin'),'file')
+                    binfileInfo = dir(fullfile(FolderPath,'*.ap.bin'));
+                    obj.binfilePath = FolderPath;
+                else
+                    binfileInfo = dir(fullfile(FolderPath,'..','*.ap.bin'));
+                    obj.binfilePath = fullfile(FolderPath,'..');
+                end
+                obj.RawDataFilename = binfileInfo(1).name;
+                obj.ksFolder = FolderPath;
+
+                dataTypeNBytes = numel(typecast(cast(0, obj.Datatype), 'uint8')); % determine number of bytes per sample
+                obj.Numsamp = binfileInfo(1).bytes/(dataTypeNBytes*obj.NumChn);
+                fullpaths = fullfile(obj.binfilePath, obj.RawDataFilename);
+                obj.mmf = memmapfile(fullpaths, 'Format', {obj.Datatype, [obj.NumChn obj.Numsamp], 'x'});
+                
+            end
             
-            dataTypeNBytes = numel(typecast(cast(0, obj.Datatype), 'uint8')); % determine number of bytes per sample
-            obj.Numsamp = binfileInfo(1).bytes/(dataTypeNBytes*obj.NumChn);
-            fullpaths = fullfile(obj.binfilePath, obj.RawDataFilename);
-            obj.mmf = memmapfile(fullpaths, 'Format', {obj.Datatype, [obj.NumChn obj.Numsamp], 'x'});
             
             % spike data info reading
             obj.SpikeStrc = loadParamsPy(fullfile(FolderPath, 'params.py'));
@@ -99,6 +130,9 @@ classdef NPspikeDataMining
         
         
         function ClusChnDatas = SpikeWaveFun(obj,varargin)
+            if isempty(obj.mmf)
+                error('The bin file location is undefined, unbale to extract spike waveform.');
+            end
             SpecificClus = obj.UsedClus_IDs;
             if nargin > 1
                 if ~isempty(varargin{1})
@@ -171,7 +205,19 @@ classdef NPspikeDataMining
             
         end
         
-        function obj = triggerOnsetTime(obj,TrigwaveScales,trigTime_ms)
+        function obj = triggerOnsetTime(obj,TrigwaveScales,trigTime_ms,TriggerType)
+            % TriggerType should be a string variable indicates what the
+            % trigger onset time is indicated, either task or passive
+            % sessions
+            if ~exist('TriggerType','Var') || isempty(TriggerType)
+                SessTypeInds = obj.CurrentSessInds;
+            else
+                SessTypeInds = strcmpi(TriggerType,obj.SessTypeStrs);
+                if ~sum(SessTypeInds)
+                   error('Unknowed trigger session type.'); 
+                end
+                obj.CurrentSessInds = SessTypeInds;
+            end
             % trigTimeLen should in ms form
             if isempty(trigTime_ms)
                 trigTime_ms = 2; % default is 2ms
@@ -179,9 +225,9 @@ classdef NPspikeDataMining
             
             if isempty(TrigwaveScales)
                 try
-                    trigScaleStrc = load(fullfile(obj.ksFolder,'TriggerDatas.mat'),'TriggerEvents');
-                catch
                     trigScaleStrc = load(fullfile(obj.ksFolder,'..','TriggerDatas.mat'),'TriggerEvents');
+                catch
+                    trigScaleStrc = load(fullfile(obj.ksFolder,'TriggerDatas.mat'),'TriggerEvents');
                 end
                 TrigwaveScales = trigScaleStrc.TriggerEvents;
             end
@@ -201,15 +247,15 @@ classdef NPspikeDataMining
                 SessionTrStartInds = find(abs(TrigWaveAll_lens((Trig_Init_TrialEnd(1)+1):end) - trigLen(2)) < 2)+Trig_Init_TrialEnd(1);
                 TrigWaveAll_lensEquals = [((Trig_Init_TrialEnd-9):Trig_Init_TrialEnd)';SessionTrStartInds];
                 
-                obj.UsedTrigOnTime = TrigwaveScales(TrigWaveAll_lensEquals,1)/obj.SpikeStrc.sample_rate+trigTime_ms/1000; % in seconds
+                obj.UsedTrigOnTime{SessTypeInds} = TrigwaveScales(TrigWaveAll_lensEquals,1)/obj.SpikeStrc.sample_rate; % in seconds
             else
                 % for passive condition, unique trigger duration
                 TrigWaveAll_lensEquals = abs(TrigWaveAll_lens - trigLen) < 2;
-                obj.UsedTrigOnTime = TrigwaveScales(TrigWaveAll_lensEquals,1)/obj.SpikeStrc.sample_rate+trigTime_ms/1000; % in seconds
+                obj.UsedTrigOnTime{SessTypeInds} = TrigwaveScales(TrigWaveAll_lensEquals,1)/obj.SpikeStrc.sample_rate; % in seconds
             end
             
             
-            fprintf('Totally %d number of triggers were detected.\n',length(obj.UsedTrigOnTime));
+            fprintf('Totally %d number of triggers were detected.\n',length(obj.UsedTrigOnTime{SessTypeInds}));
             
         end
         
@@ -233,50 +279,57 @@ classdef NPspikeDataMining
                   IsEventDataGiven = 1;
                end
             end
-            obj.psthTimeWin = timeWin;
+            obj.psthTimeWin{obj.CurrentSessInds} = timeWin;
             if isempty(smoothbin)
-                smoothbin = [50,10]; % in miliseconds
+                if isempty(obj.USedbin)
+                    smoothbin = [50,10]; % in miliseconds
+                else
+                    smoothbin = obj.USedbin * 1000;
+                end
             end
             smoothbin = smoothbin / 1000;
             smoothbinfactor = smoothbin(1)/smoothbin(2);
             
-            if isempty(obj.UsedTrigOnTime)
+            if isempty(obj.UsedTrigOnTime{obj.CurrentSessInds})
                 % load trigger scale time file
                 trigScaleStrc = load(fullfile(obj.ksFolder,'TriggerDatas.mat'),'TriggerEvents');
-                obj = obj.triggerOnsetTime(trigScaleStrc.TriggerEvents,[]);
+                obj = obj.triggerOnsetTime(trigScaleStrc.TriggerEvents,[],[]);
             end
             if IsEventDataGiven
-               if  length(StimEventTime) ~= length(obj.UsedTrigOnTime)
+               if  length(StimEventTime) ~= length(obj.UsedTrigOnTime{obj.CurrentSessInds})
                    error('The input event time length %d is different from trigger trial number %d.',...
-                       length(StimEventTime),length(obj.UsedTrigOnTime));
+                       length(StimEventTime),length(obj.UsedTrigOnTime{obj.CurrentSessInds}));
                end
             end
+            %%
             
-            TrigNums = length(obj.UsedTrigOnTime);
+            histbin = [timeWin(1):smoothbin(2):0,smoothbin(2):smoothbin(2):timeWin(2)];
+            obj.BinCenters = histbin(1:end-1)+smoothbin(2)/2;
+            obj.TriggerStartBin{obj.CurrentSessInds} = find(obj.BinCenters > 0,1,'first');
+            
+            TrigNums = length(obj.UsedTrigOnTime{obj.CurrentSessInds});
             TrigBinDatas = cell(TrigNums,2);
             NumUsedClus = length(obj.UsedClus_IDs);
             cTrig_TrialSPtimes = cell(NumUsedClus,TrigNums);
             for ctrig = 1 : TrigNums
                 if IsEventDataGiven
                     % Select data range according to the event time
-                    cTrigTime = obj.UsedTrigOnTime(ctrig)+StimEventTime(ctrig); % in seconds
+                    cTrigTime = obj.UsedTrigOnTime{obj.CurrentSessInds}(ctrig)+StimEventTime(ctrig); % in seconds
                     obj.TrigAlignType = 'stim'; % ZerosBin is stimulus
                 else
                     % Select data range according to the trigger time
-                    cTrigTime = obj.UsedTrigOnTime(ctrig); % in seconds
+                    cTrigTime = obj.UsedTrigOnTime{obj.CurrentSessInds}(ctrig); % in seconds
                     obj.TrigAlignType = 'trigger'; % zeros Bin is trigger
                 end
+                %
                 cTrigTimeWin = cTrigTime + timeWin;
                 WithinTimewinInds = obj.SpikeTimes > cTrigTimeWin(1) & obj.SpikeTimes < cTrigTimeWin(2);
                 cTrigWin_spTimes = obj.SpikeTimes(WithinTimewinInds);
                 cTrigWin_spClus = obj.SpikeClus(WithinTimewinInds);
-                histbin = [timeWin(1):smoothbin(2):0,smoothbin(2):smoothbin(2):timeWin(2)];
-                obj.BinCenters = histbin(1:end-1)+smoothbin(2)/2;
-                obj.TriggerStartBin = find(obj.BinCenters > 0,1,'first');
                 
                 cTrig_binClusCount = nan(NumUsedClus,length(obj.BinCenters));
                 cTrig_binCountSM = nan(NumUsedClus,length(obj.BinCenters));
-                
+                %
                 for cClus = 1 : NumUsedClus
                     cClusTime = cTrigWin_spTimes(cTrigWin_spClus == obj.UsedClus_IDs(cClus)) - cTrigTime;
                     cTrig_TrialSPtimes(cClus,ctrig) = {cClusTime};
@@ -295,17 +348,18 @@ classdef NPspikeDataMining
                 end
                 TrigBinDatas(ctrig,:) = {cTrig_binClusCount/smoothbin(2), cTrig_binCountSM/smoothbin(2)}; % convert into Hz
             end
+            %%
             obj.USedbin = smoothbin;
-            obj.TrigData_Bin = cell(NumUsedClus,2);
-            obj.TrTrigSpikeTimes = cTrig_TrialSPtimes;
+            TrigData_Bins = cell(NumUsedClus,2);
+            obj.TrTrigSpikeTimes{obj.CurrentSessInds} = cTrig_TrialSPtimes;
             for cClus = 1 : NumUsedClus
                 cClus_trigTimeC = cellfun(@(x) x(cClus,:),TrigBinDatas(:,1),'uniformOutput',false);
                 cClus_trigTimeSMC = cellfun(@(x) x(cClus,:),TrigBinDatas(:,2),'uniformOutput',false);
                 cClus_trigTime = cell2mat(cClus_trigTimeC);
                 cClus_trigTimeSM = cell2mat(cClus_trigTimeSMC);
-                obj.TrigData_Bin(cClus,:) = {cClus_trigTime, cClus_trigTimeSM};
+                TrigData_Bins(cClus,:) = {cClus_trigTime, cClus_trigTimeSM};
             end
-            
+            obj.TrigData_Bin{obj.CurrentSessInds} = TrigData_Bins;
         end
         
         function obj = BaselineSubFun(obj, RawDatas, StimOnsetTimes)
@@ -329,19 +383,19 @@ classdef NPspikeDataMining
                 BaseFRSubData{cUnit,1} = cUnitData;
                 BaseFRSubData{cUnit,2} = cUnitDataSM;
             end
-            obj.TrigDataBin_FRSub = BaseFRSubData;
+            obj.TrigDataBin_FRSub{obj.CurrentSessInds} = BaseFRSubData;
             
         end
         
         function RawRasterplot(obj,EventsDelay,EventStrs,EventColors,StimRepeats)
             % spike raster plot for spike times
-            if isempty(obj.TrTrigSpikeTimes)
+            if isempty(obj.TrTrigSpikeTimes{obj.CurrentSessInds})
                 obj = TrigPSTH(obj,[],[]);
             end
             if size(EventsDelay,1) == 1
                 EventsDelay = EventsDelay';
             end
-            if size(obj.TrTrigSpikeTimes,2) ~= size(EventsDelay,1)
+            if size(obj.TrTrigSpikeTimes{obj.CurrentSessInds},2) ~= size(EventsDelay,1)
                 error('The input event size isn''t fit with trigger event numbers.');
             end
             UnitChannelID = obj.ChannelUseds_id;
@@ -373,7 +427,7 @@ classdef NPspikeDataMining
             EventTAfTrig = (EventsDelay/1000);% real time but not in bin mode, trigger time is 0
 %             TriggerTime = (obj.TriggerStartBin-1)*obj.USedbin(2);
             
-            [unitNum, TrNum] = size(obj.TrTrigSpikeTimes);
+            [unitNum, TrNum] = size(obj.TrTrigSpikeTimes{obj.CurrentSessInds});
             
             % processing event lines
             NumOfEvents = length(EventStrs);
@@ -394,11 +448,11 @@ classdef NPspikeDataMining
             if ~isdir(fullfile(obj.ksFolder,'RawRasterPlot'))
                 mkdir(fullfile(obj.ksFolder,'RawRasterPlot'));
             end
-            cd(fullfile(obj.ksFolder,'RawRasterPlot'));
+%             cd(fullfile(obj.ksFolder,'RawRasterPlot'));
             
             for cUnit = 1 : unitNum
                 %%
-                cUnitData = obj.TrTrigSpikeTimes(cUnit,:);
+                cUnitData = obj.TrTrigSpikeTimes{obj.CurrentSessInds}(cUnit,:);
                 cUnitChnID = UnitChannelID(cUnit);
                 
                 if RawColorPlotOnly
@@ -419,7 +473,7 @@ classdef NPspikeDataMining
                         plot(xtimes(:),yticks(:),'k','linewidth',1.2);
                     end
                 end
-                
+%                 set(hcf,'visible','on')
                 line([0 0],[0.5 TrNum+0.5],'Color','g','linewidth',1);
                 hhl = [];
                 for cEvent = 1 :NumOfEvents
@@ -427,7 +481,7 @@ classdef NPspikeDataMining
                     hhl = [hhl,hl];
                 end
                 
-                set(gca,'xlim',obj.psthTimeWin,'ylim',[0.5 TrNum+0.5]);
+                set(gca,'xlim',obj.psthTimeWin{obj.CurrentSessInds},'ylim',[0.5 TrNum+0.5]);
                 xlabel('Time (s)');
                 ylabel('# Trials');
                 title(sprintf('Unit %d, chn %d',cUnit,cUnitChnID));
@@ -440,7 +494,7 @@ classdef NPspikeDataMining
                 if ~RawColorPlotOnly
                     ax2 = subplot(122);
                     hold on
-                    SortUnitSPtimes = obj.TrTrigSpikeTimes(cUnit,PlotSortVec);
+                    SortUnitSPtimes = obj.TrTrigSpikeTimes{obj.CurrentSessInds}(cUnit,PlotSortVec);
                     for cTrig = 1 : TrNum
                         cTrigSPtimes = SortUnitSPtimes{cTrig};
                         if ~isempty(cTrigSPtimes)
@@ -461,12 +515,12 @@ classdef NPspikeDataMining
                     % add segration lines
                     SegLinePos = cumsum(TypeStimNum);
                     for cType = 1 : length(TypeStimNum)
-                        line(obj.psthTimeWin,[SegLinePos(cType) SegLinePos(cType)],...
+                        line(obj.psthTimeWin{obj.CurrentSessInds},[SegLinePos(cType) SegLinePos(cType)],...
                             'Color','c','linewidth',1.2);
                     end
                     
 %                     legend(hhl,EventStrs(:),'Box','Off','location','NortheastOutside');
-                    set(gca,'xlim',obj.psthTimeWin,'ylim',[0.5 TrNum+0.5]);
+                    set(gca,'xlim',obj.psthTimeWin{obj.CurrentSessInds},'ylim',[0.5 TrNum+0.5]);
                     set(gca,'YDir','reverse')
                     xlabel('Time (s)');
                     ylabel('# Sort Trials');
@@ -476,10 +530,11 @@ classdef NPspikeDataMining
                     set(lax,'position',get(lax,'position')+[-0.2 -0.07 0 0]);
                     
                     set(ax2,'position',RawImPos);
-                end 
+                end
                 %%
-                saveas(hcf,sprintf('Unit%03d raw spike raster color plot',cUnit));
-                saveas(hcf,sprintf('Unit%03d raw spike raster color plot',cUnit),'png');
+                savefileName = fullfile(obj.ksFolder,'RawRasterPlot',sprintf('Unit%03d raw spike raster color plot',obj.UsedClus_IDs(cUnit)));
+                saveas(hcf,savefileName);
+                saveas(hcf,savefileName,'png');
                 close(hcf);
 %                 saveas(hcf,sprintf('ROI%03d raw spike change color plot',cUnit));
             end
@@ -490,7 +545,7 @@ classdef NPspikeDataMining
             % according to the real trial sequency, for a preview to see
             % whether the unit activity is persistant or whether there are
             % unexpected response level change as the trial increases
-            if isempty(obj.TrigData_Bin) || isempty(obj.UsedTrigOnTime) 
+            if isempty(obj.TrigData_Bin{obj.CurrentSessInds}) || isempty(obj.UsedTrigOnTime{obj.CurrentSessInds}) 
                 obj = TrigPSTH(obj,[],[]);
             end
             if size(EventsDelay) == 1
@@ -526,13 +581,14 @@ classdef NPspikeDataMining
             
             % after trigget event bin
             BinWidth = obj.USedbin(2);
-            EventBinLength = ((EventsDelay/1000))+(obj.TriggerStartBin-1)*obj.USedbin(2);% real time but not in bin mode
-            TriggerTime = (obj.TriggerStartBin-1)*obj.USedbin(2);
-            if isempty(obj.TrigDataBin_FRSub)
-                obj = obj.BaselineSubFun(obj.TrigData_Bin, EventsDelay(:,1)+obj.TriggerStartBin-1);
+            EventBinLength = ((EventsDelay/1000))+(obj.TriggerStartBin{obj.CurrentSessInds}-1)*obj.USedbin(2);% real time but not in bin mode
+            TriggerTime = (obj.TriggerStartBin{obj.CurrentSessInds}-1)*obj.USedbin(2);
+            if isempty(obj.TrigDataBin_FRSub{obj.CurrentSessInds})
+                obj = obj.BaselineSubFun(obj.TrigData_Bin{obj.CurrentSessInds}, EventsDelay(:,1)+...
+                    obj.TriggerStartBin{obj.CurrentSessInds}-1);
             end
             PlotDataType = 1; % 1 indicates unsmoothed raw plot, 2 indicates smoothed plot
-            SMBinDataMtx = permute(cat(3,obj.TrigDataBin_FRSub{:,PlotDataType}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+            SMBinDataMtx = permute(cat(3,obj.TrigDataBin_FRSub{obj.CurrentSessInds}{:,PlotDataType}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
             [TrNum, unitNum, BinNum] = size(SMBinDataMtx);
             
             % processing event lines
@@ -555,12 +611,12 @@ classdef NPspikeDataMining
                 if ~isdir(fullfile(obj.ksFolder,'RawRespPlots_unSM'))
                     mkdir(fullfile(obj.ksFolder,'RawRespPlots_unSM'));
                 end
-                cd(fullfile(obj.ksFolder,'RawRespPlots_unSM'));
+                savefolder = (fullfile(obj.ksFolder,'RawRespPlots_unSM'));
             elseif PlotDataType == 2
                 if ~isdir(fullfile(obj.ksFolder,'RawRespPlots'))
                     mkdir(fullfile(obj.ksFolder,'RawRespPlots'));
                 end
-                cd(fullfile(obj.ksFolder,'RawRespPlots'));
+                savefolder = (fullfile(obj.ksFolder,'RawRespPlots'));
             end
             
 %             EventColors = blue2red_2(NumOfEvents*2, 0.7);
@@ -635,8 +691,9 @@ classdef NPspikeDataMining
                     set(ax2,'position',RawImPos);
                 end 
                 %%
-                saveas(hcf,sprintf('ROI%03d raw spike change color plot',cUnit));
-                saveas(hcf,sprintf('ROI%03d raw spike change color plot',cUnit),'png');
+                saveName = fullfile(savefolder,sprintf('ROI%03d raw spike change color plot',obj.UsedClus_IDs(cUnit)));
+                saveas(hcf,saveName);
+                saveas(hcf,saveName,'png');
                 close(hcf);
 %                 saveas(hcf,sprintf('ROI%03d raw spike change color plot',cUnit));
             end
@@ -668,9 +725,9 @@ classdef NPspikeDataMining
             % tiral specific plots, the second input can be the foldername str that the user wants to use 
             
             
-            if isempty(obj.TrigData_Bin) || isempty(obj.UsedTrigOnTime) 
+            if isempty(obj.TrigData_Bin{obj.CurrentSessInds}) || isempty(obj.UsedTrigOnTime{obj.CurrentSessInds}) 
                 obj = TrigPSTH(obj,[],[]);
-                obj.TrigAlignType = 'trigger';
+                obj.TrigAlignType{obj.CurrentSessInds} = 'trigger';
             end
             if size(EventsDelay,1) < size(EventsDelay,2)
                 EventsDelay = EventsDelay';
@@ -699,14 +756,23 @@ classdef NPspikeDataMining
                      LickTimeStrc = varargin{3};
                 end
             end
+            IsChnAreaGiven = 0;
+            if length(varargin) > 3
+                if ~isempty(varargin{4})
+                     IsChnAreaGiven = 1;
+                     ChnAreaStrs = varargin{4};
+                end
+            end
+            
+            
             if IsLickPlot
                 UsedLickStrc = LickTimeStrc(PlotTrInds);
             end
             
-            if length(obj.UsedTrigOnTime(PlotTrInds)) ~= size(EventsDelay,1)
+            if length(obj.UsedTrigOnTime{obj.CurrentSessInds}(PlotTrInds)) ~= size(EventsDelay,1)
                 error('The input event size isn''t fit with trigger event numbers.');
             end
-            if size(EventsDelay,2) ~= length(EventColors)
+            if size(EventsDelay,2) ~= size(EventColors,2)
                 error('Event column number is different from dscription color str numbers.');
             end
             if isempty(AlignEvent)
@@ -723,7 +789,7 @@ classdef NPspikeDataMining
             
             % sort and align the binned data according to the event times
             % only input trials will be plotted
-            SMBinDataMtx = permute(cat(3,obj.TrigData_Bin{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+            SMBinDataMtx = permute(cat(3,obj.TrigData_Bin{obj.CurrentSessInds}{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
             SMBinDataMtx = SMBinDataMtx(PlotTrInds,:,:);
             [TrNum, unitNum, BinNum] = size(SMBinDataMtx);
             
@@ -739,7 +805,7 @@ classdef NPspikeDataMining
             
             if strcmpi(obj.TrigAlignType,'trigger')
                 % exclude some long-delayed onset bins
-                ZeroPointBin = obj.TriggerStartBin;
+                ZeroPointBin = obj.TriggerStartBin{obj.CurrentSessInds};
                 EventBinLength = ceil((EventsDelay/1000)/BinWidth)+ZeroPointBin; % aligned to trigger onset time, plus trigger onset time bin
                 OutlierEventBins = sum(EventBinLength > (BinNum - 1),2);
                 if sum(OutlierEventBins)
@@ -764,8 +830,8 @@ classdef NPspikeDataMining
                 TrEventAligned = bsxfun(@minus,EventBinLength, EventBinLength(:,1)-ComUsedEventBin) - ComUsedEventBin; % zero time to aligned to stimOnset time
                 ZeroPointBin = ComUsedEventBin;
                 EventBinLengthBack = EventBinLength; % for debug, not used 
-                EventBinLength = TrEventAligned + obj.TriggerStartBin; % Event time bin relative to matrix start inds
-                
+                EventBinLength = TrEventAligned + obj.TriggerStartBin{obj.CurrentSessInds}; % Event time bin relative to matrix start inds
+                %%
                 OutlierEventBins = sum(EventBinLength > (BinNum - 1),2);
                 if sum(OutlierEventBins)
                     ExcludeInds = OutlierEventBins > 0;
@@ -791,9 +857,10 @@ classdef NPspikeDataMining
                     if ~isempty(cTrLeftLick)
                         LeftTimeBin = ceil((cTrLeftLick/1000)/BinWidth);
                         if strcmpi(obj.TrigAlignType,'trigger')
-                            LRLick_alignBins{cTr,1} = LeftTimeBin(:) - TrShifts(cTr) - 1 + obj.TriggerStartBin; % correct to matrix start
+                            LRLick_alignBins{cTr,1} = LeftTimeBin(:) - TrShifts(cTr) - 1 + obj.TriggerStartBin{obj.CurrentSessInds}; % correct to matrix start
                         else
-                            LRLick_alignBins{cTr,1} = LeftTimeBin(:) - TrShifts(cTr) - 1 + obj.TriggerStartBin - ZeroPointBin; 
+                            LRLick_alignBins{cTr,1} = LeftTimeBin(:) - TrShifts(cTr) - 1 + ...
+                                obj.TriggerStartBin{obj.CurrentSessInds} - ZeroPointBin; 
                         end
                     end
 
@@ -801,9 +868,10 @@ classdef NPspikeDataMining
                     if ~isempty(cTrRightLick)
                        RightTimeBin = ceil((cTrRightLick/1000)/BinWidth);
                        if strcmpi(obj.TrigAlignType,'trigger')
-                           LRLick_alignBins{cTr,2} = RightTimeBin(:) - TrShifts(cTr) - 1 + obj.TriggerStartBin;
+                           LRLick_alignBins{cTr,2} = RightTimeBin(:) - TrShifts(cTr) - 1 + obj.TriggerStartBin{obj.CurrentSessInds};
                        else
-                           LRLick_alignBins{cTr,2} = RightTimeBin(:) - TrShifts(cTr) - 1 + obj.TriggerStartBin - ZeroPointBin; 
+                           LRLick_alignBins{cTr,2} = RightTimeBin(:) - TrShifts(cTr) - 1 + ...
+                               obj.TriggerStartBin{obj.CurrentSessInds} - ZeroPointBin; 
                        end
                     end
 
@@ -855,11 +923,12 @@ classdef NPspikeDataMining
                 error('Unsupported segments numbers, please check your inputs.');
             end
             %%
-            NumSingleUnits = size(obj.TrigData_Bin,1);
+            NumSingleUnits = size(obj.TrigData_Bin{obj.CurrentSessInds},1);
 %             xTs = obj.psthTimeWin(1):obj.USedbin(2):(obj.psthTimeWin(2)-obj.USedbin(2));
             
             xTs = ((1:UsedBinLength) - AlignedEventOnBin)*obj.USedbin(2);
             xTs = xTs + obj.USedbin(2)/2; % convert to bin center
+            ChoiceStrs = {'LeftC','RightC'};
             for cUnit = 1 : NumSingleUnits
                 cUnitData = squeeze(AlignedSortDatas(:,cUnit,:)); % sorted by events time
                 UnitPlotScale = [0 max(prctile(cUnitData(:),99),1)];
@@ -877,10 +946,14 @@ classdef NPspikeDataMining
                         if isempty(cComSeg_datas)
                             if c1Seg == 1
                                 ax = subplot(Seg2TypeNum,Seg1TypeNum,(c2Seg-1)*Seg1TypeNum+c1Seg);
-                                ylabel(ax,sprintf('%d\n # Trials',Seg2_types(c2Seg))); 
+                                if max(Seg2_types) > 2
+                                    ylabel(ax,sprintf('%d\n # Trials',Seg2_types(c2Seg))); 
+                                else
+                                    ylabel(ax,sprintf('%s\n # Trials',ChoiceStrs{Seg2_types(c2Seg)+1})); 
+                                end
                             end
                             continue;
-                        end
+                        end 
                         cComSeg_Events = AlignSortEventsBin(SegTypeInds{c1Seg,c2Seg},:);
                         cComSeg_TrNums = size(cComSeg_Events,1);
                         if IsLickPlot
@@ -930,7 +1003,11 @@ classdef NPspikeDataMining
                         set(ax,'YDir','reverse');
                         %
                         if c1Seg == 1
-                           ylabel(ax,sprintf('%d\n # Trials',Seg2_types(c2Seg))); 
+                            if max(Seg2_types) > 2
+                                ylabel(ax,sprintf('%d\n # Trials',Seg2_types(c2Seg))); 
+                            else
+                                ylabel(ax,sprintf('%s\n # Trials',ChoiceStrs{Seg2_types(c2Seg)+1})); 
+                            end
                         end
                         if c2Seg == Seg2TypeNum
                             xlabel(ax,'Times(s)');
@@ -942,7 +1019,12 @@ classdef NPspikeDataMining
                            haxisPos = get(ax,'position');
                            hbar = colorbar;
                            cBarPos = get(hbar,'position');
-                           set(hbar,'position',cBarPos+[0.05 0 cBarPos(3)*2 0.1*cBarPos(4)]);
+                           if Seg2TypeNum == 1
+                               set(hbar,'position',cBarPos+[0.05 0 cBarPos(3) -0.5*cBarPos(4)]);
+                           else
+                                set(hbar,'position',cBarPos+[0.05 0 cBarPos(3)*2 0.1*cBarPos(4)]);
+                           end
+                           set(get(hbar,'Title'),'String','Frate');
                            set(ax,'position',haxisPos);
                            
                            leg = legend(hlAll,EventDespStrs,'location','Southwest','box','off');
@@ -953,9 +1035,23 @@ classdef NPspikeDataMining
                     end
                     
                 end
-                annotation(hcf,'textbox',[0.475,0.68,0.3,0.3],'String',sprintf('Unit %d, Chn %d',...
-                    obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit)),'FitBoxToText','on','EdgeColor',...
-                       'none','FontSize',12);
+                if ~IsChnAreaGiven
+                    annotation(hcf,'textbox',[0.475,0.68,0.3,0.3],'String',sprintf('Unit %d, Chn %d',...
+                        obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit)),'FitBoxToText','on','EdgeColor',...
+                           'none','FontSize',12);
+                else
+                   cChnAreaIndex = ChnAreaStrs{obj.ChannelUseds_id(cUnit),1};
+                   if cChnAreaIndex < 0
+                       ChnAreaStr = ['(',ChnAreaStrs{obj.ChannelUseds_id(cUnit),3},')'];
+                   else
+                       ChnAreaStr = ChnAreaStrs{obj.ChannelUseds_id(cUnit),3};
+                   end
+                   annotation(hcf,'textbox',[0.425,0.7,0.3,0.3],'String',sprintf('Unit %d, Chn %d Area %s',...
+                        obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit),ChnAreaStr),'FitBoxToText','on','EdgeColor',...
+                           'none','FontSize',12,'Color',[0.8 0.5 0.2]);
+                   
+                end
+                
               %%
                 % add a mean trace plot for current unit, aligned to
                 % aligned event time
@@ -1020,6 +1116,7 @@ classdef NPspikeDataMining
                    line(TraceAxess(cSeg1Inds),[0 0],...
                        CommonYScales,'Color','k','linewidth',0.8,'linestyle','--'); 
                 end
+                
                 annotation(hMeanf,'textbox',[0.50,0.71,0.3,0.3],'String',sprintf('Unit %d, Chn %d',...
                     obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit)),'FitBoxToText','on','EdgeColor',...
                        'none','FontSize',12);
@@ -1054,9 +1151,83 @@ classdef NPspikeDataMining
             % function used to analysis single unit waveform features
             % the wave form features may includes firerate, peak-to-trough
             % width, refraction peak and so on
-            
-            
-            
+            if isempty(obj.binfilePath) || isempty(obj.RawDataFilename)
+                error('Bin file location is needed for spikewave extraction.');
+            end
+%             if isempty(obj.mmf) && eixst(fullfile(obj.binfilePath,obj.RawDataFilename))
+%                 fullpaths = fullfile(obj.binfilePath, obj.RawDataFilename);
+% %                 dataNBytes = get_file_size(fullpaths); % determine number of bytes per sample
+% %                 obj.Numsamp = dataNBytes/(2*obj.NumChn);
+% %                 obj.mmf = memmapfile(fullpaths, 'Format', {obj.Datatype, [obj.NumChn obj.Numsamp], 'x'});
+% %             
+%             end
+            fullpaths = fullfile(obj.binfilePath, obj.RawDataFilename);
+            ftempid = fopen(fullpaths);
+            % startTime = 15000;
+            % offsets = 385*startTime*2;
+            % status = fseek(ftempid,offsets,bof);
+            % AsNew= fread(ftempid,[385 15000],'int16');
+            NumofUnit = length(obj.UsedClus_IDs);
+            UnitDatas = cell(NumofUnit,1);
+            UnitFeatures = cell(NumofUnit,3);
+            for cUnit = 1 : NumofUnit
+            % cUnit = 137;
+            % close;
+                cClusInds = obj.UsedIDs_clus(cUnit);
+                cClusChannel = obj.ChannelUseds_id(cUnit);
+                cClus_Sptimes = obj.SpikeTimeSample(obj.SpikeClus == cClusInds);
+                if numel(cClus_Sptimes) < 2000
+                    UsedSptimes = cClus_Sptimes;
+                    SPNums = length(UsedSptimes);
+                else
+                    UsedSptimes = cClus_Sptimes(randsample(numel(cClus_Sptimes),2000));
+                    SPNums = 2000;
+                end
+                cspWaveform = nan(SPNums,diff(obj.WaveWinSamples));
+                for csp = 1 : SPNums
+                    cspTime = UsedSptimes(csp);
+                    cspStartInds = cspTime+obj.WaveWinSamples(1);
+                    cspEndInds = cspTime+obj.WaveWinSamples(2);
+                    offsetTimeSample = cspStartInds - 1;
+                    if offsetTimeSample < 0 || cspEndInds > obj.Numsamp
+                        continue;
+                    end
+                    offsets = 385*(cspStartInds-1)*2; 
+                    status = fseek(ftempid,offsets,'bof');
+                    if ~status
+                       % correct offset value is set
+                       AllChnDatas = fread(ftempid,[385 diff(obj.WaveWinSamples)],'int16');
+                       cspWaveform(csp,:) = AllChnDatas(cClusChannel,:);
+                %        cspWaveform(csp,:) = mean(AllChnDatas);
+                    end
+                end
+                
+                huf = figure('visible','off');
+                AvgWaves = mean(cspWaveform);
+                UnitDatas{cUnit} = cspWaveform;
+
+                plot(AvgWaves);
+                [isabnorm,isUsedVec] = iswaveformatypical(AvgWaves,obj.WaveWinSamples,false);
+                title([num2str(cClusChannel,'chn=%d'),'  ',num2str(1-isabnorm,'Ispass = %d')]);
+                wavefeature = SPwavefeature(AvgWaves,obj.WaveWinSamples);
+                text(6,0.8*max(AvgWaves),{sprintf('tough2peak = %d',wavefeature.tough2peakT);...
+                    sprintf('posthyper = %d',wavefeature.postHyperT)},'FontSize',8);
+
+                if wavefeature.IsPrePosPeak
+                    text(50,0.5*max(AvgWaves),{sprintf('pre2postpospeakratio = %.3f',wavefeature.pre2post_peakratio)},'color','r','FontSize',8);
+                end
+                UnitFeatures(cUnit,:) = {wavefeature,isabnorm,isUsedVec};
+                %
+                saveName = fullfile(obj.ksFolder,sprintf('Unit%d waveform plot save',cUnit));
+                saveas(huf,saveName);
+                saveas(huf,saveName,'png');
+
+                close(huf);
+
+            end
+            obj.UnitWaves = UnitDatas;
+            obj.UnitWaveFeatures = UnitFeatures;
+            save(fullfile(obj.ksFolder,'UnitwaveformDatas.mat'), 'UnitDatas', 'UnitFeatures', '-v7.3');
         end
         
         
@@ -1122,7 +1293,7 @@ classdef NPspikeDataMining
                     %             AlignedSortDatas(cTr,:,:) =  SMBinDataMtx(cTr,:,TrShifts(cTr)+(1:UsedBinLength));
                     %         end
                     AlignedSortDatas = SMBinDataMtx;
-                    AlignedEventOnBin = obj.TriggerStartBin;
+                    AlignedEventOnBin = obj.TriggerStartBin{obj.CurrentSessInds};
                     AlignSortEventsBin = [];
                     SortEventInds = 1:TrNum;
                     UsedBinLength = size(AlignedSortDatas,3);
@@ -1131,7 +1302,7 @@ classdef NPspikeDataMining
                         SortEvents = max(AllEvent_shifts(:,2) - AllEvent_shifts(:,1),0);
                         [~,SortEventInds] = sort(SortEvents);
                         AlignedSortDatas = SMBinDataMtx(SortEventInds,:,:);
-                        AlignedEventOnBin = obj.TriggerStartBin;
+                        AlignedEventOnBin = obj.TriggerStartBin{obj.CurrentSessInds};
                         AlignSortEventsBin = AllEvent_shifts(SortEventInds,:);
                         UsedBinLength = size(AlignedSortDatas,3);
                     else % need aligned to other events

@@ -1,12 +1,12 @@
 cclr
 
-Part1Binfile = 'N:\NPDatas\b104a03_20210428_NPSess02_g0\b104a03_20210428_NPSess02_g0_imec2\b104a03_20210428_NPSess02_g0_t0.imec2.ap.bin';
+Part1Binfile = 'N:\NPDatas\b104a03_20210428_NPSess02_g0\b104a03_20210428_NPSess02_g0_imec0\b104a03_20210428_NPSess02_g0_t0.imec0.ap.bin';
 Part1UsedSampleNum = 80969446; % The left data points will be excluded
 
-Part2Binfile = 'N:\NPDatas\b104a03_20210428_NPSess02-2_g0\b104a03_20210428_NPSess02-2_g0_imec1\b104a03_20210428_NPSess02-2_g0_t0.imec1.ap.bin';
-Part2UsedSampleNum = -1; % All data was used
+% Part2Binfile = 'N:\NPDatas\b104a03_20210428_NPSess02-2_g0\b104a03_20210428_NPSess02-2_g0_imec2\b104a03_20210428_NPSess02-2_g0_t0.imec2.ap.bin';
+% Part2UsedSampleNum = -1; % All data was used
 
-NewFileLocation = 'N:\NPDatas\b104a03_20210428_NPSess02_Merged\b104a03_20210428_NPSess02_g0_imec2\Merge.imec2.ap.bin';
+NewFileLocation = 'N:\NPDatas\b104a03_20210428_NPSess02_Merged\b104a03_20210428_NPSess02_g0_imec0\Merge.imec0.ap.bin';
 
 BatchSize = 3000000;
 ChnNums = 385;
@@ -25,7 +25,7 @@ else
     MaxTimeInds = nTimepoints;
 end
 
-fMergBinDataid = fopen(NewFileLocation,'a+');
+fMergBinDataid = fopen(NewFileLocation,'w+');
 for cb = 1 : BatchIndsNum
     if cb == BatchIndsNum
         DataInds = ((cb-1)*BatchSize+1):MaxTimeInds;
@@ -36,7 +36,8 @@ for cb = 1 : BatchIndsNum
     fwrite(fMergBinDataid,WriteData,'int16');
     
 end
-
+fclose(fMergBinDataid);
+%%
 % write Part2 bin data
 fullbinfile2 = Part2Binfile;
 bytes2       = get_file_size(fullbinfile2); % size in bytes of raw binary

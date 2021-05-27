@@ -249,8 +249,11 @@ gui_data = guidata(gui_fig);
 % Get slice (larger spacing for faster pulling)
 [tv_slice,av_slice,plane_ap,plane_ml,plane_dv] = grab_atlas_slice(gui_data,3);
 
+Bregmas = allenCCFbregma;
+APlocation = (gui_data.atlas_slice_point(1) - Bregmas(1))*0.01; % in mm
 % Update the slice display
 set(gui_data.atlas_slice_plot,'XData',plane_ap,'YData',plane_ml,'ZData',plane_dv,'CData',tv_slice);
+title(gui_data.atlas_ax,sprintf('AP = %.3fmm',-APlocation));
 
 % Upload gui_data
 guidata(gui_fig, gui_data);

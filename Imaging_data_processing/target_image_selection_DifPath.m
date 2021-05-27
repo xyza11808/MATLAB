@@ -1,18 +1,18 @@
 %finding the target image for alignment
-SourcePath = 'Z:\Lab_Members\Xin_Y\behavior_rig06_backup\behaviro_data\Batch_70\batch70';
-TargetPath = '20200529\anm06\test02_rf';
+SourcePath = 'Y:\#members\xy\batch\Batch70';
+TargetPath = '20200531\anm03\test03_rf';
 cd([SourcePath,filesep,TargetPath]);
 
-[im, ~] = load_scim_data('b70a06_test01_rf_2x_110um_20200529_045.tif');
+[im, ~] = load_scim_data('b70a03_test03_rf_2x_150um_20200531_050.tif');
 
-selectframe=im(:,:,1:28);
+selectframe=im(:,:,1:25);
 figure;
 imagesc(mean(selectframe,3),[-20 1000]);
 im_reg_target = mean(selectframe,3);
 figure(gcf);
 colormap gray;
 %%
-TargUpperPath = 'E:\xnn_data\Batch_70\batch70';
+TargUpperPath = 'E:\xnn_data\batch70\batch_70';
 clc
 dir_imreg_src = pwd;
 save TargetImage.mat im_reg_target
@@ -27,7 +27,7 @@ cd(dir_imreg_dest);
 if sum(~isFileBadAlign)
     save BadAlignF.mat BadAlignFrame -v7.3
 end
-% save TargetImage.mat im_reg_target
+%% save TargetImage.mat im_reg_target
 %
 % % 
 % % % load('P:\BatchData\batch52\20180423\anm05\test01\TargetImage.mat','im_reg_target');
