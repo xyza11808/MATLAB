@@ -25,6 +25,7 @@ classdef NPspikeDataMining
         ChannelUseds_id % used channel index
         UsedClusinds % inds indicating which cluster is to be used
         UsedChnDepth
+        ChannelAreaStrs = {}; % channel area strings
         
         % for triggered PSTH 
         UsedTrigOnTime = {[],[]}; % trigger onset time, in seconds format
@@ -701,7 +702,7 @@ classdef NPspikeDataMining
         end
         
         
-        function EventsPSTHplot(obj,EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,varargin)
+        function obj = EventsPSTHplot(obj,EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,varargin)
             % EventsDelay should be a n-by-p matrix, in milisecond format. n is the number of
             % trials, which should be the same as trigger number; p is the
             % number of events types. for example, the passive listening
@@ -761,10 +762,13 @@ classdef NPspikeDataMining
                 if ~isempty(varargin{4})
                      IsChnAreaGiven = 1;
                      ChnAreaStrs = varargin{4};
+                     obj.ChannelAreaStrs = ChnAreaStrs;
                 end
             end
-            
-            
+            if ~IsChnAreaGiven && ~isempty(obj.ChannelAreaStrs)
+                IsChnAreaGiven = 1;
+                ChnAreaStrs = obj.ChannelAreaStrs;
+            end
             if IsLickPlot
                 UsedLickStrc = LickTimeStrc(PlotTrInds);
             end
@@ -1046,9 +1050,9 @@ classdef NPspikeDataMining
                    else
                        ChnAreaStr = ChnAreaStrs{obj.ChannelUseds_id(cUnit),3};
                    end
-                   annotation(hcf,'textbox',[0.425,0.7,0.3,0.3],'String',sprintf('Unit %d, Chn %d Area %s',...
+                   annotation(hcf,'textbox',[0.01,0.32,0.05,0.3],'String',sprintf('Unit %d, \nChn %d \nArea :\n%s',...
                         obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit),ChnAreaStr),'FitBoxToText','on','EdgeColor',...
-                           'none','FontSize',12,'Color',[0.8 0.5 0.2]);
+                           'none','FontSize',10,'Color',[0.8 0.5 0.2],'FitBoxToText','on');
                    
                 end
                 
@@ -1147,12 +1151,21 @@ classdef NPspikeDataMining
             
         end
         
-        function obj = SpikeWaveFeature(obj,varargins)
+        function obj = SpikeWaveFeature(obj,varargin)
             % function used to analysis single unit waveform features
             % the wave form features may includes firerate, peak-to-trough
             % width, refraction peak and so on
             if isempty(obj.binfilePath) || isempty(obj.RawDataFilename)
-                error('Bin file location is needed for spikewave extraction.');
+                if ~isempty(varargin) && ~isempty(varargin{1})
+                    obj.binfilePath = varargin{1};
+                    possbinfilestrc = dir(fullfile(obj.binfilePath,'*.ap.bin'));
+                    if isempty(possbinfilestrc)
+                        error('target bin file doesnt exists.');
+                    end 
+                    obj.RawDataFilename = possbinfilestrc(1).name; 
+                else
+                    error('Bin file location is needed for spikewave extraction.');
+                end
             end
 %             if isempty(obj.mmf) && eixst(fullfile(obj.binfilePath,obj.RawDataFilename))
 %                 fullpaths = fullfile(obj.binfilePath, obj.RawDataFilename);
@@ -1163,6 +1176,10 @@ classdef NPspikeDataMining
 %             end
             fullpaths = fullfile(obj.binfilePath, obj.RawDataFilename);
             ftempid = fopen(fullpaths);
+            
+            if ~isfolder(fullfile(obj.ksFolder,'UnitWaveforms'))
+                mkdir(fullfile(obj.ksFolder,'UnitWaveforms'));
+            end
             % startTime = 15000;
             % offsets = 385*startTime*2;
             % status = fseek(ftempid,offsets,bof);
@@ -1172,8 +1189,8 @@ classdef NPspikeDataMining
             UnitFeatures = cell(NumofUnit,3);
             for cUnit = 1 : NumofUnit
             % cUnit = 137;
-            % close;
-                cClusInds = obj.UsedIDs_clus(cUnit);
+            %% close;
+                cClusInds = obj.UsedClus_IDs(cUnit);
                 cClusChannel = obj.ChannelUseds_id(cUnit);
                 cClus_Sptimes = obj.SpikeTimeSample(obj.SpikeClus == cClusInds);
                 if numel(cClus_Sptimes) < 2000
@@ -1203,9 +1220,9 @@ classdef NPspikeDataMining
                 end
                 
                 huf = figure('visible','off');
-                AvgWaves = mean(cspWaveform);
+                AvgWaves = mean(cspWaveform,'omitnan');
                 UnitDatas{cUnit} = cspWaveform;
-
+                %%
                 plot(AvgWaves);
                 [isabnorm,isUsedVec] = iswaveformatypical(AvgWaves,obj.WaveWinSamples,false);
                 title([num2str(cClusChannel,'chn=%d'),'  ',num2str(1-isabnorm,'Ispass = %d')]);
@@ -1218,7 +1235,8 @@ classdef NPspikeDataMining
                 end
                 UnitFeatures(cUnit,:) = {wavefeature,isabnorm,isUsedVec};
                 %
-                saveName = fullfile(obj.ksFolder,sprintf('Unit%d waveform plot save',cUnit));
+                
+                saveName = fullfile(obj.ksFolder,'UnitWaveforms',sprintf('Unit%d waveform plot save',cUnit));
                 saveas(huf,saveName);
                 saveas(huf,saveName,'png');
 
@@ -1228,8 +1246,70 @@ classdef NPspikeDataMining
             obj.UnitWaves = UnitDatas;
             obj.UnitWaveFeatures = UnitFeatures;
             save(fullfile(obj.ksFolder,'UnitwaveformDatas.mat'), 'UnitDatas', 'UnitFeatures', '-v7.3');
+            
+%             % ways to calculate the refractory period using output datas
+%             default_binsize = 1e-3;
+%             if ~exist('binsize_time','var')
+%                 binsize_time = default_binsize;
+%             end
+%             baselinefr_timebin = [600, 900]; % ms
+%             baselinefr_bin = round(baselinefr_timebin/1000/default_binsize);
+% 
+%             % ccgData = ClusSelfccg{1};
+%             RefracBinNum = cellfun(@(x) refractoryperiodFun(x,baselinefr_bin),ClusSelfccg);
+%             RefracBinTime = RefracBinNum*binsize_time;
+            
         end
         
+        function ClusSelfccg = refractoryPeriodCal(obj,spclus,winsize,binsize)
+            % function to calculate the refractory period for given cluster
+            % inds, if empty cluster inds is given, try to calculate the
+            % ccg values for all valid clusters
+            if isempty(spclus)
+                PlotclusInds = obj.UsedClus_IDs;
+                AllClusCal = 1;
+            else
+                PlotclusInds = sort(spclus); % 
+                AllClusCal = 0;
+            end
+            if binsize < 1 % in case of input as real time in seconds
+                winsize = round(winsize * obj.SpikeStrc.sample_rate);
+                binsize = round(binsize * obj.SpikeStrc.sample_rate);
+            end
+            
+            MaxclusbatchSize = 5;
+            if length(PlotclusInds) > MaxclusbatchSize
+                BatchNums = ceil(length(PlotclusInds) / MaxclusbatchSize);
+                ClusSelfccg = cell(length(PlotclusInds),1);
+                %%
+                for cBatch = 1 : BatchNums
+                    cBatchedScale = [(cBatch-1)*MaxclusbatchSize+1,min(cBatch*MaxclusbatchSize,length(PlotclusInds))];
+                    cBatchedInds = cBatchedScale(1):cBatchedScale(2);
+                    cBatch_clus_inds = PlotclusInds(cBatchedInds);
+                    BatchClus2fullInds = ismember(obj.SpikeClus,cBatch_clus_inds);
+                    Batch_sptimesAll = obj.SpikeTimeSample(BatchClus2fullInds); % using sample value to increase the bin accuracy
+                    Batch_spclusAll = obj.SpikeClus(BatchClus2fullInds);
+                    Batchccg = Spikeccgfun(Batch_sptimesAll,Batch_spclusAll,winsize,binsize,false);
+                    for cb = 1 : length(cBatch_clus_inds)
+                        ClusSelfccg(cBatchedInds(cb)) = {squeeze(Batchccg(cb,cb,:))};
+                    end
+                end
+                %%
+            else
+                ClusSelfccg = cell(length(PlotclusInds),1);
+                clus2fullInds = ismember(obj.SpikeClus,PlotclusInds);
+                sptimeAlls = obj.SpikeTimeSample(clus2fullInds);
+                spclusAlls = obj.SpikeClus(clus2fullInds);
+                ccgs = Spikeccgfun(sptimeAlls,spclusAlls,winsize,binsize,false);
+                for cb = 1 : length(PlotclusInds)
+                    ClusSelfccg(cb) = {squeeze(ccgs(cb,cb,:))};
+                end
+            end
+            if AllClusCal
+                save(fullfile(obj.ksFolder,'AllClusccgData.mat'),'ClusSelfccg','PlotclusInds','-v7.3');
+            end
+            
+        end
         
     end
     

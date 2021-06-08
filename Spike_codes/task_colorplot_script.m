@@ -1,16 +1,18 @@
 % load behave structure data
 load(BehaviorDataPath);
 
-if ~(isempty(BehaviorExcludeInds) || ismissing({BehaviorExcludeInds}))
-     if strfind(BehaviorExcludeInds, '-')
-        BehaviorExcludeInds = strrep(BehaviorExcludeInds,'-',':');
-    end
-    
-    if isempty(num2str(BehaviorExcludeInds)) && contains(BehaviorExcludeInds,'end')
-        TotalTrs = length(behavResults.Trial_inds);
-        eval(sprintf('BehaviorExcludeInds = TotalTrs(%s);',BehaviorExcludeInds));
-    else
-        BehaviorExcludeInds = str2num(BehaviorExcludeInds);
+if ~(isempty(BehaviorExcludeInds) || any(ismissing(BehaviorExcludeInds)))
+    if ~isnumeric(BehaviorExcludeInds)
+        if strfind(BehaviorExcludeInds, '-')
+            BehaviorExcludeInds = strrep(BehaviorExcludeInds,'-',':');
+        end
+
+        if isempty(num2str(BehaviorExcludeInds)) && contains(BehaviorExcludeInds,'end')
+            TotalTrs = length(behavResults.Trial_inds);
+            eval(sprintf('BehaviorExcludeInds = TotalTrs(%s);',BehaviorExcludeInds));
+        else
+            BehaviorExcludeInds = str2num(BehaviorExcludeInds);
+        end
     end
     behavFieldNames = fieldnames(behavResults);
     for cf = 1 : length(behavFieldNames)
@@ -85,9 +87,13 @@ if IsBoundshiftSess
        RepeatStr = {'Sounds','Choice'};
        EventColors = {'SOnset','AnswerT';'r','m'};
        %
-       ProbNPSess.EventsPSTHplot(EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,...
-           cBNMRealTrInds,BlockNameStr,lick_time_struct,ProbeChn_regionCells);
-       %
+       if cB == 1 % save channel area infomation in the class handle
+           ProbNPSess = ProbNPSess.EventsPSTHplot(EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,...
+               cBNMRealTrInds,BlockNameStr,lick_time_struct,ProbeChn_regionCells);
+       else
+           ProbNPSess.EventsPSTHplot(EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,...
+               cBNMRealTrInds,BlockNameStr,lick_time_struct,ProbeChn_regionCells);
+       end
    end
    
 end

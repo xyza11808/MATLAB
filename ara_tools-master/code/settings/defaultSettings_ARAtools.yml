@@ -1,0 +1,14 @@
+volFormat: tiff
+downSampledDir: downsampled_stacks
+regDir: registration
+extractedDataDir: sparsedata
+ARAsize: 25
+araDir: ~/ReferenceAtlas/ARA_CCFv3/
+araSubDirFormat: ARA_%s_micron_mhd
+ara2sampleDir: ARA_to_sample
+sample2araDir: sample_to_ARA
+invertedMatName: inverted.mat
+sparseDataMatLogFname: exportedDataLog.mat
+removeMovingAndFixed: 1
+sparseDataLogName: downsampleData_log.txt
+dsVolLogName: downsampleVolume_log.txt

@@ -11,13 +11,16 @@ end
 
 raw = readcell(fullfile(filepath,[name,'.csv']));
 %%
-UsedIDs_inds = cellfun(@(x) strcmpi(x,'good'),raw(2:end,4)) & cellfun(@(x) ~strcmpi(x,'noise'),raw(2:end,9))...
-    & cellfun(@(x) x>=1,raw(2:end,8));
+UsedIDs_inds = find(cellfun(@(x) strcmpi(x,'good'),raw(2:end,4)) & cellfun(@(x) ~strcmpi(x,'noise'),raw(2:end,9))...
+    & cellfun(@(x) x>=1,raw(2:end,8)));
 Clu_idAlls = cell2mat(raw(2:end,1));
 Channel_idAlls = cell2mat(raw(2:end,6))+1;
 
-UsedIDs_clus = Clu_idAlls(UsedIDs_inds);
+UsedIDs_clusraw = Clu_idAlls(UsedIDs_inds);
+[UsedIDs_clus,clussortinds] = sort(UsedIDs_clusraw);
+UsedIDs_inds = UsedIDs_inds(clussortinds);
 Channel_idUseds = Channel_idAlls(UsedIDs_inds);
+% Channel_idUseds = Channel_idUseds(clussortinds);
 
 
 

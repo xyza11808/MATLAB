@@ -25,7 +25,12 @@ end
 win_length = floor(0.5*winsize/binsize)*2+1;
 correlograms = zeros(NumClus,NumClus,floor(win_length/2)+1); % only half of the symmetrize window
 ccgdims = size(correlograms);
-% Shift between the two copies of the spike trains.
+MaxBinLen = ccgdims(3);
+if NumClus == 1
+    correlograms = squeeze(correlograms);
+end
+
+%% Shift between the two copies of the spike trains.
 spshifts = 1;
 TotalSPNums = numel(SpikeTimes);
 spmasks = true(TotalSPNums,1);
@@ -52,18 +57,25 @@ while any(spmasks(1:TotalSPNums-spshifts))
     former_clusterInds = SpikeClus_inds(1:(TotalSPNums-spshifts));
     
     latter_clusterInds = SpikeClus_inds((1+spshifts):end);
-    if max(sptimebins) > (ccgdims(3)-1)
+    
+    if max(sptimebins) > (MaxBinLen-1)
         disp(max(sptimebins));
         error('Somewhere is wrong!');
     end
+    
     AddIndices = sub2ind(ccgdims,former_clusterInds(shift_mask_backup),...
         latter_clusterInds(shift_mask_backup),sptimebins+1);
-    
     [Types,Counts] = uniAndcount(AddIndices);
     
     correlograms(Types) = correlograms(Types) + Counts;
     
     spshifts = spshifts + 1;
+end
+%%
+if NumClus == 1
+   correlogramsResize = zeros(NumClus,NumClus,floor(win_length/2)+1);
+   correlogramsResize(1,1,:) = correlograms;
+   correlograms = correlogramsResize;
 end
 if IsSymOuts
    Fullsizeccg =  zeros(NumClus,NumClus,win_length);
@@ -73,7 +85,9 @@ if IsSymOuts
    HalfccgBack = correlograms;
    correlograms = Fullsizeccg;
 end
-figure;stem(1:size(correlograms,3),squeeze(correlograms(2,2,:)))
+
+
+% figure;stem(1:size(correlograms,3),squeeze(correlograms(2,2,:)))
 
 % % ccgWinLen = floor(winsize/binsize);
 % % % FullccgWinLen = ccgWinLen*2+1;

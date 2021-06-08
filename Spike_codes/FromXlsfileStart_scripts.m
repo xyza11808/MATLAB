@@ -31,49 +31,178 @@ BadProbeInds = cellfun(@(x) isempty(x) | strcmpi(x,'NaN') | ismissing({x}),DataC
 UsedDataCells = DataCell(~BadProbeInds,:);
 
 %%
-cProbe = 2;
-cProbeStr = num2str(UsedDataCells{cProbe,1},'Probe%d');
-ProbeFileLocation = UsedDataCells{cProbe,2};
-[~,~,ProbeChn_regionCells] = xlsread(ProbeFileLocation,cProbeStr);
-ProbespikeFolder = UsedDataCells{cProbe,3};
-BehaviorDataPath = UsedDataCells{cProbe,4};
-[fPath, ~, ~] = fileparts(BehaviorDataPath);
-PassiveFileFullPath = fullfile(fPath,UsedDataCells{cProbe,5});
+Errors = cell(size(UsedDataCells,1),1);
+for cProbe = 1 : size(UsedDataCells,1)
+% cProbe = 6;
+    try
+        clearvars ProbNPSess
+        fprintf('Processing probe %d...\n',cProbe);
+        cProbeStr = num2str(UsedDataCells{cProbe,1},'Probe%d');
+        ProbeFileLocation = UsedDataCells{cProbe,2};
+        [~,~,ProbeChn_regionCells] = xlsread(ProbeFileLocation,cProbeStr);
+        ProbespikeFolder = UsedDataCells{cProbe,3};
+        BehaviorDataPath = UsedDataCells{cProbe,4};
+        [fPath, ~, ~] = fileparts(BehaviorDataPath);
+        PassiveFileFullPath = fullfile(fPath,UsedDataCells{cProbe,5});
 
-if ~exist(ProbeFileLocation,'file') || ~exist(fullfile(ProbespikeFolder,'kilosort3'),'dir') || ...
-        ~exist(BehaviorDataPath,'file')
-    warning('At least one of the file location string doesnt exist.');
-    return;
+        if ~exist(ProbeFileLocation,'file') || ~exist(fullfile(ProbespikeFolder,'kilosort3'),'dir') || ...
+                ~exist(BehaviorDataPath,'file')
+            warning('At least one of the file location string doesnt exist.');
+%             return;
+            error('File does not exists');
+        end
+        BehaviorExcludeInds = UsedDataCells{cProbe,6};
+        %
+        ProbNPSess = NPspikeDataMining(fullfile(ProbespikeFolder,'kilosort3'),'Task');
+%         if exist(fullfile(ProbNPSess.ksFolder,'ClassAnaHandle.mat'),'file')
+%             continue;
+%         end
+        if contains(ProbespikeFolder,'b103a04_20210408')
+            ProbNPSess = ProbNPSess.triggerOnsetTime([],[2,6],[]); 
+        else
+            ProbNPSess = ProbNPSess.triggerOnsetTime([],[6,2],[]); 
+        end
+
+        %
+        ProbNPSess.CurrentSessInds = strcmpi('task',ProbNPSess.SessTypeStrs);
+
+        task_colorplot_script;
+        %
+        ProbNPSess.CurrentSessInds = strcmpi('passive',ProbNPSess.SessTypeStrs);
+        Passive_colorplot_script;
+
+        %
+        save(fullfile(ProbNPSess.ksFolder,'ClassAnaHandle.mat'),'ProbNPSess','-v7.3');
+    catch ME
+        Errors{cProbe} = ME;
+    end
 end
-BehaviorExcludeInds = UsedDataCells{cProbe,6};
-%%
-ProbNPSess = NPspikeDataMining(fullfile(ProbespikeFolder,'kilosort3'),'Task');
-ProbNPSess = ProbNPSess.triggerOnsetTime([],[6,2],[]); 
-
-%%
-ProbNPSess.CurrentSessInds = strcmpi('task',ProbNPSess.SessTypeStrs);
-
-task_colorplot_script;
-%%
-ProbNPSess.CurrentSessInds = strcmpi('passive',ProbNPSess.SessTypeStrs);
-Passive_colorplot_script;
-
-%%
-save(fullfile(ProbNPSess.ksFolder,'ClassAnaHandle.mat'),'ProbNPSess','-v7.3');
-
 %% spike autocorrelation function
-PlotClusInds = 1:3;
-totalTimes = obj.Numsamp/obj.SpikeStrc.sample_rate;
-SumInds = false(numel(obj.SpikeClus),1);
-for cInds = 1 : length(PlotClusInds)
-    ClusInds = obj.SpikeClus == obj.UsedClus_IDs(PlotClusInds(cInds));
-    SumInds = SumInds | ClusInds;
+% PlotClusInds = 1:3;
+% totalTimes = obj.Numsamp/obj.SpikeStrc.sample_rate;
+% SumInds = false(numel(obj.SpikeClus),1);
+% for cInds = 1 : length(PlotClusInds)
+%     ClusInds = obj.SpikeClus == obj.UsedClus_IDs(PlotClusInds(cInds));
+%     SumInds = SumInds | ClusInds;
+% end
+% 
+% ClusSPAll = obj.SpikeTimes(SumInds);
+% ClusSPclus = obj.SpikeClus(SumInds);
+% %%
+% clusccgStrc = Spikeccgfun(ClusSPAll,ClusSPclus,1.5,0.01);
+
+%% refractory period calculation
+Errors2 = cell(size(UsedDataCells,1),1);
+SessClusCCgs = cell(size(UsedDataCells,1),1);
+for cProbe = 1 : size(UsedDataCells,1)
+% cProbe = 6;
+    try
+        %
+        clearvars ProbNPSess
+        fprintf('Processing probe %d...\n',cProbe);
+        cProbeStr = num2str(UsedDataCells{cProbe,1},'Probe%d');
+        ProbeFileLocation = UsedDataCells{cProbe,2};
+        [~,~,ProbeChn_regionCells] = xlsread(ProbeFileLocation,cProbeStr);
+        ProbespikeFolder = UsedDataCells{cProbe,3};
+        BehaviorDataPath = UsedDataCells{cProbe,4};
+        [fPath, ~, ~] = fileparts(BehaviorDataPath);
+        PassiveFileFullPath = fullfile(fPath,UsedDataCells{cProbe,5});
+        %
+        if ~exist(ProbeFileLocation,'file') || ~exist(fullfile(ProbespikeFolder,'kilosort3'),'dir') || ...
+                ~exist(BehaviorDataPath,'file')
+            warning('At least one of the file location string does not exist.');
+%             return;
+            error('File does not exists');
+        end
+        BehaviorExcludeInds = UsedDataCells{cProbe,6};
+        %
+        if ~exist(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandle.mat'),'file')
+            error('Unable to find existed NPsess analysis handle saved results.');
+        end
+        load(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandle.mat'));
+        SessClusCCgs{cProbe} = ProbNPSess.refractoryPeriodCal([],2,1e-3);
+%         ProbNPSess = NPspikeDataMining(fullfile(ProbespikeFolder,'kilosort3'),'Task');
+        
+    catch ME
+        Errors2{cProbe} = ME;
+    end
 end
 
-ClusSPAll = obj.SpikeTimes(SumInds);
-ClusSPclus = obj.SpikeClus(SumInds);
+%% extract raw spike waveform from the raw bin file data
+% since the raw bin file location is not for sure, this section will not
+% run automatically, but the raw bin file location have to been predefined
+
+for cProbe = 3 : size(UsedDataCells,1)
+% cProbe = 6;
+    try
+        %
+        clearvars ProbNPSess
+        fprintf('Processing probe %d...\n',cProbe);
+        cProbeStr = num2str(UsedDataCells{cProbe,1},'Probe%d');
+        ProbeFileLocation = UsedDataCells{cProbe,2};
+        [~,~,ProbeChn_regionCells] = xlsread(ProbeFileLocation,cProbeStr);
+        ProbespikeFolder = UsedDataCells{cProbe,3};
+        BehaviorDataPath = UsedDataCells{cProbe,4};
+        [fPath, ~, ~] = fileparts(BehaviorDataPath);
+        PassiveFileFullPath = fullfile(fPath,UsedDataCells{cProbe,5});
+        %
+        if ~exist(ProbeFileLocation,'file') || ~exist(fullfile(ProbespikeFolder,'kilosort3'),'dir') || ...
+                ~exist(BehaviorDataPath,'file')
+            warning('At least one of the file location string does not exist.');
+%             return;
+            error('File does not exists');
+        end
+        BehaviorExcludeInds = UsedDataCells{cProbe,6};
+        %
+        if ~exist(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandle.mat'),'file')
+            error('Unable to find existed NPsess analysis handle saved results.');
+        end
+        load(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandle.mat'));
+        
+        fprintf('Current ks folder path is: \n <%s> \nPlease select the corresponded bin file location.\n', ProbespikeFolder);
+        RawbinfilePath = uigetdir(pwd,'Please select the raw bin file path');
+        if ~ischar(RawbinfilePath)
+            fprintf('No file was selected.!\n');
+            return;
+        end
+        ProbNPSess = ProbNPSess.SpikeWaveFeature(RawbinfilePath);
+        
+        save(fullfile(ProbNPSess.ksFolder,'ClassAnaHandleWithwave.mat'),'ProbNPSess','-v7.3');
+        %
+        catch ME
+        Errors2{cProbe} = ME;
+    end
+end
+
+
+%% ways to calculate the refractory period for each unit
+
+% firstly, the ccg save file should be loaded before running following
+% codes
+
+% load(fullfile(ProbNPSess.ksFolder,'AllClusccgData.mat'));
+default_binsize = 1e-3;
+if ~exist('binsize_time','var')
+    binsize_time = default_binsize;
+end
+baselinefr_timebin = [600, 900]; % ms
+baselinefr_bin = round(baselinefr_timebin/1000/default_binsize);
+
+% ccgData = ClusSelfccg{1};
+RefracBinNum = cellfun(@(x) refractoryperiodFun(x,baselinefr_bin),ClusSelfccg);
+RefracBinTime = RefracBinNum*binsize_time;
+
+
+
+
+
+
+
+
 %%
-clusccgStrc = Spikeccgfun(ClusSPAll,ClusSPclus,1.5,0.01);
+
+
+
 
 
 

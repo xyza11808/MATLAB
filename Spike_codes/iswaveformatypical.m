@@ -54,7 +54,7 @@ if ~isempty(pks)
 end
 
 % criteria 4
-% in case there are platu period between tough and postpeak
+% in case there are plateau period between tough and postpeak
 tough2peakTrace_diff = [0,diff(upsampleWave(Tough2peakInds))];
 tough2peakTrace_xx = upsamplexx(Tough2peakInds);
 pks = findpeaks(tough2peakTrace_diff/0.2,tough2peakTrace_xx,'MinPeakProminence',0.03);

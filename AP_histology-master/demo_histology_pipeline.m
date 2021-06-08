@@ -9,7 +9,7 @@ av = readNPY([allen_atlas_path filesep 'annotation_volume_10um_by_index.npy']);
 st = loadStructureTree([allen_atlas_path filesep 'structure_tree_safe_2017.csv']);
 
 % Set paths for histology images and directory to save slice/alignment
-im_path = 'N:\NP_Anatomy_data\b104a03\b104a03_RGBfiles';
+im_path = 'N:\NP_Anatomy_data\20210418_xy_b103a04\b103a04_RGBfiles';
 slice_path = [im_path filesep 'slices'];
 
 %% 2) Preprocess slide images to produce slice images
@@ -22,7 +22,7 @@ slice_path = [im_path filesep 'slices'];
 
 % Set resize factor
 % resize_factor = []; % (slides ome.tiff: auto-resize ~CCF size 10um/px)
-ImageSizeInfo = 5756.23/2214; % um/px for the real image
+ImageSizeInfo = 6244.80/2402; % um/px for the real image
 resize_factor = ImageSizeInfo/10; % um/px is the allen reference size
 % resize_factor = 1; % (slides tiff: resize factor)
 
