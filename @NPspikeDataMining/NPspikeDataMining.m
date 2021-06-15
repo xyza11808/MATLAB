@@ -27,6 +27,8 @@ classdef NPspikeDataMining
         UsedChnDepth
         ChannelAreaStrs = {}; % channel area strings
         
+        SessBlockTypes = [];
+        
         % for triggered PSTH 
         UsedTrigOnTime = {[],[]}; % trigger onset time, in seconds format
         TrigData_Bin = {[],[]};
@@ -293,7 +295,7 @@ classdef NPspikeDataMining
             
             if isempty(obj.UsedTrigOnTime{obj.CurrentSessInds})
                 % load trigger scale time file
-                trigScaleStrc = load(fullfile(obj.ksFolder,'TriggerDatas.mat'),'TriggerEvents');
+                trigScaleStrc = load(fullfile(obj.ksFolder,'..','TriggerDatas.mat'),'TriggerEvents');
                 obj = obj.triggerOnsetTime(trigScaleStrc.TriggerEvents,[],[]);
             end
             if IsEventDataGiven
@@ -702,7 +704,7 @@ classdef NPspikeDataMining
         end
         
         
-        function obj = EventsPSTHplot(obj,EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,varargin)
+        function [obj, varargout] = EventsPSTHplot(obj,EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,varargin)
             % EventsDelay should be a n-by-p matrix, in milisecond format. n is the number of
             % trials, which should be the same as trigger number; p is the
             % number of events types. for example, the passive listening
@@ -800,7 +802,7 @@ classdef NPspikeDataMining
             % firstly excluded zeros time events
             ExcludeInds = sum(EventsDelay < 1e-4, 2);
             if sum(ExcludeInds)
-                EventBinLength(ExcludeInds,:) = [];
+                EventsDelay(ExcludeInds,:) = [];
                 TrNum = TrNum - sum(ExcludeInds);
                 SMBinDataMtx(ExcludeInds,:,:) = [];
                 RepeatTypes(ExcludeInds,:) = [];
@@ -933,12 +935,20 @@ classdef NPspikeDataMining
             xTs = ((1:UsedBinLength) - AlignedEventOnBin)*obj.USedbin(2);
             xTs = xTs + obj.USedbin(2)/2; % convert to bin center
             ChoiceStrs = {'LeftC','RightC'};
+            BloundaryBlockStrs = {'LowBound','HighBound'};
+            if isempty(obj.SessBlockTypes)
+                cBlockTypeStrs = '';
+            else
+                cBlockTypeStrs = BloundaryBlockStrs{obj.SessBlockTypes+1};
+            end
+            Seg1TypeNum = length(Seg1_types);
+            SegMeanTraces = cell(NumSingleUnits,Seg1TypeNum,Seg2TypeNum,3);
             for cUnit = 1 : NumSingleUnits
                 cUnitData = squeeze(AlignedSortDatas(:,cUnit,:)); % sorted by events time
                 UnitPlotScale = [0 max(prctile(cUnitData(:),99),1)];
                 
                 hcf = figure('position',[100 100 1450 300],'visible','off'); %,'visible','off'
-                Seg1TypeNum = length(Seg1_types);
+                
                 for c1Seg = 1 :Seg1TypeNum  % normally stimulus segments
 %                     c1SegInds = SortRepeats(:,1) == Seg1_types(c1Seg);
                     if Seg2TypeNum > 1
@@ -1040,8 +1050,8 @@ classdef NPspikeDataMining
                     
                 end
                 if ~IsChnAreaGiven
-                    annotation(hcf,'textbox',[0.475,0.68,0.3,0.3],'String',sprintf('Unit %d, Chn %d',...
-                        obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit)),'FitBoxToText','on','EdgeColor',...
+                    annotation(hcf,'textbox',[0.475,0.68,0.3,0.3],'String',sprintf('Unit %d, Chn %d, (%s)',...
+                        obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit)),cBlockTypeStrs,'FitBoxToText','on','EdgeColor',...
                            'none','FontSize',12);
                 else
                    cChnAreaIndex = ChnAreaStrs{obj.ChannelUseds_id(cUnit),1};
@@ -1050,8 +1060,8 @@ classdef NPspikeDataMining
                    else
                        ChnAreaStr = ChnAreaStrs{obj.ChannelUseds_id(cUnit),3};
                    end
-                   annotation(hcf,'textbox',[0.01,0.32,0.05,0.3],'String',sprintf('Unit %d, \nChn %d \nArea :\n%s',...
-                        obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit),ChnAreaStr),'FitBoxToText','on','EdgeColor',...
+                   annotation(hcf,'textbox',[0.01,0.32,0.05,0.3],'String',sprintf('(%s), \nUnit %d, \nChn %d \nArea :\n%s',...
+                        cBlockTypeStrs,obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit),ChnAreaStr),'FitBoxToText','on','EdgeColor',...
                            'none','FontSize',10,'Color',[0.8 0.5 0.2],'FitBoxToText','on');
                    
                 end
@@ -1067,7 +1077,7 @@ classdef NPspikeDataMining
                     ax = subplot(1,Seg1TypeNum,cSeg1Inds);
                     hold on;
                     TraceColors = jet(Seg2TypeNum);
-                    SegMeanTraces = cell(Seg1TypeNum,Seg2TypeNum,2);
+                    
                     hlAlls = [];
                     
                     for cSeg2Inds = 1 : Seg2TypeNum
@@ -1095,9 +1105,9 @@ classdef NPspikeDataMining
                             SegTraceMean = NaN;
                             SegTraceSem = NaN;
                         end
-                        SegMeanTraces{cSeg1Inds,cSeg2Inds,1} = SegTraceMean;
-                        SegMeanTraces{cSeg1Inds,cSeg2Inds,2} = SegTraceSem;
-                        
+                        SegMeanTraces{cUnit,cSeg1Inds,cSeg2Inds,1} = SegTraceMean;
+                        SegMeanTraces{cUnit,cSeg1Inds,cSeg2Inds,2} = SegTraceSem;
+                        SegMeanTraces{cUnit,cSeg1Inds,cSeg2Inds,3} = cComNums;
                     end
                     yaxisScales(cSeg1Inds,:) = get(ax,'ylim');
                     TraceAxess = [TraceAxess,ax];
@@ -1121,8 +1131,8 @@ classdef NPspikeDataMining
                        CommonYScales,'Color','k','linewidth',0.8,'linestyle','--'); 
                 end
                 
-                annotation(hMeanf,'textbox',[0.50,0.71,0.3,0.3],'String',sprintf('Unit %d, Chn %d',...
-                    obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit)),'FitBoxToText','on','EdgeColor',...
+                annotation(hMeanf,'textbox',[0.50,0.71,0.3,0.3],'String',sprintf('Unit %d, Chn %d, (%s)',...
+                    obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit),cBlockTypeStrs),'FitBoxToText','on','EdgeColor',...
                        'none','FontSize',12);
                 
             %%
@@ -1147,7 +1157,10 @@ classdef NPspikeDataMining
                  close(hcf);
                  close(hMeanf);
             end
-            
+            if nargout > 1
+                varargout{1} = {SegMeanTraces,xTs};
+                varargout{2} = {Seg1_types, Seg2_types};
+            end
             
         end
         
@@ -1224,7 +1237,11 @@ classdef NPspikeDataMining
                 UnitDatas{cUnit} = cspWaveform;
                 %%
                 plot(AvgWaves);
-                [isabnorm,isUsedVec] = iswaveformatypical(AvgWaves,obj.WaveWinSamples,false);
+                try
+                    [isabnorm,isUsedVec] = iswaveformatypical(AvgWaves,obj.WaveWinSamples,false);
+                catch ME
+                    fprintf('Errors');
+                end
                 title([num2str(cClusChannel,'chn=%d'),'  ',num2str(1-isabnorm,'Ispass = %d')]);
                 wavefeature = SPwavefeature(AvgWaves,obj.WaveWinSamples);
                 text(6,0.8*max(AvgWaves),{sprintf('tough2peak = %d',wavefeature.tough2peakT);...

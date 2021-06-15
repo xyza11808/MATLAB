@@ -91,10 +91,12 @@ for n = 1:fileNum
     behavResults.Trial_Type(MissTrialsInds) = [];
     behavResults.Time_reward (MissTrialsInds) = [];
     behavResults.Stim_toneFreq(MissTrialsInds) = [];
-    if iscell(behavResults.Stim_Type(1))
-        behavResults.Stim_Type(MissTrialsInds) = [];
-    else
-        behavResults.Stim_Type(MissTrialsInds,:) = [];
+    if isfield(behavResults,'Stim_Type')
+        if iscell(behavResults.Stim_Type(1))
+            behavResults.Stim_Type(MissTrialsInds) = [];
+        else
+            behavResults.Stim_Type(MissTrialsInds,:) = [];
+        end
     end
     behavResults.Action_choice(MissTrialsInds) = [];
     SessBehavDatas = [behavResults.Stim_toneFreq(:),behavResults.Trial_Type(:),behavResults.Action_choice(:),...
@@ -163,11 +165,12 @@ for n = 1:fileNum
     
     stim_types=double(unique(behavResults.Stim_toneFreq));
     GrNum = floor(length(stim_types)/2); % in case boundary tone exists
-    if iscell(behavResults.Stim_Type(1))
-        FirstTrType = behavResults.Stim_Type(1);
-    else
-        FirstTrType = behavResults.Stim_Type(1,:);
-    end
+    FirstTrType = 'randtone';
+%     if iscell(behavResults.Stim_Type(1))
+%         FirstTrType = behavResults.Stim_Type(1);
+%     else
+%         FirstTrType = behavResults.Stim_Type(1,:);
+%     end
     if length(stim_types)==2 || strcmpi(FirstTrType,'sweep')
         %for probe trial data analysis, further analysis can be added here
         disp('This behavior data is not the random puretone trial result, quit analysis.\n');

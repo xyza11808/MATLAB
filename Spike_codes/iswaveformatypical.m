@@ -15,7 +15,8 @@ if IsNormedwave
     NormedWave = waveform;
 else
    % normalize the waveform using amplitude
-    [~,toughInds] = min(waveform);
+%     [~,toughInds] = min(waveform);
+    toughInds = abs(timewin(1))+1;
     [postPeakValue, postPeakInds] = max(waveform(toughInds:end));
     postPeakIndex = postPeakInds + toughInds-1;
 
@@ -24,9 +25,21 @@ else
     
 end
 WaveLen = numel(NormedWave);
+
 upsamplexx = 0:0.2:WaveLen;
 upsampleWave = spline(1:WaveLen,NormedWave,upsamplexx);
+if any(isinf(NormedWave)) || any(isnan(upsampleWave))
+    Isatypical = 1;
+    atypicalVec = [-1,-1,-1,-1];
+    if nargout == 1
+        varargout{1} = Isatypical;
+    elseif nargout == 2
+        varargout{1} = Isatypical;
+        varargout{2} = atypicalVec;
+    end
 
+    return;
+end
 [~,upsample_toughInds] = min(abs(upsamplexx - toughInds));
 [~,upsample_postpeakInds] = min(abs(upsamplexx - postPeakIndex));
 
