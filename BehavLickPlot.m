@@ -67,7 +67,7 @@ BinTimepoints = (1:BinLength) * (LickEndT/200);
 %%
 save LickRateDatSave.mat AlignedBinDataL AlignedBinDataR minTrBinNum trial_outcome PlotTypes BinTimepoints -v7.3
 % AlignedLickRplot(AlignedBinDataL,AlignedBinDataR,minTrBinNum,double(trial_outcome(:)),PlotTypes,BinTimepoints);
-
+%%
 if ~sum(isProbTrial)  %if there are no prob trials
     if length(FreqTypes)==2 % single-pair stimulus 2afc task
         %         TypeDesp={'Left','Right'};
@@ -289,9 +289,9 @@ if ~sum(isProbTrial)  %if there are no prob trials
             ylabel('# Trials');
         end
         suptitle('Lick Time Plot');
-        saveas(h_all,sprintf('%sRaster_plot_MT2AFC_Lick_plot.png',fnBase));
-        saveas(h_all,sprintf('%sRaster_plot_MT2AFC_Lick_plot.fig',fnBase));
-        close(h_all);
+%         saveas(h_all,sprintf('%sRaster_plot_MT2AFC_Lick_plot.png',fnBase));
+%         saveas(h_all,sprintf('%sRaster_plot_MT2AFC_Lick_plot.fig',fnBase));
+%         close(h_all);
     end
 else
     if ~(sum(behavStruct.Trial_isOptoProbeTrial) || sum(behavStruct.Trial_isOptoTraingTrial))

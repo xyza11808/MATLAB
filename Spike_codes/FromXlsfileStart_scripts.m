@@ -78,7 +78,9 @@ for cProbe = 1 : size(UsedDataCells,1)
         Errors{cProbe} = ME;
     end
 end
-%% correct the calculation time for task trials, The most commoned ITI is 5s
+%% # replot the single unit colorplot and raster plot, correct the licktime plots
+% updates plot the licks aligned to answer times
+
 Errors3 = cell(size(UsedDataCells,1),1);
 for cProbe = 1 : size(UsedDataCells,1)
 % cProbe = 6;
@@ -102,16 +104,20 @@ for cProbe = 1 : size(UsedDataCells,1)
         end
         BehaviorExcludeInds = UsedDataCells{cProbe,6};
         %
-        if ~exist(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandleWithwave.mat'),'file')
+        if ~exist(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandle2.mat'),'file')
             error('Unable to find existed NPsess analysis handle saved results.');
         end
-        load(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandleWithwave.mat'));
+        load(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandle2.mat'));
         
         ProbNPSess.CurrentSessInds = strcmpi('task',ProbNPSess.SessTypeStrs);
-
+        ProbNPSess.TrigAlignType = {'stim','trigger'};
         task_colorplot_script;
-        save(fullfile(ProbNPSess.ksFolder,'ClassAnaHandle2.mat'),'ProbNPSess','-v7.3');
         
+%         ProbNPSess.CurrentSessInds = strcmpi('passive',ProbNPSess.SessTypeStrs);
+%         Passive_colorplot_script;
+        
+        save(fullfile(ProbNPSess.ksFolder,'ClassAnaHandle2.mat'),'ProbNPSess','-v7.3');
+        %
     catch ME
         Errors3{cProbe} = ME;
     end
@@ -193,7 +199,7 @@ for cProbe = 3 : size(UsedDataCells,1)
             error('File does not exists');
         end
         BehaviorExcludeInds = UsedDataCells{cProbe,6};
-        %
+        %%
         if ~exist(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandle.mat'),'file')
             error('Unable to find existed NPsess analysis handle saved results.');
         end

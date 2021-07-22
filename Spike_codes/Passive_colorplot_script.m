@@ -6,7 +6,7 @@ ProbNPSess = ProbNPSess.triggerOnsetTime([],4);  % 4 is the trigger duration, in
 
 %% given trigger time windows, and then calculate trigger onset PSTHs
 TimeWin = [-0.4,3]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
-% Smoothbin = [50,10]; % time window for smooth psth, in ms format
+% Smoothbin = [100,20]; % time window for smooth psth, in ms format
 ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, []);
 
 %% load passive sound results

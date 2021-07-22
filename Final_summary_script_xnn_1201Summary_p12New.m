@@ -94,7 +94,7 @@ CoefTypeStrs = {'AllAstNeu','AstAst','NeuNeu','ActiveAstNeu','ActiveAstAst','Act
 nTypes = length(CoefTypeStrs);
 plotdatas = cell(nTypes,4);
 plotfieldWiseDatas = cell(nTypes,4);
-for cT = 1:1% : nTypes
+for cT = 1: nTypes
     %
     WTSessAllCoefData = cellfun(@(x) squeeze(x(:,1,cT+1)),WTSessData_Cell,'uniformoutput',false);
     WTSessAllDissData = cellfun(@(x) squeeze(x(:,2,cT+1)),WTSessData_Cell,'uniformoutput',false);
