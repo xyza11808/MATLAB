@@ -1,5 +1,5 @@
 
-function SpikeWaveFeature_single(rez)
+function [UsedClus_IDs,ChannelUseds_id] = SpikeWaveFeature_single(rez)
 % function used to analysis single unit waveform features
 % the wave form features may includes firerate, peak-to-trough
 % width, refraction peak and so on

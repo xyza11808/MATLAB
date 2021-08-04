@@ -72,9 +72,14 @@ disp('Constructing cluster info files...\n');
 ks3_Result2Info_script;
 
 %% calculate unit waveform for each unit
-SpikeWaveFeature_single(rez);
+[UsedClus_IDs,~] = SpikeWaveFeature_single(rez);
 
-%%
+%% calculate the ccg for each clusters
+spdata.SpikeClus = readNPY(fullfile(rez.ops.ksFolderPath,'kilosort3','spike_clusters.npy'));
+spdata.SpikeTimeSample = readNPY(fullfile(rez.ops.ksFolderPath,'kilosort3','spike_times.npy'));
+spdata.ksfolder = rootZ;
+spdata.sample_rate = rez.ops.fs;
+spdata.UsedClus_IDs = UsedClus_IDs;
 
-
+refractoryPeriodCal_sg(spdataStrc,[],2,1e-3); % [] indicates all clustes
 
