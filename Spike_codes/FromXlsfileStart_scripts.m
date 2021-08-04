@@ -53,7 +53,7 @@ for cProbe = 1 : size(UsedDataCells,1)
             error('File does not exists');
         end
         BehaviorExcludeInds = UsedDataCells{cProbe,6};
-        %
+        %%
         ProbNPSess = NPspikeDataMining(fullfile(ProbespikeFolder,'kilosort3'),'Task');
 %         if exist(fullfile(ProbNPSess.ksFolder,'ClassAnaHandle.mat'),'file')
 %             continue;
@@ -63,17 +63,32 @@ for cProbe = 1 : size(UsedDataCells,1)
         else
             ProbNPSess = ProbNPSess.triggerOnsetTime([],[6,2],[]); 
         end
-
-        %%
+        
+        %
         ProbNPSess.CurrentSessInds = strcmpi('task',ProbNPSess.SessTypeStrs);
-
+        %%
+        if isempty(ProbNPSess.UnitWaves) || isempty(ProbNPSess.UnitWaveFeatures)
+            % unit spike waveform extraction
+            fprintf('Current ks folder path is: \n <%s> \nPlease select the corresponded bin file location.\n', ProbespikeFolder);
+            RawbinfilePath = uigetdir(pwd,'Please select the raw bin file path');
+            if ~ischar(RawbinfilePath)
+                fprintf('No file was selected.!\n');
+                return;
+            end
+            ProbNPSess = ProbNPSess.SpikeWaveFeature(RawbinfilePath);
+            
+        end
+        % exclude isoformed spike wave units
+        ProbNPSess = ProbNPSess.wavefeatureExclusion;
+        %%
         task_colorplot_script;
         %
         ProbNPSess.CurrentSessInds = strcmpi('passive',ProbNPSess.SessTypeStrs);
         Passive_colorplot_script;
-
+        
+        ProbNPSess.refractoryPeriodCal([],2,1e-3);
         %%
-        save(fullfile(ProbNPSess.ksFolder,'ClassAnaHandle.mat'),'ProbNPSess','-v7.3');
+        save(fullfile(ProbNPSess.ksFolder,'ClassAnaHandleAll.mat'),'ProbNPSess','-v7.3');
     catch ME
         Errors{cProbe} = ME;
     end

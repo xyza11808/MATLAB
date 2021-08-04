@@ -1,6 +1,6 @@
 % load behave structure data
 load(BehaviorDataPath);
-
+%
 if ~(isempty(BehaviorExcludeInds) || any(ismissing(BehaviorExcludeInds)))
     %
     if ~isnumeric(BehaviorExcludeInds)
@@ -41,11 +41,11 @@ TrManWaters = double(behavResults.ManWater_choice(:));
 ExcludeFirstNumofInds = 10; 
 %% if using stim aligned PSTH data
 % given trigger time windows, and then calculate trigger onset PSTHs
-% if isempty(ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds})
-   TimeWin = [-1.5,5]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
-    Smoothbin = [100,20]; % time window for smooth psth, in ms format
+TimeWin = [-1.5,5]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
+Smoothbin = [50,10]; % time window for smooth psth, in ms format
+if isempty(ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds})
     ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, Smoothbin, TrStimOnsets);
-% end
+end
 [lick_time_struct,Lick_bias_side]=beha_lickTime_data(behavResults,TimeWin(2)); 
 
 IsBoundshiftSess = 0;
@@ -64,13 +64,16 @@ if IsBoundshiftSess
    BlockNMRealTrInds = cell(NumBlocks,1);
    BlockpsthAvgTrace = cell(NumBlocks,2);
    BlockAlignedEventTypes = cell(NumBlocks,2);
+   BlockNMTrRealInds = cell(NumBlocks,1);
+   
+   EventsDelay = [TrStimOnsets,TrTimeAnswer];
    %%
    for cB = 1 : NumBlocks
        cBScales = [max(BlockSectionInfo.BlockTrScales(cB,1),ExcludeFirstNumofInds),...
            BlockSectionInfo.BlockTrScales(cB,2)];
        cBScales = cBScales+[BlockStartNotUsedTrs,0];
        
-       UsedTrRealInds = cBScales(1):cBScales(2);
+       UsedTrRealInds = (cBScales(1):cBScales(2))';
 %        cBTrFreqs = TrFreqUseds(UsedTrRealInds);
        cBTrChoices = TrActionChoice(UsedTrRealInds);
 %        cBTrPerfs = TrTypes(UsedTrRealInds) == cBTrChoices;
@@ -103,38 +106,38 @@ if IsBoundshiftSess
            end
            RasterAlign = [2,1];
        end
-       EventsDelay = [TrStimOnsets,TrTimeAnswer];
        
        RepeatTypes = [TrFreqUseds,TrActionChoice];
        RepeatStr = {'Sounds','Choice'};
        EventColors = {'SOnset','AnswerT';'r','m'};
        
-       ProbNPSess.SessBlockTypes = BlockSectionInfo.BlockTypes(cB);
-       %
-       
-       if cB == 1 % save channel area infomation in the class handle
-           %
-           [ProbNPSess,StimAvgTrace,StimTypes] = ProbNPSess.EventsPSTHplot(EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,...
-               cBNMRealTrInds,BlockNameStr,lick_time_struct,ProbeChn_regionCells);
-           %
-       else
-           [~,StimAvgTrace, StimTypes]= ProbNPSess.EventsPSTHplot(EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,...
-               cBNMRealTrInds,BlockNameStr,lick_time_struct,ProbeChn_regionCells);
-       end
-       ProbNPSess.SessBlockTypes = [];
-       BlockpsthAvgTrace(cB,:) = StimAvgTrace;
-       BlockAlignedEventTypes(cB,:) = StimTypes;
-       
-       % plot the stim aligned spike raster plot
-       if strcmpi(ProbNPSess.TrigAlignType,'trigger') 
-           BlockNameStr2 = sprintf('Block%d_spRaster_trigBin',cB);
-       else
-           BlockNameStr2 = sprintf('Block%d_spRaster_stimBin',cB);
-       end
-       %
-       ProbNPSess.EventRasterplot(EventsDelay,[1,2],RepeatTypes,RepeatStr,EventColors,...
-            cBNMRealTrInds,BlockNameStr2,lick_time_struct,ProbeChn_regionCells);
-       
+%        ProbNPSess.SessBlockTypes = BlockSectionInfo.BlockTypes(cB);
+%        %
+%        
+%        if cB == 1 % save channel area infomation in the class handle
+%            %
+%            [ProbNPSess,StimAvgTrace,StimTypes] = ProbNPSess.EventsPSTHplot(EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,...
+%                cBNMRealTrInds,BlockNameStr,lick_time_struct,ProbeChn_regionCells);
+%            %
+%        else
+%            [~,StimAvgTrace, StimTypes]= ProbNPSess.EventsPSTHplot(EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,...
+%                cBNMRealTrInds,BlockNameStr,lick_time_struct,ProbeChn_regionCells);
+%        end
+%        ProbNPSess.SessBlockTypes = [];
+%        BlockpsthAvgTrace(cB,:) = StimAvgTrace;
+%        BlockAlignedEventTypes(cB,:) = StimTypes;
+%        
+%        % plot the stim aligned spike raster plot
+%        if strcmpi(ProbNPSess.TrigAlignType,'trigger') 
+%            BlockNameStr2 = sprintf('Block%d_spRaster_trigBin',cB);
+%        else
+%            BlockNameStr2 = sprintf('Block%d_spRaster_stimBin',cB);
+%        end
+%        %
+%        ProbNPSess.EventRasterplot(EventsDelay,[1,2],RepeatTypes,RepeatStr,EventColors,...
+%             cBNMRealTrInds,BlockNameStr2,lick_time_struct,ProbeChn_regionCells);
+        
+       BlockNMTrRealInds{cB} = cBNMRealTrInds(:);
    end
    
 end
@@ -147,6 +150,29 @@ else
 end
 save(TaskDataSavePath,'BlockSectionInfo','behavResults','BlockNMRealTrInds',...
         'BlockpsthAvgTrace','BlockAlignedEventTypes','-v7.3');
+    
+%% Extract block trial response values
+BlockNMTrAlls = cell2mat(BlockNMTrRealInds);
+
+%  EventsDelay = [TrStimOnsets,TrTimeAnswer];
+
+% calculate baseline response value
+baselineRespWin = -1; % use all values before stim onset to calculate baseline
+[baselineRespData, ProbNPSess] = ProbNPSess.EventRespFR([],baselineRespWin,BlockNMTrAlls,TrStimOnsets);
+
+% calculate stim response data
+stimRespWin = 0.5;
+[StimRespData, ~] = ProbNPSess.EventRespFR(TrStimOnsets,stimRespWin,BlockNMTrAlls);
+
+%% calculate the answer response data
+AnsRespWin = 0.5;
+[AnsRespData, ~] = ProbNPSess.EventRespFR(TrStimOnsets,AnsRespWin,BlockNMTrAlls);
+
+% calculate the answer response window 2 data
+AnsRespWin2 = 1;
+[AnsRespData2, ~] = ProbNPSess.EventRespFR(TrStimOnsets,AnsRespWin2,BlockNMTrAlls);
+
+
 %% plot the mean traces from different blocks in same axis
 RepeatTypeStrs = {'Stim','Choice'};
 % if IsBoundshiftSess 

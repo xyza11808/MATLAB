@@ -9,7 +9,7 @@ av = readNPY([allen_atlas_path filesep 'annotation_volume_10um_by_index.npy']);
 st = loadStructureTree([allen_atlas_path filesep 'structure_tree_safe_2017.csv']);
 
 % Set paths for histology images and directory to save slice/alignment
-im_path = 'N:\NP_Anatomy_data\20210418_xy_b103a04\b103a04_RGBfiles';
+im_path = 'N:\NP_Anatomy_data\b105a07\RGBfiles';
 slice_path = [im_path filesep 'slices'];
 
 %% 2) Preprocess slide images to produce slice images
@@ -22,7 +22,7 @@ slice_path = [im_path filesep 'slices'];
 
 % Set resize factor
 % resize_factor = []; % (slides ome.tiff: auto-resize ~CCF size 10um/px)
-ImageSizeInfo = 6244.80/2402; % um/px for the real image
+ImageSizeInfo = 5034.77/1937; % um/px for the real image
 resize_factor = ImageSizeInfo/10; % um/px is the allen reference size
 % resize_factor = 1; % (slides tiff: resize factor)
 
@@ -32,8 +32,7 @@ slice_images = true; % (images are already individual slices)
 
 % Preprocess images
 AP_process_histology(im_path,resize_factor,slice_images);
-%%
-% (optional) Rotate, center, pad, flip slice images
+g% (optional) Rotate, center, pad, flip slice images
 AP_rotate_histology(slice_path);
 
 %% 3) Align CCF to slices
@@ -46,7 +45,6 @@ AP_grab_histology_ccf(tv,av,st,slice_path);
 AP_auto_align_histology_ccf(slice_path);
 % (second: curate manually)
 AP_manual_align_histology_ccf(tv,av,st,slice_path);
-
 
 %% 4) Utilize aligned CCF
 

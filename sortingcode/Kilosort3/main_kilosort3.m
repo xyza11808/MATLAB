@@ -64,4 +64,17 @@ rezCPU.F0m = gather(rezCPU.F0m);
 rezCPU.dWU = gather(rezCPU.dWU);
 rezCPU.nsp = gather(rezCPU.nsp);
 save(fullfile(rootZ,'rezdata.mat'),'rez','rezCPU','-v7.3');
-%% 
+%% construct group info file
+
+FolderPath = rootZ;
+SR = rez.ops.sampsToRead;
+disp('Constructing cluster info files...\n');
+ks3_Result2Info_script;
+
+%% calculate unit waveform for each unit
+SpikeWaveFeature_single(rez);
+
+%%
+
+
+

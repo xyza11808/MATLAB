@@ -1,6 +1,6 @@
 
 
-if ~(exist('FolderPath','var') && exist('binfilepath','var'))
+if ~exist('FolderPath','var')
     FolderPath = pwd;
 %     binfilepath = fullfile(FolderPath,'..');
     SR = 30000;
