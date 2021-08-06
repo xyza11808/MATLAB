@@ -28,10 +28,11 @@ set(ax, 'ColorOrder', copper(length(marginalChans)));
 plot(F(dispF), 10*log10(allPowerEst(marginalChans,dispF)));
 ylabel('power (dB)');
 set(ax, 'XTick', []);
-hleg = legend(array2stringCell(marginalChans*10));
+% hleg = legend(array2stringCell(marginalChans*10));
+hleg = legend(cellstr(num2str(marginalChans(:)*10,'%d')));
 set(hleg, 'Position', [0.7125    0.7607    0.1036    0.2083]);
 makepretty;
-
+%%
 ax = subplot(4,4,[8 12 16]); hold on;
 c = copper(length(freqBands));
 c = c(:, [3 2 1]);

@@ -55,9 +55,13 @@ nChansInFile = 385;  % neuropixels phase3a, from spikeGLX
 
 [lfpByChannel, allPowerEst, F, allPowerVar] = ...
     lfpBandPower(lfpFilename, lfpFs, nChansInFile, []);
-
-chanMap = readNPY(fullfile(myKsDir, 'channel_map.npy'));
-nC = length(chanMap);
+%
+try
+    chanMap = readNPY(fullfile(myKsDir, 'kilosort3', 'channel_map.npy'));
+catch
+    chanMap = readNPY(fullfile(myKsDir, 'channel_map.npy'));
+end
+    nC = length(chanMap);
 
 allPowerEst = allPowerEst(:,chanMap+1)'; % now nChans x nFreq
 
@@ -66,7 +70,7 @@ dispRange = [0 100]; % Hz
 marginalChans = [10:50:nC];
 freqBands = {[1.5 4], [4 10], [10 30], [30 80], [80 200]};
 
-plotLFPpower(F, allPowerEst, dispRange, marginalChans, freqBands);
+hf = plotLFPpower(F, allPowerEst, dispRange, marginalChans, freqBands);
 
 %% Computing some useful details about spikes/neurons (like depths)
 

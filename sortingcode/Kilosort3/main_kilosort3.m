@@ -83,3 +83,36 @@ spdata.UsedClus_IDs = UsedClus_IDs;
 
 refractoryPeriodCal_sg(spdataStrc,[],2,1e-3); % [] indicates all clustes
 
+%% calculate LFP signals from *.lf.bin file
+myKsDir = fullfile(rootZ,'..');
+lfpD = dir(fullfile(myKsDir, '*.lf.bin')); % LFP file from spikeGLX specifically
+lfpFilename = fullfile(myKsDir, lfpD(1).name);
+
+lfpFs = 2500;  % neuropixels phase3a
+nChansInFile = 385;  % neuropixels phase3a, from spikeGLX
+
+[lfpByChannel, allPowerEst, F, allPowerVar] = ...
+    lfpBandPower(lfpFilename, lfpFs, nChansInFile, []);
+%
+try
+    chanMap = readNPY(fullfile(myKsDir, 'kilosort3', 'channel_map.npy'));
+catch
+    chanMap = readNPY(fullfile(myKsDir, 'channel_map.npy'));
+end
+    nC = length(chanMap);
+
+allPowerEst = allPowerEst(:,chanMap+1)'; % now nChans x nFreq
+
+% plot LFP power
+dispRange = [0 100]; % Hz
+marginalChans = [10:50:nC];
+freqBands = {[1.5 4], [4 10], [10 30], [30 80], [80 200]};
+%
+hf = plotLFPpower(F, allPowerEst, dispRange, marginalChans, freqBands);
+savefigname = fullfile(rootZ,'LFP power for all channels');
+saveas(hf,savefigname);
+saveas(hf,savefigname,'png');
+close(hf);
+
+matfilesavename = fullfile(rootZ,'LFPpowerData.mat');
+save(matfilesavename,'F', 'allPowerEst', 'dispRange', 'marginalChans', 'freqBands','-v7.3');
