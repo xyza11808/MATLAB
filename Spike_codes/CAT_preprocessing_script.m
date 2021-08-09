@@ -78,13 +78,13 @@ for cprobe = 1 : sessionProbeNums
     Newsaved_imecfile_strc = dir(fullfile(Rawfilepath,sprintf('*.%s.lf.bin',cprobe_imec_str)));
     Oldpath_imecfile_path = fullfile(Rawfilepath, Newsaved_imecfile_strc(1).name);
     Target_imecfile_path = fullfile(save_imec_filder,Newsaved_imecfile_strc(1).name);
-    stat3 = movefile(Oldpath_imecfile_path,Target_imecfile_path,'f');
+    stat3 = copyfile(Oldpath_imecfile_path,Target_imecfile_path,'f');
     
     % move lf.meta file
     Newsaved_imecfile_strc = dir(fullfile(Rawfilepath,sprintf('*.%s.lf.meta',cprobe_imec_str)));
     Oldpath_imecfile_path = fullfile(Rawfilepath, Newsaved_imecfile_strc(1).name);
     Target_imecfile_path = fullfile(save_imec_filder,Newsaved_imecfile_strc(1).name);
-    stat4 = movefile(Oldpath_imecfile_path,Target_imecfile_path,'f');
+    stat4 = copyfile(Oldpath_imecfile_path,Target_imecfile_path,'f');
     
     if ~all([stat1,stat2,stat3,stat4])
         disp([stat1,stat2,stat3,stat4]);
