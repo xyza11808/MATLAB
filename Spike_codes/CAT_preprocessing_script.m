@@ -33,11 +33,11 @@ catsave_fullpath = fullfile(datasave_folder, catsaveName);
 if ~isdir(catsave_fullpath)
     mkdir(catsave_fullpath);
 end
-%%
+%
 powershellLocation = 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe';
 systemstr = sprintf('%s %s -dir=%s -prb=0:4 -gbldmx -dest=%s -aphipass=300 -run=%s -g=%s -t=0 -ap -prb_fld -prb_miss_ok',...
     powershellLocation, cat_batfile_path, UpperfolderPath, catsave_fullpath, run_name,gNumber(end));
-%%
+%
 status = system(systemstr);
 disp(status);
 

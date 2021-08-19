@@ -58,7 +58,7 @@ datdir = 'E:\MatCode\MATLAB\glm_spfit\GLMspiketraintutorial-master\data_RGCs';  
 load([datdir, filesep, 'Stim']);    % stimulus (temporal binary white noise)
 load([datdir, filesep, 'stimtimes']); % stim frame times in seconds (if desired)
 load([datdir, filesep, 'SpTimes']); % load spike times (in units of stim frames)
-
+%%
 % Pick a cell to work with
 cellnum = 3; % (1-2 are OFF cells; 3-4 are ON cells).
 tsp = SpTimes{cellnum};
@@ -378,7 +378,7 @@ title('nonlinearity');
 %     giving log-likelihood:  log P(s|r) =  s log r - r   
 %
 % (where we have ignored the -log s! term because it is independent of the
-% parameters). The total log-likelihood is the summed log-likelihood over
+% parameters). The total log-likelihood is the summed log-likelihood over 
 % time bins in the experiment.
 
 % 1. for GLM with exponential nonlinearity

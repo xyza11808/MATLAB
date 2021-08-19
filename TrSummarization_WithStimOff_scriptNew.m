@@ -121,12 +121,13 @@ NumParas = size(TrEventsRespData,3);
 AllROIData = cell(nROIs,1);
 
 options = glmnetSet;
-    options.alpha = 0.9;
+    options.alpha = 0.1;
     options.nlambda = 110;
+    options.lambda = (10 .^ linspace(-4,4,110));
 %% using glmnet analysis, unable to use parpool while using this function
 
 for cROI = 1 : nROIs
-    %
+    %%
 %     cROI = 48;
 %     close
     cROIData = squeeze(TrEventsRespData(:,cROI,:));
@@ -295,6 +296,7 @@ for cROI = 1 : nROIs
     AllCoefsCell = RepeatData{:,1};
     AllCoefsMtx = cell2mat(AllCoefsCell(:,1));
     AllROIData{cROI} = RepeatData;
+    %%
 end
 
 %%

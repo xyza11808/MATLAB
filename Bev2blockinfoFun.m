@@ -42,18 +42,21 @@ end
 
 BlockTrIndexs = [BlockStartInds_useds,BlockStartInds_useds+BlockLens-1];
 NoMissTrBlockLens = nan(size(BlockTrIndexs,1),1);
+IsBlockUsed = true(size(BlockTrIndexs,1),1);
 for cb = 1 : size(BlockTrIndexs,1)
    BlockChoices =  TrChoicces(BlockTrIndexs(cb,1):BlockTrIndexs(cb,2));
    
    if sum(BlockChoices ~= 2) < 70 % non-miss trial should not less than 70
-       BlockType_useds(cb) = [];
-       BlockStartInds_useds(cb) = [];
-       BlockLens(cb) = [];
-       BlockTrIndexs(cb,:) = [];
+       IsBlockUsed = false;
    else
        NoMissTrBlockLens(cb) = sum(BlockChoices ~= 2);
    end
 end
+
+BlockType_useds(~IsBlockUsed) = [];
+BlockStartInds_useds(~IsBlockUsed) = [];
+BlockLens(~IsBlockUsed) = [];
+BlockTrIndexs(~IsBlockUsed,:) = [];
 
 NoMissTrBlockLens(isnan(NoMissTrBlockLens)) = [];
 UsedBlockNums = length(BlockLens);

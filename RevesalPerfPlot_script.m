@@ -200,76 +200,104 @@ line([BeforeSwTrNum BeforeSwTrNum],[0 1],'Color','k','linestyle','--');
 title('High bound block Choice');
 
 %% boundary shift session plots
-IsBoundshiftSess = 0;
-SessFreqTypes = BlockSectionInfo.BlockFreqTypes;
-if length(SessFreqTypes) > 3
-    IsBoundshiftSess = 1;
-end
-SessFreqOcts = log2(SessFreqTypes/min(SessFreqTypes));
-NumFreqs = length(SessFreqTypes);
-BlockStartNotUsedTrs = 0; % number of trals not used after block switch
-if IsBoundshiftSess 
-   hf = figure('position',[100 100 400 300]);
-   hold on
-   NumBlocks = length(BlockSectionInfo.BlockTypes);
-   BlockPerfs = cell(NumBlocks,5);
-   for cB = 1 : NumBlocks
-       cBScales = BlockSectionInfo.BlockTrScales(cB,:) + [BlockStartNotUsedTrs,0];
-       cBTrFreqs = TrFreqUseds(cBScales(1):cBScales(2));
-       cBTrChoices = TrActionChoice(cBScales(1):cBScales(2));
-       cBTrPerfs = TrTypes(cBScales(1):cBScales(2)) == cBTrChoices;
-       
-       cBNMInds = cBTrChoices~= 2;
-       cBTrFreqsNM = cBTrFreqs(cBNMInds);
-       cBTrChoiceNM = cBTrChoices(cBNMInds);
-       cBTrPerfsNM = cBTrPerfs(cBNMInds);
-       
-       FreqChoiceANDperfs = zeros(NumFreqs,3);
-       for cf = 1 : NumFreqs
-          cfcBInds = cBTrFreqsNM == SessFreqTypes(cf);
-          cfcBChoices = cBTrChoiceNM(cfcBInds);
-          cfcBPerfs = mean(cBTrPerfsNM(cfcBInds));
-          
-          FreqChoiceANDperfs(cf,:) = [mean(cfcBChoices),cfcBPerfs,numel(cfcBChoices)]; 
-       end
-       BlockPerfs{cB,1} = FreqChoiceANDperfs;
-       
-       ChoiceProbs = FreqChoiceANDperfs(:,1);
-       UL = [0.5, 0.5, max(SessFreqOcts), 100];
-       SP = [min(ChoiceProbs),1 - max(ChoiceProbs)-min(ChoiceProbs), mean(SessFreqOcts), 1];
-       LM = [0, 0, min(SessFreqOcts), 0];
-       ParaBoundLim = ([UL;SP;LM]);
-       cBTrFreqOcts = log2(cBTrFreqsNM/min(SessFreqTypes));
-       fit_curveAll = FitPsycheCurveWH_nx(cBTrFreqOcts,cBTrChoiceNM,ParaBoundLim);
-       fit_curveAvg = FitPsycheCurveWH_nx(SessFreqOcts,ChoiceProbs,ParaBoundLim);
-       
-       if ~BlockSectionInfo.BlockTypes(cB) % low bound session
-          plot(fit_curveAvg.curve(:,1),fit_curveAvg.curve(:,2),'color',[.45 .8 0.4],'LineWidth',1.6);
-          plot(SessFreqOcts,ChoiceProbs,'o','Color',[.45 .8 0.4],'MarkerSize',5,'linewidth',1.2);
-       else
-           plot(fit_curveAvg.curve(:,1),fit_curveAvg.curve(:,2),'color',[0.94 0.72 0.2],'LineWidth',1.6);
-           plot(SessFreqOcts,ChoiceProbs,'d','Color',[0.94 0.72 0.2],'MarkerSize',5,'linewidth',1.2);
-       end
-       CurveBounds = fit_curveAll.ffit.u;
-       BlockPerfs{cB,2} = fit_curveAll;
-       BlockPerfs{cB,3} = CurveBounds;
-       BlockPerfs{cB,4} = fit_curveAvg;
-       BlockPerfs{cB,5} = fit_curveAvg.ffit.u;
-   end
-   text(median(SessFreqOcts)+0.1,0.4,num2str(abs(BlockPerfs{1,3}-BlockPerfs{2,3}),'First2BoundDiff=%.3f'));
-   LowBoundInds = BlockSectionInfo.BlockTypes == 0;
-   MeanLowBound = mean(cell2mat(BlockPerfs(LowBoundInds,3)));
-   MeanHighBound = mean(cell2mat(BlockPerfs(~LowBoundInds,3)));
-   text(median(SessFreqOcts)+0.1,0.2,num2str(MeanHighBound-MeanLowBound,'AvgBoundDiff=%.3f'));
-   xlabel('Octaves');
-   ylabel('Rightward prob.');
-   set(gca,'ylim',[-0.05 1.05]);
-   title(strrep(fn(1:end-4),'_','\_'));
-end
-%%
-saveas(gcf,fullfile(fp,[fn(1:end-4),'_Boundshift_plot']));
-saveas(gcf,fullfile(fp,[fn(1:end-4),'_Boundshift_plot']),'png');
+% UnsedTrScale = 3; % 1 indicates all trials within block, 2 indicates the last 150 trials, and 3 indicates the first 150 trials
+for UnsedTrScale = 1 : 3
+    IsBoundshiftSess = 0;
+    SessFreqTypes = BlockSectionInfo.BlockFreqTypes;
+    if length(SessFreqTypes) > 3
+        IsBoundshiftSess = 1;
+    end
+    SessFreqOcts = log2(SessFreqTypes/min(SessFreqTypes));
+    NumFreqs = length(SessFreqTypes);
+    BlockStartNotUsedTrs = 0; % number of trals not used after block switch
 
+    if IsBoundshiftSess 
+       hf = figure('position',[100 100 400 300]);
+       hold on
+       NumBlocks = length(BlockSectionInfo.BlockTypes);
+       BlockPerfs = cell(NumBlocks,5);
+       for cB = 1 : NumBlocks
+           switch UnsedTrScale
+               case 1
+                    cBScales = BlockSectionInfo.BlockTrScales(cB,:) + [BlockStartNotUsedTrs,0];
+               case 2
+                    cBScales = BlockSectionInfo.BlockTrScales(cB,2) + [-150,0];
+                    if BlockSectionInfo.BlockLens(cB) < 150
+                       continue;
+                   end
+               case 3
+                   if BlockSectionInfo.BlockLens(cB) < 150
+                       continue;
+                   end
+                   cBScales = BlockSectionInfo.BlockTrScales(cB,1) + [0,150];
+           end
+           cBTrFreqs = TrFreqUseds(cBScales(1):cBScales(2));
+           cBTrChoices = TrActionChoice(cBScales(1):cBScales(2));
+           cBTrPerfs = TrTypes(cBScales(1):cBScales(2)) == cBTrChoices;
+
+           cBNMInds = cBTrChoices~= 2;
+           cBTrFreqsNM = cBTrFreqs(cBNMInds);
+           cBTrChoiceNM = cBTrChoices(cBNMInds);
+           cBTrPerfsNM = cBTrPerfs(cBNMInds);
+
+           FreqChoiceANDperfs = zeros(NumFreqs,3);
+           for cf = 1 : NumFreqs
+              cfcBInds = cBTrFreqsNM == SessFreqTypes(cf);
+              cfcBChoices = cBTrChoiceNM(cfcBInds);
+              cfcBPerfs = mean(cBTrPerfsNM(cfcBInds));
+
+              FreqChoiceANDperfs(cf,:) = [mean(cfcBChoices),cfcBPerfs,numel(cfcBChoices)]; 
+           end
+           BlockPerfs{cB,1} = FreqChoiceANDperfs;
+
+           ChoiceProbs = FreqChoiceANDperfs(:,1);
+           UL = [0.5, 0.5, max(SessFreqOcts), 100];
+           SP = [min(ChoiceProbs),1 - max(ChoiceProbs)-min(ChoiceProbs), mean(SessFreqOcts), 1];
+           LM = [0, 0, min(SessFreqOcts), 0];
+           ParaBoundLim = ([UL;SP;LM]);
+           cBTrFreqOcts = log2(cBTrFreqsNM/min(SessFreqTypes));
+           fit_curveAll = FitPsycheCurveWH_nx(cBTrFreqOcts,cBTrChoiceNM,ParaBoundLim);
+%            fit_curveAvg = FitPsycheCurveWH_nx(SessFreqOcts,ChoiceProbs,ParaBoundLim);
+
+           if ~BlockSectionInfo.BlockTypes(cB) % low bound session
+              plot(fit_curveAll.curve(:,1),fit_curveAll.curve(:,2),'color',[.45 .8 0.4],'LineWidth',1.6);
+              plot(SessFreqOcts,ChoiceProbs,'o','Color',[.45 .8 0.4],'MarkerSize',5,'linewidth',1.2);
+           else
+               plot(fit_curveAll.curve(:,1),fit_curveAll.curve(:,2),'color',[0.94 0.72 0.2],'LineWidth',1.6);
+               plot(SessFreqOcts,ChoiceProbs,'d','Color',[0.94 0.72 0.2],'MarkerSize',5,'linewidth',1.2);
+           end
+           CurveBounds = fit_curveAll.ffit.u;
+           BlockPerfs{cB,2} = fit_curveAll;
+           BlockPerfs{cB,3} = CurveBounds;
+%            BlockPerfs{cB,4} = fit_curveAvg;
+%            BlockPerfs{cB,5} = fit_curveAvg.ffit.u;
+       end
+       text(median(SessFreqOcts)+0.1,0.4,num2str(abs(BlockPerfs{1,3}-BlockPerfs{2,3}),'First2BoundDiff=%.3f'));
+       LowBoundInds = BlockSectionInfo.BlockTypes == 0;
+       MeanLowBound = mean(cell2mat(BlockPerfs(LowBoundInds,3)));
+       MeanHighBound = mean(cell2mat(BlockPerfs(~LowBoundInds,3)));
+       text(median(SessFreqOcts)+0.1,0.2,num2str(MeanHighBound-MeanLowBound,'AvgBoundDiff=%.3f'));
+       xlabel('Octaves');
+       ylabel('Rightward prob.');
+       set(gca,'ylim',[-0.05 1.05]);
+       switch UnsedTrScale
+           case 1
+               title(strrep(fn(1:end-4),'_','\_'));
+               saveName = fullfile(fp,[fn(1:end-4),'_Boundshift_plot']);
+           case 2
+               title([strrep(fn(1:end-4),'_','\_'),'\_last150Trs']);
+               saveName = fullfile(fp,[fn(1:end-4),'_Boundshift_last150']);
+           case 3
+               title([strrep(fn(1:end-4),'_','\_'),'\_first150Trs']);
+               saveName = fullfile(fp,[fn(1:end-4),'_Boundshift_first150']);
+       end
+    end
+    %
+
+    saveas(gcf,saveName);
+    saveas(gcf,saveName,'png');
+    close(gcf);
+end
 %%
 
 % TrFreqUseds = double(behavResults.Stim_toneFreq(:));
@@ -285,7 +313,7 @@ saveas(gcf,fullfile(fp,[fn(1:end-4),'_Boundshift_plot']),'png');
 %     FreqTrTypes(cf,2) = sum(FreqTypes == 1);
 % end
 cclr;
-[fn,fp,fi] = uigetfile('*.mat','Please select session analized mat file');
+[fn,fp,fi] = uigetfile('*NPSess*.mat','Please select session analized mat file');
 if ~fi
     return;
 end

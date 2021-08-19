@@ -23,6 +23,7 @@ classdef NPspikeDataMining
         ClusterInfoAll
         UsedClus_IDs % used cluster index
         ChannelUseds_id % used channel index
+        RawClusANDchan_ids_All = {[],[]};
         UsedClusinds % inds indicating which cluster is to be used
         UsedChnDepth
         ChannelAreaStrs = {}; % channel area strings
@@ -130,7 +131,7 @@ classdef NPspikeDataMining
             obj.UsedChnDepth = ChannelDepth(obj.UsedClusinds);
             NumGoodClus = length(obj.UsedClus_IDs);
             fprintf('Totally %d number of good units were find.\n',NumGoodClus);
-            
+            obj.RawClusANDchan_ids_All = {obj.UsedClus_IDs, obj.ChannelUseds_id};
             % load unit waveform data is saved file exists
             if ~exist(fullfile(FolderPath,'UnitwaveformDatas.mat'),'file')
                 waveDatas = load(fullfile(FolderPath,'UnitwaveformDatas.mat'));
@@ -149,6 +150,10 @@ classdef NPspikeDataMining
                warning('The unit waveform data does not exists, please check your class handle contains.');
                return;
            end
+           if isempty(obj.RawClusANDchan_ids_All{1})
+                obj.RawClusANDchan_ids_All = {obj.UsedClus_IDs, obj.ChannelUseds_id};
+           end
+           
            UnitWaveExclusionInds = cell2mat(obj.UnitWaveFeatures(:,2)); % Isoformed waves were excluded
            Unit_pre2post_peakRatio = cellfun(@(x) x.pre2post_peakratio,obj.UnitWaveFeatures(:,1));
            Unit_sp_duration = cellfun(@(x) x.tough2peakT,obj.UnitWaveFeatures(:,1));
@@ -188,6 +193,44 @@ classdef NPspikeDataMining
                end
            end
            
+        end
+        
+        function obj = Sesssptime_check_exclusion(obj)
+            % exclusion some units based on the response pattern of each
+            % single unit within the recording session, the spikes should
+            % be uniformly distributed throughout the session period but
+            % not onlt happens at a narrowd time window, which usually is a
+            % indication of channel drifting
+            if isempty(obj.RawClusANDchan_ids_All{1})
+                obj.RawClusANDchan_ids_All = {obj.UsedClus_IDs, obj.ChannelUseds_id};
+            end
+            
+            RemainedInds = SessResp_binnedcheckFun(obj);
+            ExcludeInds = true(numel(obj.UsedClus_IDs),1);
+            ExcludeInds(RemainedInds) = false;
+            
+            fprintf('Totally %d number of unit will be excluded because of unevened spike times.\n',sum(ExcludeInds));
+            
+            obj.UsedClus_IDs = obj.UsedClus_IDs(RemainedInds);
+            obj.ChannelUseds_id = obj.ChannelUseds_id(RemainedInds);
+            obj.UsedClusinds = obj.UsedClusinds(RemainedInds);
+            obj.UsedChnDepth = obj.UsedChnDepth(RemainedInds);
+            
+            if ~isempty(obj.TrigData_Bin{1})
+                obj.TrigData_Bin{1}(ExcludeInds,:) = [];
+                obj.TrTrigSpikeTimes{1}(ExcludeInds,:) = [];
+                if ~isempty(obj.TrigDataBin_FRSub{1})
+                     obj.TrigDataBin_FRSub{1}(ExcludeInds,:) = [];
+                end
+            end
+            if ~isempty(obj.TrigData_Bin{2})
+                obj.TrigData_Bin{2}(ExcludeInds,:) = [];
+                obj.TrTrigSpikeTimes{2}(ExcludeInds,:) = [];
+                if ~isempty(obj.TrigDataBin_FRSub{2})
+                     obj.TrigDataBin_FRSub{2}(ExcludeInds,:) = [];
+                end
+            end
+            
         end
         
         function ClusChnDatas = SpikeWaveFun(obj,varargin)
