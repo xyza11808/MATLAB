@@ -133,7 +133,7 @@ classdef NPspikeDataMining
             fprintf('Totally %d number of good units were find.\n',NumGoodClus);
             obj.RawClusANDchan_ids_All = {obj.UsedClus_IDs, obj.ChannelUseds_id};
             % load unit waveform data is saved file exists
-            if ~exist(fullfile(FolderPath,'UnitwaveformDatas.mat'),'file')
+            if exist(fullfile(FolderPath,'UnitwaveformDatas.mat'),'file')
                 waveDatas = load(fullfile(FolderPath,'UnitwaveformDatas.mat'));
                 obj.UnitWaves = waveDatas.UnitDatas;
                 obj.UnitWaveFeatures = waveDatas.UnitFeatures;

@@ -325,6 +325,142 @@ BlockSectionInfo = Bev2blockinfoFun(behavResults);
 if isempty(BlockSectionInfo)
     return;
 end
+%%
+TrTypes = double(behavResults.Trial_Type(:));
+TrActionChoice = double(behavResults.Action_choice(:));
+TrFreqUseds = double(behavResults.Stim_toneFreq(:));
+TrStimOnsets = double(behavResults.Time_stimOnset(:));
+TrTimeAnswer = double(behavResults.Time_answer(:));
+TrTimeReward = double(behavResults.Time_reward(:));
+TrManWaters = double(behavResults.ManWater_choice(:));
+
+%% Reversed freq choice switch trace plot
+RevFreqNums = sum(BlockSectionInfo.IsFreq_asReverse);
+RevFreqInds = find(BlockSectionInfo.IsFreq_asReverse);
+
+RevFreq_choices = cell(RevFreqNums+1,3);
+for cf = 1 : RevFreqNums
+   cfInds = RevFreqInds(cf);
+   cRevFreq_logis = BlockSectionInfo.RevFreqTrInds(:, cfInds+1);
+   cRevFreq_logis(TrActionChoice == 2) = false;
+   cRevFreq_trRealIndex = find(cRevFreq_logis);
+   cFreq_realChoices = TrActionChoice(cRevFreq_trRealIndex);
+   
+   RevFreq_choices(cf,:) = {cRevFreq_trRealIndex, cFreq_realChoices, num2str(BlockSectionInfo.BlockFreqTypes(cfInds),'%d')};
+end
+
+AllRevFreq_logis = BlockSectionInfo.RevFreqTrInds(:, 1);
+AllRevFreq_logis(TrActionChoice == 2) = false;
+AllRevFreq_trRealIndex = find(AllRevFreq_logis);
+AllFreq_realchoices = TrActionChoice(AllRevFreq_trRealIndex);
+RevFreq_choices(end,:) = {AllRevFreq_trRealIndex, AllFreq_realchoices, 'AllRevFreqs'};
+% %%
+% lineStyles = linspecer(RevFreqNums+1);
+% hf = figure('position',[100 100 1440 380]);
+% hold on
+% 
+% BlockSwitchInds = BlockSectionInfo.BlockTrScales(1:end-1,2) + 0.5;
+% % patched colors for block indication
+% PatchColorStr = {[.45 .8 0.4], [0.94 0.72 0.2]};
+% for cB = 1 : BlockSectionInfo.NumBlocks
+%     cBlockScales = BlockSectionInfo.BlockTrScales(cB,:);
+%     patchx = [cBlockScales(1),cBlockScales(1),cBlockScales(2)+1,cBlockScales(2)+1];
+%     patchy = [0 1 1 0];
+%     patch_color = PatchColorStr{BlockSectionInfo.BlockTypes(cB)+1};
+%     patch(patchx,patchy,1,'EdgeColor','none','FaceColor',patch_color,'facealpha',0.3);
+%     line([cBlockScales(2) cBlockScales(2)], [0 1],'Color','k','linewidth',1.5);
+% end
+% 
+% hls = [];
+% for cl = 1 : RevFreqNums+1
+%     hl = plot(RevFreq_choices{cl,1}, smooth(RevFreq_choices{cl,2},5), 'Color', lineStyles(cl,:),'linewidth',1.5);
+%     hls = [hls, hl];
+% end
+% legend(hls, RevFreq_choices(:,3),'location','Northeast','box','off');
+% set(gca,'ylim',[-0.02 1.02],'ytick',[0 1],'yticklabel',{'Left','Right'});
+% xlabel('Trials Nums');
+% ylabel('Choice');
+%% plot each frequency in real trial inds for each frequency itself
+lineStyles = linspecer(RevFreqNums+1);
+hf = figure('position',[100 100 1460 660]);
+hold on
+RevStimNums = size(RevFreq_choices,1); % which usually should be 4, including three freqs and all of the rev freqs
+BlockSwitchInds = BlockSectionInfo.BlockTrScales(1:end-1,2) + 0.5;
+NumswitchInds = length(BlockSwitchInds);
+% patched colors for block indication
+PatchColorStr = {[.45 .8 0.4], [0.94 0.72 0.2]};
+PatchType = {'LowB','HighB'};
+for cax = 1 : RevStimNums
+    if cax > 4
+        error('Too much rev freq numbers.');
+    end
+    ccax = subplot(2,2,cax);
+    hold on
+    c_freq_RealTrInds = RevFreq_choices{cax, 1};
+    BlockStartInds = 1;
+    for cSwitch = 1 : NumswitchInds
+        cSwitchInds = find(c_freq_RealTrInds > BlockSwitchInds(cSwitch), 1, 'first') - 1; % the last trial lower than switch inds
+        patchx = [BlockStartInds,BlockStartInds,cSwitchInds,cSwitchInds];
+        patchy = [0 1 1 0];
+        patch_color = PatchColorStr{BlockSectionInfo.BlockTypes(cSwitch)+1};
+        patch(ccax, patchx,patchy,1,'EdgeColor','none','FaceColor',patch_color,'facealpha',0.3);
+        text(mean([BlockStartInds,cSwitchInds]),0.5,PatchType{BlockSectionInfo.BlockTypes(cSwitch)+1},'Color','m','FontSize',8);
+        line([cSwitchInds+0.5 cSwitchInds+0.5],[0 1],'Color','k','linewidth',1.5);
+        BlockStartInds = cSwitchInds + 1;
+    end
+    patch_x = [BlockStartInds,BlockStartInds,numel(c_freq_RealTrInds),numel(c_freq_RealTrInds)];
+    patch_y = [0 1 1 0];
+    patch_color = PatchColorStr{BlockSectionInfo.BlockTypes(NumswitchInds+1)+1};
+    patch(ccax, patch_x,patch_y,1,'EdgeColor','none','FaceColor',patch_color,'facealpha',0.3); 
+    text(mean([BlockStartInds,numel(c_freq_RealTrInds)]),0.5,PatchType{BlockSectionInfo.BlockTypes(cSwitch)+1},'Color','m','FontSize',8);
+    
+    plot(ccax, smooth(RevFreq_choices{cax,2},5), 'Color', lineStyles(cax,:),'linewidth',1.5)
+    title(RevFreq_choices{cax,3});
+    set(ccax,'ylim',[-0.02 1.02],'ytick',[0 1],'yticklabel',{'Left','Right'});
+    xlabel('Trials Nums');
+    ylabel('Choice');
+end
+%%
+saveName = fullfile(fp,[fn(1:end-4),'_RevFreqChoiceplot']);
+saveas(hf,saveName);
+saveas(hf,saveName,'png');
+close(hf);
+
+% for cB = 1 : BlockSectionInfo.NumBlocks
+%     cBlockScales = BlockSectionInfo.BlockTrScales(cB,:);
+%     patchx = [cBlockScales(1),cBlockScales(1),cBlockScales(2)+1,cBlockScales(2)+1];
+%     patchy = [0 1 1 0];
+%     patch_color = PatchColorStr{BlockSectionInfo.BlockTypes(cB)+1};
+%     patch(patchx,patchy,1,'EdgeColor','none','FaceColor',patch_color,'facealpha',0.3);
+%     line([cBlockScales(2) cBlockScales(2)], [0 1],'Color','k','linewidth',1.5);
+% end
+% 
+% hls = [];
+% for cl = 1 : RevFreqNums+1
+%     hl = plot(RevFreq_choices{cl,1}, smooth(RevFreq_choices{cl,2},5), 'Color', lineStyles(cl,:),'linewidth',1.5);
+%     hls = [hls, hl];
+% end
+% legend(hls, RevFreq_choices(:,3),'location','Northeast','box','off');
+% set(gca,'ylim',[-0.02 1.02],'ytick',[0 1],'yticklabel',{'Left','Right'});
+% xlabel('Trials Nums');
+% ylabel('Choice');
+
+
+%% load behavior datas
+cclr;
+[fn,fp,fi] = uigetfile('*NPSess*.mat','Please select session analized mat file');
+if ~fi
+    return;
+end
+cd(fp);
+
+load(fullfile(fp,fn));
+
+BlockSectionInfo = Bev2blockinfoFun(behavResults);
+if isempty(BlockSectionInfo)
+    return;
+end
+%%
 TrTypes = double(behavResults.Trial_Type(:));
 TrActionChoice = double(behavResults.Action_choice(:));
 TrFreqUseds = double(behavResults.Stim_toneFreq(:));

@@ -47,7 +47,7 @@ for cb = 1 : size(BlockTrIndexs,1)
    BlockChoices =  TrChoicces(BlockTrIndexs(cb,1):BlockTrIndexs(cb,2));
    
    if sum(BlockChoices ~= 2) < 70 % non-miss trial should not less than 70
-       IsBlockUsed = false;
+       IsBlockUsed(cb) = false;
    else
        NoMissTrBlockLens(cb) = sum(BlockChoices ~= 2);
    end
@@ -84,13 +84,14 @@ end
 BlockFreqTypes = unique(BlockTr_freqs);
 NumBlockfreqTypes = length(BlockFreqTypes);
 IsFreq_asReverseFreq = zeros(NumBlockfreqTypes,1);
-RevFreqTrInds = false(numel(TrFreqUseds),1);
+RevFreqTrInds = false(numel(TrFreqUseds),NumBlockfreqTypes+1); % the first row is the whole reverse freqs merged
 for cf = 1 : NumBlockfreqTypes
     cfInds = BlockTr_freqs == BlockFreqTypes(cf);
     cfTrTypes = BlockTr_TrTypes(cfInds);
     if length(unique(cfTrTypes)) > 1
         IsFreq_asReverseFreq(cf) = 1;
-        RevFreqTrInds(TrFreqUseds == BlockFreqTypes(cf)) = true;
+        RevFreqTrInds(TrFreqUseds == BlockFreqTypes(cf),1) = true;
+        RevFreqTrInds(TrFreqUseds == BlockFreqTypes(cf),cf+1) = true;
     end
 end
 
