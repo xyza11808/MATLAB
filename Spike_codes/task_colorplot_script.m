@@ -111,31 +111,31 @@ if IsBoundshiftSess
        RepeatStr = {'Sounds','Choice'};
        EventColors = {'SOnset','AnswerT';'r','m'};
        
-%        ProbNPSess.SessBlockTypes = BlockSectionInfo.BlockTypes(cB);
-%        %
-%        
-%        if cB == 1 % save channel area infomation in the class handle
-%            %
-%            [ProbNPSess,StimAvgTrace,StimTypes] = ProbNPSess.EventsPSTHplot(EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,...
-%                cBNMRealTrInds,BlockNameStr,lick_time_struct,ProbeChn_regionCells);
-%            %
-%        else
-%            [~,StimAvgTrace, StimTypes]= ProbNPSess.EventsPSTHplot(EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,...
-%                cBNMRealTrInds,BlockNameStr,lick_time_struct,ProbeChn_regionCells);
-%        end
-%        ProbNPSess.SessBlockTypes = [];
-%        BlockpsthAvgTrace(cB,:) = StimAvgTrace;
-%        BlockAlignedEventTypes(cB,:) = StimTypes;
-%        
-%        % plot the stim aligned spike raster plot
-%        if strcmpi(ProbNPSess.TrigAlignType,'trigger') 
-%            BlockNameStr2 = sprintf('Block%d_spRaster_trigBin',cB);
-%        else
-%            BlockNameStr2 = sprintf('Block%d_spRaster_stimBin',cB);
-%        end
-%        %
-%        ProbNPSess.EventRasterplot(EventsDelay,[1,2],RepeatTypes,RepeatStr,EventColors,...
-%             cBNMRealTrInds,BlockNameStr2,lick_time_struct,ProbeChn_regionCells);
+       ProbNPSess.SessBlockTypes = BlockSectionInfo.BlockTypes(cB);
+       %
+       
+       if cB == 1 % save channel area infomation in the class handle
+           %
+           [ProbNPSess,StimAvgTrace,StimTypes] = ProbNPSess.EventsPSTHplot(EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,...
+               cBNMRealTrInds,BlockNameStr,lick_time_struct,ProbeChn_regionCells);
+           %
+       else
+           [~,StimAvgTrace, StimTypes]= ProbNPSess.EventsPSTHplot(EventsDelay,AlignEvent,RepeatTypes,RepeatStr,EventColors,...
+               cBNMRealTrInds,BlockNameStr,lick_time_struct,ProbeChn_regionCells);
+       end
+       ProbNPSess.SessBlockTypes = [];
+       BlockpsthAvgTrace(cB,:) = StimAvgTrace;
+       BlockAlignedEventTypes(cB,:) = StimTypes;
+       
+       % plot the stim aligned spike raster plot
+       if strcmpi(ProbNPSess.TrigAlignType,'trigger') 
+           BlockNameStr2 = sprintf('Block%d_spRaster_trigBin',cB);
+       else
+           BlockNameStr2 = sprintf('Block%d_spRaster_stimBin',cB);
+       end
+       %
+       ProbNPSess.EventRasterplot(EventsDelay,[1,2],RepeatTypes,RepeatStr,EventColors,...
+            cBNMRealTrInds,BlockNameStr2,lick_time_struct,ProbeChn_regionCells);
         
        BlockNMTrRealInds{cB} = cBNMRealTrInds(:);
    end

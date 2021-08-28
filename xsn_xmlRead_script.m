@@ -49,7 +49,7 @@ end
 
 clearvars ccChildrens
 
-% load all tif files
+%% load all tif files
 warning off
 Testfilename = IndexAndFileAll{1,3};
 cTif = Tiff(Testfilename,'r');
@@ -83,14 +83,14 @@ for cTag = 1 : nTagNum
 end
  %
     
-AllTifDatas.Ch1_data = zeros(Tif_height,Tif_width,nFrames);
+% AllTifDatas.Ch1_data = zeros(Tif_height,Tif_width,nFrames);
 AllTifDatas.Ch2_data = zeros(Tif_height,Tif_width,nFrames);
-ch1_filesIndsAll = find(strcmpi('Ch1',IndexAndFileAll(:,2)));
+% ch1_filesIndsAll = find(strcmpi('Ch1',IndexAndFileAll(:,2)));
 ch2_filesIndsAll = find(strcmpi('Ch2',IndexAndFileAll(:,2)));
 
 for cf = 1 : nFrames
-    cCh1_data = double(read(Tiff(IndexAndFileAll{ch1_filesIndsAll(cf),3})));
-    AllTifDatas.Ch1_data(:,:,cf) = cCh1_data;
+%     cCh1_data = double(read(Tiff(IndexAndFileAll{ch1_filesIndsAll(cf),3})));
+%     AllTifDatas.Ch1_data(:,:,cf) = cCh1_data;
     
     cCh2_data = double(read(Tiff(IndexAndFileAll{ch2_filesIndsAll(cf),3})));
     AllTifDatas.Ch2_data(:,:,cf) = cCh2_data;
@@ -100,46 +100,47 @@ end
 
 %% align tif files 
 % if IsCalRef
-    RefAvgIndexScale = [700, 800];
-    RefImage = squeeze(mean(AllTifDatas.Ch1_data(:,:,RefAvgIndexScale(1):RefAvgIndexScale(2)),3));
+    RefAvgIndexScale = [100, 200];
+    RefImage = squeeze(mean(AllTifDatas.Ch2_data(:,:,RefAvgIndexScale(1):RefAvgIndexScale(2)),3));
     figure('position',[2000 100 450 380]);
-    imagesc(RefImage,[100 4000]);
+    imagesc(RefImage,[100 800]);
     colormap gray
     save TargetIm.mat RefImage -v7.3
 % end
 %% or load from another session
 
-[Ch1_alignedData,ch1_shift] = dft_reg(AllTifDatas.Ch1_data,RefImage);
-padding = [0 0 0 0];
-Ch2_alignedData = ImageTranslation_nx(AllTifDatas.Ch2_data,ch1_shift,padding,0);
+% [Ch1_alignedData,ch1_shift] = dft_reg(AllTifDatas.Ch1_data,RefImage);
+[Ch2_alignedData,ch2_shift] = dft_reg(AllTifDatas.Ch2_data,RefImage);
+% padding = [0 0 0 0];
+% Ch2_alignedData = ImageTranslation_nx(AllTifDatas.Ch2_data,ch1_shift,padding,0);
 
-% save aligned data
+%% save aligned data
 if ~isdir('./Aligned_datas/')
     mkdir('./Aligned_datas/');
 end
 cd('./Aligned_datas/');
-save ShiftData.mat ch1_shift -v7.3
+save ShiftData.mat ch2_shift -v7.3
 fileSize = 1000;
 SubfileNum = ceil(nFrames/fileSize);
 k = 1;
-Ch1_savefileName = 'Ch1_aligned_datasave_file%d.tif';
+% Ch1_savefileName = 'Ch1_aligned_datasave_file%d.tif';
 Ch2_savefileName = 'Ch2_aligned_datasave_file%d.tif';
 for cf = 1 : nFrames
     if mod(cf,fileSize) == 1
         cSubfNum = floor(cf/fileSize) + 1;
-        t1 = Tiff(sprintf(Ch1_savefileName,cSubfNum),'w');
+%         t1 = Tiff(sprintf(Ch1_savefileName,cSubfNum),'w');
         t2 = Tiff(sprintf(Ch2_savefileName,cSubfNum),'w');
     else
-        t1 = Tiff(sprintf(Ch1_savefileName,cSubfNum),'a');
+%         t1 = Tiff(sprintf(Ch1_savefileName,cSubfNum),'a');
         t2 = Tiff(sprintf(Ch2_savefileName,cSubfNum),'a');
     end
-    t1.setTag(TifStrc);
+%     t1.setTag(TifStrc);
     t2.setTag(TifStrc);
     
-    t1.write(squeeze(uint16(Ch1_alignedData(:,:,cf)))); 
+%     t1.write(squeeze(uint16(Ch1_alignedData(:,:,cf)))); 
     t2.write(squeeze(uint16(Ch2_alignedData(:,:,cf))));
     
-    t1.close();
+%     t1.close();
     t2.close();
 end
-figure;plot(ch1_shift')
+figure;plot(ch2_shift')
