@@ -1,7 +1,8 @@
 cclr;
-SumSourPath = 'F:\新建文件夹 (2)';
+
+SumSourPath = 'I:\20210901_xsn_done';
 cd(SumSourPath);
-WithinSourcePaths = dir(fullfile(SumSourPath,'*2020*'));
+WithinSourcePaths = dir(fullfile(SumSourPath,'*2021*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
 UsedTargetFolder = WithinSourcePaths(FolderIndex);
 NumFolders = length(UsedTargetFolder);
@@ -10,6 +11,7 @@ FolderFullpaths = arrayfun(@(x) fullfile(x.folder,x.name),UsedTargetFolder,'Unif
 % FolderNames = arrayfun(@(x) x.name,UsedTargetFolder,'UniformOutput',false);
 %%
 % AllFolderDatas = cell(NumFolders,1);
+
 for cf = 1:NumFolders
     cInputPath = FolderFullpaths{cf};
     fprintf('Processing folder:\n %s...\n',cInputPath);

@@ -16,16 +16,16 @@ UsedStrc = ccChildrens(SeqIndex).Children;
 FrameIndex = find(arrayfun(@(x) strcmpi(x.Name,'Frame'),UsedStrc));
 IsCalRef = 1;
 
-% %% or load existed ref images from another session for alignment
-% [ffn,ffp,ffi] = uigetfile('TargetIm.mat','Please select same FOV ref data');
-% if fi
-%     load(fullfile(ffp,ffn));
-% else
-%     return;
-% end
-% save TargetIm.mat RefImage -v7.3
-% IsCalRef = 0;
-% %%
+%% or load existed ref images from another session for alignment
+[ffn,ffp,ffi] = uigetfile('TargetIm.mat','Please select same FOV ref data');
+if fi
+    load(fullfile(ffp,ffn));
+else
+    return;
+end
+save TargetIm.mat RefImage -v7.3
+IsCalRef = 0;
+%%
 
 nFrames = length(FrameIndex);
 IndexAndFileAll = cell(nFrames*2,4);
@@ -37,6 +37,10 @@ for cf = 1 : nFrames
     AbsoluteTime = str2num(UsedStrc(cfStrcIndex).Attributes(AbsoluteTimeIndex).Value);
     
     cfFileAndChannel = FileNameExtraction(UsedStrc(cfStrcIndex).Children);
+    if size(cfFileAndChannel,1) == 1
+        cfFileAndChannel(2,:) = cfFileAndChannel;
+        cfFileAndChannel(1,:) = {'',''};
+    end
     cStartInds = (cf-1)*2+1;
     
     IndexAndFileAll{cStartInds,1} = cfIndex;
@@ -49,9 +53,9 @@ end
 
 clearvars ccChildrens
 
-%% load all tif files
+% load all tif files
 warning off
-Testfilename = IndexAndFileAll{1,3};
+Testfilename = IndexAndFileAll{2,3};
 cTif = Tiff(Testfilename,'r');
 Tif_height = getTag(cTif,'ImageLength');
 Tif_width = getTag(cTif,'ImageWidth');
@@ -87,8 +91,8 @@ end
 AllTifDatas.Ch2_data = zeros(Tif_height,Tif_width,nFrames);
 % ch1_filesIndsAll = find(strcmpi('Ch1',IndexAndFileAll(:,2)));
 ch2_filesIndsAll = find(strcmpi('Ch2',IndexAndFileAll(:,2)));
-
-for cf = 1 : nFrames
+%%
+for cf = 1 : 3000 %nFrames
 %     cCh1_data = double(read(Tiff(IndexAndFileAll{ch1_filesIndsAll(cf),3})));
 %     AllTifDatas.Ch1_data(:,:,cf) = cCh1_data;
     
@@ -100,23 +104,26 @@ end
 
 %% align tif files 
 % if IsCalRef
-    RefAvgIndexScale = [100, 200];
+    RefAvgIndexScale = [2200, 2400]; %630 830
     RefImage = squeeze(mean(AllTifDatas.Ch2_data(:,:,RefAvgIndexScale(1):RefAvgIndexScale(2)),3));
     figure('position',[2000 100 450 380]);
-    imagesc(RefImage,[100 800]);
+    imagesc(RefImage,[100 1200]);
     colormap gray
     save TargetIm.mat RefImage -v7.3
 % end
 %% or load from another session
 
 % [Ch1_alignedData,ch1_shift] = dft_reg(AllTifDatas.Ch1_data,RefImage);
-[Ch2_alignedData,ch2_shift] = dft_reg(AllTifDatas.Ch2_data,RefImage);
-% padding = [0 0 0 0];
-% Ch2_alignedData = ImageTranslation_nx(AllTifDatas.Ch2_data,ch1_shift,padding,0);
+[~,ch2_shift] = dft_reg(AllTifDatas.Ch2_data,RefImage);
+figure;plot(ch2_shift')
+ch2_shift(abs(ch2_shift) > 10) = 0;
 
+padding = [0 0 0 0];
+Ch2_alignedData = ImageTranslation_nx(AllTifDatas.Ch2_data,ch2_shift,padding,0);
+figure;plot(ch2_shift')
 %% save aligned data
 if ~isdir('./Aligned_datas/')
-    mkdir('./Aligned_datas/');
+    mkdir('./Aligned_datas/'); 
 end
 cd('./Aligned_datas/');
 save ShiftData.mat ch2_shift -v7.3
@@ -125,7 +132,7 @@ SubfileNum = ceil(nFrames/fileSize);
 k = 1;
 % Ch1_savefileName = 'Ch1_aligned_datasave_file%d.tif';
 Ch2_savefileName = 'Ch2_aligned_datasave_file%d.tif';
-for cf = 1 : nFrames
+for cf = 1 : 3000%nFrames
     if mod(cf,fileSize) == 1
         cSubfNum = floor(cf/fileSize) + 1;
 %         t1 = Tiff(sprintf(Ch1_savefileName,cSubfNum),'w');

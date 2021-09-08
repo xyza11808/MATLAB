@@ -10,7 +10,7 @@
 clear
 clc
 
-[xlsfilefn,xlsfilefp,xlsfilefnfi] = uigetfile('probeANDNPData_location.xlsx');
+[xlsfilefn,xlsfilefp,xlsfilefnfi] = uigetfile('probeANDNPData_location*.xlsx');
 if ~xlsfilefnfi
     return;
 end
@@ -54,7 +54,12 @@ for cProbe = 1 : size(UsedDataCells,1)
         end
         BehaviorExcludeInds = UsedDataCells{cProbe,6};
         %
-        ProbNPSess = NPspikeDataMining(fullfile(ProbespikeFolder,'kilosort3'),'Task');
+        if exist(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandleAll.mat'),'file')
+            load(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandleAll.mat'));
+        else
+            ProbNPSess = NPspikeDataMining(fullfile(ProbespikeFolder,'kilosort3'),'Task');
+        end
+        %
 %         if exist(fullfile(ProbNPSess.ksFolder,'ClassAnaHandle.mat'),'file')
 %             continue;
 %         end
@@ -90,6 +95,7 @@ for cProbe = 1 : size(UsedDataCells,1)
         %
         save(fullfile(ProbNPSess.ksFolder,'ClassAnaHandleAll.mat'),'ProbNPSess','-v7.3');
     catch ME
+        disp(ME.message);
         Errors{cProbe} = ME;
     end
 end

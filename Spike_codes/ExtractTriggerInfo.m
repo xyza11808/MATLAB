@@ -14,7 +14,7 @@ if GUIprocess
 else
     % function was called in a ks script
     DataPath = obj.ksFolderPath;
-    fnames = dir(fullfile(DataPath,'*.bin'));
+    fnames = dir(fullfile(DataPath,'*.ap.bin'));
     fullbinfile = fullfile(DataPath,fnames(1).name);
     bytes       = get_file_size(fullbinfile); % size in bytes of raw binary
     nTimepoints = floor(bytes/obj.NchanTOT/2); % number of total timepoints

@@ -5,7 +5,7 @@ function IsFieldDataPath_SessFrameIndex(InputPath)
 if ~isfolder(InputPath)
     return;
 end
-cFolderFiles = dir(fullfile(InputPath,'*2020*'));
+cFolderFiles = dir(fullfile(InputPath,'*2021*'));
 if isempty(cFolderFiles)
    return;
 else

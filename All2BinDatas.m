@@ -1,5 +1,8 @@
-function [BinMeanSEMData,BinAllDatas] = All2BinDatas(AllCoefs,AllDis,BinSize)
-
+function [BinMeanSEMData,BinAllDatas] = All2BinDatas(AllCoefs,AllDis,BinSize,cutoff)
+IsCutoffAdded = 1;
+if ~exist('cutoff','var')
+    IsCutoffAdded = 0;
+end
 BinEdges = 0:BinSize:ceil(max(AllDis)/BinSize)*BinSize;
 BinCenters = (BinEdges(1:end-1)+BinEdges(2:end))/2;
 BinMeanSEMData = zeros(length(BinCenters),3);
@@ -18,6 +21,11 @@ for cBin = 1 : length(BinCenters)
 end
 
 BinMeanSEMData(:,3) = BinCenters;
+if IsCutoffAdded
+    CutoffInds = BinCenters >= cutoff;
+    BinMeanSEMData(CutoffInds,:) = [];
+    BinAllDatas(CutoffInds) = [];
+end
 
 if sum(ExcludedInds)
     BinMeanSEMData(ExcludedInds,:) = [];

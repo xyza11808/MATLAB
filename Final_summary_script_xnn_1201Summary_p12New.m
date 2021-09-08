@@ -8,8 +8,8 @@
 
 %% load datas for one animal types
 cclr
-SumSourPath = 'C:\Users\tinyt\Desktop\4MDatas';
-WithinSourcePaths = dir(fullfile(SumSourPath,'*2021*done'));
+SumSourPath = 'P:\20210824_20210901_datas';
+WithinSourcePaths = dir(fullfile(SumSourPath,'*2021*mice*'));
 FolderIndex = arrayfun(@(x) x.isdir,WithinSourcePaths);
 UsedTargetFolder = WithinSourcePaths(FolderIndex);
 NumFolders = length(UsedTargetFolder);
@@ -72,8 +72,11 @@ cclr
 FNameData  = load(fullfile(DataPath,DataFn),'FolderNames');
 % FolderNameStrc = load(fullfile(DataPath,'FNamesSave.mat'));
 %% FolderNameCells = FolderNameStrc.FolderNames;
-WTStrInds = cellfun(@(x) ~isempty(strfind(x,'wt')) & ~isempty(strfind(x,'dmso')),FNameData.FolderNames); %ctrl
-TgStrInds = cellfun(@(x) ~isempty(strfind(x,'wt')) & ~isempty(strfind(x,'gap27')),FNameData.FolderNames); %drug
+% WTStrInds = cellfun(@(x) ~isempty(strfind(x,'wt')) & ~isempty(strfind(x,'dmso')),FNameData.FolderNames); %ctrl
+% TgStrInds = cellfun(@(x) ~isempty(strfind(x,'wt')) & ~isempty(strfind(x,'gap27')),FNameData.FolderNames); %drug
+
+WTStrInds = cellfun(@(x) ~isempty(strfind(x,'wt')),FNameData.FolderNames); %ctrl
+TgStrInds = cellfun(@(x) ~isempty(strfind(x,'tg')),FNameData.FolderNames); %drug
 % WTStrInds = Vshuffle(WTStrInds);
 WTFolderNames = FNameData.FolderNames(WTStrInds);
 TgFolderNames = FNameData.FolderNames(TgStrInds);
@@ -164,9 +167,9 @@ for cT = 1: nTypes
     ylabel('Noise coefficient');
     title(CoefTypeStrs{cT})
     %
-%     saveas(hf,sprintf('adult TG %s NC EventOnly',CoefTypeStrs{cT}));
-%     saveas(hf,sprintf('adult TG %s NC EventOnly',CoefTypeStrs{cT}),'png');
-%     saveas(hf,sprintf('adult TG %s NC EventOnly',CoefTypeStrs{cT}),'pdf');
+    saveas(hf,sprintf('adult TG %s NC EventOnly',CoefTypeStrs{cT}));
+    saveas(hf,sprintf('adult TG %s NC EventOnly',CoefTypeStrs{cT}),'png');
+    saveas(hf,sprintf('adult TG %s NC EventOnly',CoefTypeStrs{cT}),'pdf');
     close(hf);
 end
 
@@ -191,8 +194,8 @@ TgSessAllDiss_sum_Vec = cell2mat(TgSessAllDiss_sum_cell);
 WTMeanCoefValues = cellfun(@mean,WTSessAllCoef_sum_cell);
 TgMeanCoefValues = cellfun(@mean,TgSessAllCoef_sum_cell);
 
-[WTBinMeanSEMData, WTBinAllCoef] = All2BinDatas(WTSessAllCoef_sum_Vec,WTSessAllDiss_sum_Vec,50);
-[TgBinMeanSEMData, TgBinAllCoef]  = All2BinDatas(TgSessAllCoef_sum_Vec,TgSessAllDiss_sum_Vec,50);
+[WTBinMeanSEMData, WTBinAllCoef] = All2BinDatas(WTSessAllCoef_sum_Vec,WTSessAllDiss_sum_Vec,50,450);
+[TgBinMeanSEMData, TgBinAllCoef]  = All2BinDatas(TgSessAllCoef_sum_Vec,TgSessAllDiss_sum_Vec,50,450);
 %%
 hf = figure('position',[100 100 1100 420]);
 subplot(121);
@@ -464,7 +467,7 @@ ROITypeStrs = {'AllROI','AllNeu','ActNeu','AllAst','ActAst','ActROIs'};
 
 WT_popuSynchronyVecEO = cell2mat(cat(1,WT_popuSynchrony_EveOy{:,1}));
 Tg_popuSynchronyVecEO = cell2mat(cat(1,Tg_popuSynchrony_EveOy{:,1}));
-AnaInds = 2; % 2 indecates all neurons
+AnaInds = 1; % 2 indecates all neurons
 EOPopuSynIndexMeanSEM = [mean(WT_popuSynchronyVecEO(:,AnaInds)),std(WT_popuSynchronyVecEO(:,AnaInds))/sqrt(size(WT_popuSynchronyVecEO,1));...
     mean(Tg_popuSynchronyVecEO(:,AnaInds)),std(Tg_popuSynchronyVecEO(:,AnaInds))/sqrt(size(Tg_popuSynchronyVecEO,1))];
 

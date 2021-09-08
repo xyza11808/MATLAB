@@ -134,7 +134,7 @@ end
 % % % subplot(212)
 % % % imagesc(RearrangedData_2,[0 1])
 
-%
+%%
 save(fullfile(SumSourPath,'NewAge_AllDataSummaryMerge.mat'),'MultiSessCoefData','EventSyncFrac','MultiSessEventData',...
     'PopuFieldSynchrony_all','EventOnlyFieldSynchrony_all','Sess_eventOnlyCoefData','EventSyncFrac_EO',...
     'MultiSessGenoType','FolderNames', 'EventSyncFrac_EONeu', 'EventSyncFrac_EONeuAct', '-v7.3');%,'EventSyncFrac_EONeu','EventSyncFrac_EONeuAct',

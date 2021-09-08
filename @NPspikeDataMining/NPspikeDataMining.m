@@ -146,6 +146,18 @@ classdef NPspikeDataMining
         function obj = wavefeatureExclusion(obj, varargin)
            %  further exclude some units according to unit spike waveform
            %  and other criterias
+           if ~isempty(obj.UnitWaveExcluInds)
+               if length(obj.UnitWaveExcluInds) == length(obj.UnitWaveFeatures)
+                   % indicates already have calculated waveform feature
+                   % exclusion inds, but not performed to variable "obj.UnitWaveFeatures"
+                   obj.UnitWaveFeatures(obj.UnitWaveExcluInds) = [];
+                   return;
+               else
+                  fprintf('Waveform feature exclusion already performed, existing...\n');
+                  return;
+               end
+           end
+                   
            if isempty(obj.UnitWaveFeatures) || isempty(obj.UnitWaves)
                warning('The unit waveform data does not exists, please check your class handle contains.');
                return;
@@ -172,27 +184,31 @@ classdef NPspikeDataMining
            fprintf('Totally %d number of unit will be excluded because of the isoformed waveform.\n',sum(UnitWaveExclusionInds));
            
            % exclued waveform discarded units
-           logiExcluInds = logical(UnitWaveExclusionInds);
-           obj.UsedClus_IDs(logiExcluInds) = [];
-           obj.ChannelUseds_id(logiExcluInds) = [];
-           obj.UsedClusinds(logiExcluInds) = [];
-           obj.UsedChnDepth(logiExcluInds) = [];
-           
-           if ~isempty(obj.TrigData_Bin{1})
-               obj.TrigData_Bin{1}(logiExcluInds,:) = [];
-               obj.TrTrigSpikeTimes{1}(logiExcluInds,:) = [];
-               if ~isempty(obj.TrigDataBin_FRSub{1})
-                    obj.TrigDataBin_FRSub{1}(logiExcluInds,:) = [];
+           try
+               logiExcluInds = logical(UnitWaveExclusionInds);
+               obj.UsedClus_IDs(logiExcluInds) = [];
+               obj.ChannelUseds_id(logiExcluInds) = [];
+               obj.UsedClusinds(logiExcluInds) = [];
+               obj.UsedChnDepth(logiExcluInds) = [];
+               obj.UnitWaveFeatures(logiExcluInds,:) = [];
+               if ~isempty(obj.TrigData_Bin{1})
+                   obj.TrigData_Bin{1}(logiExcluInds,:) = [];
+                   obj.TrTrigSpikeTimes{1}(logiExcluInds,:) = [];
+                   if ~isempty(obj.TrigDataBin_FRSub{1})
+                        obj.TrigDataBin_FRSub{1}(logiExcluInds,:) = [];
+                   end
                end
-           end
-           if ~isempty(obj.TrigData_Bin{2})
-               obj.TrigData_Bin{2}(logiExcluInds,:) = [];
-               obj.TrTrigSpikeTimes{2}(logiExcluInds,:) = [];
-               if ~isempty(obj.TrigDataBin_FRSub{2})
-                    obj.TrigDataBin_FRSub{2}(logiExcluInds,:) = [];
+               if ~isempty(obj.TrigData_Bin{2})
+                   obj.TrigData_Bin{2}(logiExcluInds,:) = [];
+                   obj.TrTrigSpikeTimes{2}(logiExcluInds,:) = [];
+                   if ~isempty(obj.TrigDataBin_FRSub{2})
+                        obj.TrigDataBin_FRSub{2}(logiExcluInds,:) = [];
+                   end
                end
+           catch ME
+               fprintf('Waveform exclusion may have already been performed.\n');
+               obj.UnitWaveFeatures(logiExcluInds,:) = [];
            end
-           
         end
         
         function obj = Sesssptime_check_exclusion(obj)
@@ -342,7 +358,7 @@ classdef NPspikeDataMining
             
             if length(trigLen) > 1
                 % for task condition, the first 10 trial will have different trigger durations
-                Trig_InitSeg_durs = (abs(TrigWaveAll_lens - trigLen(1)) < 2);
+                Trig_InitSeg_durs = (abs(TrigWaveAll_lens - trigLen(1)) < 3);
                 Trig_InitSeg_consec = consecTRUECount(Trig_InitSeg_durs);
                 Trig_Init_TrialEnd = find(Trig_InitSeg_consec == 10,1,'first'); % used the first 10 tirals
                 if isempty(Trig_Init_TrialEnd)

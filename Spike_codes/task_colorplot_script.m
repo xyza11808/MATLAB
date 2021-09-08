@@ -86,7 +86,7 @@ if IsBoundshiftSess
 %        cBTrFreqsNM = cBTrFreqs(cBNMInds);
 %        cBTrChoiceNM = cBTrChoices(cBNMInds);
 %        cBTrPerfsNM = cBTrPerfs(cBNMInds);
-       AlignEvent = 2;
+       AlignEvent = 1;
        if AlignEvent == 1
            if strcmpi(ProbNPSess.TrigAlignType,'trigger') 
                BlockNameStr = sprintf('Block%d_plot_trigBin',cB);
@@ -189,7 +189,7 @@ RepeatTypeStrs = {'Stim','Choice'};
    for cUnit = 1 : NumUnits
        %%
        cUnitAllBData = cellfun(@(x) squeeze(x(cUnit,:,:,:)),BlockpsthAvgTrace(:,1),'UniformOutput',false);
-       hsumf = figure('position',[100 100 1520 420],'visible','on');
+       hsumf = figure('position',[100 100 1520 420],'visible','off');
        LowBoundPlottedInds = 1;
        HighBoundPlottedInds = 1;
        AxAll = gobjects(NumEventtype1,NumEventtype2); % to store axess
@@ -280,11 +280,10 @@ RepeatTypeStrs = {'Stim','Choice'};
            mkdir(fullfile(ProbespikeFolder,'BlockmergedMeanTrace'));
        end
        savename = fullfile(ProbespikeFolder,'BlockmergedMeanTrace',sprintf('Unit%d across block mean trace plot',ProbNPSess.UsedClus_IDs(cUnit)));
-%        saveas(hsumf,savename);
-%        saveas(hsumf,savename,'png');
-%        close(hsumf);
+       saveas(hsumf,savename);
+       saveas(hsumf,savename,'png');
+       close(hsumf);
    end
-% end
 
 
 
