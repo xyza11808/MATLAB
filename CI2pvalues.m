@@ -14,7 +14,7 @@ if isempty(StardDevRatio)
     StardDevRatio = 1.96; % default using 95% CI
 end
 
-SE = (abs(CI(2) - CI(1)))/(2 * StardDevRatio); % SE = (u - l)/(2 * StardDevRatio)
+SE = ((CI(2) - CI(1)))/(2 * StardDevRatio); % SE = (u - l)/(2 * StardDevRatio)
 z = mu / SE;
 p = exp(-0.717*z - 0.416 * z^2);
 
