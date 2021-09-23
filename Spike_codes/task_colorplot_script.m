@@ -172,7 +172,72 @@ AnsRespWin = 0.5;
 AnsRespWin2 = 1;
 [AnsRespData2, ~] = ProbNPSess.EventRespFR(TrStimOnsets,AnsRespWin2,BlockNMTrAlls);
 
+saveName = fullfile(ProbespikeFolder,'StimAndAnswerRespData.mat');
 
+save(saveName,'baselineRespWin','baselineRespData','stimRespWin','StimRespData',...
+    'AnsRespWin','AnsRespData','AnsRespWin2','AnsRespData2','-v7.3');
+%% All ROI sorted color plot, all blocks
+SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{1}{:,1}),[1,3,2]); 
+[TotalTrNum,UnitNum,BinNumbers] = size(SMBinDataMtx);
+
+% % zscore before average calculation
+% zsDatas = zeros(TotalTrNum,UnitNum,BinNumbers);
+% for cunit = 1 : UnitNum
+%     cUnitData = SMBinDataMtx(:,cunit,:);
+%     unitMean = mean(cUnitData(:));
+%     unitstd = std(cUnitData(:))+1e-6;
+%     zsDatas(:,cunit,:) = (cUnitData-unitMean)/unitstd;
+% end
+binTimeStep = ProbNPSess.USedbin(2); % in seconds
+% NumBlocks = length(BlockNMRealTrInds);
+% cBlockAvg_datas = cell(NumBlocks,2); % data and sorting inds
+% for cB = 1 : NumBlocks
+%     cBInds = BlockNMRealTrInds{cB};
+%     cBTrDatas = zsDatas(cBInds,:,:);
+%     TrAvgData_mtx = squeeze(mean(cBTrDatas));
+%     cBlockAvg_datas{cB,1} = TrAvgData_mtx;
+%     [~,MaxInds] = max(TrAvgData_mtx,[],2);
+%     [~,sortInds] = sort(MaxInds);
+%     cBlockAvg_datas{cB,2} = sortInds;
+% end
+NumBlocks = length(BlockNMRealTrInds);
+RawBlockAvgDatas = cell(NumBlocks,1);
+for cB = 1 : NumBlocks
+    cBInds = BlockNMRealTrInds{cB};
+    cBTrDatas = SMBinDataMtx(cBInds,:,:);
+    TrAvgData_mtx = squeeze(mean(cBTrDatas));
+    RawBlockAvgDatas{cB,1} = TrAvgData_mtx'; % nbins * nUnit, for zscore calculation convenience
+end
+AllBlockAvgTraces = cell2mat(RawBlockAvgDatas);
+AllBlockAvgTraces_zs = zscore(AllBlockAvgTraces);
+cBlockAvg_datas = cell(NumBlocks,2); % data and sorting inds
+for cB = 1 : NumBlocks
+    BlockBinInds = (1:BinNumbers)+BinNumbers*(cB-1);
+    cB_zsTrace = (AllBlockAvgTraces_zs(BlockBinInds,:))';
+%     cB_zsTrace = AllBlockAvgTraces_zs(BlockBinInds,:);
+%     BaselineAvgs = mean(cB_zsTrace(1:(ProbNPSess.TriggerStartBin{1}-1),:));
+%     cB_zsTrace = (cB_zsTrace - BaselineAvgs)';
+    cBlockAvg_datas{cB,1} = cB_zsTrace;
+    [~,MaxInds] = max(cB_zsTrace,[],2);
+    [~,sortInds] = sort(MaxInds);
+    cBlockAvg_datas{cB,2} = sortInds;
+end
+
+%%
+xTimes = ((1:BinNumbers) - ProbNPSess.TriggerStartBin{1})*binTimeStep;
+yNums = 1:UnitNum;
+
+hf = figure('position',[100 100 1200 360]);
+SortInds = 3; % which block inds is used for sorting
+for cAx = 1 : NumBlocks
+    ax = subplot(1,NumBlocks,cAx);
+    cBlockData = cBlockAvg_datas{cAx,1};
+    imagesc(xTimes,yNums,cBlockData(cBlockAvg_datas{SortInds,2},:),[-0.5 1]);
+%     colormap gray
+    xlabel('Times (s)');
+    ylabel(sprintf('# ROIs (SortbyBlock #%d)',SortInds));
+    title(num2str(cAx,'Block %d'));
+end
 %% plot the mean traces from different blocks in same axis
 RepeatTypeStrs = {'Stim','Choice'};
 % if IsBoundshiftSess 

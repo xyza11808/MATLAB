@@ -1,4 +1,4 @@
-datafolders = 'G:\behaviro_data\batch105\anm07\data';
+datafolders = 'G:\behaviro_data\batch106\anm08\data';
 cd(datafolders);
 sess_matfiles = dir(fullfile(datafolders,'*2021*.mat'));
 
@@ -32,7 +32,7 @@ for cf = 1 : NumMatfiles
     IsBoundshiftSess = 0;
     matfileBlockInfos{cf,3} = 0;
     SessFreqTypes = BlockSectionInfo.BlockFreqTypes;
-    if length(SessFreqTypes) > 5 && BlockSectionInfo.NumBlocks > 1
+    if length(SessFreqTypes) > 4 && BlockSectionInfo.NumBlocks > 1
         IsBoundshiftSess = 1;
     end
     try
@@ -189,7 +189,7 @@ for cf = 1 : NumMatfiles
 end
 
 save summariedBlockRevPerfs.mat matfileBlockInfos -v7.3
-%%
+%
 EmptyMatcCells = cellfun(@isempty, matfileBlockInfos(:,1));
 UsedBlockMats = matfileBlockInfos(~EmptyMatcCells,:);
 StartIndsCell = cellfun(@(x) regexp(x,'2021\d{4}'),UsedBlockMats(:,1),'UniformOutput',false);
@@ -205,12 +205,12 @@ RevSess_dateStrs = CelldateStrs(RevSessMatInds);
 
 BlockBoundDiffs = cell2mat(RevSessMats(SortInds,4));
 
-% load to tony labe date from current folder path, one file named "ToTonylabDate.txt"
-ToTonyDatePath = fullfile(datafolders,'ToTonylabDate.txt');
-fid = fopen(ToTonyDatePath);
-tline = fgetl(fid);
-fclose(fid);
-DateInds = find(strcmpi(SortedDateS, tline));
+% % load to tony labe date from current folder path, one file named "ToTonylabDate.txt"
+% ToTonyDatePath = fullfile(datafolders,'ToTonylabDate.txt');
+% fid = fopen(ToTonyDatePath);
+% tline = fgetl(fid);
+% fclose(fid);
+% DateInds = find(strcmpi(SortedDateS, tline));
 
 huf = figure;
 plot(BlockBoundDiffs,'r-o','linewidth',1.5);
@@ -219,13 +219,13 @@ xlabel('Date')
 title(AnminfoStrs);
 set(gca,'box','off');
 yscales = get(gca,'ylim');
-line([DateInds DateInds]-0.4, yscales,'Color','k','linewidth',1.5);
-text(DateInds,yscales(2)-0.2,'ChangeEnvDate','FontSize',10,'Color','k');
-%%
+% line([DateInds DateInds]-0.4, yscales,'Color','k','linewidth',1.5);
+% text(DateInds,yscales(2)-0.2,'ChangeEnvDate','FontSize',10,'Color','k');
+%
 savename = fullfile(datafolders,'Across days boundary shift values plot');
 saveas(huf,savename);
 saveas(huf,savename,'png');
-close(huf);
+% close(huf);
 
 
 
