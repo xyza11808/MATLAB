@@ -205,6 +205,8 @@ hold on
 cl1 = plot(WT_x,WT_y,'k','linewidth',1.4);
 cl2 = plot(Tg_x,Tg_y,'r','linewidth',1.4);
 Overp = ranksum(WTSessAllCoef_sum_Vec,TgSessAllCoef_sum_Vec);
+text([0,0],[0.7 0.8],{num2str(numel(WTSessAllCoef_sum_Vec),'WTpair=%d');num2str(numel(TgSessAllCoef_sum_Vec),'Tgpair=%d')},...
+    'HorizontalAlignment','center','FontSize',8);
 title(sprintf('p = %.2e',Overp));
 legend([cl1,cl2],{'WT','Tg'},'location','NorthWest','box','off');
 
@@ -215,17 +217,18 @@ hl2 = errorbar(TgBinMeanSEMData(:,3),TgBinMeanSEMData(:,1),TgBinMeanSEMData(:,2)
 yscales = get(gca,'ylim');
 PlotNum = min(length(WTBinAllCoef),length(TgBinAllCoef));
 pValues = zeros(PlotNum,1);
+text_y = max([WTBinMeanSEMData(:,1), TgBinMeanSEMData(:,1)],[],2);
 for cBin = 1 : PlotNum
-    [~,pp] = ttest2(WTBinAllCoef{cBin},TgBinAllCoef{cBin});
-    if pp >= 0.05
-        text(WTBinMeanSEMData(cBin,3),0.95*yscales(2),num2str(pp,'%.2f'),'HorizontalAlignment','center');
-    elseif pp< 0.05 && pp >= 0.01
-        text(WTBinMeanSEMData(cBin,3),0.95*yscales(2),'*','FontSize',18,'HorizontalAlignment','center');
-    elseif pp< 0.01 && pp >= 0.001
-        text(WTBinMeanSEMData(cBin,3),0.95*yscales(2),'**','FontSize',18,'HorizontalAlignment','center');
-    elseif pp < 0.001
-        text(WTBinMeanSEMData(cBin,3),0.95*yscales(2),'***','FontSize',18,'HorizontalAlignment','center');
-    end
+    pp = ranksum(WTBinAllCoef{cBin},TgBinAllCoef{cBin});
+%     if pp >= 0.05
+        text(WTBinMeanSEMData(cBin,3),text_y(cBin)+0.02,num2str(pp,'%.3e'),'HorizontalAlignment','center');
+%     elseif pp< 0.05 && pp >= 0.01
+%         text(WTBinMeanSEMData(cBin,3),0.95*yscales(2),'*','FontSize',18,'HorizontalAlignment','center');
+%     elseif pp< 0.01 && pp >= 0.001
+%         text(WTBinMeanSEMData(cBin,3),0.95*yscales(2),'**','FontSize',18,'HorizontalAlignment','center');
+%     elseif pp < 0.001
+%         text(WTBinMeanSEMData(cBin,3),0.95*yscales(2),'***','FontSize',18,'HorizontalAlignment','center');
+%     end
     pValues(cBin) = pp;
 end
 legend([hl1,hl2],{'WT','Tg'},'location','SouthWest','box','off');
