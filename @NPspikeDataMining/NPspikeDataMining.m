@@ -1067,7 +1067,7 @@ classdef NPspikeDataMining
             end
             Seg1TypeNum = length(Seg1_types);
             SegMeanTraces = cell(NumSingleUnits,Seg1TypeNum,Seg2TypeNum,3);
-            for cUnit = 1 : NumSingleUnits
+            for cUnit = 44 : NumSingleUnits
                 cUnitData = squeeze(AlignedSortDatas(:,cUnit,:)); % sorted by events time
                 UnitPlotScale = [0 max(prctile(cUnitData(:),99),1)];
                 
@@ -1640,20 +1640,17 @@ classdef NPspikeDataMining
         end
         % function used to calculate the averaged respose FR within target
         % time window
-        function [binwinDatas,obj] = EventRespFR(obj,EventTimes,Timewin,usedTrialInds,StimOnTime)
+        function [binwinDatas,obj] = EventRespFR(obj,StimOnTime,Timewin,usedTrialInds,EventsTimes)
             % this function is used to extract event triggered response within given
             % 'Timewin', than return the event evoked response values that have the same
             % size as 'EventTimes'
 
             if isempty(obj.TrigData_Bin{obj.CurrentSessInds}) || isempty(obj.UsedTrigOnTime{obj.CurrentSessInds})
-                error('Please run the spine data psth code before using current function.');
+                error('Please run the spike psth code before using current function.');
             end
-            if length(Timewin) ~= 1
-               error('Only a single valued timewin value was supportted currently, but current length is %d.',length(Timewin)); 
-            end
-            
-            if ~isprop(obj,'StimAlignedTime') || isempty(obj.StimAlignedTime{obj.CurrentSessInds})
-                obj.StimAlignedTime{obj.CurrentSessInds} = StimOnTime/1000;
+            % we could handle two-element vector from now
+            if length(Timewin) > 2
+               error('The response time win should have no more than two numbers, but current length is %d.',length(Timewin)); 
             end
             
             if ~exist('usedTrialInds','var') || isempty(usedTrialInds)
@@ -1661,7 +1658,13 @@ classdef NPspikeDataMining
             else
                 TrUsedInds = usedTrialInds;
             end
-            
+            if ~exist('EventsTimes','var')
+                % only use the stimOnset time for calculation
+                Cal_EventTimes = StimOnTime(:);
+            else
+                Cal_EventTimes = EventsTimes(:);
+            end
+            USedCalEventTimes = Cal_EventTimes(TrUsedInds);
             % sort and align the binned data according to the event times
             % only input trials will be used
             SMBinDataMtx = permute(cat(3,obj.TrigData_Bin{obj.CurrentSessInds}{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
@@ -1669,50 +1672,62 @@ classdef NPspikeDataMining
             [TrNum, unitNum, BinNum] = size(SMBinDataMtx);
 
             BinWidth = obj.USedbin(2);
-            StimOnsetTime = obj.StimAlignedTime{obj.CurrentSessInds}(TrUsedInds); % only used trials were included
-            if Timewin > 0
-                % calculate response after certain event
-                TrEventTime = EventTimes(TrUsedInds,:);
-                
-                % determine the propossed event bin according to the psth alignment methods
-                if strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'trigger')
-                    EventOnBins = ceil((TrEventTime/1000)/BinWidth)+obj.TriggerStartBin{obj.CurrentSessInds};
-                elseif strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'stim')
-                    EventOnBins = ceil(((TrEventTime/1000-StimOnsetTime))/BinWidth) + ...
-                        obj.TriggerStartBin{obj.CurrentSessInds};
+            UsedStimOnsetTime = StimOnTime(TrUsedInds); % only used trials were included
+            if length(Timewin) == 1
+                if Timewin > 0
+
+                    % determine the propossed event bin according to the psth alignment methods
+                    if strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'trigger')
+                        EventOnBins = ceil((USedCalEventTimes/1000)/BinWidth)+obj.TriggerStartBin{obj.CurrentSessInds};
+                    elseif strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'stim')
+                        EventOnBins = ceil(((USedCalEventTimes-UsedStimOnsetTime)/1000)/BinWidth) + ...
+                            obj.TriggerStartBin{obj.CurrentSessInds};
+                    end
+
+                    winbin = ceil(Timewin/BinWidth);
+                    if (max(EventOnBins)+winbin) > BinNum
+                        error('The maximum bin index is out-of-range.');
+                    end
+                    TrTargetBinAlls = EventOnBins+[1,winbin];
+
+                elseif Timewin == 0
+                   % calculate baseline response FR
+                   % if Timewin == 0, indicates using all baseline times for
+                   % calculation, if Timewin < 0, using given time length for
+                   % calculation
+                   if strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'trigger')
+                        MaxBasebin = ceil((UsedStimOnsetTime/1000)/BinWidth)+obj.TriggerStartBin{obj.CurrentSessInds}-1;
+                    elseif strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'stim')
+                        MaxBasebin = (obj.TriggerStartBin{obj.CurrentSessInds}-1)*ones(TrNum,1);
+                    end
+                   TrTargetBinAlls = [ones(TrNum,1),MaxBasebin];
+
+                else % Timewin < 0
+                   winbin = ceil(Timewin/BinWidth);
+                   if abs(winbin) > obj.TriggerStartBin{obj.CurrentSessInds}
+                       winbin = -1*obj.TriggerStartBin{obj.CurrentSessInds};
+                   end
+    %                StartBinInds = obj.TriggerStartBin{obj.CurrentSessInds}+winbin;
+
+                   if strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'trigger')
+                        MaxBasebin = ceil((UsedStimOnsetTime/1000)/BinWidth)+obj.TriggerStartBin{obj.CurrentSessInds}-1;
+                    elseif strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'stim')
+                        MaxBasebin = (obj.TriggerStartBin{obj.CurrentSessInds}-1)*ones(TrNum,1);
+    %                     TrTargetBinAlls = [MaxBasebin+winbin,MaxBasebin];
+                   end
+                   TrTargetBinAlls = [MaxBasebin+winbin, MaxBasebin];
+
                 end
-                                
+            elseif length(Timewin) == 2
                 winbin = ceil(Timewin/BinWidth);
-                if (max(EventOnBins)+winbin) > BinNum
-                    error('The maximum bin index is out-of-range.');
+                if strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'trigger')
+                    EventWinBins = ceil((USedCalEventTimes/1000)/BinWidth)+obj.TriggerStartBin{obj.CurrentSessInds}-1;
+                    
+                elseif strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'stim')
+                    EventWinBins = ceil(((USedCalEventTimes-UsedStimOnsetTime)/1000)/BinWidth)+obj.TriggerStartBin{obj.CurrentSessInds}-1;
                 end
-                TrTargetBinAlls = EventOnBins+[1,winbin];
+                TrTargetBinAlls = EventWinBins+ winbin;
                 
-            elseif Timewin == 0
-               % calculate baseline response FR
-               % if Timewin == 0, indicates using all baseline times for
-               % calculation, if Timewin < 0, using given time length for
-               % calculation
-               if strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'trigger')
-                    MaxBasebin = ceil((StimOnsetTime)/BinWidth)+obj.TriggerStartBin{obj.CurrentSessInds}-1;
-                elseif strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'stim')
-                    MaxBasebin = (obj.TriggerStartBin{obj.CurrentSessInds}-1)*ones(TrNum,1);
-                end
-               TrTargetBinAlls = [ones(TrNum,1),MaxBasebin];
-               
-            else % Timewin < 0
-               winbin = ceil(Timewin/BinWidth);
-               if abs(winbin) > obj.TriggerStartBin{obj.CurrentSessInds}
-                   winbin = -1*obj.TriggerStartBin{obj.CurrentSessInds};
-               end
-               StartBinInds = obj.TriggerStartBin{obj.CurrentSessInds}+winbin;
-               
-               if strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'trigger')
-                    MaxBasebin = ceil((StimOnsetTime)/BinWidth)+obj.TriggerStartBin{obj.CurrentSessInds}-1;
-                elseif strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'stim')
-                    MaxBasebin = (obj.TriggerStartBin{obj.CurrentSessInds}-1)*ones(TrNum,1);
-               end
-                TrTargetBinAlls = [ones(TrNum,1)*StartBinInds,MaxBasebin];
                 
             end
             % extract data from target time bin in a trial-by-trial manner

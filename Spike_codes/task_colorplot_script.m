@@ -29,7 +29,7 @@ BlockSectionInfo = Bev2blockinfoFun(behavResults);
 if isempty(BlockSectionInfo)
     return;
 end
-
+%%
 TrTypes = double(behavResults.Trial_Type(:));
 TrActionChoice = double(behavResults.Action_choice(:));
 TrFreqUseds = double(behavResults.Stim_toneFreq(:));
@@ -57,6 +57,10 @@ SessFreqOcts = log2(SessFreqTypes/min(SessFreqTypes));
 NumFreqs = length(SessFreqTypes);
 BlockStartNotUsedTrs = 0; % number of trals not used after block switch
 %%
+if ~exist('ProbeChn_regionCells','var')
+    ProbeChn_regionCells = [];
+end
+    
 if IsBoundshiftSess 
 %    hf = figure('position',[100 100 400 300]);
 %    hold on
@@ -64,10 +68,9 @@ if IsBoundshiftSess
    BlockNMRealTrInds = cell(NumBlocks,1);
    BlockpsthAvgTrace = cell(NumBlocks,2);
    BlockAlignedEventTypes = cell(NumBlocks,2);
-   BlockNMTrRealInds = cell(NumBlocks,1);
    
    EventsDelay = [TrStimOnsets,TrTimeAnswer];
-   %%
+   %
    for cB = 1 : NumBlocks
        cBScales = [max(BlockSectionInfo.BlockTrScales(cB,1),ExcludeFirstNumofInds),...
            BlockSectionInfo.BlockTrScales(cB,2)];
@@ -82,7 +85,7 @@ if IsBoundshiftSess
        
        cBNMInds = cBTrChoices~= 2;
        cBNMRealTrInds = UsedTrRealInds(cBNMInds);
-       BlockNMRealTrInds{cB} = cBNMRealTrInds;
+       BlockNMRealTrInds{cB} = cBNMRealTrInds(:);
 %        cBTrFreqsNM = cBTrFreqs(cBNMInds);
 %        cBTrChoiceNM = cBTrChoices(cBNMInds);
 %        cBTrPerfsNM = cBTrPerfs(cBNMInds);
@@ -137,12 +140,11 @@ if IsBoundshiftSess
        ProbNPSess.EventRasterplot(EventsDelay,[1,2],RepeatTypes,RepeatStr,EventColors,...
             cBNMRealTrInds,BlockNameStr2,lick_time_struct,ProbeChn_regionCells);
         
-       BlockNMTrRealInds{cB} = cBNMRealTrInds(:);
    end
    
 end
 
-% save task data within current sessions
+%% save task data within current sessions
 if AlignEvent == 1
     TaskDataSavePath = fullfile(ProbespikeFolder,'TaskSessData.mat');
 else
@@ -152,30 +154,100 @@ save(TaskDataSavePath,'BlockSectionInfo','behavResults','BlockNMRealTrInds',...
         'BlockpsthAvgTrace','BlockAlignedEventTypes','-v7.3');
     
 %% Extract block trial response values
-BlockNMTrAlls = cell2mat(BlockNMTrRealInds);
-
+% BlockNMTrAlls = cell2mat(BlockNMRealTrInds);
+BlockFrameInds = cellfun(@length,BlockNMRealTrInds);
+BlockStartInds = cumsum([1;BlockFrameInds]);
 %  EventsDelay = [TrStimOnsets,TrTimeAnswer];
-
+ProbNPSess.CurrentSessInds = strcmpi('task',ProbNPSess.SessTypeStrs);
 % calculate baseline response value
-baselineRespWin = -1; % use all values before stim onset to calculate baseline
-[baselineRespData, ProbNPSess] = ProbNPSess.EventRespFR([],baselineRespWin,BlockNMTrAlls,TrStimOnsets);
+baselineRespWin = -1; % use 1 second before stim onset to calculate baseline
+[baselineRespData, ProbNPSess] = ProbNPSess.EventRespFR(TrStimOnsets,baselineRespWin,BlockNMTrAlls);
 
 % calculate stim response data
-stimRespWin = 0.5;
+stimRespWin = 0.3;
 [StimRespData, ~] = ProbNPSess.EventRespFR(TrStimOnsets,stimRespWin,BlockNMTrAlls);
-
-%% calculate the answer response data
+StimFreqsAll = TrFreqUseds(BlockNMTrAlls);
+%%
+% calculate the answer response data
 AnsRespWin = 0.5;
-[AnsRespData, ~] = ProbNPSess.EventRespFR(TrStimOnsets,AnsRespWin,BlockNMTrAlls);
+[AnsRespData, ~] = ProbNPSess.EventRespFR(TrStimOnsets,AnsRespWin,BlockNMTrAlls,TrTimeAnswer);
+ActionUsedAll = TrActionChoice(BlockNMTrAlls);
 
 % calculate the answer response window 2 data
-AnsRespWin2 = 1;
-[AnsRespData2, ~] = ProbNPSess.EventRespFR(TrStimOnsets,AnsRespWin2,BlockNMTrAlls);
-
-saveName = fullfile(ProbespikeFolder,'StimAndAnswerRespData.mat');
+AnsRespWin2 = [0.5 1];
+[AnsRespData2, ~] = ProbNPSess.EventRespFR(TrStimOnsets,AnsRespWin2,BlockNMTrAlls,TrTimeAnswer);
+%%
+saveName = fullfile(ProbNPSess.ksFolder,'StimAndAnswerRespData.mat');
 
 save(saveName,'baselineRespWin','baselineRespData','stimRespWin','StimRespData',...
     'AnsRespWin','AnsRespData','AnsRespWin2','AnsRespData2','-v7.3');
+%%
+cBlock = 1;
+BlockTrInds = BlockStartInds(cBlock):BlockStartInds(cBlock+1)-1;
+[StimRespAUC, StimTypes, StimRespDiff] = respAUCCalculFun(baselineRespData,StimRespData,BlockTrInds,StimFreqsAll);
+[AnsRespAUC, AnsTypes, AnsRespDiff] = respAUCCalculFun(baselineRespData,AnsRespData,BlockTrInds,ActionUsedAll);
+[AnsRespAUC2, AnsTypes2, AnsRespDiff2] = respAUCCalculFun(baselineRespData,AnsRespData2,BlockTrInds,ActionUsedAll);
+%%
+if ~isdir(fullfile(ProbNPSess.ksFolder, 'UnitRespAUC'))
+    mkdir(fullfile(ProbNPSess.ksFolder, 'UnitRespAUC'));
+end
+NumUnits = size(StimRespAUC,2);
+for cUnit = 1 : NumUnits
+    %%
+   cUnit_stimResp = squeeze(StimRespAUC(:,cUnit,:));
+   NumStims = size(cUnit_stimResp,1);
+   cUnit_ansResp = squeeze(AnsRespAUC(:,cUnit,:));
+   NumActions = size(cUnit_ansResp,1);
+   cUnit_ansResp2 = squeeze(AnsRespAUC2(:,cUnit,:));
+   
+   hf = figure('position',[100 100 1200 360],'paperpositionmode','manual');
+   subplot(131)
+   yyaxis left
+   hold on
+   plot(1:NumStims,cUnit_stimResp(:,1),'b','linewidth',1.5);
+   plot(1:NumStims,cUnit_stimResp(:,5),'Color',[.7 .7 .7],'linewidth',1.2);
+   set(gca,'xtick',1:NumStims,'xticklabel',cellstr(num2str(StimTypes/1000,'%.2fkHz')),'ylim',[0.3 1],'xlim',[0.5 NumStims+0.5]);
+   title('Stimulus AUC');
+   ylabel(num2str(ProbNPSess.UsedClus_IDs(cUnit),'Unit #%d'));
+   
+   yyaxis right
+   plot(1:NumStims,StimRespDiff(:,cUnit),'r-o','linewidth',1.2);
+   ylabel('FR change');
+   
+   subplot(132)
+   yyaxis left
+   hold on
+   plot(1:NumActions,cUnit_ansResp(:,1),'b-o','linewidth',1.5);
+   plot(1:NumActions,cUnit_ansResp(:,5),'-o','Color',[.7 .7 .7],'linewidth',1.2);
+   set(gca,'xtick',1:NumActions,'xticklabel',cellstr(num2str(AnsTypes,'Choice %d')),'ylim',[0.3 1],'xlim',[0.5 NumActions+0.5]);
+   title('AnswerResp AUC');
+   
+   yyaxis right
+   plot(1:NumActions,AnsRespDiff(:,cUnit),'r-o','linewidth',1.2);
+   ylabel('FR change');
+   
+   
+   subplot(133)
+   yyaxis left
+   hold on
+   plot(1:NumActions,cUnit_ansResp2(:,1),'b-o','linewidth',1.5);
+   plot(1:NumActions,cUnit_ansResp2(:,5),'-o','Color',[.7 .7 .7],'linewidth',1.2);
+   set(gca,'xtick',1:NumActions,'xticklabel',cellstr(num2str(AnsTypes,'Choice %d')),'ylim',[0.3 1],'xlim',[0.5 NumActions+0.5]);
+   title('AnswerResp AUC');
+   
+   yyaxis right
+   plot(1:NumActions,AnsRespDiff2(:,cUnit),'r-o','linewidth',1.2);
+   ylabel('FR change');
+   
+   %%
+   savename = fullfile(ProbNPSess.ksFolder, 'UnitRespAUC', sprintf('Unit %d respCI_calculation', [0 cUnit]));
+   saveas(hf,savename);
+   saveas(hf,savename,'png');
+   saveas(hf,savename,'pdf');
+   close(hf)
+   %
+end
+
 %% All ROI sorted color plot, all blocks
 SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{1}{:,1}),[1,3,2]); 
 [TotalTrNum,UnitNum,BinNumbers] = size(SMBinDataMtx);
