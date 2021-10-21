@@ -31,8 +31,10 @@ function [UsedClus_IDs,ChannelUseds_id] = SpikeWaveFeature_single(rez)
 % fullpaths = fullfile(obj.binfilePath, obj.RawDataFilename);
 fullpaths = rez.ops.fbinary; % bin file path
 
-ksfolder = fullfile(rez.ops.ksFolderPath,'kilosort3');
-
+ksfolder = fullfile(rez.ops.ksFolderPath,'ks2_5');
+if ~isfolder(ksfolder)
+    ksfolder = fullfile(rez.ops.ksFolderPath,'kilosort3');
+end
 ftempid = fopen(fullpaths);
 
 if ~isfolder(fullfile(ksfolder,'UnitWaveforms'))
@@ -87,7 +89,11 @@ for cUnit = 1 : NumofUnit
     end
     
     huf = figure('visible','off');
-    AvgWaves = mean(cspWaveform,'omitnan');
+    if size(cspWaveform,1) == 1
+        AvgWaves = cspWaveform;
+    else
+        AvgWaves = mean(cspWaveform,'omitnan');
+    end
     UnitDatas{cUnit} = cspWaveform;
     %%
     plot(AvgWaves);
@@ -97,6 +103,9 @@ for cUnit = 1 : NumofUnit
         fprintf('Errors');
     end
     title([num2str(cClusChannel,'chn=%d'),'  ',num2str(1-isabnorm,'Ispass = %d')]);
+%     if length(AvgWaves) == 1
+%         fprintf('Too few spikes for calculation.\n');
+%     end
     wavefeature = SPwavefeature(AvgWaves,WaveWinSamples);
     text(6,0.8*max(AvgWaves),{sprintf('tough2peak = %d',wavefeature.tough2peakT);...
         sprintf('posthyper = %d',wavefeature.postHyperT)},'FontSize',8);

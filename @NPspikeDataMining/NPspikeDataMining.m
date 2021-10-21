@@ -21,7 +21,12 @@ classdef NPspikeDataMining
         chnMaps
         
         ClusterInfoAll
-        UsedClus_IDs % used cluster index
+        FRIncludeClus % only used units with higher than 1Hz FrameRate
+        FRIncludeChans % corresponded channel inds
+        FRUsedClusinds
+        FRIncludeClusFRs
+        
+        UsedClus_IDs % Really
         ChannelUseds_id % used channel index
         RawClusANDchan_ids_All = {[],[]};
         UsedClusinds % inds indicating which cluster is to be used
@@ -100,7 +105,6 @@ classdef NPspikeDataMining
                 
             end
             
-            
             % spike data info reading
             obj.SpikeStrc = loadParamsPy(fullfile(FolderPath, 'params.py'));
             
@@ -124,8 +128,8 @@ classdef NPspikeDataMining
             % sorted data have been processed by phy
             % cluster include criteria: good, not noise, fr >=1
             cgsFile = fullfile(FolderPath,'cluster_info.tsv');
-            [obj.UsedClus_IDs,obj.ChannelUseds_id,obj.UsedClusinds,...
-                obj.ClusterInfoAll] = ClusterGroups_Reads(cgsFile);
+            [obj.FRIncludeClus,obj.FRIncludeClus,obj.FRUsedClusinds,...
+                obj.ClusterInfoAll, obj.FRIncludeClusFRs] = ClusterGroups_Reads(cgsFile);
             
             ChannelDepth = cell2mat(obj.ClusterInfoAll(2:end,7));
             obj.UsedChnDepth = ChannelDepth(obj.UsedClusinds);
@@ -215,7 +219,7 @@ classdef NPspikeDataMining
             % exclusion some units based on the response pattern of each
             % single unit within the recording session, the spikes should
             % be uniformly distributed throughout the session period but
-            % not onlt happens at a narrowd time window, which usually is a
+            % not only happens at a narrowd time window, which usually is a
             % indication of channel drifting
             if isempty(obj.RawClusANDchan_ids_All{1})
                 obj.RawClusANDchan_ids_All = {obj.UsedClus_IDs, obj.ChannelUseds_id};
@@ -1754,7 +1758,7 @@ classdef NPspikeDataMining
                     obj.binfilePath = varargin{1};
                     possbinfilestrc = dir(fullfile(obj.binfilePath,'*.ap.bin'));
                     if isempty(possbinfilestrc)
-                        error('target bin file doesnt exists.');
+                        error('target bin file doesn''t exists.');
                     end
                     obj.RawDataFilename = possbinfilestrc(1).name;
                 else

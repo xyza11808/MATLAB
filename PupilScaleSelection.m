@@ -61,6 +61,9 @@ PupilDetectionDatas.fileName = '';
 PupilDetectionDatas.RawVideoData = [];
 PupilDetectionDatas.TotalFrameNum = 0;
 PupilDetectionDatas.CurrentFrameNum = 1;
+PupilDetectionDatas.loadedFrameDur = 10; % in default we only load 10 seconds frames
+PupilDetectionDatas.LoadedFrameCount = 0; % calculated by loadedFrameDur times frame rate
+PupilDetectionDatas.loadingStartTime = 0;
 
 PupilDetectionDatas.TargetRegCoord = [];
 PupilDetectionDatas.TargetRegionData = [];
@@ -124,7 +127,7 @@ PupilDetectionDatas.fileName = FileName;
 [PupilDetectionDatas.RawVideoData, PupilDetectionDatas.PupilBrightscale] = ...
     readVideoFun(fullfile(PupilDetectionDatas.filePath, ...
     PupilDetectionDatas.fileName));
-PupilDetectionDatas.TotalFrameNum = size(PupilDetectionDatas.RawVideoData, 3);
+
 PupilDetectionDatas.CurrentFrameNum = 1;
 set(handles.TotalFrame_tag,'String',num2str(PupilDetectionDatas.TotalFrameNum));
 set(handles.cFrameEdit_tag,'String',num2str(1));
@@ -139,11 +142,17 @@ PupilDetectionDatas.PupilBrightThres = mean(PupilDetectionDatas.PupilBrightscale
 
 function [AllFrameData, Frame_Scale] = readVideoFun(FullPath)
 % read video image
+global PupilDetectionDatas
+
 fobj = VideoReader(FullPath);
-AllFrameData = zeros(fobj.Height, fobj.Width, round(fobj.Duration * fobj.FrameRate)); 
-FrameScales = zeros(round(fobj.Duration * fobj.FrameRate), 2);
+PupilDetectionDatas.TotalFrameNum = fobj.NumFrames;
+PupilDetectionDatas.LoadedFrameCount = PupilDetectionDatas.loadedFrameDur * fobj.FrameRate;
+AllFrameData = zeros(fobj.Height, fobj.Width, round(PupilDetectionDatas.LoadedFrameCount)); 
+FrameScales = zeros(round(PupilDetectionDatas.LoadedFrameCount), 2);
+fobj.CurrentTime = PupilDetectionDatas.loadingStartTime;
+
 k = 1;
-while hasFrame(fobj)
+while hasFrame(fobj) && k <= PupilDetectionDatas.LoadedFrameCount
     vidframe = readFrame(fobj);
     cFrame = squeeze(mean(double(vidframe),3));
     AllFrameData(:,:,k) = cFrame;
@@ -211,7 +220,7 @@ InputValue = get(hObject,'Value');
 
 PupilDetectionDatas.PupilBrightThres = InputValue;
 
-if ~isempty(PupilDetectionDatas.TargetRegAxes) && ~isempty(PupilDetectionDatas.Thres_pupilMask)
+if ~isempty(PupilDetectionDatas.hRawAx) && ~isempty(PupilDetectionDatas.Thres_pupilMask)
     GeneMask_tag_Callback([], eventdata, handles);
 end
 set(handles.CurrentScaleEdit_tag,'String',num2str(InputValue, '%.2f'));
@@ -444,7 +453,7 @@ surface(FitDataCell{1}(:,:,1), FitDataCell{1}(:,:,2), FitDataCell{2},'EdgeColor'
 [xline, yline] = ellipseFun(FitParas([2,4]), FitParas([3,5])*2, [], FitParas(6));
 
 axes(TargetAxes);
-plot(xline, yline,'r','linewidth',1.2)
+plot(xline,yline,'r','linewidth',1.2)
 ComData = PupilDetectionDatas.com;
 plot(ComData(1), ComData(2),'g.','MarkerSize', 20);
 [AxisPointsx, AxisPointsy] = ellipseFun(FitParas([2,4]), FitParas([3,5])*1.5, [0 pi/2], FitParas(6));

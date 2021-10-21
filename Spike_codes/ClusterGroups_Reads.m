@@ -1,4 +1,4 @@
-function [UsedIDs_clus,Channel_idUseds,UsedIDs_inds,raw] = ClusterGroups_Reads(filename)
+function [UsedIDs_clus,Channel_idUseds,UsedIDs_inds,Used_ClusFRs,raw] = ClusterGroups_Reads(filename)
 % used to read cluster informations
 
 [filepath,name,ext] = fileparts(filename);
@@ -15,11 +15,13 @@ UsedIDs_inds = find(cellfun(@(x) strcmpi(x,'good'),raw(2:end,4)) & cellfun(@(x) 
     & cellfun(@(x) x>=1,raw(2:end,8)));
 Clu_idAlls = cell2mat(raw(2:end,1));
 Channel_idAlls = cell2mat(raw(2:end,6))+1;
+AllClusFR = cell2mat(raw(2:end,8));
 
 UsedIDs_clusraw = Clu_idAlls(UsedIDs_inds);
 [UsedIDs_clus,clussortinds] = sort(UsedIDs_clusraw);
 UsedIDs_inds = UsedIDs_inds(clussortinds);
 Channel_idUseds = Channel_idAlls(UsedIDs_inds);
+Used_ClusFRs = AllClusFR(UsedIDs_inds);
 % Channel_idUseds = Channel_idUseds(clussortinds);
 
 

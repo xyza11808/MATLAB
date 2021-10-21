@@ -13,6 +13,7 @@ if IsNormedwave
     [~, postPeakInds] = max(waveform(toughInds:end));
     postPeakIndex = postPeakInds + toughInds-1;
     NormedWave = waveform;
+    WaveAmplitude = NaN;
 else
    % normalize the waveform using amplitude
 %     [~,toughInds] = min(waveform);
@@ -81,6 +82,16 @@ if nargout == 1
 elseif nargout == 2
     varargout{1} = Isatypical;
     varargout{2} = atypicalVec;
+elseif nargout == 3
+    varargout{1} = Isatypical;
+    varargout{2} = atypicalVec;
+    varargout{3} = WaveAmplitude;
+elseif nargout == 4
+    varargout{1} = Isatypical;
+    varargout{2} = atypicalVec;
+    varargout{3} = WaveAmplitude;
+    varargout{4} = [toughInds, postPeakIndex];
+    
 end
 
 
