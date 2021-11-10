@@ -16,7 +16,12 @@ else
 end
 
 framesize=size(imdata);
-NumStack=imheader.SI4.stackNumSlices;
+try
+    NumStack=imheader.SI4.stackNumSlices;
+catch ME
+%     disp(ME);
+    NumStack = imheader.hStackManager.actualNumSlices;
+end
 FramesPreStack=framesize(3)/NumStack;
 
 NewStackData=zeros(framesize(1),framesize(2),NumStack);
