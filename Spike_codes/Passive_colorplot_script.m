@@ -33,3 +33,6 @@ TrRepeats = Datas(:,1:2);
 ProbNPSess.EventsPSTHplot(AlignEvents,1,[TrFrequency,TrDBs],{'Frequency','DB'},...
     {'SOnset','SOffset';'r','m'},[],'Passive_colorplot',[],ProbeChn_regionCells);
 
+%%
+NPSess.EventRasterplot(AlignEvents,1,[TrFrequency,TrDBs],{'Frequency','DB'},...
+{'SOnset','SOffset';'r','m'},[],'Passive_colorplot');

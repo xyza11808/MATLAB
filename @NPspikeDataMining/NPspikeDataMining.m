@@ -25,6 +25,8 @@ classdef NPspikeDataMining
         FRIncludeChans % corresponded channel inds
         FRUsedClusinds
         FRIncludeClusFRs
+        FRUsedChnDepth
+        SurviveInds = [] % used to indicate which cluster was kept after quality control
         
         UsedClus_IDs % Really
         ChannelUseds_id % used channel index
@@ -74,21 +76,25 @@ classdef NPspikeDataMining
                 end
             end
             
-            if ~exist(fullfile(FolderPath,'*.ap.bin'),'file') && ~exist(fullfile(FolderPath,'..','*.ap.bin'),'file')
+            if isempty(dir(fullfile(FolderPath,'*.ap.bin'))) && isempty(dir(fullfile(FolderPath,'..','*.ap.bin')))
                 warning('Unable to find target bin file.');
                 obj.ksFolder = FolderPath;
                 obj.binfilePath = [];
                 obj.RawDataFilename = [];
-                if ~exist(fullfile(FolderPath,'rezdata.mat'),'file')
+                if ~exist(fullfile(FolderPath,'rezdata.mat'),'file') && ~exist(fullfile(FolderPath,'rez2.mat'),'file')
                     error('Unable to locate *.bin file location or rez.mat file location, which is needed for further analysis.');
                 else
                     fprintf('Load sample number from rez.mat file.\n');
-                    RezStrc = load(fullfile(FolderPath,'rezdata.mat'));
+                    try
+                       RezStrc = load(fullfile(FolderPath,'rezdata.mat'));
+                    catch
+                        RezStrc = load(fullfile(FolderPath,'rez2.mat'));
+                    end
                     obj.Numsamp = RezStrc.rez.ops.sampsToRead;
                     obj.mmf = [];
                 end
             else
-                if exist(fullfile(FolderPath,'*.ap.bin'),'file')
+                if ~isempty(dir(fullfile(FolderPath,'*.ap.bin')))
                     binfileInfo = dir(fullfile(FolderPath,'*.ap.bin'));
                     obj.binfilePath = FolderPath;
                 else
@@ -128,130 +134,158 @@ classdef NPspikeDataMining
             % sorted data have been processed by phy
             % cluster include criteria: good, not noise, fr >=1
             cgsFile = fullfile(FolderPath,'cluster_info.tsv');
-            [obj.FRIncludeClus,obj.FRIncludeClus,obj.FRUsedClusinds,...
-                obj.ClusterInfoAll, obj.FRIncludeClusFRs] = ClusterGroups_Reads(cgsFile);
+            [obj.FRIncludeClus,obj.FRIncludeChans,obj.FRUsedClusinds,...
+                obj.FRIncludeClusFRs,obj.ClusterInfoAll] = ClusterGroups_Reads(cgsFile);
             
             ChannelDepth = cell2mat(obj.ClusterInfoAll(2:end,7));
-            obj.UsedChnDepth = ChannelDepth(obj.UsedClusinds);
-            NumGoodClus = length(obj.UsedClus_IDs);
+            obj.FRUsedChnDepth = ChannelDepth(obj.FRUsedClusinds);
+            NumGoodClus = length(obj.FRIncludeClus);
             fprintf('Totally %d number of good units were find.\n',NumGoodClus);
-            obj.RawClusANDchan_ids_All = {obj.UsedClus_IDs, obj.ChannelUseds_id};
-            % load unit waveform data is saved file exists
+            obj.RawClusANDchan_ids_All = {obj.FRIncludeClus, obj.FRIncludeChans};
+            % load unit waveform data if saved file exists
             if exist(fullfile(FolderPath,'UnitwaveformDatas.mat'),'file')
                 waveDatas = load(fullfile(FolderPath,'UnitwaveformDatas.mat'));
+                if size(waveDatas.UnitDatas,2) ~= 2
+                    [~,~] = SpikeWaveFeature_single(obj,0);
+                    waveDatas = load(fullfile(FolderPath,'UnitwaveformDatas.mat'));
+                end
                 obj.UnitWaves = waveDatas.UnitDatas;
                 obj.UnitWaveFeatures = waveDatas.UnitFeatures;
                 
-                obj = obj.wavefeatureExclusion;
             end
             
         end
         
-        function obj = wavefeatureExclusion(obj, varargin)
-           %  further exclude some units according to unit spike waveform
-           %  and other criterias
-           if ~isempty(obj.UnitWaveExcluInds)
-               if length(obj.UnitWaveExcluInds) == length(obj.UnitWaveFeatures)
-                   % indicates already have calculated waveform feature
-                   % exclusion inds, but not performed to variable "obj.UnitWaveFeatures"
-                   obj.UnitWaveFeatures(obj.UnitWaveExcluInds) = [];
-                   return;
-               else
-                  fprintf('Waveform feature exclusion already performed, existing...\n');
-                  return;
-               end
+        function obj = ClusScreeningFun(obj,varargin)
+           % this function is used to evaluate the cluster inclusion
+           % criteria and test whether a cluster will be used in further
+           % analysis
+           if nargin > 1
+               InputOps = varargin{1};
+           else
+               % if no option is given, just use the default options
+               InputOps = struct('Unitwaveform',true,...
+                    'ISIviolation',0.1,...  % default threshold value is 0.1, or 10%
+                    'SessSpiketimeCheck',true,...
+                    'Amplitude',30,... % threshold amplitude value, default is 70uv
+                    'WaveformSpread',1000,... % 1000um, about 50 channels?.
+                    'FiringRate',1,... % 1Hz
+                    'SNR',3); 
            end
-                   
-           if isempty(obj.UnitWaveFeatures) || isempty(obj.UnitWaves)
-               warning('The unit waveform data does not exists, please check your class handle contains.');
-               return;
-           end
-           if isempty(obj.RawClusANDchan_ids_All{1})
-                obj.RawClusANDchan_ids_All = {obj.UsedClus_IDs, obj.ChannelUseds_id};
-           end
+           OverAllExcludeInds = UsedClusIndsCheckFun(obj,InputOps);
            
-           UnitWaveExclusionInds = cell2mat(obj.UnitWaveFeatures(:,2)); % Isoformed waves were excluded
-           Unit_pre2post_peakRatio = cellfun(@(x) x.pre2post_peakratio,obj.UnitWaveFeatures(:,1));
-           Unit_sp_duration = cellfun(@(x) x.tough2peakT,obj.UnitWaveFeatures(:,1));
+           obj.UsedClus_IDs = obj.FRIncludeClus(~OverAllExcludeInds);
+           obj.ChannelUseds_id  = obj.FRIncludeChans(~OverAllExcludeInds);
+           obj.UsedClusinds  = obj.FRUsedClusinds(~OverAllExcludeInds);
+           obj.UsedChnDepth = obj.FRUsedChnDepth(~OverAllExcludeInds);
+           obj.SurviveInds = ~OverAllExcludeInds;
            
-           % lick artifact exclusion
-           lickArtifactExclusion = Unit_sp_duration >= (1.5*1e-3*obj.SpikeStrc.sample_rate); % spike duratio longer than 1.5ms
-           
-           % axonal spike exclusion
-           axonalspExclusion = abs(Unit_pre2post_peakRatio) > 1;
-           
-           % summarize all exclusion criterias
-           UnitWaveExclusionInds(lickArtifactExclusion) = 1;
-           UnitWaveExclusionInds(axonalspExclusion) = 1;
-           
-           obj.UnitWaveExcluInds = logical(UnitWaveExclusionInds);
-           fprintf('Totally %d number of unit will be excluded because of the isoformed waveform.\n',sum(UnitWaveExclusionInds));
-           
-           % exclued waveform discarded units
-           try
-               logiExcluInds = logical(UnitWaveExclusionInds);
-               obj.UsedClus_IDs(logiExcluInds) = [];
-               obj.ChannelUseds_id(logiExcluInds) = [];
-               obj.UsedClusinds(logiExcluInds) = [];
-               obj.UsedChnDepth(logiExcluInds) = [];
-               obj.UnitWaveFeatures(logiExcluInds,:) = [];
-               if ~isempty(obj.TrigData_Bin{1})
-                   obj.TrigData_Bin{1}(logiExcluInds,:) = [];
-                   obj.TrTrigSpikeTimes{1}(logiExcluInds,:) = [];
-                   if ~isempty(obj.TrigDataBin_FRSub{1})
-                        obj.TrigDataBin_FRSub{1}(logiExcluInds,:) = [];
-                   end
-               end
-               if ~isempty(obj.TrigData_Bin{2})
-                   obj.TrigData_Bin{2}(logiExcluInds,:) = [];
-                   obj.TrTrigSpikeTimes{2}(logiExcluInds,:) = [];
-                   if ~isempty(obj.TrigDataBin_FRSub{2})
-                        obj.TrigDataBin_FRSub{2}(logiExcluInds,:) = [];
-                   end
-               end
-           catch ME
-               fprintf('Waveform exclusion may have already been performed.\n');
-               obj.UnitWaveFeatures(logiExcluInds,:) = [];
-           end
         end
+%         function obj = wavefeatureExclusion(obj, varargin)
+%            %  further exclude some units according to unit spike waveform
+%            %  and other criterias
+%            if ~isempty(obj.UnitWaveExcluInds)
+%                if length(obj.UnitWaveExcluInds) == length(obj.UnitWaveFeatures)
+%                    % indicates already have calculated waveform feature
+%                    % exclusion inds, but not performed to variable "obj.UnitWaveFeatures"
+%                    obj.UnitWaveFeatures(obj.UnitWaveExcluInds) = [];
+%                    return;
+%                else
+%                   fprintf('Waveform feature exclusion already performed, existing...\n');
+%                   return;
+%                end
+%            end
+%                    
+%            if isempty(obj.UnitWaveFeatures) || isempty(obj.UnitWaves)
+%                warning('The unit waveform data does not exists, please check your class handle contains.');
+%                return;
+%            end
+%            if isempty(obj.RawClusANDchan_ids_All{1})
+%                 obj.RawClusANDchan_ids_All = {obj.UsedClus_IDs, obj.ChannelUseds_id};
+%            end
+%            
+%            UnitWaveExclusionInds = cell2mat(obj.UnitWaveFeatures(:,2)); % Isoformed waves were excluded
+%            Unit_pre2post_peakRatio = cellfun(@(x) x.pre2post_peakratio,obj.UnitWaveFeatures(:,1));
+%            Unit_sp_duration = cellfun(@(x) x.tough2peakT,obj.UnitWaveFeatures(:,1));
+%            
+%            % lick artifact exclusion
+%            lickArtifactExclusion = Unit_sp_duration >= (1.5*1e-3*obj.SpikeStrc.sample_rate); % spike duratio longer than 1.5ms
+%            
+%            % axonal spike exclusion
+%            axonalspExclusion = abs(Unit_pre2post_peakRatio) > 1;
+%            
+%            % summarize all exclusion criterias
+%            UnitWaveExclusionInds(lickArtifactExclusion) = 1;
+%            UnitWaveExclusionInds(axonalspExclusion) = 1;
+%            
+%            obj.UnitWaveExcluInds = logical(UnitWaveExclusionInds);
+%            fprintf('Totally %d number of unit will be excluded because of the isoformed waveform.\n',sum(UnitWaveExclusionInds));
+%            
+%            % exclued waveform discarded units
+%            try
+%                logiExcluInds = logical(UnitWaveExclusionInds);
+%                obj.UsedClus_IDs(logiExcluInds) = [];
+%                obj.ChannelUseds_id(logiExcluInds) = [];
+%                obj.UsedClusinds(logiExcluInds) = [];
+%                obj.UsedChnDepth(logiExcluInds) = [];
+%                obj.UnitWaveFeatures(logiExcluInds,:) = [];
+%                if ~isempty(obj.TrigData_Bin{1})
+%                    obj.TrigData_Bin{1}(logiExcluInds,:) = [];
+%                    obj.TrTrigSpikeTimes{1}(logiExcluInds,:) = [];
+%                    if ~isempty(obj.TrigDataBin_FRSub{1})
+%                         obj.TrigDataBin_FRSub{1}(logiExcluInds,:) = [];
+%                    end
+%                end
+%                if ~isempty(obj.TrigData_Bin{2})
+%                    obj.TrigData_Bin{2}(logiExcluInds,:) = [];
+%                    obj.TrTrigSpikeTimes{2}(logiExcluInds,:) = [];
+%                    if ~isempty(obj.TrigDataBin_FRSub{2})
+%                         obj.TrigDataBin_FRSub{2}(logiExcluInds,:) = [];
+%                    end
+%                end
+%            catch ME
+%                fprintf('Waveform exclusion may have already been performed.\n');
+%                obj.UnitWaveFeatures(logiExcluInds,:) = [];
+%            end
+%         end
         
-        function obj = Sesssptime_check_exclusion(obj)
-            % exclusion some units based on the response pattern of each
-            % single unit within the recording session, the spikes should
-            % be uniformly distributed throughout the session period but
-            % not only happens at a narrowd time window, which usually is a
-            % indication of channel drifting
-            if isempty(obj.RawClusANDchan_ids_All{1})
-                obj.RawClusANDchan_ids_All = {obj.UsedClus_IDs, obj.ChannelUseds_id};
-            end
-            
-            RemainedInds = SessResp_binnedcheckFun(obj);
-            ExcludeInds = true(numel(obj.UsedClus_IDs),1);
-            ExcludeInds(RemainedInds) = false;
-            
-            fprintf('Totally %d number of unit will be excluded because of unevened spike times.\n',sum(ExcludeInds));
-            
-            obj.UsedClus_IDs = obj.UsedClus_IDs(RemainedInds);
-            obj.ChannelUseds_id = obj.ChannelUseds_id(RemainedInds);
-            obj.UsedClusinds = obj.UsedClusinds(RemainedInds);
-            obj.UsedChnDepth = obj.UsedChnDepth(RemainedInds);
-            
-            if ~isempty(obj.TrigData_Bin{1})
-                obj.TrigData_Bin{1}(ExcludeInds,:) = [];
-                obj.TrTrigSpikeTimes{1}(ExcludeInds,:) = [];
-                if ~isempty(obj.TrigDataBin_FRSub{1})
-                     obj.TrigDataBin_FRSub{1}(ExcludeInds,:) = [];
-                end
-            end
-            if ~isempty(obj.TrigData_Bin{2})
-                obj.TrigData_Bin{2}(ExcludeInds,:) = [];
-                obj.TrTrigSpikeTimes{2}(ExcludeInds,:) = [];
-                if ~isempty(obj.TrigDataBin_FRSub{2})
-                     obj.TrigDataBin_FRSub{2}(ExcludeInds,:) = [];
-                end
-            end
-            
-        end
+%         function obj = Sesssptime_check_exclusion(obj)
+%             % exclusion some units based on the response pattern of each
+%             % single unit within the recording session, the spikes should
+%             % be uniformly distributed throughout the session period but
+%             % not only happens at a narrowd time window, which usually is a
+%             % indication of channel drifting
+%             if isempty(obj.RawClusANDchan_ids_All{1})
+%                 obj.RawClusANDchan_ids_All = {obj.UsedClus_IDs, obj.ChannelUseds_id};
+%             end
+%             
+%             RemainedInds = SessResp_binnedcheckFun(obj);
+%             ExcludeInds = true(numel(obj.UsedClus_IDs),1);
+%             ExcludeInds(RemainedInds) = false;
+%             
+%             fprintf('Totally %d number of unit will be excluded because of unevened spike times.\n',sum(ExcludeInds));
+%             
+%             obj.UsedClus_IDs = obj.UsedClus_IDs(RemainedInds);
+%             obj.ChannelUseds_id = obj.ChannelUseds_id(RemainedInds);
+%             obj.UsedClusinds = obj.UsedClusinds(RemainedInds);
+%             obj.UsedChnDepth = obj.UsedChnDepth(RemainedInds);
+%             
+%             if ~isempty(obj.TrigData_Bin{1})
+%                 obj.TrigData_Bin{1}(ExcludeInds,:) = [];
+%                 obj.TrTrigSpikeTimes{1}(ExcludeInds,:) = [];
+%                 if ~isempty(obj.TrigDataBin_FRSub{1})
+%                      obj.TrigDataBin_FRSub{1}(ExcludeInds,:) = [];
+%                 end
+%             end
+%             if ~isempty(obj.TrigData_Bin{2})
+%                 obj.TrigData_Bin{2}(ExcludeInds,:) = [];
+%                 obj.TrTrigSpikeTimes{2}(ExcludeInds,:) = [];
+%                 if ~isempty(obj.TrigDataBin_FRSub{2})
+%                      obj.TrigDataBin_FRSub{2}(ExcludeInds,:) = [];
+%                 end
+%             end
+%             
+%         end
         
         function ClusChnDatas = SpikeWaveFun(obj,varargin)
             if isempty(obj.mmf)
@@ -434,7 +468,12 @@ classdef NPspikeDataMining
             
             TrigNums = length(obj.UsedTrigOnTime{obj.CurrentSessInds});
             TrigBinDatas = cell(TrigNums,2);
-            NumUsedClus = length(obj.UsedClus_IDs);
+            if isempty(obj.UsedClus_IDs)
+                calClusters = obj.FRIncludeClus;
+            else
+                calClusters = obj.UsedClus_IDs;
+            end
+            NumUsedClus = length(calClusters);
             cTrig_TrialSPtimes = cell(NumUsedClus,TrigNums);
             for ctrig = 1 : TrigNums
                 if IsEventDataGiven
@@ -462,7 +501,7 @@ classdef NPspikeDataMining
                 cTrig_binCountSM = nan(NumUsedClus,length(obj.BinCenters));
                 %
                 for cClus = 1 : NumUsedClus
-                    cClusTime = cTrigWin_spTimes(cTrigWin_spClus == obj.UsedClus_IDs(cClus)) - cTrigTime;
+                    cClusTime = cTrigWin_spTimes(cTrigWin_spClus == calClusters(cClus)) - cTrigTime;
                     cTrig_TrialSPtimes(cClus,ctrig) = {cClusTime};
                     [bincounts,~] = histcounts(cClusTime,histbin);
                     
@@ -925,6 +964,9 @@ classdef NPspikeDataMining
             % only input trials will be plotted
             SMBinDataMtx = permute(cat(3,obj.TrigData_Bin{obj.CurrentSessInds}{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
             SMBinDataMtx = SMBinDataMtx(PlotTrInds,:,:);
+            if ~isempty(obj.SurviveInds)
+                SMBinDataMtx = SMBinDataMtx(:,obj.SurviveInds,:);
+            end
             [TrNum, unitNum, BinNum] = size(SMBinDataMtx);
             
             % firstly excluded zeros time events
@@ -973,7 +1015,9 @@ classdef NPspikeDataMining
                     TrNum = TrNum - sum(ExcludeInds);
                     SMBinDataMtx(ExcludeInds,:,:) = [];
                     RepeatTypes(ExcludeInds,:) = [];
-                    UsedLickStrc(ExcludeInds) = [];
+                    if IsLickPlot
+                        UsedLickStrc(ExcludeInds) = [];
+                    end
                 end
                 AlignedEvents = EventBinLength(:,AlignEvent);
                 TrShifts = AlignedEvents - min(AlignedEvents); % bin number to be shifted for each trial
@@ -1057,7 +1101,7 @@ classdef NPspikeDataMining
                 error('Unsupported segments numbers, please check your inputs.');
             end
             %%
-            NumSingleUnits = size(obj.TrigData_Bin{obj.CurrentSessInds},1);
+            NumSingleUnits = unitNum;
             %             xTs = obj.psthTimeWin(1):obj.USedbin(2):(obj.psthTimeWin(2)-obj.USedbin(2));
             
             xTs = ((1:UsedBinLength) - AlignedEventOnBin)*obj.USedbin(2);
@@ -1065,13 +1109,13 @@ classdef NPspikeDataMining
             ChoiceStrs = {'LeftC','RightC'};
             BloundaryBlockStrs = {'LowBound','HighBound'};
             if isempty(obj.SessBlockTypes)
-                cBlockTypeStrs = '';
+                cBlockTypeStrs = 'NaN';
             else
                 cBlockTypeStrs = BloundaryBlockStrs{obj.SessBlockTypes+1};
             end
             Seg1TypeNum = length(Seg1_types);
             SegMeanTraces = cell(NumSingleUnits,Seg1TypeNum,Seg2TypeNum,3);
-            for cUnit = 44 : NumSingleUnits
+            for cUnit = 1 : NumSingleUnits
                 cUnitData = squeeze(AlignedSortDatas(:,cUnit,:)); % sorted by events time
                 UnitPlotScale = [0 max(prctile(cUnitData(:),99),1)];
                 
@@ -1185,7 +1229,7 @@ classdef NPspikeDataMining
                 end
                 if ~IsChnAreaGiven
                     annotation(hcf,'textbox',[0.475,0.68,0.3,0.3],'String',sprintf('Unit %d, Chn %d, (%s)',...
-                        obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit)),cBlockTypeStrs,'FitBoxToText','on','EdgeColor',...
+                        obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit),cBlockTypeStrs),'FitBoxToText','on','EdgeColor',...
                         'none','FontSize',12);
                 else
                     cChnAreaIndex = ChnAreaStrs{obj.ChannelUseds_id(cUnit),1};
@@ -1392,7 +1436,11 @@ classdef NPspikeDataMining
             EventDespStrs = EventColors(1,:);
             EventPlotColors = EventColors(2,:);
             
-            RawSptimeData = obj.TrTrigSpikeTimes{obj.CurrentSessInds}(:,PlotTrInds); % should be a numUnit-by-numTrigtrial cell matrix
+            if ~isempty(obj.SurviveInds)
+                RawSptimeData = obj.TrTrigSpikeTimes{obj.CurrentSessInds}(obj.SurviveInds,PlotTrInds); % should be a numUnit-by-numTrigtrial cell matrix
+            else
+                RawSptimeData = obj.TrTrigSpikeTimes{obj.CurrentSessInds}(:,PlotTrInds);
+            end
             [unitNum, TrNum] = size(RawSptimeData);
             
             if strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'trigger')
@@ -1401,14 +1449,16 @@ classdef NPspikeDataMining
                 zerospointtime = OnsetTimes;
                 % in case some of the trials have very long presound delay caused by
                 % presound no-lick punishment
-                LatterOnsettimeTrs = sum(EventTimes > (obj.psthTimeWin{obj.CurrentSessInds}(2) - 1),2);
+                LatterOnsettimeTrs = sum(EventTimes > (obj.psthTimeWin{obj.CurrentSessInds}(2) - 0.1),2);
                 if sum(LatterOnsettimeTrs)
                     ExcludeInds = LatterOnsettimeTrs > 0;
                     EventTimes(ExcludeInds,:) = [];
                     TrNum = TrNum - sum(ExcludeInds);
                     RawSptimeData(:,ExcludeInds) = [];
                     RepeatTypes(ExcludeInds,:) = [];
-                    UsedLickStrc(ExcludeInds) = [];
+                    if IsLickPlot
+                        UsedLickStrc(ExcludeInds) = [];
+                    end
                 end
             elseif strcmpi(obj.TrigAlignType{obj.CurrentSessInds},'stim')
                 EventTimes = EventsDelay/1000; % in seconds
@@ -1515,7 +1565,7 @@ classdef NPspikeDataMining
             ChoiceStrs = {'LeftC','RightC'};
             BloundaryBlockStrs = {'LowBound','HighBound'};
             if isempty(obj.SessBlockTypes)
-                cBlockTypeStrs = '';
+                cBlockTypeStrs = 'NaN';
             else
                 cBlockTypeStrs = BloundaryBlockStrs{obj.SessBlockTypes+1};
             end
@@ -1613,7 +1663,7 @@ classdef NPspikeDataMining
                 %%
                 if ~IsChnAreaGiven
                     annotation(hcf,'textbox',[0.475,0.68,0.3,0.3],'String',sprintf('Unit %d, Chn %d, (%s)',...
-                        obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit)),cBlockTypeStrs,'FitBoxToText','on','EdgeColor',...
+                        obj.UsedClus_IDs(cUnit),obj.ChannelUseds_id(cUnit),cBlockTypeStrs),'FitBoxToText','on','EdgeColor',...
                         'none','FontSize',12);
                 else
                     cChnAreaIndex = ChnAreaStrs{obj.ChannelUseds_id(cUnit),1};
@@ -1743,125 +1793,125 @@ classdef NPspikeDataMining
         end
 
         
-        function obj = SpikeWaveFeature(obj,varargin)
-            % function used to analysis single unit waveform features
-            % the wave form features may includes firerate, peak-to-trough
-            % width, refraction peak and so on
-            
-            % from "Nuo Li et al, 2016", trough-to-peak interval  less than
-            % 0.35ms were defined as fast-spiking neuron and spike width
-            % larger than 0.45ms as putative pyramidal neurons
-            
-            
-            if isempty(obj.binfilePath) || isempty(obj.RawDataFilename)
-                if ~isempty(varargin) && ~isempty(varargin{1})
-                    obj.binfilePath = varargin{1};
-                    possbinfilestrc = dir(fullfile(obj.binfilePath,'*.ap.bin'));
-                    if isempty(possbinfilestrc)
-                        error('target bin file doesn''t exists.');
-                    end
-                    obj.RawDataFilename = possbinfilestrc(1).name;
-                else
-                    error('Bin file location is needed for spikewave extraction.');
-                end
-            end
-            %             if isempty(obj.mmf) && eixst(fullfile(obj.binfilePath,obj.RawDataFilename))
-            %                 fullpaths = fullfile(obj.binfilePath, obj.RawDataFilename);
-            % %                 dataNBytes = get_file_size(fullpaths); % determine number of bytes per sample
-            % %                 obj.Numsamp = dataNBytes/(2*obj.NumChn);
-            % %                 obj.mmf = memmapfile(fullpaths, 'Format', {obj.Datatype, [obj.NumChn obj.Numsamp], 'x'});
-            % %
-            %             end
-            fullpaths = fullfile(obj.binfilePath, obj.RawDataFilename);
-            ftempid = fopen(fullpaths);
-            
-            if ~isfolder(fullfile(obj.ksFolder,'UnitWaveforms'))
-                mkdir(fullfile(obj.ksFolder,'UnitWaveforms'));
-            end
-            % startTime = 15000;
-            % offsets = 385*startTime*2;
-            % status = fseek(ftempid,offsets,bof);
-            % AsNew= fread(ftempid,[385 15000],'int16');
-            NumofUnit = length(obj.UsedClus_IDs);
-            UnitDatas = cell(NumofUnit,1);
-            UnitFeatures = cell(NumofUnit,3);
-            for cUnit = 1 : NumofUnit
-                % cUnit = 137;
-                %% close;
-                cClusInds = obj.UsedClus_IDs(cUnit);
-                cClusChannel = obj.ChannelUseds_id(cUnit);
-                cClus_Sptimes = obj.SpikeTimeSample(obj.SpikeClus == cClusInds);
-                if numel(cClus_Sptimes) < 2000
-                    UsedSptimes = cClus_Sptimes;
-                    SPNums = length(UsedSptimes);
-                else
-                    UsedSptimes = cClus_Sptimes(randsample(numel(cClus_Sptimes),2000));
-                    SPNums = 2000;
-                end
-                cspWaveform = nan(SPNums,diff(obj.WaveWinSamples));
-                for csp = 1 : SPNums
-                    cspTime = UsedSptimes(csp);
-                    cspStartInds = cspTime+obj.WaveWinSamples(1);
-                    cspEndInds = cspTime+obj.WaveWinSamples(2);
-                    offsetTimeSample = cspStartInds - 1;
-                    if offsetTimeSample < 0 || cspEndInds > obj.Numsamp
-                        continue;
-                    end
-                    offsets = 385*(cspStartInds-1)*2;
-                    status = fseek(ftempid,offsets,'bof');
-                    if ~status
-                        % correct offset value is set
-                        AllChnDatas = fread(ftempid,[385 diff(obj.WaveWinSamples)],'int16');
-                        cspWaveform(csp,:) = AllChnDatas(cClusChannel,:);
-                        %        cspWaveform(csp,:) = mean(AllChnDatas);
-                    end
-                end
-                
-                huf = figure('visible','off');
-                AvgWaves = mean(cspWaveform,'omitnan');
-                UnitDatas{cUnit} = cspWaveform;
-                %%
-                plot(AvgWaves);
-                try
-                    [isabnorm,isUsedVec] = iswaveformatypical(AvgWaves,obj.WaveWinSamples,false);
-                catch ME
-                    fprintf('Errors');
-                end
-                title([num2str(cClusChannel,'chn=%d'),'  ',num2str(1-isabnorm,'Ispass = %d')]);
-                wavefeature = SPwavefeature(AvgWaves,obj.WaveWinSamples);
-                text(6,0.8*max(AvgWaves),{sprintf('tough2peak = %d',wavefeature.tough2peakT);...
-                    sprintf('posthyper = %d',wavefeature.postHyperT)},'FontSize',8);
-                
-                if wavefeature.IsPrePosPeak
-                    text(50,0.5*max(AvgWaves),{sprintf('pre2postpospeakratio = %.3f',wavefeature.pre2post_peakratio)},'color','r','FontSize',8);
-                end
-                UnitFeatures(cUnit,:) = {wavefeature,isabnorm,isUsedVec};
-                %
-                
-                saveName = fullfile(obj.ksFolder,'UnitWaveforms',sprintf('Unit%d waveform plot save',cUnit));
-                saveas(huf,saveName);
-                saveas(huf,saveName,'png');
-                
-                close(huf);
-                
-            end
-            obj.UnitWaves = UnitDatas;
-            obj.UnitWaveFeatures = UnitFeatures;
-            save(fullfile(obj.ksFolder,'UnitwaveformDatas.mat'), 'UnitDatas', 'UnitFeatures', '-v7.3');
-            
-            %             % ways to calculate the refractory period using output datas
-            %             default_binsize = 1e-3;
-            %             if ~exist('binsize_time','var')
-            %                 binsize_time = default_binsize;
-            %             end
-            %             baselinefr_timebin = [600, 900]; % ms
-            %             baselinefr_bin = round(baselinefr_timebin/1000/default_binsize);
-            %
-            %             % ccgData = ClusSelfccg{1};
-            %             RefracBinNum = cellfun(@(x) refractoryperiodFun(x,baselinefr_bin),ClusSelfccg);
-            %             RefracBinTime = RefracBinNum*binsize_time;
-            
-        end
+%         function obj = SpikeWaveFeature(obj,varargin)
+%             % function used to analysis single unit waveform features
+%             % the wave form features may includes firerate, peak-to-trough
+%             % width, refraction peak and so on
+%             
+%             % from "Nuo Li et al, 2016", trough-to-peak interval  less than
+%             % 0.35ms were defined as fast-spiking neuron and spike width
+%             % larger than 0.45ms as putative pyramidal neurons
+%             
+%             
+%             if isempty(obj.binfilePath) || isempty(obj.RawDataFilename)
+%                 if ~isempty(varargin) && ~isempty(varargin{1})
+%                     obj.binfilePath = varargin{1};
+%                     possbinfilestrc = dir(fullfile(obj.binfilePath,'*.ap.bin'));
+%                     if isempty(possbinfilestrc)
+%                         error('target bin file doesn''t exists.');
+%                     end
+%                     obj.RawDataFilename = possbinfilestrc(1).name;
+%                 else
+%                     error('Bin file location is needed for spikewave extraction.');
+%                 end
+%             end
+%             %             if isempty(obj.mmf) && eixst(fullfile(obj.binfilePath,obj.RawDataFilename))
+%             %                 fullpaths = fullfile(obj.binfilePath, obj.RawDataFilename);
+%             % %                 dataNBytes = get_file_size(fullpaths); % determine number of bytes per sample
+%             % %                 obj.Numsamp = dataNBytes/(2*obj.NumChn);
+%             % %                 obj.mmf = memmapfile(fullpaths, 'Format', {obj.Datatype, [obj.NumChn obj.Numsamp], 'x'});
+%             % %
+%             %             end
+%             fullpaths = fullfile(obj.binfilePath, obj.RawDataFilename);
+%             ftempid = fopen(fullpaths);
+%             
+%             if ~isfolder(fullfile(obj.ksFolder,'UnitWaveforms'))
+%                 mkdir(fullfile(obj.ksFolder,'UnitWaveforms'));
+%             end
+%             % startTime = 15000;
+%             % offsets = 385*startTime*2;
+%             % status = fseek(ftempid,offsets,bof);
+%             % AsNew= fread(ftempid,[385 15000],'int16');
+%             NumofUnit = length(obj.UsedClus_IDs);
+%             UnitDatas = cell(NumofUnit,1);
+%             UnitFeatures = cell(NumofUnit,3);
+%             for cUnit = 1 : NumofUnit
+%                 % cUnit = 137;
+%                 %% close;
+%                 cClusInds = obj.UsedClus_IDs(cUnit);
+%                 cClusChannel = obj.ChannelUseds_id(cUnit);
+%                 cClus_Sptimes = obj.SpikeTimeSample(obj.SpikeClus == cClusInds);
+%                 if numel(cClus_Sptimes) < 2000
+%                     UsedSptimes = cClus_Sptimes;
+%                     SPNums = length(UsedSptimes);
+%                 else
+%                     UsedSptimes = cClus_Sptimes(randsample(numel(cClus_Sptimes),2000));
+%                     SPNums = 2000;
+%                 end
+%                 cspWaveform = nan(SPNums,diff(obj.WaveWinSamples));
+%                 for csp = 1 : SPNums
+%                     cspTime = UsedSptimes(csp);
+%                     cspStartInds = cspTime+obj.WaveWinSamples(1);
+%                     cspEndInds = cspTime+obj.WaveWinSamples(2);
+%                     offsetTimeSample = cspStartInds - 1;
+%                     if offsetTimeSample < 0 || cspEndInds > obj.Numsamp
+%                         continue;
+%                     end
+%                     offsets = 385*(cspStartInds-1)*2;
+%                     status = fseek(ftempid,offsets,'bof');
+%                     if ~status
+%                         % correct offset value is set
+%                         AllChnDatas = fread(ftempid,[385 diff(obj.WaveWinSamples)],'int16');
+%                         cspWaveform(csp,:) = AllChnDatas(cClusChannel,:);
+%                         %        cspWaveform(csp,:) = mean(AllChnDatas);
+%                     end
+%                 end
+%                 
+%                 huf = figure('visible','off');
+%                 AvgWaves = mean(cspWaveform,'omitnan');
+%                 UnitDatas{cUnit} = cspWaveform;
+%                 %%
+%                 plot(AvgWaves);
+%                 try
+%                     [isabnorm,isUsedVec] = iswaveformatypical(AvgWaves,obj.WaveWinSamples,false);
+%                 catch ME
+%                     fprintf('Errors');
+%                 end
+%                 title([num2str(cClusChannel,'chn=%d'),'  ',num2str(1-isabnorm,'Ispass = %d')]);
+%                 wavefeature = SPwavefeature(AvgWaves,obj.WaveWinSamples);
+%                 text(6,0.8*max(AvgWaves),{sprintf('tough2peak = %d',wavefeature.tough2peakT);...
+%                     sprintf('posthyper = %d',wavefeature.postHyperT)},'FontSize',8);
+%                 
+%                 if wavefeature.IsPrePosPeak
+%                     text(50,0.5*max(AvgWaves),{sprintf('pre2postpospeakratio = %.3f',wavefeature.pre2post_peakratio)},'color','r','FontSize',8);
+%                 end
+%                 UnitFeatures(cUnit,:) = {wavefeature,isabnorm,isUsedVec};
+%                 %
+%                 
+%                 saveName = fullfile(obj.ksFolder,'UnitWaveforms',sprintf('Unit%d waveform plot save',cUnit));
+%                 saveas(huf,saveName);
+%                 saveas(huf,saveName,'png');
+%                 
+%                 close(huf);
+%                 
+%             end
+%             obj.UnitWaves = UnitDatas;
+%             obj.UnitWaveFeatures = UnitFeatures;
+%             save(fullfile(obj.ksFolder,'UnitwaveformDatas.mat'), 'UnitDatas', 'UnitFeatures', '-v7.3');
+%             
+%             %             % ways to calculate the refractory period using output datas
+%             %             default_binsize = 1e-3;
+%             %             if ~exist('binsize_time','var')
+%             %                 binsize_time = default_binsize;
+%             %             end
+%             %             baselinefr_timebin = [600, 900]; % ms
+%             %             baselinefr_bin = round(baselinefr_timebin/1000/default_binsize);
+%             %
+%             %             % ccgData = ClusSelfccg{1};
+%             %             RefracBinNum = cellfun(@(x) refractoryperiodFun(x,baselinefr_bin),ClusSelfccg);
+%             %             RefracBinTime = RefracBinNum*binsize_time;
+%             
+%         end
         
         function ClusSelfccg = refractoryPeriodCal(obj,spclus,winsize,binsize)
             % function to calculate the refractory period for given cluster

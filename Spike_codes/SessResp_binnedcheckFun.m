@@ -56,9 +56,9 @@ for cU = 1 : leftUnitNum
    end
 end
 
-
-RemainedInds = UsedInds1_Real;
-RemainedInds(isnan(RemainedInds)) = [];
+TotalUnits = size(SMBinDataMtx,2);
+RemainedInds = true(TotalUnits,1);
+RemainedInds(isnan(UsedInds1_Real)) = false;
 
 
 

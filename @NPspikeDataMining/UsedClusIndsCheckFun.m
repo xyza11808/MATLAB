@@ -1,24 +1,60 @@
-function UsedClusIndsCheckFun(obj,selectops)
+function OverAllExcludeInds = UsedClusIndsCheckFun(obj,selectops,varargin)
 % this function is used to check the used cluster criteria, using the true
 % value fields in selectops to check the used cluster selection criteria
 % and perform cluster selection
 
 FullClusSelectionops = struct('Unitwaveform',false,...
-    'ISIviolation',[],...
+    'ISIviolation',[],...  % default threshold value is 0.1, or 10%
     'SessSpiketimeCheck',false,...
     'Amplitude',[],... % threshold amplitude value
     'WaveformSpread',[],... % in um, Spatial extent (in μm) of channels in which the waveform amplitude exceeds 12% of the peak amplitude.
-    'FiringRate',[]);
-
+    'FiringRate',[],...
+    'SNR',[]);
+DefaultValues = struct('Unitwaveform',false,...
+    'ISIviolation',0.1,...  % default threshold value is 0.1, or 10%
+    'SessSpiketimeCheck',false,...
+    'Amplitude',20,... % threshold amplitude value, default is 20uv (70 uV for subcortical neurons, for cortical neurons the Amp should be smaller)
+    'WaveformSpread',1000,... % 1000um, about 50 channels?.
+    'FiringRate',1,... % 1Hz
+    'SNR',3); 
 opsFieldName = fieldnames(selectops);
 NumInputFields = length(opsFieldName);
 for cf = 1 : NumInputFields
     FullClusSelectionops.(opsFieldName{cf}) = selectops.(opsFieldName{cf});
+    % if nan value is given, using default threshold value for filtering
+    if ~islogical(FullClusSelectionops.(opsFieldName{cf})) && isnan(FullClusSelectionops.(opsFieldName{cf}))
+        FullClusSelectionops.(opsFieldName{cf}) = DefaultValues.(opsFieldName{cf});
+    end
 end
-f
-if FullClusSelectionops.Unitwaveform % whether performing isoformed waveform exclusion
-    UnitFeatures = SpikeWaveFeature(obj); % obj sould have raw bin file path and filename provided.
+
+IsWaveDataGiven = 0;
+if nargin > 2  % if the wavefrom data was already given for analysis
+    IsWaveDataGiven = 1;
+    UnitWaves = varargin{1};
+    UnitFeature = varargin{2};
+end
+
+if nargin == 2 
+    % if the inpput structure already contains the target data fields
+   if ~isempty(obj.UnitWaves) && ~isempty(obj.UnitWaveFeatures)
+       if size(obj.UnitWaves,2) == 2 && size(obj.UnitWaveFeatures,2) == 5 % check whether the field data format is the latest
+           IsWaveDataGiven = 1;
+           UnitWaves  = obj.UnitWaves;
+           UnitFeature= obj.UnitWaveFeatures;
+       end
+   end
+end
+
+fprintf('\n');
+
+if FullClusSelectionops.Unitwaveform % whether performing isoform waveform exclusion
+    if IsWaveDataGiven
+        UnitFeatures = UnitFeature;
+    else
+        UnitFeatures = SpikeWaveFeature(obj); % obj sould have raw bin file path and filename provided.
+    end
     waveformExclusion = cell2mat(UnitFeatures(:,2)); % excluded unit inds
+    fprintf('Waveform exclusion fraction is %d/%d, %.4f...\n',sum(waveformExclusion),numel(waveformExclusion),mean(waveformExclusion));
 else
     waveformExclusion = false;
 end
@@ -36,38 +72,62 @@ if ~isempty(FullClusSelectionops.ISIviolation)
        [ClusISIvolFrac(cClus),~] = ISIViolations(cClusSpiketime, minISI, refDur);
    end
     ISIExclusion = ClusISIvolFrac >= ViolationFracThres;
+    fprintf('ISI exclusion fraction is %d/%d, %.4f...\n',sum(ISIExclusion),numel(ISIExclusion),mean(ISIExclusion));
 else
     ISIExclusion = false;
 end
 
 if FullClusSelectionops.SessSpiketimeCheck % session spike time distribution check
-    sessSPdistributionExclusion = SessResp_binnedcheckFun(obj);
+    if isempty(obj.TrigData_Bin{obj.CurrentSessInds})
+        warning('The PSTH data havent been constructed yet, skip spike time consistance check.\n');
+    else
+        RespCheckInds = SessResp_binnedcheckFun(obj);
+        if isempty(RespCheckInds)
+            sessSPdistributionExclusion = false;
+        else
+            sessSPdistributionExclusion = ~RespCheckInds;
+            fprintf('Session spike time exclusion fraction is %d/%d, %.4f...\n',sum(sessSPdistributionExclusion),...
+                numel(sessSPdistributionExclusion),mean(sessSPdistributionExclusion));
+        end
+    end
+    
 else
     sessSPdistributionExclusion = false;
 end
 
 if ~isempty(FullClusSelectionops.Amplitude) % default threshold value is 70uv
-    if ~exist('UnitFeatures','var')
+    if IsWaveDataGiven
+        UnitFeatures = UnitFeature;
+    else
         UnitFeatures = SpikeWaveFeature(obj);
     end
     UnitAmps = cell2mat(UnitFeatures(:,4));
     AmpExcludeInds = UnitAmps < FullClusSelectionops.Amplitude;
+    fprintf('Amplitude exclusion fraction is %d/%d, %.4f...\n',sum(AmpExcludeInds),numel(AmpExcludeInds),mean(AmpExcludeInds));
 else
     AmpExcludeInds = false;
 end
 
 if ~isempty(FullClusSelectionops.WaveformSpread) % waveform spread of all channels
-    AllchnData = load(fullfile(obj.ksFolder,'UnitwaveformDatas.mat'), 'UnitDatas');
-    if ~exist('UnitFeatures','var') || ~exist(fullfile(obj.ksFolder,'UnitwaveformDatas.mat'),'file')
-        UnitFeatures = SpikeWaveFeature(obj);
+    if IsWaveDataGiven
+        UnitFeatures = UnitFeature;
+        UnitAllchnWaveData = UnitWaves;
+    else
+        if ~exist('UnitFeatures','var') || ~exist(fullfile(obj.ksFolder,'UnitwaveformDatas.mat'),'file')
+            UnitFeatures = SpikeWaveFeature(obj);
+        end
+        AllchnData = load(fullfile(obj.ksFolder,'UnitwaveformDatas.mat'), 'UnitDatas');
+        UnitAllchnWaveData = AllchnData.UnitDatas; % SPNums,channel(384),spikewindowlength    
     end
+    
     ToughPeakInds = cell2mat(UnitFeatures(:,5));
-    UnitAllchnWaveData = AllchnData.UnitDatas; % SPNums,channel(384),spikewindowlength    
     SpreadLengthAll = zeros(size(UnitAllchnWaveData,1),1);
     for cUnit = 1 : size(UnitAllchnWaveData,1)
-        SpreadLengthAll(cUnit) = peakAmpSpreadFun(UnitAllchnWaveData{cUnit,2}, ToughPeakInds, obj.FRIncludeChans(cUnit));
+        SpreadLengthAll(cUnit) = peakAmpSpreadFun(UnitAllchnWaveData{cUnit,2}, ToughPeakInds(cUnit,:), obj.FRIncludeChans(cUnit));
     end
     AmpSpreadExcludeInds = SpreadLengthAll > FullClusSelectionops.WaveformSpread; % larger value indicates noise across all channels
+    fprintf('AmpSpread exclusion fraction is %d/%d, %.4f...\n',sum(AmpSpreadExcludeInds),...
+        numel(AmpSpreadExcludeInds),mean(AmpSpreadExcludeInds));
 else
     AmpSpreadExcludeInds = false;
 end
@@ -75,14 +135,56 @@ end
 
 if ~isempty(FullClusSelectionops.FiringRate)
     FRExcludeInds = obj.FRIncludeClusFRs <= FullClusSelectionops.FiringRate;
+    fprintf('FR exclusion fraction is %d/%d, %.4f...\n',sum(FRExcludeInds),numel(FRExcludeInds),mean(FRExcludeInds));
 else
     FRExcludeInds = false;
 end
 
-
-
+if ~isempty(FullClusSelectionops.SNR) % waveform spread of all channels
+    if IsWaveDataGiven
+        UnitFeatures = UnitFeature;
+        UnitAllchnWaveData = UnitWaves;
+    else
+        if ~exist('UnitFeatures','var') || ~exist(fullfile(obj.ksFolder,'UnitwaveformDatas.mat'),'file')
+            UnitFeatures = SpikeWaveFeature(obj);
+        end
+        AllchnData = load(fullfile(obj.ksFolder,'UnitwaveformDatas.mat'), 'UnitDatas');
+        UnitAllchnWaveData = AllchnData.UnitDatas; % SPNums,channel(384),spikewindowlength    
+    end
+    
+    UnitAmps = cell2mat(UnitFeatures(:,4));
+    
+    UnitSPWaveformAll = UnitAllchnWaveData(:,1);
+    UnitNums = length(UnitSPWaveformAll);
+    UnitSNRs = zeros(UnitNums, 1);
+    for cUnit = 1 : UnitNums 
+        cUnitSPwaves = UnitSPWaveformAll{cUnit};
+        nanSPs = sum(isnan(cUnitSPwaves),2) > 0;
+        cUnitSPwaves(nanSPs,:) = [];
+        
+        AvgWaveform = mean(cUnitSPwaves);
+        Residues = cUnitSPwaves - AvgWaveform;
+        ResValueSTD = std(Residues(:));
+        
+        % from siegle et al, 2021 nature paper, the SNR is defined as the
+        % ratio between amplitude and 2x residue std
+        UnitSNRs(cUnit) = UnitAmps(cUnit) / ResValueSTD;
+        
+    end
+    
+    SNRExcludeInds = UnitSNRs < FullClusSelectionops.SNR;
+    fprintf('AmpSNR exclusion fraction is %d/%d, %.4f...\n',sum(SNRExcludeInds),numel(SNRExcludeInds),mean(SNRExcludeInds));
+else
+    SNRExcludeInds = false;
 end
 
+OverAllExcludeInds = waveformExclusion | ISIExclusion | sessSPdistributionExclusion ...
+    | AmpExcludeInds | AmpSpreadExcludeInds | FRExcludeInds | SNRExcludeInds;
+fprintf('##################################################\n');
+fprintf('Overall exclusion number is %d/%d, %.4f...\n',sum(OverAllExcludeInds),numel(OverAllExcludeInds),mean(OverAllExcludeInds));
+
+fprintf('\n');
+end
 
 
 
@@ -162,7 +264,7 @@ function UnitFeatures = SpikeWaveFeature(obj,varargin)
 %             huf = figure('visible','off');
         AvgWaves = mean(cspWaveform,'omitnan');
         UnitDatas{cUnit,1} = cspWaveform;
-        UnitDatas{cUnit,2} = AllChannelWaveData;
+        UnitDatas{cUnit,2} = squeeze(mean(AllChannelWaveData,'omitnan'));
         %%
 %             plot(AvgWaves);
         try

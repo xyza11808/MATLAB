@@ -134,7 +134,7 @@ rmdir(rootH,'s');
 
 %% construct group info file
 FolderPath = rootZ;
-SR = rez.ops.sampsToRead;
+SR = rez.ops.fs;
 disp('Constructing cluster info files...\n');
 ks3_Result2Info_script;
 

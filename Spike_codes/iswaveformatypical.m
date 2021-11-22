@@ -37,8 +37,16 @@ if any(isinf(NormedWave)) || any(isnan(upsampleWave))
     elseif nargout == 2
         varargout{1} = Isatypical;
         varargout{2} = atypicalVec;
+    elseif nargout == 3
+        varargout{1} = Isatypical;
+        varargout{2} = atypicalVec;
+        varargout{3} = WaveAmplitude;
+    elseif nargout == 4
+        varargout{1} = Isatypical;
+        varargout{2} = atypicalVec;
+        varargout{3} = WaveAmplitude;
+        varargout{4} = [toughInds, postPeakIndex];
     end
-
     return;
 end
 [~,upsample_toughInds] = min(abs(upsamplexx - toughInds));

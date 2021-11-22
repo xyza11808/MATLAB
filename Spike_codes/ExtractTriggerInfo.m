@@ -30,12 +30,12 @@ TrgChnNorm = TriggerChnData/min(64,max(TriggerChnData));
 TriggerEvents = [];
 k = 1;
 IsInitInput = 1;
-TrgWaveStart = find(TrgChnNorm(30000*60*5:end) > 0.95,1,'first');
+TrgWaveStart = find(TrgChnNorm(30000*30:end) > 0.95,1,'first');
 
 while ~isempty(TrgWaveStart)
     % StartSearchInds = TrgWaveStart;
     if IsInitInput
-        TrgWaveStart = TrgWaveStart + 30000*60*5 - 1;
+        TrgWaveStart = TrgWaveStart + 30000*30 - 1;
         IsInitInput = 0;
     end
     TrgwaveEndInds = find(TrgChnNorm(TrgWaveStart:end) < 0.95,1,'first');

@@ -1,5 +1,5 @@
 
-function [UsedClus_IDs,ChannelUseds_id] = SpikeWaveFeature_single(rez)
+function [UsedClus_IDs,ChannelUseds_id] = SpikeWaveFeature_single(rez,IsKsCall)
 % function used to analysis single unit waveform features
 % the wave form features may includes firerate, peak-to-trough
 % width, refraction peak and so on
@@ -29,11 +29,22 @@ function [UsedClus_IDs,ChannelUseds_id] = SpikeWaveFeature_single(rez)
 % %
 %             end
 % fullpaths = fullfile(obj.binfilePath, obj.RawDataFilename);
-fullpaths = rez.ops.fbinary; % bin file path
+if ~exist('IsKsCall','var')
+    IsKsCall = 1;
+end
 
-ksfolder = fullfile(rez.ops.ksFolderPath,'ks2_5');
-if ~isfolder(ksfolder)
-    ksfolder = fullfile(rez.ops.ksFolderPath,'kilosort3');
+if IsKsCall
+    fullpaths = rez.ops.fbinary; % bin file path
+
+    ksfolder = fullfile(rez.ops.ksFolderPath,'ks2_5');
+    if ~isfolder(ksfolder)
+        ksfolder = fullfile(rez.ops.ksFolderPath,'kilosort3');
+    end
+    TotalSamples = rez.ops.sampsToRead;
+else
+    fullpaths = fullfile(rez.binfilePath, rez.RawDataFilename);
+    ksfolder = rez.ksFolder;
+    TotalSamples = rez.Numsamp;
 end
 ftempid = fopen(fullpaths);
 
@@ -48,14 +59,14 @@ end
 % read clusters info from cluster_info.tsv file
 cgsFile = fullfile(ksfolder,'cluster_info.tsv');
 [UsedClus_IDs,ChannelUseds_id,~,...
-    ~] = ClusterGroups_Reads(cgsFile);
+    ~,~] = ClusterGroups_Reads(cgsFile);
 SpikeTimeSample = readNPY(fullfile(ksfolder,'spike_times.npy'));
 SpikeClus = readNPY(fullfile(ksfolder,'spike_clusters.npy'));
 
 WaveWinSamples = [-30,51];
 NumofUnit = length(UsedClus_IDs);
-UnitDatas = cell(NumofUnit,1);
-UnitFeatures = cell(NumofUnit,3);
+UnitDatas = cell(NumofUnit,2);
+UnitFeatures = cell(NumofUnit,5);
 for cUnit = 1 : NumofUnit
     % cUnit = 137;
     %% close;
@@ -70,12 +81,13 @@ for cUnit = 1 : NumofUnit
         SPNums = 2000;
     end
     cspWaveform = nan(SPNums,diff(WaveWinSamples));
+    AllChannelWaveData = nan(SPNums,384,diff(WaveWinSamples));
     for csp = 1 : SPNums
         cspTime = UsedSptimes(csp);
         cspStartInds = cspTime+WaveWinSamples(1);
         cspEndInds = cspTime+WaveWinSamples(2);
         offsetTimeSample = cspStartInds - 1;
-        if offsetTimeSample < 0 || cspEndInds > rez.ops.sampsToRead
+        if offsetTimeSample < 0 || cspEndInds > TotalSamples
             continue;
         end
         offsets = 385*(cspStartInds-1)*2;
@@ -84,6 +96,7 @@ for cUnit = 1 : NumofUnit
             % correct offset value is set
             AllChnDatas = fread(ftempid,[385 diff(WaveWinSamples)],'int16');
             cspWaveform(csp,:) = AllChnDatas(cClusChannel,:);
+            AllChannelWaveData(csp,:,:) = AllChnDatas(1:384,:); % for waveform spread calculation
             %        cspWaveform(csp,:) = mean(AllChnDatas);
         end
     end
@@ -91,14 +104,17 @@ for cUnit = 1 : NumofUnit
     huf = figure('visible','off');
     if size(cspWaveform,1) == 1
         AvgWaves = cspWaveform;
+        UnitDatas{cUnit,2} = squeeze(AllChannelWaveData);
     else
         AvgWaves = mean(cspWaveform,'omitnan');
+        UnitDatas{cUnit,2} = squeeze(mean(AllChannelWaveData,'omitnan'));
     end
-    UnitDatas{cUnit} = cspWaveform;
+    UnitDatas{cUnit,1} = cspWaveform;
+    
     %%
     plot(AvgWaves);
     try
-        [isabnorm,isUsedVec] = iswaveformatypical(AvgWaves,WaveWinSamples,false);
+        [isabnorm,isUsedVec,waveAmplitude,toughPeakInds] = iswaveformatypical(AvgWaves,WaveWinSamples,false);
     catch ME
         fprintf('Errors');
     end
@@ -113,7 +129,7 @@ for cUnit = 1 : NumofUnit
     if wavefeature.IsPrePosPeak
         text(50,0.5*max(AvgWaves),{sprintf('pre2postpospeakratio = %.3f',wavefeature.pre2post_peakratio)},'color','r','FontSize',8);
     end
-    UnitFeatures(cUnit,:) = {wavefeature,isabnorm,isUsedVec};
+    UnitFeatures(cUnit,:) = {wavefeature,isabnorm,isUsedVec,waveAmplitude,toughPeakInds};
     %
     
     saveName = fullfile(ksfolder,'UnitWaveforms',sprintf('Unit%d waveform plot save',cUnit));
