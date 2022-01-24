@@ -382,7 +382,7 @@ switch eventdata.Key
             disp(['Saved probe locations in ' save_fn])
             
             % Close GUI
-            close(gui_fig)
+%             close(gui_fig)
             
             % Plot probe trajectories
             plot_probe(gui_data,probe_ccf);

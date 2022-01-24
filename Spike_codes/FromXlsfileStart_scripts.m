@@ -46,7 +46,8 @@ for cProbe = 1 : size(UsedDataCells,1)
         [fPath, ~, ~] = fileparts(BehaviorDataPath);
         PassiveFileFullPath = fullfile(fPath,UsedDataCells{cProbe,5});
 
-        if ~exist(ProbeFileLocation,'file') || ~exist(fullfile(ProbespikeFolder,'kilosort3'),'dir') || ...
+%         if ~exist(ProbeFileLocation,'file') || ~exist(fullfile(ProbespikeFolder,'kilosort3'),'dir') || ...
+          if ~exist(ProbeFileLocation,'file') || ~exist(fullfile(ProbespikeFolder,'ks2_5'),'dir') || ...
                 ~exist(BehaviorDataPath,'file')
             warning('At least one of the file location string doesnt exist.');
 %             return;
@@ -54,10 +55,15 @@ for cProbe = 1 : size(UsedDataCells,1)
         end
         BehaviorExcludeInds = UsedDataCells{cProbe,6};
         %
-        if exist(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandleAll.mat'),'file')
-            load(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandleAll.mat'));
+%         if exist(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandleAll.mat'),'file')
+%             load(fullfile(ProbespikeFolder,'kilosort3','ClassAnaHandleAll.mat'));
+%         else
+%             ProbNPSess = NPspikeDataMining(fullfile(ProbespikeFolder,'kilosort3'),'Task');
+%         end
+        if exist(fullfile(ProbespikeFolder,'ks2_5','ClassAnaHandleAll.mat'),'file')
+            load(fullfile(ProbespikeFolder,'ks2_5','ClassAnaHandleAll.mat'));
         else
-            ProbNPSess = NPspikeDataMining(fullfile(ProbespikeFolder,'kilosort3'),'Task');
+            ProbNPSess = NPspikeDataMining(fullfile(ProbespikeFolder,'ks2_5'),'Task');
         end
         %
 %         if exist(fullfile(ProbNPSess.ksFolder,'ClassAnaHandle.mat'),'file')
@@ -84,7 +90,8 @@ for cProbe = 1 : size(UsedDataCells,1)
             
         end
         % exclude isoformed spike wave units
-        ProbNPSess = ProbNPSess.wavefeatureExclusion;
+%         ProbNPSess = ProbNPSess.wavefeatureExclusion;
+        
         %
         task_colorplot_script;
         %

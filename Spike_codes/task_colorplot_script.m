@@ -25,11 +25,14 @@ if ~(isempty(BehaviorExcludeInds) || any(ismissing(BehaviorExcludeInds)))
        end
     end
 end
+
+
+%%
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
 if isempty(BlockSectionInfo)
     return;
 end
-%%
+
 TrTypes = double(behavResults.Trial_Type(:));
 TrActionChoice = double(behavResults.Action_choice(:));
 TrFreqUseds = double(behavResults.Stim_toneFreq(:));
@@ -46,6 +49,24 @@ Smoothbin = [50,10]; % time window for smooth psth, in ms format
 if isempty(ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds})
     ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, Smoothbin, TrStimOnsets);
 end
+% the unit exclusion needs spike time data, moved after the unit spike data
+% construction
+if isempty(ProbNPSess.SurviveInds)
+    ProbNPSess = ProbNPSess.ClusScreeningFun;
+else
+    IsRescreening = questdlg('Survival inds already exists, do you want to rescreen the units?','rescreening check',...
+        'Yes','No','Cancel','Yes');
+    switch IsRescreening
+        case 'Yes'
+            ProbNPSess = ProbNPSess.ClusScreeningFun;
+        case 'No'
+            % do nothing
+        case 'Cancel'
+            % do nothing
+    end
+end
+    
+    
 [lick_time_struct,Lick_bias_side]=beha_lickTime_data(behavResults,TimeWin(2)); 
 
 IsBoundshiftSess = 0;

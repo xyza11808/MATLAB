@@ -1,6 +1,6 @@
 function AP_align_probe_histology(st,slice_path, ...
     spike_times,spike_templates,template_depths, ...
-    lfp,lfp_channel_positions,use_probe)
+    lfp,lfp_channel_positions,use_probe)  %
 % AP_align_probe_histology(st,slice_path,spike_times,spike_templates,template_depths,lfp,lfp_channel_positions,use_probe)
 
 % If no probe specified, use probe 1
@@ -145,7 +145,7 @@ gui_data = guidata(gui_fig);
 
 % Set amounts to move by with/without shift
 if any(strcmp(eventdata.Modifier,'shift'))
-    y_change = 100;
+    y_change = 50;
 else
     y_change = 1;
 end

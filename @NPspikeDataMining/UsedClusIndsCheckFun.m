@@ -80,6 +80,7 @@ end
 if FullClusSelectionops.SessSpiketimeCheck % session spike time distribution check
     if isempty(obj.TrigData_Bin{obj.CurrentSessInds})
         warning('The PSTH data havent been constructed yet, skip spike time consistance check.\n');
+        sessSPdistributionExclusion = false;
     else
         RespCheckInds = SessResp_binnedcheckFun(obj);
         if isempty(RespCheckInds)

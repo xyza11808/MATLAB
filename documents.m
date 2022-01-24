@@ -150,6 +150,10 @@
 % ########################################################
 % function 'fitcdiscr' can be used to train a LDA classifier
 
+% #########################################################
+
+% "evalclusters" can be used to find optimal cluster numbers while
+% calculating kmeans clusters
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % reset color scale for multiple subplots

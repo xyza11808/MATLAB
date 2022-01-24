@@ -85,12 +85,23 @@ classdef NPspikeDataMining
                     error('Unable to locate *.bin file location or rez.mat file location, which is needed for further analysis.');
                 else
                     fprintf('Load sample number from rez.mat file.\n');
-                    try
-                       RezStrc = load(fullfile(FolderPath,'rezdata.mat'));
-                    catch
-                        RezStrc = load(fullfile(FolderPath,'rez2.mat'));
+                    if exist(fullfile(FolderPath,'rez2.mat'),'file')
+                        loadName = fullfile(FolderPath,'rez2.mat');
+                    else
+                        loadName = fullfile(FolderPath,'rezdata.mat');
                     end
-                    obj.Numsamp = RezStrc.rez.ops.sampsToRead;
+                    try
+                       RezStrc = load(loadName,'TotalSamples');
+                       obj.Numsamp = RezStrc.TotalSamples;
+                    catch
+                        RezStrc = load(loadName);
+                        obj.Numsamp = RezStrc.rez.ops.sampsToRead;
+                        TotalSamples = obj.Numsamp;
+                        rez = RezStrc.rez;
+                        save(loadName,'rez','TotalSamples','-v7.3');
+                        clearvars RezStrc rez
+                    end
+                    
                     obj.mmf = [];
                 end
             else
@@ -167,11 +178,12 @@ classdef NPspikeDataMining
                InputOps = struct('Unitwaveform',true,...
                     'ISIviolation',0.1,...  % default threshold value is 0.1, or 10%
                     'SessSpiketimeCheck',true,...
-                    'Amplitude',30,... % threshold amplitude value, default is 70uv
+                    'Amplitude',20,... % threshold amplitude value, default is 70uv for subcortical neurons
                     'WaveformSpread',1000,... % 1000um, about 50 channels?.
                     'FiringRate',1,... % 1Hz
                     'SNR',3); 
            end
+           
            OverAllExcludeInds = UsedClusIndsCheckFun(obj,InputOps);
            
            obj.UsedClus_IDs = obj.FRIncludeClus(~OverAllExcludeInds);
@@ -396,13 +408,14 @@ classdef NPspikeDataMining
             
             if length(trigLen) > 1
                 % for task condition, the first 10 trial will have different trigger durations
-                Trig_InitSeg_durs = (abs(TrigWaveAll_lens - trigLen(1)) < 3);
+                Trig_InitSeg_durs = (abs(TrigWaveAll_lens - trigLen(1)) < 5);
                 Trig_InitSeg_consec = consecTRUECount(Trig_InitSeg_durs);
                 Trig_Init_TrialEnd = find(Trig_InitSeg_consec == 10,1,'first'); % used the first 10 tirals
                 if isempty(Trig_Init_TrialEnd)
                     warning('Failed to find enough lengthed consecutive trials.\n Please check your trigger duration data or input value.\n')
                 end
-                SessionTrStartInds = find(abs(TrigWaveAll_lens((Trig_Init_TrialEnd(1)+1):end) - trigLen(2)) < 2)+Trig_Init_TrialEnd(1);
+                SessionTrStartInds = find(abs(TrigWaveAll_lens((Trig_Init_TrialEnd(1)+1):end) - trigLen(2)) < 5 | ...
+                    abs(TrigWaveAll_lens((Trig_Init_TrialEnd(1)+1):end) - trigLen(1)) < 5)+Trig_Init_TrialEnd(1);
                 TrigWaveAll_lensEquals = [((Trig_Init_TrialEnd-9):Trig_Init_TrialEnd)';SessionTrStartInds];
                 
                 obj.UsedTrigOnTime{SessTypeInds} = TrigwaveScales(TrigWaveAll_lensEquals,1)/obj.SpikeStrc.sample_rate; % in seconds
@@ -468,11 +481,11 @@ classdef NPspikeDataMining
             
             TrigNums = length(obj.UsedTrigOnTime{obj.CurrentSessInds});
             TrigBinDatas = cell(TrigNums,2);
-            if isempty(obj.UsedClus_IDs)
+%             if isempty(obj.UsedClus_IDs)
                 calClusters = obj.FRIncludeClus;
-            else
-                calClusters = obj.UsedClus_IDs;
-            end
+%             else
+%                 calClusters = obj.UsedClus_IDs;
+%             end
             NumUsedClus = length(calClusters);
             cTrig_TrialSPtimes = cell(NumUsedClus,TrigNums);
             for ctrig = 1 : TrigNums

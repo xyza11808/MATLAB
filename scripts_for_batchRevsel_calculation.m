@@ -1,4 +1,5 @@
-datafolders = 'G:\behaviro_data\batch106\anm08\data';
+cclr
+datafolders = 'E:\datas\behavDatas\batch107\anm06Data';
 cd(datafolders);
 sess_matfiles = dir(fullfile(datafolders,'*2021*.mat'));
 
