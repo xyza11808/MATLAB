@@ -1,7 +1,10 @@
 cclr
 load('NPClassHandleSaved.mat')
-
-
+load('Chnlocation.mat');
+load('SessAreaIndexData.mat');
+if isempty(ProbNPSess.ChannelAreaStrs)
+    ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
+end
 %%
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 % TimeWin = [-1.5,8]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
@@ -15,22 +18,24 @@ SMBinDataMtxRaw = SMBinDataMtx;
 if ~isempty(ProbNPSess.SurviveInds)
     SMBinDataMtx = SMBinDataMtx(:,ProbNPSess.SurviveInds,:);
 end
-SMBinDataMtx = SMBinDataMtx(:,:,:);
+% SMBinDataMtx = SMBinDataMtx(:,:,:);
+SMBinDataMtx = SMBinDataMtx(:,SessAreaIndexStrc.CA3.MatchedUnitInds,:);
+
+%%
 [TrNum, unitNum, BinNum] = size(SMBinDataMtx);
 
 TriggerAlignBin = ProbNPSess.TriggerStartBin{ProbNPSess.CurrentSessInds};
 halfBaselineWinInds = round((TriggerAlignBin-1)/2);
-% BaselineResp_First = mean(SMBinDataMtx(:,:,1:halfBaselineWinInds),3);
-% BaselineResp_Last = mean(SMBinDataMtx(:,:,(halfBaselineWinInds+1):(TriggerAlignBin-1)),3);
+BaselineResp_First = mean(SMBinDataMtx(:,:,1:halfBaselineWinInds),3);
+BaselineResp_Last = mean(SMBinDataMtx(:,:,(halfBaselineWinInds+1):(TriggerAlignBin-1)),3);
 
-RespTimeWin = round(1/ProbNPSess.USedbin(2));
-BaselineResp_First = mean(SMBinDataMtx(:,:,(TriggerAlignBin+1):(TriggerAlignBin+RespTimeWin)),3);
+% RespTimeWin = round(1/ProbNPSess.USedbin(2));
+% BaselineResp_First = mean(SMBinDataMtx(:,:,(TriggerAlignBin+1):(TriggerAlignBin+RespTimeWin)),3);
 
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
 %%
 zsbaselineData = zscore(BaselineResp_First);
-% figure;imagesc(zsbaselineData)
-% figure;plot(zsbaselineData)
+
 BlockTypesAll = double(behavResults.BlockType(:));
 sampleInds = randsample(TrNum,round(TrNum*0.7));
 IsTrainingSet = false(TrNum,1);
@@ -89,7 +94,7 @@ end
 % AUCValuesAll(RevInds,1) = 1 - AUCValuesAll(RevInds,1);
 
 %%
-cUnit = 181;
+cUnit = 38;
 if cUnit > unitNum
     fprintf('Out of index range.\n');
     return;
@@ -98,7 +103,8 @@ close;
 lhf = figure;
 hold on
 plot(smoothed_baseline_resp(:,cUnit),'b');
-title(sprintf('AUC = %.4f', AUCValuesAll(cUnit)));
+cChnStrs = ProbNPSess.ChannelAreaStrs{2}{ProbNPSess.ChannelUseds_id(cUnit)};
+title(sprintf('(%s) AUC = %.4f', cChnStrs, AUCValuesAll(cUnit)));
 yaxiss = get(gca,'ylim');
 if size(BlockSectionInfo.BlockTrScales,1) == 1
     BlockEndInds = BlockSectionInfo.BlockTrScales(2);
@@ -132,6 +138,9 @@ pValue = 1./(1+exp(-1.*MatrixScore));
 %% pred new half dataset
 [pihatNew,dlowNew,dhiNew] = mnrval(BTrain,BaselineResp_Last,statsTrain);
 PredProbNew = pihatNew(:,1);
+
+%% predict block type using SVM classifier
+PredProbNew = 1 - predict(mdl,BaselineResp_Last); % the result was minused by 1 to adapted for choice direction
 
 %% plot the behavior result on top
 RevFreqs = BlockSectionInfo.BlockFreqTypes(logical(BlockSectionInfo.IsFreq_asReverse));

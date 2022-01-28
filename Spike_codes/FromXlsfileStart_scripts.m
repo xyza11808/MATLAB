@@ -26,7 +26,7 @@ DataCell = DataCellWithNames(2:end,:);
 ProbeNums = size(DataCell,1);
 BadProbeInds = cellfun(@(x) isempty(x) | strcmpi(x,'NaN') | ismissing({x}),DataCell(:,3)) | ... % lack of ks folder path
     cellfun(@(x) isempty(x) | strcmpi(x,'NaN') | ismissing({x}),DataCell(:,4)) | ... % lack of behavior data path
-    cellfun(@(x) strcmpi(x,'No'),DataCell(:,7)); % unable to check probe location
+    cellfun(@(x) strcmpi(x,'No'),DataCell(:,7)); % unable to find probe location
 
 UsedDataCells = DataCell(~BadProbeInds,:);
 

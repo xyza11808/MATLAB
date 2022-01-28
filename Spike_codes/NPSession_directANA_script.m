@@ -1,7 +1,7 @@
 cclr;
 
 %
-ProbespikeFolder='F:\b105a07_ksoutput\b105a07_NPSess01_20210626_g0_cat\Cat_b105a07_NPSess01_20210626_g0_imec3';
+ProbespikeFolder='F:\b104a03_ksoutputs\catgt_b104a03_20210427_NPSess01_g0\Cat_b104a03_20210427_NPSess01_g0_imec3';
 
 %
 % start a new NP data analysis session
@@ -11,7 +11,7 @@ ProbNPSess = ProbNPSess.triggerOnsetTime([],[6,2],[]);
 % ProbNPSess = ProbNPSess.triggerOnsetTime([],[2,6],[]);
 % load behavior datas
 
-load('F:\b105a07_ksoutput\b105a07_NPSess01_20210626_g0_cat\105a07_2afc_20210626_NPSess01.mat');
+load('F:\b104a03_ksoutputs\catgt_b104a03_20210427_NPSess01_g0\atch104_anm03_20210427Tony_NPSess01.mat');
 %
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
 if isempty(BlockSectionInfo)
@@ -337,7 +337,7 @@ end
 
 
 % passive analysis session
-PassiveFileFullPath = 'F:\b105a07_ksoutput\b105a07_NPSess01_20210626_g0_cat\b105a07_rf_20210626_NPSess01.txt';
+PassiveFileFullPath = 'F:\b104a03_ksoutputs\catgt_b104a03_20210427_NPSess01_g0\batch104_anm03_20210427Tony_NPSess01_passive.txt';
 ProbNPSess.CurrentSessInds = strcmpi('passive',ProbNPSess.SessTypeStrs);
 
 ProbNPSess = ProbNPSess.triggerOnsetTime([],4);  % 4 is the trigger duration, in ms
