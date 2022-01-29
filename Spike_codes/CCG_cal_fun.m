@@ -19,10 +19,10 @@ else
     IsACGCalculation = 0;
 end
 
-if ~exist('spikeBin','var')
+if ~exist('spikeBin','var') || isempty(spikeBin)
     spikeBin = 1; % binned in 1ms step
 end
-if ~exist('IsShiftCCG','var')
+if ~exist('IsShiftCCG','var') || isempty(IsShiftCCG)
     IsShiftCCG = 0;
 end
 
@@ -31,18 +31,18 @@ xTrain2 = xTrain2(:);
 % TrialNums = length(xTrain1);
 
 % the spike time should all in ms unit
-TrTimeBins = 0:spikeBin:TrialTime; % trial time should be ms also
-xt1_counts = cellfun(@(x) double(histcounts(x,TrTimeBins)>0),xTrain1,'UniformOutput',false); % binary vector for each time bin
-xt2_counts = cellfun(@(x) double(histcounts(x,TrTimeBins)>0),xTrain2,'UniformOutput',false);
-xt1_count_mtx = cell2mat(xt1_counts);
-xt2_count_mtx = cell2mat(xt2_counts);
+% TrTimeBins = 0:spikeBin:TrialTime; % trial time should be ms also
+% xt1_counts = cellfun(@(x) double(histcounts(x,TrTimeBins)>0),xTrain1,'UniformOutput',false); % binary vector for each time bin
+% xt2_counts = cellfun(@(x) double(histcounts(x,TrTimeBins)>0),xTrain2,'UniformOutput',false);
+xt1_count_mtx = double(cell2mat(xTrain1) > 0);
+xt2_count_mtx = double(cell2mat(xTrain2) > 0);
 
 lag_tau_bin = ceil(lag_tau/spikeBin);
-TrBinNums = length(TrTimeBins)-1; % trial total bin count
+TrBinNums = size(xt1_count_mtx,2); % trial total bin count
 if IsACGCalculation
     bottomValues = 1;
 else
-    bottomValues = ((TrialTime-abs(lag_tau))*sqrt(FR1*FR2)/1000);
+    bottomValues = ((TrialTime*1000-abs(lag_tau))*sqrt(FR1*FR2));
 end
     
 if ~IsShiftCCG

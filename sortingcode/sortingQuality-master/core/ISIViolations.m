@@ -12,6 +12,9 @@ function [fpRate, numViolations] = ISIViolations(spikeTrain, minISI, refDur)
 % to know... also, if it's a fast spiking cell, you could use a smaller
 % value than for regular spiking.
 
+% The false positive value should less than 0.1, Ref from 
+% https://doi.org/10.1038/s41586-020-03166-8
+
 totalRate = length(spikeTrain)/spikeTrain(end);
 numViolations = sum(diff(spikeTrain) <= refDur);
 
