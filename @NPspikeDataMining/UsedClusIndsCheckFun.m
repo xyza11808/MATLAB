@@ -69,7 +69,11 @@ if ~isempty(FullClusSelectionops.ISIviolation)
    ClusISIvolFrac = zeros(NumClusters,1);
    for cClus = 1 : NumClusters
        cClusSpiketime = obj.SpikeTimes(obj.SpikeClus == AllClus(cClus));
-       [ClusISIvolFrac(cClus),~] = ISIViolations(cClusSpiketime, minISI, refDur);
+       if obj.FRIncludeClusFRs(cClus) > 10 % in case of a fast spiking neuron, the refDur should be less
+            [ClusISIvolFrac(cClus),~] = ISIViolations(cClusSpiketime, minISI, refDur/2);
+       else
+           [ClusISIvolFrac(cClus),~] = ISIViolations(cClusSpiketime, minISI, refDur);
+       end
    end
     ISIExclusion = ClusISIvolFrac >= ViolationFracThres;
     fprintf('ISI exclusion fraction is %d/%d, %.4f...\n',sum(ISIExclusion),numel(ISIExclusion),mean(ISIExclusion));

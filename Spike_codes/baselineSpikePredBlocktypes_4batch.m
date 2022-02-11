@@ -255,3 +255,28 @@ close(h4f);
 %     ksfolder = fullfile(NPsessionfolders{cfff},sortingcode_string);
 %     baselineSpikePredBlocktypes_4batch;
 % end
+
+% ############################################################################
+
+% % batched through all used sessions
+% cclr
+% 
+% AllSessFolderPathfile = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+% % AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+% sortingcode_string = 'ks2_5';
+% 
+% SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
+%         'Sheet',1);
+% SessionFolders = SessionFoldersC(2:end);
+% NumprocessedNPSess = length(SessionFolders);
+% 
+% %%
+% 
+% for cfff = 1 : NumprocessedNPSess
+%     
+% %     ksfolder = fullfile(NPsessionfolders{cfff},sortingcode_string);
+%     ksfolder = fullfile(strrep(SessionFolders{cfff}(2:end-1),'F:','I:\ksOutput_backup'),sortingcode_string);
+%     fprintf('Processing session %d...\n', cfff);
+%     baselineSpikePredBlocktypes_4batch;
+% end
+

@@ -1,4 +1,9 @@
 
+clearvars ProbNPSess UnitUsedCoefs UnitFitmds_All
+load(fullfile(cSessFolder,'ks2_5','NPClassHandleSaved.mat'));
+
+%%
+
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 % TimeWin = [-1.5,8]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
 % Smoothbin = [50,10]; %
@@ -40,8 +45,6 @@ Stimwinbin = round([0,150;151,300]/1000/ProbNPSess.USedbin(2));
 AnsRe_winbin = round([0,1000]/1000/ProbNPSess.USedbin(2));
 if strcmpi(ProbNPSess.TrigAlignType{ProbNPSess.CurrentSessInds},'trigger') % events aligend to trigger time 
     
-    
-    
 elseif strcmpi(ProbNPSess.TrigAlignType{ProbNPSess.CurrentSessInds},'stim') 
     AlignedChoiceTime = ChoiceTimes - OnsetTime;
     AlignedChoiceBin = round(max(AlignedChoiceTime,0)/1000/ProbNPSess.USedbin(2) + TriggerAlignBin);
@@ -82,9 +85,6 @@ elseif strcmpi(ProbNPSess.TrigAlignType{ProbNPSess.CurrentSessInds},'stim')
 %         NullDataSet(cRepeat,:) = {StimResp_Null, StimResp2_Null, ChoiceResp_Null, ReResp_Null};
 %     end
 end
-
-% 
-
 
 AllParas_mtx = zeros(TrNum*3,NumFreqTypes+2+1+2);
 AllParas_mtx(1:TrNum,1:NumFreqTypes) = FreqParas_mtx;
@@ -228,57 +228,117 @@ parfor cUnit = 1 : unitNum
 
 end
 warning on
+
 %%
-cUnit = 31;
-if cUnit > unitNum
-    return;
+DevThreshold = 0.1; % mannually defined criteria
+AllmdFit_devExplain_median = cellfun(@median,UnitFitmds_All(:,2));
+AboveThresUnit = find(AllmdFit_devExplain_median > DevThreshold);
+RealUnitInds = ProbNPSess.UsedClus_IDs(AboveThresUnit);
+NumUsedUnits = length(AboveThresUnit);
+fprintf('Number of significant units is %d.\n', NumUsedUnits);
+
+%%
+UnitUsedCoefs = cell(NumUsedUnits,1);
+for cUsed_Unit = 1 : NumUsedUnits
+    cUnit_allCoefs = UnitFitmds_All{AboveThresUnit(cUsed_Unit),1};
+    AboveThresDevInds = UnitFitmds_All{AboveThresUnit(cUsed_Unit),2} > DevThreshold;
+    cUnit_UsedCoefs = cUnit_allCoefs(AboveThresDevInds);
+    %
+    cUnit_coef_pvalues = cellfun(@(x) (x.pValue)',cUnit_UsedCoefs,'UniformOutput',false);
+    cUnit_coef_pvalueMtx = cell2mat(cUnit_coef_pvalues);
+    cUnit_coef_SigInds = mean(cUnit_coef_pvalueMtx < 0.05) > 0.7; % more than 70% of the p values is significant
+    cUnit_coefs = cellfun(@(x) (x.Estimate)',cUnit_UsedCoefs,'UniformOutput',false);
+    cUnit_coefsMtx = cell2mat(cUnit_coefs);
+    cUnit_coefsMtx(cUnit_coef_pvalueMtx > 0.05) = NaN;
+    AvgCoefs = mean(cUnit_coefsMtx,'omitnan');
+    cUnitCoefs_final = zeros(1,numel(cUnit_coef_SigInds));
+    cUnitCoefs_final(cUnit_coef_SigInds) = AvgCoefs(cUnit_coef_SigInds);
+    %
+    UnitUsedCoefs{cUsed_Unit} = cUnitCoefs_final;
+    
 end
 
-AllParas_mtx = zeros(TrNum*3,NumFreqTypes+2+1+2);
-AllParas_mtx(1:TrNum,1:NumFreqTypes) = FreqParas_mtx;
-AllParas_mtx((1+TrNum):(TrNum*2),(1+NumFreqTypes):(2+NumFreqTypes)) = ChoiceParas_mtx;
-AllParas_mtx((1+TrNum*2):(TrNum*3),(3+NumFreqTypes)) = ReParas_mtx;
-BlockType_mtx = [1-TrialBlockTypes,TrialBlockTypes];
-AllParas_mtx(1:end,(4+NumFreqTypes):(5+NumFreqTypes)) = [BlockType_mtx;BlockType_mtx;BlockType_mtx];
-
-% NumRepeats = 100;
-% UnitFitmds_All = cell(unitNum,2);
-% parfor cUnit = 1 : unitNum
-    warning off
-    cUnitRespVec = [StimResp1(:,cUnit);ChoiceResp(:,cUnit);ReResp(:,cUnit)];
-    cUnitRespVec = zscore(cUnitRespVec);
-%     IsNegResp = mean(cUnitRespVec) < 0;
-%     cUnitRespVec = cUnitRespVec/mean(cUnitRespVec);
-    
-%     cUnitRepeatDevExplain = zeros(NumRepeats,1);
-%     cUnitRepeatMD = cell(NumRepeats,1);
-%     for cRepeat = 1 : NumRepeats
-        SampleInds = randsample(numel(cUnitRespVec),round(numel(cUnitRespVec)*0.7));
-        trainInds = false(numel(cUnitRespVec),1);
-        trainInds(SampleInds) = true;
-
-        TestInds = ~trainInds;
-
-        md2 = fitglm(AllParas_mtx(trainInds,:),cUnitRespVec(trainInds,:),overAllTerms_mtx,'CategoricalVars',...
-            true(NumFreqTypes+5,1));
-
-        %
-        TestDataVec = cUnitRespVec(~trainInds,:);
-        TestDataPred = predict(md2,AllParas_mtx(~trainInds,:));
-
-        NullDEvience = sum((TestDataVec - mean(TestDataVec)).^2);
-        predDev = sum((TestDataVec - TestDataPred).^2);
-        Explain = (NullDEvience - predDev)/NullDEvience;
-        
-%         cUnitRepeatDevExplain(cRepeat) = Explain;
-%         cUnitRepeatMD{cRepeat} = md2.Coefficients;
-        
-        disp(md2)
-
-        fprintf('Current cluster %d: \n   devience explain = %.6f.\n',ProbNPSess.UsedClus_IDs(cUnit),Explain);
+%%
+% % batched running code
+% cclr
+% 
+% AllSessFolderPathfile = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+% % AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+% 
+% SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
+%         'Sheet',1);
+% SessionFolders = SessionFoldersC(2:end);
+% NumUsedSess = length(SessionFolders);
+% 
+% 
+% %%
+% 
+% 
+% for cSess = 1 : NumUsedSess
+%     
+% %     cSessFolder = fullfile(SessionFolders{cSess}(2:end-1),'ks2_5');
+%     cSessFolder = fullfile(strrep(SessionFolders{cSess}(2:end-1),'F:','I:\ksOutput_backup'));
+%     
+%     EventResp_avg_codes;
+% 
+%     saveName = fullfile(cSessFolder,'ks2_5','UnitRespTypeCoef.mat');
+%     save(saveName,'UnitUsedCoefs', 'AboveThresUnit', 'UnitFitmds_All', 'overAllTerms_mtx', 'DevThreshold','-v7.3');
+%     
 % end
-warning on
 
+
+
+%%
+% cUnit = 31;
+% if cUnit > unitNum
+%     return;
+% end
+% 
+% AllParas_mtx = zeros(TrNum*3,NumFreqTypes+2+1+2);
+% AllParas_mtx(1:TrNum,1:NumFreqTypes) = FreqParas_mtx;
+% AllParas_mtx((1+TrNum):(TrNum*2),(1+NumFreqTypes):(2+NumFreqTypes)) = ChoiceParas_mtx;
+% AllParas_mtx((1+TrNum*2):(TrNum*3),(3+NumFreqTypes)) = ReParas_mtx;
+% BlockType_mtx = [1-TrialBlockTypes,TrialBlockTypes];
+% AllParas_mtx(1:end,(4+NumFreqTypes):(5+NumFreqTypes)) = [BlockType_mtx;BlockType_mtx;BlockType_mtx];
+% 
+% % NumRepeats = 100;
+% % UnitFitmds_All = cell(unitNum,2);
+% % parfor cUnit = 1 : unitNum
+%     warning off
+%     cUnitRespVec = [StimResp1(:,cUnit);ChoiceResp(:,cUnit);ReResp(:,cUnit)];
+%     cUnitRespVec = zscore(cUnitRespVec);
+% %     IsNegResp = mean(cUnitRespVec) < 0;
+% %     cUnitRespVec = cUnitRespVec/mean(cUnitRespVec);
+%     
+% %     cUnitRepeatDevExplain = zeros(NumRepeats,1);
+% %     cUnitRepeatMD = cell(NumRepeats,1);
+% %     for cRepeat = 1 : NumRepeats
+%         SampleInds = randsample(numel(cUnitRespVec),round(numel(cUnitRespVec)*0.7));
+%         trainInds = false(numel(cUnitRespVec),1);
+%         trainInds(SampleInds) = true;
+% 
+%         TestInds = ~trainInds;
+% 
+%         md2 = fitglm(AllParas_mtx(trainInds,:),cUnitRespVec(trainInds,:),overAllTerms_mtx,'CategoricalVars',...
+%             true(NumFreqTypes+5,1));
+% 
+%         %
+%         TestDataVec = cUnitRespVec(~trainInds,:);
+%         TestDataPred = predict(md2,AllParas_mtx(~trainInds,:));
+% 
+%         NullDEvience = sum((TestDataVec - mean(TestDataVec)).^2);
+%         predDev = sum((TestDataVec - TestDataPred).^2);
+%         Explain = (NullDEvience - predDev)/NullDEvience;
+%         
+% %         cUnitRepeatDevExplain(cRepeat) = Explain;
+% %         cUnitRepeatMD{cRepeat} = md2.Coefficients;
+%         
+%         disp(md2)
+% 
+%         fprintf('Current cluster %d: \n   devience explain = %.6f.\n',ProbNPSess.UsedClus_IDs(cUnit),Explain);
+% % end
+% warning on
+% 
 
 
 

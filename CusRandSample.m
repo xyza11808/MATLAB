@@ -4,7 +4,7 @@ function RandIns = CusRandSample(n,k,varargin)
 % The Second uasge is to performing class-wised sampling, sampling K number
 % of trials for different weights from different classes based the number
 % of fraction for each class, under that case, the n will be a
-% classindicator vector.
+% class-indicator vector.
 
 if ~isnumeric(n) || ~isnumeric(k)
     error('Input must be numeric variables.');

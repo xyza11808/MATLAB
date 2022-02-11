@@ -34,6 +34,7 @@ classdef NPspikeDataMining
         UsedClusinds % inds indicating which cluster is to be used
         UsedChnDepth
         ChannelAreaStrs = {}; % channel area strings
+        UnitInclusionCriteria = [];
         
         SessBlockTypes = [];
         
@@ -178,10 +179,10 @@ classdef NPspikeDataMining
                InputOps = struct('Unitwaveform',true,...
                     'ISIviolation',0.1,...  % default threshold value is 0.1, or 10%
                     'SessSpiketimeCheck',true,...
-                    'Amplitude',20,... % threshold amplitude value, default is 70uv for subcortical neurons
+                    'Amplitude',10,... % threshold amplitude value, default is 70uv for subcortical neurons
                     'WaveformSpread',1000,... % 1000um, about 50 channels?.
                     'FiringRate',1,... % 1Hz
-                    'SNR',3); 
+                    'SNR',2); 
            end
            
            OverAllExcludeInds = UsedClusIndsCheckFun(obj,InputOps);
@@ -191,7 +192,7 @@ classdef NPspikeDataMining
            obj.UsedClusinds  = obj.FRUsedClusinds(~OverAllExcludeInds);
            obj.UsedChnDepth = obj.FRUsedChnDepth(~OverAllExcludeInds);
            obj.SurviveInds = ~OverAllExcludeInds;
-           
+           obj.UnitInclusionCriteria = InputOps;
         end
 %         function obj = wavefeatureExclusion(obj, varargin)
 %            %  further exclude some units according to unit spike waveform
