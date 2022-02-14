@@ -57,7 +57,7 @@ for cSess = 1 : NumUsedSess
             fprintf('Already processed session %d...\n', cSess);
             continue;
         end
-        
+        fprintf('Processing session %d...\n', cSess);
         load(fullfile(ProbespikeFolder,'ks2_5','NPClassHandleSaved.mat'));
         
 %         if isprop(ProbNPSess,'UnitInclusionCriteria')
