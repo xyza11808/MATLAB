@@ -1,4 +1,4 @@
-clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_First BaselineResp_Last
+clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_All RelagCoefsAll Allxcf Alllags Lags LagCoefMtx
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
 % load('Chnlocation.mat');
 load(fullfile(ksfolder,'SessAreaIndexData.mat'));
@@ -39,8 +39,8 @@ end
 
 % SVMDecodingAccu_strs = {'SVMScores','mdperfs','RevfreqInds','PredBTANDRealChoice','CrossCoefValues'};
 % SVMDecodingAccuracy = cell(NumExistAreas,4);
-SVMSCoreProb_strs = {'SVMScores','mdperfs','RevfreqInds','PredBTANDRealChoice','CrossCoefValues'};
-SVMSCoreProbofBlock = cell(NumExistAreas,5);
+SVMSCoreProb_strs = {'SVMScores','mdperfs','RevfreqInds','PredBTANDRealChoice','CrossCoefValues','UnitNumber','SampledecodLags'};
+SVMSCoreProbofBlock = cell(NumExistAreas,7);
 for cArea = 1 : NumExistAreas
     
     cUsedAreas = ExistAreas_Names{cArea};
@@ -136,12 +136,11 @@ for cArea = 1 : NumExistAreas
     title(sprintf('Area(%s) SVMaccu = %.4f, unitNum = %d',cUsedAreas,mean(Trmdperfs(:,2)), numel(cAUnitInds)));
     
     % time-lagged correlation plot
-    [xcf,lags,bounds] = crosscorr(SortRevFreqPredProb,SortRevFreqChoices,'NumLags',40,'NumSTD',3);
+    [Allxcf,Alllags,Allbounds] = crosscorr(SortRevFreqPredProb,SortRevFreqChoices,'NumLags',40,'NumSTD',3);
     hf3 = figure; 
     crosscorr(SortRevFreqPredProb,SortRevFreqChoices,'NumLags',40,'NumSTD',3);
 
-    SVMSCoreProbofBlock(cArea,:) = {TrPredBlockTypes, Trmdperfs, SortRevFreqRealIndex, ...
-        [SortRevFreqPredProb, SortRevFreqChoices],{xcf,lags,bounds},NumberOfUnits};
+    
     %%
     SVMSCoreSaveName = fullfile(fullsavePath,sprintf('Area_%s SVMSCore prob plot save',cUsedAreas));
     saveas(lhf2,SVMSCoreSaveName);
@@ -154,37 +153,64 @@ for cArea = 1 : NumExistAreas
     close(hf3);
     
     %%
-    nRepeats = 100;
-    SampleScore2Prob = randomUnitPrediction(BaselineResp_All(NMTrialIndex,:), BlockTypesAll(NMTrialIndex), 20, nRepeats);
-    NMTrialFreqs = TrialFreqsAll(NMTrialIndex);
-    NMTrialChoice = TrialAnmChoice(NMTrialIndex);
-    
-    Re_RevFreqInds = ismember(NMTrialFreqs,RevFreqs);
-    Re_RevFreqChoices = NMTrialChoice(Re_RevFreqInds);
-    %%
-    RelagCoefsAll = cell(nRepeats, 3);
-    for cR = 1 : nRepeats
-       cRInds = SampleScore2Prob{cR,2};
-       cRScoreProbs = SampleScore2Prob{cR,1};
-       [SortTrialIndex, SInds] = sort(cRInds);
-       cRScoreProbs = cRScoreProbs(SInds);
-       
-       cR_RevFreq_scoreProbs = cRScoreProbs(Re_RevFreqInds);
-       [xcf,lags,bounds] = crosscorr(Re_RevFreqChoices,cR_RevFreq_scoreProbs,'NumLags',40,'NumSTD',3);
-       
-       RelagCoefsAll(cR,:) = {xcf,lags,bounds}; 
+    if NumberOfUnits > 25
+        nRepeats = 100;
+        SampleScore2Prob = randomUnitPrediction(BaselineResp_All(NMTrialIndex,:), BlockTypesAll(NMTrialIndex), 20, nRepeats);
+        NMTrialFreqs = TrialFreqsAll(NMTrialIndex);
+        NMTrialChoice = TrialAnmChoice(NMTrialIndex);
+
+        Re_RevFreqInds = ismember(NMTrialFreqs,RevFreqs);
+        Re_RevFreqChoices = NMTrialChoice(Re_RevFreqInds);
+        %
+        RelagCoefsAll = cell(nRepeats, 3);
+        for cR = 1 : nRepeats
+           cRInds = SampleScore2Prob{cR,2};
+           cRScoreProbs = SampleScore2Prob{cR,1};
+           [SortTrialIndex, SInds] = sort(cRInds);
+           cRScoreProbs = cRScoreProbs(SInds);
+
+           cR_RevFreq_scoreProbs = cRScoreProbs(Re_RevFreqInds);
+           [xcf,lags,bounds] = crosscorr(Re_RevFreqChoices,cR_RevFreq_scoreProbs,'NumLags',40,'NumSTD',3);
+
+           RelagCoefsAll(cR,:) = {xcf,lags,bounds}; 
+        end
+        LagCoefMtx = (cell2mat((RelagCoefsAll(:,1))'))';
+        Lags = RelagCoefsAll{1,2};
+
+        LagCoefAvgs = mean(LagCoefMtx);
+        LagCoefSEMs = std(LagCoefMtx)/sqrt(nRepeats)*5;
+
+        lags_patch_x = [Lags;flipud(Lags)];
+        lags_patch_y = ([LagCoefAvgs-LagCoefSEMs,fliplr(LagCoefAvgs+LagCoefSEMs)])';
+        hhf = figure('position',[100 100 420 360]);
+        hold on
+        patch(lags_patch_x,lags_patch_y,1,'FaceColor',[.4 .4 .4],'EdgeColor','none');
+        hl1 = plot(Lags, LagCoefAvgs, 'k', 'linewidth', 1.5);
+
+        hl2 = plot(Alllags, Allxcf, 'r', 'linewidth', 1.4);
+        xlabel('Trial Lags');
+        ylabel('Coefs');
+        legend([hl1,hl2],{'Randsample(5SEM)','AllUnit'},'Location','South','box','off');
+        set(gca,'box','off');
+        [~, samplePeak] = max(LagCoefAvgs);
+        title(sprintf('SamplePeakLag = %d, AllPeakLag = %d', ))
+        
+        USCrossCoefSaveName = fullfile(fullsavePath,sprintf('Area_%s UnitSample Crosscoef plot save',cUsedAreas));
+        saveas(hhf,USCrossCoefSaveName);
+        saveas(hhf,USCrossCoefSaveName,'png');
+        close(hhf);
+    else
+        Lags = [];
+        LagCoefMtx = [];
     end
-    LagCoefMtx = (cell2mat((RelagCoefsAll(:,1))'))';
-    Lags = RelagCoefsAll{:,2};
     
-    LagCoefAvgs = mean(LagCoefMtx);
-    LagCoefSEMs = std(LagCoefMtx)/sqrt(nRepeats);
-    
-    
+    SVMSCoreProbofBlock(cArea,:) = {TrPredBlockTypes, Trmdperfs, SortRevFreqRealIndex, ...
+        [SortRevFreqPredProb, SortRevFreqChoices],{Allxcf,Alllags,Allbounds},NumberOfUnits,...
+        {Lags, LagCoefMtx}};
 end
 
 save(fullfile(fullsavePath,'PopudecodingDatas.mat'), 'SVMSCoreProbofBlock', ...
-    'SVMSCoreProb_strs', 'ExistAreas_Names', '-v7.3');
+    'SVMSCoreProb_strs', 'ExistAreas_Names', 'SampleScore2Prob', '', '-v7.3');
 
 %% ROC test for each unit
 [TrNum, unitNum, BinNum] = size(SMBinDataMtxRaw);
