@@ -124,6 +124,7 @@ AUCThres = squeeze(Areawise_UnitAUC(:,:,2));
 
 AUCedges = 0:0.05:1;
 AUCcent = AUCedges(1:end-1)+0.025;
+AreaWiseAUCs = cell(NumAllTargetAreas, 3);
 for cArea = 1 : NumAllTargetAreas
     cArea_realAUC = cell2mat(RealAUCs(:,cArea));
     cArea_AUCthres = cell2mat(AUCThres(:,cArea));
@@ -131,49 +132,51 @@ for cArea = 1 : NumAllTargetAreas
         continue;
     end
     SigAUCvalues = cArea_realAUC(cArea_realAUC > cArea_AUCthres);
-    h3f = figure('position',[100 100 460 230]);
-    ax1 = subplot(121);
-    hold on
-    h1 = histogram(ax1,cArea_realAUC,AUCedges);
-    h2 = histogram(ax1,SigAUCvalues,AUCedges);
-    yscales = get(ax1,'ylim');
-    h1.EdgeColor = 'none';
-    h2.EdgeColor = 'none';
-    h1.FaceColor = [.7 .7 .7];
-    h2.FaceColor = 'k';
-    xlabel('AUC')
-    ylabel('Unit counts');
-    title(BrainAreasStr{cArea});
-    line(mean(SigAUCvalues)*[1 1],yscales,'Color','r','linewidth',1.4);
-    set(gca,'ylim',yscales);
-    text(mean(SigAUCvalues)+0.01,yscales(2)*0.75,{'AvgSigAUC';num2str(mean(SigAUCvalues),'%.3f')},...
-    'FontSize',6);
-    text(0.01,yscales(2)*0.9,{'UnitNumber';num2str(numel(cArea_realAUC),'%d')},...
-        'FontSize',6);
     
-    ax2 = subplot(122);
-    SigAUCFrac = mean(cArea_realAUC > cArea_AUCthres);
-    labels = {sprintf('SigUnits(%.2f%%)',SigAUCFrac*100),'NotSigUnits'};
-    p = pie(ax2, [SigAUCFrac 1-SigAUCFrac],labels);
-    p(1).EdgeColor = 'none';
-    p(1).FaceColor = 'k';
-    p(3).EdgeColor = 'none';
-    p(3).FaceColor = [.7 .7 .7];
-    p(2).FontSize = 6;
-    p(4).FontSize = 6;
+    AreaWiseAUCs(cArea,1:2) = {cArea_realAUC, SigAUCvalues};
+%     h3f = figure('position',[100 100 460 230]);
+%     ax1 = subplot(121);
+%     hold on
+%     h1 = histogram(ax1,cArea_realAUC,AUCedges);
+%     h2 = histogram(ax1,SigAUCvalues,AUCedges);
+%     yscales = get(ax1,'ylim');
+%     h1.EdgeColor = 'none';
+%     h2.EdgeColor = 'none';
+%     h1.FaceColor = [.7 .7 .7];
+%     h2.FaceColor = 'k';
+%     xlabel('AUC')
+%     ylabel('Unit counts');
+%     title(BrainAreasStr{cArea});
+%     line(mean(SigAUCvalues)*[1 1],yscales,'Color','r','linewidth',1.4);
+%     set(gca,'ylim',yscales);
+%     text(mean(SigAUCvalues)+0.01,yscales(2)*0.75,{'AvgSigAUC';num2str(mean(SigAUCvalues),'%.3f')},...
+%     'FontSize',6);
+%     text(0.01,yscales(2)*0.9,{'UnitNumber';num2str(numel(cArea_realAUC),'%d')},...
+%         'FontSize',6);
+%     
+%     ax2 = subplot(122);
+%     SigAUCFrac = mean(cArea_realAUC > cArea_AUCthres);
+%     labels = {sprintf('SigUnits(%.2f%%)',SigAUCFrac*100),'NotSigUnits'};
+%     p = pie(ax2, [SigAUCFrac 1-SigAUCFrac],labels);
+%     p(1).EdgeColor = 'none';
+%     p(1).FaceColor = 'k';
+%     p(3).EdgeColor = 'none';
+%     p(3).FaceColor = [.7 .7 .7];
+%     p(2).FontSize = 6;
+%     p(4).FontSize = 6;
     
     
-    savename = fullfile(sumfigsavefolder,sprintf('BrainRegion_unitAUCdis_%s',BrainAreasStr{cArea}));
-    saveas(h3f,savename);
-    saveas(h3f,savename,'png');
-    close(h3f);
+%     savename = fullfile(sumfigsavefolder,sprintf('BrainRegion_unitAUCdis_%s',BrainAreasStr{cArea}));
+%     saveas(h3f,savename);
+%     saveas(h3f,savename,'png');
+%     close(h3f);
     
 end
-
+AreaWiseAUCs(:,3) = BrainAreasStr;
 %%
 sumDatasaveName = fullfile(sumfigsavefolder,'SummarizedBlocktypedecodingData.mat');
 save(sumDatasaveName,'Areawise_UnitAUC','Areawise_sessDecPerf',...
-    'BrainAreasStr','SessionFolders','-v7.3')
+    'BrainAreasStr','SessionFolders','AreaWiseAUCs','-v7.3')
 %% partial correlation analysis
 % load and calculate behavior datas
 AllSVMperfDatas_Vec = cell2mat(AllAreaSess_SVMperfs(NonEmptyInds));
@@ -276,6 +279,82 @@ title('Sig coef session lags')
 saveName = fullfile(sumfigsavefolder,'Areawise Crosscoef peakcoef lag plot');
 saveas(h5f,saveName);
 saveas(h5f,saveName,'png');
+
+%%
+% AUC value sort and plots
+NumAreas = size(AreaWiseAUCs,1);
+AreaAvgAUCs = nan(NumAreas,6);
+for cA = 1 : NumAreas
+    if isempty(AreaWiseAUCs{cA,1}) || length(AreaWiseAUCs{cA,1}) < 5
+        continue;
+    else
+        cA_AllAUC = AreaWiseAUCs{cA,1};
+        AreaAvgAUCs(cA,1:3) = [mean(cA_AllAUC), std(cA_AllAUC)/sqrt(numel(cA_AllAUC)),numel(cA_AllAUC)];
+        
+        if isempty(AreaWiseAUCs{cA,2}) || length(AreaWiseAUCs{cA,2}) < 3
+            continue;
+        else
+            cA_SigAUCs = AreaWiseAUCs{cA,2};
+            AreaAvgAUCs(cA,4:6) = [mean(cA_SigAUCs), std(cA_SigAUCs)/sqrt(numel(cA_SigAUCs)),numel(cA_SigAUCs)];
+        end
+    end
+end
+
+h6f = figure('position',[100 100 900 560]);
+ax1 = subplot(121);
+hold on
+ValidAreaInds = ~isnan(AreaAvgAUCs(:,1));
+ValidAreas_AllStrs = BrainAreasStr(ValidAreaInds);
+ValidAreas_AllAUC = AreaAvgAUCs(ValidAreaInds,1);
+ValidAreas_AllAUC_SEM = AreaAvgAUCs(ValidAreaInds,2);
+ValidAreas_AllAUC_nums = AreaAvgAUCs(ValidAreaInds,3);
+
+[AllAUCSort, AllSortinds] = sort(ValidAreas_AllAUC);
+AllAUCSEMs = ValidAreas_AllAUC_SEM(AllSortinds);
+AllAUCNames = ValidAreas_AllStrs(AllSortinds);
+AllAUC_SortNums = ValidAreas_AllAUC_nums(AllSortinds);
+
+Num_UsedAreas = length(AllAUCSort);
+errorbar(AllAUCSort, (1:Num_UsedAreas)', AllAUCSEMs,'horizontal', 'ko', 'linewidth',1.4);
+xscales = get(ax1,'xlim');
+text((xscales(2)+0.05)*ones(Num_UsedAreas,1), 1:Num_UsedAreas, cellstr(num2str(AllAUC_SortNums(:),'%d')),'Color','m',...
+    'FontSize',8);
+set(gca,'xlim',[xscales(1) xscales(2)+0.1])
+set(gca,'ytick',1:Num_UsedAreas,'yticklabel',AllAUCNames(:));
+xlabel('Peak lags');
+title('AllAUCAvg session lags')
+
+ax2 = subplot(122);
+hold on
+ValidAreaInds = ~isnan(AreaAvgAUCs(:,4));
+ValidAreas_SigStrs = BrainAreasStr(ValidAreaInds);
+ValidAreas_SigAUC = AreaAvgAUCs(ValidAreaInds,4);
+ValidAreas_SigAUC_SEM = AreaAvgAUCs(ValidAreaInds,5);
+ValidAreas_SigAUC_Nums = AreaAvgAUCs(ValidAreaInds,6);
+
+[SigAUCSort, SigSortinds] = sort(ValidAreas_SigAUC);
+SigAUCSEMs = ValidAreas_SigAUC_SEM(SigSortinds);
+SigAUCNames = ValidAreas_SigStrs(SigSortinds);
+SigAUC_Nums = ValidAreas_SigAUC_Nums(SigSortinds);
+
+Num_SigAreas = length(SigAUCSort);
+errorbar(SigAUCSort, (1:Num_SigAreas)', SigAUCSEMs,'horizontal', 'ko', 'linewidth',1.4);
+xscales = get(ax2,'xlim');
+text((xscales(2)+0.05)*ones(Num_SigAreas,1), 1:Num_SigAreas, cellstr(num2str(SigAUC_Nums(:),'%d')),'Color','m',...
+    'FontSize',8);
+set(gca,'xlim',[xscales(1) xscales(2)+0.1])
+set(gca,'ytick',1:Num_SigAreas,'yticklabel',SigAUCNames(:));
+xlabel('Peak lags');
+title('Sig AUCAvg session lags')
+
+
+%%
+saveName = fullfile(sumfigsavefolder,'Areawise Averaged AUC sorted plot');
+saveas(h6f,saveName);
+saveas(h6f,saveName,'png');
+
+
+
 
 
 

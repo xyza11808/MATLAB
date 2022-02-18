@@ -378,3 +378,47 @@ end
 % disp(prctile(NullDevExplain,95));
 % warning on
 
+
+% ###############################################################################################
+% 
+% cclr
+% 
+% AllSessFolderPathfile = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+% % AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+% 
+% SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
+%         'Sheet',1);
+% SessionFolders = SessionFoldersC(2:end);
+% NumUsedSess = length(SessionFolders);
+% 
+% 
+% %%
+% 
+% 
+% for cSess = 1 : NumUsedSess
+%     
+% %     cSessFolder = fullfile(SessionFolders{cSess}(2:end-1),'ks2_5');
+%     cSessFolder = fullfile(strrep(SessionFolders{cSess}(2:end-1),'F:','I:\ksOutput_backup'),'ks2_5');
+%     
+%     EventResp_avg_codes;
+% 
+%     saveName = fullfile(cSessFolder,'ks2_5','UnitRespTypeCoef.mat');
+%     save(saveName,'UnitUsedCoefs', 'AboveThresUnit', 'UnitFitmds_All', 'overAllTerms_mtx', 'DevThreshold','-v7.3');
+%     
+% end
+% 
+% %%
+% 
+% for cSess = 1 : NumUsedSess
+%     
+% %     cSessFolder = fullfile(SessionFolders{cSess}(2:end-1),'ks2_5');
+%     ksfolder = fullfile(strrep(SessionFolders{cSess}(2:end-1),'F:','I:\ksOutput_backup'),'ks2_5');
+%     
+%     baselineSpikePredBlocktypes_SVMProb;
+% 
+% %     saveName = fullfile(cSessFolder,'ks2_5','UnitRespTypeCoef.mat');
+% %     save(saveName,'UnitUsedCoefs', 'AboveThresUnit', 'UnitFitmds_All', 'overAllTerms_mtx', 'DevThreshold','-v7.3');
+%     
+% end
+
+

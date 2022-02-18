@@ -36,23 +36,34 @@ if ~isfolder(fullsavePath)
     mkdir(fullsavePath);
 end
 
+TargetAreaUnits = false(size(SMBinDataMtxRaw,2),1);
 
 % SVMDecodingAccu_strs = {'SVMScores','mdperfs','RevfreqInds','PredBTANDRealChoice','CrossCoefValues'};
 % SVMDecodingAccuracy = cell(NumExistAreas,4);
 SVMSCoreProb_strs = {'SVMScores','mdperfs','RevfreqInds','PredBTANDRealChoice','CrossCoefValues','UnitNumber','SampledecodLags'};
-SVMSCoreProbofBlock = cell(NumExistAreas,7);
-for cArea = 1 : NumExistAreas
-    
-    cUsedAreas = ExistAreas_Names{cArea};
-    if isempty(SessAreaIndexStrc.(cUsedAreas))
-        error('Something wrong, no unit was found in the input channel position file.');
+SVMSCoreProbofBlock = cell(NumExistAreas+1,7);
+SampleScore2ProbAlls = cell(NumExistAreas+1,1);
+AreaPredInfo = cell(NumExistAreas+1, 2);
+for cArea = 1 : NumExistAreas+1
+    if cArea <= NumExistAreas
+        cUsedAreas = ExistAreas_Names{cArea};
+        if isempty(SessAreaIndexStrc.(cUsedAreas))
+            error('Something wrong, no unit was found in the input channel position file.');
+        end
+        cAUnitInds = SessAreaIndexStrc.(cUsedAreas).MatchedUnitInds;
+
+        SMBinDataMtx = SMBinDataMtxRaw(:,cAUnitInds,:);
+    else
+        cAUnitInds = find(~TargetAreaUnits);
+        SMBinDataMtx = SMBinDataMtxRaw(:,cAUnitInds,:);
+        cUsedAreas = 'OtherAreas';
     end
-    cAUnitInds = SessAreaIndexStrc.(cUsedAreas).MatchedUnitInds;
-    
-    SMBinDataMtx = SMBinDataMtxRaw(:,cAUnitInds,:);
-    
     NumberOfUnits = length(cAUnitInds); % number of units will be used for population decoding
     
+    if NumberOfUnits == 0
+        warning('All units were target area units.');
+        continue;
+    end
     %%
     TriggerAlignBin = ProbNPSess.TriggerStartBin{ProbNPSess.CurrentSessInds};
     BaselineResp_All = mean(SMBinDataMtx(:,:,1:TriggerAlignBin-1),3);
@@ -67,7 +78,7 @@ for cArea = 1 : NumExistAreas
     NumofFolds = 10;
     GrWithinIndsSet = seqpartitionFun(NMTrialIndex, NumofFolds); % default partition fraction
     %%
-    TrPredBlockTypes = cell(NumofFolds,5); % PredInds, PredType, PredScore
+    TrPredBlockTypes = cell(NumofFolds,6); % PredInds, PredType, PredScore
     Trmdperfs = zeros(NumofFolds,2);
     MDbetas = cell(NumofFolds,2); % model prediction coefs
     for cfold = 1 : NumofFolds
@@ -88,7 +99,7 @@ for cArea = 1 : NumExistAreas
         
         Trmdperfs(cfold,:) = [MDPerfs, PredPerfs];
         
-        TrPredBlockTypes(cfold,:) = {PerdTrInds,mdPredTypes,PredScores(:,1),mdl.Beta,mdl.Bias};
+        TrPredBlockTypes(cfold,:) = {PerdTrInds,mdPredTypes,PredScores(:,1),BlockTypesAll(PerdTrInds),mdl.Beta,mdl.Bias};
     end
     %%
     fprintf('Model self lost is %.4f.\n',1-mean(Trmdperfs(:,1)));
@@ -97,6 +108,8 @@ for cArea = 1 : NumExistAreas
     AllUsedTrInds = cell2mat(TrPredBlockTypes(:,1));
     AllUsedTrPredScores = cell2mat(TrPredBlockTypes(:,3));
     AllUsedTrPredTypes = cell2mat(TrPredBlockTypes(:,2));
+    AllUsedTrRealTypes = cell2mat(TrPredBlockTypes(:,4));
+    AreaPredInfo{cArea,1} = MutInfo(AllUsedTrPredTypes, AllUsedTrRealTypes);
     PredScore2Prob = 1./(1+exp(-1.*AllUsedTrPredScores)); % 
     %%
     % %% predict block type using SVM classifier
@@ -137,6 +150,7 @@ for cArea = 1 : NumExistAreas
     
     % time-lagged correlation plot
     [Allxcf,Alllags,Allbounds] = crosscorr(SortRevFreqPredProb,SortRevFreqChoices,'NumLags',40,'NumSTD',3);
+    [~, AllPeakInds] = max(Alllags);
     hf3 = figure; 
     crosscorr(SortRevFreqPredProb,SortRevFreqChoices,'NumLags',40,'NumSTD',3);
 
@@ -156,6 +170,7 @@ for cArea = 1 : NumExistAreas
     if NumberOfUnits > 25
         nRepeats = 100;
         SampleScore2Prob = randomUnitPrediction(BaselineResp_All(NMTrialIndex,:), BlockTypesAll(NMTrialIndex), 20, nRepeats);
+        AreaPredInfo{cArea,2} = cell2mat(SampleScore2Prob(:,5)); % sample unit decoding info
         NMTrialFreqs = TrialFreqsAll(NMTrialIndex);
         NMTrialChoice = TrialAnmChoice(NMTrialIndex);
 
@@ -192,8 +207,8 @@ for cArea = 1 : NumExistAreas
         ylabel('Coefs');
         legend([hl1,hl2],{'Randsample(5SEM)','AllUnit'},'Location','South','box','off');
         set(gca,'box','off');
-        [~, samplePeak] = max(LagCoefAvgs);
-        title(sprintf('SamplePeakLag = %d, AllPeakLag = %d', ))
+        [~, samplePeakInds] = max(LagCoefAvgs);
+        title(sprintf('SamplePeakLag = %d, AllPeakLag = %d', samplePeakInds, AllPeakInds));
         
         USCrossCoefSaveName = fullfile(fullsavePath,sprintf('Area_%s UnitSample Crosscoef plot save',cUsedAreas));
         saveas(hhf,USCrossCoefSaveName);
@@ -202,55 +217,57 @@ for cArea = 1 : NumExistAreas
     else
         Lags = [];
         LagCoefMtx = [];
+        SampleScore2Prob = [];
+        AreaPredInfo{cArea,2} = [];
     end
-    
+    SampleScore2ProbAlls(cArea) = {SampleScore2Prob};
     SVMSCoreProbofBlock(cArea,:) = {TrPredBlockTypes, Trmdperfs, SortRevFreqRealIndex, ...
         [SortRevFreqPredProb, SortRevFreqChoices],{Allxcf,Alllags,Allbounds},NumberOfUnits,...
         {Lags, LagCoefMtx}};
 end
 
 save(fullfile(fullsavePath,'PopudecodingDatas.mat'), 'SVMSCoreProbofBlock', ...
-    'SVMSCoreProb_strs', 'ExistAreas_Names', 'SampleScore2Prob', '', '-v7.3');
+    'SVMSCoreProb_strs', 'ExistAreas_Names', 'SampleScore2Prob', 'SampleScore2ProbAlls', 'AreaPredInfo', '-v7.3');
 
-%% ROC test for each unit
-[TrNum, unitNum, BinNum] = size(SMBinDataMtxRaw);
-
-TriggerAlignBin = ProbNPSess.TriggerStartBin{ProbNPSess.CurrentSessInds};
-halfBaselineWinInds = round((TriggerAlignBin-1)/2);
-BaselineResp_First = mean(SMBinDataMtxRaw(:,:,1:halfBaselineWinInds),3);
-
-AUCValuesAll = zeros(unitNum,3);
-smoothed_baseline_resp = zeros(size(BaselineResp_First));
-for cUnit = 1 : unitNum
-    cUnitDatas = BaselineResp_First(:,cUnit);
-    [AUC, IsMeanRev] = AUC_fast_utest(cUnitDatas, BlockTypesAll);
-    
-    [~,~,SigValues] = ROCSiglevelGeneNew([cUnitDatas, BlockTypesAll],500,1,0.001);
-    AUCValuesAll(cUnit,:) = [AUC, IsMeanRev, SigValues];
-    
-    smoothed_baseline_resp(:,cUnit) = smooth(cUnitDatas,7);
-end
-
-%% plot all AUC values
-[AUCvalues, SortInds] = sort(AUCValuesAll(:,1));
-SortedSiglevels = AUCValuesAll(SortInds,3);
-IsAUCSigInds = AUCvalues > SortedSiglevels;
-AUCIndex = 1 : numel(AUCvalues);
-h4f = figure;
-hold on
-plot(AUCIndex(IsAUCSigInds),AUCvalues(IsAUCSigInds),'ko','linewidth',1.4,'MarkerSize',10);
-plot(AUCIndex(~IsAUCSigInds),AUCvalues(~IsAUCSigInds),'o','linewidth',1.4,'MarkerSize',10,'MarkerEdgeColor',[.7 .7 .7]);
-title(sprintf('SigAUCfrac = %.4f',mean(IsAUCSigInds)));
-xlabel('Units');
-ylabel('AUC');
-set(gca,'ylim',[0.2 1],'ytick',[0.5 1])
-%%
-
-save(fullfile(fullsavePath,'SingleUnitAUC.mat'), 'AUCValuesAll', 'smoothed_baseline_resp', '-v7.3');
-AUCSaveName = fullfile(fullsavePath,'Unit AUC distributions');
-saveas(h4f,AUCSaveName);
-saveas(h4f,AUCSaveName,'png');
-close(h4f);
+% %% ROC test for each unit
+% [TrNum, unitNum, BinNum] = size(SMBinDataMtxRaw);
+% 
+% TriggerAlignBin = ProbNPSess.TriggerStartBin{ProbNPSess.CurrentSessInds};
+% halfBaselineWinInds = round((TriggerAlignBin-1)/2);
+% BaselineResp_First = mean(SMBinDataMtxRaw(:,:,1:halfBaselineWinInds),3);
+% 
+% AUCValuesAll = zeros(unitNum,3);
+% smoothed_baseline_resp = zeros(size(BaselineResp_First));
+% for cUnit = 1 : unitNum
+%     cUnitDatas = BaselineResp_First(:,cUnit);
+%     [AUC, IsMeanRev] = AUC_fast_utest(cUnitDatas, BlockTypesAll);
+%     
+%     [~,~,SigValues] = ROCSiglevelGeneNew([cUnitDatas, BlockTypesAll],500,1,0.001);
+%     AUCValuesAll(cUnit,:) = [AUC, IsMeanRev, SigValues];
+%     
+%     smoothed_baseline_resp(:,cUnit) = smooth(cUnitDatas,7);
+% end
+% 
+% %% plot all AUC values
+% [AUCvalues, SortInds] = sort(AUCValuesAll(:,1));
+% SortedSiglevels = AUCValuesAll(SortInds,3);
+% IsAUCSigInds = AUCvalues > SortedSiglevels;
+% AUCIndex = 1 : numel(AUCvalues);
+% h4f = figure;
+% hold on
+% plot(AUCIndex(IsAUCSigInds),AUCvalues(IsAUCSigInds),'ko','linewidth',1.4,'MarkerSize',10);
+% plot(AUCIndex(~IsAUCSigInds),AUCvalues(~IsAUCSigInds),'o','linewidth',1.4,'MarkerSize',10,'MarkerEdgeColor',[.7 .7 .7]);
+% title(sprintf('SigAUCfrac = %.4f',mean(IsAUCSigInds)));
+% xlabel('Units');
+% ylabel('AUC');
+% set(gca,'ylim',[0.2 1],'ytick',[0.5 1])
+% %%
+% 
+% save(fullfile(fullsavePath,'SingleUnitAUC.mat'), 'AUCValuesAll', 'smoothed_baseline_resp', '-v7.3');
+% AUCSaveName = fullfile(fullsavePath,'Unit AUC distributions');
+% saveas(h4f,AUCSaveName);
+% saveas(h4f,AUCSaveName,'png');
+% close(h4f);
 
 
 % cclr

@@ -36,23 +36,33 @@ if ~isfolder(fullsavePath)
     mkdir(fullsavePath);
 end
 
+TargetAreaUnits = false(size(SMBinDataMtxRaw,2),1);
 
 SVMDecodingAccu_strs = {'SVMaccuracy','ShufAccu','SVMmodel','UsedUnitInds(NotRealIndex)'};
-SVMDecodingAccuracy = cell(NumExistAreas,4);
+SVMDecodingAccuracy = cell(NumExistAreas+1,4);
 logRegressorProb_strs = {'logregressorMD', 'Predprob','NMFreqChoice','NMFreqTrialIndex','CrossCoefValues'};
-logRegressorProbofBlock = cell(NumExistAreas,5);
-for cArea = 1 : NumExistAreas
-    
-    cUsedAreas = ExistAreas_Names{cArea};
-    if isempty(SessAreaIndexStrc.(cUsedAreas))
-        error('Something wrong, no unit was found in the input channel position file.');
+logRegressorProbofBlock = cell(NumExistAreas+1,5);
+for cArea = 1 : NumExistAreas+1
+    if cArea <= NumExistAreas
+        cUsedAreas = ExistAreas_Names{cArea};
+        if isempty(SessAreaIndexStrc.(cUsedAreas))
+            error('Something wrong, no unit was found in the input channel position file.');
+        end
+        cAUnitInds = SessAreaIndexStrc.(cUsedAreas).MatchedUnitInds;
+        SMBinDataMtx = SMBinDataMtxRaw(:,cAUnitInds,:);
+    else
+        cAUnitInds = find(~TargetAreaUnits);
+        SMBinDataMtx = SMBinDataMtxRaw(:,cAUnitInds,:);
+        cUsedAreas = 'OtherAreas';
     end
-    cAUnitInds = SessAreaIndexStrc.(cUsedAreas).MatchedUnitInds;
-    SMBinDataMtx = SMBinDataMtxRaw(:,cAUnitInds,:);
-    
     NumberOfUnits = length(cAUnitInds); % number of units will be used for population decoding
     
-    [TrNum, unitNum, BinNum] = size(SMBinDataMtx);
+    if NumberOfUnits == 0
+        warning('All units were target area units.');
+        continue;
+    end
+    
+    [TrNum, ~, ~] = size(SMBinDataMtx);
 
     TriggerAlignBin = ProbNPSess.TriggerStartBin{ProbNPSess.CurrentSessInds};
     halfBaselineWinInds = round((TriggerAlignBin-1)/2);

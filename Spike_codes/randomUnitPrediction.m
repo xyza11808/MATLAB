@@ -11,13 +11,13 @@ end
 NumofFolds = 10;
 TrInds = (1:size(AllUnitResponse,1))';
 GrWithinIndsSet = seqpartitionFun(TrInds, NumofFolds);
-SampleScore2Prob = cell(RepeatNum, 4);
+SampleScore2Prob = cell(RepeatNum, 5);
 
 for cR = 1 : RepeatNum
     cReSampleInds = randsample(TotalUnitNums, sampleNumber);
     cReSampleResp = AllUnitResponse(:,cReSampleInds);
     
-    TrPredBlockTypes = cell(NumofFolds,5); % PredInds, PredType, PredScore
+    TrPredBlockTypes = cell(NumofFolds,6); % PredInds, PredType, PredScore
     Trmdperfs = zeros(NumofFolds,2);
     for cfold = 1 : NumofFolds
         cFoldInds = (GrWithinIndsSet(cfold,:))';
@@ -37,15 +37,17 @@ for cR = 1 : RepeatNum
         
         Trmdperfs(cfold,:) = [MDPerfs, PredPerfs];
         
-        TrPredBlockTypes(cfold,:) = {PerdTrInds,mdTargetTypes,PredScores(:,1),mdl.Beta,mdl.Bias};
+        TrPredBlockTypes(cfold,:) = {PerdTrInds,mdTargetTypes,PredScores(:,1),...
+            TargetTypes(PerdTrInds),mdl.Beta,mdl.Bias};
     end
     
     AllUsedTrPredScores = cell2mat(TrPredBlockTypes(:,3));
     AllUsedTrInds = cell2mat(TrPredBlockTypes(:,1));
     PredScore2Prob = 1./(1+exp(-1.*AllUsedTrPredScores));
     
-    SampleScore2Prob(cR,:) = {PredScore2Prob, AllUsedTrInds, TrPredBlockTypes, Trmdperfs};
-
+    DecodingInfo = MutInfo(cell2mat(TrPredBlockTypes(:,2)),...
+        cell2mat(TrPredBlockTypes(:,4)));
+    SampleScore2Prob(cR,:) = {PredScore2Prob, AllUsedTrInds, TrPredBlockTypes, Trmdperfs, DecodingInfo};
 
 end
 
