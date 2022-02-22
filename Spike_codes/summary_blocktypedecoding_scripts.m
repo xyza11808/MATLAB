@@ -8,7 +8,8 @@ BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
 BrainAreasStrCC = BrainAreasStrC(2:end);
 BrainAreasStrCCC = cellfun(@(x) x(2:end-1),BrainAreasStrCC,'UniformOutput',false);
 EmptyInds = cellfun(@isempty,BrainAreasStrCCC);
-BrainAreasStr = BrainAreasStrCCC(~EmptyInds);
+BrainAreasStr = [BrainAreasStrCCC(~EmptyInds);{'Others'}];
+
 %%
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
         'Sheet',1);
@@ -19,17 +20,23 @@ NumAllTargetAreas = length(BrainAreasStr);
 Areawise_sessDecPerf = cell(NumUsedSess,NumAllTargetAreas,3);
 Areawise_UnitAUC = cell(NumUsedSess,NumAllTargetAreas,2);
 Areawise_PopuPredCC = cell(NumUsedSess,NumAllTargetAreas,2);
+Areawise_PopuSVMCC = cell(NumUsedSess,NumAllTargetAreas,2);
 Areawise_BehavChoiceDiff = cell(NumUsedSess,NumAllTargetAreas);
-for cS = 1 : NumUsedSess
+for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}(2:end-1);
     cSessPath = strrep(SessionFolders{cS}(2:end-1),'F:','I:\ksOutput_backup');
     
     SessblocktypeDecfile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktype','PopudecodingDatas.mat');
     SessUnitAUCfile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktype','SingleUnitAUC.mat');
     behavFilePath = fullfile(cSessPath,'ks2_5','BehavSwitchData.mat');
+    
+    SessBT_sVMScorefile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktypeSVM','PopudecodingDatas.mat');
 %     UnitAreafile = fullfile(cSessPath,'ks2_5','SessAreaIndexData.mat');
     
     SessblocktypeDecDataStrc = load(SessblocktypeDecfile,'ExistAreas_Names','SVMDecodingAccuracy','logRegressorProbofBlock');
+    
+    SessBT_sVMScoreStrc = load(SessBT_sVMScorefile, 'ExistAreas_Names', 'SVMSCoreProbofBlock', 'SampleScore2ProbAlls');
+    
     SessUnitAUCStrc = load(SessUnitAUCfile,'AUCValuesAll');
     BehavBlockchoiceDiff = load(behavFilePath,'H2L_choiceprob_diff');
 %     UnitAreaStrc = load(UnitAreafile);
@@ -40,8 +47,12 @@ for cS = 1 : NumUsedSess
         continue;
     end
     
-    for cAreaInds = 1 : NumAreas
-        cAreaStr = SessblocktypeDecDataStrc.ExistAreas_Names{cAreaInds};
+    for cAreaInds = 1 : NumAreas+1
+        if cAreaInds > NumAreas
+            cAreaStr = 'Others';
+        else
+            cAreaStr = SessblocktypeDecDataStrc.ExistAreas_Names{cAreaInds};
+        end
         cAreaSVMperf = SessblocktypeDecDataStrc.SVMDecodingAccuracy{cAreaInds,1};
         cAreaSVMShufthres = prctile(SessblocktypeDecDataStrc.SVMDecodingAccuracy{cAreaInds,2},95);
         cAreaUnitInds = SessblocktypeDecDataStrc.SVMDecodingAccuracy{cAreaInds,4};
@@ -55,7 +66,7 @@ for cS = 1 : NumUsedSess
         
         Areawise_BehavChoiceDiff(cS,AreaMatchInds) = {BehavBlockchoiceDiff.H2L_choiceprob_diff};
         
-        cAreaCCData = SessblocktypeDecDataStrc.logRegressorProbofBlock{1,5};
+        cAreaCCData = SessblocktypeDecDataStrc.logRegressorProbofBlock{cAreaInds,5};
         cAreaCC_values = smooth(cAreaCCData{1},5);
         cAreaCC_lags = cAreaCCData{2};
         cAreaCC_CoefThres = cAreaCCData{3}(1);
@@ -65,6 +76,15 @@ for cS = 1 : NumUsedSess
         Areawise_PopuPredCC(cS,AreaMatchInds,1) = {MaxValue_lags};
         Areawise_PopuPredCC(cS,AreaMatchInds,2) = {[MaxValue, cAreaCC_CoefThres]};
         
+        cAreaSVMScoreCC = SessBT_sVMScoreStrc.SVMSCoreProbofBlock{cAreaInds,5};
+        cASVMCC_values = smooth(cAreaSVMScoreCC{1},5);
+        cASVMCC_lags = cAreaSVMScoreCC{2};
+        cASVMCC_CoefThres = cAreaSVMScoreCC{3}(1);
+        [SVMMaxValue, SVMMaxInds] = max(cASVMCC_values);
+        SVMMaxValue_lags = cASVMCC_lags(SVMMaxInds);
+        
+        Areawise_PopuSVMCC(cS,AreaMatchInds,1) = {SVMMaxValue_lags};
+        Areawise_PopuSVMCC(cS,AreaMatchInds,2) = {[SVMMaxValue, cASVMCC_CoefThres]};
     end
 end
 
@@ -258,6 +278,7 @@ text((xscales(2)+10)*ones(NumUsedAreas,1), 1:NumUsedAreas, cellstr(num2str(AreaN
 set(gca,'xlim',[xscales(1) xscales(2)+12])
 set(gca,'ytick',1:NumUsedAreas,'yticklabel',AreaNames(:));
 xlabel('Peak lags');
+title('logistic regressor crosscoef peaklag distribution')
 
 [SortLagValues_sig, SortInds_sig] = sort(UsedAreaDatas_sig(:,1),'descend');
 SEMValues_sig = UsedAreaDatas_sig(SortInds_sig,2);
@@ -353,6 +374,102 @@ saveName = fullfile(sumfigsavefolder,'Areawise Averaged AUC sorted plot');
 saveas(h6f,saveName);
 saveas(h6f,saveName,'png');
 
+%% Areawise SVM score cross correlation analysis plot
+
+
+AllAreaSess_CCmaxlag = squeeze(Areawise_PopuSVMCC(:,:,1));
+AllAreaSess_CCmaxCoef = squeeze(Areawise_PopuSVMCC(:,:,2));
+
+NonEmptyInds = find(cellfun(@(x) ~isempty(x),AllAreaSess_CCmaxlag));
+[row,AreaInds] = ind2sub([NumUsedSess,NumAllTargetAreas],NonEmptyInds);
+
+% AllCC_maxlags = cell2mat(AllAreaSess_CCmaxlag(NonEmptyInds));
+% AllCC_maxValues = cell2mat(AllAreaSess_CCmaxCoef(NonEmptyInds));
+% SigCoefInds = AllCC_maxValues(:,1) > AllCC_maxValues(:,2);
+
+%% Correlation peak lag plots
+% plot(AreaInds, AllCC_maxlags,'ko')
+AreaLagAvgs = zeros(NumAllTargetAreas,3);
+AreaSigLagAvgs = zeros(NumAllTargetAreas,3);
+IsAreaAllEmpty = false(NumAllTargetAreas,1);
+IsArea_SigCCAllEmpty = false(NumAllTargetAreas,1);
+for cArea = 1 : NumAllTargetAreas
+    cA_lagsAll = cell2mat(AllAreaSess_CCmaxlag(:,cArea));
+    if isempty(cA_lagsAll)
+        AreaLagAvgs(cArea,:) = nan(1,3);
+        IsAreaAllEmpty(cArea) = true;
+    elseif length(cA_lagsAll) < 3
+        AreaLagAvgs(cArea,:) = [mean(cA_lagsAll),0,numel(cA_lagsAll)];
+    else
+        AreaLagAvgs(cArea,:) = [mean(cA_lagsAll), std(cA_lagsAll)/sqrt(numel(cA_lagsAll)), numel(cA_lagsAll)];
+    end
+    
+    cA_CCvalueAll = cell2mat(AllAreaSess_CCmaxCoef(:,cArea));
+    if isempty(cA_CCvalueAll)
+        AreaSigLagAvgs(cArea,:) = nan(1,3);
+        IsArea_SigCCAllEmpty(cArea) = true;
+    else
+        cA_SigInds = cA_CCvalueAll(:,2) > cA_CCvalueAll(:,1);
+        cA_CCSiglagAll = cA_lagsAll(cA_SigInds);
+        if isempty(cA_CCSiglagAll)
+            AreaSigLagAvgs(cArea,:) = nan(1,3);
+            IsArea_SigCCAllEmpty(cArea) = true;
+        elseif size(cA_CCSiglagAll,1) < 3
+            AreaSigLagAvgs(cArea,:) = [mean(cA_CCSiglagAll),0,numel(cA_CCSiglagAll)];
+        else
+            AreaSigLagAvgs(cArea,:) = [mean(cA_CCSiglagAll), std(cA_CCSiglagAll)/sqrt(numel(cA_CCSiglagAll)), numel(cA_CCSiglagAll)];
+        end
+    end
+
+end
+
+UsedAreaDatas = AreaLagAvgs(~IsAreaAllEmpty,:);
+UsedAreaNames = BrainAreasStr(~IsAreaAllEmpty);
+NumUsedAreas = length(UsedAreaNames);
+
+UsedAreaDatas_sig = AreaLagAvgs(~IsArea_SigCCAllEmpty,:);
+UsedAreaNames_sig = BrainAreasStr(~IsArea_SigCCAllEmpty);
+NumUsedAreas_sig = length(UsedAreaNames_sig);
+
+
+[SortLagValues, SortInds] = sort(UsedAreaDatas(:,1),'descend');
+SEMValues = UsedAreaDatas(SortInds,2);
+AreaNums = UsedAreaDatas(SortInds,3);
+
+AreaNames = UsedAreaNames(SortInds);
+
+h7f = figure('position',[100 100 880 540]);
+subplot(121)
+hold on
+errorbar(SortLagValues, (1:NumUsedAreas)', SEMValues,'horizontal', 'ko', 'linewidth',1.4);
+xscales = get(gca,'xlim');
+text((xscales(2)+10)*ones(NumUsedAreas,1), 1:NumUsedAreas, cellstr(num2str(AreaNums(:),'%d')),'Color','m',...
+    'FontSize',8);
+set(gca,'xlim',[xscales(1) xscales(2)+12])
+set(gca,'ytick',1:NumUsedAreas,'yticklabel',AreaNames(:));
+xlabel('Peak lags');
+title('SVM score crosscoef peaklag distribution')
+
+[SortLagValues_sig, SortInds_sig] = sort(UsedAreaDatas_sig(:,1),'descend');
+SEMValues_sig = UsedAreaDatas_sig(SortInds_sig,2);
+AreaNums_sig = UsedAreaDatas_sig(SortInds_sig,3);
+
+AreaNames_sig = UsedAreaNames_sig(SortInds_sig);
+
+subplot(122)
+hold on
+errorbar(SortLagValues_sig, (1:NumUsedAreas_sig)', SEMValues_sig,'horizontal', 'ko', 'linewidth',1.4);
+xscales = get(gca,'xlim');
+text((xscales(2)+10)*ones(NumUsedAreas_sig,1), 1:NumUsedAreas_sig, cellstr(num2str(AreaNums_sig(:),'%d')),'Color','m',...
+    'FontSize',8);
+set(gca,'xlim',[xscales(1) xscales(2)+12])
+set(gca,'ytick',1:NumUsedAreas_sig,'yticklabel',AreaNames_sig(:));
+xlabel('Peak lags');
+title('Sig coef session lags')
+%%
+saveName = fullfile(sumfigsavefolder,'Areawise Crosscoef peakcoef lag plot');
+saveas(h7f,saveName);
+saveas(h7f,saveName,'png');
 
 
 

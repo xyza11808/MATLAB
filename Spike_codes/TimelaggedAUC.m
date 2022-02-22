@@ -1,4 +1,4 @@
-function [LagsAll, AlgAUCAlls] = TimelaggedAUC(Data,Types,Maxlag)
+function [LagsAll, LagAUCAlls] = TimelaggedAUC(Data,Types,Maxlag)
 % this function is used to calculate a time lagged AUC 
 % If the lag value is non-zeros, a corresponded zero-shift AUC will also be
 % calculated for comparison
@@ -18,7 +18,7 @@ for cLag = -Maxlag:0
     
     [ShiftAUC,~] = AUC_fast_utest(NonShift_datas, ShiftTypes);
     
-    NegLagAUCs(cLag,:) = [NS_AUC, NS_SigValues, ShiftAUC];
+    NegLagAUCs(cLag+Maxlag+1,:) = [NS_AUC, NS_SigValues, ShiftAUC];
 end
 
 PosLagAUCs = zeros(Maxlag,3); % Real AUC, threshold, shift AUC
@@ -36,6 +36,6 @@ for cLag = 1 : Maxlag
 end
 
 LagsAll = -Maxlag:Maxlag;
-AlgAUCAlls = [NegLagAUCs;PosLagAUCs];
+LagAUCAlls = [NegLagAUCs;PosLagAUCs];
 
 

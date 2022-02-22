@@ -5,8 +5,8 @@ TotalUnitNums = size(AllUnitResponse,2);
 if sampleNumber > TotalUnitNums
     error('The sample number should be less than total numbers.');
 end
-if sampleNumber > (TotalUnitNums*0.8)
-   warning('The sample number is higher than 80% of total unit numbers, the sample result might be quiet similar.\n');
+if sampleNumber > (TotalUnitNums*0.9)
+   warning('The sample number is higher than 90% of total unit numbers, the sample result might be quiet similar.\n');
 end
 NumofFolds = 10;
 TrInds = (1:size(AllUnitResponse,1))';
