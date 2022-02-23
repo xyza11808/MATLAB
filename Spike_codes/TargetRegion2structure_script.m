@@ -29,8 +29,8 @@ save(saveNames,'BrainRegions','-v7.3');
 %% ########################################################################################
 % loop through all ks sessions to extract chn area info
 cclr
-% AnmSess_sourcepath = 'F:\b103a04_ksoutput';
-AnmSess_sourcepath = 'I:\ksOutput_backup';
+AnmSess_sourcepath = 'F:\b106a07_ksoutputs';
+% AnmSess_sourcepath = 'I:\ksOutput_backup';
 
 xpath = genpath(AnmSess_sourcepath);
 nameSplit = (strsplit(xpath,';'))';
@@ -45,8 +45,8 @@ sortingcode_string = 'ks2_5';
 % Find processed folders 
 ProcessedFoldInds = cellfun(@(x) exist(fullfile(x,sortingcode_string,'NPClassHandleSaved.mat'),'file') && ...
    exist(fullfile(x,sortingcode_string,'Chnlocation.mat'),'file') ,nameSplit);
-NPsessionfolders = nameSplit((ProcessedFoldInds>0));
-NumprocessedNPSess = length(NPsessionfolders);
+SessionFolders = nameSplit((ProcessedFoldInds>0));
+NumprocessedNPSess = length(SessionFolders);
 if NumprocessedNPSess < 1
     warning('No valid NP session was found in current path.');
 end
@@ -64,16 +64,16 @@ NumprocessedNPSess = length(SessionFolders);
 
 
 %%
-% TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
-TargetBrainArea_file = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+% TargetBrainArea_file = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
 
 BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
 TargetRegionNamesAll = fieldnames(BrainRegionStrc.BrainRegions);
 NumofTargetAreas = length(TargetRegionNamesAll);
 for cP = 1 : NumprocessedNPSess
     %
-%     cPath = NPsessionfolders{cP};
-    cPath = fullfile(strrep(SessionFolders{cP}(2:end-1),'F:','I:\ksOutput_backup'));
+    cPath = SessionFolders{cP};
+%     cPath = fullfile(strrep(SessionFolders{cP}(2:end-1),'F:','I:\ksOutput_backup'));
     load(fullfile(cPath,sortingcode_string,'NPClassHandleSaved.mat'));
     
     if isempty(ProbNPSess.ChannelAreaStrs)
@@ -84,8 +84,10 @@ for cP = 1 : NumprocessedNPSess
     UnitMaxampChnInds = ProbNPSess.ChannelUseds_id; % already had +1 for matlab indexing
     UnitChnAreasAll = ProbNPSess.ChannelAreaStrs(UnitMaxampChnInds,:);
     UnitChnAreaIndexAll = cell2mat(UnitChnAreasAll(:,2));
+    totalUnitNum = length(UnitMaxampChnInds);
     SessAreaIndexStrc = struct();
-    IstargetfieldExist = false(NumofTargetAreas,1);
+    IsUnitAreTarget = false(totalUnitNum, 1);
+    IstargetfieldExist = false(NumofTargetAreas+1,1);
     for cNameNum = 1 : NumofTargetAreas
         [Lia, Lib] = ismember(UnitChnAreaIndexAll,BrainRegionStrc.BrainRegions.(TargetRegionNamesAll{cNameNum}));
         if sum(Lia)
@@ -93,14 +95,20 @@ for cP = 1 : NumprocessedNPSess
                 'MatchedUnitInds',find(Lia),'MatchUnitRealIndex',ProbNPSess.UsedClus_IDs(Lia),'MatchUnitRealChn',...
                 UnitMaxampChnInds(Lia),'MatchedBrainAreas',unique(UnitChnAreaIndexAll(Lia)));
             IstargetfieldExist(cNameNum) = true;
+            IsUnitAreTarget(Lia)=true;
         else
             SessAreaIndexStrc.(TargetRegionNamesAll{cNameNum}) = struct();
-            
         end
     end
+    
+    OtherRegionsUnit = ~IsUnitAreTarget;
+    if sum(IsUnitAreTarget)
+        SessAreaIndexStrc.Others = struct('MatchedInds',unique(UnitChnAreaIndexAll(~IsUnitAreTarget)),...
+            'MatchedUnitInds',find(~IsUnitAreTarget),'MatchUnitRealIndex',ProbNPSess.UsedClus_IDs(~IsUnitAreTarget),...
+            'MatchUnitRealChn',UnitMaxampChnInds(~IsUnitAreTarget),'MatchedBrainAreas',unique(UnitChnAreaIndexAll(~IsUnitAreTarget)));
+        IstargetfieldExist(end) = true;
+    end
     SessAreaIndexStrc.UsedAbbreviations = IstargetfieldExist;
-    
-    
     SessAreaIndex_saveName = fullfile(cPath,sortingcode_string,'SessAreaIndexData.mat');
     save(SessAreaIndex_saveName,'SessAreaIndexStrc','-v7.3');
     clearvars ProbNPSess

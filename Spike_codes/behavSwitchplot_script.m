@@ -1,4 +1,7 @@
+
 load(behavfilepath,'behavResults');
+
+%%
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
 
 RevFreqs = BlockSectionInfo.BlockFreqTypes(logical(BlockSectionInfo.IsFreq_asReverse));
@@ -56,8 +59,15 @@ if BlockSectionInfo.NumBlocks == 2
     plot(fit_data_x,fitcurve,'r','linewidth',1.4);
     xlabel('Trials after switch');
     ylabel('Rightward choice prob');
-    
+    syms x
+    s = solve(md.a*exp(-x/md.tau) == 0.5);
+    HalfPeakTrial = double(s);
+    if HalfPeakTrial<0 || HalfPeakTrial > 50
+       HalfPeakTrial = NaN;
+    end
+    title(sprintf('Tau = %.2f, HalfPeakTr = %.2f',md.tau, HalfPeakTrial));
     AllFitMd = md;
+    
 elseif BlockSectionInfo.NumBlocks > 2 % if multiple switch exists
     % normally only the first switch performance is good
     LowBlock_RealRevfreqInds = [];
@@ -89,7 +99,8 @@ elseif BlockSectionInfo.NumBlocks > 2 % if multiple switch exists
             mean(TrialAnmChoice(HighBlock_RealRevfreqInds)); % choice prob difference between low and high block for reversed frequencies
     
     linecolors = jet(BlockSectionInfo.NumBlocks-1);
-    AllFitMd = cell(BlockSectionInfo.NumBlocks-1,1);
+    AllFitMd = cell(BlockSectionInfo.NumBlocks-1,2);
+    HalfPeakTrial = zeros(BlockSectionInfo.NumBlocks-1,1);
     startPoints = [1,1];
     hf = figure('position',[100 100 480 360]);
     hold on
@@ -101,6 +112,14 @@ elseif BlockSectionInfo.NumBlocks > 2 % if multiple switch exists
         plot(fit_data_x,smooth(fit_data_y,5),'-o','linewidth',0.8,'color',linecolors(cswitch,:));
         fitcurve = feval(md,fit_data_x);
         plot(fit_data_x,fitcurve,'r','linewidth',1.4); %'color',linecolors(cswitch,:)
+        syms x
+        s = solve(md.a*exp(-x/md.tau) == 0.5);
+        HalfPeakTrial(cswitch) = double(s);
+        if HalfPeakTrial(cswitch) <0 || HalfPeakTrial(cswitch) > 50
+           HalfPeakTrial(cswitch) = NaN;
+        end
+        text(40,1-0.05*cswitch,sprintf('Tau = %.2f, HalfPeakTr = %.2f',md.tau, HalfPeakTrial),...
+            'Color',linecolors(cswitch,:));
         
         AllFitMd{cswitch} = md;
     end
@@ -109,16 +128,28 @@ elseif BlockSectionInfo.NumBlocks > 2 % if multiple switch exists
     
     
 end
+%%
+SwitchInBlockType = BlockSectionInfo.BlockTypes(2:end); % switch into what kind of the block
 
-figsavePath = fullfile(cfFolder,'ks2_5','BehavSwitchPlot');
+SavePlotFolder = fullfile(cfFolder,'BehavSwitchPlot'); % for behavior data processing
+% SavePlotFolder = fullfile(cfFolder,'ks2_5'); % for spike session data processing
+if ~exist('cF_prefix','var')
+    figsavePath = fullfile(SavePlotFolder,'BehavSwitchPlot');
+    matfileSavePath = fullfile(SavePlotFolder,'BehavSwitchData.mat');
+else
+    figsavePath = fullfile(SavePlotFolder,sprintf('%s_BSPlot',cF_prefix));
+    matfileSavePath = fullfile(SavePlotFolder,sprintf('%s_BSData.mat',cF_prefix));
+end
+
 saveas(hf,figsavePath);
 saveas(hf,figsavePath,'png');
 close(hf);
 
-matfileSavePath = fullfile(cfFolder,'ks2_5','BehavSwitchData.mat');
-save(matfileSavePath,'SwitchBlockChoices_rightward','AllFitMd', 'H2L_choiceprob_diff','-v7.3');
+save(matfileSavePath,'SwitchBlockChoices_rightward','AllFitMd', 'H2L_choiceprob_diff',...
+    'SwitchBlockChoices_rightward', 'ft', 'HalfPeakTrial','SwitchInBlockType','-v7.3');
 
-clearvars SwitchBlockChoices_rightward AllFitMd H2L_choiceprob_diff
+% clearvars SwitchBlockChoices_rightward AllFitMd H2L_choiceprob_diff ...
+%   SwitchBlockChoices_rightward ft HalfPeakTrial SwitchInBlockType
 
 
 %%

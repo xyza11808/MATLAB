@@ -1,7 +1,7 @@
 cclr;
 
 %
-ProbespikeFolder='F:\b104a03_ksoutputs\catgt_b104a03_20210427_NPSess01_g0\Cat_b104a03_20210427_NPSess01_g0_imec3';
+ProbespikeFolder='F:\b106a04_ksoutputs\b106a04_20211204_NPsess04_g0_cat\catgt_b106a04_20211204_NPsess04_g0\Cat_b106a04_20211204_NPsess04_g0_imec1';
 
 %
 % start a new NP data analysis session
@@ -11,7 +11,7 @@ ProbNPSess = ProbNPSess.triggerOnsetTime([],[6,2],[]);
 % ProbNPSess = ProbNPSess.triggerOnsetTime([],[2,6],[]);
 % load behavior datas
 
-load('F:\b104a03_ksoutputs\catgt_b104a03_20210427_NPSess01_g0\atch104_anm03_20210427Tony_NPSess01.mat');
+load('F:\b106a04_ksoutputs\b106a04_20211204_NPsess04_g0_cat\catgt_b106a04_20211204_NPsess04_g0\Ab106a04_2afc_20211204_NPsess04.mat');
 %
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
 if isempty(BlockSectionInfo)
@@ -161,69 +161,69 @@ end
 save(TaskDataSavePath,'BlockSectionInfo','behavResults','BlockNMRealTrInds',...
     'BlockpsthAvgTrace','BlockAlignedEventTypes','-v7.3');
 
-%%
-SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{1}{:,1}),[1,3,2]);
-[TotalTrNum,UnitNum,BinNumbers] = size(SMBinDataMtx);
-
-% % zscore before average calculation
-% zsDatas = zeros(TotalTrNum,UnitNum,BinNumbers);
-% for cunit = 1 : UnitNum
-%     cUnitData = SMBinDataMtx(:,cunit,:);
-%     unitMean = mean(cUnitData(:));
-%     unitstd = std(cUnitData(:))+1e-6;
-%     zsDatas(:,cunit,:) = (cUnitData-unitMean)/unitstd;
-% end
-binTimeStep = ProbNPSess.USedbin(2); % in seconds
+% %%
+% SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{1}{:,1}),[1,3,2]);
+% [TotalTrNum,UnitNum,BinNumbers] = size(SMBinDataMtx);
+% 
+% % % zscore before average calculation
+% % zsDatas = zeros(TotalTrNum,UnitNum,BinNumbers);
+% % for cunit = 1 : UnitNum
+% %     cUnitData = SMBinDataMtx(:,cunit,:);
+% %     unitMean = mean(cUnitData(:));
+% %     unitstd = std(cUnitData(:))+1e-6;
+% %     zsDatas(:,cunit,:) = (cUnitData-unitMean)/unitstd;
+% % end
+% binTimeStep = ProbNPSess.USedbin(2); % in seconds
+% % NumBlocks = length(BlockNMRealTrInds);
+% % cBlockAvg_datas = cell(NumBlocks,2); % data and sorting inds
+% % for cB = 1 : NumBlocks
+% %     cBInds = BlockNMRealTrInds{cB};
+% %     cBTrDatas = zsDatas(cBInds,:,:);
+% %     TrAvgData_mtx = squeeze(mean(cBTrDatas));
+% %     cBlockAvg_datas{cB,1} = TrAvgData_mtx;
+% %     [~,MaxInds] = max(TrAvgData_mtx,[],2);
+% %     [~,sortInds] = sort(MaxInds);
+% %     cBlockAvg_datas{cB,2} = sortInds;
+% % end
 % NumBlocks = length(BlockNMRealTrInds);
-% cBlockAvg_datas = cell(NumBlocks,2); % data and sorting inds
+% RawBlockAvgDatas = cell(NumBlocks,1);
 % for cB = 1 : NumBlocks
 %     cBInds = BlockNMRealTrInds{cB};
-%     cBTrDatas = zsDatas(cBInds,:,:);
+%     cBTrDatas = SMBinDataMtx(cBInds,:,:);
 %     TrAvgData_mtx = squeeze(mean(cBTrDatas));
-%     cBlockAvg_datas{cB,1} = TrAvgData_mtx;
-%     [~,MaxInds] = max(TrAvgData_mtx,[],2);
+%     RawBlockAvgDatas{cB,1} = TrAvgData_mtx'; % nbins * nUnit, for zscore calculation convenience
+% end
+% AllBlockAvgTraces = cell2mat(RawBlockAvgDatas);
+% AllBlockAvgTraces_zs = zscore(AllBlockAvgTraces);
+% cBlockAvg_datas = cell(NumBlocks,2); % data and sorting inds
+% for cB = 1 : NumBlocks
+%     BlockBinInds = (1:BinNumbers)+BinNumbers*(cB-1);
+%     cB_zsTrace = (AllBlockAvgTraces_zs(BlockBinInds,:))';
+%     %     cB_zsTrace = AllBlockAvgTraces_zs(BlockBinInds,:);
+%     %     BaselineAvgs = mean(cB_zsTrace(1:(ProbNPSess.TriggerStartBin{1}-1),:));
+%     %     cB_zsTrace = (cB_zsTrace - BaselineAvgs)';
+%     cBlockAvg_datas{cB,1} = cB_zsTrace;
+%     [~,MaxInds] = max(cB_zsTrace,[],2);
 %     [~,sortInds] = sort(MaxInds);
 %     cBlockAvg_datas{cB,2} = sortInds;
 % end
-NumBlocks = length(BlockNMRealTrInds);
-RawBlockAvgDatas = cell(NumBlocks,1);
-for cB = 1 : NumBlocks
-    cBInds = BlockNMRealTrInds{cB};
-    cBTrDatas = SMBinDataMtx(cBInds,:,:);
-    TrAvgData_mtx = squeeze(mean(cBTrDatas));
-    RawBlockAvgDatas{cB,1} = TrAvgData_mtx'; % nbins * nUnit, for zscore calculation convenience
-end
-AllBlockAvgTraces = cell2mat(RawBlockAvgDatas);
-AllBlockAvgTraces_zs = zscore(AllBlockAvgTraces);
-cBlockAvg_datas = cell(NumBlocks,2); % data and sorting inds
-for cB = 1 : NumBlocks
-    BlockBinInds = (1:BinNumbers)+BinNumbers*(cB-1);
-    cB_zsTrace = (AllBlockAvgTraces_zs(BlockBinInds,:))';
-    %     cB_zsTrace = AllBlockAvgTraces_zs(BlockBinInds,:);
-    %     BaselineAvgs = mean(cB_zsTrace(1:(ProbNPSess.TriggerStartBin{1}-1),:));
-    %     cB_zsTrace = (cB_zsTrace - BaselineAvgs)';
-    cBlockAvg_datas{cB,1} = cB_zsTrace;
-    [~,MaxInds] = max(cB_zsTrace,[],2);
-    [~,sortInds] = sort(MaxInds);
-    cBlockAvg_datas{cB,2} = sortInds;
-end
 
-%%
-xTimes = ((1:BinNumbers) - ProbNPSess.TriggerStartBin{1})*binTimeStep;
-yNums = 1:UnitNum;
-
-hf = figure('position',[100 100 1200 360]);
-SortInds = 1; % which block inds is used for sorting
-for cAx = 1 : NumBlocks
-    ax = subplot(1,NumBlocks,cAx);
-    cBlockData = cBlockAvg_datas{cAx,1};
-    imagesc(xTimes,yNums,cBlockData(cBlockAvg_datas{SortInds,2},:),[-0.5 1]);
-    %     colormap gray
-    xlabel('Times (s)');
-    ylabel(sprintf('# ROIs (SortbyBlock #%d)',SortInds));
-    title(num2str(cAx,'Block %d'));
-end
-%% plot the mean traces from different blocks in same axis
+% %%
+% xTimes = ((1:BinNumbers) - ProbNPSess.TriggerStartBin{1})*binTimeStep;
+% yNums = 1:UnitNum;
+% 
+% hf = figure('position',[100 100 1200 360]);
+% SortInds = 1; % which block inds is used for sorting
+% for cAx = 1 : NumBlocks
+%     ax = subplot(1,NumBlocks,cAx);
+%     cBlockData = cBlockAvg_datas{cAx,1};
+%     imagesc(xTimes,yNums,cBlockData(cBlockAvg_datas{SortInds,2},:),[-0.5 1]);
+%     %     colormap gray
+%     xlabel('Times (s)');
+%     ylabel(sprintf('# ROIs (SortbyBlock #%d)',SortInds));
+%     title(num2str(cAx,'Block %d'));
+% end
+% %% plot the mean traces from different blocks in same axis
 RepeatTypeStrs = {'Stim','Choice'};
 % if IsBoundshiftSess
 %    hf = figure('position',[100 100 400 300]);
@@ -337,7 +337,7 @@ end
 
 
 % passive analysis session
-PassiveFileFullPath = 'F:\b104a03_ksoutputs\catgt_b104a03_20210427_NPSess01_g0\batch104_anm03_20210427Tony_NPSess01_passive.txt';
+PassiveFileFullPath = 'F:\b106a04_ksoutputs\b106a04_20211204_NPsess04_g0_cat\catgt_b106a04_20211204_NPsess04_g0\Ab106a04_rf_20211204_NPsess04.txt';
 ProbNPSess.CurrentSessInds = strcmpi('passive',ProbNPSess.SessTypeStrs);
 
 ProbNPSess = ProbNPSess.triggerOnsetTime([],4);  % 4 is the trigger duration, in ms
