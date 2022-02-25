@@ -41,10 +41,10 @@ TargetAreaUnits = false(size(SMBinDataMtxRaw,2),1);
 % SVMDecodingAccu_strs = {'SVMScores','mdperfs','RevfreqInds','PredBTANDRealChoice','CrossCoefValues'};
 % SVMDecodingAccuracy = cell(NumExistAreas,4);
 SVMSCoreProb_strs = {'SVMScores','mdperfs','RevfreqInds','PredBTANDRealChoice','CrossCoefValues','UnitNumber','SampledecodLags'};
-SVMSCoreProbofBlock = cell(NumExistAreas+1,7);
-SampleScore2ProbAlls = cell(NumExistAreas+1,1);
-AreaPredInfo = cell(NumExistAreas+1, 2);
-for cArea = 1 : NumExistAreas+1
+SVMSCoreProbofBlock = cell(NumExistAreas,7);
+SampleScore2ProbAlls = cell(NumExistAreas,1);
+AreaPredInfo = cell(NumExistAreas, 2);
+for cArea = 1 : NumExistAreas
     if cArea <= NumExistAreas
         cUsedAreas = ExistAreas_Names{cArea};
         if isempty(SessAreaIndexStrc.(cUsedAreas))
@@ -150,7 +150,7 @@ for cArea = 1 : NumExistAreas+1
     
     % time-lagged correlation plot
     [Allxcf,Alllags,Allbounds] = crosscorr(SortRevFreqPredProb,SortRevFreqChoices,'NumLags',40,'NumSTD',3);
-    [~, AllPeakInds] = max(Alllags);
+    [~, AllPeakInds] = max(Allxcf);
     hf3 = figure; 
     crosscorr(SortRevFreqPredProb,SortRevFreqChoices,'NumLags',40,'NumSTD',3);
 

@@ -1,6 +1,6 @@
 
 % TargetRegionFile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\TargetbrainRegions.xlsx';
-TargetRegionFile = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\TargetbrainRegions.xlsx';
+TargetRegionFile = 'K:\Documents\me\projects\NP_reversaltask\TargetbrainRegions.xlsx';
 
 ChnposIndex = readcell(TargetRegionFile,'Range','A:A',...
         'Sheet',1);
@@ -22,7 +22,8 @@ for cArea = 1 : NumTargetAreas
 end
 
 %%
-saveNames = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+% saveNames = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+saveNames = 'K:\ Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
 
 save(saveNames,'BrainRegions','-v7.3');
 
@@ -54,7 +55,7 @@ end
 %%
 cclr
 
-AllSessFolderPathfile = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
 % AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
 sortingcode_string = 'ks2_5';
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
@@ -64,7 +65,7 @@ NumprocessedNPSess = length(SessionFolders);
 
 
 %%
-TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
 % TargetBrainArea_file = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
 
 BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
@@ -72,8 +73,8 @@ TargetRegionNamesAll = fieldnames(BrainRegionStrc.BrainRegions);
 NumofTargetAreas = length(TargetRegionNamesAll);
 for cP = 1 : NumprocessedNPSess
     %
-    cPath = SessionFolders{cP};
-%     cPath = fullfile(strrep(SessionFolders{cP}(2:end-1),'F:','I:\ksOutput_backup'));
+%     cPath = SessionFolders{cP};
+    cPath = fullfile(strrep(SessionFolders{cP}(2:end-1),'F:','I:\ksOutput_backup'));
     load(fullfile(cPath,sortingcode_string,'NPClassHandleSaved.mat'));
     
     if isempty(ProbNPSess.ChannelAreaStrs)

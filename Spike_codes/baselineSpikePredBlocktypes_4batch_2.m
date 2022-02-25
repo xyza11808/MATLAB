@@ -41,13 +41,13 @@ end
 TargetAreaUnits = false(size(SMBinDataMtxRaw,2),1);
 
 SVMDecodingAccu_strs = {'SVMaccuracy','ShufAccu','SVMmodel','UsedUnitInds(NotRealIndex)'};
-SVMDecodingAccuracy = cell(NumExistAreas+1,4);
+SVMDecodingAccuracy = cell(NumExistAreas,4);
 logRegressorProb_strs = {'logregressorMD', 'Predprob','NMFreqChoice','NMFreqTrialIndex','CrossCoefValues'};
-logRegressorProbofBlock = cell(NumExistAreas+1,5);
+logRegressorProbofBlock = cell(NumExistAreas,5);
 % logRegressorUnitSampleDec = cell(NumExistAreas+1,2);
-AreaPredInfo = cell(NumExistAreas+1, 2);
+AreaPredInfo = cell(NumExistAreas, 2);
 %
-for cArea = 1 : NumExistAreas+1
+for cArea = 1 : NumExistAreas
     if cArea <= NumExistAreas
         cUsedAreas = ExistAreas_Names{cArea};
         if isempty(SessAreaIndexStrc.(cUsedAreas))
@@ -140,7 +140,7 @@ for cArea = 1 : NumExistAreas+1
         MDPerfInds = cell2mat(AllTrIndsBack(:,2)); % for model performance evaluating
         PerdTrInds = cell2mat(cFoldInds(:)); % predicting the rest datas
         
-        [BTrain,~,statsTrain] = mnrfit(BaselineResp_All(TrainInds,:),categorical(BlockTypesAll(TrainInds)));
+        [BTrain,~,statsTrain] = mnrfit(BaselineResp_All(TrainInds,:)+1e-6,categorical(BlockTypesAll(TrainInds)));
         [pihatNewPerf,~,~] = mnrval(BTrain,BaselineResp_All(MDPerfInds,:),statsTrain);
         
         MDProbNewPerf = double(pihatNewPerf(:,1)>0.5);

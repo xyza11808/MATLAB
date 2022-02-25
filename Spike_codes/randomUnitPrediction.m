@@ -13,7 +13,7 @@ TrInds = (1:size(AllUnitResponse,1))';
 GrWithinIndsSet = seqpartitionFun(TrInds, NumofFolds);
 SampleScore2Prob = cell(RepeatNum, 5);
 
-for cR = 1 : RepeatNum
+parfor cR = 1 : RepeatNum
     cReSampleInds = randsample(TotalUnitNums, sampleNumber);
     cReSampleResp = AllUnitResponse(:,cReSampleInds);
     
