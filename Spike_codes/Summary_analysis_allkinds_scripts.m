@@ -78,6 +78,7 @@ AllArea_BLSAUCs = squeeze(Areawise_BTANDChoiceAUC(:,:,2));
 AllArea_BLAUCs = squeeze(Areawise_BTANDChoiceAUC(:,:,3));
 
 NonEmptySessInds = cellfun(@(x) ~isempty(x),AllArea_ASAUCs);
+
 [SessInds, AreaInds] = find(NonEmptySessInds);
 AllArea_VecAngle_Vec = cell2mat(AllArea_TwoVecAngle(NonEmptySessInds));
 AllArea_UnitNum_Vec = cell2mat(AllArea_UnitNums(NonEmptySessInds));
@@ -88,8 +89,165 @@ ValidPopuVecInds = AllArea_UnitNum_Vec > 3 & AllArea_BTloss_Vec < 0.5 ...
     & AllArea_Choiceloss_Vec < 0.5;
 ValidPopuVecs = AllArea_VecAngle_Vec(ValidPopuVecInds);
 
+AllArea_AS_AUC_CellVec = AllArea_ASAUCs(NonEmptySessInds);
+AllArea_BLS_AUC_CellVec = AllArea_BLSAUCs(NonEmptySessInds);
+AllArea_BL_AUC_CellVec = AllArea_BLAUCs(NonEmptySessInds);
 
+% loop across all areas
+NumBrainAreas = length(BrainAreasStr);
+AreaWiseCellDatas = cell(NumBrainAreas, 5);
+for cA = 1 : NumBrainAreas
+    cA_Inds = AreaInds == cA;
+    cA_Area_str = BrainAreasStr{cA};
+    AreaWiseCellDatas(cA,1) = {cA_Area_str};
+    if sum(cA_Inds)
+       cA_AS_AUC_Vec = cell2mat(AllArea_AS_AUC_CellVec(cA_Inds));
+       cA_BLS_AUC_Vec = cell2mat(AllArea_BLS_AUC_CellVec(cA_Inds));
+       cA_BL_AUC_Vec = cell2mat(AllArea_BL_AUC_CellVec(cA_Inds));
+       % left to see whether bad performed session should be excluded
+       
+       cA_BT8Choice_Angles = [AllArea_VecAngle_Vec(cA_Inds),...
+           AllArea_UnitNum_Vec(cA_Inds), AllArea_BTloss_Vec(cA_Inds), ...
+           AllArea_Choiceloss_Vec(cA_Inds)];
+       
+       AreaWiseCellDatas(cA,2:end) = {cA_AS_AUC_Vec, cA_BLS_AUC_Vec, ...
+           cA_BL_AUC_Vec, cA_BT8Choice_Angles};
+       
+    end
+    
+    
+end
 
+%%
+summarySaveFolder1 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\BlockType_ChoiceVecANDAUC';
+if ~isfolder(summarySaveFolder1)
+    mkdir(summarySaveFolder1);
+end
+
+%%
+for cAA = 1 : NumBrainAreas
+    cAreaStr = BrainAreasStr{cAA};
+    if ~isempty(AreaWiseCellDatas{cAA,2}) % non-empty area regions
+        cA_AS_AUCs = AreaWiseCellDatas{cAA,2};
+        cA_BLS_AUCs = AreaWiseCellDatas{cAA,3};
+        cA_BL_AUCs = AreaWiseCellDatas{cAA,4};
+        cA_BTChoiceAngle = AreaWiseCellDatas{cAA,5};
+        
+        UsedAngleInds = cA_BTChoiceAngle(:,2) > 3;
+        cA_BTChoice_usedAngles = cA_BTChoiceAngle(UsedAngleInds,1);
+        cA_BTPerfs_used = 1 - cA_BTChoiceAngle(UsedAngleInds,3);
+        cA_ChoicePerfs_used = 1 - cA_BTChoiceAngle(UsedAngleInds,4);
+        
+        NumTotalUnits = size(cA_AS_AUCs,1);
+        if NumTotalUnits < 3
+            continue;
+        end
+        
+        hf = figure('position',[100 50 1240 900],'PaperPositionMode', 'manual');
+        ax1 = subplot(331);
+        plot(cA_AS_AUCs(:,1),cA_BLS_AUCs(:,1),'ro')
+        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
+        xlabel('AfterStim resp, BlockType');
+        ylabel('baselineSub resp, BlockType');
+        set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off','xlim',[0 1],'ylim',[0 1]);
+        [~, p_BT] = ttest(cA_AS_AUCs(:,1),cA_BLS_AUCs(:,1));
+        title(sprintf('Area %s, p = %.3e',cAreaStr, p_BT));
+        text(0.3,0.2,sprintf('n = %d',NumTotalUnits));
+
+        ax2 = subplot(332);
+        plot(cA_AS_AUCs(:,3),cA_BLS_AUCs(:,3),'bo')
+        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
+        xlabel('AfterStim resp, Choice');
+        ylabel('baselineSub resp, Choice');
+        set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off');
+        [~, p_Choice] = ttest(cA_AS_AUCs(:,3),cA_BLS_AUCs(:,3));
+        title(sprintf('p = %.3e',p_Choice));
+        
+        % compare block type decoding with baseline data
+%         h2f = figure('position',[100 100 920 360]);
+        ax3 = subplot(334);
+        plot(cA_AS_AUCs(:,1),cA_BL_AUCs(:,1),'ro')
+        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
+        xlabel('AfterStim resp, BlockType');
+        ylabel('baseline, BlockType');
+        set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off');
+        [~, p_BT] = ttest(cA_AS_AUCs(:,1),cA_BL_AUCs(:,1));
+        title(sprintf('p = %.3e',p_BT));
+%         text(0.3,0.2,sprintf('n = %d',NumUsedUnits));
+
+        ax4 = subplot(335);
+        plot(cA_BLS_AUCs(:,1),cA_BL_AUCs(:,1),'ro')
+        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
+        xlabel('baselineSub resp, BlockType');
+        ylabel('baseline, BlockType');
+        set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off');
+        [~, p_Choice] = ttest(cA_BLS_AUCs(:,1),cA_BL_AUCs(:,1));
+        title(sprintf('p = %.3e',p_Choice));
+        
+        % is there correlation between choice decoding and blocktype decoding
+        ax5 = subplot(337);
+        plot(cA_AS_AUCs(:,1),cA_AS_AUCs(:,3),'mo')
+        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
+        xlabel('AfterStim resp, BlockType');
+        ylabel('AfterStim resp, Choice');
+        set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off');
+        [r1, p3] = corrcoef(cA_AS_AUCs(:,1),cA_AS_AUCs(:,3));
+        title(sprintf('p = %.3e, r = %.3f',p3(1,2),r1(1,2)));
+%         text(0.3,0.2,sprintf('n = %d',NumUsedUnits));
+
+        ax6 = subplot(338);
+        plot(cA_BLS_AUCs(:,1),cA_BLS_AUCs(:,3),'mo')
+        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
+        xlabel('baselineSub resp, BlockType');
+        ylabel('baselineSub resp, Choice');
+        set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off');
+        [~, p_Choice3] = corrcoef(cA_BLS_AUCs(:,1),cA_BLS_AUCs(:,3));
+        tb1 = fitlm(cA_BLS_AUCs(:,1),cA_BLS_AUCs(:,3));
+        SlopeValue = tb1.Coefficients.Estimate(2);
+        title(sprintf('p = %.3e, Slope = %.3f',p_Choice3(1,2),SlopeValue));
+        
+       ax7 = subplot(333);
+%        PerfEdges = 0:0.05:1;
+       nBins = 10;
+       hh = histogram(ax7,cA_BTChoice_usedAngles,nBins);
+       yscales = get(gca,'ylim')+[0 0.5];
+       line([mean(cA_BTChoice_usedAngles) mean(cA_BTChoice_usedAngles)],yscales,...
+           'Color','m','linewidth',1.8);
+       set(gca,'box','off','ylim',yscales);
+       title(ax7,sprintf('TwodecodeVecAngle = %.2f',mean(cA_BTChoice_usedAngles)));
+       
+       ax8 = subplot(336);
+       PerfEdges = 0:0.05:1;
+       hh2 = histogram(ax8,cA_BTPerfs_used,PerfEdges);
+       yscales = get(gca,'ylim')+[0 0.5];
+       line([mean(cA_BTPerfs_used) mean(cA_BTPerfs_used)],yscales,...
+           'Color','m','linewidth',1.8);
+       set(gca,'box','off','ylim',yscales);
+       title(ax8,sprintf('BlockType decodePerf = %.2f',mean(cA_BTPerfs_used)));
+       
+       ax9 = subplot(339);
+       PerfEdges = 0:0.05:1;
+       hh3 = histogram(ax9,cA_ChoicePerfs_used,PerfEdges);
+       yscales = get(gca,'ylim')+[0 0.5];
+       line([mean(cA_ChoicePerfs_used) mean(cA_ChoicePerfs_used)],yscales,...
+           'Color','m','linewidth',1.8);
+       set(gca,'box','off','ylim',yscales);
+       title(ax9,sprintf('BlockType decodePerf = %.2f',mean(cA_ChoicePerfs_used)));
+       
+       fullfileSaveNames = fullfile(summarySaveFolder1,sprintf('Area_%s_UnitAUC_PopultionVecAngle_plot',cAreaStr));
+       
+       saveas(hf, fullfileSaveNames);
+       saveas(hf, fullfileSaveNames, 'png');
+       saveas(hf, fullfileSaveNames, 'pdf');
+       close(hf);
+    end
+
+end
+
+%%
+dataFullSaveNames1 = fullfile(summarySaveFolder1,'UnitAUC_PopuVecAngle_datas.mat');
+save(dataFullSaveNames1,'AreaWiseCellDatas', 'BrainAreasStr', 'Areawise_PopuVec',...
+    'Areawise_BTANDChoiceAUC', 'Areawise_PopuBTChoicePerf','-v7.3');
 
 
 
