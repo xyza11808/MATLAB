@@ -10,7 +10,7 @@ NumofChannels = 385; % last channel is the trigger channel data
 % fnames = dir(fullfile(binfilepath,'*.ap.bin'));
 % fullbinfile = fullpaths; %fullfile(binfilepath,fnames(1).name);
 % bytes       = get_file_size(fullbinfile); % size in bytes of raw binary
-TotalTimes = obj.Numsamp/SR;  % total recording times
+TotalTimes = rez.ops.sampsToRead/SR;  % total recording times
 %%
 chnMaps = readNPY(fullfile(FolderPath, 'channel_map.npy'));
 chnposition = readNPY(fullfile(FolderPath, 'channel_positions.npy'));
@@ -47,7 +47,7 @@ for Clus = 1:NumberClusters
 end
 
 try
-    TemplateAmps = readNPY(fullfile(FolderPath, 'ampUnscales.npy'));
+    TemplateAmps = readNPY(fullfile(FolderPath, 'ampUnscaled.npy'));
 catch
     TemplateAmps = zeros(NumberClusters,1);
 end
@@ -71,8 +71,8 @@ clus_spNums = ClusFRs * TotalTimes;
 
 %% write data into cluster_info.tsv files
 % 
-% id	Amplitude	ContamPct	KSLabel	amp	ch	depth	fr	group	n_spikes	sh
-% 0	6804.9	100	good	110.2760696	2	40	1.05573393		4442	0
+% id	Amplitude	ContamPct	KSLabel	amp	          ch	depth	fr	       group 	n_spikes	sh
+% 0	    6804.9	     100	    good	110.2760696	   2	40	  1.05573393		     4442	     0
 
 fileIDInfo = fopen(fullfile(FolderPath, 'cluster_info.tsv'),'w');
 if fileIDInfo < 0

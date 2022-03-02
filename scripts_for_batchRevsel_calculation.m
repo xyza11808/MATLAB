@@ -1,7 +1,7 @@
 cclr
-datafolders = 'E:\datas\behavDatas\batch107\anm06Data';
+datafolders = 'E:\datas\behavDatas';
 cd(datafolders);
-sess_matfiles = dir(fullfile(datafolders,'*2021*.mat'));
+sess_matfiles = dir(fullfile(datafolders,'*202*.mat'));
 
 NumMatfiles = length(sess_matfiles);
 
@@ -11,7 +11,7 @@ for cf = 1 : NumMatfiles
     cMatfile = sess_matfiles(cf).name;
     clearvars behavResults behavSettings
     load(fullfile(datafolders,cMatfile));
-    
+    %
     BlockSectionInfo = Bev2blockinfoFun(behavResults);
     if isempty(BlockSectionInfo)
         continue;
@@ -104,11 +104,11 @@ for cf = 1 : NumMatfiles
         saveas(hf,fullfile(datafolders,[cMatfile(1:end-4),'_Boundshift_plot']));
         saveas(hf,fullfile(datafolders,[cMatfile(1:end-4),'_Boundshift_plot']),'png');
         close(hf);
-        
+        %
     catch ME
         % do nothing
     end
-    
+    %
     try
         if IsBoundshiftSess
             RevFreqNums = sum(BlockSectionInfo.IsFreq_asReverse);
@@ -186,14 +186,14 @@ for cf = 1 : NumMatfiles
     catch ME
         % do nothing
     end
-    
+    %
 end
-
+%%
 save summariedBlockRevPerfs.mat matfileBlockInfos -v7.3
 %
 EmptyMatcCells = cellfun(@isempty, matfileBlockInfos(:,1));
 UsedBlockMats = matfileBlockInfos(~EmptyMatcCells,:);
-StartIndsCell = cellfun(@(x) regexp(x,'2021\d{4}'),UsedBlockMats(:,1),'UniformOutput',false);
+StartIndsCell = cellfun(@(x) regexp(x,'202\d{5}'),UsedBlockMats(:,1),'UniformOutput',false);
 CelldateStrs = cellfun(@(x,y) x(y:(y+7)),UsedBlockMats(:,1),StartIndsCell,'UniformOutput',false);
 OneMatfilestrs = UsedBlockMats{1,1};
 AnminfoStartInds = regexp(OneMatfilestrs,'\d{3}a\d{2}');
@@ -203,16 +203,16 @@ RevSessMatInds = logical(cell2mat(UsedBlockMats(:,3)));
 RevSessMats = UsedBlockMats(RevSessMatInds,:);
 RevSess_dateStrs = CelldateStrs(RevSessMatInds);
 [SortedDateS,SortInds] = sort(RevSess_dateStrs);
-
+%
 BlockBoundDiffs = cell2mat(RevSessMats(SortInds,4));
-
+StartInNPBoxInds = find(cellfun(@(x) contains(x,'NP'),RevSessMats(:,1)),1,'first');
 % % load to tony labe date from current folder path, one file named "ToTonylabDate.txt"
 % ToTonyDatePath = fullfile(datafolders,'ToTonylabDate.txt');
 % fid = fopen(ToTonyDatePath);
 % tline = fgetl(fid);
 % fclose(fid);
 % DateInds = find(strcmpi(SortedDateS, tline));
-
+%
 huf = figure;
 plot(BlockBoundDiffs,'r-o','linewidth',1.5);
 ylabel('Boundary difference');
@@ -220,13 +220,13 @@ xlabel('Date')
 title(AnminfoStrs);
 set(gca,'box','off');
 yscales = get(gca,'ylim');
-% line([DateInds DateInds]-0.4, yscales,'Color','k','linewidth',1.5);
+line([StartInNPBoxInds StartInNPBoxInds]-0.4, yscales,'Color','k','linewidth',1.5);
 % text(DateInds,yscales(2)-0.2,'ChangeEnvDate','FontSize',10,'Color','k');
 %
 savename = fullfile(datafolders,'Across days boundary shift values plot');
 saveas(huf,savename);
 saveas(huf,savename,'png');
-% close(huf);
+close(huf);
 
 
 
