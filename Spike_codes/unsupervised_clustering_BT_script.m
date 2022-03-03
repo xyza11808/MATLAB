@@ -29,7 +29,7 @@ NumExistAreas = length(ExistAreas_Names);
 
 
 %%
-AreaVLDatas = SMBinDataMtxRaw(:,SessAreaIndexStrc.VL.MatchedUnitInds,:); % change the used area str names
+AreaVLDatas = SMBinDataMtxRaw(:,SessAreaIndexStrc.Others.MatchedUnitInds,:); % change the used area str names
 TriggerAlignBin = ProbNPSess.TriggerStartBin{ProbNPSess.CurrentSessInds};
 BaselineResp_All = mean(AreaVLDatas(:,:,1:TriggerAlignBin-1),3);
 
@@ -69,7 +69,7 @@ RevFreq_Choices = NMChoices(RevFreqInds);
 RevFreq_ClusIDs = IndexMtx(RevFreqInds,:) - 1;
 
 [r,p] = corr(RevFreq_ClusIDs, RevFreq_Choices);
-
+%%
 UsedInds = 3;
 
 figure;

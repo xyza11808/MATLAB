@@ -182,7 +182,10 @@ for cAA = 1 : NumBrainAreas
         ylabel('baseline, BlockType');
         set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off');
         [~, p_Choice] = ttest(cA_BLS_AUCs(:,1),cA_BL_AUCs(:,1));
-        title(sprintf('p = %.3e',p_Choice));
+        tb10 = fitlm(cA_BLS_AUCs(:,1),cA_BL_AUCs(:,1));
+        SlopeValue0 = tb10.Coefficients.Estimate(2);
+        
+        title(sprintf('p = %.3e, slope = %.4f',p_Choice,SlopeValue0));
         
         % is there correlation between choice decoding and blocktype decoding
         ax5 = subplot(337);
@@ -249,12 +252,13 @@ dataFullSaveNames1 = fullfile(summarySaveFolder1,'UnitAUC_PopuVecAngle_datas.mat
 save(dataFullSaveNames1,'AreaWiseCellDatas', 'BrainAreasStr', 'Areawise_PopuVec',...
     'Areawise_BTANDChoiceAUC', 'Areawise_PopuBTChoicePerf','-v7.3');
 
-
-
 %%
 % ###################################################################################################
 % Summary codes 2: summary of BT_and_Choice AUC values
 %
+
+
+
 
 
 

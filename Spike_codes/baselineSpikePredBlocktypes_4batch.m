@@ -40,11 +40,11 @@ end
 TargetAreaUnits = false(size(SMBinDataMtxRaw,2),1);
 
 SVMDecodingAccu_strs = {'SVMaccuracy','ShufAccu','SVMmodel','UsedUnitInds(NotRealIndex)'};
-SVMDecodingAccuracy = cell(NumExistAreas+1,4);
+SVMDecodingAccuracy = cell(NumExistAreas,4);
 logRegressorProb_strs = {'logregressorMD', 'Predprob','NMFreqChoice','NMFreqTrialIndex','CrossCoefValues'};
-logRegressorProbofBlock = cell(NumExistAreas+1,5);
-logRegressorUnitSampleDec = cell(NumExistAreas+1,2);
-for cArea = 1 : NumExistAreas+1
+logRegressorProbofBlock = cell(NumExistAreas,5);
+logRegressorUnitSampleDec = cell(NumExistAreas,2);
+for cArea = 1 : NumExistAreas
     if cArea <= NumExistAreas
         cUsedAreas = ExistAreas_Names{cArea};
         if isempty(SessAreaIndexStrc.(cUsedAreas))
@@ -195,7 +195,7 @@ for cArea = 1 : NumExistAreas+1
         BaselineResp_Last, [BlockTypesAll, TrialAnmChoice], round(NumberOfUnits*0.8), NMRevFreqIndedx);
     logRegressorUnitSampleDec(cArea,:) = {MaxCoefANDlag, RepeatUnitIndsANDbeta};
 end
-
+%%
 save(fullfile(fullsavePath,'PopudecodingDatas.mat'), 'logRegressorProbofBlock', 'SVMDecodingAccuracy', 'SVMDecodingAccu_strs', ...
     'logRegressorProb_strs', 'ExistAreas_Names','logRegressorUnitSampleDec', '-v7.3');
 

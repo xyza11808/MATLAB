@@ -55,7 +55,7 @@ end
 %%
 cclr
 
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 % AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
 sortingcode_string = 'ks2_5';
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
