@@ -131,8 +131,8 @@ end
 %%
 SwitchInBlockType = BlockSectionInfo.BlockTypes(2:end); % switch into what kind of the block
 
-SavePlotFolder = fullfile(cfFolder,'BehavSwitchPlot'); % for behavior data processing
-% SavePlotFolder = fullfile(cfFolder,'ks2_5'); % for spike session data processing
+% SavePlotFolder = fullfile(cfFolder,'BehavSwitchPlot'); % for behavior data processing
+SavePlotFolder = fullfile(cfFolder,'ks2_5'); % for spike session data processing
 if ~exist('cF_prefix','var')
     figsavePath = fullfile(SavePlotFolder,'BehavSwitchPlot');
     matfileSavePath = fullfile(SavePlotFolder,'BehavSwitchData.mat');
@@ -153,9 +153,9 @@ save(matfileSavePath,'SwitchBlockChoices_rightward','AllFitMd', 'H2L_choiceprob_
 
 
 %%
-
+% cclr
 % 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 % 
 % SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
 %         'Sheet',1);
@@ -164,10 +164,12 @@ save(matfileSavePath,'SwitchBlockChoices_rightward','AllFitMd', 'H2L_choiceprob_
 % 
 % for cf = 1 : NumUsedSess
 %    cfFolder = SessionFolders{cf}(2:end-1);
-%    behavfilepath = fullfile(cfFolder,'ks2_5','NPClassHandleSaved.mat');
-%    clearvars behavResults fit_data_x fit_data_y md
-%    behavSwitchplot_script;
-% 
+%    if ~exist(fullfile(cfFolder,'ks2_5','BehavSwitchPlot.png'),'file')
+%        fprintf('Processing Session %d...\n',cf);
+%        behavfilepath = fullfile(cfFolder,'ks2_5','NPClassHandleSaved.mat');
+%        clearvars behavResults fit_data_x fit_data_y md
+%        behavSwitchplot_script;
+%    end
 % end
 
 

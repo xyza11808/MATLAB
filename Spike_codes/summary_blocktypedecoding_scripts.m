@@ -1,7 +1,7 @@
 cclr
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -24,8 +24,8 @@ Areawise_PopuSVMCC = cell(NumUsedSess,NumAllTargetAreas,2);
 Areawise_popuSVMpredInfo = cell(NumUsedSess,NumAllTargetAreas,3);
 Areawise_BehavChoiceDiff = cell(NumUsedSess,NumAllTargetAreas);
 for cS = 1 :  NumUsedSess
-%     cSessPath = SessionFolders{cS}(2:end-1);
-    cSessPath = strrep(SessionFolders{cS}(2:end-1),'F:','I:\ksOutput_backup');
+    cSessPath = SessionFolders{cS}(2:end-1);
+%     cSessPath = strrep(SessionFolders{cS}(2:end-1),'F:','I:\ksOutput_backup');
     
     SessblocktypeDecfile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktype','PopudecodingDatas.mat');
     SessUnitAUCfile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktype','SingleUnitAUC.mat');
@@ -95,8 +95,8 @@ for cS = 1 :  NumUsedSess
 end
 
 %% summary figure plots saved position
-% sumfigsavefolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\blocktype_baseline_encoding';
-sumfigsavefolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\blocktype_baseline_SVMpred';
+sumfigsavefolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\blocktype_baseline_encoding';
+% sumfigsavefolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\blocktype_baseline_SVMpred';
 if ~isfolder(sumfigsavefolder)
     mkdir(sumfigsavefolder);
 end
@@ -136,6 +136,16 @@ title('SVM decoding perf')
 saveas(hf,fullfile(sumfigsavefolder,'SVMperf 3d plot save'));
 saveas(hf,fullfile(sumfigsavefolder,'SVMperf 3d plot save'),'png');
 
+%% anova analysis 
+tbl = table(AllSVMperfDatas_Vec,AreaInds,AllSVMnumberDatas_Vec,...
+                'VariableNames',{'SVMPerf','Areas','UnitNumber'});
+tbl.Areas = categorical(tbl.Areas);
+
+mmdl = fitlm(tbl,'SVMPerf ~ Areas+UnitNumber');
+anovaTable = anova(mmdl);
+
+
+
 % %%
 % h2df = figure;
 % hold on
@@ -147,6 +157,10 @@ saveas(hf,fullfile(sumfigsavefolder,'SVMperf 3d plot save'),'png');
 %% single unit AUC plot
 RealAUCs = squeeze(Areawise_UnitAUC(:,:,1));
 AUCThres = squeeze(Areawise_UnitAUC(:,:,2));
+AUCFigSavePath = fullfile(sumfigsavefolder,'Area_AUCDistribution');
+if ~isfolder(AUCFigSavePath)
+    mkdir(AUCFigSavePath);
+end
 
 AUCedges = 0:0.05:1;
 AUCcent = AUCedges(1:end-1)+0.025;
@@ -160,42 +174,42 @@ for cArea = 1 : NumAllTargetAreas
     SigAUCvalues = cArea_realAUC(cArea_realAUC > cArea_AUCthres);
     
     AreaWiseAUCs(cArea,1:2) = {cArea_realAUC, SigAUCvalues};
-%     h3f = figure('position',[100 100 460 230]);
-%     ax1 = subplot(121);
-%     hold on
-%     h1 = histogram(ax1,cArea_realAUC,AUCedges);
-%     h2 = histogram(ax1,SigAUCvalues,AUCedges);
-%     yscales = get(ax1,'ylim');
-%     h1.EdgeColor = 'none';
-%     h2.EdgeColor = 'none';
-%     h1.FaceColor = [.7 .7 .7];
-%     h2.FaceColor = 'k';
-%     xlabel('AUC')
-%     ylabel('Unit counts');
-%     title(BrainAreasStr{cArea});
-%     line(mean(SigAUCvalues)*[1 1],yscales,'Color','r','linewidth',1.4);
-%     set(gca,'ylim',yscales);
-%     text(mean(SigAUCvalues)+0.01,yscales(2)*0.75,{'AvgSigAUC';num2str(mean(SigAUCvalues),'%.3f')},...
-%     'FontSize',6);
-%     text(0.01,yscales(2)*0.9,{'UnitNumber';num2str(numel(cArea_realAUC),'%d')},...
-%         'FontSize',6);
-%     
-%     ax2 = subplot(122);
-%     SigAUCFrac = mean(cArea_realAUC > cArea_AUCthres);
-%     labels = {sprintf('SigUnits(%.2f%%)',SigAUCFrac*100),'NotSigUnits'};
-%     p = pie(ax2, [SigAUCFrac 1-SigAUCFrac],labels);
-%     p(1).EdgeColor = 'none';
-%     p(1).FaceColor = 'k';
-%     p(3).EdgeColor = 'none';
-%     p(3).FaceColor = [.7 .7 .7];
-%     p(2).FontSize = 6;
-%     p(4).FontSize = 6;
+    h3f = figure('position',[100 100 460 230]);
+    ax1 = subplot(121);
+    hold on
+    h1 = histogram(ax1,cArea_realAUC,AUCedges);
+    h2 = histogram(ax1,SigAUCvalues,AUCedges);
+    yscales = get(ax1,'ylim');
+    h1.EdgeColor = 'none';
+    h2.EdgeColor = 'none';
+    h1.FaceColor = [.7 .7 .7];
+    h2.FaceColor = 'k';
+    xlabel('AUC')
+    ylabel('Unit counts');
+    title(BrainAreasStr{cArea});
+    line(mean(SigAUCvalues)*[1 1],yscales,'Color','r','linewidth',1.4);
+    set(gca,'ylim',yscales);
+    text(mean(SigAUCvalues)+0.01,yscales(2)*0.75,{'AvgSigAUC';num2str(mean(SigAUCvalues),'%.3f')},...
+    'FontSize',6);
+    text(0.01,yscales(2)*0.9,{'UnitNumber';num2str(numel(cArea_realAUC),'%d')},...
+        'FontSize',6);
+    
+    ax2 = subplot(122);
+    SigAUCFrac = mean(cArea_realAUC > cArea_AUCthres);
+    labels = {sprintf('SigUnits(%.2f%%)',SigAUCFrac*100),'NotSigUnits'};
+    p = pie(ax2, [SigAUCFrac 1-SigAUCFrac],labels);
+    p(1).EdgeColor = 'none';
+    p(1).FaceColor = 'k';
+    p(3).EdgeColor = 'none';
+    p(3).FaceColor = [.7 .7 .7];
+    p(2).FontSize = 6;
+    p(4).FontSize = 6;
     
     
-%     savename = fullfile(sumfigsavefolder,sprintf('BrainRegion_unitAUCdis_%s',BrainAreasStr{cArea}));
-%     saveas(h3f,savename);
-%     saveas(h3f,savename,'png');
-%     close(h3f);
+    savename = fullfile(AUCFigSavePath,sprintf('BrainRegion_unitAUCdis_%s',BrainAreasStr{cArea}));
+    saveas(h3f,savename);
+    saveas(h3f,savename,'png');
+    close(h3f);
     
 end
 AreaWiseAUCs(:,3) = BrainAreasStr;
@@ -348,7 +362,7 @@ text((xscales(2)+0.05)*ones(Num_UsedAreas,1), 1:Num_UsedAreas, cellstr(num2str(A
     'FontSize',8);
 set(gca,'xlim',[xscales(1) xscales(2)+0.1])
 set(gca,'ytick',1:Num_UsedAreas,'yticklabel',AllAUCNames(:));
-xlabel('Peak lags');
+xlabel('Averaged AUCs');
 title('AllAUCAvg session lags')
 
 ax2 = subplot(122);
@@ -371,7 +385,7 @@ text((xscales(2)+0.05)*ones(Num_SigAreas,1), 1:Num_SigAreas, cellstr(num2str(Sig
     'FontSize',8);
 set(gca,'xlim',[xscales(1) xscales(2)+0.1])
 set(gca,'ytick',1:Num_SigAreas,'yticklabel',SigAUCNames(:));
-xlabel('Peak lags');
+xlabel('Averaged AUCs');
 title('Sig AUCAvg session lags')
 
 
@@ -473,7 +487,7 @@ set(gca,'ytick',1:NumUsedAreas_sig,'yticklabel',AreaNames_sig(:));
 xlabel('Peak lags');
 title('Sig coef session lags')
 %%
-saveName = fullfile(sumfigsavefolder,'Areawise Crosscoef peakcoef lag plot');
+saveName = fullfile(sumfigsavefolder,'Areawise SVMScore Crosscoef peakcoef lag plot');
 saveas(h7f,saveName);
 saveas(h7f,saveName,'png');
 
