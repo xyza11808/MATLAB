@@ -6,7 +6,7 @@
 cclr
 
 % AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);

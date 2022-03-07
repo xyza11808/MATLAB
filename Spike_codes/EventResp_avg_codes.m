@@ -1,6 +1,6 @@
 
 clearvars ProbNPSess UnitUsedCoefs UnitFitmds_All
-load(fullfile(cSessFolder,'ks2_5','NPClassHandleSaved.mat'));
+load(fullfile(cSessFolder,'NPClassHandleSaved.mat'));
 
 %%
 
@@ -51,8 +51,8 @@ elseif strcmpi(ProbNPSess.TrigAlignType{ProbNPSess.CurrentSessInds},'stim')
     AlignedRewardTime = ReTimes - OnsetTime;
     AlignedReBin = round(max(AlignedRewardTime,0)/1000/ProbNPSess.USedbin(2) + TriggerAlignBin);
     BaselineResp = mean(SMBinDataMtx(:,:,1:TriggerAlignBin-1),3);
-    StimResp1 = mean(SMBinDataMtx(:,:,(TriggerAlignBin+Stimwinbin(1,1)+1):(TriggerAlignBin+Stimwinbin(1,2))),3) - BaselineResp;
-    StimResp2 = mean(SMBinDataMtx(:,:,(TriggerAlignBin+Stimwinbin(2,1)+1):(TriggerAlignBin+Stimwinbin(2,2))),3) - BaselineResp;
+    StimResp1 = mean(SMBinDataMtx(:,:,(TriggerAlignBin+Stimwinbin(1,1)+1):(TriggerAlignBin+Stimwinbin(1,2))),3);% - BaselineResp;
+    StimResp2 = mean(SMBinDataMtx(:,:,(TriggerAlignBin+Stimwinbin(2,1)+1):(TriggerAlignBin+Stimwinbin(2,2))),3);% - BaselineResp;
     ChoiceResp = zeros(TrNum, unitNum);
     ReResp = zeros(TrNum, unitNum);
     for cTr = 1 : TrNum
@@ -238,7 +238,7 @@ NumUsedUnits = length(AboveThresUnit);
 fprintf('Number of significant units is %d.\n', NumUsedUnits);
 
 %%
-UnitUsedCoefs = cell(NumUsedUnits,1);
+UnitUsedCoefs = cell(NumUsedUnits,2);
 for cUsed_Unit = 1 : NumUsedUnits
     cUnit_allCoefs = UnitFitmds_All{AboveThresUnit(cUsed_Unit),1};
     AboveThresDevInds = UnitFitmds_All{AboveThresUnit(cUsed_Unit),2} > DevThreshold;
@@ -254,8 +254,8 @@ for cUsed_Unit = 1 : NumUsedUnits
     cUnitCoefs_final = zeros(1,numel(cUnit_coef_SigInds));
     cUnitCoefs_final(cUnit_coef_SigInds) = AvgCoefs(cUnit_coef_SigInds);
     %
-    UnitUsedCoefs{cUsed_Unit} = cUnitCoefs_final;
-    
+    UnitUsedCoefs{cUsed_Unit,1} = cUnitCoefs_final;
+    UnitUsedCoefs{cUsed_Unit,2} = cell2mat(cUnit_coefs);
 end
 
 %%

@@ -1,7 +1,7 @@
 
 cclr
 
-AllSessFolderPathfile = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+AllSessFolderPathfile = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 % AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
@@ -17,12 +17,12 @@ for cSess = 1 : NumUsedSess
     %     cSessFolder = fullfile(SessionFolders{cSess}(2:end-1),'ks2_5');
         ProbespikeFolder = fullfile(strrep(SessionFolders{cSess}(2:end-1),'F:','I:\ksOutput_backup'));
         
-        load(fullfile(ProbespikeFolder,'ks2_5','NPClassHandleSaved.mat'));
-        
-        ProbNPSess = ProbNPSess.ClusScreeningFun; % change the inclusion criteria if needed
+            load(fullfile(ProbespikeFolder,'ks2_5','NPClassHandleSaved.mat'));
 
-        saveName = fullfile(ProbespikeFolder,'ks2_5','NPClassHandleSaved.mat');
-        save(saveName,'ProbNPSess','PassSoundDatas','behavResults','-v7.3');
+            ProbNPSess = ProbNPSess.ClusScreeningFun; % change the inclusion criteria if needed
+
+            saveName = fullfile(ProbespikeFolder,'ks2_5','NPClassHandleSaved.mat');
+            save(saveName,'ProbNPSess','PassSoundDatas','behavResults','-v7.3');
     catch ME
         Errors(cSess) = 1;
     end
@@ -33,7 +33,7 @@ end
 %% unit response colorplot replots
 cclr
 
-AllSessFolderPathfile = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 % AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
@@ -78,7 +78,7 @@ end
 
 cclr
 
-AllSessFolderPathfile = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 % AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
 sortingcode_string = 'ks2_5';
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
@@ -89,7 +89,7 @@ NumprocessedNPSess = length(SessionFolders);
 
 %%
 % TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
-TargetBrainArea_file = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
 
 BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
 TargetRegionNamesAll = fieldnames(BrainRegionStrc.BrainRegions);
@@ -135,7 +135,7 @@ end
 %% used unit response amplitue analysis
 cclr
 
-AllSessFolderPathfile = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 % AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
@@ -149,6 +149,10 @@ for cSess = 1 : NumUsedSess
     
 %     cSessFolder = fullfile(SessionFolders{cSess}(2:end-1),'ks2_5');
     cSessFolder = fullfile(strrep(SessionFolders{cSess}(2:end-1),'F:','I:\ksOutput_backup'),'ks2_5');
+    if exist(fullfile(cSessFolder,'UnitspikeAmpSave.mat'),'file')
+        continue;
+    end
+    fprintf('Processing Session %d...\n', cSess);
     
     Amps = readNPY(fullfile(cSessFolder,'amplitudes.npy'));
     ClusInds = readNPY(fullfile(cSessFolder,'spike_clusters.npy'));
