@@ -23,7 +23,7 @@ end
 
 %%
 % saveNames = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
-saveNames = 'K:\ Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+saveNames = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
 
 save(saveNames,'BrainRegions','-v7.3');
 
@@ -70,6 +70,7 @@ TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainA
 
 BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
 TargetRegionNamesAll = fieldnames(BrainRegionStrc.BrainRegions);
+%
 NumofTargetAreas = length(TargetRegionNamesAll);
 for cP = 1 : NumprocessedNPSess
     %
