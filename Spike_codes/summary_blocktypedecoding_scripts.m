@@ -1,7 +1,7 @@
 cclr
 
-AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -24,8 +24,8 @@ Areawise_PopuSVMCC = cell(NumUsedSess,NumAllTargetAreas,2);
 Areawise_popuSVMpredInfo = cell(NumUsedSess,NumAllTargetAreas,3);
 Areawise_BehavChoiceDiff = cell(NumUsedSess,NumAllTargetAreas);
 for cS = 1 :  NumUsedSess
-    cSessPath = SessionFolders{cS}(2:end-1);
-%     cSessPath = strrep(SessionFolders{cS}(2:end-1),'F:','I:\ksOutput_backup');
+%     cSessPath = SessionFolders{cS}(2:end-1);
+    cSessPath = strrep(SessionFolders{cS}(2:end-1),'F:','I:\ksOutput_backup');
     
     SessblocktypeDecfile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktype','PopudecodingDatas.mat');
     SessUnitAUCfile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktype','SingleUnitAUC.mat');
