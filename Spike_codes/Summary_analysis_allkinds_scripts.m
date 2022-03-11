@@ -5,8 +5,8 @@
 %
 cclr
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -29,8 +29,8 @@ Areawise_PopuBTChoicePerf = zeros(NumUsedSess,NumAllTargetAreas,2);
 % Areawise_PopuSVMCC = cell(NumUsedSess,NumAllTargetAreas,2);
 % Areawise_BehavChoiceDiff = cell(NumUsedSess,NumAllTargetAreas);
 for cS = 1 :  NumUsedSess
-%     cSessPath = SessionFolders{cS}(2:end-1);
-    cSessPath = strrep(SessionFolders{cS}(2:end-1),'F:','I:\ksOutput_backup');
+    cSessPath = SessionFolders{cS}(2:end-1);
+%     cSessPath = strrep(SessionFolders{cS}(2:end-1),'F:','I:\ksOutput_backup');
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     
@@ -119,12 +119,15 @@ for cA = 1 : NumBrainAreas
 end
 
 %%
-summarySaveFolder1 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\BlockType_ChoiceVecANDAUC';
+% summarySaveFolder1 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\BlockType_ChoiceVecANDAUC';
+summarySaveFolder1 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\BlockType_ChoiceVecANDAUC';
 if ~isfolder(summarySaveFolder1)
     mkdir(summarySaveFolder1);
 end
 
 %%
+AfterRespSigAUCFracs = nan(NumBrainAreas,3);% only collect the after-stimulus response AUC
+AllKinds_sigAUCFracs = nan(NumBrainAreas,5); % AS_BT_frac, AS_Choice_frac,BLS_BT_frac,BLS_choice_frac,BS_BT_frac
 for cAA = 1 : NumBrainAreas
     cAreaStr = BrainAreasStr{cAA};
     if ~isempty(AreaWiseCellDatas{cAA,2}) % non-empty area regions
@@ -145,7 +148,15 @@ for cAA = 1 : NumBrainAreas
         
         hf = figure('position',[100 50 1240 900],'PaperPositionMode', 'manual');
         ax1 = subplot(331);
-        plot(cA_AS_AUCs(:,1),cA_BLS_AUCs(:,1),'ro')
+        hold on
+        cA_AS_AUC_SigInds = cA_AS_AUCs(:,1) > cA_AS_AUCs(:,2);
+        cA_BLS_AUC_SigInds = cA_BLS_AUCs(:,1) > cA_BLS_AUCs(:,2);
+        
+        plot(cA_AS_AUCs(~cA_AS_AUC_SigInds & ~cA_BLS_AUC_SigInds,1),cA_BLS_AUCs(~cA_AS_AUC_SigInds & ~cA_BLS_AUC_SigInds,1),...
+            'o','Color',[.7 .7 .7]);
+        plot(cA_AS_AUCs(cA_AS_AUC_SigInds,1),cA_BLS_AUCs(cA_AS_AUC_SigInds,1),'bo');
+        plot(cA_AS_AUCs(cA_BLS_AUC_SigInds,1),cA_BLS_AUCs(cA_BLS_AUC_SigInds,1),'bo');
+        
         line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
         xlabel('AfterStim resp, BlockType');
         ylabel('baselineSub resp, BlockType');
@@ -153,30 +164,57 @@ for cAA = 1 : NumBrainAreas
         [~, p_BT] = ttest(cA_AS_AUCs(:,1),cA_BLS_AUCs(:,1));
         title(sprintf('Area %s, p = %.3e',cAreaStr, p_BT));
         text(0.3,0.2,sprintf('n = %d',NumTotalUnits));
+        text(0.1,0.7,{'SigFraction:';sprintf('x Frac.: %.3f',mean(cA_AS_AUC_SigInds));...
+            sprintf('y Frac.: %.3f',mean(cA_BLS_AUC_SigInds))},'FontSize',6);
 
         ax2 = subplot(332);
-        plot(cA_AS_AUCs(:,3),cA_BLS_AUCs(:,3),'bo')
+        hold on
+        cA_AS_AUCChoiceSig = cA_AS_AUCs(:,3) > cA_AS_AUCs(:,4);
+        cA_BLS_AUCChoiceSig = cA_BLS_AUCs(:,3) > cA_BLS_AUCs(:,4);
+        
+        plot(cA_AS_AUCs(~cA_AS_AUCChoiceSig & ~cA_BLS_AUCChoiceSig,3),...
+            cA_BLS_AUCs(~cA_AS_AUCChoiceSig & ~cA_BLS_AUCChoiceSig,3),'o',...
+            'Color',[.7 .7 .7]);
+        plot(cA_AS_AUCs(cA_AS_AUCChoiceSig,3),cA_BLS_AUCs(cA_AS_AUCChoiceSig,3),'bo');
+        plot(cA_AS_AUCs(cA_BLS_AUCChoiceSig,3),cA_BLS_AUCs(cA_BLS_AUCChoiceSig,3),'bo');
+        
         line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
         xlabel('AfterStim resp, Choice');
         ylabel('baselineSub resp, Choice');
         set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off');
         [~, p_Choice] = ttest(cA_AS_AUCs(:,3),cA_BLS_AUCs(:,3));
         title(sprintf('p = %.3e',p_Choice));
+        text(0.1,0.7,{'SigFraction:';sprintf('x Frac.: %.3f',mean(cA_AS_AUCChoiceSig));...
+            sprintf('y Frac.: %.3f',mean(cA_BLS_AUCChoiceSig))},'FontSize',6);
         
         % compare block type decoding with baseline data
 %         h2f = figure('position',[100 100 920 360]);
         ax3 = subplot(334);
-        plot(cA_AS_AUCs(:,1),cA_BL_AUCs(:,1),'ro')
+        hold on
+        cA_BL_AUCSig = cA_BL_AUCs(:,1) > cA_BL_AUCs(:,2);
+        
+        plot(cA_AS_AUCs(~cA_AS_AUC_SigInds & ~cA_BL_AUCSig,1),...
+            cA_BL_AUCs(~cA_AS_AUC_SigInds & ~cA_BL_AUCSig,1),'o','Color',[.7 .7 .7]);
+        plot(cA_AS_AUCs(cA_BL_AUCSig,1),cA_BL_AUCs(cA_BL_AUCSig,1),'ro');
+        plot(cA_AS_AUCs(cA_AS_AUC_SigInds,1),cA_BL_AUCs(cA_AS_AUC_SigInds,1),'ro');
+        
         line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
         xlabel('AfterStim resp, BlockType');
         ylabel('baseline, BlockType');
         set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off');
         [~, p_BT] = ttest(cA_AS_AUCs(:,1),cA_BL_AUCs(:,1));
         title(sprintf('p = %.3e',p_BT));
+        text(0.1,0.7,{'SigFraction:';...
+            sprintf('y Frac.: %.3f',mean(cA_BL_AUCSig))},'FontSize',6);
 %         text(0.3,0.2,sprintf('n = %d',NumUsedUnits));
 
         ax4 = subplot(335);
-        plot(cA_BLS_AUCs(:,1),cA_BL_AUCs(:,1),'ro')
+        hold on
+        plot(cA_BLS_AUCs(~cA_BLS_AUC_SigInds & ~cA_BL_AUCSig,1),...
+            cA_BL_AUCs(~cA_BLS_AUC_SigInds & ~cA_BL_AUCSig,1),'o','Color',[.7 .7 .7]);
+        plot(cA_BLS_AUCs(cA_BL_AUCSig,1),cA_BL_AUCs(cA_BL_AUCSig,1),'ro');
+        plot(cA_BLS_AUCs(cA_BLS_AUC_SigInds,1),cA_BL_AUCs(cA_BLS_AUC_SigInds,1),'ro');
+        
         line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
         xlabel('baselineSub resp, BlockType');
         ylabel('baseline, BlockType');
@@ -189,7 +227,12 @@ for cAA = 1 : NumBrainAreas
         
         % is there correlation between choice decoding and blocktype decoding
         ax5 = subplot(337);
-        plot(cA_AS_AUCs(:,1),cA_AS_AUCs(:,3),'mo')
+        hold on
+        plot(cA_AS_AUCs(~cA_AS_AUCChoiceSig & ~cA_AS_AUC_SigInds,1),...
+            cA_AS_AUCs(~cA_AS_AUCChoiceSig & ~cA_AS_AUC_SigInds,3),'o','Color',[.7 .7 .7]);
+        plot(cA_AS_AUCs(cA_AS_AUC_SigInds,1),cA_AS_AUCs(cA_AS_AUC_SigInds,3),'mo');
+        plot(cA_AS_AUCs(cA_AS_AUCChoiceSig,1),cA_AS_AUCs(cA_AS_AUCChoiceSig,3),'mo');
+        
         line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
         xlabel('AfterStim resp, BlockType');
         ylabel('AfterStim resp, Choice');
@@ -197,9 +240,23 @@ for cAA = 1 : NumBrainAreas
         [r1, p3] = corrcoef(cA_AS_AUCs(:,1),cA_AS_AUCs(:,3));
         title(sprintf('p = %.3e, r = %.3f',p3(1,2),r1(1,2)));
 %         text(0.3,0.2,sprintf('n = %d',NumUsedUnits));
-
+        
+        AfterRespSigAUCFracs(cAA,1:2) = [mean(cA_AS_AUCChoiceSig), mean(cA_AS_AUC_SigInds)];
+        AfterRespSigAUCFracs(cAA,3) = (AfterRespSigAUCFracs(cAA,2) - AfterRespSigAUCFracs(cAA,1))/...
+            (AfterRespSigAUCFracs(cAA,1) + AfterRespSigAUCFracs(cAA,2)); % 1 indicates pure rule info
+        % -1 indicates pure choice info
+        
+        AllKinds_sigAUCFracs(cAA,:) = [mean(cA_AS_AUC_SigInds),mean(cA_AS_AUCChoiceSig),...
+            mean(cA_BLS_AUC_SigInds),mean(cA_BLS_AUCChoiceSig),mean(cA_BL_AUCSig)];
+        
+        
         ax6 = subplot(338);
-        plot(cA_BLS_AUCs(:,1),cA_BLS_AUCs(:,3),'mo')
+        hold on
+        plot(cA_BLS_AUCs(~cA_BLS_AUCChoiceSig & ~cA_BLS_AUC_SigInds,1),...
+            cA_BLS_AUCs(~cA_BLS_AUCChoiceSig & ~cA_BLS_AUC_SigInds,3),'o','Color',[.7 .7 .7]);
+        plot(cA_BLS_AUCs(cA_BLS_AUC_SigInds,1),cA_BLS_AUCs(cA_BLS_AUC_SigInds,3),'mo');
+        plot(cA_BLS_AUCs(cA_BLS_AUCChoiceSig,1),cA_BLS_AUCs(cA_BLS_AUCChoiceSig,3),'mo');
+        
         line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
         xlabel('baselineSub resp, BlockType');
         ylabel('baselineSub resp, Choice');
@@ -250,7 +307,28 @@ end
 %%
 dataFullSaveNames1 = fullfile(summarySaveFolder1,'UnitAUC_PopuVecAngle_datas.mat');
 save(dataFullSaveNames1,'AreaWiseCellDatas', 'BrainAreasStr', 'Areawise_PopuVec',...
-    'Areawise_BTANDChoiceAUC', 'Areawise_PopuBTChoicePerf','-v7.3');
+    'Areawise_BTANDChoiceAUC', 'Areawise_PopuBTChoicePerf','AfterRespSigAUCFracs','AllKinds_sigAUCFracs','-v7.3');
+%%
+nanInds = isnan(AfterRespSigAUCFracs(:,3));
+UsedAreaInds = find(~nanInds);
+UsedArea_index = AfterRespSigAUCFracs(UsedAreaInds,3);
+UsedAreaStrs = BrainAreasStr(UsedAreaInds);
+UsedAreaNumber = length(UsedAreaStrs);
+[SortIndex, SortInds] = sort(UsedArea_index);
+h2f = figure('position',[100 100 420 800]);
+plot(SortIndex,1:UsedAreaNumber, 'ko','linewidth',1.5,'MarkerSize',10);
+line([0 0],[0.5,UsedAreaNumber+0.5],'linewidth',1,'Color',[.7 .7 .7],'linestyle','--');
+set(gca,'ytick', 1:UsedAreaNumber,'yticklabel',UsedAreaStrs(:),'xlim',[-1.05 1.05],'xtick',[-1 1],...
+    'xticklabel',{'Choice','Rule'},'ylim',[0 UsedAreaNumber+1]);
+
+ylabel('Areas');
+xlabel('Rule/Choice Index');
+
+saveName2 = fullfile(summarySaveFolder1,'Rule and choice index area sort plot');
+saveas(h2f,saveName2);
+saveas(h2f,saveName2,'png');
+saveas(h2f,saveName2,'pdf');
+
 
 %%
 % ###################################################################################################
