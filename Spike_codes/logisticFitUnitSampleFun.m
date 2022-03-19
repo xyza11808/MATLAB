@@ -18,7 +18,7 @@ parfor cR = 1 : DefaultRepeatNum
     
     NMRevFreqChoice = BTANDChoices(NMRevFreqIndedx,2);
     predProb4Revfreqs = PredProbNew(NMRevFreqIndedx);
-    [xcf,lags,bounds] = crosscorr(predProb4Revfreqs,NMRevFreqChoice,'NumLags',MaxLag,'NumSTD',3);
+    [xcf,lags,bounds] = crosscorr(NMRevFreqChoice,predProb4Revfreqs,'NumLags',MaxLag,'NumSTD',3);
     
     [MaxCoef,maxInds] = max(smooth(xcf, 5));
     MaxLags = lags(maxInds);

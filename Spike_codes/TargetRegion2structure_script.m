@@ -1,10 +1,10 @@
 
-% TargetRegionFile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\TargetbrainRegions.xlsx';
-TargetRegionFile = 'K:\Documents\me\projects\NP_reversaltask\TargetbrainRegions.xlsx';
+TargetRegionFile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\TargetbrainRegions.xlsx';
+% TargetRegionFile = 'K:\Documents\me\projects\NP_reversaltask\TargetbrainRegions.xlsx';
 
 ChnposIndex = readcell(TargetRegionFile,'Range','A:A',...
         'Sheet',1);
-BrainArea_shortsCell = readcell(TargetRegionFile,'Range','D:D',...
+BrainArea_shortsCell = readcell(TargetRegionFile,'Range','E:E',...
         'Sheet',1);
 %%
 Valid_cell_inds = cellfun(@(x) all(ismissing(x)),ChnposIndex(2:end));
@@ -22,8 +22,8 @@ for cArea = 1 : NumTargetAreas
 end
 
 %%
-% saveNames = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
-saveNames = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+saveNames = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+% saveNames = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
 
 save(saveNames,'BrainRegions','-v7.3');
 
@@ -74,8 +74,8 @@ TargetRegionNamesAll = fieldnames(BrainRegionStrc.BrainRegions);
 NumofTargetAreas = length(TargetRegionNamesAll);
 for cP = 1 : NumprocessedNPSess
     %
-    cPath = SessionFolders{cP}(2:end-1);
-%     cPath = fullfile(strrep(SessionFolders{cP}(2:end-1),'F:','I:\ksOutput_backup'));
+    cPath = SessionFolders{cP};
+%     cPath = fullfile(strrep(SessionFolders{cP},'F:','I:\ksOutput_backup'));
     load(fullfile(cPath,sortingcode_string,'NPClassHandleSaved.mat'));
     
     if isempty(ProbNPSess.ChannelAreaStrs)

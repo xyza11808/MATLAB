@@ -1,7 +1,14 @@
 clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_All RelagCoefsAll Allxcf Alllags Lags LagCoefMtx
+
+load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+if isempty(fieldnames(SessAreaIndexStrc.ACAv)) && isempty(fieldnames(SessAreaIndexStrc.ACAd))...
+         && isempty(fieldnames(SessAreaIndexStrc.ACA))
+    return;
+end
+
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
 % load('Chnlocation.mat');
-load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+
 % if isempty(ProbNPSess.ChannelAreaStrs)
 %     ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
 % end
@@ -64,6 +71,7 @@ for cArea = 1 : NumExistAreas
         warning('All units were target area units.');
         continue;
     end
+    fprintf('        Processing Session Area %s...\n',cUsedAreas);
     %
     TriggerAlignBin = ProbNPSess.TriggerStartBin{ProbNPSess.CurrentSessInds};
     BaselineResp_All = mean(SMBinDataMtx(:,:,1:TriggerAlignBin-1),3);
@@ -149,10 +157,10 @@ for cArea = 1 : NumExistAreas
     title(sprintf('Area(%s) SVMaccu = %.4f, unitNum = %d',cUsedAreas,mean(Trmdperfs(:,2)), numel(cAUnitInds)));
     
     % time-lagged correlation plot
-    [Allxcf,Alllags,Allbounds] = crosscorr(SortRevFreqPredProb,SortRevFreqChoices,'NumLags',40,'NumSTD',3);
+    [Allxcf,Alllags,Allbounds] = crosscorr(SortRevFreqChoices,SortRevFreqPredProb,'NumLags',40,'NumSTD',3);
     [~, AllPeakInds] = max(Allxcf);
     hf3 = figure; 
-    crosscorr(SortRevFreqPredProb,SortRevFreqChoices,'NumLags',40,'NumSTD',3);
+    crosscorr(SortRevFreqChoices,SortRevFreqPredProb,'NumLags',40,'NumSTD',3);
 
     
     %
@@ -186,7 +194,7 @@ for cArea = 1 : NumExistAreas
            cRScoreProbs = cRScoreProbs(SInds);
 
            cR_RevFreq_scoreProbs = cRScoreProbs(Re_RevFreqInds);
-           [xcf,lags,bounds] = crosscorr(cR_RevFreq_scoreProbs,Re_RevFreqChoices,'NumLags',40,'NumSTD',3);
+           [xcf,lags,bounds] = crosscorr(Re_RevFreqChoices,cR_RevFreq_scoreProbs,'NumLags',40,'NumSTD',3);
 
            RelagCoefsAll(cR,:) = {xcf,lags,bounds}; 
         end

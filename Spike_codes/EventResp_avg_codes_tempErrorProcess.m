@@ -1,7 +1,7 @@
 
-clearvars ProbNPSess UnitUsedCoefs UnitFitmds_All
+clearvars ProbNPSess UnitUsedCoefs UnitFitmds_All SMBinDataMtx
 load(fullfile(cSessFolder,'NPClassHandleSaved.mat'));
-
+load(fullfile(cSessFolder,'UnitRespTypeCoefNew.mat'));
 %%
 
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
@@ -39,21 +39,21 @@ ChoiceParas_mtx = [1-Trial_Choices,Trial_Choices];
 ReParas_mtx = double(ReTimes > 0);
 %%
 % time shift of real response unit data
-[TrNum, unitNum, BinNum] = size(SMBinDataMtx);
-TShiftSMBinDataMtx = zeros(TrNum, unitNum, BinNum);
-TShiftSize = round(BinNum/3);
-parfor cTr = 1 : TrNum
-    for cU = 1 : unitNum
-        cTrace = squeeze(SMBinDataMtx(cTr, cU, :));
-        ShiftSize = randsample(TShiftSize,1);
-        if rand(1) > 0.5
-            Direction = 1;
-        else
-            Direction = -1;
-        end
-        TShiftSMBinDataMtx(cTr, cU, :) = circshift(cTrace, ShiftSize*Direction);
-    end
-end
+% [TrNum, unitNum, BinNum] = size(SMBinDataMtx);
+% TShiftSMBinDataMtx = zeros(TrNum, unitNum, BinNum);
+% TShiftSize = round(BinNum/3);
+% parfor cTr = 1 : TrNum
+%     for cU = 1 : unitNum
+%         cTrace = squeeze(SMBinDataMtx(cTr, cU, :));
+%         ShiftSize = randsample(TShiftSize,1);
+%         if rand(1) > 0.5
+%             Direction = 1;
+%         else
+%             Direction = -1;
+%         end
+%         TShiftSMBinDataMtx(cTr, cU, :) = circshift(cTrace, ShiftSize*Direction);
+%     end
+% end
 
 %%
 
@@ -70,12 +70,12 @@ elseif strcmpi(ProbNPSess.TrigAlignType{ProbNPSess.CurrentSessInds},'stim')
     BaselineResp = mean(SMBinDataMtx(:,:,1:TriggerAlignBin-1),3);
     StimResp1 = mean(SMBinDataMtx(:,:,(TriggerAlignBin+Stimwinbin(1,1)+1):(TriggerAlignBin+Stimwinbin(1,2))),3) - BaselineResp;%;
 %     StimResp2 = mean(SMBinDataMtx(:,:,(TriggerAlignBin+Stimwinbin(2,1)+1):(TriggerAlignBin+Stimwinbin(2,2))),3);% - BaselineResp;
-    ShufStimResp1 = mean(TShiftSMBinDataMtx(:,:,(TriggerAlignBin+Stimwinbin(1,1)+1):(TriggerAlignBin+Stimwinbin(1,2))),3) - BaselineResp;%;
+%     ShufStimResp1 = mean(TShiftSMBinDataMtx(:,:,(TriggerAlignBin+Stimwinbin(1,1)+1):(TriggerAlignBin+Stimwinbin(1,2))),3) - BaselineResp;%;
 
     ChoiceResp = zeros(TrNum, unitNum);
     ReResp = zeros(TrNum, unitNum);
-    ShufChoiceResp = zeros(TrNum, unitNum);
-    ShufReResp = zeros(TrNum, unitNum);
+%     ShufChoiceResp = zeros(TrNum, unitNum);
+%     ShufReResp = zeros(TrNum, unitNum);
     
     for cTr = 1 : TrNum
         ChoiceResp(cTr,:) = squeeze(mean(SMBinDataMtx(cTr,:,(TriggerAlignBin+AlignedChoiceBin(cTr)+AnsRe_winbin(1)+1):...
@@ -83,10 +83,10 @@ elseif strcmpi(ProbNPSess.TrigAlignType{ProbNPSess.CurrentSessInds},'stim')
         ReResp(cTr,:) = squeeze(mean(SMBinDataMtx(cTr,:,(TriggerAlignBin+AlignedReBin(cTr)+AnsRe_winbin(1)+1):...
             (TriggerAlignBin+AlignedReBin(cTr)+AnsRe_winbin(2))),3));
         
-        ShufChoiceResp(cTr,:) = squeeze(mean(TShiftSMBinDataMtx(cTr,:,(TriggerAlignBin+AlignedChoiceBin(cTr)+AnsRe_winbin(1)+1):...
-            (TriggerAlignBin+AlignedChoiceBin(cTr)+AnsRe_winbin(2))),3));
-        ShufReResp(cTr,:) = squeeze(mean(TShiftSMBinDataMtx(cTr,:,(TriggerAlignBin+AlignedReBin(cTr)+AnsRe_winbin(1)+1):...
-            (TriggerAlignBin+AlignedReBin(cTr)+AnsRe_winbin(2))),3));
+%         ShufChoiceResp(cTr,:) = squeeze(mean(TShiftSMBinDataMtx(cTr,:,(TriggerAlignBin+AlignedChoiceBin(cTr)+AnsRe_winbin(1)+1):...
+%             (TriggerAlignBin+AlignedChoiceBin(cTr)+AnsRe_winbin(2))),3));
+%         ShufReResp(cTr,:) = squeeze(mean(TShiftSMBinDataMtx(cTr,:,(TriggerAlignBin+AlignedReBin(cTr)+AnsRe_winbin(1)+1):...
+%             (TriggerAlignBin+AlignedReBin(cTr)+AnsRe_winbin(2))),3));
     end
     NoRewardInds = AlignedReBin == TriggerAlignBin;
     ReResp(NoRewardInds,:) = ChoiceResp(NoRewardInds,:); % using choice response data as non-reward response data
@@ -175,108 +175,109 @@ AllParas_mtx((1+TrNum*2):(TrNum*3),(3+NumFreqTypes)) = ReParas_mtx;
 
 %% term matrix
 
-ParasNum = size(AllParas_mtx,2);
-
-% single term inclusion matrix
-single_term_mtx = diag(ones(ParasNum,1));
-
-% paired freq with other items matrix
-NulldiagVec = zeros(NumFreqTypes,ParasNum - NumFreqTypes);
-FreqItermVec = diag(ones(NumFreqTypes,1));
-OnepairedIterms = zeros(NumFreqTypes*(ParasNum - NumFreqTypes), ParasNum);
-k = 1;
-for cPairedInds = 1 : (ParasNum - NumFreqTypes)
-    RestMtx = NulldiagVec;
-    RestMtx(:,cPairedInds) = 1;
-    OnepairedIterms(k:NumFreqTypes*cPairedInds,:) = [FreqItermVec,RestMtx];
-    k = k + NumFreqTypes;
-end
-
-
-% paired stimfreq and choice and block types, three-paired
-ThreePairedTerms = zeros(NumFreqTypes*(ParasNum - NumFreqTypes-2)*2, ParasNum);
-ExcludeBlockTermMtx = OnepairedIterms(1:(NumFreqTypes*(ParasNum - NumFreqTypes - 2)),1:(ParasNum-2));
-ThreePairedTerms(:,1:(ParasNum-2)) = [ExcludeBlockTermMtx;ExcludeBlockTermMtx];
-ThreePairedTerms(1 : size(ExcludeBlockTermMtx,1),(ParasNum-1):end) = [ones(size(ExcludeBlockTermMtx,1),1),zeros(size(ExcludeBlockTermMtx,1),1)];
-ThreePairedTerms((size(ExcludeBlockTermMtx,1)+1):end,(ParasNum-1):end) = [zeros(size(ExcludeBlockTermMtx,1),1),ones(size(ExcludeBlockTermMtx,1),1)];
-
-% overAllTerms_mtx = [zeros(1,ParasNum);single_term_mtx;OnepairedIterms;ThreePairedTerms];
-overAllTerms_mtx = [zeros(1,ParasNum);single_term_mtx];
-
-%% including term matrix
-
-% cUnit = 180;
-% if cUnit > unitNum
-%     return;
+% ParasNum = size(AllParas_mtx,2);
+% 
+% % single term inclusion matrix
+% single_term_mtx = diag(ones(ParasNum,1));
+% 
+% % paired freq with other items matrix
+% NulldiagVec = zeros(NumFreqTypes,ParasNum - NumFreqTypes);
+% FreqItermVec = diag(ones(NumFreqTypes,1));
+% OnepairedIterms = zeros(NumFreqTypes*(ParasNum - NumFreqTypes), ParasNum);
+% k = 1;
+% for cPairedInds = 1 : (ParasNum - NumFreqTypes)
+%     RestMtx = NulldiagVec;
+%     RestMtx(:,cPairedInds) = 1;
+%     OnepairedIterms(k:NumFreqTypes*cPairedInds,:) = [FreqItermVec,RestMtx];
+%     k = k + NumFreqTypes;
 % end
-
-% AllParas_mtx = zeros(TrNum*3,NumFreqTypes+2+1);%+2
-% AllParas_mtx(1:TrNum,1:NumFreqTypes) = FreqParas_mtx;
-% AllParas_mtx((1+TrNum):(TrNum*2),(1+NumFreqTypes):(2+NumFreqTypes)) = ChoiceParas_mtx;
-% AllParas_mtx((1+TrNum*2):(TrNum*3),(3+NumFreqTypes)) = ReParas_mtx;
-% BlockType_mtx = [1-TrialBlockTypes,TrialBlockTypes];
-% AllParas_mtx(1:end,(4+NumFreqTypes):(5+NumFreqTypes)) = [BlockType_mtx;BlockType_mtx;BlockType_mtx];
-
-NumRepeats = 100;
-UnitFitmds_All = cell(unitNum,2);
-parfor cUnit = 1 : unitNum
-    warning off
-    cUnitRespVec = [StimResp1(:,cUnit);ChoiceResp(:,cUnit);ReResp(:,cUnit)];
-    cUnitRespVec_shuf = [ShufStimResp1(:,cUnit);ShufChoiceResp(:,cUnit);ShufReResp(:,cUnit)];
-%     IsNegResp = mean(cUnitRespVec) < 0;
-%     cUnitRespVec = cUnitRespVec/mean(cUnitRespVec);
-    cUnitRespVec = zscore(cUnitRespVec);
-    
-    cUnitRepeatDevExplain = zeros(NumRepeats,6);
-    cUnitRepeatMD = cell(NumRepeats,1);
-    for cRepeat = 1 : NumRepeats
-        SampleInds = randsample(numel(cUnitRespVec),round(numel(cUnitRespVec)*0.7));
-        trainInds = false(numel(cUnitRespVec),1);
-        trainInds(SampleInds) = true;
-
-        TestInds = ~trainInds;
-
-        md2 = fitglm(AllParas_mtx(trainInds,:),cUnitRespVec(trainInds,:),overAllTerms_mtx,'CategoricalVars',...
-            true(NumFreqTypes+3,1));
-        
-        shufMd2 = fitglm(AllParas_mtx(trainInds,:),cUnitRespVec_shuf(trainInds,:),overAllTerms_mtx,'CategoricalVars',...
-            true(NumFreqTypes+3,1));
-        
-        %
-        TestDataVec = cUnitRespVec(~trainInds,:);
-        TestDataPred = predict(md2,AllParas_mtx(~trainInds,:));
-        
-        NullDEvience = sum((TestDataVec - mean(TestDataVec)).^2);
-        predDev = sum((TestDataVec - TestDataPred).^2);
-        Explain = (NullDEvience - predDev)/NullDEvience;
-        
-        % shuf datas
-        sTestDataVec = cUnitRespVec_shuf(~trainInds,:);
-        sTestDataPred = predict(md2,AllParas_mtx(~trainInds,:));
-        
-        sNullDEvience = sum((sTestDataVec - mean(sTestDataVec)).^2);
-        spredDev = sum((sTestDataVec - sTestDataPred).^2);
-        sExplain = (sNullDEvience - spredDev)/sNullDEvience;
-        
-        cUnitRepeatDevExplain(cRepeat,:) = [Explain, md2.Rsquared.Ordinary, md2.Rsquared.Adjusted,...
-            sExplain, shufMd2.Rsquared.Ordinary, shufMd2.Rsquared.Adjusted];
-        cUnitRepeatMD{cRepeat} = md2.Coefficients;
-        
-        
-    end
-%     disp(md2)
-
-%     fprintf('Current cluster %d: \n   devience explain = %.6f.\n',ProbNPSess.UsedClus_IDs(cUnit),Explain);
-    UnitFitmds_All(cUnit,:) = {cUnitRepeatMD, cUnitRepeatDevExplain};
-
-end
-warning on
+% 
+% 
+% % paired stimfreq and choice and block types, three-paired
+% ThreePairedTerms = zeros(NumFreqTypes*(ParasNum - NumFreqTypes-2)*2, ParasNum);
+% ExcludeBlockTermMtx = OnepairedIterms(1:(NumFreqTypes*(ParasNum - NumFreqTypes - 2)),1:(ParasNum-2));
+% ThreePairedTerms(:,1:(ParasNum-2)) = [ExcludeBlockTermMtx;ExcludeBlockTermMtx];
+% ThreePairedTerms(1 : size(ExcludeBlockTermMtx,1),(ParasNum-1):end) = [ones(size(ExcludeBlockTermMtx,1),1),zeros(size(ExcludeBlockTermMtx,1),1)];
+% ThreePairedTerms((size(ExcludeBlockTermMtx,1)+1):end,(ParasNum-1):end) = [zeros(size(ExcludeBlockTermMtx,1),1),ones(size(ExcludeBlockTermMtx,1),1)];
+% 
+% % overAllTerms_mtx = [zeros(1,ParasNum);single_term_mtx;OnepairedIterms;ThreePairedTerms];
+% overAllTerms_mtx = [zeros(1,ParasNum);single_term_mtx];
+% 
+% %% including term matrix
+% 
+% % cUnit = 180;
+% % if cUnit > unitNum
+% %     return;
+% % end
+% 
+% % AllParas_mtx = zeros(TrNum*3,NumFreqTypes+2+1);%+2
+% % AllParas_mtx(1:TrNum,1:NumFreqTypes) = FreqParas_mtx;
+% % AllParas_mtx((1+TrNum):(TrNum*2),(1+NumFreqTypes):(2+NumFreqTypes)) = ChoiceParas_mtx;
+% % AllParas_mtx((1+TrNum*2):(TrNum*3),(3+NumFreqTypes)) = ReParas_mtx;
+% % BlockType_mtx = [1-TrialBlockTypes,TrialBlockTypes];
+% % AllParas_mtx(1:end,(4+NumFreqTypes):(5+NumFreqTypes)) = [BlockType_mtx;BlockType_mtx;BlockType_mtx];
+% 
+% NumRepeats = 100;
+% UnitFitmds_All = cell(unitNum,2);
+% parfor cUnit = 1 : unitNum
+%     warning off
+%     cUnitRespVec = [StimResp1(:,cUnit);ChoiceResp(:,cUnit);ReResp(:,cUnit)];
+%     cUnitRespVec_shuf = [ShufStimResp1(:,cUnit);ShufChoiceResp(:,cUnit);ShufReResp(:,cUnit)];
+% %     IsNegResp = mean(cUnitRespVec) < 0;
+% %     cUnitRespVec = cUnitRespVec/mean(cUnitRespVec);
+%     cUnitRespVec = zscore(cUnitRespVec);
+%     
+%     cUnitRepeatDevExplain = zeros(NumRepeats,6);
+%     cUnitRepeatMD = cell(NumRepeats,1);
+%     for cRepeat = 1 : NumRepeats
+%         SampleInds = randsample(numel(cUnitRespVec),round(numel(cUnitRespVec)*0.7));
+%         trainInds = false(numel(cUnitRespVec),1);
+%         trainInds(SampleInds) = true;
+% 
+%         TestInds = ~trainInds;
+% 
+%         md2 = fitglm(AllParas_mtx(trainInds,:),cUnitRespVec(trainInds,:),overAllTerms_mtx,'CategoricalVars',...
+%             true(NumFreqTypes+3,1));
+%         
+%         shufMd2 = fitglm(AllParas_mtx(trainInds,:),cUnitRespVec_shuf(trainInds,:),overAllTerms_mtx,'CategoricalVars',...
+%             true(NumFreqTypes+3,1));
+%         
+%         %
+%         TestDataVec = cUnitRespVec(~trainInds,:);
+%         TestDataPred = predict(md2,AllParas_mtx(~trainInds,:));
+%         
+%         NullDEvience = sum((TestDataVec - mean(TestDataVec)).^2);
+%         predDev = sum((TestDataVec - TestDataPred).^2);
+%         Explain = (NullDEvience - predDev)/NullDEvience;
+%         
+%         % shuf datas
+%         sTestDataVec = cUnitRespVec_shuf(~trainInds,:);
+%         sTestDataPred = predict(md2,AllParas_mtx(~trainInds,:));
+%         
+%         sNullDEvience = sum((sTestDataVec - mean(sTestDataVec)).^2);
+%         spredDev = sum((sTestDataVec - sTestDataPred).^2);
+%         sExplain = (sNullDEvience - spredDev)/sNullDEvience;
+%         
+%         cUnitRepeatDevExplain(cRepeat,:) = [Explain, md2.Rsquared.Ordinary, md2.Rsquared.Adjusted,...
+%             sExplain, shufMd2.Rsquared.Ordinary, shufMd2.Rsquared.Adjusted];
+%         cUnitRepeatMD{cRepeat} = md2.Coefficients;
+%         
+%         
+%     end
+% %     disp(md2)
+% 
+% %     fprintf('Current cluster %d: \n   devience explain = %.6f.\n',ProbNPSess.UsedClus_IDs(cUnit),Explain);
+%     UnitFitmds_All(cUnit,:) = {cUnitRepeatMD, cUnitRepeatDevExplain};
+% 
+% end
+% warning on
 
 %%
 shufMdAllUnits = cellfun(@(x) prctile(x(:,6),95),UnitFitmds_All(:,2),'UniformOutput',false);
 RealMdRsAllUnits = cellfun(@(x) mean(x(:,3)),UnitFitmds_All(:,2),'UniformOutput',false);
-AboveThresUnit = find(cell2mat(RealMdRsAllUnits) > cell2mat(shufMdAllUnits));
+AboveThresUnit = find(cell2mat(RealMdRsAllUnits) > cell2mat(shufMdAllUnits) & cell2mat(RealMdRsAllUnits) > 0.08); % inclusion threshold
 RealUnitInds = ProbNPSess.UsedClus_IDs(AboveThresUnit);
+UsedUnitMDRs_WithShuf = [RealMdRsAllUnits(AboveThresUnit),shufMdAllUnits(AboveThresUnit)];
 NumUsedUnits = length(AboveThresUnit);
 fprintf('Number of significant units is %d.\n', NumUsedUnits);
 % %%
@@ -304,7 +305,7 @@ for cUsed_Unit = 1 : NumUsedUnits
 %     AvgCoefs = mean(cUnit_coefsMtx,'omitnan');
 %     cUnitCoefs_final = zeros(1,numel(cUnit_coef_SigInds));
 %     cUnitCoefs_final(cUnit_coef_SigInds) = AvgCoefs(cUnit_coef_SigInds);
-    %%
+    %
     cUnitRespVec = zscore([StimResp1(:,cUnit);ChoiceResp(:,cUnit);ReResp(:,cUnit)]);
     FullMDRs = UnitFitmds_All{cUnit,2}(:,3);
     ShufMdRs = UnitFitmds_All{cUnit,2}(:,6);
@@ -339,8 +340,8 @@ for cUsed_Unit = 1 : NumUsedUnits
 
         VariableContributes(cV,:) = [mean(FullMDRs), Md_Rs_diff, Md_Rs_diffRatio];
     end
-%%
-    UsedVariableInds = VariableContributes(:,3) > 0.1 & VariableContributes(:,3) < 1;  
+%
+    UsedVariableInds = find(VariableContributes(:,3) > 0.1 & VariableContributes(:,3) < 1);  
     UsedVariableCoefs = zeros(1,NumVariables);
     UsedVariableCoefs(UsedVariableInds) = cUnit_coef_avg(UsedVariableInds+1);
     %
@@ -349,7 +350,7 @@ for cUsed_Unit = 1 : NumUsedUnits
 end
 %%
 saveName = fullfile(cSessFolder,'UnitRespTypeCoefNew.mat');
-save(saveName,'UnitUsedCoefs', 'AboveThresUnit', 'UnitFitmds_All', 'overAllTerms_mtx','-v7.3');
+save(saveName,'UnitUsedCoefs', 'AboveThresUnit', 'UnitFitmds_All', 'overAllTerms_mtx','UsedUnitMDRs_WithShuf','-v7.3');
 %%
 % % batched running code
 % cclr

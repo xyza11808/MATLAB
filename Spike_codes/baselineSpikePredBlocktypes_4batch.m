@@ -1,7 +1,13 @@
-clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_First BaselineResp_Last
-load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
+clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_First BaselineResp_Last SMBinDataMtx
+
 % load('Chnlocation.mat');
 load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+if isempty(fieldnames(SessAreaIndexStrc.ACAv)) && isempty(fieldnames(SessAreaIndexStrc.ACAd))...
+         && isempty(fieldnames(SessAreaIndexStrc.ACA))
+    return;
+end
+
+load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
 % if isempty(ProbNPSess.ChannelAreaStrs)
 %     ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
 % end
@@ -175,9 +181,9 @@ for cArea = 1 : NumExistAreas
     title(sprintf('Area(%s) SVMaccu = %.4f, unitNum = %d',cUsedAreas,PredictionAccu, numel(cAUnitInds)));
     % time-lagged correlation plot
     predProb4Revfreqs = PredProbNew(NMRevFreqIndedx);
-    [xcf,lags,bounds] = crosscorr(predProb4Revfreqs,NMRevFreqChoice,'NumLags',50,'NumSTD',3);
+    [xcf,lags,bounds] = crosscorr(NMRevFreqChoice,predProb4Revfreqs,'NumLags',50,'NumSTD',3);
     hf3 = figure; 
-    crosscorr(predProb4Revfreqs,NMRevFreqChoice,'NumLags',50,'NumSTD',3);
+    crosscorr(NMRevFreqChoice,predProb4Revfreqs,'NumLags',50,'NumSTD',3);
 
     logRegressorProbofBlock(cArea,:) = {{BTrain,dev,statsTrain}, PredProbNew, NMRevFreqChoice, NMRevFreqIndedx,{xcf,lags,bounds}};
     
@@ -274,8 +280,8 @@ close(h4f);
 % % batched through all used sessions
 % cclr
 % 
-% AllSessFolderPathfile = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
-% % AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+% % AllSessFolderPathfile = 'K\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 % sortingcode_string = 'ks2_5';
 % 
 % SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
@@ -283,13 +289,36 @@ close(h4f);
 % SessionFolders = SessionFoldersC(2:end);
 % NumprocessedNPSess = length(SessionFolders);
 % 
-% %%
 % 
+% %%
 % for cfff = 1 : NumprocessedNPSess
 %     
-% %     ksfolder = fullfile(NPsessionfolders{cfff},sortingcode_string);
-%     ksfolder = fullfile(strrep(SessionFolders{cfff}(2:end-1),'F:','I:\ksOutput_backup'),sortingcode_string);
+%     ksfolder = fullfile(SessionFolders{cfff},sortingcode_string);
+%     cSessFolder = ksfolder;
+% %     ksfolder = fullfile(strrep(SessionFolders{cfff},'F:','I:\ksOutput_backup'),sortingcode_string);
 %     fprintf('Processing session %d...\n', cfff);
-%     baselineSpikePredBlocktypes_4batch;
+% % % %     OldFolderName = fullfile(cSessFolder,'BaselinePredofBlocktype');
+% % % %     if isfolder(OldFolderName)
+% % % % %         stats = rmdir(OldFolderName,'s');
+% % % %         
+% % % %         stats = movefile(OldFolderName,fullfile(cSessFolder,'Old_BaselinePredofBT'),'f');
+% % % %         if ~stats
+% % % %             error('Unable to delete folder in Session %d.',cfff);
+% % % %         end
+% % % %     end
+%     OldFolderName = fullfile(cSessFolder,'UnitRespTypeCoef.mat');
+%     if exist(OldFolderName,'file')
+%         delete(OldFolderName);
+%         
+% %         stats = movefile(OldFolderName,fullfile(cSessFolder,'Old_BaselinePredofBT'),'f');
+% %         if ~stats
+% %             error('Unable to delete folder in Session %d.',cfff);
+% %         end
+%     end
+%     
+% %     baselineSpikePredBlocktypes_SVMProb;
+% %     BlockType_Choice_decodingScript;
+% %     baselineSpikePredBlocktypes_4batch;
+% %     BT_Choice_decodingScript_trialtypeWise;
+%     EventResp_avg_codes_tempErrorProcess;
 % end
-

@@ -197,9 +197,9 @@ for cArea = 1 : NumExistAreas
     title(sprintf('Area(%s) SVMaccu = %.4f, unitNum = %d',cUsedAreas,PredictionAccu, numel(cAUnitInds)));
     % time-lagged correlation plot
     predProb4Revfreqs = NMRevFreqPredTypes;
-    [xcf,lags,bounds] = crosscorr(predProb4Revfreqs,NMRevFreqChoice,'NumLags',50,'NumSTD',3);
+    [xcf,lags,bounds] = crosscorr(NMRevFreqChoice,predProb4Revfreqs,'NumLags',50,'NumSTD',3);
     hf3 = figure; 
-    crosscorr(predProb4Revfreqs,NMRevFreqChoice,'NumLags',50,'NumSTD',3);
+    crosscorr(NMRevFreqChoice,predProb4Revfreqs,'NumLags',50,'NumSTD',3);
 %
     logRegressorProbofBlock(cArea,:) = {AllUsedTrInds, AllUsedTrPredTypes, NMRevFreqPredTypes, NMRevFreqChoice,{xcf,lags,bounds}};
     
