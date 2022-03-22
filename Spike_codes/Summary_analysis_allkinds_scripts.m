@@ -584,8 +584,8 @@ save(filesavename,'Areawise_BTANDChoiceAUC','Areawise_PopuBTChoicePerf','BrainAr
 
 cclr
 %
-AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -605,8 +605,9 @@ NumAllTargetAreas = length(BrainAreasStr);
 Areawise_RespUnitAll = cell(NumUsedSess,NumAllTargetAreas,3);
 SessTotalUnitNum = zeros(NumUsedSess,1);
 for cS = 1 :  NumUsedSess
-    cSessPath = SessionFolders{cS}; %(2:end-1)
+%     cSessPath = SessionFolders{cS}; %(2:end-1)
 %     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:','P:'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
         
@@ -675,6 +676,7 @@ Areawise_MDRs_CellVec = Areawise_MDRs_Cells(EmptySessInds);
 % Areawise_MDRs_Vecs = cat(1,Areawise_MDRs_CellVec); % real Rs and shuf Rs
 AreaSum_respCoefAlls = cell(NumAllTargetAreas, 4);
 IsAreaHaveRespUnit = zeros(NumAllTargetAreas,1);
+IsPlot = 1;
 for cA = 1 : NumAllTargetAreas
    cA_inds = AreaInds == cA;
    if any(cA_inds)
@@ -691,9 +693,16 @@ for cA = 1 : NumAllTargetAreas
        AreaSum_respCoefAlls(cA,:) = {cA_respCoefs_mtx, cA_respCoef_RepeatAvg, cA_Sess_totalUnitsNum, cA_MDRs_Vecs};
        
        IsAreaHaveRespUnit(cA) = 1;
+       
+       % check whether needs to plot the results
+       if IsPlot
+          
+          
+          
+       end
    end
-    
-    
+   
+   
 end
 
 %%
