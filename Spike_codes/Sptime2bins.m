@@ -7,7 +7,7 @@ if isempty(SPTimes)
     binnedSP = zeros(1,length(binEdges)-1);
     NumSpikes = 0;
 else
-   binnedSP = histcounts(SPTimes, binEdges);
+   binnedSP = double(histcounts(SPTimes, binEdges) > 0);
    NumSpikes = numel(SPTimes);
 end
 

@@ -60,7 +60,6 @@ for cS = 1 :  NumUsedSess
         cA_SVMPerfs = BTANDChoiceAUCStrc.SVMDecVecs{cAreaInds,6};
         
         Areawise_PopuBTChoicePerf(cS,AreaMatchInds,:) = cA_SVMPerfs; % population decoding performance of choice and BT
-        AreaMatchInds = matches(BrainAreasStr,cAreaStr);
         Areawise_BTANDChoiceAUC(cS,AreaMatchInds,:) = {BTANDChoiceAUCStrc.UnitAfterStimAUC(cA_unitInds,:),...
             BTANDChoiceAUCStrc.UnitAS_BLSubAUC(cA_unitInds,:),...
             BTANDChoiceAUCStrc.UnitBaselineAUC(cA_unitInds,:)}; % Behavior, SVMAccuracy, MaxCC,IsCCoefSig
@@ -580,12 +579,12 @@ save(filesavename,'Areawise_BTANDChoiceAUC','Areawise_PopuBTChoicePerf','BrainAr
 
 %%
 % ###################################################################################################
-% Summary codes 3: 
+% Summary codes 3: unit task responsive parameters summary
 
 cclr
 %
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -605,9 +604,9 @@ NumAllTargetAreas = length(BrainAreasStr);
 Areawise_RespUnitAll = cell(NumUsedSess,NumAllTargetAreas,3);
 SessTotalUnitNum = zeros(NumUsedSess,1);
 for cS = 1 :  NumUsedSess
-%     cSessPath = SessionFolders{cS}; %(2:end-1)
+    cSessPath = SessionFolders{cS}; %(2:end-1)
 %     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
-    cSessPath = strrep(SessionFolders{cS},'F:','P:'); %(2:end-1)
+%     cSessPath = strrep(SessionFolders{cS},'F:','P:'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
         
@@ -691,8 +690,9 @@ for cA = 1 : NumAllTargetAreas
        cA_MDRs_Vecs = cell2mat(cat(1, cA_MDRs_CellVec{:}));
        
        AreaSum_respCoefAlls(cA,:) = {cA_respCoefs_mtx, cA_respCoef_RepeatAvg, cA_Sess_totalUnitsNum, cA_MDRs_Vecs};
-       
-       IsAreaHaveRespUnit(cA) = 1;
+       if size(cA_respCoefs_mtx,1) > 3
+            IsAreaHaveRespUnit(cA) = 1;
+       end
        
        % check whether needs to plot the results
        if IsPlot
@@ -702,8 +702,300 @@ for cA = 1 : NumAllTargetAreas
        end
    end
    
-   
 end
+
+%%
+summarySaveFolder3 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitRespFieldSummary';
+if ~isfolder(summarySaveFolder3)
+    mkdir(summarySaveFolder3);
+end
+% figsavename3 = fullfile(summarySaveFolder3,'Area_sorted_plots_summary');
+% saveas(hs4f,figsavename3);
+% saveas(hs4f,figsavename3,'png');
+% saveas(hs4f,figsavename3,'pdf');
+
+datasavename3 = fullfile(summarySaveFolder3,'UnitRespfieldDatas.mat');
+save(datasavename3,'IsAreaHaveRespUnit', 'AreaSum_respCoefAlls', 'BrainAreasStr','-v7.3');
+
+
+%%
+% ###################################################################################################
+% Summary codes 4: summary of sigAUC unit crosscorr peak lags
+%
+cclr
+%
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+
+BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
+        'Sheet',1);
+BrainAreasStrCC = BrainAreasStrC(2:end);
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
+BrainAreasStr = [BrainAreasStrCC(~EmptyInds);{'Others'}];
+
+%%
+
+SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
+        'Sheet',1);
+SessionFolders = SessionFoldersC(2:end);
+NumUsedSess = length(SessionFolders);
+NumAllTargetAreas = length(BrainAreasStr);
+
+Areawise_unitSigAUC_peakLag = cell(NumUsedSess,NumAllTargetAreas);
+
+for cS = 1 :  NumUsedSess
+    cSessPath = SessionFolders{cS}; %(2:end-1)
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    
+    ksfolder = fullfile(cSessPath,'ks2_5');
+    
+    AreaUnitPeaklag_file = fullfile(ksfolder,'AreaWise_AUCSigUnitlags.mat');
+    AreaUnitPeaklag_Strc = load(AreaUnitPeaklag_file,'SessAreaUnitlagDatas');
+    
+    
+    AreaNames = AreaUnitPeaklag_Strc.SessAreaUnitlagDatas(:,1);
+    NumAreas = length(AreaNames);
+    if NumAreas < 1
+        warning('There is no target units within following folder:\n %s \n ##################\n',cSessPath);
+        continue;
+    end
+    
+    for cAreaInds = 1 : NumAreas % including the 'Others' region at the end
+        cAreaStr = AreaNames{cAreaInds};
+        if isempty(cAreaStr)
+            continue;
+        end
+        
+        AreaMatchInds = matches(BrainAreasStr,cAreaStr);
+        
+        Areawise_unitSigAUC_peakLag(cS,AreaMatchInds) = AreaUnitPeaklag_Strc.SessAreaUnitlagDatas(cAreaInds,2); 
+        
+    end
+end
+
+%%
+IsEmptyAreaSess = cellfun(@(x) ~isempty(x), Areawise_unitSigAUC_peakLag);
+[SessInds, AreaInds] = find(IsEmptyAreaSess);
+
+ExistSess_unitSigAUClags = Areawise_unitSigAUC_peakLag(IsEmptyAreaSess);
+Area_AllsigUnitLags = cell(NumAllTargetAreas,2);
+IsMultiUnitExists = false(NumAllTargetAreas,1);
+for cA = 1 : NumAllTargetAreas
+    cA_Inds = AreaInds == cA;
+    if sum(cA_Inds)
+        cA_summaryDatas = ExistSess_unitSigAUClags(cA_Inds);
+        cA_summaryDatas_vec = cat(1,cA_summaryDatas{:});
+        Area_AllsigUnitLags(cA,1) = {cell2mat(cA_summaryDatas_vec)};
+        if size(Area_AllsigUnitLags{cA,1},1) > 2
+            IsMultiUnitExists(cA) = true;
+            cData = Area_AllsigUnitLags{cA,1};
+            NumUnits = size(cData,1);
+            Area_AllsigUnitLags{cA,2} = [mean(cData(:,3)),std(cData(:,3))/sqrt(NumUnits),... % peak lag
+                mean(cData(:,2)),std(cData(:,2))/sqrt(NumUnits),... % peak coef value
+                mean(cData(:,4)),std(cData(:,4))/sqrt(NumUnits)]; % unit AUC average
+            
+        end
+    end
+    
+end
+
+UsedArea_AllsigUnitLags = Area_AllsigUnitLags(IsMultiUnitExists,:);
+UsedArea_nameStrs = BrainAreasStr(IsMultiUnitExists);
+
+%% plot results
+UsedArea_AllAvgs = cell2mat(UsedArea_AllsigUnitLags(:,2));
+UsedArea_PeakLagAvg = UsedArea_AllAvgs(:,1:2);
+NumofUsedAreas = size(UsedArea_PeakLagAvg,1);
+
+[~, UsedArea_SortInds] = sort(UsedArea_PeakLagAvg(:,1),'descend');
+Sorted_peaklagAvg = UsedArea_PeakLagAvg(UsedArea_SortInds,:);
+
+UsedArea_AUCs = UsedArea_AllAvgs(:,5:6);
+[~, AUCsortInds] = sort(UsedArea_AUCs(:,1));
+
+hs4f = figure('position',[100 50 1280 820],'paperpositionmode','manual');
+
+ax1 = subplot(141);
+errorbar(Sorted_peaklagAvg(:,1),1:NumofUsedAreas,Sorted_peaklagAvg(:,2),'b-o',...
+    'horizontal','linewidth',1.5);
+set(gca,'ytick',1:NumofUsedAreas,'yticklabel',UsedArea_nameStrs(UsedArea_SortInds));
+xlabel('Peakcoef lags');
+title('Area units peaklags');
+
+
+ax2 = subplot(142);
+errorbar(UsedArea_AUCs(UsedArea_SortInds,1),1:NumofUsedAreas,UsedArea_AUCs(UsedArea_SortInds,2),...
+    'k-o','horizontal','linewidth',1.5);
+set(gca,'ytick',1:NumofUsedAreas,'yticklabel',UsedArea_nameStrs(UsedArea_SortInds));
+xlabel('AUCavgs ');
+title('Area units AUC (sort by ax1)');
+
+ax3 = subplot(144);
+errorbar(UsedArea_PeakLagAvg(AUCsortInds,1),1:NumofUsedAreas,UsedArea_PeakLagAvg(AUCsortInds,2),...
+    'b-o','horizontal','linewidth',1.5);
+set(gca,'ytick',1:NumofUsedAreas,'yticklabel',UsedArea_nameStrs(AUCsortInds));
+xlabel('Peakcoef lags');
+title('Area units peaklags (sortby ax3)');
+
+
+ax4 = subplot(143);
+errorbar(UsedArea_AUCs(AUCsortInds,1),1:NumofUsedAreas,UsedArea_AUCs(AUCsortInds,2),...
+    'k-o','horizontal','linewidth',1.5);
+set(gca,'ytick',1:NumofUsedAreas,'yticklabel',UsedArea_nameStrs(AUCsortInds));
+xlabel('AUCavgs');
+title('Area units AUC');
+
+%%
+summarySaveFolder4 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\SingleUnitSigAUC_corrPeakLag';
+if ~isfolder(summarySaveFolder4)
+    mkdir(summarySaveFolder4);
+end
+figsavename4 = fullfile(summarySaveFolder4,'Area_sorted_plots_summary');
+saveas(hs4f,figsavename4);
+saveas(hs4f,figsavename4,'png');
+saveas(hs4f,figsavename4,'pdf');
+
+datasavename4 = fullfile(summarySaveFolder4,'UnitFRCrossCoef_peaklagSummary.mat');
+save(datasavename4,'Area_AllsigUnitLags', 'BrainAreasStr', 'IsMultiUnitExists','-v7.3')
+
+%%
+% ###################################################################################################
+% Summary codes 5: summary of anovan results for each regions
+%
+cclr
+%
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+
+BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
+        'Sheet',1);
+BrainAreasStrCC = BrainAreasStrC(2:end);
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
+BrainAreasStr = [BrainAreasStrCC(~EmptyInds);{'Others'}];
+
+%%
+
+SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
+        'Sheet',1);
+SessionFolders = SessionFoldersC(2:end);
+NumUsedSess = length(SessionFolders);
+NumAllTargetAreas = length(BrainAreasStr);
+
+Areawise_unitAnovaTrace = cell(NumUsedSess,NumAllTargetAreas,3, 2); % 3 corresponding to three factors, 2 corresponding to real and threshld data
+Areawise_unitAnovaSigNum = cell(NumUsedSess,NumAllTargetAreas); % units that were defined as significant, used to calculate the fraction
+
+for cS = 1 : NumUsedSess
+%     cSessPath = SessionFolders{cS}; %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    
+    ksfolder = fullfile(cSessPath,'ks2_5');
+    
+    AreaUnitAnovaEV_file = fullfile(ksfolder,'AnovanAnA','SigAnovaTracedataSave.mat');
+    AreaUnitAnovaEV_Strc = load(AreaUnitAnovaEV_file); % AreaValidInfoDatas, ExistAreaNames, ExistField_ClusIDs
+    
+    AreaNames = AreaUnitAnovaEV_Strc.ExistAreaNames;
+    NumAreas = length(AreaNames);
+    if NumAreas < 1
+        warning('There is no target units within following folder:\n %s \n ##################\n',cSessPath);
+        continue;
+    end
+    
+    for cAreaInds = 1 : NumAreas % excluding the 'Others' region at the end
+        cAreaStr = AreaNames{cAreaInds};
+        if isempty(cAreaStr)
+            continue;
+        end
+        
+        AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
+        
+        cA_SigUnitTraces = AreaUnitAnovaEV_Strc.AreaValidInfoDatas{cAreaInds,5};
+        Areawise_unitAnovaTrace(cS, AreaMatchInds, :, :) = cA_SigUnitTraces; % althrough maybe empty unit exists
+        
+        Areawise_unitAnovaSigNum(cS, AreaMatchInds) = AreaUnitAnovaEV_Strc.AreaValidInfoDatas(cAreaInds,1);
+        
+    end
+end
+
+%%
+summarySavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas';
+
+% TotalCalcuNumber = size(NSMUnitOmegaSqrData,1);
+CaledStimOnsetBin = 149; % stimonset bin is 151, and the calculation window is 50ms (5 bins)
+winGoesStep = 0.01; % seconds
+titleStrs = {'Choice','Sound','Blocktypes'};
+AllArea_anovaEVdatas = cell(NumAllTargetAreas, FactorNum, 3);
+for cA = 1 : NumAllTargetAreas
+%     cA = 4;
+    cA_nameStr = BrainAreasStr{cA};
+    cA_summaryData_real = squeeze(Areawise_unitAnovaTrace(:,cA,:,1));
+    cA_summaryData_thres = squeeze(Areawise_unitAnovaTrace(:,cA,:,2));
+    cA_summary_unitNums = Areawise_unitAnovaSigNum(:,cA);
+    FactorNum = 3;
+    cF_unitNums = cat(1,cA_summary_unitNums{:});
+    if isempty(cF_unitNums) || sum(sum(cF_unitNums)) == 0
+        continue;
+    end
+    huf = figure('position',[100 100 1080 280]);
+    for cF = 1 : FactorNum
+        cx = subplot(1,FactorNum,cF);
+        hold on
+        cF_datas = cat(2,cA_summaryData_real{:,cF});
+        cF_ThresDatas = cat(2,cA_summaryData_thres{:,cF});
+        if ~isempty(cF_datas)
+            cf_unitNumVec = cF_unitNums(:,cF);
+            [TotalCalcuNumber, SigUnitNum] = size(cF_datas);
+            UnitCalWinTimes = (((1:TotalCalcuNumber)-CaledStimOnsetBin) * winGoesStep)';
+            AllArea_anovaEVdatas(cA, cF, :) = {cF_datas, cF_ThresDatas, cf_unitNumVec};
+            
+            Summary_EV_Avg = mean(cF_datas,2);
+            % to remove smooth artifact at the terminal location
+            Summary_EV_Avg(1) = mean(Summary_EV_Avg(1:5));
+            Summary_EV_Avg(end) = mean(Summary_EV_Avg(end-4:end));
+            % ########
+            Summary_EV_sem = std(cF_datas,[],2) / sqrt(SigUnitNum);
+            Summary_EV_thres = mean(cF_ThresDatas,2);
+
+            cF_sigUnitFrac = mean(cf_unitNumVec);
+            sigUnit_NumsFromVec = sum(cf_unitNumVec);
+            if sigUnit_NumsFromVec~= SigUnitNum
+                error('Something is wrong in significant unit numbers calcualtion.');
+            end
+
+            semPatch_x = [UnitCalWinTimes;flipud(UnitCalWinTimes)];
+            semPatch_y = [Summary_EV_Avg+Summary_EV_sem;...
+                flipud(Summary_EV_Avg-Summary_EV_sem)];
+            patch(semPatch_x,semPatch_y,1,'EdgeColor','none','faceColor',[0.8 0.4 0.4],'facealpha',0.6);
+
+            plot(UnitCalWinTimes,Summary_EV_thres,'Color',[.7 .7 .7],'linewidth',1.2);
+            plot(UnitCalWinTimes,Summary_EV_Avg,'Color','r','linewidth',1.2);
+
+            yscales = get(gca,'ylim');
+            line([0 0],yscales,'Color','c','linewidth',1.0,'linestyle','--');
+            set(cx,'ylim',yscales);
+            title(sprintf('%s Sigfrac = %.2f',titleStrs{cF},cF_sigUnitFrac));
+            text(2, yscales(2)*0.9,sprintf('UnitNum = %d',sigUnit_NumsFromVec));
+            xlabel('Time (s)');
+            ylabel('EV');
+
+            annotation('textbox',[0.02 0.5 0.1 0.05],'String',cA_nameStr,'Color','b',...
+                'FitBoxToText','on','Edgecolor','none');
+        end
+    end
+    
+    SaveNames = fullfile(summarySavePath,sprintf('Area_%s anovaEV plot save',cA_nameStr));
+    saveas(huf,SaveNames);
+    
+    print(huf,SaveNames,'-dpng','-r0');
+    print(huf,SaveNames,'-dpdf','-bestfit');
+    close(huf);
+
+end
+
+datasaveName5 = fullfile(summarySavePath,'AllArea_anovaEV_datas.mat');
+save(datasaveName5,'AllArea_anovaEVdatas','Areawise_unitAnovaSigNum','Areawise_unitAnovaTrace','-v7.3');
 
 %%
 % cclr

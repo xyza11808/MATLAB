@@ -14,7 +14,7 @@ if binsize < 1 % in case of input as real time in seconds
     binsize = round(binsize * spdataStrc.sample_rate);
 end
 
-MaxclusbatchSize = 5;
+MaxclusbatchSize = 6;
 if length(PlotclusInds) > MaxclusbatchSize
     BatchNums = ceil(length(PlotclusInds) / MaxclusbatchSize);
     ClusSelfccg = cell(length(PlotclusInds),1);

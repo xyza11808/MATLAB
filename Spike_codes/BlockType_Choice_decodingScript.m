@@ -1,4 +1,4 @@
-
+ksfolder = pwd;
 clearvars UnitAfterStimAUC UnitAS_BLSubAUC UnitBaselineAUC SVMDecVecs SMBinDataMtx ProbNPSess
 % calculate AUC for each unit in distinguish choice and block type
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
@@ -14,7 +14,7 @@ if ~isfolder(figSaveFolder)
 end
 
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
-% TimeWin = [-1.5,8]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
+% TimeWin = [-1,5]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
 % Smoothbin = [50,10]; %
 % ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, Smoothbin, double(behavResults.Time_stimOnset(:)));
 % save(fullfile(pwd,'ks2_5','NPClassHandleSaved.mat'),'ProbNPSess', 'PassSoundDatas', 'behavResults', '-v7.3');
@@ -57,36 +57,36 @@ NMTrial_FreqsAll = TrialFreqsAll(NMTrialIndex);
 
 %%
 TotalUnitNumbers = size(SMBinDataMtx,2);
-DataSaveName = fullfile(figSaveFolder,'BTANDChoiceAUC_popuVec.mat');
-load(DataSaveName);
-% % % % UnitAfterStimAUC = zeros(TotalUnitNumbers,4); % for after-stim response: AUC4Block, Threshold,AUC4Choice,Threshold
-% % % % UnitAS_BLSubAUC = zeros(TotalUnitNumbers,4); % for baseline-sub after-stim response: AUC4Block, Threshold,AUC4Choice,Threshold
-% % % % UnitBaselineAUC = zeros(TotalUnitNumbers,2); % for baseline response: AUC4Block, Threshold
-% % % % for cU = 1 : TotalUnitNumbers
-% % % %     cUData_afterStim = NMAfterStimResp_dataAll(:,cU);
-% % % %     cUData_Baseline = NMBaselneResp_dataAll(:,cU);
-% % % %     cU_baselineSubData = cUData_afterStim - cUData_Baseline;
-% % % %     
-% % % %     [AUC_AS_BT, IsMeanRev_AS_BT] = AUC_fast_utest(cUData_afterStim, NMTrial_blockTypesAll); % block type decoding, after stim response
-% % % %     [~,~,SigValues_AS_BT] = ROCSiglevelGeneNew([cUData_afterStim, NMTrial_blockTypesAll],500,1,0.001);
-% % % %     
-% % % %     [AUC_AS_Choice, IsMeanRev_AS_Choice] = AUC_fast_utest(cUData_afterStim, NMTrial_ChoiceAll); % Choice decoding, after stim response
-% % % %     [~,~,SigValues_AS_Choice] = ROCSiglevelGeneNew([cUData_afterStim, NMTrial_ChoiceAll],500,1,0.001);
-% % % %     
-% % % %     [AUC_BS_BT, IsMeanRev_BS_BT] = AUC_fast_utest(cU_baselineSubData, NMTrial_blockTypesAll); % block type decoding, baseline substraction response
-% % % %     [~,~,SigValues_BS_BT] = ROCSiglevelGeneNew([cU_baselineSubData, NMTrial_blockTypesAll],500,1,0.001);
-% % % %     
-% % % %     [AUC_BS_Choice, IsMeanRev_BS_Choice] = AUC_fast_utest(cU_baselineSubData, NMTrial_ChoiceAll); % Choice decoding, baseline substraction  response
-% % % %     [~,~,SigValues_BS_Choice] = ROCSiglevelGeneNew([cU_baselineSubData, NMTrial_ChoiceAll],500,1,0.001);
-% % % %     
-% % % %     [AUC_BL_BT, IsMeanRev_BL_BT] = AUC_fast_utest(cUData_Baseline, NMTrial_blockTypesAll); % block type decoding, baseline response
-% % % %     [~,~,SigValues_BL_BT] = ROCSiglevelGeneNew([cUData_Baseline, NMTrial_blockTypesAll],500,1,0.001);
-% % % %     
-% % % %     
-% % % %     UnitAfterStimAUC(cU,:) = [AUC_AS_BT, SigValues_AS_BT, AUC_AS_Choice, SigValues_AS_Choice];
-% % % %     UnitBaselineAUC(cU,:)  = [AUC_BL_BT, SigValues_BL_BT];
-% % % %     UnitAS_BLSubAUC(cU,:) = [AUC_BS_BT, SigValues_BS_BT,AUC_BS_Choice, SigValues_BS_Choice];
-% % % % end
+% DataSaveName = fullfile(figSaveFolder,'BTANDChoiceAUC_popuVec.mat');
+% load(DataSaveName);
+UnitAfterStimAUC = zeros(TotalUnitNumbers,4); % for after-stim response: AUC4Block, Threshold,AUC4Choice,Threshold
+UnitAS_BLSubAUC = zeros(TotalUnitNumbers,4); % for baseline-sub after-stim response: AUC4Block, Threshold,AUC4Choice,Threshold
+UnitBaselineAUC = zeros(TotalUnitNumbers,2); % for baseline response: AUC4Block, Threshold
+for cU = 1 : TotalUnitNumbers
+    cUData_afterStim = NMAfterStimResp_dataAll(:,cU);
+    cUData_Baseline = NMBaselneResp_dataAll(:,cU);
+    cU_baselineSubData = cUData_afterStim - cUData_Baseline;
+    
+    [AUC_AS_BT, IsMeanRev_AS_BT] = AUC_fast_utest(cUData_afterStim, NMTrial_blockTypesAll); % block type decoding, after stim response
+    [~,~,SigValues_AS_BT] = ROCSiglevelGeneNew([cUData_afterStim, NMTrial_blockTypesAll],1000,1,0.001);
+    
+    [AUC_AS_Choice, IsMeanRev_AS_Choice] = AUC_fast_utest(cUData_afterStim, NMTrial_ChoiceAll); % Choice decoding, after stim response
+    [~,~,SigValues_AS_Choice] = ROCSiglevelGeneNew([cUData_afterStim, NMTrial_ChoiceAll],1000,1,0.001);
+    
+    [AUC_BS_BT, IsMeanRev_BS_BT] = AUC_fast_utest(cU_baselineSubData, NMTrial_blockTypesAll); % block type decoding, baseline substraction response
+    [~,~,SigValues_BS_BT] = ROCSiglevelGeneNew([cU_baselineSubData, NMTrial_blockTypesAll],1000,1,0.001);
+    
+    [AUC_BS_Choice, IsMeanRev_BS_Choice] = AUC_fast_utest(cU_baselineSubData, NMTrial_ChoiceAll); % Choice decoding, baseline substraction  response
+    [~,~,SigValues_BS_Choice] = ROCSiglevelGeneNew([cU_baselineSubData, NMTrial_ChoiceAll],1000,1,0.001);
+    
+    [AUC_BL_BT, IsMeanRev_BL_BT] = AUC_fast_utest(cUData_Baseline, NMTrial_blockTypesAll); % block type decoding, baseline response
+    [~,~,SigValues_BL_BT] = ROCSiglevelGeneNew([cUData_Baseline, NMTrial_blockTypesAll],1000,1,0.001);
+    
+    
+    UnitAfterStimAUC(cU,:) = [AUC_AS_BT, SigValues_AS_BT, AUC_AS_Choice, SigValues_AS_Choice];
+    UnitBaselineAUC(cU,:)  = [AUC_BL_BT, SigValues_BL_BT];
+    UnitAS_BLSubAUC(cU,:) = [AUC_BS_BT, SigValues_BS_BT,AUC_BS_Choice, SigValues_BS_Choice];
+end
 
 % linear regression to substract choice fitting values and use the residues
 % to calculate block type differences
@@ -206,6 +206,44 @@ end
 
 save(DataSaveName, 'UnitAfterStimAUC','UnitAS_BLSubAUC','UnitBaselineAUC','SVMDecVecs','-v7.3');
 
+
+%%
+% 
+% % batched through all used sessions
+% cclr
+% 
+% % AllSessFolderPathfile = 'K\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+% sortingcode_string = 'ks2_5';
+% 
+% SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
+%         'Sheet',1);
+% SessionFolders = SessionFoldersC(2:end);
+% NumprocessedNPSess = length(SessionFolders);
+% 
+% %%
+% for cfff = 1 : NumprocessedNPSess
+%     
+%     ksfolder = fullfile(SessionFolders{cfff},sortingcode_string);
+%     cSessFolder = ksfolder;
+% %     ksfolder = fullfile(strrep(SessionFolders{cfff},'F:','I:\ksOutput_backup'),sortingcode_string);
+%     fprintf('Processing session %d...\n', cfff);
+% % % %     OldFolderName = fullfile(cSessFolder,'BaselinePredofBlocktype');
+% % % %     if isfolder(OldFolderName)
+% % % % %         stats = rmdir(OldFolderName,'s');
+% % % %         
+% % % %         stats = movefile(OldFolderName,fullfile(cSessFolder,'Old_BaselinePredofBT'),'f');
+% % % %         if ~stats
+% % % %             error('Unable to delete folder in Session %d.',cfff);
+% % % %         end
+% % % % 
+% % % %     end
+% %     baselineSpikePredBlocktypes_SVMProb;
+% %     BlockType_Choice_decodingScript;
+% %     baselineSpikePredBlocktypes_4batch;
+%     BT_Choice_decodingScript_trialtypeWise;
+% %     EventResp_avg_codes;
+% end
 
 
 

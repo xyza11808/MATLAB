@@ -35,7 +35,7 @@ if nargin > 3
     SigPrc = 100 * (1 - varargin{2});
     SigValue = prctile(AllROCresult,SigPrc);
 else
-    SigValue = [];
+    SigValue = prctile(AllROCresult,99); % default using alpha value of 0.01
 end
 
 if nargout

@@ -4,7 +4,7 @@ function correlograms = Spikeccgfun(SpikeTimes,SpikeClus,winsize,binsize,isSymme
 
 % binsize should be in ms format, as well as the winsize variable
 % the spikeTimes is in seconds format
-if ~exist('isSymmetrize','var') || isempty(isSymmetrize)
+if isempty(isSymmetrize)
     IsSymOuts = false;
 else
     IsSymOuts = isSymmetrize;
@@ -16,16 +16,19 @@ if numel(SpikeTimes) ~= numel(SpikeClus)
    error('The number of spike times and spikeclusters should be the same.'); 
 end
 SpikeClus = SpikeClus(:);
+
 SpikeClus_inds = zeros(numel(SpikeClus),1);
 ClusterType = unique(SpikeClus);
 NumClus = length(ClusterType);
 for cClus = 1 : NumClus
     SpikeClus_inds(SpikeClus == ClusterType(cClus)) = cClus; % find the cluster Inds for each cluster
 end
+
+
 win_length = floor(0.5*winsize/binsize)*2+1;
 correlograms = zeros(NumClus,NumClus,floor(win_length/2)+1); % only half of the symmetrize window
 ccgdims = size(correlograms);
-MaxBinLen = ccgdims(3);
+% MaxBinLen = ccgdims(3);
 if NumClus == 1
     correlograms = squeeze(correlograms);
 end
@@ -58,19 +61,69 @@ while any(spmasks(1:TotalSPNums-spshifts))
     
     latter_clusterInds = SpikeClus_inds((1+spshifts):end);
     
-    if max(sptimebins) > (MaxBinLen-1)
-        disp(max(sptimebins));
-        error('Somewhere is wrong!');
-    end
+%     if max(sptimebins) > (MaxBinLen-1)
+%         disp(max(sptimebins));
+%         error('Somewhere is wrong!');
+%     end
     
     AddIndices = sub2ind(ccgdims,former_clusterInds(shift_mask_backup),...
         latter_clusterInds(shift_mask_backup),sptimebins+1);
-    [Types,Counts] = uniAndcount(AddIndices);
+%     [Types,Counts] = uniAndcount(AddIndices); % very very slow...
+    Counts = accumarray(AddIndices,1);
+    Types = find(Counts);
     
-    correlograms(Types) = correlograms(Types) + Counts;
+%     correlograms(Types) = correlograms(Types) + Counts;
+    correlograms(Types) = correlograms(Types) + Counts(Types);
     
     spshifts = spshifts + 1;
 end
+% %%
+% correlogramsNeg = zeros(NumClus,NumClus,floor(win_length/2)+1);
+% % calculate the negtive shiftments CCG
+% spshiftsNeg = -1;
+% TotalSPNums = numel(SpikeTimes);
+% spmasks = true(TotalSPNums,1);
+% while any(spmasks((1-spshiftsNeg):TotalSPNums))
+% %     disp(sum(spmasks(1:TotalSPNums-spshifts)));
+%     spike_time_diff = SpikeTimes(1:(TotalSPNums+spshiftsNeg)) - SpikeTimes((1-spshiftsNeg):TotalSPNums);
+%     
+%     % convert spike time to bins
+%     spike_diff_bin = floor(spike_time_diff/binsize); 
+%    
+%     % create current shift inds
+%     cmask_shiftInds = 1:(TotalSPNums+spshiftsNeg);
+%     
+%     % spikes with no matching spikes are masked
+%     spmasks(cmask_shiftInds(spike_diff_bin > floor(win_length/2))) = false;
+%     
+%     % cache the masked spike delays
+%     shift_mask_backup = spmasks(1:TotalSPNums+spshiftsNeg);
+%     
+%     % fetch valid spike bins corresponded cluster inds
+%     sptimebins = spike_diff_bin(shift_mask_backup);
+%     
+%     % found current bin corresponded indices
+%     former_clusterInds = SpikeClus_inds((1-spshiftsNeg):end);
+%     
+%     latter_clusterInds = SpikeClus_inds(1:(TotalSPNums+spshiftsNeg));
+%     
+%     if max(sptimebins) > (MaxBinLen-1)
+%         disp(max(sptimebins));
+%         error('Somewhere is wrong!');
+%     end
+%     
+%     AddIndices = sub2ind(ccgdims,former_clusterInds(shift_mask_backup),...
+%         latter_clusterInds(shift_mask_backup),sptimebins+1);
+% %     [Types,Counts] = uniAndcount(AddIndices); % very very slow...
+%     Counts = accumarray(AddIndices,1);
+%     Types = find(Counts);
+%     
+% %     correlograms(Types) = correlograms(Types) + Counts;
+%     correlograms(Types) = correlogramsNeg(Types) + Counts(Types);
+%     
+%     spshiftsNeg = spshiftsNeg - 1;
+% end
+
 %%
 if NumClus == 1
    correlogramsResize = zeros(NumClus,NumClus,floor(win_length/2)+1);
@@ -82,7 +135,7 @@ if IsSymOuts
    RevccgInds = (ccgdims(3)):-1:2;
    Fullsizeccg(:,:,1:(ccgdims(3)-1)) = correlograms(:,:,RevccgInds);
    Fullsizeccg(:,:,ccgdims(3):end) = correlograms;
-   HalfccgBack = correlograms;
+%    HalfccgBack = correlograms;
    correlograms = Fullsizeccg;
 end
 

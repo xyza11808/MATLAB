@@ -2,8 +2,11 @@ function ConsecVec = consecTRUECount(Vecs)
 a0 = double(Vecs(:)); % input vector
 ii = strfind(a0',[1 0]);
 if isempty(ii)
-    warning('There is no change of logical values within current vector');
-    return;
+    ii = strfind(a0',[0 1]);
+    if isempty(ii)
+        warning('There is no change of logical values within current vector');
+        return;
+    end
 end
 a1 = cumsum(a0);
 i1 = a1(ii);

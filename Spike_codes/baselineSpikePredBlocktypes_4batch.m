@@ -2,10 +2,10 @@ clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_First BaselineRes
 
 % load('Chnlocation.mat');
 load(fullfile(ksfolder,'SessAreaIndexData.mat'));
-if isempty(fieldnames(SessAreaIndexStrc.ACAv)) && isempty(fieldnames(SessAreaIndexStrc.ACAd))...
-         && isempty(fieldnames(SessAreaIndexStrc.ACA))
-    return;
-end
+% if isempty(fieldnames(SessAreaIndexStrc.ACAv)) && isempty(fieldnames(SessAreaIndexStrc.ACAd))...
+%          && isempty(fieldnames(SessAreaIndexStrc.ACA))
+%     return;
+% end
 
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
 % if isempty(ProbNPSess.ChannelAreaStrs)
