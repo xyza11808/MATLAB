@@ -431,6 +431,7 @@ classdef NPspikeDataMining
             
         end
         
+        % function used for initial spike time binned calculation
         function obj = TrigPSTH(obj,timeWin,smoothbin,varargin)
             % smoothbin should be a [a,b] vector, a must be larger than b,
             % indicating the smoothed bin steps
@@ -473,6 +474,9 @@ classdef NPspikeDataMining
                         length(StimEventTime),length(obj.UsedTrigOnTime{obj.CurrentSessInds}));
                 end
                 obj.StimAlignedTime{obj.CurrentSessInds} = StimEventTime;
+                obj.TrigAlignType{obj.CurrentSessInds} = 'stim'; % ZerosBin is stimulus
+            else
+               obj.TrigAlignType{obj.CurrentSessInds} = 'trigger'; % zeros Bin is trigger
             end
             %%
             
@@ -493,14 +497,14 @@ classdef NPspikeDataMining
                 if IsEventDataGiven
                     % Select data range according to the event time
                     cTrigTime = obj.UsedTrigOnTime{obj.CurrentSessInds}(ctrig)+StimEventTime(ctrig); % in seconds
-                    obj.TrigAlignType{obj.CurrentSessInds} = 'stim'; % ZerosBin is stimulus
+                    
                     if ctrig == 1
                         fprintf('Spiketimes was aligned to stimulus onset times!\n');
                     end
                 else
                     % Select data range according to the trigger time
                     cTrigTime = obj.UsedTrigOnTime{obj.CurrentSessInds}(ctrig); % in seconds
-                    obj.TrigAlignType{obj.CurrentSessInds} = 'trigger'; % zeros Bin is trigger
+                    
                     if ctrig == 1
                         fprintf('Spiketimes was aligned to trigger times!\n');
                     end
@@ -546,6 +550,125 @@ classdef NPspikeDataMining
             obj.TrigData_Bin{obj.CurrentSessInds} = TrigData_Bins;
         end
         
+        % external function used for re-calculate binned spike train, but
+        % not change the precalcualted datas in Obj
+        function OutDataStrc = TrigPSTH_Ext(obj,timeWin,smoothbin,varargin)
+            % smoothbin should be a [a,b] vector, a must be larger than b,
+            % indicating the smoothed bin steps
+            
+            % timeWin was also a 1-by-2 vector, indicates the time window
+            % that was used to calculate the PSTH
+            if isempty(timeWin)
+                timeWin = obj.psthTimeWin{obj.CurrentSessInds}; % in seconds
+            end
+            
+            IsEventDataGiven = 0;
+            if length(varargin) > 0
+                if ~isempty(varargin{1})
+                    StimEventTime = varargin{1}; % convert into seconds
+                    IsEventDataGiven = 1;
+                end
+            end
+            
+            if isempty(smoothbin)
+                smoothbin = obj.USedbin * 1000;
+             end
+            smoothbin = smoothbin / 1000;
+            smoothbinfactor = smoothbin(1)/smoothbin(2);
+            
+            if isempty(obj.UsedTrigOnTime{obj.CurrentSessInds})
+                % load trigger scale time file
+                trigScaleStrc = load(fullfile(obj.ksFolder,'..','TriggerDatas.mat'),'TriggerEvents');
+                obj = obj.triggerOnsetTime(trigScaleStrc.TriggerEvents,[],[]);
+            end
+            
+            if IsEventDataGiven
+                if  length(StimEventTime) ~= length(obj.UsedTrigOnTime{obj.CurrentSessInds})
+                    error('The input event time length %d is different from trigger trial number %d.',...
+                        length(StimEventTime),length(obj.UsedTrigOnTime{obj.CurrentSessInds}));
+                end
+%                 obj.StimAlignedTime{obj.CurrentSessInds} = StimEventTime;
+            end
+           %%
+            OutDataStrc = struct();
+            histbin = [timeWin(1):smoothbin(2):0,smoothbin(2):smoothbin(2):timeWin(2)];
+            OutDataStrc.BinCenters = histbin(1:end-1)+smoothbin(2)/2;
+            OutDataStrc.TriggerStartBin = find(OutDataStrc.BinCenters > 0,1,'first');
+            
+            if IsEventDataGiven
+                OutDataStrc.TrigAlignType = 'stim'; 
+            else
+                OutDataStrc.TrigAlignType = 'trigger';
+            end
+            
+            TrigNums = length(obj.UsedTrigOnTime{obj.CurrentSessInds});
+            TrigBinDatas = cell(TrigNums,2);
+%             if isempty(obj.UsedClus_IDs)
+                calClusters = obj.UsedClus_IDs;
+%             else
+%                 calClusters = obj.UsedClus_IDs;
+%             end
+            NumUsedClus = length(calClusters);
+            cTrig_TrialSPtimes = cell(NumUsedClus,TrigNums);
+            for ctrig = 1 : TrigNums
+                if IsEventDataGiven
+                    % Select data range according to the event time
+                    cTrigTime = obj.UsedTrigOnTime{obj.CurrentSessInds}(ctrig)+StimEventTime(ctrig); % in seconds
+%                     OutDataStrc.TrigAlignType = 'stim'; % ZerosBin is stimulus
+                    if ctrig == 1
+                        fprintf('Spiketimes was aligned to stimulus onset times!\n');
+                    end
+                else
+                    % Select data range according to the trigger time
+                    cTrigTime = obj.UsedTrigOnTime{obj.CurrentSessInds}(ctrig); % in seconds
+%                     OutDataStrc.TrigAlignType = 'trigger'; % zeros Bin is trigger
+                    if ctrig == 1
+                        fprintf('Spiketimes was aligned to trigger times!\n');
+                    end
+                end
+                %
+                cTrigTimeWin = cTrigTime + timeWin;
+                WithinTimewinInds = obj.SpikeTimes > cTrigTimeWin(1) & obj.SpikeTimes < cTrigTimeWin(2);
+                cTrigWin_spTimes = obj.SpikeTimes(WithinTimewinInds);
+                cTrigWin_spClus = obj.SpikeClus(WithinTimewinInds);
+                
+                cTrig_binClusCount = nan(NumUsedClus,length(OutDataStrc.BinCenters));
+                cTrig_binCountSM = nan(NumUsedClus,length(OutDataStrc.BinCenters));
+                %
+                for cClus = 1 : NumUsedClus
+                    cClusTime = cTrigWin_spTimes(cTrigWin_spClus == calClusters(cClus)) - cTrigTime;
+                    cTrig_TrialSPtimes(cClus,ctrig) = {cClusTime};
+                    [bincounts,~] = histcounts(cClusTime,histbin);
+                    
+                    cTrig_binClusCount(cClus,:) = bincounts;
+                    % before trig sps
+                    % Do not use segment smooth method, may cause artifact
+                    % at trigger position
+                    %                     Beforecounts = bincounts(obj.BinCenters < 0);
+                    %                     cTrig_binCountSM(cClus,obj.BinCenters < 0) = smooth(Beforecounts,smoothbinfactor);
+                    %
+                    %                     Aftercounts = bincounts(obj.BinCenters >= 0);
+                    %                     cTrig_binCountSM(cClus,obj.BinCenters >= 0) = smooth(Aftercounts,smoothbinfactor);
+                    cTrig_binCountSM(cClus,:) = smooth(bincounts, max(smoothbinfactor,3));
+                end
+                TrigBinDatas(ctrig,:) = {cTrig_binClusCount/smoothbin(2), cTrig_binCountSM/smoothbin(2)}; % convert into Hz
+            end
+            %%
+            OutDataStrc.USedbin = smoothbin;
+            TrigData_Bins = cell(NumUsedClus,2);
+            OutDataStrc.TrTrigSpikeTimes = cTrig_TrialSPtimes;
+            for cClus = 1 : NumUsedClus
+                cClus_trigTimeC = cellfun(@(x) x(cClus,:),TrigBinDatas(:,1),'uniformOutput',false);
+                cClus_trigTimeSMC = cellfun(@(x) x(cClus,:),TrigBinDatas(:,2),'uniformOutput',false);
+                cClus_trigTime = cell2mat(cClus_trigTimeC);
+                cClus_trigTimeSM = cell2mat(cClus_trigTimeSMC);
+                TrigData_Bins(cClus,:) = {cClus_trigTime, cClus_trigTimeSM};
+            end
+            OutDataStrc.TrigData_Bin = TrigData_Bins;
+        end
+        
+        
+        % baseline substraction analysis
         function obj = BaselineSubFun(obj, RawDatas, StimOnsetTimes)
             % substract the baseline FR to create response change datas
             BinWidth = obj.USedbin(2);

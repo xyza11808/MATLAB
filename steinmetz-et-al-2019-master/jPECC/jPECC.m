@@ -37,11 +37,14 @@ jPECC_p = zeros(nBins);
 N = size(sp1,1); %number of trials
 cvp = cvpartition(N, 'KFold', kfold);
 nd = min([maxNpc size(sp1,3) size(sp2,3)]);
+sp1_new = permute(sp1,[1,3,2]); % to avoid squeeze operation
+sp2_new = permute(sp2,[1,3,2]);
 % nd = min([size(sp1,3) size(sp2,3)]);
-for t1 = 1:nBins
+parfor t1 = 1:nBins
     
     % reducing dimensionality to help regularize
-    X = squeeze(sp1(:,t1,:));
+%     X = squeeze(sp1(:,t1,:));
+    X = sp1_new(:,:,t1);
     if doPCA        
         [~,Xs] = pca(X);
         Xs = Xs(:,1:nd);
@@ -53,7 +56,8 @@ for t1 = 1:nBins
     
     for t2 = 1:nBins
         
-        Y = squeeze(sp2(:,t2,:));
+%         Y = squeeze(sp2(:,t2,:));
+        Y = sp2_new(:,:,t2);
         if doPCA
             [~,Ys] = pca(Y);           
             Ys = Ys(:,1:nd);

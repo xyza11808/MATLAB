@@ -64,17 +64,6 @@ if ~isfolder(PlotSaveNames)
 end
 
 %%
-UnitClus_realIDs = ProbNPSess.UsedClus_IDs; % single unit cluster IDs in the .npy file
-TrigInfoDataFiles = fullfile(cSessFolder,'..','TriggerDatas.mat');
-load(TrigInfoDataFiles,'TriggerEvents');
-Start_trig_sampleTime = TriggerEvents(1,1)-(30*30000);
-if Start_trig_sampleTime < (30*30000)
-    Start_trig_sampleTime = TriggerEvents(1,1)-1;
-end
-End_trig_sampleTime = TriggerEvents(end,2)+(30*30000);
-
-
-%%
 UnitSigInds = find(AUCValuesAll(:,1) > AUCValuesAll(:,3)); 
 NumSigUnits = length(UnitSigInds);
 SigUnit_clusIDs = ProbNPSess.UsedClus_IDs(UnitSigInds);
@@ -86,24 +75,6 @@ for cU = 1 : NumSigUnits
     cUnit = UnitSigInds(cU);
     cUnit_ClusID = SigUnit_clusIDs(cU);
     cClus_SampleTime = ProbNPSess.SpikeTimeSample(ProbNPSess.SpikeClus == cUnit_ClusID);
-    
-    % before trig spike rates
-    BeforeTrigSamples = cClus_SampleTime(cClus_SampleTime<Start_trig_sampleTime);
-    BeforeTrig_timeBinSize = Start_trig_sampleTime/10;
-    BeforeTrig_BinEdges = round(1:BeforeTrig_timeBinSize:Start_trig_sampleTime);
-    BeforeTrig_BinCounts = histcounts(BeforeTrigSamples,BeforeTrig_BinEdges);
-    BfBinSampleLen = diff(BeforeTrig_BinEdges);
-    BeforeTrig_BinSP_FR = BeforeTrig_BinCounts ./ (BfBinSampleLen /30000);
-    
-    % after task spike rates
-    AfterTaskSample = cClus_SampleTime(cClus_SampleTime > End_trig_sampleTime) - End_trig_sampleTime;
-    PostTaskSessTimeLen = (ProbNPSess.Numsamp - End_trig_sampleTime);
-    AfterTask_timeBinSize = (PostTaskSessTimeLen/10);
-    AfterTask_BinEdges = round(1:AfterTask_timeBinSize:PostTaskSessTimeLen);
-    AfterTask_BinCounts = histcounts(AfterTaskSample,AfterTask_BinEdges);
-    AfBinSample = diff(AfterTask_BinEdges);
-    AfterTask_BinSP_FR = AfterTask_BinCounts ./ (AfBinSample/30000);
-    %
     
     RealUnitInds = ProbNPSess.UsedClusinds(cUnit);
     RealUnitMaxChn = ProbNPSess.ChannelUseds_id(cUnit);
@@ -120,9 +91,21 @@ for cU = 1 : NumSigUnits
     else
         BlockEndInds = BlockSectionInfo.BlockTrScales(1:end-1,2);
     end
+    NearBlockBaselineResp = zeros(length(BlockEndInds),3);
+    NearBlockTrNum = 30; % the 30 trials near blockswitch position
+    MiddleBlockTrInds = [70,120];
     for cB = 1 : length(BlockEndInds)
         line([BlockEndInds(cB) BlockEndInds(cB)],yaxiss,...
             'Color','k','linewidth',1.2);
+        cNearBlockInds = BlockEndInds(cB) + [-1*NearBlockTrNum,NearBlockTrNum];
+        cBfMiddleBlockTrs = BlockEndInds(cB) - fliplr(MiddleBlockTrInds);
+        cAfMiddleBlockTrs = BlockEndInds(cB) + MiddleBlockTrInds;
+        
+        NearBlock_FRAvg = mean(BaselineResp_First(cNearBlockInds(1):cNearBlockInds(2),cUnit));
+        BfMidBlock_FRAvg = mean(BaselineResp_First(cBfMiddleBlockTrs(1):cBfMiddleBlockTrs(2),cUnit));
+        AfMidBlock_FRAvg = mean(BaselineResp_First(cAfMiddleBlockTrs(1):cAfMiddleBlockTrs(2),cUnit));
+        
+        
     end
     ylabel('Baseline FR');
 

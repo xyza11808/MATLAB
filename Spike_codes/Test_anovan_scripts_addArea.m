@@ -1,8 +1,43 @@
 % "Cortical information flow during flexible sensorimotor decisions"
 % ksfolder = pwd;
 ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
-clearvars ProbNPSess AllNullThres_Mtx NSMUnitOmegaSqrData CalWinUnitOmegaSqrs NullOmegaSqrDatas
+clearvars ProbNPSess AllNullThres_Mtx NSMUnitOmegaSqrData CalWinUnitOmegaSqrs NullOmegaSqrDatas NewSessAreaStrc
 
+AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
+
+AllFieldNames = fieldnames(AreaIndexStrc.SessAreaIndexStrc);
+UsedNames = AllFieldNames(1:end-1);
+ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);
+if any(strcmpi(ExistAreaNames,'MOs'))
+   MosAreaInds = find(strcmpi(ExistAreaNames,'MOs'));
+   CompExistAreaNames = ExistAreaNames;
+   CompExistAreaNames{MosAreaInds} = 'MOs';
+end
+if strcmpi(ExistAreaNames(end),'Others')
+    ExistAreaNames(end) = [];
+end
+NumExistAreas = length(ExistAreaNames);
+
+NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
+NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
+NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
+if strcmpi(NewAdd_ExistAreaNames(end),'Others')
+    NewAdd_ExistAreaNames(end) = [];
+end
+NewAdd_NumExistAreas = length(NewAdd_ExistAreaNames);
+
+%%
+if NewAdd_NumExistAreas > NumExistAreas
+    % new area exists
+    OldSessExistInds = ismember(NewAdd_ExistAreaNames, CompExistAreaNames);
+    NewAddAreaNames = NewAdd_ExistAreaNames(~OldSessExistInds);
+    Num_newAddAreaNums = length(NewAddAreaNames);
+else
+    return;
+end
+
+%%
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
@@ -14,24 +49,52 @@ if ~isempty(ProbNPSess.SurviveInds)
 end
 SMBinDataMtxRaw = SMBinDataMtx;
 
-AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexData.mat'));
-AllFieldNames = fieldnames(AreaIndexStrc.SessAreaIndexStrc);
-UsedNames = AllFieldNames(1:end-1);
-ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);
 
-if strcmpi(ExistAreaNames(end),'Others')
-    ExistAreaNames(end) = [];
-end
 %%
-Numfieldnames = length(ExistAreaNames);
+% old session unit numbers
+ONumfieldnames = length(ExistAreaNames);
+OExistField_ClusIDs = [];
+OAreaUnitNumbers = zeros(ONumfieldnames,1);
+for cA = 1 : ONumfieldnames
+    cA_Clus_IDs = AreaIndexStrc.SessAreaIndexStrc.(ExistAreaNames{cA}).MatchUnitRealIndex;
+    cA_clus_inds = AreaIndexStrc.SessAreaIndexStrc.(ExistAreaNames{cA}).MatchedUnitInds;
+    OExistField_ClusIDs = [OExistField_ClusIDs;[cA_Clus_IDs,cA_clus_inds]]; % real Clus_IDs and Clus indexing inds
+    OAreaUnitNumbers(cA) = numel(cA_clus_inds);
+end
+
+%% load previously saved datas
+
+if ~isfolder(fullfile(ksfolder,'AnovanAnA'))
+    mkdir(fullfile(ksfolder,'AnovanAnA'))
+end
+savename = fullfile(ksfolder,'AnovanAnA','OmegaSqrDatas.mat');
+oldDatas = load(savename);
+
+OldSavedUnitNums = sum(OAreaUnitNumbers)+1;
+
+oldDatas.AllNullThres_Mtx(:,OldSavedUnitNums:end,:) = [];
+oldDatas.NSMUnitOmegaSqrData(:,OldSavedUnitNums:end,:) = [];
+oldDatas.CalWinUnitOmegaSqrs(:,OldSavedUnitNums:end,:) = [];
+oldNullOmegaSqrDatas = cell(length(oldDatas.NullOmegaSqrDatas),1);
+for cCal = 1 : length(oldDatas.NullOmegaSqrDatas)
+    cOldCalData = oldDatas.NullOmegaSqrDatas{cCal};
+    cOldCalData(:,OldSavedUnitNums:end,:) = [];
+    oldNullOmegaSqrDatas{cCal} = cOldCalData;
+end
+oldDatas.NullOmegaSqrDatas = oldNullOmegaSqrDatas;
+%%
+Numfieldnames = length(NewAddAreaNames);
 ExistField_ClusIDs = [];
 AreaUnitNumbers = zeros(Numfieldnames,1);
 for cA = 1 : Numfieldnames
-    cA_Clus_IDs = AreaIndexStrc.SessAreaIndexStrc.(ExistAreaNames{cA}).MatchUnitRealIndex;
-    cA_clus_inds = AreaIndexStrc.SessAreaIndexStrc.(ExistAreaNames{cA}).MatchedUnitInds;
+    cA_Clus_IDs = NewSessAreaStrc.SessAreaIndexStrc.(NewAddAreaNames{cA}).MatchUnitRealIndex;
+    cA_clus_inds = NewSessAreaStrc.SessAreaIndexStrc.(NewAddAreaNames{cA}).MatchedUnitInds;
     ExistField_ClusIDs = [ExistField_ClusIDs;[cA_Clus_IDs,cA_clus_inds]]; % real Clus_IDs and Clus indexing inds
     AreaUnitNumbers(cA) = numel(cA_clus_inds);
 end
+AreaNamesAll = [ExistAreaNames;NewAddAreaNames];
+AreaUnitNumbersAll = [OAreaUnitNumbers;AreaUnitNumbers];
+ExistField_ClusIDsAll = [OExistField_ClusIDs;ExistField_ClusIDs];
 %%
 if isempty(ExistField_ClusIDs)
     fprintf('No target region units within current session.\n');
@@ -219,12 +282,28 @@ end
 AllNullThres_Cell = cellfun(@(x) squeeze(prctile(x,99,1)),NullOmegaSqrDatas,'un',0);
 AllNullThres_Mtx = permute(cat(3,AllNullThres_Cell{:}),[3,1,2]);
 
-%%
-if ~isfolder(fullfile(ksfolder,'AnovanAnA'))
-    mkdir(fullfile(ksfolder,'AnovanAnA'))
+
+
+%% merge added area datas
+
+if ndims(AllNullThres_Mtx) == 2
+    % unit number is 1, which will be ignored during squeeze operation
+    [nTs, nFactors] = size(AllNullThres_Mtx);
+    New3D_data = zeros(nTs, 1, nFactors);
+    New3D_data(:,1,:) = AllNullThres_Mtx;
+    AllNullThres_MtxRaw = AllNullThres_Mtx;
+    AllNullThres_Mtx = New3D_data;
 end
-savename = fullfile(ksfolder,'AnovanAnA','OmegaSqrDatas.mat');
-save(savename,'AllNullThres_Mtx', 'NSMUnitOmegaSqrData', 'CalWinUnitOmegaSqrs', 'NullOmegaSqrDatas','-v7.3');
+    
+AllNullThres_Mtx = cat(2,oldDatas.AllNullThres_Mtx,AllNullThres_Mtx);
+NSMUnitOmegaSqrData = cat(2,oldDatas.NSMUnitOmegaSqrData,NSMUnitOmegaSqrData);
+CalWinUnitOmegaSqrs = cat(2,oldDatas.CalWinUnitOmegaSqrs,CalWinUnitOmegaSqrs);
+NullOmegaSqrDatas = cellfun(@(x,y) cat(2,x,y),oldDatas.NullOmegaSqrDatas,NullOmegaSqrDatas,'un',0);
+
+%%
+
+save(savename,'AllNullThres_Mtx', 'NSMUnitOmegaSqrData', 'CalWinUnitOmegaSqrs', 'NullOmegaSqrDatas',...
+    'AreaNamesAll','-v7.3');
 %%
 % close;
 % % nan values meaning there is not enough valid data within calculation

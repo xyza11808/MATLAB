@@ -66,7 +66,7 @@ for q = 1:numel(uacr)
     end
 end
 
-% add annotations last so they're on top
+% % add annotations last so they're on top
 % for q = 1:numel(uIdx)
 %     
 %     below = [uIdx(q); tpidx(tpidx(:,1)==uIdx(q),2)];

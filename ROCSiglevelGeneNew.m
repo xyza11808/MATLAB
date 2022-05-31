@@ -13,18 +13,25 @@ if sum(isnan(RawData))
     return;
 end
 Labels = OrderData(:,2);
+NumLabels = length(Labels);
+ShufRandInds = rand(nIteration, NumLabels);
+
 AllROCresult = zeros(nIteration,1);
 ReverseLabel = zeros(nIteration,1);
 if isParallel
     parfor NumIter = 1:nIteration
-        Svector=Vshuffle(Labels);
+        [~,shufInds] = sort(ShufRandInds(NumIter,:));
+        Svector = Labels(shufInds);
+%         Svector=Vshuffle(Labels);
         [ROCout,LabelMeanS]=AUC_fast_utest(RawData,Svector);
         AllROCresult(NumIter) = ROCout;
         ReverseLabel(NumIter) = LabelMeanS;
     end
 else
     for NumIter = 1:nIteration
-        Svector=Vshuffle(Labels);
+        [~,shufInds] = sort(ShufRandInds(NumIter,:));
+        Svector = Labels(shufInds);
+%         Svector=Vshuffle(Labels);
         [ROCout,LabelMeanS]=AUC_fast_utest(RawData,Svector);
         AllROCresult(NumIter) = ROCout;
         ReverseLabel(NumIter) = LabelMeanS;

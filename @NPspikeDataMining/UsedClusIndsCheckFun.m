@@ -100,7 +100,7 @@ else
     sessSPdistributionExclusion = false;
 end
 
-if ~isempty(FullClusSelectionops.Amplitude) % default threshold value is 70uv
+if ~isempty(FullClusSelectionops.Amplitude) 
     if IsWaveDataGiven
         UnitFeatures = UnitFeature;
     else
@@ -145,7 +145,7 @@ else
     FRExcludeInds = false;
 end
 
-if ~isempty(FullClusSelectionops.SNR) % waveform spread of all channels
+if ~isempty(FullClusSelectionops.SNR) % Amplitude SNR
     if IsWaveDataGiven
         UnitFeatures = UnitFeature;
         UnitAllchnWaveData = UnitWaves;
@@ -172,7 +172,7 @@ if ~isempty(FullClusSelectionops.SNR) % waveform spread of all channels
         ResValueSTD = std(Residues(:));
         
         % from siegle et al, 2021 nature paper, the SNR is defined as the
-        % ratio between amplitude and 2x residue std
+        % ratio between amplitude and residue std
         UnitSNRs(cUnit) = UnitAmps(cUnit) / ResValueSTD;
         
     end

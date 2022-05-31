@@ -60,7 +60,9 @@ AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\proce
 sortingcode_string = 'ks2_5';
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
         'Sheet',1);
-SessionFolders = SessionFoldersC(2:end);
+SessionFoldersAll = SessionFoldersC(2:end);
+UsedFolderInds = cellfun(@ischar,SessionFoldersAll);
+SessionFolders = SessionFoldersAll(UsedFolderInds);
 NumprocessedNPSess = length(SessionFolders);
 
 
@@ -74,7 +76,8 @@ TargetRegionNamesAll = fieldnames(BrainRegionStrc.BrainRegions);
 NumofTargetAreas = length(TargetRegionNamesAll);
 for cP = 1 : NumprocessedNPSess
     %
-    cPath = SessionFolders{cP};
+%     cPath = SessionFolders{cP};
+    cPath = strrep(SessionFolders{cP},'F:\','E:\NPCCGs\');
 %     cPath = fullfile(strrep(SessionFolders{cP},'F:','I:\ksOutput_backup'));
     load(fullfile(cPath,sortingcode_string,'NPClassHandleSaved.mat'));
     
@@ -111,7 +114,7 @@ for cP = 1 : NumprocessedNPSess
         IstargetfieldExist(end) = true;
     end
     SessAreaIndexStrc.UsedAbbreviations = IstargetfieldExist;
-    SessAreaIndex_saveName = fullfile(cPath,sortingcode_string,'SessAreaIndexData.mat');
+    SessAreaIndex_saveName = fullfile(cPath,sortingcode_string,'SessAreaIndexDataNew.mat');
     save(SessAreaIndex_saveName,'SessAreaIndexStrc','-v7.3');
     clearvars ProbNPSess
     %

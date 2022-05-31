@@ -34,8 +34,9 @@ coords = makeSmoothCoords(c);
 
 if ~isempty(ax)
     clear h
+    hold(ax, 'on');
     for cidx = 1:numel(coords)
-        h(cidx) = plot(ax, coords(cidx).x,coords(cidx).y, 'k','LineWidth', 2.0); hold on;    
+        h(cidx) = plot(ax, coords(cidx).x,coords(cidx).y, 'k','LineWidth', 1.2);   
         
         % using a fill looks nicer but doesn't save to pdf very well
         %fill(x,y, cmap(uAnn(u),:), 'FaceAlpha', 0.2, 'EdgeAlpha', 0);

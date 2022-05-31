@@ -1,14 +1,16 @@
 
 clearvars NSMUnitOmegaSqrData AllNullThres_Mtx AreaValidInfoDatas
 ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
+
+%%
 figSavefolder = fullfile(ksfolder, 'AnovanAnA');
 
-if exist(fullfile(figSavefolder,'SigAnovaTracedataSave.mat'),'file')
-    return;
-end
+% if exist(fullfile(figSavefolder,'SigAnovaTracedataSave.mat'),'file')
+%     return;
+% end
 
 AnovaDatafile = fullfile(figSavefolder,'OmegaSqrDatas.mat');
-load(AnovaDatafile,'NSMUnitOmegaSqrData','AllNullThres_Mtx');
+load(AnovaDatafile,'NSMUnitOmegaSqrData','AllNullThres_Mtx','CalWinUnitOmegaSqrs');
 AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexData.mat'));
 AllFieldNames = fieldnames(AreaIndexStrc.SessAreaIndexStrc);
 UsedNames = AllFieldNames(1:end-1);
@@ -17,30 +19,80 @@ ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);
 if strcmpi(ExistAreaNames(end),'Others')
     ExistAreaNames(end) = [];
 end
+CompExistAreaNames = ExistAreaNames;
+if any(strcmpi(ExistAreaNames,'MOs'))
+   MosAreaInds = find(strcmpi(ExistAreaNames,'MOs'));
+   CompExistAreaNames{MosAreaInds} = 'MOs';
+end
+NumExistAreas = length(ExistAreaNames);
+
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
+NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
+NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
+NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
+if strcmpi(NewAdd_ExistAreaNames(end),'Others')
+    NewAdd_ExistAreaNames(end) = [];
+end
+NewAdd_NumExistAreas = length(NewAdd_ExistAreaNames);
+%%
+if NewAdd_NumExistAreas > NumExistAreas
+    % new area exists
+    OldSessExistInds = ismember(NewAdd_ExistAreaNames, CompExistAreaNames);
+    NewAddAreaNames = NewAdd_ExistAreaNames(~OldSessExistInds);
+    Num_newAddAreaNums = length(NewAddAreaNames);
+% else
+%     return;
+else
+    NewAddAreaNames = [];
+    Num_newAddAreaNums = 0;
+end
 %%
 Numfieldnames = length(ExistAreaNames);
-ExistField_ClusIDs = [];
-AreaUnitNumbers = zeros(Numfieldnames,1);
+oExistField_ClusIDs = [];
+oAreaUnitNumbers = zeros(Numfieldnames,1);
 for cA = 1 : Numfieldnames
     cA_Clus_IDs = AreaIndexStrc.SessAreaIndexStrc.(ExistAreaNames{cA}).MatchUnitRealIndex;
     cA_clus_inds = AreaIndexStrc.SessAreaIndexStrc.(ExistAreaNames{cA}).MatchedUnitInds;
-    ExistField_ClusIDs = [ExistField_ClusIDs;[cA_Clus_IDs,cA_clus_inds]]; % real Clus_IDs and Clus indexing inds
-    AreaUnitNumbers(cA) = numel(cA_clus_inds);
+    oExistField_ClusIDs = [oExistField_ClusIDs;[cA_Clus_IDs,cA_clus_inds]]; % real Clus_IDs and Clus indexing inds
+    oAreaUnitNumbers(cA) = numel(cA_clus_inds);
 end
 
-%%
-AccumedUnitNums = [1;cumsum(AreaUnitNumbers)];
-% AreaInds = 6;
+% calculate extra area units numbers
+AddFieldNames = length(NewAddAreaNames);
+AddField_ClusIDs = [];
+AddAreaUnitNumbers = zeros(AddFieldNames,1);
+for ccA = 1 : AddFieldNames
+   cA_Clus_IDs = NewSessAreaStrc.SessAreaIndexStrc.(NewAddAreaNames{ccA}).MatchUnitRealIndex;
+   cA_clus_inds = NewSessAreaStrc.SessAreaIndexStrc.(NewAddAreaNames{ccA}).MatchedUnitInds;
+   AddField_ClusIDs = [AddField_ClusIDs;[cA_Clus_IDs,cA_clus_inds]]; % real Clus_IDs and Clus indexing inds
+   AddAreaUnitNumbers(ccA) = numel(cA_clus_inds);
+end 
+    
 
-NumofExistAreas = length(ExistAreaNames);
+%%
+SeqAreaUnitNums = [oAreaUnitNumbers;AddAreaUnitNumbers];
+AccumedUnitNums = [0;cumsum([oAreaUnitNumbers;AddAreaUnitNumbers])];
+SeqAreaNames = [ExistAreaNames;NewAddAreaNames];
+SeqFieldClusIDs = [oExistField_ClusIDs;AddField_ClusIDs];
+% AreaInds = 6;
+%%
+NonRevFreqOs = cellfun(@(x) mean(x(:,1),'omitnan'),CalWinUnitOmegaSqrs(:,:,3)); % the third factor corresponded to blocktype factor 
+RevFreqOs = cellfun(@(x) mean(x(:,2),'omitnan'),CalWinUnitOmegaSqrs(:,:,3));% size of NumCalculation * NumUnits
+
+clearvars CalWinUnitOmegaSqrs
+%%
+NumofExistAreas = length(SeqAreaNames);
 
 AreaValidInfoDatas = cell(NumofExistAreas,5);
+AreaWise_BTfreqseqDatas = cell(NumofExistAreas,3);
 for AreaInds = 1 : NumofExistAreas
 
-    cAreaNames = ExistAreaNames{AreaInds};
+    cAreaNames = SeqAreaNames{AreaInds};
     cA_UnitInds = (AccumedUnitNums(AreaInds)+1):AccumedUnitNums(AreaInds+1);
     cA_UnitDatas = NSMUnitOmegaSqrData(:,cA_UnitInds,:);
     cA_UnitNullDatas = AllNullThres_Mtx(:,cA_UnitInds,:);
+    cA_UnitBTOsDatas_nonRev = NonRevFreqOs(:,cA_UnitInds);
+    cA_UnitBTOsDatas_Revfreq = RevFreqOs(:,cA_UnitInds);
     cA_unitNums = size(cA_UnitDatas,2);
 
     factorNum = size(cA_UnitNullDatas,3);
@@ -69,9 +121,7 @@ for AreaInds = 1 : NumofExistAreas
         AllFactorAbove(cInds,:) = IsfactorAbove;
 
     end
-
-
-    %
+    
     FactorTracesAll = cell(factorNum,5);
     FactorThresAvg = cell(factorNum,1);
     SigUnitDatasAll = cell(factorNum,2);
@@ -94,17 +144,40 @@ for AreaInds = 1 : NumofExistAreas
 
     AreaValidInfoDatas(AreaInds,:) = {AllFactorAbove, IsUnitHaveNaN, FactorTracesAll, FactorThresAvg, SigUnitDatasAll};
     
+    % freqtype sepecific blocktype varaince analysis
+    cA_BT_unitDatas = {cA_UnitBTOsDatas_nonRev,cA_UnitBTOsDatas_Revfreq};
+    BTVarTraces = cell(2,5);
+    BTVarThresAvg = cell(2,1);
+    BTVarSigUnitDatasAll = cell(2,2);
+    for cc = 1 : 2
+        ccData = cA_BT_unitDatas{cc};
+        
+        cfUsedAreaInds = logical(AllFactorAbove(:,factorNum)) & (~(sum(isnan(ccData))))';
+        
+        cBTUsedDatas = ccData(:,cfUsedAreaInds);
+        cBT_AvgTrace = mean(cBTUsedDatas,2);
+        cValidUnitNums = size(cBTUsedDatas,2);
+        cBT_Trace_sem = std(cBTUsedDatas,[],2)/sqrt(cValidUnitNums);
+        BTVarTraces(cc,:) = {cBT_AvgTrace,cBT_Trace_sem,cValidUnitNums,numel(IsUnitHaveNaN) ,mean(cfUsedAreaInds)};
+        
+        ccThresData = squeeze(cA_UnitNullDatas(:,cfUsedAreaInds,factorNum));
+        BTVarThresAvg{cc} = mean(ccThresData,2);
+        
+        BTVarSigUnitDatasAll(cc,:) = {cBTUsedDatas, ccThresData};
+    end
+    AreaWise_BTfreqseqDatas(AreaInds,:) = {BTVarTraces, BTVarThresAvg, BTVarSigUnitDatasAll};
+    
     % plot the results
     TotalCalcuNumber = size(NSMUnitOmegaSqrData,1);
     CaledStimOnsetBin = 149; % stimonset bin is 151, and the calculation window is 50ms (5 bins)
     winGoesStep = 0.01; % seconds
     TotalUnitNumbers = (((1:TotalCalcuNumber)-CaledStimOnsetBin) * winGoesStep)';
     titleStrs = {'Choice','Sound','Blocktypes'};
-    FactorSigUnitFrac = cell2mat(FactorTracesAll(:,5));
-
-    huf = figure('position',[100 100 1080 280]);
+    FactorSigUnitFrac = cell2mat(FactorTracesAll(:,4:5));
+    FactorSigUnitNums = cell2mat(FactorTracesAll(:,3));
+    huf = figure('position',[100 100 1080 600]);
     for caInds = 1 : factorNum
-        ax = subplot(1,factorNum,caInds);
+        ax = subplot(2,factorNum,caInds);
         hold on
 
         semPatch_x = [TotalUnitNumbers;flipud(TotalUnitNumbers)];
@@ -117,12 +190,36 @@ for AreaInds = 1 : NumofExistAreas
 
         yscales = get(gca,'ylim');
         line([0 0],yscales,'Color','c','linewidth',1.0,'linestyle','--');
+        text(-0.3,yscales(2)*0.8,num2str(FactorSigUnitFrac(caInds,1),'nTotal=%d'),'HorizontalAlignment','center');
         set(ax,'ylim',yscales);
-        title(sprintf('%s Sigfrac = %.2f',titleStrs{caInds},FactorSigUnitFrac(caInds)));
+        title(sprintf('%s Sigfrac = %.2f (%d)',titleStrs{caInds},FactorSigUnitFrac(caInds,2),FactorSigUnitNums(caInds)));
         xlabel('Time (s)');
         ylabel('EV');
     end
+    
+    BTSeqStrs = {'NonRevF\_BT','RevF\_BT'};
+    BTSigUnitFrac = cell2mat(BTVarTraces(:,4:5));
+    BTSigUnitNums = cell2mat(BTVarTraces(:,3));
+    for cA = 1:2
+       cax = subplot(2,factorNum,factorNum+cA);
+       hold on
+       
+        semPatch_x = [TotalUnitNumbers;flipud(TotalUnitNumbers)];
+        semPatch_y = [BTVarTraces{cA,1}+BTVarTraces{cA,2};...
+            flipud(BTVarTraces{cA,1}-BTVarTraces{cA,2})];
+        patch(semPatch_x,semPatch_y,1,'EdgeColor','none','faceColor',[0.8 0.4 0.4],'facealpha',0.3);
 
+        plot(TotalUnitNumbers,BTVarThresAvg{cA},'Color',[.7 .7 .7],'linewidth',1.2);
+        plot(TotalUnitNumbers,BTVarTraces{cA,1},'Color','r','linewidth',1.2);
+
+        yscales = get(cax,'ylim');
+        line([0 0],yscales,'Color','c','linewidth',1.0,'linestyle','--');
+        text(-0.3,yscales(2)*0.8,num2str(BTSigUnitFrac(cA,1),'nTotal=%d'),'HorizontalAlignment','center');
+        set(cax,'ylim',yscales);
+        title(sprintf('%s Sigfrac = %.2f (%d)',BTSeqStrs{cA},BTSigUnitFrac(cA,2),BTSigUnitNums(cA)));
+        xlabel('Time (s)');
+        ylabel('EV');
+    end
 
     annotation('textbox',[0.02 0.5 0.1 0.05],'String',cAreaNames,'Color','b','FitBoxToText','on','Edgecolor','none');
     
@@ -135,7 +232,8 @@ for AreaInds = 1 : NumofExistAreas
     close(huf);
     
 end
-
+%%
 dataSavePath = fullfile(figSavefolder,'SigAnovaTracedataSave.mat');
-save(dataSavePath,'ExistAreaNames','AreaValidInfoDatas','AreaUnitNumbers','ExistField_ClusIDs','-v7.3')
+save(dataSavePath,'SeqAreaNames','AreaValidInfoDatas','AreaWise_BTfreqseqDatas',...
+    'AccumedUnitNums','SeqFieldClusIDs','SeqAreaUnitNums','CaledStimOnsetBin','winGoesStep','-v7.3');
 

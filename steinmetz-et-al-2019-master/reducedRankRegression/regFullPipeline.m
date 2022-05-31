@@ -14,10 +14,11 @@
 
 %% load basic
 addpath(genpath('F:\Dropbox\ucl\code\analysisScripts\CoriMullerRadnitz\'))
-
-av = readNPY('J:/allen/annotation_volume_10um_by_index.npy');
-st = loadStructureTree();
-r = loadInclRecs(av, st, 'noSpDetail');
+%%
+av = readNPY('E:\AllenCCF\annotation_volume_10um_by_index.npy');
+fn = 'E:\AllenCCF\structure_tree_safe_2017.csv';
+st = loadStructureTree(fn);
+r = loadInclRecs('noSpDetail'); %av, st, 
 
 %% load part 2
 

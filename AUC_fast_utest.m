@@ -20,9 +20,10 @@ U1 = sum(ranks(y_labels == 1)) - n1*(n1 + 1)/2;
 
 AUC1 = U1/(n1 * n0);
 % AUC0 = U0/(n1 * n0);
-
-posLabel_mean = mean(y_values(y_labels == 1));
-negLabel_mean = mean(y_values(y_labels == 0));
+pos_yDatas = y_values(y_labels == 1);
+neg_yDatas = y_values(y_labels == 0);
+posLabel_mean = sum(pos_yDatas)/numel(pos_yDatas);
+negLabel_mean = sum(neg_yDatas)/numel(neg_yDatas);
 
 IsmeanRev = posLabel_mean < negLabel_mean;
 if IsmeanRev
