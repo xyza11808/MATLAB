@@ -1,6 +1,6 @@
 
 clearvars UnitAfterStimAUC UnitAS_BLSubAUC UnitBaselineAUC SVMDecVecs SMBinDataMtx SMBinDataMtxRaw
-ksfolder = strrep(ksfolder,'F:\','E:\NPCCGs\');
+% ksfolder = strrep(ksfolder,'F:\','E:\NPCCGs\');
 
 % calculate AUC for each unit in distinguish choice and block type
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
@@ -11,6 +11,8 @@ load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
 % end
 %%
 figSaveFolder = fullfile(ksfolder,'BTANDChoiceAUC_TrWise');
+rmdir(figSaveFolder,'s');
+
 if ~isfolder(figSaveFolder)
     mkdir(figSaveFolder);
 end
@@ -62,64 +64,64 @@ NMTrial_IsRevFreqs = ismember(NMTrial_FreqsAll,RevFreqs);
 TotalUnitNumbers = size(SMBinDataMtx,2);
 
 DataSaveName = fullfile(figSaveFolder,'BTANDChoiceAUC_TrTypeWise.mat');
-load(DataSaveName);
+% load(DataSaveName);
 
-% % % UnitAfterStimAUC = zeros(2,TotalUnitNumbers,4); % for after-stim response: AUC4Block, Threshold,AUC4Choice,Threshold
-% % % UnitAS_BLSubAUC = zeros(2,TotalUnitNumbers,4); % for baseline-sub after-stim response: AUC4Block, Threshold,AUC4Choice,Threshold
-% % % UnitBaselineAUC = zeros(2,TotalUnitNumbers,2); % for baseline response: AUC4Block, Threshold
-% % % for cU = 1 : TotalUnitNumbers
-% % %     % reverse-frequency trials AUCs
-% % %     cUData_afterStim = NMAfterStimResp_dataAll(NMTrial_IsRevFreqs,cU);
-% % %     cUData_Baseline = NMBaselneResp_dataAll(NMTrial_IsRevFreqs,cU);
-% % %     cU_baselineSubData = cUData_afterStim - cUData_Baseline;
-% % %     
-% % %     [AUC_AS_BT, IsMeanRev_AS_BT] = AUC_fast_utest(cUData_afterStim, NMTrial_blockTypesAll(NMTrial_IsRevFreqs)); % block type decoding, after stim response
-% % %     [~,~,SigValues_AS_BT] = ROCSiglevelGeneNew([cUData_afterStim, NMTrial_blockTypesAll(NMTrial_IsRevFreqs)],500,1,0.001);
-% % %     
-% % %     [AUC_AS_Choice, IsMeanRev_AS_Choice] = AUC_fast_utest(cUData_afterStim, NMTrial_ChoiceAll(NMTrial_IsRevFreqs)); % Choice decoding, after stim response
-% % %     [~,~,SigValues_AS_Choice] = ROCSiglevelGeneNew([cUData_afterStim, NMTrial_ChoiceAll(NMTrial_IsRevFreqs)],500,1,0.001);
-% % %     
-% % %     [AUC_BS_BT, IsMeanRev_BS_BT] = AUC_fast_utest(cU_baselineSubData, NMTrial_blockTypesAll(NMTrial_IsRevFreqs)); % block type decoding, baseline substraction response
-% % %     [~,~,SigValues_BS_BT] = ROCSiglevelGeneNew([cU_baselineSubData, NMTrial_blockTypesAll(NMTrial_IsRevFreqs)],500,1,0.001);
-% % %     
-% % %     [AUC_BS_Choice, IsMeanRev_BS_Choice] = AUC_fast_utest(cU_baselineSubData, NMTrial_ChoiceAll(NMTrial_IsRevFreqs)); % Choice decoding, baseline substraction  response
-% % %     [~,~,SigValues_BS_Choice] = ROCSiglevelGeneNew([cU_baselineSubData, NMTrial_ChoiceAll(NMTrial_IsRevFreqs)],500,1,0.001);
-% % %     
-% % %     [AUC_BL_BT, IsMeanRev_BL_BT] = AUC_fast_utest(cUData_Baseline, NMTrial_blockTypesAll(NMTrial_IsRevFreqs)); % block type decoding, baseline response
-% % %     [~,~,SigValues_BL_BT] = ROCSiglevelGeneNew([cUData_Baseline, NMTrial_blockTypesAll(NMTrial_IsRevFreqs)],500,1,0.001);
-% % %     
-% % %     
-% % %     UnitAfterStimAUC(1,cU,:) = [AUC_AS_BT, SigValues_AS_BT, AUC_AS_Choice, SigValues_AS_Choice];
-% % %     UnitBaselineAUC(1,cU,:)  = [AUC_BL_BT, SigValues_BL_BT];
-% % %     UnitAS_BLSubAUC(1,cU,:) = [AUC_BS_BT, SigValues_BS_BT,AUC_BS_Choice, SigValues_BS_Choice];
-% % %     
-% % %     % non-reverse-frequency trials AUCs
-% % %     cUData_afterStim = NMAfterStimResp_dataAll(~NMTrial_IsRevFreqs,cU);
-% % %     cUData_Baseline = NMBaselneResp_dataAll(~NMTrial_IsRevFreqs,cU);
-% % %     cU_baselineSubData = cUData_afterStim - cUData_Baseline;
-% % %     
-% % %     [AUC_AS_BT, IsMeanRev_AS_BT] = AUC_fast_utest(cUData_afterStim, NMTrial_blockTypesAll(~NMTrial_IsRevFreqs)); % block type decoding, after stim response
-% % %     [~,~,SigValues_AS_BT] = ROCSiglevelGeneNew([cUData_afterStim, NMTrial_blockTypesAll(~NMTrial_IsRevFreqs)],500,1,0.001);
-% % %     
-% % %     [AUC_AS_Choice, IsMeanRev_AS_Choice] = AUC_fast_utest(cUData_afterStim, NMTrial_ChoiceAll(~NMTrial_IsRevFreqs)); % Choice decoding, after stim response
-% % %     [~,~,SigValues_AS_Choice] = ROCSiglevelGeneNew([cUData_afterStim, NMTrial_ChoiceAll(~NMTrial_IsRevFreqs)],500,1,0.001);
-% % %     
-% % %     [AUC_BS_BT, IsMeanRev_BS_BT] = AUC_fast_utest(cU_baselineSubData, NMTrial_blockTypesAll(~NMTrial_IsRevFreqs)); % block type decoding, baseline substraction response
-% % %     [~,~,SigValues_BS_BT] = ROCSiglevelGeneNew([cU_baselineSubData, NMTrial_blockTypesAll(~NMTrial_IsRevFreqs)],500,1,0.001);
-% % %     
-% % %     [AUC_BS_Choice, IsMeanRev_BS_Choice] = AUC_fast_utest(cU_baselineSubData, NMTrial_ChoiceAll(~NMTrial_IsRevFreqs)); % Choice decoding, baseline substraction  response
-% % %     [~,~,SigValues_BS_Choice] = ROCSiglevelGeneNew([cU_baselineSubData, NMTrial_ChoiceAll(~NMTrial_IsRevFreqs)],500,1,0.001);
-% % %     
-% % %     [AUC_BL_BT, IsMeanRev_BL_BT] = AUC_fast_utest(cUData_Baseline, NMTrial_blockTypesAll(~NMTrial_IsRevFreqs)); % block type decoding, baseline response
-% % %     [~,~,SigValues_BL_BT] = ROCSiglevelGeneNew([cUData_Baseline, NMTrial_blockTypesAll(~NMTrial_IsRevFreqs)],500,1,0.001);
-% % %     
-% % %     
-% % %     UnitAfterStimAUC(2,cU,:) = [AUC_AS_BT, SigValues_AS_BT, AUC_AS_Choice, SigValues_AS_Choice];
-% % %     UnitBaselineAUC(2,cU,:)  = [AUC_BL_BT, SigValues_BL_BT];
-% % %     UnitAS_BLSubAUC(2,cU,:) = [AUC_BS_BT, SigValues_BS_BT,AUC_BS_Choice, SigValues_BS_Choice];
-% % %     
-% % %     
-% % % end
+UnitAfterStimAUC = zeros(2,TotalUnitNumbers,4); % for after-stim response: AUC4Block, Threshold,AUC4Choice,Threshold
+UnitAS_BLSubAUC = zeros(2,TotalUnitNumbers,4); % for baseline-sub after-stim response: AUC4Block, Threshold,AUC4Choice,Threshold
+UnitBaselineAUC = zeros(2,TotalUnitNumbers,2); % for baseline response: AUC4Block, Threshold
+for cU = 1 : TotalUnitNumbers
+    % reverse-frequency trials AUCs
+    cUData_afterStim = NMAfterStimResp_dataAll(NMTrial_IsRevFreqs,cU);
+    cUData_Baseline = NMBaselneResp_dataAll(NMTrial_IsRevFreqs,cU);
+    cU_baselineSubData = cUData_afterStim - cUData_Baseline;
+    
+    [AUC_AS_BT, IsMeanRev_AS_BT] = AUC_fast_utest(cUData_afterStim, NMTrial_blockTypesAll(NMTrial_IsRevFreqs)); % block type decoding, after stim response
+    [~,~,SigValues_AS_BT] = ROCSiglevelGeneNew([cUData_afterStim, NMTrial_blockTypesAll(NMTrial_IsRevFreqs)],500,1,0.001);
+    
+    [AUC_AS_Choice, IsMeanRev_AS_Choice] = AUC_fast_utest(cUData_afterStim, NMTrial_ChoiceAll(NMTrial_IsRevFreqs)); % Choice decoding, after stim response
+    [~,~,SigValues_AS_Choice] = ROCSiglevelGeneNew([cUData_afterStim, NMTrial_ChoiceAll(NMTrial_IsRevFreqs)],500,1,0.001);
+    
+    [AUC_BS_BT, IsMeanRev_BS_BT] = AUC_fast_utest(cU_baselineSubData, NMTrial_blockTypesAll(NMTrial_IsRevFreqs)); % block type decoding, baseline substraction response
+    [~,~,SigValues_BS_BT] = ROCSiglevelGeneNew([cU_baselineSubData, NMTrial_blockTypesAll(NMTrial_IsRevFreqs)],500,1,0.001);
+    
+    [AUC_BS_Choice, IsMeanRev_BS_Choice] = AUC_fast_utest(cU_baselineSubData, NMTrial_ChoiceAll(NMTrial_IsRevFreqs)); % Choice decoding, baseline substraction  response
+    [~,~,SigValues_BS_Choice] = ROCSiglevelGeneNew([cU_baselineSubData, NMTrial_ChoiceAll(NMTrial_IsRevFreqs)],500,1,0.001);
+    
+    [AUC_BL_BT, IsMeanRev_BL_BT] = AUC_fast_utest(cUData_Baseline, NMTrial_blockTypesAll(NMTrial_IsRevFreqs)); % block type decoding, baseline response
+    [~,~,SigValues_BL_BT] = ROCSiglevelGeneNew([cUData_Baseline, NMTrial_blockTypesAll(NMTrial_IsRevFreqs)],500,1,0.001);
+    
+    
+    UnitAfterStimAUC(1,cU,:) = [AUC_AS_BT, SigValues_AS_BT, AUC_AS_Choice, SigValues_AS_Choice];
+    UnitBaselineAUC(1,cU,:)  = [AUC_BL_BT, SigValues_BL_BT];
+    UnitAS_BLSubAUC(1,cU,:) = [AUC_BS_BT, SigValues_BS_BT,AUC_BS_Choice, SigValues_BS_Choice];
+    
+    % non-reverse-frequency trials AUCs
+    cUData_afterStim = NMAfterStimResp_dataAll(~NMTrial_IsRevFreqs,cU);
+    cUData_Baseline = NMBaselneResp_dataAll(~NMTrial_IsRevFreqs,cU);
+    cU_baselineSubData = cUData_afterStim - cUData_Baseline;
+    
+    [AUC_AS_BT, IsMeanRev_AS_BT] = AUC_fast_utest(cUData_afterStim, NMTrial_blockTypesAll(~NMTrial_IsRevFreqs)); % block type decoding, after stim response
+    [~,~,SigValues_AS_BT] = ROCSiglevelGeneNew([cUData_afterStim, NMTrial_blockTypesAll(~NMTrial_IsRevFreqs)],500,1,0.001);
+    
+    [AUC_AS_Choice, IsMeanRev_AS_Choice] = AUC_fast_utest(cUData_afterStim, NMTrial_ChoiceAll(~NMTrial_IsRevFreqs)); % Choice decoding, after stim response
+    [~,~,SigValues_AS_Choice] = ROCSiglevelGeneNew([cUData_afterStim, NMTrial_ChoiceAll(~NMTrial_IsRevFreqs)],500,1,0.001);
+    
+    [AUC_BS_BT, IsMeanRev_BS_BT] = AUC_fast_utest(cU_baselineSubData, NMTrial_blockTypesAll(~NMTrial_IsRevFreqs)); % block type decoding, baseline substraction response
+    [~,~,SigValues_BS_BT] = ROCSiglevelGeneNew([cU_baselineSubData, NMTrial_blockTypesAll(~NMTrial_IsRevFreqs)],500,1,0.001);
+    
+    [AUC_BS_Choice, IsMeanRev_BS_Choice] = AUC_fast_utest(cU_baselineSubData, NMTrial_ChoiceAll(~NMTrial_IsRevFreqs)); % Choice decoding, baseline substraction  response
+    [~,~,SigValues_BS_Choice] = ROCSiglevelGeneNew([cU_baselineSubData, NMTrial_ChoiceAll(~NMTrial_IsRevFreqs)],500,1,0.001);
+    
+    [AUC_BL_BT, IsMeanRev_BL_BT] = AUC_fast_utest(cUData_Baseline, NMTrial_blockTypesAll(~NMTrial_IsRevFreqs)); % block type decoding, baseline response
+    [~,~,SigValues_BL_BT] = ROCSiglevelGeneNew([cUData_Baseline, NMTrial_blockTypesAll(~NMTrial_IsRevFreqs)],500,1,0.001);
+    
+    
+    UnitAfterStimAUC(2,cU,:) = [AUC_AS_BT, SigValues_AS_BT, AUC_AS_Choice, SigValues_AS_Choice];
+    UnitBaselineAUC(2,cU,:)  = [AUC_BL_BT, SigValues_BL_BT];
+    UnitAS_BLSubAUC(2,cU,:) = [AUC_BS_BT, SigValues_BS_BT,AUC_BS_Choice, SigValues_BS_Choice];
+    
+    
+end
 
 % linear regression to substract choice fitting values and use the residues
 % to calculate block type differences

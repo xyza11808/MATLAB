@@ -694,154 +694,127 @@ classdef NPspikeDataMining
             
         end
         
-        function RawRasterplot(obj,EventsDelay,EventStrs,EventColors,StimRepeats)
+        function RawRasterplot(obj,ExtraEventTimes,ExtraEventStr,ExtraEventPlotColor,TrBlockTypes,BlockColors, UsedTrInds)
             % spike raster plot for spike times
+            % Each spike line color was defined by block types, and
+            % sequtial plots of all trials, without miss trial maybe
+            
+            % the unique types for each ExtraEventTimes columns should have
+            % save number as in the ExtraEventPlotColor, so that each
+            % unique event type will have unique color
+            
             if isempty(obj.TrTrigSpikeTimes{obj.CurrentSessInds})
                 obj = TrigPSTH(obj,[],[]);
             end
-            if size(EventsDelay,1) == 1
-                EventsDelay = EventsDelay';
+            if size(ExtraEventTimes,1) == 1
+                ExtraEventTimes = ExtraEventTimes';
             end
-            if size(obj.TrTrigSpikeTimes{obj.CurrentSessInds},2) ~= size(EventsDelay,1)
+            ObjAlignedSPTimes = obj.TrTrigSpikeTimes{obj.CurrentSessInds};
+            if size(ObjAlignedSPTimes(:,UsedTrInds),2) ~= size(ExtraEventTimes,1)
                 error('The input event size isn''t fit with trigger event numbers.');
             end
-            UnitChannelID = obj.ChannelUseds_id;
-            if isempty(StimRepeats)
-                %                 fprintf('Raw trial response colorplot only');
-                RawColorPlotOnly = 1;
-            else
-                % also plot the trial response according to given repeats
-                RawColorPlotOnly = 0;
-                
-                UniqueTypes = unique(StimRepeats(:,1));
-                PlotSortInds = cell(length(UniqueTypes),1);
-                TypeStimNum = zeros(length(UniqueTypes),1);
-                for cStims = 1 : length(UniqueTypes)
-                    cStimInds = find(StimRepeats(:,1) == UniqueTypes(cStims));
-                    if size(StimRepeats,2) > 1
-                        SortTypes = StimRepeats(cStimInds,2);
-                        [~,SortedInds] = sort(SortTypes);
-                        PlotSortInds{cStims} = cStimInds(SortedInds);
-                    else
-                        PlotSortInds{cStims} = SortedInds;
-                    end
-                    TypeStimNum(cStims) = numel(cStimInds);
-                end
-                PlotSortVec = cell2mat(PlotSortInds);
-            end
+            EventOntime = obj.TriggerStartBin{obj.CurrentSessInds} * obj.USedbin(2);% convert into seconds
             
             % after trigget event time
-            EventTAfTrig = (EventsDelay/1000);% real time but not in bin mode, trigger time is 0
+            EventTAfTrig = (ExtraEventTimes/1000);% real time but not in bin mode, trigger time is 0
             %             TriggerTime = (obj.TriggerStartBin-1)*obj.USedbin(2);
-            
-            [unitNum, TrNum] = size(obj.TrTrigSpikeTimes{obj.CurrentSessInds});
+            UsedUintSlignSPTimes = ObjAlignedSPTimes(obj.SurviveInds,UsedTrInds);
+            [unitNum, TrNum] = size(UsedUintSlignSPTimes);
+%             ExtraEventStr = [{'StimOnset'},ExtraEventStr(:)'];
+%             ExtraEventPlotColor = [{'m'},ExtraEventPlotColor(:)'];
             
             % processing event lines
-            NumOfEvents = length(EventStrs);
-            EventPlotBins = cell(NumOfEvents,2);
+            NumOfEvents = size(ExtraEventTimes,2); % each events take one column
+            AllEventTypesCell = ExtraEventPlotColor(:,1);
+            AllEventTypesColors = ExtraEventPlotColor(:,2);
+            %%
+            EventPlotAll = cell(NumOfEvents,1);
             for cEvent = 1 : NumOfEvents
-                cEventBin =  EventTAfTrig(:,cEvent);
-                cEventBin(cEventBin < 1e-8) = NaN;
-                xEventBinMtx = [cEventBin';cEventBin';nan(1,TrNum)];
-                EventPlotBins{cEvent,1} = xEventBinMtx(:);
-                
-                if ~RawColorPlotOnly
-                    xSortEventBinMtx = [cEventBin(PlotSortVec)';cEventBin(PlotSortVec)';nan(1,TrNum)];
-                    EventPlotBins{cEvent,2} = xSortEventBinMtx(:);
+                cEventTimes = EventTAfTrig(:,cEvent);
+                cEventTypes = unique(AllEventTypesCell{cEvent});
+                cEventTypeColors = AllEventTypesColors{cEvent};
+                cEvTypePlotData = cell(numel(cEventTypes),3);
+                for cEvType = 1 : numel(cEventTypes)
+                    cEvTypeInds = find(AllEventTypesCell{cEvent} == cEventTypes(cEvType));
+                    cEvTypeTimes = cEventTimes(cEvTypeInds);
+                    cEvPlot_x_mtx = ([cEvTypeTimes,cEvTypeTimes,nan(numel(cEvTypeTimes),1)])';
+                    cEvPlot_y_mtx = ([cEvTypeInds-0.5,cEvTypeInds+0.5,nan(numel(cEvTypeInds),1)])';
+                    cEvTypePlotData(cEvType,:) = {cEvPlot_x_mtx(:),cEvPlot_y_mtx(:),cEventTypeColors{cEvType}};
                 end
+                EventPlotAll(cEvent) = {cEvTypePlotData};
             end
-            yPlotMtx = [(1:TrNum)-0.5;(1:TrNum)+0.5;nan(1,TrNum)];
-            yPlotBinInds = yPlotMtx(:);
+            %%
+            
             if ~isdir(fullfile(obj.ksFolder,'RawRasterPlot'))
                 mkdir(fullfile(obj.ksFolder,'RawRasterPlot'));
             end
             %             cd(fullfile(obj.ksFolder,'RawRasterPlot'));
-            
+            SMBinDataMtx = permute(cat(3,obj.TrigData_Bin{obj.CurrentSessInds}{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+            SMBinDataMtx = SMBinDataMtx(UsedTrInds,:,:);
+            if ~isempty(obj.SurviveInds)
+                SMBinDataMtx = SMBinDataMtx(:,obj.SurviveInds,:);
+            end
+            UsedBinLength = size(SMBinDataMtx,3);
+            AlignedEventOnBin = obj.TriggerStartBin{obj.CurrentSessInds}-0.5;
+            xTs = ((1:UsedBinLength) - AlignedEventOnBin)*obj.USedbin(2);
+            %%
             for cUnit = 1 : unitNum
                 %%
-                cUnitData = obj.TrTrigSpikeTimes{obj.CurrentSessInds}(cUnit,:);
-                cUnitChnID = UnitChannelID(cUnit);
+                cUnitData = UsedUintSlignSPTimes(cUnit,:);
+                cUnitChnID = obj.UsedClus_IDs(cUnit);
                 
-                if RawColorPlotOnly
-                    hcf = figure('position',[50 150 600 750],'visible','off'); %
-                else
-                    hcf = figure('position',[50 150 1250 750],'visible','off'); %
-                    ax1 = subplot(121);
-                end
-                set(hcf,'paperpositionmode','manual');
+                hcf = figure('position',[50 150 500 750],'visible','on'); %
+                ax1 = subplot(3,1,[1,2]);
                 hold on
-                currentPos = get(gca,'position');
+                
                 for cTrig = 1 : TrNum
                     cTrigSPtimes = cUnitData{cTrig};
+                    cTrBlockType = TrBlockTypes(cTrig);
+                    cTrBlockColor = BlockColors{cTrBlockType+1};
                     if ~isempty(cTrigSPtimes)
                         TrNumSpikes = numel(cTrigSPtimes);
                         xtimes = ([cTrigSPtimes(:) cTrigSPtimes(:) nan(TrNumSpikes,1)])';
                         yticks = ([zeros(TrNumSpikes,1)+cTrig-0.3,zeros(TrNumSpikes,1)+cTrig+0.3,nan(TrNumSpikes,1)])';
-                        plot(xtimes(:),yticks(:),'k','linewidth',1.2);
+                        plot(xtimes(:),yticks(:),'Color',cTrBlockColor,'linewidth',1);
                     end
                 end
                 %                 set(hcf,'visible','on')
-                line([0 0],[0.5 TrNum+0.5],'Color','g','linewidth',1);
-                hhl = [];
-                for cEvent = 1 :NumOfEvents
-                    hl = plot(EventPlotBins{cEvent,1},yPlotBinInds,'Color',EventColors{cEvent},'linewidth',1.4);
-                    hhl = [hhl,hl];
-                end
+                line(ax1,[0 0],[0.5 TrNum+0.5],'Color','m','linewidth',1);
                 
-                set(gca,'xlim',obj.psthTimeWin{obj.CurrentSessInds},'ylim',[0.5 TrNum+0.5]);
+                for cEvent = 1 : NumOfEvents
+                    cEventAllPlot = EventPlotAll{cEvent};
+                    Numof_c_Plot = size(cEventAllPlot,1);
+                    for cP = 1 :Numof_c_Plot 
+                        plot(cEventAllPlot{cP,1},cEventAllPlot{cP,2},'Color',cEventAllPlot{cP,3},'linewidth',1.2);
+                    end
+                end
+                xtimescale = obj.psthTimeWin{obj.CurrentSessInds};
+                set(ax1,'xlim',[xtimescale(1) min(4,xtimescale(2))],'ylim',[0.5 TrNum+0.5],'YDir','Reverse');
                 xlabel('Time (s)');
                 ylabel('# Trials');
                 title(sprintf('Unit %d, chn %d',cUnit,cUnitChnID));
-                if RawColorPlotOnly
-                    legend(hhl,EventStrs(:),'Box','Off','location','NortheastOutside');
-                    set(gca,'position',currentPos)
-                end
                 
-                % ############################# sortted plot if given
-                if ~RawColorPlotOnly
-                    ax2 = subplot(122);
-                    hold on
-                    SortUnitSPtimes = obj.TrTrigSpikeTimes{obj.CurrentSessInds}(cUnit,PlotSortVec);
-                    for cTrig = 1 : TrNum
-                        cTrigSPtimes = SortUnitSPtimes{cTrig};
-                        if ~isempty(cTrigSPtimes)
-                            TrNumSpikes = numel(cTrigSPtimes);
-                            xtimes = ([cTrigSPtimes(:) cTrigSPtimes(:) nan(TrNumSpikes,1)])';
-                            yticks = ([zeros(TrNumSpikes,1)+cTrig-0.3,zeros(TrNumSpikes,1)+cTrig+0.3,nan(TrNumSpikes,1)])';
-                            plot(xtimes(:),yticks(:),'k','linewidth',1.2);
-                        end
-                    end
-                    
-                    line([0,0],[0.5 TrNum+0.5],'Color','g','linewidth',1);
-                    RawImPos = get(ax2,'position');
-                    hl2 = [];
-                    for cEvent = 1 :NumOfEvents
-                        hl = plot(EventPlotBins{cEvent,2},yPlotBinInds,'Color',EventColors{cEvent},'linewidth',1.4);
-                        hl2 = [hl2,hl];
-                    end
-                    % add segration lines
-                    SegLinePos = cumsum(TypeStimNum);
-                    for cType = 1 : length(TypeStimNum)
-                        line(obj.psthTimeWin{obj.CurrentSessInds},[SegLinePos(cType) SegLinePos(cType)],...
-                            'Color','c','linewidth',1.2);
-                    end
-                    
-                    %                     legend(hhl,EventStrs(:),'Box','Off','location','NortheastOutside');
-                    set(gca,'xlim',obj.psthTimeWin{obj.CurrentSessInds},'ylim',[0.5 TrNum+0.5]);
-                    set(gca,'YDir','reverse')
-                    xlabel('Time (s)');
-                    ylabel('# Sort Trials');
-                    title(sprintf('Unit %d, chn %d',cUnit,cUnitChnID));
-                    
-                    lax = legend(hl2,EventStrs(:),'Box','Off','location','SouthOutside','FontSize',8);
-                    set(lax,'position',get(lax,'position')+[-0.2 -0.07 0 0]);
-                    
-                    set(ax2,'position',RawImPos);
-                end
+                % mean psth plot
+                cuPSTHData = squeeze(SMBinDataMtx(:,cUnit,:));
+                
+                ax2 = subplot(313);
+                hold on
+                LowBlockDataInds = TrBlockTypes == 0;
+                MeanSemPlot(cuPSTHData(LowBlockDataInds,:),xTs,ax2,1,[.7 .7 .7],'Color',BlockColors{1});
+                HighBlockDataInds = TrBlockTypes == 1;
+                MeanSemPlot(cuPSTHData(HighBlockDataInds,:),xTs,ax2,1,[1 .7 .7],'Color',BlockColors{2});
+                
+                yscales = get(ax2,'ylim');
+                line([0 0],yscales,'Color','m','linewidth',1);
+                set(ax2,'xlim',[xTs(1) min(xTs(end),4)],'ylim',yscales);
+                
+                xlabel('Time (s)');
+                ylabel('Avg. PSTH');
+                
                 %%
                 savefileName = fullfile(obj.ksFolder,'RawRasterPlot',sprintf('Unit%03d raw spike raster color plot',obj.UsedClus_IDs(cUnit)));
                 saveas(hcf,savefileName);
-                saveas(hcf,savefileName,'png');
+                print(hcf,savefileName,'-dpng');
                 close(hcf);
                 %                 saveas(hcf,sprintf('ROI%03d raw spike change color plot',cUnit));
             end
@@ -940,7 +913,7 @@ classdef NPspikeDataMining
                     hcf = figure('position',[50 150 900 750],'visible','off');
                     ax1 = subplot(121);
                 end
-                set(hcf,'paperpositionmode','manual');
+%                 set(hcf,'paperpositionmode','manual');
                 hold on
                 currentPos = get(gca,'position');
                 imagesc(xTimes,ytickss,cUnitData,[0 max(0.1,prctile(cUnitData(:),98))]);

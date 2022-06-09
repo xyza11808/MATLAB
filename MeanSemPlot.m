@@ -18,7 +18,7 @@ if ~exist('shadowColor','var') || isempty(shadowColor)
 end
 
 [nROws,nCloumns] = size(data);
-MeanTrace = mean(data);
+MeanTrace = (smooth(mean(data),5))';
 TraceSem = std(data)/sqrt(nROws) * SEMratio; 
 if isempty(xticks)
     xticks = 1 : nCloumns;
@@ -45,7 +45,7 @@ hold on;
 hp = patch(xpatch,ypatch,1,'facecolor',shadowColor,...
               'edgecolor','none',...
               'facealpha',0.4);
-hline = plot(xticks,MeanTrace,varargin{2:end});
+hline = plot(xticks,MeanTrace,varargin{:});
 if nargout > 0
     varargout{1} = h;
     varargout{2} = hp;

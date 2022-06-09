@@ -1,14 +1,15 @@
-ksfolder = pwd;
+% ksfolder = pwd;
 clearvars UnitAfterStimAUC UnitAS_BLSubAUC UnitBaselineAUC SVMDecVecs SMBinDataMtx ProbNPSess
 % calculate AUC for each unit in distinguish choice and block type
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
 % load('Chnlocation.mat');
-load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
 % if isempty(ProbNPSess.ChannelAreaStrs)
 %     ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
 % end
 %%
 figSaveFolder = fullfile(ksfolder,'BTANDChoiceAUC_compPlot');
+rmdir(figSaveFolder,'s');
 if ~isfolder(figSaveFolder)
     mkdir(figSaveFolder);
 end
@@ -57,7 +58,7 @@ NMTrial_FreqsAll = TrialFreqsAll(NMTrialIndex);
 
 %%
 TotalUnitNumbers = size(SMBinDataMtx,2);
-% DataSaveName = fullfile(figSaveFolder,'BTANDChoiceAUC_popuVec.mat');
+DataSaveName = fullfile(figSaveFolder,'BTANDChoiceAUC_popuVec.mat');
 % load(DataSaveName);
 UnitAfterStimAUC = zeros(TotalUnitNumbers,4); % for after-stim response: AUC4Block, Threshold,AUC4Choice,Threshold
 UnitAS_BLSubAUC = zeros(TotalUnitNumbers,4); % for baseline-sub after-stim response: AUC4Block, Threshold,AUC4Choice,Threshold
