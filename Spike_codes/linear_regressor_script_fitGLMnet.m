@@ -1,6 +1,6 @@
 
-ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
-% ksfolder = pwd;
+% ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
+ksfolder = pwd;
 
 savefolder = fullfile(ksfolder,'Regressor_ANA');
 if ~isfolder(savefolder)
@@ -8,9 +8,9 @@ if ~isfolder(savefolder)
 end
 dataSaveNames = fullfile(savefolder,'REgressorDataSave.mat');
 % disp(exist(dataSaveNames,'file'));
-if exist(dataSaveNames,'file')
-    return;
-end
+% if exist(dataSaveNames,'file')
+%     return;
+% end
 
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 clearvars RegressorInfosCell
@@ -218,8 +218,11 @@ RegressorInfosCell = cell(size(BinnedSPdatas,1),3);
 f = waitbar(0,'Session Calculation Start...');
 NumNeurons = size(BinnedSPdatas,1);
 for cU = 1 : NumNeurons
-[ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
-    lassoelasticRegressor(BinnedSPdatas(1,:), TaskEvents_predictor, 5);
+%     [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
+%         lassoelasticRegressor(BinnedSPdatas(1,:), TaskEvents_predictor, 5);
+    [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
+        glmnetRegressor(BinnedSPdatas(1,:), TaskEvents_predictor, 5);
+
     RegressorInfosCell(cU,:) = {ExplainVarStrc, RegressorCoefs, RegressorPreds};
     Progress = (cU - 1)/(NumNeurons - 1);
     waitbar(Progress,f,sprintf('Processing %.2f%% of all calculation...',Progress*100));

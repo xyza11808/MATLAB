@@ -1,6 +1,6 @@
 % "Cortical information flow during flexible sensorimotor decisions"
 % ksfolder = pwd;
-ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
+% ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
 clearvars ProbNPSess AllNullThres_Mtx NSMUnitOmegaSqrData CalWinUnitOmegaSqrs NullOmegaSqrDatas
 
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
@@ -14,7 +14,7 @@ if ~isempty(ProbNPSess.SurviveInds)
 end
 SMBinDataMtxRaw = SMBinDataMtx;
 
-AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
 AllFieldNames = fieldnames(AreaIndexStrc.SessAreaIndexStrc);
 UsedNames = AllFieldNames(1:end-1);
 ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);

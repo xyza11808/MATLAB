@@ -1,7 +1,7 @@
 clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_First BaselineResp_Last SMBinDataMtx
 
 % load('Chnlocation.mat');
-load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
 % if isempty(fieldnames(SessAreaIndexStrc.ACAv)) && isempty(fieldnames(SessAreaIndexStrc.ACAd))...
 %          && isempty(fieldnames(SessAreaIndexStrc.ACA))
 %     return;
@@ -39,6 +39,9 @@ BlockTypesAll = double(behavResults.BlockType(:));
 SavedFolderPathName = 'BaselinePredofBlocktype';
 
 fullsavePath = fullfile(ksfolder, SavedFolderPathName);
+
+rmdir(fullsavePath,'s');
+
 if ~isfolder(fullsavePath)
     mkdir(fullsavePath);
 end 
@@ -106,7 +109,7 @@ for cArea = 1 : NumExistAreas
     RepeatNum = 100;
     IsTrainingSet = false(TrNum,1);
     shufPredCorr = zeros(RepeatNum,1);
-    for cR = 1 : RepeatNum
+    parfor cR = 1 : RepeatNum
         shufBlocks = Vshuffle(BlockTypesAll);
         sampleInds = randsample(TrNum,round(TrNum*0.7));
         TrainInds = IsTrainingSet;

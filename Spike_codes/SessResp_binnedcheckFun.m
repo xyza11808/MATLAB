@@ -29,36 +29,47 @@ binLessThanhalfPeak = mean(Isbinlessthanhalfpeak, 2);
 % title(num2str(binLessThanhalfPeak(cR),'%.4f'));
 
 %% criterias for unit exclusion
-% 1, the binned value should have no more than 80% of the bins have value
+% 1, the binned value should have no more than 70% of the bins have value
 % less than half of the maximum value
-% 2, for those have less than 80% bins below half-maximum, the consecutive
+% 2, for those have less than 70% bins below half-maximum, the consecutive
 % bins should not more than 200 trials (normally 20 bins with a bin size of 10 trials)
 
 % criteria 1
-UsedInds1 = binLessThanhalfPeak < 0.8;
-UsedInds1_Real = find(UsedInds1);
+criteria1_inds = binLessThanhalfPeak < 0.3;
 
-tempUsedUnit_isless = Isbinlessthanhalfpeak(UsedInds1,:);
-tempUsed_binlessthanhalf = binLessThanhalfPeak(UsedInds1);
+
+% criteria 2
+UsedInds2 = binLessThanhalfPeak >= 0.3;
+UsedInds2_Real = find(UsedInds2);
+
+tempUsedUnit_isless = Isbinlessthanhalfpeak(UsedInds2,:);
+tempUsed_binlessthanhalf = binLessThanhalfPeak(UsedInds2);
 
 leftUnitNum = length(tempUsed_binlessthanhalf);
+IsGivenasNaN = zeros(leftUnitNum, 1);
 for cU = 1 : leftUnitNum
-   if tempUsed_binlessthanhalf(cU) > 0.5
-       % only use bin number fraction less than 0.8 but more than 0.5
+   if tempUsed_binlessthanhalf(cU) < 0.5
+       % only use bin number fraction less than 0.5 but more than 0.3
        cunit_binisless =  tempUsedUnit_isless(cU,:);
        binlogi_SM = conv(cunit_binisless, (1/21)*ones(21,1),'same');
        binlogi_SM(1) = 0;
        binlogi_SM(end) = 0;
        Is_consecutiveBins = find(binlogi_SM > 0.99, 1, 'first');
        if ~isempty(Is_consecutiveBins)
-           UsedInds1_Real(cU) = NaN;
+           IsGivenasNaN(cU) = NaN;
        end
+   else
+       IsGivenasNaN(cU) = NaN;
    end
 end
 
-TotalUnits = size(SMBinDataMtx,2);
-RemainedInds = true(TotalUnits,1);
-RemainedInds(isnan(UsedInds1_Real)) = false;
+criteria2_inds = true(size(criteria1_inds));
+criteria2_inds(UsedInds2_Real(isnan(IsGivenasNaN))) = false;
+
+% TotalUnits = size(SMBinDataMtx,2);
+% RemainedInds = true(TotalUnits,1);
+% RemainedInds(isnan(UsedInds1_Real)) = false;
+RemainedInds = criteria1_inds | criteria2_inds;
 
 
 

@@ -599,7 +599,7 @@ for cA = 1 : NumAllTargetAreas
         saveas(h1f,savename);
         
         print(h1f,savename,'-dpng','-r0');
-        print(h1f,savename,'-dpdf','-bestfit');
+        print(h1f,savename,'-dpdf','-bestfit'); %print(gcf,'Unit111example','-dpdf','-bestfit');
         close(h1f);
     end
 end

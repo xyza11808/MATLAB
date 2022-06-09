@@ -1,6 +1,6 @@
 
 clearvars NSMUnitOmegaSqrData AllNullThres_Mtx AreaValidInfoDatas
-ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
+% ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
 
 %%
 figSavefolder = fullfile(ksfolder, 'AnovanAnA');
@@ -11,7 +11,7 @@ figSavefolder = fullfile(ksfolder, 'AnovanAnA');
 
 AnovaDatafile = fullfile(figSavefolder,'OmegaSqrDatas.mat');
 load(AnovaDatafile,'NSMUnitOmegaSqrData','AllNullThres_Mtx','CalWinUnitOmegaSqrs');
-AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
 AllFieldNames = fieldnames(AreaIndexStrc.SessAreaIndexStrc);
 UsedNames = AllFieldNames(1:end-1);
 ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);
@@ -19,33 +19,7 @@ ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);
 if strcmpi(ExistAreaNames(end),'Others')
     ExistAreaNames(end) = [];
 end
-CompExistAreaNames = ExistAreaNames;
-if any(strcmpi(ExistAreaNames,'MOs'))
-   MosAreaInds = find(strcmpi(ExistAreaNames,'MOs'));
-   CompExistAreaNames{MosAreaInds} = 'MOs';
-end
-NumExistAreas = length(ExistAreaNames);
 
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
-NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
-NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
-NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
-if strcmpi(NewAdd_ExistAreaNames(end),'Others')
-    NewAdd_ExistAreaNames(end) = [];
-end
-NewAdd_NumExistAreas = length(NewAdd_ExistAreaNames);
-%%
-if NewAdd_NumExistAreas > NumExistAreas
-    % new area exists
-    OldSessExistInds = ismember(NewAdd_ExistAreaNames, CompExistAreaNames);
-    NewAddAreaNames = NewAdd_ExistAreaNames(~OldSessExistInds);
-    Num_newAddAreaNums = length(NewAddAreaNames);
-% else
-%     return;
-else
-    NewAddAreaNames = [];
-    Num_newAddAreaNums = 0;
-end
 %%
 Numfieldnames = length(ExistAreaNames);
 oExistField_ClusIDs = [];
@@ -57,23 +31,11 @@ for cA = 1 : Numfieldnames
     oAreaUnitNumbers(cA) = numel(cA_clus_inds);
 end
 
-% calculate extra area units numbers
-AddFieldNames = length(NewAddAreaNames);
-AddField_ClusIDs = [];
-AddAreaUnitNumbers = zeros(AddFieldNames,1);
-for ccA = 1 : AddFieldNames
-   cA_Clus_IDs = NewSessAreaStrc.SessAreaIndexStrc.(NewAddAreaNames{ccA}).MatchUnitRealIndex;
-   cA_clus_inds = NewSessAreaStrc.SessAreaIndexStrc.(NewAddAreaNames{ccA}).MatchedUnitInds;
-   AddField_ClusIDs = [AddField_ClusIDs;[cA_Clus_IDs,cA_clus_inds]]; % real Clus_IDs and Clus indexing inds
-   AddAreaUnitNumbers(ccA) = numel(cA_clus_inds);
-end 
-    
-
 %%
-SeqAreaUnitNums = [oAreaUnitNumbers;AddAreaUnitNumbers];
-AccumedUnitNums = [0;cumsum([oAreaUnitNumbers;AddAreaUnitNumbers])];
-SeqAreaNames = [ExistAreaNames;NewAddAreaNames];
-SeqFieldClusIDs = [oExistField_ClusIDs;AddField_ClusIDs];
+SeqAreaUnitNums = oAreaUnitNumbers;
+AccumedUnitNums = [0;cumsum(oAreaUnitNumbers)];
+SeqAreaNames = ExistAreaNames;
+SeqFieldClusIDs = oExistField_ClusIDs;
 % AreaInds = 6;
 %%
 NonRevFreqOs = cellfun(@(x) mean(x(:,1),'omitnan'),CalWinUnitOmegaSqrs(:,:,3)); % the third factor corresponded to blocktype factor 
