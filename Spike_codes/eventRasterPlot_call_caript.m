@@ -1,14 +1,21 @@
 
+
+ksfolder = pwd;
+obj.ksFolder = ksfolder;
+
+%%
 AllTrStimOnTime = double(behavResults.Time_stimOnset(:));
 AllTrAnsTime = double(behavResults.Time_answer(:));
 TrActionChoice = double(behavResults.Action_choice(:));
 TrBlockTypes = double(behavResults.BlockType(:));
+TrStimFreqs = double(behavResults.Stim_toneFreq(:));
 
 NMTrInds = TrActionChoice ~= 2;
 NMTrStimOnTime = AllTrStimOnTime(NMTrInds);
 NMTrAnsTime = AllTrAnsTime(NMTrInds);
 NMTrChoices = TrActionChoice(NMTrInds);
 NMBlockTypes = TrBlockTypes(NMTrInds);
+NMTrFreqs = TrStimFreqs(NMTrInds);
 
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
 BlockSecEdgeInds = [0.5;BlockSectionInfo.BlockTrScales(:,2)+0.5;numel(NMTrInds)+0.5];
@@ -22,7 +29,7 @@ ExtraEventStrs = {'Choice'};
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 
 
-ProbNPSess.RawRasterplot(EventAignTimes,ExtraEventStrs,...
+ProbNPSess.RawRasterplot(EventAignTimes,NMTrFreqs,...
     {NMTrChoices,ChoiceTypeColors}, NMBlockTypes, BlockTypeColors,NMTrInds);
 
 

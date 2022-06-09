@@ -694,7 +694,7 @@ classdef NPspikeDataMining
             
         end
         
-        function RawRasterplot(obj,ExtraEventTimes,ExtraEventStr,ExtraEventPlotColor,TrBlockTypes,BlockColors, UsedTrInds)
+        function RawRasterplot(obj,ExtraEventTimes,StimAlls,ExtraEventPlotColor,TrBlockTypes,BlockColors, UsedTrInds)
             % spike raster plot for spike times
             % Each spike line color was defined by block types, and
             % sequtial plots of all trials, without miss trial maybe
@@ -763,8 +763,8 @@ classdef NPspikeDataMining
                 cUnitData = UsedUintSlignSPTimes(cUnit,:);
                 cUnitChnID = obj.UsedClus_IDs(cUnit);
                 
-                hcf = figure('position',[50 150 500 750],'visible','on'); %
-                ax1 = subplot(3,1,[1,2]);
+                hcf = figure('position',[50 150 900 750],'visible','on'); %
+                ax1 = subplot(3,2,[1,3]);
                 hold on
                 
                 for cTrig = 1 : TrNum
@@ -779,7 +779,9 @@ classdef NPspikeDataMining
                     end
                 end
                 %                 set(hcf,'visible','on')
-                line(ax1,[0 0],[0.5 TrNum+0.5],'Color','m','linewidth',1);
+%                 line(ax1,[0 0],[0.5 TrNum+0.5],'Color','m','linewidth',1);
+                patch(ax1,[0 0.3 0.3 0],[0.5 0.5 TrNum+0.5 TrNum+0.5],1, 'FaceColor','m',...
+                   'edgeColor','none','facealpha',0.2);
                 
                 for cEvent = 1 : NumOfEvents
                     cEventAllPlot = EventPlotAll{cEvent};
@@ -797,7 +799,7 @@ classdef NPspikeDataMining
                 % mean psth plot
                 cuPSTHData = squeeze(SMBinDataMtx(:,cUnit,:));
                 
-                ax2 = subplot(313);
+                ax2 = subplot(325);
                 hold on
                 LowBlockDataInds = TrBlockTypes == 0;
                 MeanSemPlot(cuPSTHData(LowBlockDataInds,:),xTs,ax2,1,[.7 .7 .7],'Color',BlockColors{1});
@@ -810,6 +812,48 @@ classdef NPspikeDataMining
                 
                 xlabel('Time (s)');
                 ylabel('Avg. PSTH');
+                
+                % plot the mean response psth according to stimulus types
+                StimTypes = unique(StimAlls);
+                NumStimType = length(StimTypes);
+                axisStartBase = 0.1;
+                axisHeight = (0.9-0.06*NumStimType)/NumStimType;
+                axiswidth = 0.34;
+                
+                AxAlls = [];
+                axScalesAll = zeros(NumStimType,2);
+                for ca = 1 : NumStimType
+                    ax_Sub = axes('position',[0.55, axisStartBase+(axisHeight+0.06)*(ca-1),...
+                        axiswidth,axisHeight]);
+                    hold on
+                    
+                    cStimInds = StimAlls == StimTypes(ca);
+                    cStim_lowbound_inds = cStimInds & TrBlockTypes == 0;
+                    MeanSemPlot(cuPSTHData(cStim_lowbound_inds,:),xTs,ax_Sub,1,[.7 .7 .7],...
+                        'Color',BlockColors{1});
+                    cStim_highbound_inds = cStimInds & TrBlockTypes == 1;
+                    MeanSemPlot(cuPSTHData(cStim_highbound_inds,:),xTs,ax_Sub,1,[.7 .7 .7],...
+                        'Color',BlockColors{2});
+                    
+                    axScalesAll(ca,:) = get(ax_Sub,'ylim');
+%                     line(ax_Sub,[0 0],yscales,'Color','m','linewidth',1);
+                    set(ax_Sub,'xlim',[xTs(1) min(xTs(end),4)]);
+                    
+                    AxAlls = [AxAlls;ax_Sub];
+                    
+                    title(ax_Sub,num2str(StimTypes(ca),'freq %dHz'));
+                    ylabel('Resp (Hz)');
+                    if ca == 1
+                        xlabel('Time (s)');
+                    end
+                    
+                end
+                CommonYScales = [min(axScalesAll(:,1)),max(axScalesAll(:,2))];
+                for ca = 1 : NumStimType
+                    line(AxAlls(ca),[0 0],CommonYScales,'Color','m',...
+                        'linewidth',0.6,'linestyle','--');
+                    set(AxAlls(ca),'ylim',CommonYScales);
+                end
                 
                 %%
                 savefileName = fullfile(obj.ksFolder,'RawRasterPlot',sprintf('Unit%03d raw spike raster color plot',obj.UsedClus_IDs(cUnit)));
