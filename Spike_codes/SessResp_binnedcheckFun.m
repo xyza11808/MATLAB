@@ -16,10 +16,11 @@ for cy = 1 : BatchNums
 end
 
 %%
-binMaxValues = max(BatchBinnedDatas,[],2);
+binMaxValues = prctile(BatchBinnedDatas,95,2);
 Isbinlessthanhalfpeak = (BatchBinnedDatas - binMaxValues/2) < 0;
 binLessThanhalfPeak = mean(Isbinlessthanhalfpeak, 2);
 
+FRBasedInds = mean(BatchBinnedDatas > 0.1,2);
 % %%
 % cR = 2;
 % % close;
@@ -48,7 +49,7 @@ tempUsed_binlessthanhalf = binLessThanhalfPeak(UsedInds2);
 leftUnitNum = length(tempUsed_binlessthanhalf);
 IsGivenasNaN = zeros(leftUnitNum, 1);
 for cU = 1 : leftUnitNum
-   if tempUsed_binlessthanhalf(cU) < 0.5
+   if tempUsed_binlessthanhalf(cU) < 0.8
        % only use bin number fraction less than 0.5 but more than 0.3
        cunit_binisless =  tempUsedUnit_isless(cU,:);
        binlogi_SM = conv(cunit_binisless, (1/21)*ones(21,1),'same');
@@ -56,7 +57,12 @@ for cU = 1 : leftUnitNum
        binlogi_SM(end) = 0;
        Is_consecutiveBins = find(binlogi_SM > 0.99, 1, 'first');
        if ~isempty(Is_consecutiveBins)
-           IsGivenasNaN(cU) = NaN;
+           if ~(all(cunit_binisless(1:3) == 0) && all(cunit_binisless(end-2:end) == 0))
+               IsGivenasNaN(cU) = NaN;
+           end
+           if FRBasedInds(UsedInds2_Real(cU)) > 0.6
+               IsGivenasNaN(cU) = 0;
+           end
        end
    else
        IsGivenasNaN(cU) = NaN;

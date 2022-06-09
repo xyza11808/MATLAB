@@ -138,8 +138,17 @@ else
 end
 
 
-if ~isempty(FullClusSelectionops.FiringRate)
-    FRExcludeInds = obj.FRIncludeClusFRs <= FullClusSelectionops.FiringRate;
+if ~isempty(FullClusSelectionops.FiringRate) % check task period FR, make it larger than 1 Hz
+    TaskSessStartTime = obj.UsedTrigOnTime{1}(1);
+    TaskSessEndTime = obj.UsedTrigOnTime{1}(end)+30; % extra 30 seconds after last trigger
+    TaskFrs = zeros(numel(obj.FRIncludeClus),1);
+    for cUU = 1 : numel(obj.FRIncludeClus)
+       cUSPTimes =  obj.SpikeTimes(obj.SpikeClus == obj.FRIncludeClus(cUU));
+       cUTask_sptimes = cUSPTimes(cUSPTimes > TaskSessStartTime & cUSPTimes < TaskSessEndTime);
+       TaskFrs(cUU) = numel(cUTask_sptimes)/(TaskSessEndTime - TaskSessStartTime);
+    end
+    
+    FRExcludeInds = TaskFrs < FullClusSelectionops.FiringRate; %obj.FRIncludeClusFRs <= FullClusSelectionops.FiringRate;
     fprintf('FR exclusion fraction is %d/%d, %.4f...\n',sum(FRExcludeInds),numel(FRExcludeInds),mean(FRExcludeInds));
 else
     FRExcludeInds = false;
