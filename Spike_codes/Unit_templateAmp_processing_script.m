@@ -136,11 +136,13 @@ end
 cclr
 
 AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
         'Sheet',1);
-SessionFolders = SessionFoldersC(2:end);
+SessionFoldersAll = SessionFoldersC(2:end);
+UsedFolderInds = cellfun(@ischar,SessionFoldersAll);
+SessionFolders = SessionFoldersAll(UsedFolderInds);
 NumUsedSess = length(SessionFolders);
 %%
 
@@ -148,10 +150,10 @@ for cSess = 1 : NumUsedSess
     clearvars ProbNPSess UnitSPAmps UnitLlmfits ClusInds SPTimes Amps
     
 %     cSessFolder = fullfile(SessionFolders{cSess}(2:end-1),'ks2_5');
-    cSessFolder = fullfile(strrep(SessionFolders{cSess}(2:end-1),'F:','I:\ksOutput_backup'),'ks2_5');
-    if exist(fullfile(cSessFolder,'UnitspikeAmpSave.mat'),'file')
-        continue;
-    end
+    cSessFolder = fullfile(strrep(SessionFolders{cSess},'F:','I:\ksOutput_backup'),'ks2_5');
+%     if exist(fullfile(cSessFolder,'UnitspikeAmpSave.mat'),'file')
+%         continue;
+%     end
     fprintf('Processing Session %d...\n', cSess);
     
     Amps = readNPY(fullfile(cSessFolder,'amplitudes.npy'));
@@ -160,7 +162,7 @@ for cSess = 1 : NumUsedSess
     load(fullfile(cSessFolder,'NPClassHandleSaved.mat'));
     
     %
-    UsedUnitIDs = ProbNPSess.UsedClus_IDs;
+    UsedUnitIDs = ProbNPSess.FRIncludeClus;
     NumUnitIDs = length(UsedUnitIDs);
 
     UnitSPAmps = cell(NumUnitIDs,2);

@@ -40,7 +40,7 @@ legend('measured','interpolant','smoothed');
 %%
 %Define knots and weights directly and evaluate derivatives and so forth
 knots = [-1,-1,0:10,11,11];
-weights = sin((0:10)*pi*.41-.9);
+% weights = sin((0:5)*pi*.41-.9);
 
 %Create spline object
 s = fastBSpline(knots,weights);
@@ -50,9 +50,9 @@ sp = s.dx;
 
 %second spatial derivative
 spp = sp.dx;
-
+figure;
 %evaluate within this range
-rg = -2:.02:12;
+rg = -2:.1:12;
 subplot(3,1,1);
 plot(rg,s.evalAt(rg),rg,sp.evalAt(rg),rg,spp.evalAt(rg))
 legend('Spline','Derivative','2nd Derivative');

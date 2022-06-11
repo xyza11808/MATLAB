@@ -21,6 +21,7 @@ Isbinlessthanhalfpeak = (BatchBinnedDatas - binMaxValues/2) < 0;
 binLessThanhalfPeak = mean(Isbinlessthanhalfpeak, 2);
 
 FRBasedInds = mean(BatchBinnedDatas > 0.1,2);
+FRBasedInds2 = mean(BatchBinnedDatas > 10,2);
 % %%
 % cR = 2;
 % % close;
@@ -49,7 +50,7 @@ tempUsed_binlessthanhalf = binLessThanhalfPeak(UsedInds2);
 leftUnitNum = length(tempUsed_binlessthanhalf);
 IsGivenasNaN = zeros(leftUnitNum, 1);
 for cU = 1 : leftUnitNum
-   if tempUsed_binlessthanhalf(cU) < 0.8
+   if tempUsed_binlessthanhalf(cU) < 0.75
        % only use bin number fraction less than 0.5 but more than 0.3
        cunit_binisless =  tempUsedUnit_isless(cU,:);
        binlogi_SM = conv(cunit_binisless, (1/21)*ones(21,1),'same');
@@ -65,7 +66,9 @@ for cU = 1 : leftUnitNum
            end
        end
    else
-       IsGivenasNaN(cU) = NaN;
+       if FRBasedInds2(UsedInds2_Real(cU)) < 0.9
+            IsGivenasNaN(cU) = NaN;
+       end
    end
 end
 
@@ -76,6 +79,16 @@ criteria2_inds(UsedInds2_Real(isnan(IsGivenasNaN))) = false;
 % RemainedInds = true(TotalUnits,1);
 % RemainedInds(isnan(UsedInds1_Real)) = false;
 RemainedInds = criteria1_inds | criteria2_inds;
+
+
+if exists(fullfile(ProbNPSess.ksFolder,'UnitspikeAmpSave.mat')) 
+    % load unit amplitude data if exists
+   cAmpfData = load(fullfile(ProbNPSess.ksFolder,'UnitspikeAmpSave.mat'));
+   UintExplainV = cellfun(@(x) x.Ordinary,cAmpfData.UnitLlmfits(:,2));
+   AmpExcludeInds = UintExplainV(:) > 0.5 & binLessThanhalfPeak(:) < 0.1; % is the varience explain is too large, excluded it
+   
+   RemainedInds = RemainedInds & ~AmpExcludeInds;
+end
 
 
 
