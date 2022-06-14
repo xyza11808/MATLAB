@@ -9,10 +9,12 @@ load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
 % end
 %%
 figSaveFolder = fullfile(ksfolder,'BTANDChoiceAUC_compPlot');
-rmdir(figSaveFolder,'s');
-if ~isfolder(figSaveFolder)
-    mkdir(figSaveFolder);
+if isfolder(figSaveFolder)
+    rmdir(figSaveFolder,'s');
 end
+% if ~isfolder(figSaveFolder)
+    mkdir(figSaveFolder);
+% end
 
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 % TimeWin = [-1,5]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds

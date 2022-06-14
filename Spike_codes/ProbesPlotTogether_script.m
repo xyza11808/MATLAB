@@ -107,7 +107,7 @@ end
 %%  
 figsaveName = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask','AllProbeLinesPlot');
 saveas(hTraj,figsaveName);
-print(hTraj,figsaveName,'-dpng','-r860');
+print(hTraj,figsaveName,'-dpng','-r860'); % -r indicates the output resolution
 
 DataSaveName = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask','AllProbeLinesData.mat');
 save(DataSaveName,'AllSessProbeDatas','SessionFolders','-v7.3');

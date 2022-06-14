@@ -67,20 +67,21 @@ NumprocessedNPSess = length(SessionFolders);
 
 
 %%
-TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
-% TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+% TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
 
 BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
 TargetRegionNamesAll = fieldnames(BrainRegionStrc.BrainRegions);
-%%
+
 NumofTargetAreas = length(TargetRegionNamesAll);
+%%
 for cP = 1 : NumprocessedNPSess
-    %
+    %%
 %     cPath = SessionFolders{cP};
 %     cPath = strrep(SessionFolders{cP},'F:\','E:\NPCCGs\');
-    cPath = fullfile(strrep(SessionFolders{cP},'F:','I:\ksOutput_backup'));
-    load(fullfile(cPath,sortingcode_string,'NPClassHandleSaved.mat'));
-    
+%     cPath = fullfile(strrep(SessionFolders{cP},'F:','I:\ksOutput_backup'));
+    load(fullfile(cPath,sortingcode_string,'NPClassHandleSavedNew.mat'));
+    ProbNPSess = Newclasshandle;
     if isempty(ProbNPSess.ChannelAreaStrs)
         load(fullfile(cPath,sortingcode_string,'Chnlocation.mat'));
         ProbNPSess.ChannelAreaStrs = ChnArea_Strings(2:end,:);
@@ -117,7 +118,7 @@ for cP = 1 : NumprocessedNPSess
     SessAreaIndex_saveName = fullfile(cPath,sortingcode_string,'SessAreaIndexDataNew.mat');
     save(SessAreaIndex_saveName,'SessAreaIndexStrc','-v7.3');
     clearvars ProbNPSess
-    %
+    %%
 end
 
 

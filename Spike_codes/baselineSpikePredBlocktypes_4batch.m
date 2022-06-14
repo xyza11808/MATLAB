@@ -39,12 +39,12 @@ BlockTypesAll = double(behavResults.BlockType(:));
 SavedFolderPathName = 'BaselinePredofBlocktype';
 
 fullsavePath = fullfile(ksfolder, SavedFolderPathName);
+if isfolder(fullsavePath)
+    rmdir(fullsavePath,'s');
+end
 
-rmdir(fullsavePath,'s');
-
-if ~isfolder(fullsavePath)
     mkdir(fullsavePath);
-end 
+ 
 
 TargetAreaUnits = false(size(SMBinDataMtxRaw,2),1);
 
