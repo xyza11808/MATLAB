@@ -135,8 +135,8 @@ end
 %% used unit response amplitue analysis
 cclr
 
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
         'Sheet',1);
@@ -149,8 +149,8 @@ NumUsedSess = length(SessionFolders);
 for cSess = 1 : NumUsedSess
     clearvars ProbNPSess UnitSPAmps UnitLlmfits ClusInds SPTimes Amps
     
-%     cSessFolder = fullfile(SessionFolders{cSess}(2:end-1),'ks2_5');
-    cSessFolder = fullfile(strrep(SessionFolders{cSess},'F:','I:\ksOutput_backup'),'ks2_5');
+    cSessFolder = fullfile(strrep(SessionFolders{cSess},'F:','E:\NPCCGs'),'ks2_5');
+%     cSessFolder = fullfile(strrep(SessionFolders{cSess},'F:','I:\ksOutput_backup'),'ks2_5');
 %     if exist(fullfile(cSessFolder,'UnitspikeAmpSave.mat'),'file')
 %         continue;
 %     end

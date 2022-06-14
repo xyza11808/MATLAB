@@ -81,7 +81,7 @@ criteria2_inds(UsedInds2_Real(isnan(IsGivenasNaN))) = false;
 RemainedInds = criteria1_inds | criteria2_inds;
 
 
-if exists(fullfile(ProbNPSess.ksFolder,'UnitspikeAmpSave.mat')) 
+if exist(fullfile(ProbNPSess.ksFolder,'UnitspikeAmpSave.mat'),'file') 
     % load unit amplitude data if exists
    cAmpfData = load(fullfile(ProbNPSess.ksFolder,'UnitspikeAmpSave.mat'));
    UintExplainV = cellfun(@(x) x.Ordinary,cAmpfData.UnitLlmfits(:,2));

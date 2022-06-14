@@ -20,7 +20,7 @@ if nargin<2||isempty(ax)
 end
 
 if nargin<4||~black_brain
-    h = plot3(ax, bp(:,1), bp(:,2), bp(:,3), 'Color', [0 0 0 0.3]);
+    h = plot3(ax, bp(:,1), bp(:,2), bp(:,3), 'Color', [0 0 0 0.2]);
 else
     h = plot3(ax, bp(:,1), bp(:,2), bp(:,3), 'Color', [.7 .7 .7 0.3]);
     set(get(ax, 'Parent'),'color','k')
