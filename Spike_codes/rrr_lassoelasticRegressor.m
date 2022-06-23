@@ -1,8 +1,11 @@
 function [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
-    lassoelasticRegressor(Y, Predictors, cvfolds, varargin)
+    rrr_lassoelasticRegressor(Y, Predictors, cvfolds, varargin)
 
 % function used to calcualte the task response regression coefficient, also
 % calculate single and ommit certain task parameter R-squares
+% same as lassoelasticRegressor, but use a reduced-rank regressor approach
+% to decrease overfitting fraction
+
 
 if size(Y,2) ~= 1
     Y = Y(:);
@@ -20,15 +23,20 @@ if ~exist('cvfolds','var') || isempty(cvfolds)
 end
 Numofobservations = length(Y);
 
-IsShufCal = 0;
+EvarStepThres = 1e-5; % if the var change reach threshold, stop component search
+UsedRankComponent = 2:50; % crossvalid to find optimal component numbers
 if nargin > 3
     if ~isempty(varargin{1})
-        IsShufCal = varargin{1};
+        UsedRankComponent = varargin{1}{1};
+        EvarStepThres = varargin{1}{1};
     end
 end
 
 % full model dataset
 predictorMtx_full = cat(2,Predictors{:});
+
+% find reduced ranks
+[~,b,R2] = CanonCor2all({Y},{predictorMtx_full});
 
 alpha = 0.5;
 lambda = 2.^(-12:0.4:-1);

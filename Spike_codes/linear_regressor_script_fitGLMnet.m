@@ -218,10 +218,10 @@ RegressorInfosCell = cell(size(BinnedSPdatas,1),3);
 f = waitbar(0,'Session Calculation Start...');
 NumNeurons = size(BinnedSPdatas,1);
 for cU = 1 : NumNeurons
-%     [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
-%         lassoelasticRegressor(BinnedSPdatas(1,:), TaskEvents_predictor, 5);
     [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
-        glmnetRegressor(BinnedSPdatas(1,:), TaskEvents_predictor, 5);
+        lassoelasticRegressor(BinnedSPdatas(1,:), TaskEvents_predictor, 5);
+%     [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
+%         glmnetRegressor(BinnedSPdatas(1,:), TaskEvents_predictor, 5);
 
     RegressorInfosCell(cU,:) = {ExplainVarStrc, RegressorCoefs, RegressorPreds};
     Progress = (cU - 1)/(NumNeurons - 1);

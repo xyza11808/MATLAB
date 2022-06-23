@@ -85,10 +85,40 @@ if exist(fullfile(ProbNPSess.ksFolder,'UnitspikeAmpSave.mat'),'file')
     % load unit amplitude data if exists
    cAmpfData = load(fullfile(ProbNPSess.ksFolder,'UnitspikeAmpSave.mat'));
    UintExplainV = cellfun(@(x) x.Ordinary,cAmpfData.UnitLlmfits(:,2));
-   AmpExcludeInds = UintExplainV(:) > 0.5 & binLessThanhalfPeak(:) < 0.1; % is the varience explain is too large, excluded it
+   AmpExcludeInds = UintExplainV(:) > 0.5 & binLessThanhalfPeak(:) > 0.1; % is the varience explain is too large, excluded it
    
    RemainedInds = RemainedInds & ~AmpExcludeInds;
 end
+
+% %%
+% cfff = 35;
+% ksfolder = fullfile(strrep(SessionFolders{cfff},'F:','E:\NPCCGs'),sortingcode_string);
+% cd(ksfolder);
+% 
+% 
+% %%
+% load('NPClassHandleSaved.mat');
+% 
+% ProbNPSess.CurrentSessInds = [true, false];
+% ProbNPSess.ksFolder = ksfolder;
+% ProbNPSess.ClusScreeningFun;
+% 
+% 
+% %%
+% 
+% cU = 391;
+% close
+% figure('position',[700 470 900 380]);
+% subplot(121);
+% plot(BatchBinnedDatas(cU,:));
+% line([1 BatchNums],[binMaxValues(cU)/2 binMaxValues(cU)/2],'Color','k','linewidth',1);
+% title(sprintf('BelowThresFrac = %.3f, IsUsed = %d',binLessThanhalfPeak(cU),RemainedInds(cU)));
+% 
+% subplot(122)
+% plot(cAmpfData.UnitSPAmps{cU,1},cAmpfData.UnitSPAmps{cU,2},'ko');
+% title(sprintf('EV = %.4f',UintExplainV(cU)));
+
+
 
 
 
