@@ -155,6 +155,12 @@
 % "evalclusters" can be used to find optimal cluster numbers while
 % calculating kmeans clusters
 
+
+% using matlab function "wdenoise" or older version "wden" to denoise
+% signals before further processing
+% using the app "waveletSignalDenoiser " to play with the parameters before
+% real processing
+
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % reset color scale for multiple subplots
 h = gcf; %current figure handle

@@ -215,14 +215,18 @@ TaskEvents_Predlabel = AllTaskEvents(2,:);
 %% BinnedSPdatas
 tic
 RegressorInfosCell = cell(size(BinnedSPdatas,1),3);
+rrr_RegressorInfosCell = cell(size(BinnedSPdatas,1),3);
 f = waitbar(0,'Session Calculation Start...');
 NumNeurons = size(BinnedSPdatas,1);
 for cU = 1 : NumNeurons
     [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
-        lassoelasticRegressor(BinnedSPdatas(1,:), TaskEvents_predictor, 5);
-%     [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
-%         glmnetRegressor(BinnedSPdatas(1,:), TaskEvents_predictor, 5);
-
+        lassoelasticRegressor(BinnedSPdatas(cU,:), TaskEvents_predictor, 5);
+    if mean(ExplainVarStrc.fullmodel_explain_var) >= 0.02
+        [ExplainVarStrc_rrr, RegressorCoefs_rrr, RegressorPreds_rrr] = ...
+            rrr_lassoelasticRegressor(BinnedSPdatas(cU,:), TaskEvents_predictor, 5);
+        rrr_RegressorInfosCell(cU,:) = {ExplainVarStrc_rrr, ...
+            RegressorCoefs_rrr, RegressorPreds_rrr};
+    end
     RegressorInfosCell(cU,:) = {ExplainVarStrc, RegressorCoefs, RegressorPreds};
     Progress = (cU - 1)/(NumNeurons - 1);
     waitbar(Progress,f,sprintf('Processing %.2f%% of all calculation...',Progress*100));
