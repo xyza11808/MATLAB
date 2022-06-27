@@ -67,27 +67,30 @@ NumprocessedNPSess = length(SessionFolders);
 
 
 %%
-% TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
-TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+% TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
 
 BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
 TargetRegionNamesAll = fieldnames(BrainRegionStrc.BrainRegions);
 
 NumofTargetAreas = length(TargetRegionNamesAll);
 %%
+UnitNumsAll = zeros(NumprocessedNPSess,1);
 for cP = 1 : NumprocessedNPSess
-    %%
+    %
 %     cPath = SessionFolders{cP};
 %     cPath = strrep(SessionFolders{cP},'F:\','E:\NPCCGs\');
-%     cPath = fullfile(strrep(SessionFolders{cP},'F:','I:\ksOutput_backup'));
-    load(fullfile(cPath,sortingcode_string,'NPClassHandleSavedNew.mat'));
-    ProbNPSess = Newclasshandle;
+    cPath = fullfile(strrep(SessionFolders{cP},'F:','I:\ksOutput_backup'));
+    load(fullfile(cPath,sortingcode_string,'NPClassHandleSaved.mat'));
+%     ProbNPSess = Newclasshandle;
     if isempty(ProbNPSess.ChannelAreaStrs)
         load(fullfile(cPath,sortingcode_string,'Chnlocation.mat'));
         ProbNPSess.ChannelAreaStrs = ChnArea_Strings(2:end,:);
     end
     %
     UnitMaxampChnInds = ProbNPSess.ChannelUseds_id; % already had +1 for matlab indexing
+    UnitNumsAll(cP) = length(UnitMaxampChnInds);
+    
     UnitChnAreasAll = ProbNPSess.ChannelAreaStrs(UnitMaxampChnInds,:);
     UnitChnAreaIndexAll = cell2mat(UnitChnAreasAll(:,2));
     totalUnitNum = length(UnitMaxampChnInds);
@@ -115,10 +118,10 @@ for cP = 1 : NumprocessedNPSess
         IstargetfieldExist(end) = true;
     end
     SessAreaIndexStrc.UsedAbbreviations = IstargetfieldExist;
-    SessAreaIndex_saveName = fullfile(cPath,sortingcode_string,'SessAreaIndexDataNew.mat');
+    SessAreaIndex_saveName = fullfile(cPath,sortingcode_string,'SessAreaIndexData2.mat');
     save(SessAreaIndex_saveName,'SessAreaIndexStrc','-v7.3');
     clearvars ProbNPSess
-    %%
+    %
 end
 
 

@@ -1,7 +1,7 @@
 cclr;
 
 %
-ProbespikeFolder='F:\b106a04_ksoutputs\b106a04_20211204_NPsess04_g0_cat\catgt_b106a04_20211204_NPsess04_g0\Cat_b106a04_20211204_NPsess04_g0_imec1';
+ProbespikeFolder='I:\ksOutput_backup\b107a03_ksoutput\A2021230_b107a03_NPSess04_g0_cat\catgt_A2021230_b107a03_NPSess04_g0\Cat_A2021230_b107a03_NPSess04_g0_imec0';
 
 %
 % start a new NP data analysis session
@@ -11,7 +11,7 @@ ProbNPSess = ProbNPSess.triggerOnsetTime([],[6,2],[]);
 % ProbNPSess = ProbNPSess.triggerOnsetTime([],[2,6],[]);
 % load behavior datas
 
-load('F:\b106a04_ksoutputs\b106a04_20211204_NPsess04_g0_cat\catgt_b106a04_20211204_NPsess04_g0\Ab106a04_2afc_20211204_NPsess04.mat');
+load('I:\ksOutput_backup\b107a03_ksoutput\A2021230_b107a03_NPSess04_g0_cat\catgt_A2021230_b107a03_NPSess04_g0\A2021230_b107a03_NPSess04_2afc.mat');
 %
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
 if isempty(BlockSectionInfo)
@@ -29,12 +29,12 @@ TrManWaters = double(behavResults.ManWater_choice(:));
 ExcludeFirstNumofInds = 0;
 % if using stim aligned PSTH data
 % given trigger time windows, and then calculate trigger onset PSTHs
-TimeWin = [-1.5,8]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
+TimeWin = [-1.5,4]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
 Smoothbin = [50,10]; % time window for smooth psth, in ms format
 if isempty(ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds})
     ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, Smoothbin, TrStimOnsets);
 end
-% the unit exclusion needs spike time data, moved after the unit spike data
+%% the unit exclusion needs spike time data, moved after the unit spike data
 % construction
 if isempty(ProbNPSess.SurviveInds)
     ProbNPSess = ProbNPSess.ClusScreeningFun;
@@ -336,8 +336,8 @@ for cUnit = 1 : NumUnits
 end
 
 
-% passive analysis session
-PassiveFileFullPath = 'F:\b106a04_ksoutputs\b106a04_20211204_NPsess04_g0_cat\catgt_b106a04_20211204_NPsess04_g0\Ab106a04_rf_20211204_NPsess04.txt';
+%% passive analysis session
+PassiveFileFullPath = 'I:\ksOutput_backup\b107a03_ksoutput\A2021230_b107a03_NPSess04_g0_cat\catgt_A2021230_b107a03_NPSess04_g0\A2021230_b107a03_NPSess04_rf.txt';
 ProbNPSess.CurrentSessInds = strcmpi('passive',ProbNPSess.SessTypeStrs);
 
 ProbNPSess = ProbNPSess.triggerOnsetTime([],4);  % 4 is the trigger duration, in ms
@@ -346,7 +346,7 @@ ProbNPSess = ProbNPSess.triggerOnsetTime([],4);  % 4 is the trigger duration, in
 TimeWin = [-0.4,3]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
 % Smoothbin = [100,20]; % time window for smooth psth, in ms format
 ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, []);
-
+%%
 % load passive sound results
 soundTextfile = PassiveFileFullPath;
 Datas = readmatrix(soundTextfile);

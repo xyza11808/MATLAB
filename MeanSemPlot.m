@@ -18,7 +18,9 @@ if ~exist('shadowColor','var') || isempty(shadowColor)
 end
 
 [nROws,nCloumns] = size(data);
-MeanTrace = (smooth(mean(data),5))';
+MeanTrace = (smooth(mean(data),9))';
+% MeanTrace = mean(data);
+% MeanTrace = wdenoise(mean(data));
 TraceSem = std(data)/sqrt(nROws) * SEMratio; 
 if isempty(xticks)
     xticks = 1 : nCloumns;

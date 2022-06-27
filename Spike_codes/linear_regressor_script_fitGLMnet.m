@@ -28,11 +28,13 @@ NewAdd_NumExistAreas = length(NewAdd_ExistAreaNames);
 Numfieldnames = length(NewAdd_ExistAreaNames);
 ExistField_ClusIDs = [];
 AreaUnitNumbers = zeros(NewAdd_NumExistAreas,1);
+AreaNameIndex = cell(Numfieldnames,1);
 for cA = 1 : Numfieldnames
     cA_Clus_IDs = NewSessAreaStrc.SessAreaIndexStrc.(NewAdd_ExistAreaNames{cA}).MatchUnitRealIndex;
     cA_clus_inds = NewSessAreaStrc.SessAreaIndexStrc.(NewAdd_ExistAreaNames{cA}).MatchedUnitInds;
     ExistField_ClusIDs = [ExistField_ClusIDs;[cA_Clus_IDs,cA_clus_inds]]; % real Clus_IDs and Clus indexing inds
     AreaUnitNumbers(cA) = numel(cA_clus_inds);
+    AreaNameIndex(cA) = {cA*ones(AreaUnitNumbers(cA),1)};
 end
 
 %%
@@ -237,5 +239,5 @@ close(f);
 %%
 
 save(dataSaveNames, 'RegressorInfosCell',...
-    'ExistField_ClusIDs', 'NewAdd_ExistAreaNames', 'AreaUnitNumbers', '-v7.3');
+    'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','rrr_RegressorInfosCell', 'AreaUnitNumbers', '-v7.3');
 
