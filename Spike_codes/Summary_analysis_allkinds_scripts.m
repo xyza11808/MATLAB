@@ -1180,6 +1180,151 @@ save(datasaveName5,'AllArea_anovaEVdatas','Areawise_unitAnovaSigNum',...
     'Areawise_unitAnovaTrace','AllArea_tempAUC_datas','Areawise_unittempAUCTraces',...
     'AllArea_BTAnova_freqwise','AllArea_StimRespAUC_datas','-v7.3');
 
+%% summary analysis 6, regressor analysis summary
+cclr
+
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+
+BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
+        'Sheet',1);
+BrainAreasStrCC = BrainAreasStrC(2:end);
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
+BrainAreasStr = [BrainAreasStrCC(~EmptyInds);{'Others'}];
+
+FullBrainStrC = readcell(AllSessFolderPathfile,'Range','E:E',...
+        'Sheet',1);
+FullBrainStrCC = FullBrainStrC(2:end);
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+% EmptyInds2 = cellfun(@(x) isempty(x) ||any(ismissing(x)),FullBrainStrCC);
+FullBrainStr = [FullBrainStrCC(~EmptyInds);{'Others'}];
+
+SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
+        'Sheet',1);
+SessionFoldersRaw = SessionFoldersC(2:end);
+EmptyInds2 = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
+SessionFolders = SessionFoldersRaw(~EmptyInds2);
+
+NumUsedSess = length(SessionFolders);
+NumAllTargetAreas = length(BrainAreasStr);
+
+%%
+Areawise_RegressorEVar = cell(NumUsedSess,NumAllTargetAreas,3);
+
+for cS = 1 :  NumUsedSess
+%     cSessPath = SessionFolders{cS}; %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','P:\'); % 'E:\NPCCGs\'
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    
+    ksfolder = fullfile(cSessPath,'ks2_5');
+    try
+        RegressorDatafile = fullfile(ksfolder,'Regressor_ANA','REgressorDataSave.mat');
+        RegressorDataStrc = load(RegressorDatafile);
+        NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
+    catch ME
+        fprintf('Error exists in session %d.\n',cS);
+    end
+    
+    AllfullmodelExplainVar = cell2mat(cellfun(@(xx) mean(xx.fullmodel_explain_var),RegressorDataStrc.RegressorInfosCell(:,1),'un',0));
+    PartialMDExplain = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var)),RegressorDataStrc.RegressorInfosCell(:,1),'un',0);
+    OmitMDExpVar = cellfun(@(x) x(:,1)',PartialMDExplain,'un',0);
+    OmitMDExpVarMtx = cat(1,OmitMDExpVar{:});
+    AloneMDExpVar = cellfun(@(x) x(:,2)',PartialMDExplain,'un',0);
+    AloneMDExpVarMtx = cat(1,AloneMDExpVar{:});
+    % prepare unit related area strings
+    
+    NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
+    NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
+    NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
+    if strcmpi(NewAdd_ExistAreaNames(end),'Others')
+        NewAdd_ExistAreaNames(end) = [];
+    end
+    NewAdd_NumExistAreas = length(NewAdd_ExistAreaNames);
+
+    Numfieldnames = length(NewAdd_ExistAreaNames);
+    AreaUnitNumbers = zeros(NewAdd_NumExistAreas,1);
+    AreaNameIndex = cell(Numfieldnames,1);
+    for cA = 1 : Numfieldnames
+        cA_Clus_IDs = NewSessAreaStrc.SessAreaIndexStrc.(NewAdd_ExistAreaNames{cA}).MatchUnitRealIndex;
+        cA_clus_inds = NewSessAreaStrc.SessAreaIndexStrc.(NewAdd_ExistAreaNames{cA}).MatchedUnitInds;
+        AreaUnitNumbers(cA) = numel(cA_clus_inds);
+        AreaNameIndex(cA) = {cA*ones(AreaUnitNumbers(cA),1)};
+    end
+
+    AreaNameIndexVec = cell2mat(AreaNameIndex);
+    
+    NumAreas = length(NewAdd_ExistAreaNames);
+    if NumAreas < 1
+        warning('There is no target units within following folder:\n %s \n ##################\n',cSessPath);
+        continue;
+    end
+    %
+    for cAreaInds = 1 : NumAreas 
+        cAreaStr = NewAdd_ExistAreaNames{cAreaInds};
+%         if isempty(cAreaStr)
+%             continue;
+%         end
+        AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
+        
+        cA_Index_Inds = AreaNameIndexVec == cAreaInds;
+        
+        Areawise_RegressorEVar(cS,AreaMatchInds,:) = {AllfullmodelExplainVar(cA_Index_Inds,1),...
+            OmitMDExpVarMtx(cA_Index_Inds,:),AloneMDExpVarMtx(cA_Index_Inds,:)};
+        
+    end
+end
+
+%%
+FullmdEVar_Alls = Areawise_RegressorEVar(:,:,1); % 6:end %exclude the fist 5 sessions due to calculation error
+AlonemdEVar_Alls = Areawise_RegressorEVar(:,:,3);
+
+ExplainVarsMtx = nan(NumAllTargetAreas, 5);
+for cArea = 1 : NumAllTargetAreas
+    cA_fullmdVars = cell2mat(FullmdEVar_Alls(:,cArea));
+    if length(cA_fullmdVars) > 20
+        cA_AlonemfEVar_all = cell2mat(AlonemdEVar_Alls(:,cArea));
+        FullMDSigRegInds = cA_fullmdVars > 0.02;
+        AlonemdSigRegInds = repmat(cA_fullmdVars,1,size(cA_AlonemfEVar_all,2)) > 0.02 & cA_AlonemfEVar_all > 0.011;
+        
+        ExplainVarsMtx(cArea,:) = [mean(FullMDSigRegInds), mean(AlonemdSigRegInds)];
+        
+    end
+    
+end
+
+%%
+UsedAreaInds = ~isnan(ExplainVarsMtx(:,1));
+UsedAreaStrings = BrainAreasStr(UsedAreaInds);
+UsedAreaFracsAll = ExplainVarsMtx(UsedAreaInds,:);
+
+[~,sortInds] = sort(UsedAreaFracsAll(:,2),'descend');
+TotalUsedAreaNum = length(sortInds);
+figure;
+bar(UsedAreaFracsAll(sortInds,2:end),'stacked')
+set(gca,'xtick',1:TotalUsedAreaNum,'xticklabel',UsedAreaStrings(sortInds));
+
+%%
+RankDatas = [1-UsedAreaFracsAll(:,2),UsedAreaFracsAll(:,3),UsedAreaFracsAll(:,5)];
+CenterLoc = mean(RankDatas);
+MeanSubDatas = RankDatas - CenterLoc;
+[U,S,V] = svd(MeanSubDatas);
+
+linevals = [-1 1];
+linedirection = V(:,1);
+linePoints = linevals .* linedirection + CenterLoc';
+Online_points = U(:,1) * S(1,1) * (V(:,1))' + CenterLoc;
+hf6 = figure;
+hold on
+plot3(RankDatas(:,1),RankDatas(:,2),RankDatas(:,3),'ro')
+line(linePoints(1,:),linePoints(2,:),linePoints(3,:),'Color','k','linewidth',1.5);
+plot3(Online_points(:,1),Online_points(:,2),Online_points(:,3),'ko')
+xlabel('Sensory');
+ylabel('Choice');
+zlabel('BT')
+set(gca,'ylim',[0 0.8])
+
+
 %%
 % cclr
 % 

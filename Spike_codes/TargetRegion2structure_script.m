@@ -89,7 +89,7 @@ for cP = 1 : NumprocessedNPSess
     end
     %
     UnitMaxampChnInds = ProbNPSess.ChannelUseds_id; % already had +1 for matlab indexing
-    UnitNumsAll(cP) = length(UnitMaxampChnInds);
+%     UnitNumsAll(cP) = length(UnitMaxampChnInds);
     
     UnitChnAreasAll = ProbNPSess.ChannelAreaStrs(UnitMaxampChnInds,:);
     UnitChnAreaIndexAll = cell2mat(UnitChnAreasAll(:,2));
@@ -118,7 +118,7 @@ for cP = 1 : NumprocessedNPSess
         IstargetfieldExist(end) = true;
     end
     SessAreaIndexStrc.UsedAbbreviations = IstargetfieldExist;
-    SessAreaIndex_saveName = fullfile(cPath,sortingcode_string,'SessAreaIndexData2.mat');
+    SessAreaIndex_saveName = fullfile(cPath,sortingcode_string,'SessAreaIndexData.mat');
     save(SessAreaIndex_saveName,'SessAreaIndexStrc','-v7.3');
     clearvars ProbNPSess
     %

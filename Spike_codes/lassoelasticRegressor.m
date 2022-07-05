@@ -88,7 +88,7 @@ for cfold = 1 : cvfolds
             testPredictorMtx, Y(TesInds));
     end
     %%
-    parfor cpredictor = 1 : NumofPredictorTypes
+    for cpredictor = 1 : NumofPredictorTypes
         for cCal = 1 : 2
             switch cCal
                 case 1

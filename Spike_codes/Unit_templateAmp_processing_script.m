@@ -150,12 +150,12 @@ for cSess = 1 : NumUsedSess
     clearvars ProbNPSess UnitSPAmps UnitLlmfits ClusInds SPTimes Amps
     
 %     cSessFolder = fullfile(strrep(SessionFolders{cSess},'F:','E:\NPCCGs'),'ks2_5');
-    cSessFolder = fullfile(strrep(SessionFolders{cSess},'F:','I:\ksOutput_backup'),'ks2_5');
+    cSessFolder = fullfile(strrep(SessionFolders{cSess},'F:','P:'),'ks2_5'); %I:\ksOutput_backup
 %     if exist(fullfile(cSessFolder,'UnitspikeAmpSave.mat'),'file')
 %         continue;
 %     end
     fprintf('Processing Session %d...\n', cSess);
-    %%
+    %
     Amps = readNPY(fullfile(cSessFolder,'amplitudes.npy'));
     ClusInds = readNPY(fullfile(cSessFolder,'spike_clusters.npy'));
     SPTimes = readNPY(fullfile(cSessFolder,'spike_times.npy'));
@@ -181,7 +181,7 @@ for cSess = 1 : NumUsedSess
 
     saveName = fullfile(cSessFolder,'UnitspikeAmpSave.mat');
     save(saveName,'UnitSPAmps','UnitLlmfits','-v7.3');
-    %%
+    %
 end
 
 

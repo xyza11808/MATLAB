@@ -325,6 +325,39 @@ v_noise = fminsearch(@(v) ErrorYData(v(1),v(2),v(3),v(4),x),([1 1 0 1])'); % how
 % hold on
 % plot3(Test2_datas(:,1)*30,Test2_datas(:,2)*30,Test2_datas(:,3)*30,'bo');
 
+%% 3d brain region mesh plot
+% ways to plot 3d brain meshes
+% load the corresponded .obj file, the file name is the corresponded "id"
+% for target region (not the atlas_is,it is the first column from the "structure_tree_safe_2017.csv" file)
+% and then load it with "loadawobj" function
+
+
+% [v,F]=loadawobj(['./Data/Allen_obj_files/',num2str(app.all_structures{app.UITable.Data{i,1},2}),'.obj']);
+% v = v/10; % change to pixel/slice value
+% if app.UITable.Data{i,5}
+%     if ~app.UITable.Data{i,6} % left only
+%         index_v = find(v(3,:)>app.mid_point);
+%         
+%         index_F = [];
+%         for j = 1:size(F,2)
+%             if any(ismember(F(:,j),index_v))
+%                 index_F = [index_F j];
+%             end
+%         end
+%         F(:,index_F) = [];
+%     end
+% else % right only
+%     index_v = find(v(3,:)<app.mid_point);
+%     
+%     index_F = [];
+%     for j = 1:size(F,2)
+%         if any(ismember(F(:,j),index_v))
+%             index_F = [index_F j];
+%         end
+%     end
+%     F(:,index_F) = [];
+% end
+% patch('Vertices',v','Faces',F','EdgeColor','none','FaceColor',str2num(app.UITable.Data{i,3}),'FaceAlpha',app.UITable.Data{i,4});
 
 
 

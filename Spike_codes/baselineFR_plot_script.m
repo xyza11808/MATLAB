@@ -1,9 +1,10 @@
 
-% cclr
+cclr
 
 % cSessFolder = pwd;
 clearvars ProbNPSess AUCValuesAll ChnArea_Strings BaselineFRANDchoice SigUnitCrossCoef
-cSessFolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
+% cSessFolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
+cSessFolder = pwd;
 
 load(fullfile(cSessFolder,'NPClassHandleSaved.mat'));
 load(fullfile(cSessFolder,'BaselinePredofBlocktype','SingleUnitAUC.mat'),'AUCValuesAll');
@@ -15,7 +16,8 @@ ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 % Smoothbin = [50,10]; %
 % ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, Smoothbin, double(behavResults.Time_stimOnset(:)));
 % save(fullfile(pwd,'ks2_5','NPClassHandleSaved.mat'),'ProbNPSess', 'PassSoundDatas', 'behavResults', '-v7.3');
-
+ProbNPSess.ksFolder = cSessFolder;
+ProbNPSess = ProbNPSess.ClusScreeningFun;
 SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds}{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
 ExcludedInds = (behavResults.Action_choice(:) == 2);
 
@@ -81,8 +83,12 @@ SigUnit_clusIDs = ProbNPSess.UsedClus_IDs(UnitSigInds);
 
 SigUnitCrossCoef = cell(NumSigUnits, 7);
 BaselineFRANDchoice = cell(NumSigUnits,5);
+%%
 for cU = 1 : NumSigUnits
-    %
+    %%
+    cU = 34;
+    close
+    
     cUnit = UnitSigInds(cU);
     cUnit_ClusID = SigUnit_clusIDs(cU);
     cClus_SampleTime = ProbNPSess.SpikeTimeSample(ProbNPSess.SpikeClus == cUnit_ClusID);
@@ -162,6 +168,8 @@ for cU = 1 : NumSigUnits
     xlabel('Bins');
     ylabel('Firing rates');
     title('Bf and Af baseline SP');
+    
+    %%
     cU_savename = fullfile(PlotSaveNames,sprintf('Unit%d FR and revfreqChoice crosscorr plot',cUnit));
     saveas(huf, cU_savename);
     print(huf,cU_savename,'-dpng','-r0');

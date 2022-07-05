@@ -14,9 +14,9 @@ dataSaveNames = fullfile(savefolder,'REgressorDataSave.mat');
 
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 clearvars RegressorInfosCell
-clc
+
 %% find target cluster inds and IDs
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexData.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
@@ -218,26 +218,33 @@ TaskEvents_Predlabel = AllTaskEvents(2,:);
 tic
 RegressorInfosCell = cell(size(BinnedSPdatas,1),3);
 rrr_RegressorInfosCell = cell(size(BinnedSPdatas,1),3);
-f = waitbar(0,'Session Calculation Start...');
+% f = waitbar(0,'Session Calculation Start...');
 NumNeurons = size(BinnedSPdatas,1);
-for cU = 1 : NumNeurons
-    [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
-        lassoelasticRegressor(BinnedSPdatas(cU,:), TaskEvents_predictor, 5);
-    if mean(ExplainVarStrc.fullmodel_explain_var) >= 0.02
-        [ExplainVarStrc_rrr, RegressorCoefs_rrr, RegressorPreds_rrr] = ...
-            rrr_lassoelasticRegressor(BinnedSPdatas(cU,:), TaskEvents_predictor, 5);
-        rrr_RegressorInfosCell(cU,:) = {ExplainVarStrc_rrr, ...
-            RegressorCoefs_rrr, RegressorPreds_rrr};
+ErrorU = zeros(NumNeurons,1);
+parfor cU = 1:NumNeurons
+    try
+        [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
+            lassoelasticRegressor(BinnedSPdatas(cU,:), TaskEvents_predictor, 5);
+        if mean(ExplainVarStrc.fullmodel_explain_var) >= 0.02
+            [ExplainVarStrc_rrr, RegressorCoefs_rrr, RegressorPreds_rrr] = ...
+                rrr_lassoelasticRegressor(BinnedSPdatas(cU,:), TaskEvents_predictor, 5);
+            rrr_RegressorInfosCell(cU,:) = {ExplainVarStrc_rrr, ...
+                RegressorCoefs_rrr, RegressorPreds_rrr};
+        end
+        RegressorInfosCell(cU,:) = {ExplainVarStrc, RegressorCoefs, RegressorPreds};
+    catch ME
+        fprintf('Errors for unit %d.\n',cU);
+        ErrorU(cU) = 1;
     end
-    RegressorInfosCell(cU,:) = {ExplainVarStrc, RegressorCoefs, RegressorPreds};
-    Progress = (cU - 1)/(NumNeurons - 1);
-    waitbar(Progress,f,sprintf('Processing %.2f%% of all calculation...',Progress*100));
+%     Progress = (cU - 1)/(NumNeurons - 1);
+%     waitbar(Progress,f,sprintf('Processing %.2f%% of all calculation...',Progress*100));
 end
 toc
-waitbar(1,f,'Calculation complete!');
-close(f);
+% waitbar(1,f,'Calculation complete!');
+% close(f);
 %%
 
 save(dataSaveNames, 'RegressorInfosCell',...
     'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','rrr_RegressorInfosCell', 'AreaUnitNumbers', '-v7.3');
+
 

@@ -6,7 +6,7 @@ PlotSavePath = fullfile(ksfolder,'Regressor_ANA');
 RegressorDatafile = fullfile(PlotSavePath,'REgressorDataSave.mat');
 load(RegressorDatafile);
 
-
+% prepare unit related area strings
 NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
