@@ -9,5 +9,5 @@ st = loadStructureTree([allen_atlas_path filesep 'structure_tree_safe_2017.csv']
 figure('position',[100 100 800 340]);
 sagAx = subplot(121);
 topdownAx = subplot(122);
-plotRecLocsMapByColor(sagAx,topdownAx,{'AUD'},'r',st,av);
+plotRecLocsMapByColor(sagAx,topdownAx,{'AUD'},[1 0 0],st,av); % color should have same rows as number of brain regions
 
