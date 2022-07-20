@@ -41,10 +41,10 @@ regressor_omitted_idx = cellfun(@(x) setdiff(1:size(predictorMtx_full,2),x), ...
 warning off
 fullmodel_coefs = cell(cvfolds,1);
 fullmodel_explain_var = zeros(cvfolds,2);
-PartialMd_coefs = cell(cvfolds,NumofPredictorTypes,2);
-PartialMd_explain_var = zeros(cvfolds,NumofPredictorTypes,2);
+PartialMd_coefs = cell(cvfolds,NumofPredictorTypes,3);
+PartialMd_explain_var = zeros(cvfolds,NumofPredictorTypes,3);
 fullmodel_pred_datas = zeros(length(Y),1,'single');
-PartialMD_pred_datas = zeros(length(Y),NumofPredictorTypes,2,'single');
+PartialMD_pred_datas = zeros(length(Y),NumofPredictorTypes,3,'single');
 FoldshufVarExplains = cell(cvfolds,1); 
 % seperate whole datasets into train and tests
 for cfold = 1 : cvfolds
@@ -64,56 +64,64 @@ for cfold = 1 : cvfolds
     [B, Y_fitinfo] = lassoglm(predictorMtx_full(TrnInds,:),Y(TrnInds),'normal',...
         'Alpha',alpha,'CV',5,'Lambda',lambda,'RelTol',1e-2,'MaxIter',100,'Options',opts);
 %     lassoPlot(B,Y_fitinfo,'plottype','CV'); 
-    IdxMinDevianceLambda = Y_fitinfo.IndexMinDeviance;  % Y_fitinfo.LambdaMinDeviance
-    Y_Coefs = [Y_fitinfo.Intercept(IdxMinDevianceLambda);B(:,IdxMinDevianceLambda)];
+    [TrainDevExplain, Test_explainVar, Y_pred, Y_Coefs] = ...
+        EVcalfun(Y_fitinfo, B, Y(TrnInds), Y(TesInds), predictorMtx_full(TesInds,:));
+    
     fullmodel_coefs{cfold} = Y_Coefs;
-    TrainNullDev = sum((Y(TrnInds) - mean(Y(TrnInds))).^2);
-    % the training devEvr is used to calculate overfit ratio, which is.
-    % (CV_train - CV_test)/CV_train, CV is the variance explained. This is
-    % called "overfit-explained variance"
-    TrainDevExplain = 1 - Y_fitinfo.Deviance(IdxMinDevianceLambda)/TrainNullDev;
-    
-    testPredictorMtx = predictorMtx_full(TesInds,:);
-    Y_pred = glmval(Y_Coefs, testPredictorMtx, 'identity');
-    
-    % overfitting can be observed by a negtive cv_full_explainVar values
-    cv_full_explainVar = 1 - sum((Y(TesInds) - Y_pred(:)).^2)/...
-        sum((Y(TesInds) - mean(Y(TesInds))).^2);
-    
     fullmodel_pred_datas(TesInds) = Y_pred;
-    fullmodel_explain_var(cfold,:) = [cv_full_explainVar, TrainDevExplain];
+    fullmodel_explain_var(cfold,:) = [Test_explainVar, TrainDevExplain];
     
     if IsShufCal
         FoldshufVarExplains{cfold} = modelshufthres(predictorMtx_full(TrnInds,:),Y(TrnInds), Y_fitinfo.LambdaMinDeviance, alpha,...
             testPredictorMtx, Y(TesInds));
     end
     %%
-    for cpredictor = 1 : NumofPredictorTypes
-        for cCal = 1 : 2
-            switch cCal
-                case 1
-                    cCal_pred_inds = regressor_omitted_idx{cpredictor};
-                case 2
-                    cCal_pred_inds = regressor_alone_idx{cpredictor};
+    if mean(fullmodel_explain_var(cfold,:)) > 0.01 % increase calculation speed
+        for cpredictor = 1 : NumofPredictorTypes
+            for cCal = 1 : 2
+                switch cCal
+                    case 1
+                        cCal_pred_inds = regressor_omitted_idx{cpredictor};
+                    case 2
+                        cCal_pred_inds = regressor_alone_idx{cpredictor};
+                end
+
+    %             Y_partial_fits = glmnet(predictorMtx_full(TrnInds,cCal_pred_inds),...
+    %                 Y(TrnInds),'gaussian',opts);
+                [BPrt, Y_fitinfo_Prt] = lassoglm(predictorMtx_full(TrnInds,cCal_pred_inds),...
+                    Y(TrnInds),'normal','Alpha',alpha,...
+                     'CV',5,'Lambda',lambda,'RelTol',1e-2,'MaxIter',100,'Options',opts);
+                [~,cv_partial_expVar,Y_partial_pred,cp_coefs] = ...
+                    EVcalfun(Y_fitinfo_Prt, BPrt, Y(TrnInds), Y(TesInds), predictorMtx_full(TesInds,cCal_pred_inds));
+                
+                PartialMd_coefs{cfold,cpredictor,cCal} = cp_coefs;
+                PartialMd_explain_var(cfold,cpredictor,cCal) = cv_partial_expVar;
+                PartialMD_pred_datas(TesInds,cpredictor,cCal) = Y_partial_pred;
+                
+                % calculate residue fitting if perform
+                % omitted_index_fitting
+                if cCal == 1
+                    % calculate single predictor fitting used residues
+                    Y_predTrain = glmval(cp_coefs, predictorMtx_full(TrnInds,cCal_pred_inds), 'identity');
+                    Residue_train = Y(TrnInds) - Y_predTrain;
+                    Residue_test = Y(TesInds) - Y_partial_pred;
+                    ResiAloneIndex = regressor_alone_idx{cpredictor};
+                    
+                    [BResi, Y_fitinfo_Resi] = lassoglm(predictorMtx_full(TrnInds,ResiAloneIndex),...
+                        Residue_train,'normal','Alpha',alpha,...
+                         'CV',5,'Lambda',lambda,'RelTol',1e-2,'MaxIter',100,'Options',opts);
+                    [~,cv_partial_expVarR,Y_partial_predR,cp_coefsR] = ...
+                        EVcalfun(Y_fitinfo_Resi, BResi, Residue_train, Residue_test, predictorMtx_full(TesInds,ResiAloneIndex));
+                    
+                    PartialMd_coefs{cfold,cpredictor,3} = cp_coefsR;
+                    PartialMd_explain_var(cfold,cpredictor,3) = cv_partial_expVarR;
+                    PartialMD_pred_datas(TesInds,cpredictor,3) = Y_partial_predR;
+                end
+                
             end
-            
-%             Y_partial_fits = glmnet(predictorMtx_full(TrnInds,cCal_pred_inds),...
-%                 Y(TrnInds),'gaussian',opts);
-            [BPrt, Y_fitinfo_Prt] = lassoglm(predictorMtx_full(TrnInds,cCal_pred_inds),...
-                Y(TrnInds),'normal','Alpha',alpha,...
-                 'CV',5,'Lambda',lambda,'RelTol',1e-2,'MaxIter',100,'Options',opts);
-            IdxMinDevLambda_prt = Y_fitinfo_Prt.IndexMinDeviance;
-            PartialMd_coefs{cfold,cpredictor,cCal} = [Y_fitinfo_Prt.Intercept(IdxMinDevLambda_prt);...
-                BPrt(:,IdxMinDevLambda_prt)]; 
-            
-            Y_partial_pred = glmval(PartialMd_coefs{cfold,cpredictor,cCal},...
-                predictorMtx_full(TesInds,cCal_pred_inds), 'identity');
-            cv_partial_expVar = 1 - sum((Y_partial_pred(:) - Y(TesInds)).^2)/...
-                sum((Y(TesInds) - mean(Y(TesInds))).^2);
-            
-            PartialMd_explain_var(cfold,cpredictor,cCal) = cv_partial_expVar;
-            PartialMD_pred_datas(TesInds,cpredictor,cCal) = Y_partial_pred;
         end
+    else
+        PartialMD_pred_datas(TesInds,:,:) = mean(Y(TesInds));
     end
 %%
 end
@@ -152,4 +160,22 @@ parfor cR = 1 : numRepeats
     
 end
 
+function [TrainDevExplain, Test_explainVar, Y_pred, Y_Coefs] = ...
+    EVcalfun(FitInfo, B, TrainY, TestY, TestX)
+%
+IdxMinDevianceLambda = FitInfo.IndexMinDeviance;  % Y_fitinfo.LambdaMinDeviance
+Y_Coefs = [FitInfo.Intercept(IdxMinDevianceLambda);B(:,IdxMinDevianceLambda)];
+
+TrainNullDev = sum((TrainY - mean(TrainY)).^2);
+% the training devEvr is used to calculate overfit ratio, which is.
+% (CV_train - CV_test)/CV_train, CV is the variance explained. This is
+% called "overfit-explained variance"
+TrainDevExplain = 1 - FitInfo.Deviance(IdxMinDevianceLambda)/TrainNullDev;
+
+% testPredictorMtx = predictorMtx_full(TesInds,:);
+Y_pred = glmval(Y_Coefs, TestX, 'identity');
+
+% overfitting can be observed by a negtive cv_full_explainVar values
+Test_explainVar = 1 - sum((TestY - Y_pred(:)).^2)/...
+    sum((TestY - mean(TestY)).^2);
 

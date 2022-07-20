@@ -331,7 +331,7 @@ v_noise = fminsearch(@(v) ErrorYData(v(1),v(2),v(3),v(4),x),([1 1 0 1])'); % how
 % for target region (not the atlas_is,it is the first column from the "structure_tree_safe_2017.csv" file)
 % and then load it with "loadawobj" function
 
-
+% mid_point = 570     % 1140/2
 % [v,F]=loadawobj(['./Data/Allen_obj_files/',num2str(app.all_structures{app.UITable.Data{i,1},2}),'.obj']);
 % v = v/10; % change to pixel/slice value
 % if app.UITable.Data{i,5}

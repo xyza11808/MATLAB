@@ -1,12 +1,12 @@
 
 % ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
-ksfolder = pwd;
+% ksfolder = pwd;
 
 savefolder = fullfile(ksfolder,'Regressor_ANA');
 if ~isfolder(savefolder)
     mkdir(savefolder);
 end
-dataSaveNames = fullfile(savefolder,'REgressorDataSave.mat');
+dataSaveNames = fullfile(savefolder,'REgressorDataSave3.mat');
 % disp(exist(dataSaveNames,'file'));
 % if exist(dataSaveNames,'file')
 %     return;
@@ -16,7 +16,7 @@ load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 clearvars RegressorInfosCell
 
 %% find target cluster inds and IDs
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexData2.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
@@ -76,8 +76,8 @@ end
 BinnedSPdatas = BinnedSPdatas./nanstd(BinnedSPdatas,[],2);
 
 %% construct behavior datas
-StimWin = single([-0.04,0.3]);
-ChoiceWin = ([-0.1,1]);
+StimWin = single([-0.1,0.4]);
+ChoiceWin = ([-0.1,2]);
 
 StimFrameWins = round(StimWin(1)/TimeBinSize):round(StimWin(2)/TimeBinSize);
 Behav_stimOnset = single(behavResults.Time_stimOnset(:))/1000; % seconds

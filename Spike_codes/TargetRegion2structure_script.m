@@ -76,7 +76,7 @@ TargetRegionNamesAll = fieldnames(BrainRegionStrc.BrainRegions);
 NumofTargetAreas = length(TargetRegionNamesAll);
 %%
 UnitNumsAll = zeros(NumprocessedNPSess,1);
-for cP = 1 : NumprocessedNPSess
+for cP = 1 : 1%NumprocessedNPSess
     %
 %     cPath = SessionFolders{cP};
 %     cPath = strrep(SessionFolders{cP},'F:\','E:\NPCCGs\');

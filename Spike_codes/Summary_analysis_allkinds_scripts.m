@@ -1214,12 +1214,12 @@ Areawise_RegressorEVar = cell(NumUsedSess,NumAllTargetAreas,3);
 
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
-    cSessPath = strrep(SessionFolders{cS},'F:\','P:\'); % 'E:\NPCCGs\'
-%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+%     cSessPath = strrep(SessionFolders{cS},'F:\','P:\'); % 'E:\NPCCGs\'
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     try
-        RegressorDatafile = fullfile(ksfolder,'Regressor_ANA','REgressorDataSave.mat');
+        RegressorDatafile = fullfile(ksfolder,'Regressor_ANA','REgressorDataSave2.mat');
         RegressorDataStrc = load(RegressorDatafile);
         NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
     catch ME
@@ -1296,14 +1296,15 @@ end
 %%
 UsedAreaInds = ~isnan(ExplainVarsMtx(:,1));
 UsedAreaStrings = BrainAreasStr(UsedAreaInds);
-UsedAreaFracsAll = ExplainVarsMtx(UsedAreaInds,:);
+UsedAreaFracsAll = ExplainVarsMtx(UsedAreaInds,[1,2,3,5]); % exclude reward column
 
 [~,sortInds] = sort(UsedAreaFracsAll(:,2),'descend');
 TotalUsedAreaNum = length(sortInds);
 figure;
 bar(UsedAreaFracsAll(sortInds,2:end),'stacked')
 set(gca,'xtick',1:TotalUsedAreaNum,'xticklabel',UsedAreaStrings(sortInds));
-
+legend({'Stim','Choice','BlockType'},'box','off');
+set(gca,'box','off');
 %%
 RankDatas = [1-UsedAreaFracsAll(:,2),UsedAreaFracsAll(:,3),UsedAreaFracsAll(:,5)];
 CenterLoc = mean(RankDatas);
