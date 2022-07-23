@@ -40,7 +40,7 @@ nd = min([maxNpc size(sp1,3) size(sp2,3)]);
 sp1_new = permute(sp1,[1,3,2]); % to avoid squeeze operation
 sp2_new = permute(sp2,[1,3,2]);
 % nd = min([size(sp1,3) size(sp2,3)]);
-parfor t1 = 1:nBins
+for t1 = 1:nBins
     
     % reducing dimensionality to help regularize
 %     X = squeeze(sp1(:,t1,:));

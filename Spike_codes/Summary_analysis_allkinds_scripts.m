@@ -1326,6 +1326,98 @@ zlabel('BT')
 set(gca,'ylim',[0 0.8])
 
 
+%% summary analysis 7, canonical correlation value
+cclr
+
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+
+BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
+        'Sheet',1);
+BrainAreasStrCC = BrainAreasStrC(2:end);
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
+BrainAreasStr = [BrainAreasStrCC(~EmptyInds);{'Others'}];
+
+FullBrainStrC = readcell(AllSessFolderPathfile,'Range','E:E',...
+        'Sheet',1);
+FullBrainStrCC = FullBrainStrC(2:end);
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+% EmptyInds2 = cellfun(@(x) isempty(x) ||any(ismissing(x)),FullBrainStrCC);
+FullBrainStr = [FullBrainStrCC(~EmptyInds);{'Others'}];
+
+SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
+        'Sheet',1);
+SessionFoldersRaw = SessionFoldersC(2:end);
+EmptyInds2 = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
+SessionFolders = SessionFoldersRaw(~EmptyInds2);
+
+NumUsedSess = length(SessionFolders);
+NumAllTargetAreas = length(BrainAreasStr);
+
+%%
+Areawise_RegressorEVar = cell(NumUsedSess,NumAllTargetAreas,3);
+
+for cS = 1 :  NumUsedSess
+%     cSessPath = SessionFolders{cS}; %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','P:\'); % 'E:\NPCCGs\'
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    
+    ksfolder = fullfile(cSessPath,'ks2_5');
+    try
+        CCADatafile = fullfile(ksfolder,'jeccAnA','JeccData.mat');
+        CCADataStrc = load(CCADatafile);
+        
+    catch ME
+        fprintf('Error exists in session %d.\n',cS);
+    end
+    
+    UsedAreaNames = CCADataStrc.NewAdd_ExistAreaNames;
+    
+    NumAreas = length(NewAdd_ExistAreaNames);
+    if NumAreas < 1
+        warning('There is no target units within following folder:\n %s \n ##################\n',cSessPath);
+        continue;
+    end
+    %
+    for cAreaInds = 1 : NumAreas 
+        cAreaStr = NewAdd_ExistAreaNames{cAreaInds};
+%         if isempty(cAreaStr)
+%             continue;
+%         end
+        AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
+        
+        cA_Index_Inds = AreaNameIndexVec == cAreaInds;
+        
+        Areawise_RegressorEVar(cS,AreaMatchInds,:) = {AllfullmodelExplainVar(cA_Index_Inds,1),...
+            OmitMDExpVarMtx(cA_Index_Inds,:),AloneMDExpVarMtx(cA_Index_Inds,:)};
+        
+    end
+end
+
+%%
+FullmdEVar_Alls = Areawise_RegressorEVar(:,:,1); % 6:end %exclude the fist 5 sessions due to calculation error
+AlonemdEVar_Alls = Areawise_RegressorEVar(:,:,3);
+
+ExplainVarsMtx = nan(NumAllTargetAreas, 5);
+for cArea = 1 : NumAllTargetAreas
+    cA_fullmdVars = cell2mat(FullmdEVar_Alls(:,cArea));
+    if length(cA_fullmdVars) > 20
+        cA_AlonemfEVar_all = cell2mat(AlonemdEVar_Alls(:,cArea));
+        FullMDSigRegInds = cA_fullmdVars > 0.02;
+        AlonemdSigRegInds = repmat(cA_fullmdVars,1,size(cA_AlonemfEVar_all,2)) > 0.02 & cA_AlonemfEVar_all > 0.011;
+        
+        ExplainVarsMtx(cArea,:) = [mean(FullMDSigRegInds), mean(AlonemdSigRegInds)];
+        
+    end
+    
+end
+
+%%
+
+
+
+
 %%
 % cclr
 % 

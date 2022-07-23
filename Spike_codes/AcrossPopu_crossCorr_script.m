@@ -1,7 +1,7 @@
 
 clearvars CalResults OutDataStrc ExistField_ClusIDs
 
-ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
+% ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
 % ksfolder = pwd;
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 
@@ -64,7 +64,7 @@ ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
 NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 % SMBinDataMtxRaw = SMBinDataMtx;
-clearvars ProbNPSess
+% clearvars ProbNPSess
 %%
 % TimeBinSize = single(0.05);
 % 
@@ -153,33 +153,58 @@ clearvars ProbNPSess
 % plot(BinCenters(~SessBin_trainInds(:,1)),smooth(PredBT,15),'bo');
 
 %% joint-correlation analysis
-if isempty(gcp('nocreate'))
-    parpool('local',6);
-end
-
+% if isempty(gcp('nocreate'))
+%     parpool('local',6);
+% end
+tic
 NumCalculations = (Numfieldnames-1)*Numfieldnames/2;
 CalResults = cell(NumCalculations,5);
+NumRepeats = 100;
+TrialNums = size(NewBinnedDatas,1);
+SampleTrNums = round(TrialNums*0.8);
+RandIndsData = rand(SampleTrNums,NumCalculations,NumRepeats);
+sampleInds = rand(TrialNums,NumCalculations,NumRepeats);
+
 k = 1;
 for cAr = 1 : Numfieldnames
     for cAr2 = cAr+1 : Numfieldnames
         
-        Area1_binned_datas = permute(NewBinnedDatas(:,ExistField_ClusIDs{cAr,2},:),[1,3,2]);
-        Area2_binned_datas = permute(NewBinnedDatas(:,ExistField_ClusIDs{cAr2,2},:),[1,3,2]);
-        [jPECC_val, jPECC_p] = jPECC(Area1_binned_datas,Area2_binned_datas,...
-            5,[],5);
-        CalResults(k,:) = {jPECC_val, jPECC_p, ...
+        % repeated sampling of 80% of all trials
+        jPECC_val_Rep = cell(NumRepeats,2);
+        parfor cRepeat = 1 : NumRepeats
+            RandsampleV = sampleInds(:,k,cRepeat);
+            RandsampleMore = RandsampleV(RandsampleV > 0.1);
+            RandsampleMoreIndex = find(RandsampleV > 0.1);
+            [~,RandsampleII] = sort(RandsampleMore);
+            RandSampleShufIndex = RandsampleMoreIndex(RandsampleII);
+            cR_sample_Index = RandSampleShufIndex(1:SampleTrNums);
+            
+            Area1_binned_datas = permute(NewBinnedDatas(cR_sample_Index,ExistField_ClusIDs{cAr,2},:),[1,3,2]);
+            Area2_binned_datas = permute(NewBinnedDatas(cR_sample_Index,ExistField_ClusIDs{cAr2,2},:),[1,3,2]);
+            [jPECC_val, ~] = jPECC(Area1_binned_datas,Area2_binned_datas,...
+                5,[],5);
+            
+            
+            [~, TrialShufInds] = sort(RandIndsData(:,k,cRepeat));
+            [jPECC_shuf, ~] = jPECC(Area1_binned_datas(TrialShufInds,:,:),Area2_binned_datas,...
+                5,[],5);
+            jPECC_val_Rep(cRepeat,:) = {jPECC_val,jPECC_shuf};
+        end
+            
+            
+        CalResults(k,:) = {jPECC_val_Rep(:,1), jPECC_val_Rep(:,2), ...
             NewAdd_ExistAreaNames{cAr},NewAdd_ExistAreaNames{cAr2},...
             [numel(ExistField_ClusIDs{cAr,1}),numel(ExistField_ClusIDs{cAr2,1})]};
         k = k + 1;
     end
 end
-
+disp(toc);
 %%
 Savepath = fullfile(ksfolder,'jeccAnA');
 if ~isfolder(Savepath)
     mkdir(Savepath);
 end
-dataSavePath = fullfile(Savepath,'JeccData.mat');
+dataSavePath = fullfile(Savepath,'JeccDataNew.mat');
 
 save(dataSavePath,'CalResults','OutDataStrc','ExistField_ClusIDs','NewAdd_ExistAreaNames','-v7.3')
 %%

@@ -37,6 +37,11 @@ predictorMtx_full = cat(2,Predictors{:});
 
 % find reduced ranks
 [~,b,~] = CanonCor2all({Y},{predictorMtx_full});
+% unknown reason could cause b values into complex format, check and just
+% use the real part to avoid lassofit error
+if ~isreal(b)
+    b = real(b);
+end
 
 alpha = 0.5;
 lambda = 2.^(-12:0.4:-1);
@@ -161,6 +166,9 @@ for cfold = 1 : cvfolds
                 cCal_rrm_predMtx = cRegPredData;
             else
                 [~,b2,~] = CanonCor2all({Y},{cRegPredData});
+                if ~isreal(b2)
+                    b2 = real(b2);
+                end
                 MaxCompNums = size(cRegPredData,2);
                 
                 CompSerials = 2:min(MaxCompNums,30);
