@@ -76,17 +76,18 @@ TargetRegionNamesAll = fieldnames(BrainRegionStrc.BrainRegions);
 NumofTargetAreas = length(TargetRegionNamesAll);
 %%
 UnitNumsAll = zeros(NumprocessedNPSess,1);
-for cP = 1 : 1%NumprocessedNPSess
-    %
+for cP = 1 : NumprocessedNPSess
+     fprintf('Processing session %d...\n',cP);
 %     cPath = SessionFolders{cP};
 %     cPath = strrep(SessionFolders{cP},'F:\','E:\NPCCGs\');
-    cPath = fullfile(strrep(SessionFolders{cP},'F:','I:\ksOutput_backup'));
+%     cPath = fullfile(strrep(SessionFolders{cP},'F:','I:\ksOutput_backup')); %
+    cPath = fullfile(strrep(SessionFolders{cP},'F:','P:'));
     load(fullfile(cPath,sortingcode_string,'NPClassHandleSaved.mat'));
 %     ProbNPSess = Newclasshandle;
-    if isempty(ProbNPSess.ChannelAreaStrs)
+%     if isempty(ProbNPSess.ChannelAreaStrs)
         load(fullfile(cPath,sortingcode_string,'Chnlocation.mat'));
         ProbNPSess.ChannelAreaStrs = ChnArea_Strings(2:end,:);
-    end
+%     end
     %
     UnitMaxampChnInds = ProbNPSess.ChannelUseds_id; % already had +1 for matlab indexing
 %     UnitNumsAll(cP) = length(UnitMaxampChnInds);
@@ -118,7 +119,7 @@ for cP = 1 : 1%NumprocessedNPSess
         IstargetfieldExist(end) = true;
     end
     SessAreaIndexStrc.UsedAbbreviations = IstargetfieldExist;
-    SessAreaIndex_saveName = fullfile(cPath,sortingcode_string,'SessAreaIndexData.mat');
+    SessAreaIndex_saveName = fullfile(cPath,sortingcode_string,'SessAreaIndexDataNew.mat');
     save(SessAreaIndex_saveName,'SessAreaIndexStrc','-v7.3');
     clearvars ProbNPSess
     %

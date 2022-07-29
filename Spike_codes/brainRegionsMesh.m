@@ -30,11 +30,14 @@ hold on;
 
 for cA = 1 : NumofAreas
     cA_nameStr = BrainAreas{cA};
-    Name2treeInds = find(strcmpi(st.acronym,cA_nameStr));
+    Name2treeInds = find(strcmp(st.acronym,cA_nameStr));
     if isempty(Name2treeInds)
         warning('No target brain region named %s, Please check your input values.\n',cA_nameStr);
     else
        AreaIDs = st.id(Name2treeInds);
+       if length(AreaIDs) ~= 1
+           fprintf('Number of AreaID is not correct.\n');
+       end
        objfileFullPath = fullfile(objFilePath,num2str(AreaIDs,'%d.obj'));
        if ~exist(objfileFullPath,'file')
            warning('Unable to find target file name:\n %s ...\n',objfileFullPath);

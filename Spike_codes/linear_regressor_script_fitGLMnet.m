@@ -1,6 +1,6 @@
 
 % ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
-% ksfolder = pwd;
+ksfolder = pwd;
 
 savefolder = fullfile(ksfolder,'Regressor_ANA');
 if ~isfolder(savefolder)
@@ -38,7 +38,6 @@ for cA = 1 : Numfieldnames
 end
 
 %%
-
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 
 TaskTrigOnTimes = ProbNPSess.UsedTrigOnTime{ProbNPSess.CurrentSessInds};
@@ -77,7 +76,8 @@ BinnedSPdatas = BinnedSPdatas./nanstd(BinnedSPdatas,[],2);
 
 %% construct behavior datas
 StimWin = single([-0.1,0.4]);
-ChoiceWin = ([-0.1,2]);
+ChoiceWin = ([-0.3,2]);
+ReWin = ([-0.5,1]);
 
 StimFrameWins = round(StimWin(1)/TimeBinSize):round(StimWin(2)/TimeBinSize);
 Behav_stimOnset = single(behavResults.Time_stimOnset(:))/1000; % seconds
@@ -117,6 +117,8 @@ for cChoice = 1 : 2
 end
 
 % reward event times
+ReFrameWins = round(ReWin(1)/TimeBinSize):round(ReWin(2)/TimeBinSize);
+
 Behav_RewardT = single(behavResults.Time_reward(:))/1000; % seconds
 Behav_RewardTRaw = Behav_RewardT;
 Behav_RewardT(Behav_RewardT == 0 & Behav_Choice ~= 2) = ...
@@ -125,15 +127,16 @@ Behav_SessReT = Behav_RewardT + TaskTrigTimeAligns(:);
 
 ReEventTimeBin = zeros(2, NumofSPcounts,'single');
 ReEventshiftMtxs = cell(2,2);
-ReEventTimeBin(1,:) = histcounts(Behav_RewardT(Behav_RewardTRaw > 0),BinEdges);
+ReEventTimeBin(1,:) = histcounts(Behav_SessReT(Behav_RewardTRaw > 0),BinEdges);
 [ShiftMtx, mtxlabel] = EventPad2Mtx(ReEventTimeBin(1,:),...
-        ChoiceFrameWins, {'Re1'});
+        ReFrameWins, {'Re1'});
 ReEventshiftMtxs(:,1) = {ShiftMtx, mtxlabel};
-ReEventTimeBin(2,:) = histcounts(Behav_RewardT(Behav_RewardTRaw == 0),BinEdges);
+ReEventTimeBin(2,:) = histcounts(Behav_SessReT(Behav_RewardTRaw == 0),BinEdges);
 [ShiftMtx, mtxlabel] = EventPad2Mtx(ReEventTimeBin(2,:),...
-        ChoiceFrameWins, {'Re2'});
+        ReFrameWins, {'Re2'});
 ReEventshiftMtxs(:,2) = {ShiftMtx, mtxlabel};
 
+% BlockType values
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
 % TotalTrialNum
 BTDataBin = zeros(2, NumofSPcounts,'single');
@@ -162,34 +165,47 @@ if BlockSectionInfo.BlockTrScales(end,2) < TotalTrialNum
 end
 BTDataBin(2,:) = 1 - BTDataBin(1,:);
 BTEventshiftMtxs = {(BTDataBin(1,:))',(BTDataBin(2,:))';'BTlow','BThigh'};
+%
+% TrIndex value assigns
+TrIndexBins = zeros(1, NumofSPcounts,'single');
+Behav_SessTrOnBin = round(TaskTrigTimeAligns/TimeBinSize);
+TotalTrNum = numel(Behav_SessTrOnBin);
+for cTr = 1 : TotalTrNum-1
+   TrIndexBins(Behav_SessTrOnBin(cTr)+1:Behav_SessTrOnBin(cTr+1)) = cTr;
+end
+TrIndexBins(Behav_SessTrOnBin(TotalTrNum):(Behav_SessTrOnBin(TotalTrNum)+6/TimeBinSize)) = TotalTrNum;
 
-% %%
-% % ii = 1;
-% predictors = cell(2,length(Events_times));
-% for ii = 1 : length(Events_times)
-%     [ShiftMtx, EventIndex_vec] = GeneratePredictors(Events_times{ii}, ...
-%         Events_Win{ii}, EventsLabelAndIndex{ii,1}, ...
-%         EventsLabelAndIndex{ii,2}, BinCenters, TimeBinSize);
-%     predictors(:,ii) = {ShiftMtx, EventIndex_vec};
-% end
+TrIndexEventshiftMtxs = {TrIndexBins';'TrialIndex'};
+
 %% including only some times before stim onset and offset, exclude extra time binns
 Behav_SessStimOnBin = round(Behav_SessStimOnTime/TimeBinSize);
+
 UsedDataBinScales = round([-1,4]/TimeBinSize);
 TotalTrNum = numel(Behav_SessStimOnTime);
 UsedTimeBins = false(1,NumofSPcounts);
+cTrExcludedBins = zeros(TotalTrNum,2);
 for cTr = 1 : TotalTrNum
-    cTrUsedBins = [Behav_SessStimOnBin(cTr) + UsedDataBinScales(1),...
-        Behav_SessStimOnBin(cTr) + UsedDataBinScales(2)];
+    if cTr < TotalTrNum
+        cTrUsedBins = [Behav_SessStimOnBin(cTr) + UsedDataBinScales(1),...
+            min(Behav_SessStimOnBin(cTr) + UsedDataBinScales(2),Behav_SessTrOnBin(cTr+1))];
+    else
+        cTrUsedBins = [Behav_SessStimOnBin(cTr) + UsedDataBinScales(1),...
+            Behav_SessStimOnBin(cTr) + UsedDataBinScales(2)];
+    end
     UsedTimeBins(cTrUsedBins(1):cTrUsedBins(2)) = true;
-    
+    cTrExcludedBins(cTr,1) = cTrUsedBins(1) - Behav_SessTrOnBin(cTr);
+    if cTr < TotalTrNum
+       cTrExcludedBins(cTr,2) =  Behav_SessTrOnBin(cTr+1) - cTrUsedBins(2);
+    end
 end
 
 %% only used designed time bins for speed
-
+% UsedTimeBins = true(1,NumofSPcounts);
 StimEventshiftMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),StimEventshiftMtxs(1,:),'un',0);StimEventshiftMtxs(2,:)];
 ChoiceEventshiftMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),ChoiceEventshiftMtxs(1,:),'un',0);ChoiceEventshiftMtxs(2,:)];
 ReEventshiftMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),ReEventshiftMtxs(1,:),'un',0);ReEventshiftMtxs(2,:)];
 BTEventshiftMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),BTEventshiftMtxs(1,:),'un',0);BTEventshiftMtxs(2,:)];
+TrIndexMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),TrIndexEventshiftMtxs(1,:),'un',0);TrIndexEventshiftMtxs(2,:)];
 
 BinnedSPdatas = BinnedSPdatas(:,UsedTimeBins);
 
@@ -202,15 +218,17 @@ if eventMerge == 1
     ChoiceEventshiftMtxs_Used = {cat(2,ChoiceEventshiftMtxsNew{1,:});cat(2,ChoiceEventshiftMtxsNew{2,:})};
     ReEventshiftMtxs_Used = {cat(2,ReEventshiftMtxsNew{1,:});cat(2,ReEventshiftMtxsNew{2,:})};
     BTEventshiftMtxs_Used = {cat(2,BTEventshiftMtxsNew{1,:});cat(2,BTEventshiftMtxsNew{2,:})};
+    TrIndexMtxsNew_Used = TrIndexMtxsNew;
 else
     StimEventshiftMtxs_Used = StimEventshiftMtxsNew;
     ChoiceEventshiftMtxs_Used = ChoiceEventshiftMtxsNew;
     ReEventshiftMtxs_Used = ReEventshiftMtxsNew;
     BTEventshiftMtxs_Used = BTEventshiftMtxsNew;
+    TrIndexMtxsNew_Used = TrIndexMtxsNew;
 end
-
+%%
 AllTaskEvents = [StimEventshiftMtxs_Used,ChoiceEventshiftMtxs_Used,...
-    ReEventshiftMtxs_Used,BTEventshiftMtxs_Used];
+    BTEventshiftMtxs_Used,TrIndexMtxsNew_Used]; %,BTEventshiftMtxs_Used,ReEventshiftMtxs_Used
 TaskEvents_predictor = AllTaskEvents(1,:);
 TaskEvents_Predlabel = AllTaskEvents(2,:);
 
@@ -246,5 +264,40 @@ toc
 
 save(dataSaveNames, 'RegressorInfosCell',...
     'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','rrr_RegressorInfosCell', 'AreaUnitNumbers', '-v7.3');
+
+
+
+%%
+% predictMtxAll = cat(2,TaskEvents_predictor{:});
+% TaskTrigOnBins = round(TaskTrigTimeAligns/0.1);
+% NumPredictor = size(predictMtxAll,2);
+% PredictorSize = cellfun(@(x) size(x,2),TaskEvents_predictor);
+% PredictorSizePos = cumsum(PredictorSize);
+% %%
+% figure('position',[100 100 630 900]);
+% ExamplepredictorData = predictMtxAll(TaskTrigOnBins(2):TaskTrigOnBins(7),:);
+% PlotBinNum = size(ExamplepredictorData,1);
+% him = imagesc(ExamplepredictorData);
+% colormap jet
+% set(him,'alphadata',abs(ExamplepredictorData) > 0);
+% ExampleTrStartInds = TaskTrigOnBins(2:7) - TaskTrigOnBins(2)+1;
+% for cTr = 1 : length(ExampleTrStartInds)
+%     line([0.5 NumPredictor+0.5],[ExampleTrStartInds(cTr)+0.5 ExampleTrStartInds(cTr)+0.5],'Color','c','linewidth',1.6);
+% end
+% set(gca,'box','off')
+% for cEdge = 1 : length(PredictorSizePos)
+%     line([PredictorSizePos(cEdge) PredictorSizePos(cEdge)],[0.5 PlotBinNum+0.5],'Color','k','linewidth',1.2);
+% end
+% 
+% %%
+% set(gca,'xtick',[20 70 110 124],'xticklabel',{'Stim','Choice','Reward','Block'},...
+%     'ytick',[30 80 130 200 260],'yticklabel',{'Trial1','Trial2','Trial3','Trial4','Trial5'});
+% 
+% %%
+% 
+% saveas(gcf,'Designed predictor matrix plot');
+% saveas(gcf,'Designed predictor matrix plot','png');
+% saveas(gcf,'Designed predictor matrix plot','pdf');
+% 
 
 

@@ -3,8 +3,8 @@ cclr
 %% 1) Load CCF and set paths for slide and slice images
 
 % Load CCF atlas
-% allen_atlas_path = 'E:\MatCode\AllentemplateData';
-allen_atlas_path = 'E:\AllenCCF';
+allen_atlas_path = 'E:\MatCode\AllentemplateData';
+% allen_atlas_path = 'E:\AllenCCF';
 tv = readNPY([allen_atlas_path filesep 'template_volume_10um.npy']);
 av = readNPY([allen_atlas_path filesep 'annotation_volume_10um_by_index.npy']);
 st = loadStructureTree([allen_atlas_path filesep 'structure_tree_safe_2017.csv']);

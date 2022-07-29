@@ -1210,7 +1210,7 @@ NumUsedSess = length(SessionFolders);
 NumAllTargetAreas = length(BrainAreasStr);
 
 %%
-Areawise_RegressorEVar = cell(NumUsedSess,NumAllTargetAreas,3);
+Areawise_RegressorEVar = cell(NumUsedSess,NumAllTargetAreas,4);
 
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
@@ -1219,9 +1219,9 @@ for cS = 1 :  NumUsedSess
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     try
-        RegressorDatafile = fullfile(ksfolder,'Regressor_ANA','REgressorDataSave2.mat');
+        RegressorDatafile = fullfile(ksfolder,'Regressor_ANA','REgressorDataSave3.mat');
         RegressorDataStrc = load(RegressorDatafile);
-        NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
+        NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexData2.mat'));
     catch ME
         fprintf('Error exists in session %d.\n',cS);
     end
@@ -1232,6 +1232,8 @@ for cS = 1 :  NumUsedSess
     OmitMDExpVarMtx = cat(1,OmitMDExpVar{:});
     AloneMDExpVar = cellfun(@(x) x(:,2)',PartialMDExplain,'un',0);
     AloneMDExpVarMtx = cat(1,AloneMDExpVar{:});
+    ResidueMDExpVar = cellfun(@(x) x(:,3)',PartialMDExplain,'un',0);
+    ResidueMDExpVarMtx = cat(1,ResidueMDExpVar{:});
     % prepare unit related area strings
     
     NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
@@ -1270,14 +1272,14 @@ for cS = 1 :  NumUsedSess
         cA_Index_Inds = AreaNameIndexVec == cAreaInds;
         
         Areawise_RegressorEVar(cS,AreaMatchInds,:) = {AllfullmodelExplainVar(cA_Index_Inds,1),...
-            OmitMDExpVarMtx(cA_Index_Inds,:),AloneMDExpVarMtx(cA_Index_Inds,:)};
+            OmitMDExpVarMtx(cA_Index_Inds,:),AloneMDExpVarMtx(cA_Index_Inds,:),ResidueMDExpVarMtx(cA_Index_Inds,:)};
         
     end
 end
 
 %%
 FullmdEVar_Alls = Areawise_RegressorEVar(:,:,1); % 6:end %exclude the fist 5 sessions due to calculation error
-AlonemdEVar_Alls = Areawise_RegressorEVar(:,:,3);
+AlonemdEVar_Alls = Areawise_RegressorEVar(:,:,4);
 
 ExplainVarsMtx = nan(NumAllTargetAreas, 5);
 for cArea = 1 : NumAllTargetAreas
@@ -1285,7 +1287,7 @@ for cArea = 1 : NumAllTargetAreas
     if length(cA_fullmdVars) > 20
         cA_AlonemfEVar_all = cell2mat(AlonemdEVar_Alls(:,cArea));
         FullMDSigRegInds = cA_fullmdVars > 0.02;
-        AlonemdSigRegInds = repmat(cA_fullmdVars,1,size(cA_AlonemfEVar_all,2)) > 0.02 & cA_AlonemfEVar_all > 0.011;
+        AlonemdSigRegInds = repmat(cA_fullmdVars,1,size(cA_AlonemfEVar_all,2)) > 0.02 & cA_AlonemfEVar_all > 0.02;
         
         ExplainVarsMtx(cArea,:) = [mean(FullMDSigRegInds), mean(AlonemdSigRegInds)];
         
@@ -1298,7 +1300,7 @@ UsedAreaInds = ~isnan(ExplainVarsMtx(:,1));
 UsedAreaStrings = BrainAreasStr(UsedAreaInds);
 UsedAreaFracsAll = ExplainVarsMtx(UsedAreaInds,[1,2,3,5]); % exclude reward column
 
-[~,sortInds] = sort(UsedAreaFracsAll(:,2),'descend');
+[~,sortInds] = sort(UsedAreaFracsAll(:,4),'descend');
 TotalUsedAreaNum = length(sortInds);
 figure;
 bar(UsedAreaFracsAll(sortInds,2:end),'stacked')
@@ -1327,7 +1329,7 @@ set(gca,'ylim',[0 0.8])
 
 
 %% summary analysis 7, canonical correlation value
-cclr
+% cclr
 
 % AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
 AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
@@ -1356,7 +1358,7 @@ NumUsedSess = length(SessionFolders);
 NumAllTargetAreas = length(BrainAreasStr);
 
 %%
-Areawise_RegressorEVar = cell(NumUsedSess,NumAllTargetAreas,3);
+Sess_CCAdatasAll = cell(NumUsedSess,5);
 
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
@@ -1372,48 +1374,78 @@ for cS = 1 :  NumUsedSess
         fprintf('Error exists in session %d.\n',cS);
     end
     
-    UsedAreaNames = CCADataStrc.NewAdd_ExistAreaNames;
-    
-    NumAreas = length(NewAdd_ExistAreaNames);
-    if NumAreas < 1
-        warning('There is no target units within following folder:\n %s \n ##################\n',cSessPath);
+    CCA_pairsData = CCADataStrc.CalResults;
+    if isempty(CCA_pairsData)
         continue;
     end
-    %
-    for cAreaInds = 1 : NumAreas 
-        cAreaStr = NewAdd_ExistAreaNames{cAreaInds};
-%         if isempty(cAreaStr)
-%             continue;
-%         end
-        AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
-        
-        cA_Index_Inds = AreaNameIndexVec == cAreaInds;
-        
-        Areawise_RegressorEVar(cS,AreaMatchInds,:) = {AllfullmodelExplainVar(cA_Index_Inds,1),...
-            OmitMDExpVarMtx(cA_Index_Inds,:),AloneMDExpVarMtx(cA_Index_Inds,:)};
-        
-    end
-end
-
-%%
-FullmdEVar_Alls = Areawise_RegressorEVar(:,:,1); % 6:end %exclude the fist 5 sessions due to calculation error
-AlonemdEVar_Alls = Areawise_RegressorEVar(:,:,3);
-
-ExplainVarsMtx = nan(NumAllTargetAreas, 5);
-for cArea = 1 : NumAllTargetAreas
-    cA_fullmdVars = cell2mat(FullmdEVar_Alls(:,cArea));
-    if length(cA_fullmdVars) > 20
-        cA_AlonemfEVar_all = cell2mat(AlonemdEVar_Alls(:,cArea));
-        FullMDSigRegInds = cA_fullmdVars > 0.02;
-        AlonemdSigRegInds = repmat(cA_fullmdVars,1,size(cA_AlonemfEVar_all,2)) > 0.02 & cA_AlonemfEVar_all > 0.011;
-        
-        ExplainVarsMtx(cArea,:) = [mean(FullMDSigRegInds), mean(AlonemdSigRegInds)];
-        
-    end
+    UsedAreaNames = CCADataStrc.NewAdd_ExistAreaNames;
+    CCA_timeBin = CCADataStrc.OutDataStrc.BinCenters;
+    
+    Sess_CCAdatasAll(cS,:) = {CCA_pairsData};
+    
     
 end
 
 %%
+SessCCAData_2rows = cat(1,Sess_CCAdatasAll{:});
+PairStrings = cellfun(@(x,y) [x,'-',y],SessCCAData_2rows(:,3),SessCCAData_2rows(:,4),'un',0);
+[UniPairStrs,~,UniPairTyppes] = unique(PairStrings);
+SessPairCounts = accumarray(UniPairTyppes,1);
+
+%% 2d plot of the correlation
+close;
+cT = 150;
+TypeInds = UniPairTyppes == cT;
+cTypeDatas = SessCCAData_2rows(TypeInds,[1,5]);
+cTypeDataAll = cat(3,cTypeDatas{:,1});
+
+AvgCCAMtx = mean(cTypeDataAll, 3);
+axisTimeScale = [min(CCA_timeBin), max(CCA_timeBin)];
+
+SMData = imgaussfilt(AvgCCAMtx,'FilterSize',5);
+figure('position',[100 200 560 420]);
+hold on
+imagesc(CCA_timeBin, CCA_timeBin, SMData); %,[-0.05 0.4]
+line([0 0],axisTimeScale,'Color', 'r','linewidth',1.8);
+line(axisTimeScale,[0 0],'Color', 'r','linewidth',1.8);
+line(axisTimeScale,axisTimeScale,'Color', 'c','linewidth',1.8);
+hb = colorbar;
+
+TypeAreasSep = strsplit(UniPairStrs{cT},'-');
+xlabel(sprintf('(%s) Time (s)',TypeAreasSep{1}));
+ylabel(sprintf('(%s) Time (s)',TypeAreasSep{2}));
+
+title(sprintf('Regions %s (%d sessions)',UniPairStrs{cT}, SessPairCounts(cT)));
+
+
+
+%% 3d plot of the correlation
+cT = 2;
+TypeInds = UniPairTyppes == cT;
+cTypeDatas = SessCCAData_2rows(TypeInds,[1,5]);
+cTypeDataAll = cat(3,cTypeDatas{:,1});
+
+AvgCCAMtx = mean(cTypeDataAll, 3);
+Zerosdatas = zeros(size(AvgCCAMtx,1),1);
+
+%
+% [xx,yy] = meshgrid(OutDataStrc.BinCenters);
+[xx,yy] = meshgrid(CCA_timeBin);
+
+SMData = imgaussfilt(AvgCCAMtx,'FilterSize',5);
+figure('position',[100 200 660 440]);
+hold on
+surf(xx,yy,SMData,SMData,'facealpha',0.8,'FaceColor','interp','LineStyle','none');
+plot3(Zerosdatas, CCA_timeBin, SMData(CCADataStrc.OutDataStrc.TriggerStartBin,:),'r','linewidth',1.8);
+plot3(CCA_timeBin, Zerosdatas, SMData(:,CCADataStrc.OutDataStrc.TriggerStartBin),'r','linewidth',1.8);
+hb = colorbar;
+
+xlabel('(From) Time (s)');
+ylabel('(To) Time (s)');
+zlabel('Canonical Correlation');
+view([-15 75])
+
+title(sprintf('Regions %s',UniPairStrs{cT}))
 
 
 
