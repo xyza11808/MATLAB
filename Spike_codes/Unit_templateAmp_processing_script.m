@@ -155,7 +155,7 @@ for cSess = 1 : NumUsedSess
 %         continue;
 %     end
     fprintf('Processing Session %d...\n', cSess);
-    %
+    %%
     Amps = readNPY(fullfile(cSessFolder,'amplitudes.npy'));
     ClusInds = readNPY(fullfile(cSessFolder,'spike_clusters.npy'));
     SPTimes = readNPY(fullfile(cSessFolder,'spike_times.npy'));

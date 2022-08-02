@@ -1,7 +1,7 @@
 cclr;
 
 %
-ProbespikeFolder='I:\ksOutput_backup\b107a03_ksoutput\A2021230_b107a03_NPSess04_g0_cat\catgt_A2021230_b107a03_NPSess04_g0\Cat_A2021230_b107a03_NPSess04_g0_imec0';
+ProbespikeFolder='P:\b106a04_ksoutputs\b106a04_20211130_NPsess02_g0_cat\catgt_b106a04_20211130_NPsess02_g0\Cat_b106a04_20211130_NPsess02_g0_imec1';
 
 %
 % start a new NP data analysis session
@@ -11,7 +11,7 @@ ProbNPSess = ProbNPSess.triggerOnsetTime([],[6,2],[]);
 % ProbNPSess = ProbNPSess.triggerOnsetTime([],[2,6],[]);
 % load behavior datas
 
-load('I:\ksOutput_backup\b107a03_ksoutput\A2021230_b107a03_NPSess04_g0_cat\catgt_A2021230_b107a03_NPSess04_g0\A2021230_b107a03_NPSess04_2afc.mat');
+load('P:\b106a04_ksoutputs\b106a04_20211130_NPsess02_g0_cat\catgt_b106a04_20211130_NPsess02_g0\Ab106a04_2afc_20211130_NPsess02.mat');
 %
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
 if isempty(BlockSectionInfo)
@@ -50,7 +50,7 @@ else
             % do nothing
     end
 end
-
+%%
 
 [lick_time_struct,Lick_bias_side]=beha_lickTime_data(behavResults,TimeWin(2));
 
@@ -337,7 +337,7 @@ end
 
 
 %% passive analysis session
-PassiveFileFullPath = 'I:\ksOutput_backup\b107a03_ksoutput\A2021230_b107a03_NPSess04_g0_cat\catgt_A2021230_b107a03_NPSess04_g0\A2021230_b107a03_NPSess04_rf.txt';
+PassiveFileFullPath = 'P:\b106a04_ksoutputs\b106a04_20211130_NPsess02_g0_cat\catgt_b106a04_20211130_NPsess02_g0\Ab106a04_rf_20211130_NPsess02.txt';
 ProbNPSess.CurrentSessInds = strcmpi('passive',ProbNPSess.SessTypeStrs);
 
 ProbNPSess = ProbNPSess.triggerOnsetTime([],4);  % 4 is the trigger duration, in ms
@@ -359,11 +359,12 @@ TrOnsetVec = repmat(BeforeSoundDelay,NumTrials,1);
 AlignEvents = [TrOnsetVec,TrOnsetVec+TrDuration];%,TrOnsetVec+TrDuration+floor((rand(numel(TrDuration),1)*200)+100)
 
 
-ProbNPSess.EventsPSTHplot(AlignEvents,1,[TrFrequency,TrDBs],{'Frequency','DB'},...
-    {'SOnset','SOffset';'r','m'},[],'Passive_colorplot',[],ProbeChn_regionCells);
+% ProbNPSess.EventsPSTHplot(AlignEvents,1,[TrFrequency,TrDBs],{'Frequency','DB'},...
+%     {'SOnset','SOffset';'r','m'},[],'Passive_colorplot',[],ProbeChn_regionCells);
 PassSoundDatas = Datas;
 
 %
+ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 save(fullfile(ProbespikeFolder,'ks2_5','NPClassHandleSaved.mat'),'ProbNPSess', 'PassSoundDatas', 'behavResults', '-v7.3');
 
 

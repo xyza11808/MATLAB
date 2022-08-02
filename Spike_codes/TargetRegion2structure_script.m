@@ -82,6 +82,7 @@ for cP = 1 : NumprocessedNPSess
 %     cPath = strrep(SessionFolders{cP},'F:\','E:\NPCCGs\');
 %     cPath = fullfile(strrep(SessionFolders{cP},'F:','I:\ksOutput_backup')); %
     cPath = fullfile(strrep(SessionFolders{cP},'F:','P:'));
+    %%
     load(fullfile(cPath,sortingcode_string,'NPClassHandleSaved.mat'));
 %     ProbNPSess = Newclasshandle;
 %     if isempty(ProbNPSess.ChannelAreaStrs)
@@ -119,7 +120,7 @@ for cP = 1 : NumprocessedNPSess
         IstargetfieldExist(end) = true;
     end
     SessAreaIndexStrc.UsedAbbreviations = IstargetfieldExist;
-    SessAreaIndex_saveName = fullfile(cPath,sortingcode_string,'SessAreaIndexDataNew.mat');
+    SessAreaIndex_saveName = fullfile(cPath,sortingcode_string,'SessAreaIndexData.mat');
     save(SessAreaIndex_saveName,'SessAreaIndexStrc','-v7.3');
     clearvars ProbNPSess
     %

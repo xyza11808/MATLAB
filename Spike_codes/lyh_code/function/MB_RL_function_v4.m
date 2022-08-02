@@ -35,7 +35,14 @@ for t = 1 : NumUsedTrs
     
     V_LR(t,1) = sum(P_lows(t,:) .* P_bound_lowANDhigh(t,:));
     V_LR(t,2) = sum((1-P_lows(t,:)) .* P_bound_lowANDhigh(t,:));
-    P_L(t) = exp(V_LR(t,1)*beta_pred) / (sum(exp(V_LR(t,:)*beta_pred)));
+    
+%     P_L(t) = exp(V_LR(t,1)*beta_pred) / (sum(exp(V_LR(t,:)*beta_pred)));
+    if any(isinf(exp(V_LR(t,:)*beta_pred)))
+        values = double(isinf(exp(V_LR(t,:)*beta_pred)));
+        P_L(t) = values(1);
+    else
+        P_L(t) = exp(V_LR(t,1)*beta_pred) / (sum(exp(V_LR(t,:)*beta_pred)));
+    end
     
     if left_choice_used(t)
         V_Chosen(t) = V_LR(t,1);

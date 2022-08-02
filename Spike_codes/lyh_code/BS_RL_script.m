@@ -1,7 +1,8 @@
 %%
 % filename = 'rs4';
 % load('rs4_20200924_Afc_used22');
-ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
+% ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
+
 saveFoldername = fullfile(ksfolder,'BSRL_ReversingTrials');
 clearvars behavResults P_choiceLeft nll delta V_R V_L P_bound_low P_bound_high
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'),'behavResults');
@@ -28,16 +29,22 @@ elseif exist('behavResults','var')
     [Octave_used,left_choice_used,inds_correct_used,inds_use,inds_rev] = BehInput(behavResults,RevFreqs);
 end
         
-        
+UsedIndsStrc = struct();
+UsedIndsStrc.IndsUsed = inds_use;
+UsedIndsStrc.IndsRev = inds_rev;
+UsedIndsStrc.IndsCorrectUsed = inds_correct_used;
+
+save(fullfile(saveFoldername,'UsedIndsDatas.mat'),'UsedIndsStrc','-v7.3');
+return;
 % NLLfun = @(x,Octave_used,left_choice_used,inds_correct_used) NLL_MB_RL_function_v5(x(1),x(2),x(3),...
 %     x(4),x(5),x(6),Octave_used,left_choice_used,inds_correct_used);
 NLLfun = @(x,Octave_used,left_choice_used,inds_correct_used) NLL_MB_RL_function_v4(x(1),x(2),x(3),...
-    x(4),Octave_used,left_choice_used,inds_correct_used); %,HighAndLowBlock_bound
+    x(4),Octave_used,left_choice_used,inds_correct_used,HighAndLowBlock_bound); %,HighAndLowBlock_bound
 
 
 fitfun = @(para) NLLfun(para,Octave_used,left_choice_used,inds_correct_used);
 bestx = zeros(ntime,NumParas);
-negll = zeros(ntime,1);
+negll2 = zeros(ntime,1);
 for n = 1:ntime
     tic
     xx =lb+rand(1,numel(ub)).*(ub-lb); %seed random starting point
@@ -45,11 +52,11 @@ for n = 1:ntime
     options = optimset('Algorithm','sqp','MaxFunEvals',3000,'MaxIter',1000,'FunValCheck','on');
     nonlcon = [];
 
-    [bestx(n,:) negll(n)]=fmincon(fitfun,xx,[],[],[],[],lb,ub);
+    [bestx(n,:) negll2(n)]=fmincon(fitfun,xx,[],[],[],[],lb,ub);
     toc
 end
 %%
-numbest = find(negll == min(negll));
+numbest = find(negll2 == min(negll2));
 
 parameters = bestx(numbest(1),:);
 theta_fit = parameters(1);
@@ -57,7 +64,8 @@ beta_fit = parameters(2);
 alpha_fit = parameters(3);
 P_bound_low_init = parameters(4);
 %
-[P_choiceLeft,nll,delta,V_R,V_L,P_bound_low,P_bound_high]= MB_RL_function_v4(theta_fit,beta_fit,alpha_fit,P_bound_low_init,Octave_used,left_choice_used,inds_correct_used);
+[P_choiceLeft,nll,delta,V_R,V_L,P_bound_low,P_bound_high]= MB_RL_function_v4(theta_fit,beta_fit,alpha_fit,...
+    P_bound_low_init,Octave_used,left_choice_used,inds_correct_used,HighAndLowBlock_bound); %,HighAndLowBlock_bound
 
 
 %% figure for behavior
@@ -96,7 +104,8 @@ close(hif);
 
 %
 filename_2 = [saveFoldername,filesep, 'BSRL_modelData.mat'];
-save(filename_2,'theta_fit','beta_fit','alpha_fit','P_bound_low_init','nll','inds_correct_used','P_choiceLeft','delta','V_L','V_R','P_bound_low','P_bound_high');
+save(filename_2,'theta_fit','beta_fit','alpha_fit','P_bound_low_init','nll','inds_correct_used',...
+    'P_choiceLeft','delta','V_L','V_R','P_bound_low','P_bound_high','HighAndLowBlock_bound');
 %%
 % load('F:\20200924\rs4\afc\im_data_reg_cpu\result_save_new\rs4_BSRL.mat')
  %

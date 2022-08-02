@@ -4,7 +4,7 @@ function [jPECC_val, jPECC_p] = jPECC(sp1, sp2, kfold, lambda, maxNpc)
 % function [jPECC_val, jPECC_p] = jPECC(sp1, sp2, kfold, lambda)
 %
 % Inputs: 
-% - sp1 and sp2 are size [trials, timebins, neurons] and contain spike counts
+% - sp1 and sp2 are size [trials, neurons, timebins] and contain spike counts
 % aligned to an event, from neurons in area 1 and area 2. The third
 % dimension (number of neurons) can be different between sp1 and sp2, but
 % the other two should match. 
@@ -29,22 +29,22 @@ if nargin<4
 end
 
 
-nBins = size(sp1,2); 
+nBins = size(sp1,3); 
 
 jPECC_val = zeros(nBins);
 jPECC_p = zeros(nBins);
 
 N = size(sp1,1); %number of trials
 cvp = cvpartition(N, 'KFold', kfold);
-nd = min([maxNpc size(sp1,3) size(sp2,3)]);
-sp1_new = permute(sp1,[1,3,2]); % to avoid squeeze operation
-sp2_new = permute(sp2,[1,3,2]);
+nd = min([maxNpc size(sp1,2) size(sp2,3)]);
+% sp1_new = permute(sp1,[1,3,2]); % to avoid squeeze operation
+% sp2_new = permute(sp2,[1,3,2]);
 % nd = min([size(sp1,3) size(sp2,3)]);
 for t1 = 1:nBins
     
     % reducing dimensionality to help regularize
-%     X = squeeze(sp1(:,t1,:));
-    X = sp1_new(:,:,t1);
+    X = (sp1(:,:,t1));
+%     X = sp1_new(:,:,t1);
     if doPCA        
         [~,Xs] = pca(X);
         Xs = Xs(:,1:nd);
@@ -56,8 +56,8 @@ for t1 = 1:nBins
     
     for t2 = 1:nBins
         
-%         Y = squeeze(sp2(:,t2,:));
-        Y = sp2_new(:,:,t2);
+        Y = (sp2(:,:,t2));
+%         Y = sp2_new(:,:,t2);
         if doPCA
             [~,Ys] = pca(Y);           
             Ys = Ys(:,1:nd);

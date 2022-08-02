@@ -14,6 +14,25 @@ dataSaveNames = fullfile(savefolder,'REgressorDataSave3.mat');
 
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 clearvars RegressorInfosCell
+%
+SessBSRLdata_file = fullfile(ksfolder,'BSRL_ReversingTrials','BSRL_modelData.mat');
+SessBSRLdata_strc = load(SessBSRLdata_file,'P_bound_low','P_bound_high','delta');
+BlockProbValues = zscore(SessBSRLdata_strc.P_bound_low - SessBSRLdata_strc.P_bound_high);
+UsedIndsfile = fullfile(ksfolder,'BSRL_ReversingTrials','UsedIndsDatas.mat');
+load(UsedIndsfile);
+FittedTrInds = UsedIndsStrc.IndsUsed;
+%
+FullTrBlockProbValues = zeros(numel(FittedTrInds),1);
+FullTrBlockProbValues(FittedTrInds) = BlockProbValues(2:end);
+ExistDatapointIndex = find(FittedTrInds);
+InterpPointIndex = find(~FittedTrInds);
+InterpValues = interp1(ExistDatapointIndex,BlockProbValues(2:end),InterpPointIndex,'spline');
+FullTrBlockProbValues(InterpPointIndex) = InterpValues;
+
+FullTrDeltaValues = zeros(numel(FittedTrInds),1);
+FullTrDeltaValues(FittedTrInds) = SessBSRLdata_strc.delta;
+DeltaInterpValue = interp1(ExistDatapointIndex,SessBSRLdata_strc.delta,InterpPointIndex,'spline');
+FullTrDeltaValues(InterpPointIndex) = DeltaInterpValue;
 
 %% find target cluster inds and IDs
 NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexData2.mat'));
@@ -177,6 +196,29 @@ TrIndexBins(Behav_SessTrOnBin(TotalTrNum):(Behav_SessTrOnBin(TotalTrNum)+6/TimeB
 
 TrIndexEventshiftMtxs = {TrIndexBins';'TrialIndex'};
 
+% BlockProbs value assigns
+BlockProbBins = zeros(1, NumofSPcounts,'single');
+% Behav_SessTrOnBin = round(TaskTrigTimeAligns/TimeBinSize);
+TotalTrNum = numel(Behav_SessTrOnBin);
+for cTr = 1 : TotalTrNum-1
+   BlockProbBins(Behav_SessTrOnBin(cTr)+1:Behav_SessTrOnBin(cTr+1)) = FullTrBlockProbValues(cTr);
+end
+BlockProbBins(Behav_SessTrOnBin(TotalTrNum):(Behav_SessTrOnBin(TotalTrNum)+6/TimeBinSize)) = FullTrBlockProbValues(TotalTrNum);
+
+BlockProbEventshiftMtxs = {BlockProbBins';'BlockProbs'};
+
+% delta value assigns
+DeltaBins = zeros(1, NumofSPcounts,'single');
+% Behav_SessTrOnBin = round(TaskTrigTimeAligns/TimeBinSize);
+TotalTrNum = numel(Behav_SessTrOnBin);
+for cTr = 1 : TotalTrNum-1
+   DeltaBins(Behav_SessTrOnBin(cTr)+1:Behav_SessTrOnBin(cTr+1)) = FullTrDeltaValues(cTr);
+end
+DeltaBins(Behav_SessTrOnBin(TotalTrNum):(Behav_SessTrOnBin(TotalTrNum)+6/TimeBinSize)) = FullTrDeltaValues(TotalTrNum);
+
+DeltaEventshiftMtxs = {DeltaBins';'Delta'};
+
+
 %% including only some times before stim onset and offset, exclude extra time binns
 Behav_SessStimOnBin = round(Behav_SessStimOnTime/TimeBinSize);
 
@@ -206,35 +248,52 @@ ChoiceEventshiftMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),ChoiceEventshiftMtxs(1
 ReEventshiftMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),ReEventshiftMtxs(1,:),'un',0);ReEventshiftMtxs(2,:)];
 BTEventshiftMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),BTEventshiftMtxs(1,:),'un',0);BTEventshiftMtxs(2,:)];
 TrIndexMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),TrIndexEventshiftMtxs(1,:),'un',0);TrIndexEventshiftMtxs(2,:)];
+BTprobMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),BlockProbEventshiftMtxs(1,:),'un',0);BlockProbEventshiftMtxs(2,:)];
+DeltaMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),DeltaEventshiftMtxs(1,:),'un',0);DeltaEventshiftMtxs(2,:)];
+
 
 BinnedSPdatas = BinnedSPdatas(:,UsedTimeBins);
 
-clearvars StimEventshiftMtxs ChoiceEventshiftMtxs ReEventshiftMtxs BTEventshiftMtxs
+clearvars StimEventshiftMtxs ChoiceEventshiftMtxs ReEventshiftMtxs BTEventshiftMtxs TrIndexEventshiftMtxs BlockProbEventshiftMtxs 
 %%
 eventMerge = 1;
 
 if eventMerge == 1
     StimEventshiftMtxs_Used = {cat(2,StimEventshiftMtxsNew{1,:});cat(2,StimEventshiftMtxsNew{2,:})};
-    ChoiceEventshiftMtxs_Used = {cat(2,ChoiceEventshiftMtxsNew{1,:});cat(2,ChoiceEventshiftMtxsNew{2,:})};
+    Choice1EventshiftMtxs_Used = ChoiceEventshiftMtxsNew(:,1);
+    Choice2EventshiftMtxs_Used = ChoiceEventshiftMtxsNew(:,2);
     ReEventshiftMtxs_Used = {cat(2,ReEventshiftMtxsNew{1,:});cat(2,ReEventshiftMtxsNew{2,:})};
     BTEventshiftMtxs_Used = {cat(2,BTEventshiftMtxsNew{1,:});cat(2,BTEventshiftMtxsNew{2,:})};
     TrIndexMtxsNew_Used = TrIndexMtxsNew;
+    BTprobMtxsNew_Used = BTprobMtxsNew;
+    DeltaMtxsNew_Used = DeltaMtxsNew;
 else
     StimEventshiftMtxs_Used = StimEventshiftMtxsNew;
-    ChoiceEventshiftMtxs_Used = ChoiceEventshiftMtxsNew;
+    Choice1EventshiftMtxs_Used = ChoiceEventshiftMtxsNew(:,1);
+    Choice2EventshiftMtxs_Used = ChoiceEventshiftMtxsNew(:,2);
     ReEventshiftMtxs_Used = ReEventshiftMtxsNew;
     BTEventshiftMtxs_Used = BTEventshiftMtxsNew;
     TrIndexMtxsNew_Used = TrIndexMtxsNew;
+    BTprobMtxsNew_Used = BTprobMtxsNew;
+    DeltaMtxsNew_Used = DeltaMtxsNew;
 end
 %%
-AllTaskEvents = [StimEventshiftMtxs_Used,ChoiceEventshiftMtxs_Used,...
-    BTEventshiftMtxs_Used,TrIndexMtxsNew_Used]; %,BTEventshiftMtxs_Used,ReEventshiftMtxs_Used
-TaskEvents_predictor = AllTaskEvents(1,:);
-TaskEvents_Predlabel = AllTaskEvents(2,:);
+AllTaskEventsFull = [StimEventshiftMtxs_Used,Choice1EventshiftMtxs_Used,Choice2EventshiftMtxs_Used,...
+    BTEventshiftMtxs_Used,TrIndexMtxsNew_Used,DeltaMtxsNew_Used,BTprobMtxsNew_Used]; %,BTEventshiftMtxs_Used,ReEventshiftMtxs_Used
+FullEvents_predictor = AllTaskEventsFull(1,:);
+FullEvents_Predlabel = AllTaskEventsFull(2,:);
 
+EventDescripStrsFull = {'Stim','ChoiceL','ChoiceR','BTBinary','TrIndex','Delta','BTprob'};
+EventDescripStrsFirst = {'Stim','ChoiceL','ChoiceR','BTBinary','TrIndex','Delta'};
+
+AllTaskEventsFirst = [StimEventshiftMtxs_Used,Choice1EventshiftMtxs_Used,Choice2EventshiftMtxs_Used,...
+    BTEventshiftMtxs_Used,TrIndexMtxsNew_Used,DeltaMtxsNew_Used]; %,BTEventshiftMtxs_Used,ReEventshiftMtxs_Used
+TaskEvents_predictor = AllTaskEventsFirst(1,:);
+TaskEvents_Predlabel = AllTaskEventsFirst(2,:);
 %% BinnedSPdatas
 tic
 RegressorInfosCell = cell(size(BinnedSPdatas,1),3);
+FullRegressorInfosCell = cell(size(BinnedSPdatas,1),3);
 rrr_RegressorInfosCell = cell(size(BinnedSPdatas,1),3);
 % f = waitbar(0,'Session Calculation Start...');
 NumNeurons = size(BinnedSPdatas,1);
@@ -243,13 +302,20 @@ parfor cU = 1:NumNeurons
     try
         [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
             lassoelasticRegressor(BinnedSPdatas(cU,:), TaskEvents_predictor, 5);
+        RegressorInfosCell(cU,:) = {ExplainVarStrc, RegressorCoefs, RegressorPreds};
         if mean(ExplainVarStrc.fullmodel_explain_var) >= 0.02
             [ExplainVarStrc_rrr, RegressorCoefs_rrr, RegressorPreds_rrr] = ...
                 rrr_lassoelasticRegressor(BinnedSPdatas(cU,:), TaskEvents_predictor, 5);
             rrr_RegressorInfosCell(cU,:) = {ExplainVarStrc_rrr, ...
                 RegressorCoefs_rrr, RegressorPreds_rrr};
         end
-        RegressorInfosCell(cU,:) = {ExplainVarStrc, RegressorCoefs, RegressorPreds};
+        cU_PartialExpVars = squeeze(mean(ExplainVarStrc.PartialMd_explain_var));
+        if any(cU_PartialExpVars(4:5,2:3) > 0.02,'all')
+            % calculate a full model including boundary estimation
+            [ExplainVarStrcFu, RegressorCoefsFu, RegressorPredsFu] = ...
+                lassoelasticRegressor(BinnedSPdatas(cU,:), FullEvents_predictor, 5);
+            FullRegressorInfosCell(cU,:) = {ExplainVarStrcFu, RegressorCoefsFu, RegressorPredsFu};
+        end
     catch ME
         fprintf('Errors for unit %d.\n',cU);
         ErrorU(cU) = 1;
@@ -261,11 +327,9 @@ toc
 % waitbar(1,f,'Calculation complete!');
 % close(f);
 %%
-
 save(dataSaveNames, 'RegressorInfosCell',...
-    'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','rrr_RegressorInfosCell', 'AreaUnitNumbers', '-v7.3');
-
-
+    'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','rrr_RegressorInfosCell', 'AreaUnitNumbers',...
+    'FullRegressorInfosCell','EventDescripStrsFull','EventDescripStrsFirst','TaskEvents_predictor','FullEvents_predictor','-v7.3');
 
 %%
 % predictMtxAll = cat(2,TaskEvents_predictor{:});

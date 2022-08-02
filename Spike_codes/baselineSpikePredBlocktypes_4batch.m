@@ -1,7 +1,7 @@
 clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_First BaselineResp_Last SMBinDataMtx
 
 % load('Chnlocation.mat');
-load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
+load(fullfile(ksfolder,'SessAreaIndexData.mat'));
 % if isempty(fieldnames(SessAreaIndexStrc.ACAv)) && isempty(fieldnames(SessAreaIndexStrc.ACAd))...
 %          && isempty(fieldnames(SessAreaIndexStrc.ACA))
 %     return;

@@ -43,7 +43,8 @@ C2_Avg = mean(C2_rawData);
 C1_cov = cov(C1_rawData);
 C2_cov = cov(C2_rawData);
 
-pooled_cov = (C1_SampleNum*C1_cov + C2_SampleNum*C2_cov)/(C1_SampleNum + C2_SampleNum);
+MtxStableTerm = 1e-6; % served to stabilize matrix inversion
+pooled_cov = (C1_SampleNum*C1_cov + C2_SampleNum*C2_cov)/(C1_SampleNum + C2_SampleNum)+MtxStableTerm;
 % pooled_cov = (C1_cov + C2_cov)/2;
 
 beta = inv(pooled_cov)*((C1_Avg - C2_Avg))';

@@ -3,7 +3,7 @@ clearvars UnitAfterStimAUC UnitAS_BLSubAUC UnitBaselineAUC SVMDecVecs SMBinDataM
 % calculate AUC for each unit in distinguish choice and block type
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
 % load('Chnlocation.mat');
-load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
+load(fullfile(ksfolder,'SessAreaIndexData.mat'));
 % if isempty(ProbNPSess.ChannelAreaStrs)
 %     ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
 % end

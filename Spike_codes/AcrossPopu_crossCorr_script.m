@@ -65,6 +65,69 @@ OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTim
 NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 % SMBinDataMtxRaw = SMBinDataMtx;
 % clearvars ProbNPSess
+%% calculate event evoked response
+AnsTimes = round((behavResults.Time_answer - behavResults.Time_stimOnset)/1000/0.1); % bins
+UsedNMTrInds = AnsTimes > 0;
+NMAnsTimeBin = AnsTimes(UsedNMTrInds);
+
+BaselineResp = mean(NewBinnedDatas(UsedNMTrInds,:,1:OutDataStrc.TriggerStartBin-1),3);
+StimRespWin = 0.5/0.1; 
+StimOnResp = mean(NewBinnedDatas(UsedNMTrInds,:,(OutDataStrc.TriggerStartBin-1):(OutDataStrc.TriggerStartBin+StimRespWin)),3);
+
+ChoiceRespWin = 1/0.1;
+ChoiceRespData1 = zeros(size(NewBinnedDatas,1),size(NewBinnedDatas,2),ChoiceRespWin);
+ChoiceRespData2 = zeros(size(NewBinnedDatas,1),size(NewBinnedDatas,2),ChoiceRespWin);
+for cUTr = 1:sum(UsedNMTrInds)
+    cUTr_AnsTimeBin1 = NMAnsTimeBin(cUTr)+OutDataStrc.TriggerStartBin-1;
+    ChoiceRespData1(cUTr,:,:) = NewBinnedDatas(cUTr,:,cUTr_AnsTimeBin1:(cUTr_AnsTimeBin1+ChoiceRespWin-1));
+    
+    cUTr_AnsTimeBin2 = NMAnsTimeBin(cUTr)+OutDataStrc.TriggerStartBin+ChoiceRespWin;
+    ChoiceRespData2(cUTr,:,:) = NewBinnedDatas(cUTr,:,cUTr_AnsTimeBin2:(cUTr_AnsTimeBin2+ChoiceRespWin-1));
+end
+ChoiceResps1 = mean(ChoiceRespData1,3);
+ChoiceResps2 = mean(ChoiceRespData2,3);
+
+
+%%
+NumCalculations = (Numfieldnames-1)*Numfieldnames/2;
+EventRespCalResults = cell(NumCalculations,4);
+
+ks = 1;
+for cAr = 1 : Numfieldnames
+    for cAr2 = cAr+1 : Numfieldnames
+        % baseline
+        Area1_binned_datas = BaselineResp(:,ExistField_ClusIDs{cAr,2});
+        Area2_binned_datas = BaselineResp(:,ExistField_ClusIDs{cAr2,2});
+        
+        [A_base,B_base,R_base] = canoncorr(Area1_binned_datas,Area2_binned_datas); % U = (X - mean(X))*A; V = (Y - mean(Y))*B; R(x) = corrcoef(U(:,1),V(:,1));
+        
+        % stimulus
+        Area1_binned_datas = StimOnResp(:,ExistField_ClusIDs{cAr,2});
+        Area2_binned_datas = StimOnResp(:,ExistField_ClusIDs{cAr2,2});
+        
+        [A_stim,B_stim,R_stim] = canoncorr(Area1_binned_datas,Area2_binned_datas); % U = (X - mean(X))*A; V = (Y - mean(Y))*B; R(x) = corrcoef(U(:,1),V(:,1));
+        
+        % choice1
+        Area1_binned_datas = ChoiceResps1(:,ExistField_ClusIDs{cAr,2});
+        Area2_binned_datas = ChoiceResps1(:,ExistField_ClusIDs{cAr2,2});
+        
+        [A_choice1,B_choice1,R_choice1] = canoncorr(Area1_binned_datas,Area2_binned_datas);
+        
+        % choice 2
+        Area1_binned_datas = ChoiceResps2(:,ExistField_ClusIDs{cAr,2});
+        Area2_binned_datas = ChoiceResps2(:,ExistField_ClusIDs{cAr2,2});
+        
+        [A_choice2,B_choice2,R_choice2] = canoncorr(Area1_binned_datas,Area2_binned_datas);
+        
+        
+        EventRespCalResults(k,:) = {{A_base,B_base,R_base},{A_stim,B_stim,R_stim},...
+            {A_choice1,B_choice1,R_choice1},{A_choice2,B_choice2,R_choice2}};
+        k = k + 1;
+    end
+end
+
+EventDatas = {BaselineResp,StimOnResp,ChoiceResps1,ChoiceResps2};
+EventStrs = {'Baseline','Stim','Choice1','Choice2'};ChoiceResps1ChoiceResps4
 %%
 % TimeBinSize = single(0.05);
 % 
@@ -179,8 +242,11 @@ for cAr = 1 : Numfieldnames
             RandSampleShufIndex = RandsampleMoreIndex(RandsampleII);
             cR_sample_Index = RandSampleShufIndex(1:SampleTrNums);
             
-            Area1_binned_datas = permute(NewBinnedDatas(cR_sample_Index,ExistField_ClusIDs{cAr,2},:),[1,3,2]);
-            Area2_binned_datas = permute(NewBinnedDatas(cR_sample_Index,ExistField_ClusIDs{cAr2,2},:),[1,3,2]);
+%             Area1_binned_datas = permute(NewBinnedDatas(cR_sample_Index,ExistField_ClusIDs{cAr,2},:),[1,3,2]);
+%             Area2_binned_datas = permute(NewBinnedDatas(cR_sample_Index,ExistField_ClusIDs{cAr2,2},:),[1,3,2]);
+            Area1_binned_datas = NewBinnedDatas(cR_sample_Index,ExistField_ClusIDs{cAr,2},:);
+            Area2_binned_datas = NewBinnedDatas(cR_sample_Index,ExistField_ClusIDs{cAr2,2},:);
+            
             [jPECC_val, ~] = jPECC(Area1_binned_datas,Area2_binned_datas,...
                 5,[],5);
             
@@ -206,7 +272,8 @@ if ~isfolder(Savepath)
 end
 dataSavePath = fullfile(Savepath,'JeccDataNew.mat');
 
-save(dataSavePath,'CalResults','OutDataStrc','ExistField_ClusIDs','NewAdd_ExistAreaNames','-v7.3')
+save(dataSavePath,'CalResults','EventRespCalResults','OutDataStrc','EventDatas','EventStrs',...
+    'ExistField_ClusIDs','NewAdd_ExistAreaNames','-v7.3')
 %%
 % CalTimeBinNums = [min(OutDataStrc.BinCenters),max(OutDataStrc.BinCenters)];
 % StimOnBinTime = 0; %OutDataStrc.BinCenters(OutDataStrc.TriggerStartBin);
