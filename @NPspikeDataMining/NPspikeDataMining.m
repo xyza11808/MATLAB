@@ -95,12 +95,19 @@ classdef NPspikeDataMining
                        RezStrc = load(loadName,'TotalSamples');
                        obj.Numsamp = RezStrc.TotalSamples;
                     catch
-                        RezStrc = load(loadName);
-                        obj.Numsamp = RezStrc.rez.ops.sampsToRead;
-                        TotalSamples = obj.Numsamp;
-                        rez = RezStrc.rez;
-                        save(loadName,'rez','TotalSamples','-v7.3');
-                        clearvars RezStrc rez
+                        totalSampleSaveName = fullfile(FolderPath,'TotalSampleNum.mat');
+                        if exist(totalSampleSaveName,'file')
+                            SampleData = load(totalSampleSaveName);
+                            TotalSamples = SampleData.TotalSamples;
+                            obj.Numsamp = TotalSamples;
+                        else
+                            RezStrc = load(loadName);
+                            obj.Numsamp = RezStrc.rez.ops.sampsToRead;
+                            TotalSamples = obj.Numsamp;
+
+                            save(totalSampleSaveName,'TotalSamples','-v7.3');
+                            clearvars RezStrc
+                        end
                     end
                     
                     obj.mmf = [];
