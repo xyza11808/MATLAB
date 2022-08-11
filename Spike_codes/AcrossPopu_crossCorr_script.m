@@ -65,6 +65,8 @@ OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTim
 NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 % SMBinDataMtxRaw = SMBinDataMtx;
 % clearvars ProbNPSess
+BlockSectionInfo = Bev2blockinfoFun(behavResults);
+
 %% calculate event evoked response
 AnsTimes = round((behavResults.Time_answer - behavResults.Time_stimOnset)/1000/0.1); % bins
 UsedNMTrInds = AnsTimes > 0;
@@ -76,22 +78,22 @@ StimOnResp = mean(NewBinnedDatas(UsedNMTrInds,:,(OutDataStrc.TriggerStartBin-1):
 
 ChoiceRespWin = 1/0.1;
 ChoiceRespData1 = zeros(size(NewBinnedDatas,1),size(NewBinnedDatas,2),ChoiceRespWin);
-ChoiceRespData2 = zeros(size(NewBinnedDatas,1),size(NewBinnedDatas,2),ChoiceRespWin);
+% ChoiceRespData2 = zeros(size(NewBinnedDatas,1),size(NewBinnedDatas,2),ChoiceRespWin);
 for cUTr = 1:sum(UsedNMTrInds)
     cUTr_AnsTimeBin1 = NMAnsTimeBin(cUTr)+OutDataStrc.TriggerStartBin-1;
     ChoiceRespData1(cUTr,:,:) = NewBinnedDatas(cUTr,:,cUTr_AnsTimeBin1:(cUTr_AnsTimeBin1+ChoiceRespWin-1));
     
-    cUTr_AnsTimeBin2 = NMAnsTimeBin(cUTr)+OutDataStrc.TriggerStartBin+ChoiceRespWin;
-    ChoiceRespData2(cUTr,:,:) = NewBinnedDatas(cUTr,:,cUTr_AnsTimeBin2:(cUTr_AnsTimeBin2+ChoiceRespWin-1));
+%     cUTr_AnsTimeBin2 = NMAnsTimeBin(cUTr)+OutDataStrc.TriggerStartBin+ChoiceRespWin;
+%     ChoiceRespData2(cUTr,:,:) = NewBinnedDatas(cUTr,:,cUTr_AnsTimeBin2:(cUTr_AnsTimeBin2+ChoiceRespWin-1));
 end
 ChoiceResps1 = mean(ChoiceRespData1,3);
-ChoiceResps2 = mean(ChoiceRespData2,3);
+% ChoiceResps2 = mean(ChoiceRespData2,3);
 
 
 %%
 NumCalculations = (Numfieldnames-1)*Numfieldnames/2;
-EventRespCalResults = cell(NumCalculations,4);
-
+EventRespCalResults = cell(NumCalculations,3);
+EventRespCalAreaIndsANDName = cell(NumCalculations,4);
 ks = 1;
 for cAr = 1 : Numfieldnames
     for cAr2 = cAr+1 : Numfieldnames
@@ -105,7 +107,7 @@ for cAr = 1 : Numfieldnames
         Area1_binned_datas = StimOnResp(:,ExistField_ClusIDs{cAr,2});
         Area2_binned_datas = StimOnResp(:,ExistField_ClusIDs{cAr2,2});
         
-        [A_stim,B_stim,R_stim] = canoncorr(Area1_binned_datas,Area2_binned_datas); % U = (X - mean(X))*A; V = (Y - mean(Y))*B; R(x) = corrcoef(U(:,1),V(:,1));
+        [A_stim,B_stim,R_stim] = canoncorr(Area1_binned_datas,Area2_binned_datas); % U = (X - mean(X))*A; V = (Y - mean(Y))*B; R(1) = corrcoef(U(:,1),V(:,1));
         
         % choice1
         Area1_binned_datas = ChoiceResps1(:,ExistField_ClusIDs{cAr,2});
@@ -113,21 +115,59 @@ for cAr = 1 : Numfieldnames
         
         [A_choice1,B_choice1,R_choice1] = canoncorr(Area1_binned_datas,Area2_binned_datas);
         
-        % choice 2
-        Area1_binned_datas = ChoiceResps2(:,ExistField_ClusIDs{cAr,2});
-        Area2_binned_datas = ChoiceResps2(:,ExistField_ClusIDs{cAr2,2});
+%         % choice 2
+%         Area1_binned_datas = ChoiceResps2(:,ExistField_ClusIDs{cAr,2});
+%         Area2_binned_datas = ChoiceResps2(:,ExistField_ClusIDs{cAr2,2});
+%         
+%         [A_choice2,B_choice2,R_choice2] = canoncorr(Area1_binned_datas,Area2_binned_datas);
         
-        [A_choice2,B_choice2,R_choice2] = canoncorr(Area1_binned_datas,Area2_binned_datas);
         
-        
-        EventRespCalResults(k,:) = {{A_base,B_base,R_base},{A_stim,B_stim,R_stim},...
-            {A_choice1,B_choice1,R_choice1},{A_choice2,B_choice2,R_choice2}};
-        k = k + 1;
+        EventRespCalResults(ks,:) = {{A_base,B_base,R_base},{A_stim,B_stim,R_stim},...
+            {A_choice1,B_choice1,R_choice1}}; %{A_choice2,B_choice2,R_choice2}
+        EventRespCalAreaIndsANDName(ks,:) = {ExistField_ClusIDs{cAr,2},ExistField_ClusIDs{cAr2,2},...
+            NewAdd_ExistAreaNames{cAr},NewAdd_ExistAreaNames{cAr2}};
+        ks = ks + 1;
     end
 end
 
-EventDatas = {BaselineResp,StimOnResp,ChoiceResps1,ChoiceResps2};
-EventStrs = {'Baseline','Stim','Choice1','Choice2'};ChoiceResps1ChoiceResps4
+EventDatas = {BaselineResp,StimOnResp,ChoiceResps1}; %,ChoiceResps2
+EventStrs = {'Baseline','Stim','Choice1'}; %,'Choice2'
+
+%%
+
+NumTimeBins = size(NewBinnedDatas,3);
+IsCalTypeEmpty = cellfun(@isempty,EventRespCalResults(1,:));
+EventRespCalResultsRaw = EventRespCalResults;
+EventRespCalResults(:,IsCalTypeEmpty) = [];
+[NumofCalculations, TypeCalculations] = size(EventRespCalResults);
+% TypeCalculations = size(EventRespCalResults,2);
+
+cBinTypeFixedCoefs = zeros(NumofCalculations,TypeCalculations,NumTimeBins);
+for cBin = 1 : NumTimeBins
+    cBinData = NewBinnedDatas(:,:,cBin);
+    for cTypeCal = 1 : TypeCalculations
+        for cCalNum = 1 : NumofCalculations
+            cCal1_data_raw = NewBinnedDatas(:,EventRespCalAreaIndsANDName{cCalNum,1},cBin);
+            cCal2_data_raw = NewBinnedDatas(:,EventRespCalAreaIndsANDName{cCalNum,2},cBin);
+            
+            if isempty(EventRespCalResults{cCalNum,cTypeCal})
+                cBinTypeFixedCoefs(cCalNum, cTypeCal, cBin) = NaN;
+            else
+                cCal1_coef_A = EventRespCalResults{cCalNum,cTypeCal}{1};
+                cCal2_coef_B = EventRespCalResults{cCalNum,cTypeCal}{2};
+                U = (cCal1_data_raw - mean(cCal1_data_raw)) * cCal1_coef_A;
+                V = (cCal2_data_raw - mean(cCal2_data_raw)) * cCal2_coef_B;
+
+                cBinCoef = corr(U(:,1),V(:,1));
+                cBinTypeFixedCoefs(cCalNum, cTypeCal, cBin) = cBinCoef;
+            end
+        end
+    end
+    
+end
+
+
+
 %%
 % TimeBinSize = single(0.05);
 % 

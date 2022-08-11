@@ -19,7 +19,7 @@ function [jPECC_val, jPECC_p] = jPECC(sp1, sp2, kfold, lambda, maxNpc)
 % correlation value
 % - jPECC_p is the p-value of each correlation 
 
-doPCA = true; % if false, just use what you're given
+doPCA = false; % if false, just use what you're given
 
 if nargin<5
     maxNpc = 10; 
@@ -44,6 +44,7 @@ for t1 = 1:nBins
     
     % reducing dimensionality to help regularize
     X = (sp1(:,:,t1));
+    X = zscore(X);
 %     X = sp1_new(:,:,t1);
     if doPCA        
         [~,Xs] = pca(X);
@@ -57,6 +58,7 @@ for t1 = 1:nBins
     for t2 = 1:nBins
         
         Y = (sp2(:,:,t2));
+        Y = zscore(Y);
 %         Y = sp2_new(:,:,t2);
         if doPCA
             [~,Ys] = pca(Y);           
