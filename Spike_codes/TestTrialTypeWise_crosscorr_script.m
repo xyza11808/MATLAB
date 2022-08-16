@@ -8,7 +8,7 @@ OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTim
 NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]) + 1e-8;
 
 %%
-
+BlockSectionInfo = Bev2blockinfoFun(behavResults);
 RevFreqs = BlockSectionInfo.BlockFreqTypes(logical(BlockSectionInfo.IsFreq_asReverse));
 AllTrFreqs = double(behavResults.Stim_toneFreq(:));
 RevFreqInds = ismember(AllTrFreqs,RevFreqs);
@@ -21,11 +21,11 @@ NonRevFreqInds(BehavActionChoice==2) = false;
 TrialIsCorrect = double(behavResults.Action_choice(:)) == double(behavResults.Trial_Type(:));
 TrialIsError = TrialIsCorrect & double(behavResults.Action_choice(:)) ~= 2;
 %%
-try
-    NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
-catch ME % some added sessions do not have file named "SessAreaIndexDataNew.mat"
+% try
+%     NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
+% catch ME % some added sessions do not have file named "SessAreaIndexDataNew.mat"
     NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexData.mat'));
-end
+% end
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);

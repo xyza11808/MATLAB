@@ -1,5 +1,5 @@
-cclr
-ksfolder = pwd;
+% cclr
+% ksfolder = pwd;
 % ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
 clearvars ProbNPSess AllUnit_temporalAUC ExistField_ClusIDs AllUnit_temporalAUC AccumedUnitNums
 % if exist(fullfile(ksfolder,'AnovanAnA','TemporalAUCdataSave.mat'),'file')
@@ -36,6 +36,12 @@ for cA = 1 : Numfieldnames
     AreaUnitNumbers(cA) = numel(cA_clus_inds);
 end
 AccumedUnitNums = [1;cumsum(AreaUnitNumbers)];
+
+%%
+SeqAreaUnitNums = AreaUnitNumbers;
+AccumedUnitNums = [0;cumsum(AreaUnitNumbers)];
+SeqAreaNames = ExistAreaNames;
+SeqFieldClusIDs = ExistField_ClusIDs;
 
 %%
 if isempty(ExistField_ClusIDs)
@@ -116,8 +122,8 @@ disp(toc(t1));
 
 %%
 dataSaveNames = fullfile(ksfolder,'AnovanAnA','TemporalAUCdataSave.mat');
-save(dataSaveNames,'AreaUnitNumbers','AccumedUnitNums','ExistField_ClusIDs','CaledStimOnsetBin',...
-    'winGoesStep','TotalCalcuNumber','AllUnit_temporalAUC','ExistAreaNamesAll','-v7.3');
+save(dataSaveNames,'SeqAreaUnitNums','AccumedUnitNums','SeqFieldClusIDs','CaledStimOnsetBin',...
+    'winGoesStep','TotalCalcuNumber','AllUnit_temporalAUC','SeqAreaNames','-v7.3');
 
 
 

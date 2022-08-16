@@ -32,7 +32,7 @@ for cA = 1 : Numfieldnames
 end
 
 %%
-AccumedUnitNums = [1;cumsum(AreaUnitNumbers)];
+AccumedUnitNums = [0;cumsum(AreaUnitNumbers)];
 % AreaInds = 6;
 
 NumofExistAreas = length(ExistAreaNames);

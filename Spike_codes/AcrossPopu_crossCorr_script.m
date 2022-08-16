@@ -68,7 +68,7 @@ NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
 
 %% calculate event evoked response
-AnsTimes = round((behavResults.Time_answer - behavResults.Time_stimOnset)/1000/0.1); % bins
+AnsTimes = round((double(behavResults.Time_answer - behavResults.Time_stimOnset))/1000/0.1); % bins
 UsedNMTrInds = AnsTimes > 0;
 NMAnsTimeBin = AnsTimes(UsedNMTrInds);
 
@@ -134,37 +134,37 @@ EventDatas = {BaselineResp,StimOnResp,ChoiceResps1}; %,ChoiceResps2
 EventStrs = {'Baseline','Stim','Choice1'}; %,'Choice2'
 
 %%
-
-NumTimeBins = size(NewBinnedDatas,3);
-IsCalTypeEmpty = cellfun(@isempty,EventRespCalResults(1,:));
-EventRespCalResultsRaw = EventRespCalResults;
-EventRespCalResults(:,IsCalTypeEmpty) = [];
-[NumofCalculations, TypeCalculations] = size(EventRespCalResults);
-% TypeCalculations = size(EventRespCalResults,2);
-
-cBinTypeFixedCoefs = zeros(NumofCalculations,TypeCalculations,NumTimeBins);
-for cBin = 1 : NumTimeBins
-    cBinData = NewBinnedDatas(:,:,cBin);
-    for cTypeCal = 1 : TypeCalculations
-        for cCalNum = 1 : NumofCalculations
-            cCal1_data_raw = NewBinnedDatas(:,EventRespCalAreaIndsANDName{cCalNum,1},cBin);
-            cCal2_data_raw = NewBinnedDatas(:,EventRespCalAreaIndsANDName{cCalNum,2},cBin);
-            
-            if isempty(EventRespCalResults{cCalNum,cTypeCal})
-                cBinTypeFixedCoefs(cCalNum, cTypeCal, cBin) = NaN;
-            else
-                cCal1_coef_A = EventRespCalResults{cCalNum,cTypeCal}{1};
-                cCal2_coef_B = EventRespCalResults{cCalNum,cTypeCal}{2};
-                U = (cCal1_data_raw - mean(cCal1_data_raw)) * cCal1_coef_A;
-                V = (cCal2_data_raw - mean(cCal2_data_raw)) * cCal2_coef_B;
-
-                cBinCoef = corr(U(:,1),V(:,1));
-                cBinTypeFixedCoefs(cCalNum, cTypeCal, cBin) = cBinCoef;
-            end
-        end
-    end
-    
-end
+% 
+% NumTimeBins = size(NewBinnedDatas,3);
+% IsCalTypeEmpty = cellfun(@isempty,EventRespCalResults(1,:));
+% EventRespCalResultsRaw = EventRespCalResults;
+% EventRespCalResults(:,IsCalTypeEmpty) = [];
+% [NumofCalculations, TypeCalculations] = size(EventRespCalResults);
+% % TypeCalculations = size(EventRespCalResults,2);
+% 
+% cBinTypeFixedCoefs = zeros(NumofCalculations,TypeCalculations,NumTimeBins);
+% for cBin = 1 : NumTimeBins
+%     cBinData = NewBinnedDatas(:,:,cBin);
+%     for cTypeCal = 1 : TypeCalculations
+%         for cCalNum = 1 : NumofCalculations
+%             cCal1_data_raw = NewBinnedDatas(:,EventRespCalAreaIndsANDName{cCalNum,1},cBin);
+%             cCal2_data_raw = NewBinnedDatas(:,EventRespCalAreaIndsANDName{cCalNum,2},cBin);
+%             
+%             if isempty(EventRespCalResults{cCalNum,cTypeCal})
+%                 cBinTypeFixedCoefs(cCalNum, cTypeCal, cBin) = NaN;
+%             else
+%                 cCal1_coef_A = EventRespCalResults{cCalNum,cTypeCal}{1};
+%                 cCal2_coef_B = EventRespCalResults{cCalNum,cTypeCal}{2};
+%                 U = (cCal1_data_raw - mean(cCal1_data_raw)) * cCal1_coef_A;
+%                 V = (cCal2_data_raw - mean(cCal2_data_raw)) * cCal2_coef_B;
+% 
+%                 cBinCoef = corr(U(:,1),V(:,1));
+%                 cBinTypeFixedCoefs(cCalNum, cTypeCal, cBin) = cBinCoef;
+%             end
+%         end
+%     end
+%     
+% end
 
 
 
@@ -313,7 +313,7 @@ end
 dataSavePath = fullfile(Savepath,'JeccDataNew.mat');
 
 save(dataSavePath,'CalResults','EventRespCalResults','OutDataStrc','EventDatas','EventStrs',...
-    'ExistField_ClusIDs','NewAdd_ExistAreaNames','-v7.3')
+    'ExistField_ClusIDs','NewAdd_ExistAreaNames','EventRespCalAreaIndsANDName','-v7.3')
 %%
 % CalTimeBinNums = [min(OutDataStrc.BinCenters),max(OutDataStrc.BinCenters)];
 % StimOnBinTime = 0; %OutDataStrc.BinCenters(OutDataStrc.TriggerStartBin);

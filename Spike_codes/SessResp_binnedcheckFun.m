@@ -88,6 +88,8 @@ if exist(fullfile(ProbNPSess.ksFolder,'UnitspikeAmpSave.mat'),'file')
    AmpExcludeInds = UintExplainV(:) > 0.5 & binLessThanhalfPeak(:) > 0.1; % is the varience explain is too large, excluded it
    
    RemainedInds = RemainedInds & ~AmpExcludeInds;
+else
+   warning('Unable to load spike amplitude datas.\n'); 
 end
 
 % %%
