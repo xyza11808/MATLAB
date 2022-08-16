@@ -1,4 +1,4 @@
-function UnitCriterias = BinaryRespCheck(ProbNPSess,RegressorInfosCell,BTTypeInds)
+function UnitCriterias = BinaryRespCheck(ProbNPSess,ExistField_ClusIDs,RegressorInfosCell,BTTypeInds)
 % currently only works for two block sessions
 
 if ~exist('BTTypeInds','Var')
@@ -67,17 +67,17 @@ for ccU = 1 : TotalNumofUnits
     FitCurve = feval(fit_model,TrInds);
     % FitSlope = fit_model.b2/(4*fit_model.b4);
 
-    % % figure('position',[50 100 420 340]);
-    % % hold on
-    % % plot(ccUBaselineData,'Color',[.7 .7 .7]);
-    % % plot(FitCurve,'k','linewidth',1.4)
-    % % title(sprintf('CI = %.2e',max(ci(2,:))));
+%     figure('position',[50 100 420 340]);
+%     hold on
+%     plot(ccUBaselineData,'Color',[.7 .7 .7]);
+%     plot(FitCurve,'k','linewidth',1.4)
+%     title(sprintf('CI = %.2e',max(ci(2,:))));
     if max(ci(2,:)) > 1000 || any(isnan(ci(2,:)))
         Criterias = 0;
         locs = NaN;
-        return;
+        continue;
     end
-    % 
+    %% 
     % figure;
     % plot(diff(FitCurve)/max(FitCurve))
 
@@ -97,17 +97,17 @@ for ccU = 1 : TotalNumofUnits
 
     EVexplain = 1 - sum((OctaveFitValue_gau - NormLogfitData).^2)/(sum((NormLogfitData-mean(NormLogfitData)).^2));
     % disp(EVexplain);
-    % figure('position',[500 100 420 340]);
-    % hold on
-    % plot(NormLogfitData,'k');
-    % plot(OctaveFitValue_gau,'r--');
+%     figure('position',[500 100 420 340]);
+%     hold on
+%     plot(NormLogfitData,'k');
+%     plot(OctaveFitValue_gau,'r--');
 
 
     [~,locs,w,p] = findpeaks(OctaveFitValue_gau,'NPeaks',1);
     % disp(w/ffit.c3);
 
-    % LogRatio = fit_model.b2/max(1,fit_model.b1);
-    % title(sprintf('c3 = %.3f, EV = %.4f,width = %.2f, LogRatio = %.3f',ffit.c3,EVexplain,w,LogRatio))
+    LogRatio = fit_model.b2/max(1,fit_model.b1);
+%     title(sprintf('c3 = %.3f, EV = %.4f,width = %.2f, LogRatio = %.3f',ffit.c3,EVexplain,w,LogRatio))
 
     if ~isempty(w)
         Criterias = ffit.c3*2 < 120 &&  EVexplain > 0.9 && LogRatio > 1 && LogRatio < 200 && w > 1;
@@ -120,3 +120,4 @@ for ccU = 1 : TotalNumofUnits
     UnitCriterias(ccU,:) = [Criterias, locs, InDataUnitIndsAll(ccU)];
 
 end
+disp('Function completed.\n');
