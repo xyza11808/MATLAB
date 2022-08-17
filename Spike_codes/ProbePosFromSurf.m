@@ -85,9 +85,32 @@ if isempty(LastRealAreaIndex) % the probe depth is larger than probe length
     
     SurfPosCord = NewchnposAll(LastRealAreaIndex,:);
     
-else
-    SurfPosCord = chnposAll(LastRealAreaIndex,:);
+else  
+    % corrected depth
+    % increase the search length
+    MaxLength = 8000; %um
+    PesudoChannellocs = (2:2:MaxLength/10)';
+    NewchnposAll = (round((-1)*PesudoChannellocs * (ProbDirectionAll)'...
+         + probeccf_strc.probe_ccf(curr_probe).trajectory_Ends));
+    chan_coords_outofbounds = ...
+                any(NewchnposAll' < 1,1) | ...
+                any(NewchnposAll' > size(av)',1);
+    %
+    if sum(chan_coords_outofbounds) % if channal out of index position exists
+        ChnOutboundInds = chan_coords_outofbounds;
+        chn_coords_idx = sub2ind(size(av), ...
+            NewchnposAll(~ChnOutboundInds,1),NewchnposAll(~ChnOutboundInds,2),...
+            NewchnposAll(~ChnOutboundInds,3));
+        NewchnposAll(chan_coords_outofbounds,:) = [];
+    else
+        chn_coords_idx = sub2ind(size(av), ...
+            NewchnposAll(:,1),NewchnposAll(:,2),NewchnposAll(:,3));
+        ChnOutboundInds = [];
+    end
+    chn_areas = int16(av(chn_coords_idx));
+    LastRealAreaIndex = find(chn_areas>1, 1, 'last');
     
+    SurfPosCord = NewchnposAll(LastRealAreaIndex,:);
 end
 
 TargetDepthEndpointCord = round(ExpDepth/10*(ProbDirectionAll)' + SurfPosCord);
@@ -157,7 +180,7 @@ else % following code haven't been cured, remains to be adjusted
     channelPosAreaAll{3} = chn_areaNameAll;
 end
     
-% write data to older xls files
+%% write data to older xls files
 sliceSavefilePath = fullfile(SlicePath,'probe_chn_location.xlsx');
 
 T = table(channelPosAreaAll{:},'VariableNames',{'UsedChnArea','AllChnArea','ChnAreaNames'});
