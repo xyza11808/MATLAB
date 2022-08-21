@@ -1,4 +1,4 @@
-function AP_align_probe_histology(st,slice_path, ...
+function AP_align_probe_histology2(st,av,slice_path, ...
     spike_times,spike_templates,template_depths, ...
     lfp,lfp_channel_positions,use_probe)  %
 % AP_align_probe_histology(st,slice_path,spike_times,spike_templates,template_depths,lfp,lfp_channel_positions,use_probe)
@@ -84,21 +84,56 @@ probe_areas_ax = subplot('Position',[0.8,0.1,0.05,0.8]);
 
 % Convert probe CCF coordinates to linear depth (*10 to convert to um)
 % (use the dorsal-most coordinate as the reference point)
-[~,dv_sort_idx] = sort(probe_ccf(use_probe).trajectory_coords(:,2));
+AlllabelPoints = [probe_ccf(use_probe).points;...
+    probe_ccf(use_probe).endpoints];
+%
+r0 = mean(AlllabelPoints,1);
+xyz = bsxfun(@minus,AlllabelPoints,r0);
+[U,S,V] = svd(xyz,0);
+histology_probe_direction = V(:,1);
+% (make sure the direction goes down in DV - flip if it's going up)
+if histology_probe_direction(2) < 0
+    histology_probe_direction = -histology_probe_direction;
+end
+ProbDirectionAll = histology_probe_direction; 
 
-probe_trajectory_depths = ...
-    pdist2(probe_ccf(use_probe).trajectory_coords, ...
-    probe_ccf(use_probe).trajectory_coords((dv_sort_idx == 1),:))*10;
+Online_probeDatapoints = U(:,1) * S(1,1) * (V(:,1))' + r0;
+probe_fit_endpoint = Online_probeDatapoints(end,:);
 
+ChnPosSteps = 0:2:500; % over-sampled
+chnposAll = (round((-1)*ChnPosSteps' * (ProbDirectionAll)'...
+    + probe_fit_endpoint));
+chan_coords_outofbounds = ...
+                any(chnposAll' < 1,1) | ...
+                any(chnposAll' > size(av)',1);
+if sum(chan_coords_outofbounds) % if channal out of index position exists
+    ChnOutboundInds = chan_coords_outofbounds;
+    chn_coords_idx = sub2ind(size(av), ...
+        chnposAll(~ChnOutboundInds,1),chnposAll(~ChnOutboundInds,2),chnposAll(~ChnOutboundInds,3));
+    chnposAll(chan_coords_outofbounds,:) = [];
+    ChnPosSteps(chan_coords_outofbounds,:) = [];
+else
+    chn_coords_idx = sub2ind(size(av), ...
+        chnposAll(:,1),chnposAll(:,2),chnposAll(:,3));
+end
+
+chn_areas = int16(av(chn_coords_idx));
+
+% [~,dv_sort_idx] = sort(probe_ccf(use_probe).trajectory_coords(:,2));
+% 
+% probe_trajectory_depths = ...
+%     pdist2(probe_ccf(use_probe).trajectory_coords, ...
+%     probe_ccf(use_probe).trajectory_coords((dv_sort_idx == 1),:))*10;
+% 
 trajectory_area_boundary_idx = ...
-    [1;find(diff(double(probe_ccf(use_probe).trajectory_areas)) ~= 0)+1];
-trajectory_area_boundaries = probe_trajectory_depths(trajectory_area_boundary_idx);
+    [1;find(diff(double(chn_areas)) ~= 0)+1];
+trajectory_area_boundaries = ChnPosSteps(trajectory_area_boundary_idx)*10;
 trajectory_area_centers = (trajectory_area_boundaries(1:end-1) + diff(trajectory_area_boundaries)/2);
-trajectory_area_labels = st.safe_name(probe_ccf(use_probe).trajectory_areas(trajectory_area_boundary_idx));
-
+trajectory_area_labels = st.safe_name(chn_areas(trajectory_area_boundary_idx));
+% 
 [~,area_dv_sort_idx] = sort(trajectory_area_centers);
 
-image([],probe_trajectory_depths,probe_ccf(use_probe).trajectory_areas);
+image([],ChnPosSteps*10,chn_areas);
 colormap(probe_areas_ax,cmap);
 caxis([1,size(cmap,1)])
 set(probe_areas_ax,'YTick',trajectory_area_centers(area_dv_sort_idx), ...

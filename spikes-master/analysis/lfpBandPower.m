@@ -28,8 +28,8 @@ for n = 1:nClips
     thisDat = double(mmf.Data.x(:, (1:nClipSamps)+sampStarts(n)));
     
     % median subtract? 
-%     thisDat = bsxfun(@minus, thisDat, median(thisDat));
-    thisDat = bsxfun(@minus, thisDat, mean(thisDat,2));
+    thisDat = bsxfun(@minus, thisDat, median(thisDat));
+%     thisDat = bsxfun(@minus, thisDat, mean(thisDat,2));
     
     [Pxx, F] = myTimePowerSpectrumMat(thisDat', lfpFs);
     

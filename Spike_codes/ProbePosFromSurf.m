@@ -64,7 +64,7 @@ if isempty(LastRealAreaIndex) % the probe depth is larger than probe length
     MaxLength = 6000; %um
     PesudoChannellocs = (2:2:MaxLength/10)';
     NewchnposAll = (round((-1)*PesudoChannellocs * (ProbDirectionAll)'...
-         + probeccf_strc.probe_ccf(curr_probe).trajectory_Ends));
+         + probe_fit_endpoint));
     chan_coords_outofbounds = ...
                 any(NewchnposAll' < 1,1) | ...
                 any(NewchnposAll' > size(av)',1);
@@ -91,7 +91,7 @@ else
     MaxLength = 8000; %um
     PesudoChannellocs = (2:2:MaxLength/10)';
     NewchnposAll = (round((-1)*PesudoChannellocs * (ProbDirectionAll)'...
-         + probeccf_strc.probe_ccf(curr_probe).trajectory_Ends));
+         + probe_fit_endpoint));
     chan_coords_outofbounds = ...
                 any(NewchnposAll' < 1,1) | ...
                 any(NewchnposAll' > size(av)',1);
@@ -156,7 +156,7 @@ if isempty(ChnOutboundInds)
     chnAllAreaNames = st.safe_name(chn_areasAll);
     channelPosAreaAll{3} = chnAllAreaNames;
 
-else % following code haven't been cured, remains to be adjusted
+else % adjust the probe depth if the aligned depth is too much
     OutBoundBoundaries = ChnOutboundInds(chn_area_boundaries);
     chn_area_boundaries(logical(OutBoundBoundaries)) = [];
     chn_area_centers = chn_area_boundaries(1:end-1) + diff(chn_area_boundaries)/2;

@@ -1,5 +1,5 @@
 
-function [pdfs, cdfs] = computeWFampsOverDepth(spikeAmps, spikeDepths, ampBins, depthBins, recordingDur);
+function [pdfs, cdfs] = computeWFampsOverDepth(spikeAmps, spikeDepths, ampBins, depthBins, recordingDur)
 
 nDbins = length(depthBins)-1;
 nAbins = length(ampBins)-1;
