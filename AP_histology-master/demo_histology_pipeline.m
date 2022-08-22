@@ -63,8 +63,8 @@ probechnfile = 'E:\MatCode\MATLAB\sortingcode\Kilosort3\configFiles\neuropixPhas
 % probechnfile = 'E:\codes\matcodes\ks2_5\configFiles\neuropixPhase3B2_kilosortChanMap.mat';
 AP_get_probe_histology(tv,av,st,slice_path,probechnfile);
 %%
-ksFolderPath = 'I:\ksOutput_backup\b107a03_ksoutput\A2021226_b107a03_NPSess02_g0_cat\catgt_A2021226_b107a03_NPSess02_g0\Cat_A2021226_b107a03_NPSess02_g0_imec0\ks2_5';
-ksRawfileFolder = 'I:\ksOutput_backup\b107a03_ksoutput\A2021226_b107a03_NPSess02_g0_cat\catgt_A2021226_b107a03_NPSess02_g0\Cat_A2021226_b107a03_NPSess02_g0_imec0';
+ksFolderPath = 'I:\ksOutput_backup\b107a03_ksoutput\A2021226_b107a03_NPSess02_g0_cat\catgt_A2021226_b107a03_NPSess02_g0\Cat_A2021226_b107a03_NPSess02_g0_imec2\ks2_5';
+ksRawfileFolder = 'I:\ksOutput_backup\b107a03_ksoutput\A2021226_b107a03_NPSess02_g0_cat\catgt_A2021226_b107a03_NPSess02_g0\Cat_A2021226_b107a03_NPSess02_g0_imec2';
 LFPfilePathStrc = dir(fullfile(ksRawfileFolder,'*.lf.bin'));
 LFPfilePath = fullfile(ksRawfileFolder,LFPfilePathStrc(1).name);
 llfpfs = 2500;
@@ -92,7 +92,7 @@ template_depths = ycoords(TemplateChns(UsedTemplates+1)+1);
 %%
 % Align histology to electrophysiology
 use_probe = 14;
-AP_align_probe_histology2(st,av,slice_path, ...
+AP_align_probe_histology(st,slice_path, ...
     spike_times,spike_templates,template_depths, ...
      lfp,channel_positions(:,2),...
     use_probe);
