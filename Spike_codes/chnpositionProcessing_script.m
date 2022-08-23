@@ -1,6 +1,6 @@
 
 cclr
-AnmSess_sourcepath = 'F:\b104a03_ksoutputs';
+AnmSess_sourcepath = 'I:\ksOutput_backup\b103a04_ksoutput';
 [fname, fpath, fidx] = uigetfile({'*.xlsx';'*.xls'},'Select chnposition spreadsheet file','probe_chn_location.xlsx');
 if ~fidx
     return;
@@ -89,6 +89,10 @@ for cSessInds = 1 : NumprocessedNPSess
 end
 disp(MatchedProbeInds');
 %% write chn position data into each NP session folder path
+% also read probeCCF data and save individual probe datas within target
+% session path
+probeCCFfilePath = fullfile(fpath,'probe_ccf.mat');
+probeCCFData = load(probeCCFfilePath);
 
 for cf = 1 : NumprocessedNPSess
     if isnan(MatchedProbeInds(cf))
@@ -96,13 +100,17 @@ for cf = 1 : NumprocessedNPSess
     end
     SessFolder = NPsessionfolders{cf};
     SavedFileName = fullfile(SessFolder, sortingcode_string, 'Chnlocation.mat');
+    ProbeCCFSavefile = fullfile(SessFolder, sortingcode_string, 'ProbeCCFdata.mat');
     
     ProbeSessDatas = probechnpos_info_All(MatchedProbeInds(cf),:);
     ChnArea_indexes = ProbeSessDatas{1};
     ChnArea_Strings = ProbeSessDatas{3};
     ChnArea_info = ProbeSessDatas{2};
     
-    save(SavedFileName,'ChnArea_indexes','ChnArea_Strings','ChnArea_info','-v7.3');
+    ProbeIndex = MatchedProbeInds(cf);
+    ProbeCCF = probeCCFData.probe_ccf(ProbeIndex);
     
+    save(SavedFileName,'ChnArea_indexes','ChnArea_Strings','ChnArea_info','-v7.3');
+    save(ProbeCCFSavefile,'ProbeCCF','ProbeIndex','-v7.3');
 end
 
