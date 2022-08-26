@@ -1,5 +1,5 @@
 
-function [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] = templatePositionsAmplitudes(temps, winv, ycoords, spikeTemplates, tempScalingAmps)
+function [spikeUnscaledAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] = templatePositionsAmplitudes(temps, winv, ycoords, spikeTemplates, tempScalingAmps)
 % function [spikeAmps, spikeDepths, templateDepths, tempAmps, tempsUnW, templateDuration, waveforms] = templatePositionsAmplitudes(temps, winv, ycoords, spikeTemplates, tempScalingAmps)
 %
 % Compute some basic things about spikes and templates
@@ -50,7 +50,7 @@ templateDepths = sum(bsxfun(@times,tempChanAmps,ycoords'),2)./sum(tempChanAmps,2
 % assign all spikes the amplitude of their template multiplied by their
 % scaling amplitudes (templates are zero-indexed)
 spikeAmps = tempAmpsUnscaled(spikeTemplates+1).*tempScalingAmps;
-
+spikeUnscaledAmps = tempAmpsUnscaled(spikeTemplates+1);
 % take the average of all spike amps to get actual template amps (since
 % tempScalingAmps are equal mean for all templates)
 ta = clusterAverage(spikeTemplates+1, spikeAmps);

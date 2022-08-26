@@ -55,9 +55,9 @@ end
 %%
 cclr
 
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-sortingcode_string = 'ks2_5';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% sortingcode_string = 'ks2_5';
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
         'Sheet',1);
 SessionFoldersAll = SessionFoldersC(2:end);
@@ -72,7 +72,7 @@ TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDInd
 
 BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
 TargetRegionNamesAll = fieldnames(BrainRegionStrc.BrainRegions);
-
+sortingcode_string = 'ks2_5';
 NumofTargetAreas = length(TargetRegionNamesAll);
 %%
 UnitNumsAll = zeros(NumprocessedNPSess,1);
@@ -80,24 +80,36 @@ for cP = 1 : NumprocessedNPSess
      fprintf('Processing session %d...\n',cP);
 %     cPath = SessionFolders{cP};
 %     cPath = strrep(SessionFolders{cP},'F:\','E:\NPCCGs\');
-%     cPath = fullfile(strrep(SessionFolders{cP},'F:','I:\ksOutput_backup')); %
-    cPath = fullfile(strrep(SessionFolders{cP},'F:','P:'));
-    %%
-    load(fullfile(cPath,sortingcode_string,'NPClassHandleSaved.mat'));
+    cPath = fullfile(strrep(SessionFolders{cP},'F:','I:\ksOutput_backup')); %
+%     cPath = fullfile(strrep(SessionFolders{cP},'F:','P:'));
+    try
+        load(fullfile(cPath,sortingcode_string,'NPClassHandleSaved.mat'));
+    catch
+       warning('NPClassHandle file is missing in session %s',cPath);
+    end
 %     ProbNPSess = Newclasshandle;
 %     if isempty(ProbNPSess.ChannelAreaStrs)
-        load(fullfile(cPath,sortingcode_string,'Chnlocation.mat'));
-        ProbNPSess.ChannelAreaStrs = ChnArea_Strings(2:end,:);
+     try
+        load(fullfile(cPath,sortingcode_string,'Chnlocation.mat'),'AlignedAreaStrings');
+     catch
+%          load(fullfile(cPath,sortingcode_string,'Chnlocation.mat'),'ChnArea_Strings');
+         warning('Session %s may need electrophysiology alignment before further analysis.',cPath);
+         continue;
+     end
+%      ProbNPSess.ChannelAreaStrs = ChnArea_Strings(2:end,:);
+     ProbNPSess.ChannelAreaStrs = AlignedAreaStrings;
 %     end
     %
     UnitMaxampChnInds = ProbNPSess.ChannelUseds_id; % already had +1 for matlab indexing
 %     UnitNumsAll(cP) = length(UnitMaxampChnInds);
     
-    UnitChnAreasAll = ProbNPSess.ChannelAreaStrs(UnitMaxampChnInds,:);
-    UnitChnAreaIndexAll = cell2mat(UnitChnAreasAll(:,2));
+%     UnitChnAreasAll = ProbNPSess.ChannelAreaStrs(UnitMaxampChnInds,:);
+%     UnitChnAreaIndexAll = cell2mat(UnitChnAreasAll(:,2));
+    UnitChnAreaIndexAll = ProbNPSess.ChannelAreaStrs{1}(UnitMaxampChnInds);
+    
     totalUnitNum = length(UnitMaxampChnInds);
     SessAreaIndexStrc = struct();
-    IsUnitAreTarget = false(totalUnitNum, 1);
+    IsUnitAreTarget = false(totalUnitNum, 1);  
     IstargetfieldExist = false(NumofTargetAreas+1,1);
     for cNameNum = 1 : NumofTargetAreas
         [Lia, Lib] = ismember(UnitChnAreaIndexAll,BrainRegionStrc.BrainRegions.(TargetRegionNamesAll{cNameNum}));
@@ -120,7 +132,7 @@ for cP = 1 : NumprocessedNPSess
         IstargetfieldExist(end) = true;
     end
     SessAreaIndexStrc.UsedAbbreviations = IstargetfieldExist;
-    SessAreaIndex_saveName = fullfile(cPath,sortingcode_string,'SessAreaIndexData.mat');
+    SessAreaIndex_saveName = fullfile(cPath,sortingcode_string,'SessAreaIndexDataAligned.mat');
     save(SessAreaIndex_saveName,'SessAreaIndexStrc','-v7.3');
     clearvars ProbNPSess
     %
