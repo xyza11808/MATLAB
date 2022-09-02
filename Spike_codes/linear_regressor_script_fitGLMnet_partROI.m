@@ -6,11 +6,12 @@ savefolder = fullfile(ksfolder,'Regressor_ANA');
 if ~isfolder(savefolder)
     mkdir(savefolder);
 end
-dataSaveNames = fullfile(savefolder,'REgressorDataSave4.mat');
+% dataSaveNames = fullfile(savefolder,'REgressorDataSave4.mat');
 % disp(exist(dataSaveNames,'file'));
 % if exist(dataSaveNames,'file')
 %     return;
 % end
+clearvars RegressorInfosCell_p FullRegressorInfosCell_p rrr_RegressorInfosCell_p
 
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 clearvars RegressorInfosCell
@@ -292,46 +293,72 @@ TaskEvents_predictor = AllTaskEventsFirst(1,:);
 TaskEvents_Predlabel = AllTaskEventsFirst(2,:);
 %% BinnedSPdatas
 tic
-RegressorInfosCell = cell(size(BinnedSPdatas,1),3);
-FullRegressorInfosCell = cell(size(BinnedSPdatas,1),3);
-rrr_RegressorInfosCell = cell(size(BinnedSPdatas,1),3);
 % f = waitbar(0,'Session Calculation Start...');
-NumNeurons = size(BinnedSPdatas,1);
-fprintf('Processing %d units...\n',NumNeurons);
+% NumNeurons = size(BinnedSPdatas,1);
+NumNeurons = length(NeedCalUnitInds);
+RegressorInfosCell_p = cell(NumNeurons,3);
+FullRegressorInfosCell_p = cell(NumNeurons,3);
+rrr_RegressorInfosCell_p = cell(NumNeurons,3);
+
 ErrorU = zeros(NumNeurons,1);
-parfor cU = 1:NumNeurons
-    try
-        [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
-            lassoelasticRegressor(BinnedSPdatas(cU,:), TaskEvents_predictor, 5);
-        RegressorInfosCell(cU,:) = {ExplainVarStrc, RegressorCoefs, RegressorPreds};
-        if mean(ExplainVarStrc.fullmodel_explain_var) >= 0.02
-            [ExplainVarStrc_rrr, RegressorCoefs_rrr, RegressorPreds_rrr] = ...
-                rrr_lassoelasticRegressor(BinnedSPdatas(cU,:), TaskEvents_predictor, 5);
-            rrr_RegressorInfosCell(cU,:) = {ExplainVarStrc_rrr, ...
-                RegressorCoefs_rrr, RegressorPreds_rrr};
+% if NumNeurons > 20
+%     if isempty(gcp('nocreate'))
+%         parpool('local',min(max(NumNeurons,20),64));
+%     end
+    parfor cU = 1:NumNeurons
+        try
+            [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
+                lassoelasticRegressor(BinnedSPdatas(NeedCalUnitInds(cU),:), TaskEvents_predictor, 5);
+            RegressorInfosCell_p(cU,:) = {ExplainVarStrc, RegressorCoefs, RegressorPreds};
+            if mean(ExplainVarStrc.fullmodel_explain_var) >= 0.02
+                [ExplainVarStrc_rrr, RegressorCoefs_rrr, RegressorPreds_rrr] = ...
+                    rrr_lassoelasticRegressor(BinnedSPdatas(NeedCalUnitInds(cU),:), TaskEvents_predictor, 5);
+                rrr_RegressorInfosCell_p(cU,:) = {ExplainVarStrc_rrr, ...
+                    RegressorCoefs_rrr, RegressorPreds_rrr};
+            end
+            cU_PartialExpVars = squeeze(mean(ExplainVarStrc.PartialMd_explain_var));
+            if any(cU_PartialExpVars(4:5,2:3) > 0.02,'all')
+                % calculate a full model including boundary estimation
+                [ExplainVarStrcFu, RegressorCoefsFu, RegressorPredsFu] = ...
+                    lassoelasticRegressor(BinnedSPdatas(NeedCalUnitInds(cU),:), FullEvents_predictor, 5);
+                FullRegressorInfosCell_p(cU,:) = {ExplainVarStrcFu, RegressorCoefsFu, RegressorPredsFu};
+            end
+        catch ME
+            fprintf('Errors for unit %d.\n',cU);
+            ErrorU(cU) = 1;
         end
-        cU_PartialExpVars = squeeze(mean(ExplainVarStrc.PartialMd_explain_var));
-        if any(cU_PartialExpVars(4:5,2:3) > 0.02,'all')
-            % calculate a full model including boundary estimation
-            [ExplainVarStrcFu, RegressorCoefsFu, RegressorPredsFu] = ...
-                lassoelasticRegressor(BinnedSPdatas(cU,:), FullEvents_predictor, 5);
-            FullRegressorInfosCell(cU,:) = {ExplainVarStrcFu, RegressorCoefsFu, RegressorPredsFu};
-        end
-    catch ME
-        fprintf('Errors for unit %d.\n',cU);
-        ErrorU(cU) = 1;
     end
 %     Progress = (cU - 1)/(NumNeurons - 1);
 %     waitbar(Progress,f,sprintf('Processing %.2f%% of all calculation...',Progress*100));
-end
+% else
+%     for cU = 1:NumNeurons
+%         try
+%             [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
+%                 lassoelasticRegressor(BinnedSPdatas(NeedCalUnitInds(cU),:), TaskEvents_predictor, 5);
+%             RegressorInfosCell_p(cU,:) = {ExplainVarStrc, RegressorCoefs, RegressorPreds};
+%             if mean(ExplainVarStrc.fullmodel_explain_var) >= 0.02
+%                 [ExplainVarStrc_rrr, RegressorCoefs_rrr, RegressorPreds_rrr] = ...
+%                     rrr_lassoelasticRegressor(BinnedSPdatas(NeedCalUnitInds(cU),:), TaskEvents_predictor, 5);
+%                 rrr_RegressorInfosCell_p(cU,:) = {ExplainVarStrc_rrr, ...
+%                     RegressorCoefs_rrr, RegressorPreds_rrr};
+%             end
+%             cU_PartialExpVars = squeeze(mean(ExplainVarStrc.PartialMd_explain_var));
+%             if any(cU_PartialExpVars(4:5,2:3) > 0.02,'all')
+%                 % calculate a full model including boundary estimation
+%                 [ExplainVarStrcFu, RegressorCoefsFu, RegressorPredsFu] = ...
+%                     lassoelasticRegressor(BinnedSPdatas(NeedCalUnitInds(cU),:), FullEvents_predictor, 5);
+%                 FullRegressorInfosCell_p(cU,:) = {ExplainVarStrcFu, RegressorCoefsFu, RegressorPredsFu};
+%             end
+%         catch ME
+%             fprintf('Errors for unit %d.\n',cU);
+%             ErrorU(cU) = 1;
+%         end
+%     end
+% end
 toc
 % waitbar(1,f,'Calculation complete!');
 % close(f);
-%%
-save(dataSaveNames, 'RegressorInfosCell',...
-    'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','rrr_RegressorInfosCell', 'AreaUnitNumbers',...
-    'FullRegressorInfosCell','EventDescripStrsFull','EventDescripStrsFirst','TaskEvents_predictor','FullEvents_predictor','-v7.3');
-
+%
 %%
 % predictMtxAll = cat(2,TaskEvents_predictor{:});
 % TaskTrigOnBins = round(TaskTrigTimeAligns/0.1);

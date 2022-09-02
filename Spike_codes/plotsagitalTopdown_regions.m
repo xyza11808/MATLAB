@@ -12,3 +12,4 @@ sagAx = subplot(121);
 topdownAx = subplot(122);
 % plotRecLocsMapByColor(sagAx,topdownAx,{'AUD'},[1 0 0],st,av); % color should have same rows as number of brain regions
 plotRecLocsMapByColor(sagAx,topdownAx,AdjAreaStrings,Value2Colors,st,av); % color should have same rows as number of brain regions
+

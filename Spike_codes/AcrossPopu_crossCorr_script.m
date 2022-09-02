@@ -6,7 +6,7 @@ clearvars CalResults OutDataStrc ExistField_ClusIDs
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 
 %% find target cluster inds and IDs
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);

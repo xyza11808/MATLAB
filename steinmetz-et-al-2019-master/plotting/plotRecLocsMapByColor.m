@@ -25,6 +25,7 @@ if ~isempty(sagAx)
     avs = squeeze(av(:,:,slicePos))';
     
     plotRLMBChelp(sagAx, avs, uacr, colors, st, tpidx);
+%     colorbar;
 end
 
 if ~isempty(topdownAx)
@@ -44,12 +45,20 @@ function plotRLMBChelp(ax, avs, uacr, colors, st, tpidx)
 [~,~,h] = sliceOutlineWithRegionVec(avs, [], [],ax);
 
 set(h, 'Color', 0.5*[1 1 1]); 
-hold on; 
-
+hold on;
+IsAreaStrctGiven = 0;
+if isstruct(tpidx)
+    AreaNameStrs = fieldnames(tpidx);
+    IsAreaStrctGiven = 1;
+end
 for q = 1:numel(uacr)
-    uIdx = find(strcmp(st.acronym, uacr{q}));
-
-    below = [uIdx; tpidx(tpidx(:,1)==uIdx,2)];
+    if IsAreaStrctGiven
+        uIdx = strcmpi(AreaNameStrs, uacr{q});
+        below = tpidx.(AreaNameStrs{uIdx});
+    else
+        uIdx = find(strcmp(st.acronym, uacr{q}));
+        below = [uIdx; tpidx(tpidx(:,1)==uIdx,2)];
+    end
     
     [ii,jj] = find(ismember(avs,below)); 
     if ~isempty(ii)
@@ -57,15 +66,17 @@ for q = 1:numel(uacr)
         thisColor = colors(q,:);
         
         c = contourc(double(ismember(avs,below)), [0.5 0.5]);
-        coordsReg = makeSmoothCoords(c);                
+        coordsReg = makeSmoothCoords(c);
+%         title(ax, uacr{q});
         for cidx = 1:numel(coordsReg)
-            h = fill(ax, coordsReg(cidx).x,coordsReg(cidx).y, thisColor); hold on;
+            h = patch(ax, coordsReg(cidx).x,coordsReg(cidx).y, thisColor); hold on;
             h.FaceAlpha = 0.75;
         end                
         
     end
 end
 
+% colorbar
 % % add annotations last so they're on top
 % for q = 1:numel(uIdx)
 %     

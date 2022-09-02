@@ -5,6 +5,12 @@
 
 saveFoldername = fullfile(ksfolder,'BSRL_ReversingTrials');
 clearvars behavResults P_choiceLeft nll delta V_R V_L P_bound_low P_bound_high
+
+filename_2 = [saveFoldername,filesep, 'BSRL_modelData.mat'];
+if exist(filename_2,'file')
+    return;
+end
+
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'),'behavResults');
 if ~isfolder(saveFoldername)
     mkdir(saveFoldername);
@@ -35,7 +41,7 @@ UsedIndsStrc.IndsRev = inds_rev;
 UsedIndsStrc.IndsCorrectUsed = inds_correct_used;
 
 save(fullfile(saveFoldername,'UsedIndsDatas.mat'),'UsedIndsStrc','-v7.3');
-return;
+% return;
 % NLLfun = @(x,Octave_used,left_choice_used,inds_correct_used) NLL_MB_RL_function_v5(x(1),x(2),x(3),...
 %     x(4),x(5),x(6),Octave_used,left_choice_used,inds_correct_used);
 NLLfun = @(x,Octave_used,left_choice_used,inds_correct_used) NLL_MB_RL_function_v4(x(1),x(2),x(3),...
@@ -103,7 +109,7 @@ print(hif,saveName,'-dpdf','-bestfit');
 close(hif);
 
 %
-filename_2 = [saveFoldername,filesep, 'BSRL_modelData.mat'];
+
 save(filename_2,'theta_fit','beta_fit','alpha_fit','P_bound_low_init','nll','inds_correct_used',...
     'P_choiceLeft','delta','V_L','V_R','P_bound_low','P_bound_high','HighAndLowBlock_bound');
 %%

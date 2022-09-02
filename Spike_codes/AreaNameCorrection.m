@@ -1,9 +1,11 @@
 function AdjAreaStrings = AreaNameCorrection(UsedAreaString, st)
 % check whether the given brain region is standard allen area names or not,
 % and replace the error ones
-
-KnownErrors = {'Mos', 'Amv', 'Amd'};
-ErrCorrects = {'MOs','AMv','AMd'};
+if ~iscell(UsedAreaString)
+    UsedAreaString = {UsedAreaString};
+end
+KnownErrors = {'Mos', 'Amv', 'Amd','SSpbfd'};
+ErrCorrects = {'MOs','AMv','AMd','SSp-bfd'};
 
 TotalAreaNums = length(UsedAreaString);
 AdjAreaStrings = UsedAreaString;

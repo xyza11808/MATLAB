@@ -5,7 +5,7 @@ load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 
 OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
-NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]) + 1e-8;
+NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 
 %%
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
@@ -90,7 +90,7 @@ for cAr = 1 : Numfieldnames
                 5,[],5);
         
         % NonRevTr Error trials
-        if sum(~NonRevTrDatasIsCorrect) > 25
+        if sum(~NonRevTrDatasIsCorrect) > 15
             Area1_datas4 = NonRevTrDatas(~NonRevTrDatasIsCorrect,ExistField_ClusIDs{cAr,2},:);
             Area2_datas4 = NonRevTrDatas(~NonRevTrDatasIsCorrect,ExistField_ClusIDs{cAr2,2},:);
             [jPECC_val4, jPECC_p4] = jPECC(Area1_datas4+1e-6,Area2_datas4+1e-6,...
@@ -121,7 +121,7 @@ save(dataSavePath,'CalResults','OutDataStrc',...
 %%
 % Times = ((1:size(RevTrDatas,3))-OutDataStrc.TriggerStartBin+0.5)*0.1;
 % 
-% PlotInds = 16;
+% PlotInds = 4;
 % 
 % figure('position',[100 100 1240 680]);
 % subplot(231)
@@ -143,11 +143,11 @@ save(dataSavePath,'CalResults','OutDataStrc',...
 % subplot(235)
 % imagesc(Times,Times,CalResults{PlotInds,7},[0 0.6])
 % title(sprintf('%s -> %s, NonRev Error',CalResults{PlotInds,9},CalResults{PlotInds,10}));
-% 
-% subplot(236)
-% imagesc(Times,Times,CalResults{PlotInds,5} - CalResults{PlotInds,7},[-0.3 0.3])
-% title('NonRev Correct-Error');
-
+% try
+%     subplot(236)
+%     imagesc(Times,Times,CalResults{PlotInds,5} - CalResults{PlotInds,7},[-0.3 0.3])
+%     title('NonRev Correct-Error');
+% end
 
 
 

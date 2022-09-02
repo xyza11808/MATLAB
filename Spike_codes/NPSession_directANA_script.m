@@ -1,7 +1,7 @@
 cclr;
 
 %
-ProbespikeFolder='P:\b106a04_ksoutputs\b106a04_20211130_NPsess02_g0_cat\catgt_b106a04_20211130_NPsess02_g0\Cat_b106a04_20211130_NPsess02_g0_imec1';
+ProbespikeFolder='P:\b105a04_ks_ouput\b105a04_NPsess02_20210710_g0_cat\catgt_b105a04_NPsess02_20210710_g0\Cat_b105a04_NPsess02_20210710_g0_imec3';
 
 %
 % start a new NP data analysis session
@@ -10,8 +10,8 @@ ProbNPSess = NPspikeDataMining(fullfile(ProbespikeFolder,'ks2_5'),'Task');
 ProbNPSess = ProbNPSess.triggerOnsetTime([],[6,2],[]);
 % ProbNPSess = ProbNPSess.triggerOnsetTime([],[2,6],[]);
 % load behavior datas
-
-load('P:\b106a04_ksoutputs\b106a04_20211130_NPsess02_g0_cat\catgt_b106a04_20211130_NPsess02_g0\Ab106a04_2afc_20211130_NPsess02.mat');
+%
+load('P:\b105a04_ks_ouput\b105a04_NPsess02_20210710_g0_cat\catgt_b105a04_NPsess02_20210710_g0\105a04_2afc_20210710_tony_NPSess02.mat');
 %
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
 if isempty(BlockSectionInfo)
@@ -34,6 +34,7 @@ Smoothbin = [50,10]; % time window for smooth psth, in ms format
 if isempty(ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds})
     ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, Smoothbin, TrStimOnsets);
 end
+
 %% the unit exclusion needs spike time data, moved after the unit spike data
 % construction
 if isempty(ProbNPSess.SurviveInds)
@@ -337,7 +338,7 @@ end
 
 
 %% passive analysis session
-PassiveFileFullPath = 'P:\b106a04_ksoutputs\b106a04_20211130_NPsess02_g0_cat\catgt_b106a04_20211130_NPsess02_g0\Ab106a04_rf_20211130_NPsess02.txt';
+PassiveFileFullPath = 'P:\b105a04_ks_ouput\b105a04_NPsess02_20210710_g0_cat\catgt_b105a04_NPsess02_20210710_g0\b105a04_rf_20210710_tony_NPSess02.txt';
 ProbNPSess.CurrentSessInds = strcmpi('passive',ProbNPSess.SessTypeStrs);
 
 ProbNPSess = ProbNPSess.triggerOnsetTime([],4);  % 4 is the trigger duration, in ms
@@ -346,7 +347,7 @@ ProbNPSess = ProbNPSess.triggerOnsetTime([],4);  % 4 is the trigger duration, in
 TimeWin = [-0.4,3]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
 % Smoothbin = [100,20]; % time window for smooth psth, in ms format
 ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, []);
-%%
+%
 % load passive sound results
 soundTextfile = PassiveFileFullPath;
 Datas = readmatrix(soundTextfile);
@@ -362,9 +363,38 @@ AlignEvents = [TrOnsetVec,TrOnsetVec+TrDuration];%,TrOnsetVec+TrDuration+floor((
 % ProbNPSess.EventsPSTHplot(AlignEvents,1,[TrFrequency,TrDBs],{'Frequency','DB'},...
 %     {'SOnset','SOffset';'r','m'},[],'Passive_colorplot',[],ProbeChn_regionCells);
 PassSoundDatas = Datas;
+%%
+cSessFolder = fullfile(ProbespikeFolder,'ks2_5');
+Amps = readNPY(fullfile(cSessFolder,'amplitudes.npy'));
+ClusInds = readNPY(fullfile(cSessFolder,'spike_clusters.npy'));
+SPTimes = readNPY(fullfile(cSessFolder,'spike_times.npy'));
+%     load(fullfile(cSessFolder,'NPClassHandleSaved.mat'));
 
 %
+UsedUnitIDs = ProbNPSess.FRIncludeClus;
+NumUnitIDs = length(UsedUnitIDs);
+
+UnitSPAmps = cell(NumUnitIDs,2);
+UnitLlmfits = cell(NumUnitIDs,2);
+for cUnit = 1 : NumUnitIDs
+    cUnit_ID = UsedUnitIDs(cUnit);
+    cUnit_ID_Inds = ClusInds == cUnit_ID;
+    cUnit_ID_sptimes = double(SPTimes(cUnit_ID_Inds))/30000;
+    cUnit_ID_spAmps = Amps(cUnit_ID_Inds);
+    UnitSPAmps(cUnit,:) = {cUnit_ID_sptimes, cUnit_ID_spAmps};
+
+    tb1 = fitlm(UnitSPAmps{cUnit,1},UnitSPAmps{cUnit,2});
+    UnitLlmfits(cUnit,:) = {tb1.Coefficients, tb1.Rsquared};
+
+end
+
+saveName = fullfile(cSessFolder,'UnitspikeAmpSave.mat');
+save(saveName,'UnitSPAmps','UnitLlmfits','-v7.3');
+    
+%
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
+ProbNPSess = ProbNPSess.ClusScreeningFun;
+%%
 save(fullfile(ProbespikeFolder,'ks2_5','NPClassHandleSaved.mat'),'ProbNPSess', 'PassSoundDatas', 'behavResults', '-v7.3');
 
 

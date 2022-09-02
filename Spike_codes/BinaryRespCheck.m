@@ -1,9 +1,6 @@
-function UnitCriterias = BinaryRespCheck(ProbNPSess,ExistField_ClusIDs,RegressorInfosCell,BTTypeInds)
+function UnitCriterias = BinaryRespCheck(ProbNPSess,InDataUnitIndsAll)
 % currently only works for two block sessions
 
-if ~exist('BTTypeInds','Var')
-    BTTypeInds = 4;
-end
 
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds}{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
@@ -14,13 +11,13 @@ end
 % SMBinDataMtxRaw = SMBinDataMtx;
 
 
-AllUnitBT_Evar = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,BTTypeInds,2))),RegressorInfosCell(:,1)); %alone model
-BTInds = AllUnitBT_Evar > 0.02;
-% BTRegressorCell = RegressorInfosCell(BTInds,1);
-% BTPartEVs = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var)),BTRegressorCell,'un',0);
-% BTPartEVsMtx = cat(3,BTPartEVs{:});
-
-InDataUnitIndsAll = ExistField_ClusIDs(BTInds,2);
+% AllUnitBT_Evar = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,BTTypeInds,2))),RegressorInfosCell(:,1)); %alone model
+% BTInds = AllUnitBT_Evar > 0.02;
+% % BTRegressorCell = RegressorInfosCell(BTInds,1);
+% % BTPartEVs = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var)),BTRegressorCell,'un',0);
+% % BTPartEVsMtx = cat(3,BTPartEVs{:});
+% 
+% InDataUnitIndsAll = ExistField_ClusIDs(BTInds,2);
 BaseDataAll = squeeze(mean(SMBinDataMtx(:,InDataUnitIndsAll,1:ProbNPSess.TriggerStartBin{1}),3));
 
 %%
