@@ -1,14 +1,14 @@
 cclr
 
 % AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
 BrainAreasStrCC = BrainAreasStrC(2:end);
-BrainAreasStrCCC = cellfun(@(x) x(2:end-1),BrainAreasStrCC,'UniformOutput',false);
-EmptyInds = cellfun(@isempty,BrainAreasStrCCC);
-BrainAreasStr = [BrainAreasStrCCC(~EmptyInds);{'Others'}];
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
+BrainAreasStr = [BrainAreasStrCC(~EmptyInds);{'Others'}];
 
 %%
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
@@ -23,9 +23,9 @@ Areawise_PopuPredCC = cell(NumUsedSess,NumAllTargetAreas,2);
 Areawise_PopuSVMCC = cell(NumUsedSess,NumAllTargetAreas,2);
 Areawise_popuSVMpredInfo = cell(NumUsedSess,NumAllTargetAreas,3);
 Areawise_BehavChoiceDiff = cell(NumUsedSess,NumAllTargetAreas);
-for cS = 1 :  NumUsedSess
-%     cSessPath = SessionFolders{cS}(2:end-1);
-    cSessPath = strrep(SessionFolders{cS}(2:end-1),'F:','I:\ksOutput_backup');
+for cS = 1 :  1%NumUsedSess
+%     cSessPath = SessionFolders{cS};
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup');
     
     SessblocktypeDecfile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktype','PopudecodingDatas.mat');
     SessUnitAUCfile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktype','SingleUnitAUC.mat');
@@ -56,7 +56,7 @@ for cS = 1 :  NumUsedSess
         cAreaSVMShufthres = prctile(SessblocktypeDecDataStrc.SVMDecodingAccuracy{cAreaInds,2},95);
         cAreaUnitInds = SessblocktypeDecDataStrc.SVMDecodingAccuracy{cAreaInds,4};
         
-        AreaMatchInds = matches(BrainAreasStr,cAreaStr);
+        AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
         Areawise_sessDecPerf(cS,AreaMatchInds,:) = {cAreaSVMperf, cAreaSVMShufthres, numel(cAreaUnitInds)}; % realperf, shufthres, observation numbers
         
         % set AUC values
