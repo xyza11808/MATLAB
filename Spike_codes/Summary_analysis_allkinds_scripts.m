@@ -1267,12 +1267,13 @@ end
 %%
 % NumAllTargetAreas = length(BrainAreasStr); % contains all brain region
 % names
-
+Areawise_SessCount = cellfun(@isempty,Areawise_RespUnitInds);
+AreaSessionNum = sum(~Areawise_SessCount);
 ExplainVarsMtx_AllC = cell(NumAllTargetAreas, 1);
 IsAreaEmpty = false(NumAllTargetAreas,1);
 for cArea = 1 : NumAllTargetAreas
     cA_AllRespMtx = cat(1,Areawise_RespUnitInds{:,cArea});
-    if isempty(cA_AllRespMtx) || size(cA_AllRespMtx,1) < 10
+    if isempty(cA_AllRespMtx) || size(cA_AllRespMtx,1) < 10 || AreaSessionNum(cArea) < 2
         IsAreaEmpty(cArea) = true;
     else
         ExplainVarsMtx_AllC{cArea} = cA_AllRespMtx;
@@ -1298,17 +1299,17 @@ for cA = 1 : NumNEAreas
     
     BrainAreaFracs(cA,:) = [NumUnits,cAPureBTFrac, cA_AllBTFrac, cA_StimFrac, cA_ChoiceFrac];
 end
-%%
+%
 AllAreaFracs = BrainAreaFracs(:,[2,4,5]);
 AllAreaFracStr = FracTypeStrs([2,4,5]-1);
-SortIndex = 1; % 1 indicates BT, 2 indicates Stim, 3 indicates choice
-[~,sortInds] = sort(AllAreaFracs(:,SortIndex),'descend');
-TotalUsedAreaNum = length(sortInds);
-figure;
-bar(AllAreaFracs(sortInds,:),'stacked')
-set(gca,'xtick',1:NumNEAreas,'xticklabel',NEBrainStrs(sortInds));
-legend({'BlockType','Stim','Choice'},'box','off');
-set(gca,'box','off');
+% SortIndex = 1; % 1 indicates BT, 2 indicates Stim, 3 indicates choice
+% [~,sortInds] = sort(AllAreaFracs(:,SortIndex),'descend');
+% TotalUsedAreaNum = length(sortInds);
+% figure;
+% bar(AllAreaFracs(sortInds,:),'stacked')
+% set(gca,'xtick',1:NumNEAreas,'xticklabel',NEBrainStrs(sortInds));
+% legend({'BlockType','Stim','Choice'},'box','off');
+% set(gca,'box','off');
 %%
 
 % allen_atlas_path = 'E:\AllenCCF';
