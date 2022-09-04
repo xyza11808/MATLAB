@@ -132,7 +132,7 @@ end
 SwitchInBlockType = BlockSectionInfo.BlockTypes(2:end); % switch into what kind of the block
 
 % SavePlotFolder = fullfile(cfFolder,'BehavSwitchPlot'); % for behavior data processing
-SavePlotFolder = fullfile(cfFolder,'ks2_5'); % for spike session data processing
+% SavePlotFolder = fullfile(cfFolder,'ks2_5'); % for spike session data processing
 if ~exist('cF_prefix','var')
     figsavePath = fullfile(SavePlotFolder,'BehavSwitchPlot');
     matfileSavePath = fullfile(SavePlotFolder,'BehavSwitchData.mat');

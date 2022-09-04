@@ -23,7 +23,7 @@ Areawise_PopuPredCC = cell(NumUsedSess,NumAllTargetAreas,2);
 Areawise_PopuSVMCC = cell(NumUsedSess,NumAllTargetAreas,2);
 Areawise_popuSVMpredInfo = cell(NumUsedSess,NumAllTargetAreas,3);
 Areawise_BehavChoiceDiff = cell(NumUsedSess,NumAllTargetAreas);
-for cS = 1 :  1%NumUsedSess
+for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS};
     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup');
     
@@ -39,7 +39,15 @@ for cS = 1 :  1%NumUsedSess
     SessBT_sVMScoreStrc = load(SessBT_sVMScorefile, 'ExistAreas_Names', 'SVMSCoreProbofBlock', 'AreaPredInfo');
     
     SessUnitAUCStrc = load(SessUnitAUCfile,'AUCValuesAll');
-    BehavBlockchoiceDiff = load(behavFilePath,'H2L_choiceprob_diff');
+    try
+        BehavBlockchoiceDiff = load(behavFilePath,'H2L_choiceprob_diff');
+    catch
+        behavfilepath = fullfile(cSessPath,'ks2_5','NPClassHandleSaved.mat');
+        SavePlotFolder = fullfile(cSessPath,'ks2_5');
+        behavSwitchplot_script;
+        clearvars behavfilepath SavePlotFolder behavResults BlockSectionInfo
+        BehavBlockchoiceDiff = load(behavFilePath,'H2L_choiceprob_diff');
+    end
 %     UnitAreaStrc = load(UnitAreafile);
     
     NumAreas = length(SessblocktypeDecDataStrc.ExistAreas_Names);
@@ -102,12 +110,14 @@ if ~isfolder(sumfigsavefolder)
 end
 
 %%
+Areawise_sessDecPerfRaw = Areawise_sessDecPerf;
+Areawise_sessDecPerf(:,end,:) = [];
 AllAreaSess_SVMperfs = squeeze(Areawise_sessDecPerf(:,:,1));
 AllAreaSess_SVMThres = squeeze(Areawise_sessDecPerf(:,:,2));
 AllAreaSess_SVMunitnums = squeeze(Areawise_sessDecPerf(:,:,3));
 
 NonEmptyInds = find(cellfun(@(x) ~isempty(x),AllAreaSess_SVMperfs));
-[row,AreaInds] = ind2sub([NumUsedSess,NumAllTargetAreas],NonEmptyInds);
+[row,AreaInds] = ind2sub([NumUsedSess,NumAllTargetAreas-1],NonEmptyInds);
 
 AllSVMperfDatas_Vec = cell2mat(AllAreaSess_SVMperfs(NonEmptyInds));
 AllSVMthresDatas_Vec = cell2mat(AllAreaSess_SVMThres(NonEmptyInds));
@@ -124,8 +134,8 @@ plot3(AreaInds(SVMperfSigInds), AllSVMnumberDatas_Vec(SVMperfSigInds), ...
 plot3(AreaInds(~SVMperfSigInds), AllSVMnumberDatas_Vec(~SVMperfSigInds), ...
     AllSVMperfDatas_Vec(~SVMperfSigInds),'o','MarkerSize',12,...
     'MarkerFaceColor',[.7 .7 .7],'MarkerEdgeColor','b','linewidth',1.4);
-set(gca,'xlim',[0 NumAllTargetAreas+1],'xtick',1:NumAllTargetAreas,...
-    'xticklabel',BrainAreasStr(:));
+set(gca,'xlim',[0 NumAllTargetAreas],'xtick',1:NumAllTargetAreas-1,...
+    'xticklabel',BrainAreasStr(1:end-1));
 grid on
 xlabel('Brain areas');
 ylabel('Unit Numbers');
@@ -141,10 +151,12 @@ tbl = table(AllSVMperfDatas_Vec,AreaInds,AllSVMnumberDatas_Vec,...
                 'VariableNames',{'SVMPerf','Areas','UnitNumber'});
 tbl.Areas = categorical(tbl.Areas);
 
-mmdl = fitlm(tbl,'SVMPerf ~ Areas+UnitNumber');
+mmdl = fitlm(tbl,'SVMPerf ~ Areas+UnitNumber+Areas:UnitNumber');
 anovaTable = anova(mmdl);
-
-
+Areawise_sessDecPerf= Areawise_sessDecPerfRaw;
+save(fullfile(sumfigsavefolder,'SVM_accuracyData.mat'),'anovaTable','Areawise_sessDecPerf','BrainAreasStr',...
+    'Areawise_UnitAUC', 'Areawise_PopuPredCC', 'Areawise_PopuSVMCC',...
+    'Areawise_popuSVMpredInfo', 'Areawise_BehavChoiceDiff','-v7.3')
 
 % %%
 % h2df = figure;
