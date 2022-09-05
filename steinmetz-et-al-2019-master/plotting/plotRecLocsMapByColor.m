@@ -1,7 +1,8 @@
 
 
-function plotRecLocsMapByColor(sagAx, topdownAx, uacr, colors, st, av, tpidx)
+function OverAllNotShow = plotRecLocsMapByColor(sagAx, topdownAx, uacr, colors, st, av, tpidx)
 
+% sagAx2
 
 % st = loadStructureTree();
 if ~exist('tpidx', 'var')
@@ -19,12 +20,20 @@ end
 % avs = squeeze(av(:,300,:));
 % avs = avs(:,1:size(avs,2)/2);
 
+% if  ~isempty(sagAx2)
+%     sliceName = 'sagittal'; slicePos = 150; 
+%     avs = squeeze(av(:,:,slicePos))';
+%     
+%     plotRLMBChelp(sagAx2, avs, uacr, colors, st, tpidx);
+%         
+% end
+
 if ~isempty(sagAx)
     % sagittal
     sliceName = 'sagittal'; slicePos = 400; 
     avs = squeeze(av(:,:,slicePos))';
     
-    plotRLMBChelp(sagAx, avs, uacr, colors, st, tpidx);
+    IsSagitalShow = plotRLMBChelp(sagAx, avs, uacr, colors, st, tpidx);
 %     colorbar;
 end
 
@@ -37,10 +46,14 @@ if ~isempty(topdownAx)
     % avs = avs(:,1:size(avs,2)/2);
     sliceName = 'topdown'; slicePos = 0;
     
-    plotRLMBChelp(topdownAx, avs, uacr, colors, st, tpidx);
+    IsTopdownShow = plotRLMBChelp(topdownAx, avs, uacr, colors, st, tpidx);
 end
-    
-function plotRLMBChelp(ax, avs, uacr, colors, st, tpidx)
+OverAllNotShow = IsSagitalShow & IsTopdownShow;
+
+
+function IsAreaShow = plotRLMBChelp(ax, avs, uacr, colors, st, tpidx)
+
+IsAreaShow = zeros(numel(uacr),1);
 
 [~,~,h] = sliceOutlineWithRegionVec(avs, [], [],ax);
 
@@ -72,6 +85,9 @@ for q = 1:numel(uacr)
             h = patch(ax, coordsReg(cidx).x,coordsReg(cidx).y, thisColor); hold on;
             h.FaceAlpha = 0.75;
         end                
+        
+    else
+       IsAreaShow(q) = 1; 
         
     end
 end
