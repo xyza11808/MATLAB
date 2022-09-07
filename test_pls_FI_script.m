@@ -6,9 +6,9 @@ NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 
 
 %% find target cluster inds and IDs
-ksfolder = pwd;
+% ksfolder = pwd;
 
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
@@ -47,7 +47,7 @@ TrTypes = TrTypesAll(NMTrInds);
 % % % RespDataUsedMtx = RespDataMtx(ActionInds ~= 2,:);
 % RespDataUsedMtx = NewBinnedDatas(NMTrInds,ExistField_ClusIDs{3,2},OutDataStrc.TriggerStartBin+(1:20));
 AllUnits = cat(1,ExistField_ClusIDs{:,2});
-RespDataUsedMtx = NewBinnedDatas(NMTrInds,AllUnits,OutDataStrc.TriggerStartBin+(1:20));
+RespDataUsedMtx = NewBinnedDatas(NMTrInds,AllUnits,OutDataStrc.TriggerStartBin+(1:15));
 RespDataUsedMtx = mean(RespDataUsedMtx,3);
 MaxROINum = size(RespDataUsedMtx,2);
 
@@ -57,8 +57,6 @@ MaxROINum = size(RespDataUsedMtx,2);
 % RespDataUsedMtx = TemporalMergeRespData;
 
 %%
-
-
 nTrs = length(TrTypes);
 
 % [Xloadings,Yloadings,Xscores,Yscores,betaPLS10,PLSPctVar] = plsregress(...

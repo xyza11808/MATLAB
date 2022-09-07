@@ -1,5 +1,5 @@
 
-clearvars SessAreaIndexStrc AreainfosAll
+clearvars SessAreaIndexStrc ProbNPSess AreainfosAll
 
 % load('Chnlocation.mat');
 
@@ -8,13 +8,12 @@ clearvars SessAreaIndexStrc AreainfosAll
 %          && isempty(fieldnames(SessAreaIndexStrc.ACA))
 %     return;
 % end
-if ~exist('ProbNPSess','var')
-    load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
-end
-ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
-OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
-NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
+load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 
+ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
+OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 4],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
+NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
+NumFrameBins = size(NewBinnedDatas,3);
 
 %% find target cluster inds and IDs
 % ksfolder = pwd;
@@ -39,7 +38,7 @@ for cA = 1 : Numfieldnames
     AreaUnitNumbers(cA) = numel(cA_clus_inds);
     
 end
-
+%
 USedAreas = cell2mat(ExistField_ClusIDs(:,3)) < 1;
 if sum(USedAreas)
     ExistField_ClusIDs(USedAreas,:) = [];
@@ -53,112 +52,71 @@ BlockTypesAll = double(behavResults.BlockType(:));
 SavedFolderPathName = 'ChoiceANDBT_LDAinfo_ana';
 
 fullsavePath = fullfile(ksfolder, SavedFolderPathName);
+% if isfolder(fullsavePath)
+%     rmdir(fullsavePath,'s');
+% end
+% 
+% mkdir(fullsavePath);
 if ~isfolder(fullsavePath)
-    mkdir(fullsavePath,'s');
+    mkdir(fullsavePath);
 end
-
-% mkdir(sfullsavePath);
 
 ActionInds = double(behavResults.Action_choice(:));
 NMTrInds = ActionInds ~= 2;
 ActTrs = ActionInds(NMTrInds);
 
-AreainfosAll = cell(Numfieldnames,2,3);
+AreainfosAll = cell(Numfieldnames,2,2);
 AllTrInds = {double(behavResults.Action_choice(:)),double(behavResults.BlockType(:))};
 for cType = 1 : 2
     TrTypesAll = AllTrInds{cType}; % Action_choice / BlockType
     TrTypes = TrTypesAll(NMTrInds);
-    
     nTrs = length(TrTypes);
     for cArea = 1 : Numfieldnames
         
         cUsedAreas = NewAdd_ExistAreaNames{cArea};
         cAUnitInds = NewSessAreaStrc.SessAreaIndexStrc.(cUsedAreas).MatchedUnitInds;
         
-        % % % RespDataMtx = mean(data_aligned(:,:,59:90),3)/100;
-        % % % RespDataUsedMtx = RespDataMtx(ActionInds ~= 2,:);
-        % RespDataUsedMtx = NewBinnedDatas(NMTrInds,ExistField_ClusIDs{3,2},OutDataStrc.TriggerStartBin+(1:20));
         cAUnits = ExistField_ClusIDs{cArea,2};
-        RespDataUsedMtx = NewBinnedDatas(NMTrInds,cAUnits,OutDataStrc.TriggerStartBin+(1:15));
-        RespDataUsedMtx = mean(RespDataUsedMtx,3);
-        MaxROINum = size(RespDataUsedMtx,2);
-        
-        % [Xloadings,Yloadings,Xscores,Yscores,betaPLS10,PLSPctVar] = plsregress(...
-        % 	X,y,10);
+        MaxROINum = length(cAUnits);
         MaxPlsDim = min(30,MaxROINum);
-        Repeat = 50;
-        NumCol_infos = zeros(Repeat,MaxPlsDim,2);
-        SVMLossAll = zeros(Repeat,MaxPlsDim,2);
-        TrainBaseAll = false(nTrs,1);
-        for cR = 1 : Repeat
-            %     TrainInds = randsample(nTrs,round(nTrs/2));
-            cc = cvpartition(nTrs,'kFold',3);
+        Repeat = 100;
+        
+        FrameBin_infos = zeros(Repeat,2,NumFrameBins);
+        FrameBin_Accuracy = zeros(Repeat,2,NumFrameBins);
+        for cframe = 1 : NumFrameBins
+%             RespDataUsedMtx = NewBinnedDatas(NMTrInds,cAUnits,OutDataStrc.TriggerStartBin+(1:15));
+%             RespDataUsedMtx = mean(RespDataUsedMtx,3);
+            RespDataUsedMtx = NewBinnedDatas(NMTrInds,cAUnits,cframe);
             
-            pls_training_Inds = TrainBaseAll;
-            pls_training_Inds(cc.test(1)) = true;
+
+            % [Xloadings,Yloadings,Xscores,Yscores,betaPLS10,PLSPctVar] = plsregress(...
+            % 	X,y,10);
             
-            FI_training_Inds = TrainBaseAll;
-            FI_training_Inds(cc.test(2)) = true;
-            
-            Final_test_Inds = TrainBaseAll;
-            Final_test_Inds(cc.test(3)) = true;
-            
-            %     [T,P,U,Q,B,W] = pls(RespDataUsedMtx(pls_training_Inds,:),ActTrs(pls_training_Inds));
-            %     % T     score matrix of X
-            %     % P     loading matrix of X
-            %     % U     score matrix of Y
-            %     % Q     loading matrix of Y
-            %     % B     matrix of regression coefficient
-            %     % W     weight matrix of X
-            %     %
-            [Xloadings,Yloadings,Xscores,Yscores,betaPLS10,PLSPctVar,MSE,stats] = plsregress(...
-                RespDataUsedMtx(pls_training_Inds,:),TrTypes(pls_training_Inds),MaxPlsDim);
-            
-            FI_training_Data = RespDataUsedMtx(FI_training_Inds,:);
-            FI_training_x0 = bsxfun(@minus, FI_training_Data, mean(FI_training_Data,1));
-            Final_test_Data = RespDataUsedMtx(Final_test_Inds,:);
-            Final_test_x0 = bsxfun(@minus, Final_test_Data, mean(Final_test_Data,1));
-            
-            FI_training_xScore = FI_training_x0 * stats.W;
-            FI_training_TrTypes = TrTypes(FI_training_Inds);
-            Final_test_xScore = Final_test_x0 * stats.W;
-            Final_test_TrTypes = TrTypes(Final_test_Inds);
-            
-            for cCol = 1 : MaxPlsDim
-                
-                %         [ddRaw,~,~,TrainWeight] = PopuFICal_fun(FI_training_xScore(:,1:cCol),FI_training_TrTypes);
-                %         FI_trainmd = fitcsvm(FI_training_xScore(:,1:cCol),FI_training_TrTypes);
-                %         FI_trainloss = 1 - kfoldLoss(crossval(FI_trainmd));
-                %
-                %         [ddTest,~,~,~] =  PopuFICal_fun(Final_test_xScore(:,1:cCol),Final_test_TrTypes,TrainWeight);
-                %         TestDataPredTypes = predict(FI_trainmd, Final_test_xScore(:,1:cCol));
-                %         Final_testloss = mean(TestDataPredTypes == Final_test_TrTypes(:));
-                %         NumCol_infos(cR,cCol,:) = [ddRaw,ddTest];
-                %         SVMLossAll(cR,cCol,:) = [FI_trainloss,Final_testloss];
-                
-                MergeTypesLabels = [FI_training_TrTypes;Final_test_TrTypes];
-                Merge_xScores = [FI_training_xScore(:,1:cCol);Final_test_xScore(:,1:cCol)];
-                MergeAllSampleNums = numel(MergeTypesLabels);
-                TrainInds = false(MergeAllSampleNums,1);
-                TrainInds(1:numel(FI_training_TrTypes)) = true;
-                TestInds = ~TrainInds;
-                [DisScore,MdPerfs,~,~] = LDAclassifierFun(Merge_xScores, MergeTypesLabels, {TrainInds,TestInds});
-                NumCol_infos(cR,cCol,:) = DisScore;
-                SVMLossAll(cR,cCol,:) = MdPerfs;
-                
-                
+            NumCol_infos = zeros(Repeat,2);
+            SVMLossAll = zeros(Repeat,2);
+            TrainBaseAll = false(nTrs,1);
+            for cR = 1 : Repeat
+                %     TrainInds = randsample(nTrs,round(nTrs/2));
+                cc = cvpartition(nTrs,'kFold',2);
+
+                FI_training_Inds = TrainBaseAll;
+                FI_training_Inds(cc.test(1)) = true;
+
+                Final_test_Inds = TrainBaseAll;
+                Final_test_Inds(cc.test(2)) = true;
+
+                [DisScore,MdPerfs,~,~] = LDAclassifierFun(RespDataUsedMtx, TrTypes, {FI_training_Inds,Final_test_Inds});
+                NumCol_infos(cR,:) = DisScore;
+                SVMLossAll(cR,:) = MdPerfs;
             end
+            FrameBin_infos(:,:,cframe) = NumCol_infos;
+            FrameBin_Accuracy(:,:,cframe) = SVMLossAll;
         end
-        SVMLoss_avg = squeeze(mean(SVMLossAll,1));
-        FIDiffDatas = diff(SVMLoss_avg(:,2));
-        UsedPCnums = find(FIDiffDatas < 0.5,1,'first');
-        
-        AreainfosAll(cArea,cType,:) = {NumCol_infos, SVMLossAll,UsedPCnums};
-        
+        AreainfosAll(cArea,cType,:) = {FrameBin_infos, FrameBin_Accuracy};
     end
 end
 %%
-save(fullfile(fullsavePath,'LDAinfo_PLSbasedData.mat'), 'AreainfosAll', 'AllTrInds', ...
+save(fullfile(fullsavePath,'LDAinfo_rawPopuData.mat'), 'AreainfosAll', 'AllTrInds', ...
     'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers', '-v7.3');
 
 

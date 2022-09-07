@@ -1,14 +1,14 @@
 % cclr
 % ksfolder = pwd;
-ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
+% ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
 clearvars ProbNPSess StimRespAUC ExistField_ClusIDs
 % if exist(fullfile(ksfolder,'AnovanAnA','TemporalAUCdataSave.mat'),'file')
 %     return;
 % end
 dataSaveNames = fullfile(ksfolder,'AnovanAnA','StimrespAUCdataSave.mat');
-if exist(dataSaveNames,'file')
-    return;
-end
+% if exist(dataSaveNames,'file')
+%     return;
+% end
 
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 
@@ -21,7 +21,7 @@ if ~isempty(ProbNPSess.SurviveInds)
 end
 SMBinDataMtxRaw = SMBinDataMtx;
 
-AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
 AllFieldNames = fieldnames(AreaIndexStrc.SessAreaIndexStrc);
 UsedNames = AllFieldNames(1:end-1);
 ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);

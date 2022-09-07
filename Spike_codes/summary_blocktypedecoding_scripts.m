@@ -1,14 +1,14 @@
 cclr
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
 BrainAreasStrCC = BrainAreasStrC(2:end);
 % BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
-BrainAreasStr = [BrainAreasStrCC(~EmptyInds);{'Others'}];
+BrainAreasStr = [BrainAreasStrCC(~EmptyInds)]; %;{'Others'}
 
 %%
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
@@ -25,7 +25,8 @@ Areawise_popuSVMpredInfo = cell(NumUsedSess,NumAllTargetAreas,3);
 Areawise_BehavChoiceDiff = cell(NumUsedSess,NumAllTargetAreas);
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS};
-    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup');
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup');
+    cSessPath = strrep(SessionFolders{cS},'F:','E:\NPCCGs');
     
     SessblocktypeDecfile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktype','PopudecodingDatas.mat');
     SessUnitAUCfile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktype','SingleUnitAUC.mat');
@@ -49,8 +50,10 @@ for cS = 1 :  NumUsedSess
         BehavBlockchoiceDiff = load(behavFilePath,'H2L_choiceprob_diff');
     end
 %     UnitAreaStrc = load(UnitAreafile);
+    SessAreaNames = SessblocktypeDecDataStrc.ExistAreas_Names;
+    SessAreaNames(strcmpi(SessAreaNames,'Others')) = [];
+    NumAreas = length(SessAreaNames);
     
-    NumAreas = length(SessblocktypeDecDataStrc.ExistAreas_Names);
     if NumAreas < 1
         warning('There is no target units within following folder:\n %s \n ##################\n',cSessPath);
         continue;
@@ -58,7 +61,7 @@ for cS = 1 :  NumUsedSess
     
     for cAreaInds = 1 : NumAreas
         
-        cAreaStr = SessblocktypeDecDataStrc.ExistAreas_Names{cAreaInds};
+        cAreaStr = SessAreaNames{cAreaInds};
         
         cAreaSVMperf = SessblocktypeDecDataStrc.SVMDecodingAccuracy{cAreaInds,1};
         cAreaSVMShufthres = prctile(SessblocktypeDecDataStrc.SVMDecodingAccuracy{cAreaInds,2},95);
@@ -111,7 +114,7 @@ end
 
 %%
 Areawise_sessDecPerfRaw = Areawise_sessDecPerf;
-Areawise_sessDecPerf(:,end,:) = [];
+% Areawise_sessDecPerf(:,end,:) = [];
 AllAreaSess_SVMperfs = squeeze(Areawise_sessDecPerf(:,:,1));
 AllAreaSess_SVMThres = squeeze(Areawise_sessDecPerf(:,:,2));
 AllAreaSess_SVMunitnums = squeeze(Areawise_sessDecPerf(:,:,3));
@@ -170,13 +173,14 @@ save(fullfile(sumfigsavefolder,'SVM_accuracyData.mat'),'anovaTable','Areawise_se
 RealAUCs = squeeze(Areawise_UnitAUC(:,:,1));
 AUCThres = squeeze(Areawise_UnitAUC(:,:,2));
 AUCFigSavePath = fullfile(sumfigsavefolder,'Area_AUCDistribution');
-if ~isfolder(AUCFigSavePath)
-    mkdir(AUCFigSavePath);
+if isfolder(AUCFigSavePath)
+    rmdir(AUCFigSavePath,'s');
 end
+mkdir(AUCFigSavePath);
 
 AUCedges = 0:0.05:1;
 AUCcent = AUCedges(1:end-1)+0.025;
-AreaWiseAUCs = cell(NumAllTargetAreas, 3);
+AreaWiseAUCs = cell(NumAllTargetAreas, 4);
 for cArea = 1 : NumAllTargetAreas
     cArea_realAUC = cell2mat(RealAUCs(:,cArea));
     cArea_AUCthres = cell2mat(AUCThres(:,cArea));
@@ -184,8 +188,9 @@ for cArea = 1 : NumAllTargetAreas
         continue;
     end
     SigAUCvalues = cArea_realAUC(cArea_realAUC > cArea_AUCthres);
-    
+    cA_SessNum = sum(~cellfun(@isempty,RealAUCs(:,cArea)));
     AreaWiseAUCs(cArea,1:2) = {cArea_realAUC, SigAUCvalues};
+    AreaWiseAUCs(cArea,4) = {cA_SessNum};
     h3f = figure('position',[100 100 460 230]);
     ax1 = subplot(121);
     hold on
@@ -253,10 +258,25 @@ NonEmptyInds = find(cellfun(@(x) ~isempty(x),AllAreaSess_CCmaxlag));
 % plot(AreaInds, AllCC_maxlags,'ko')
 AreaLagAvgs = zeros(NumAllTargetAreas,3);
 AreaSigLagAvgs = zeros(NumAllTargetAreas,3);
+AreaPopuSVMPerf = zeros(NumAllTargetAreas,6);
 IsAreaAllEmpty = false(NumAllTargetAreas,1);
 IsArea_SigCCAllEmpty = false(NumAllTargetAreas,1);
+IsAreaSVMPerfEmpty = false(NumAllTargetAreas,1);
 for cArea = 1 : NumAllTargetAreas
     cA_lagsAll = cell2mat(AllAreaSess_CCmaxlag(:,cArea));
+    cA_SVMPerfReal = cat(1,AllAreaSess_SVMperfs{:,cArea});
+    cA_SVMPerfShuf = cat(1,AllAreaSess_SVMThres{:,cArea});
+    
+    if isempty(cA_SVMPerfReal)
+        IsAreaSVMPerfEmpty(cArea) = true;
+    elseif numel(cA_SVMPerfReal) <=3
+        AreaPopuSVMPerf(cArea,:) = [mean(cA_SVMPerfReal),0,numel(cA_SVMPerfReal),...
+            mean(cA_SVMPerfShuf),0,numel(cA_SVMPerfShuf)];
+    else
+        AreaPopuSVMPerf(cArea,:) = [mean(cA_SVMPerfReal),std(cA_SVMPerfReal)/sqrt(numel(cA_SVMPerfReal)),numel(cA_SVMPerfReal),...
+            mean(cA_SVMPerfShuf),std(cA_SVMPerfShuf)/sqrt(numel(cA_SVMPerfShuf)),numel(cA_SVMPerfShuf)];
+    end
+    
     if isempty(cA_lagsAll)
         AreaLagAvgs(cArea,:) = nan(1,3);
         IsAreaAllEmpty(cArea) = true;
@@ -285,25 +305,41 @@ for cArea = 1 : NumAllTargetAreas
 
 end
 
-UsedAreaDatas = AreaLagAvgs(~IsAreaAllEmpty,:);
-UsedAreaNames = BrainAreasStr(~IsAreaAllEmpty);
+UsedAreaDatasNE = AreaLagAvgs(~IsAreaAllEmpty,:);
+UsedAreaNamesNE = BrainAreasStr(~IsAreaAllEmpty);
+UsedAreaSVMPerfNE = AreaPopuSVMPerf(~IsAreaAllEmpty,:);
+% sessions for each area should not be less than 3
+SessNumThresInds = UsedAreaDatasNE(:,3) > 2;
+UsedAreaDatas = UsedAreaDatasNE(SessNumThresInds,:);
+UsedAreaNames = UsedAreaNamesNE(SessNumThresInds);
+UsedAreaSVMPerf = UsedAreaSVMPerfNE(SessNumThresInds,:);
+
 NumUsedAreas = length(UsedAreaNames);
 
-UsedAreaDatas_sig = AreaLagAvgs(~IsArea_SigCCAllEmpty,:);
-UsedAreaNames_sig = BrainAreasStr(~IsArea_SigCCAllEmpty);
-NumUsedAreas_sig = length(UsedAreaNames_sig);
+UsedAreaDatas_sigNE = AreaLagAvgs(~IsArea_SigCCAllEmpty,:);
+UsedAreaNames_sigNE = BrainAreasStr(~IsArea_SigCCAllEmpty);
+UsedSVMPerf_sigNE = AreaPopuSVMPerf(~IsArea_SigCCAllEmpty,:);
 
+SigSessnumThresInds = UsedAreaDatas_sigNE(:,3) > 2;
+UsedAreaDatas_sig = UsedAreaDatas_sigNE(SigSessnumThresInds,:);
+UsedAreaNames_sig = UsedAreaNames_sigNE(SigSessnumThresInds);
+UsedSVMPerf_sig = UsedSVMPerf_sigNE(SigSessnumThresInds,:);
+
+NumUsedAreas_sig = length(UsedAreaNames_sig);
 
 [SortLagValues, SortInds] = sort(UsedAreaDatas(:,1),'descend');
 SEMValues = UsedAreaDatas(SortInds,2);
 AreaNums = UsedAreaDatas(SortInds,3);
+SortAreaAccu = UsedAreaSVMPerf(SortInds,1);
 
 AreaNames = UsedAreaNames(SortInds);
 
-h5f = figure('position',[100 100 880 540]);
+h5f = figure('position',[100 100 880 840]);
 subplot(121)
 hold on
-errorbar(SortLagValues, (1:NumUsedAreas)', SEMValues,'horizontal', 'ko', 'linewidth',1.4);
+errorbar(SortLagValues, (1:NumUsedAreas)', SEMValues,'horizontal', 'k.', 'linewidth',1.4);
+scatter(SortLagValues, (1:NumUsedAreas)',45,SortAreaAccu,'filled');
+colormap cool
 xscales = get(gca,'xlim');
 text((xscales(2)+10)*ones(NumUsedAreas,1), 1:NumUsedAreas, cellstr(num2str(AreaNums(:),'%d')),'Color','m',...
     'FontSize',8);
@@ -315,12 +351,17 @@ title('logistic regressor crosscoef peaklag distribution')
 [SortLagValues_sig, SortInds_sig] = sort(UsedAreaDatas_sig(:,1),'descend');
 SEMValues_sig = UsedAreaDatas_sig(SortInds_sig,2);
 AreaNums_sig = UsedAreaDatas_sig(SortInds_sig,3);
-
+SortAreaAccu_sig = UsedSVMPerf_sig(SortInds_sig,1);
 AreaNames_sig = UsedAreaNames_sig(SortInds_sig);
 
 subplot(122)
 hold on
-errorbar(SortLagValues_sig, (1:NumUsedAreas_sig)', SEMValues_sig,'horizontal', 'ko', 'linewidth',1.4);
+errorbar(SortLagValues_sig, (1:NumUsedAreas_sig)', SEMValues_sig,'horizontal', 'k.', 'linewidth',1.4,'Marker','none');
+scatter(SortLagValues_sig, (1:NumUsedAreas_sig)',45,SortAreaAccu_sig,'filled');
+
+colormap cool
+hbar = colorbar;
+set(get(hbar,'title'),'String','SVM accuracy')
 xscales = get(gca,'xlim');
 text((xscales(2)+10)*ones(NumUsedAreas_sig,1), 1:NumUsedAreas_sig, cellstr(num2str(AreaNums_sig(:),'%d')),'Color','m',...
     'FontSize',8);
@@ -338,7 +379,7 @@ saveas(h5f,saveName,'png');
 NumAreas = size(AreaWiseAUCs,1);
 AreaAvgAUCs = nan(NumAreas,6);
 for cA = 1 : NumAreas
-    if isempty(AreaWiseAUCs{cA,1}) || length(AreaWiseAUCs{cA,1}) < 5
+    if isempty(AreaWiseAUCs{cA,1}) || length(AreaWiseAUCs{cA,1}) < 5 || AreaWiseAUCs{cA,4} < 3
         continue;
     else
         cA_AllAUC = AreaWiseAUCs{cA,1};
@@ -353,7 +394,7 @@ for cA = 1 : NumAreas
     end
 end
 
-h6f = figure('position',[100 100 900 560]);
+h6f = figure('position',[100 100 900 760]);
 ax1 = subplot(121);
 hold on
 ValidAreaInds = ~isnan(AreaAvgAUCs(:,1));
@@ -361,16 +402,20 @@ ValidAreas_AllStrs = BrainAreasStr(ValidAreaInds);
 ValidAreas_AllAUC = AreaAvgAUCs(ValidAreaInds,1);
 ValidAreas_AllAUC_SEM = AreaAvgAUCs(ValidAreaInds,2);
 ValidAreas_AllAUC_nums = AreaAvgAUCs(ValidAreaInds,3);
+ValidAreas_SessNums = cat(1,AreaWiseAUCs{ValidAreaInds,4});
 
 [AllAUCSort, AllSortinds] = sort(ValidAreas_AllAUC);
 AllAUCSEMs = ValidAreas_AllAUC_SEM(AllSortinds);
 AllAUCNames = ValidAreas_AllStrs(AllSortinds);
 AllAUC_SortNums = ValidAreas_AllAUC_nums(AllSortinds);
+Sessnum_sorts = ValidAreas_SessNums(AllSortinds);
 
 Num_UsedAreas = length(AllAUCSort);
 errorbar(AllAUCSort, (1:Num_UsedAreas)', AllAUCSEMs,'horizontal', 'ko', 'linewidth',1.4);
 xscales = get(ax1,'xlim');
 text((xscales(2)+0.05)*ones(Num_UsedAreas,1), 1:Num_UsedAreas, cellstr(num2str(AllAUC_SortNums(:),'%d')),'Color','m',...
+    'FontSize',8);
+text((xscales(2)+0.07)*ones(Num_UsedAreas,1), 1:Num_UsedAreas, cellstr(num2str(Sessnum_sorts(:),'/ %d')),'Color','b',...
     'FontSize',8);
 set(gca,'xlim',[xscales(1) xscales(2)+0.1])
 set(gca,'ytick',1:Num_UsedAreas,'yticklabel',AllAUCNames(:));
@@ -423,10 +468,25 @@ NonEmptyInds = find(cellfun(@(x) ~isempty(x),AllAreaSess_CCmaxlag));
 % plot(AreaInds, AllCC_maxlags,'ko')
 AreaLagAvgs = zeros(NumAllTargetAreas,3);
 AreaSigLagAvgs = zeros(NumAllTargetAreas,3);
+AreaPopuSVMPerf = zeros(NumAllTargetAreas,6);
 IsAreaAllEmpty = false(NumAllTargetAreas,1);
 IsArea_SigCCAllEmpty = false(NumAllTargetAreas,1);
+IsAreaSVMPerfEmpty = false(NumAllTargetAreas,1);
 for cArea = 1 : NumAllTargetAreas
     cA_lagsAll = cell2mat(AllAreaSess_CCmaxlag(:,cArea));
+    cA_SVMPerfReal = cat(1,AllAreaSess_SVMperfs{:,cArea});
+    cA_SVMPerfShuf = cat(1,AllAreaSess_SVMThres{:,cArea});
+    
+    if isempty(cA_SVMPerfReal)
+        IsAreaSVMPerfEmpty(cArea) = true;
+    elseif numel(cA_SVMPerfReal) <=3
+        AreaPopuSVMPerf(cArea,:) = [mean(cA_SVMPerfReal),0,numel(cA_SVMPerfReal),...
+            mean(cA_SVMPerfShuf),0,numel(cA_SVMPerfShuf)];
+    else
+        AreaPopuSVMPerf(cArea,:) = [mean(cA_SVMPerfReal),std(cA_SVMPerfReal)/sqrt(numel(cA_SVMPerfReal)),numel(cA_SVMPerfReal),...
+            mean(cA_SVMPerfShuf),std(cA_SVMPerfShuf)/sqrt(numel(cA_SVMPerfShuf)),numel(cA_SVMPerfShuf)];
+    end
+    
     if isempty(cA_lagsAll)
         AreaLagAvgs(cArea,:) = nan(1,3);
         IsAreaAllEmpty(cArea) = true;
@@ -455,42 +515,64 @@ for cArea = 1 : NumAllTargetAreas
 
 end
 
-UsedAreaDatas = AreaLagAvgs(~IsAreaAllEmpty,:);
-UsedAreaNames = BrainAreasStr(~IsAreaAllEmpty);
+UsedAreaDatasNE = AreaLagAvgs(~IsAreaAllEmpty,:);
+UsedAreaNamesNE = BrainAreasStr(~IsAreaAllEmpty);
+UsedAreaSVMPerfNE = AreaPopuSVMPerf(~IsAreaAllEmpty,:);
+% sessions for each area should not be less than 3
+SessNumThresInds = UsedAreaDatasNE(:,3) > 2;
+UsedAreaDatas = UsedAreaDatasNE(SessNumThresInds,:);
+UsedAreaNames = UsedAreaNamesNE(SessNumThresInds);
+UsedAreaSVMPerf = UsedAreaSVMPerfNE(SessNumThresInds,:);
+
 NumUsedAreas = length(UsedAreaNames);
 
-UsedAreaDatas_sig = AreaLagAvgs(~IsArea_SigCCAllEmpty,:);
-UsedAreaNames_sig = BrainAreasStr(~IsArea_SigCCAllEmpty);
-NumUsedAreas_sig = length(UsedAreaNames_sig);
+UsedAreaDatas_sigNE = AreaLagAvgs(~IsArea_SigCCAllEmpty,:);
+UsedAreaNames_sigNE = BrainAreasStr(~IsArea_SigCCAllEmpty);
+UsedSVMPerf_sigNE = AreaPopuSVMPerf(~IsArea_SigCCAllEmpty,:);
 
+SigSessnumThresInds = UsedAreaDatas_sigNE(:,3) > 2;
+UsedAreaDatas_sig = UsedAreaDatas_sigNE(SigSessnumThresInds,:);
+UsedAreaNames_sig = UsedAreaNames_sigNE(SigSessnumThresInds);
+UsedSVMPerf_sig = UsedSVMPerf_sigNE(SigSessnumThresInds,:);
+
+NumUsedAreas_sig = length(UsedAreaNames_sig);
 
 [SortLagValues, SortInds] = sort(UsedAreaDatas(:,1),'descend');
 SEMValues = UsedAreaDatas(SortInds,2);
 AreaNums = UsedAreaDatas(SortInds,3);
+SortAreaAccu = UsedAreaSVMPerf(SortInds,1);
 
 AreaNames = UsedAreaNames(SortInds);
 
-h7f = figure('position',[100 100 880 540]);
+h7f = figure('position',[100 100 880 840]);
 subplot(121)
 hold on
-errorbar(SortLagValues, (1:NumUsedAreas)', SEMValues,'horizontal', 'ko', 'linewidth',1.4);
+errorbar(SortLagValues, (1:NumUsedAreas)', SEMValues,'horizontal', 'k.', 'linewidth',1.4);
+scatter(SortLagValues, (1:NumUsedAreas)',45,SortAreaAccu,'filled');
+colormap cool
 xscales = get(gca,'xlim');
 text((xscales(2)+10)*ones(NumUsedAreas,1), 1:NumUsedAreas, cellstr(num2str(AreaNums(:),'%d')),'Color','m',...
     'FontSize',8);
 set(gca,'xlim',[xscales(1) xscales(2)+12])
 set(gca,'ytick',1:NumUsedAreas,'yticklabel',AreaNames(:));
 xlabel('Peak lags');
-title('SVM score crosscoef peaklag distribution')
+title('SVM regressor crosscoef peaklag distribution')
 
 [SortLagValues_sig, SortInds_sig] = sort(UsedAreaDatas_sig(:,1),'descend');
 SEMValues_sig = UsedAreaDatas_sig(SortInds_sig,2);
 AreaNums_sig = UsedAreaDatas_sig(SortInds_sig,3);
+SortAreaAccu_sig = UsedSVMPerf_sig(SortInds_sig,1);
 
 AreaNames_sig = UsedAreaNames_sig(SortInds_sig);
 
 subplot(122)
 hold on
-errorbar(SortLagValues_sig, (1:NumUsedAreas_sig)', SEMValues_sig,'horizontal', 'ko', 'linewidth',1.4);
+errorbar(SortLagValues_sig, (1:NumUsedAreas_sig)', SEMValues_sig,'horizontal', 'k.', 'linewidth',1.4,'Marker','none');
+scatter(SortLagValues_sig, (1:NumUsedAreas_sig)',45,SortAreaAccu_sig,'filled');
+
+colormap cool
+hbar = colorbar;
+set(get(hbar,'title'),'String','SVM accuracy')
 xscales = get(gca,'xlim');
 text((xscales(2)+10)*ones(NumUsedAreas_sig,1), 1:NumUsedAreas_sig, cellstr(num2str(AreaNums_sig(:),'%d')),'Color','m',...
     'FontSize',8);
@@ -508,26 +590,32 @@ saveas(h7f,saveName,'png');
 AllAreaSess_SVMpredMutInfo = squeeze(Areawise_popuSVMpredInfo(:,:,1));
 AllAreaSess_SVMSampleInfo = squeeze(Areawise_popuSVMpredInfo(:,:,2));
 AllAreaSess_SVMUnitNum = squeeze(Areawise_popuSVMpredInfo(:,:,3));
+% AllAreaSess_SVMAccu = 
 
 NonEmptyInds = find(cellfun(@(x) ~isempty(x),AllAreaSess_SVMpredMutInfo));
 [row,AreaInds] = ind2sub([NumUsedSess,NumAllTargetAreas],NonEmptyInds);
 
 UsedAreaSess_SVMpredMutInfoVec = cell2mat(AllAreaSess_SVMpredMutInfo(NonEmptyInds));
 UsedAreaSess_SVMUnitVec = cell2mat(AllAreaSess_SVMUnitNum(NonEmptyInds));
+UsedAreaSess_SVMAccu = cat(1,AllAreaSess_SVMperfs{NonEmptyInds});
 UsedAreaSess_SVMSampleInfoVec = (AllAreaSess_SVMSampleInfo(NonEmptyInds));
 
 IsAreaEmpty = zeros(NumAllTargetAreas,1);
 AreaMutInfo_summary = cell(NumAllTargetAreas,1);
-AreaMutInfoAvg_summary = nan(NumAllTargetAreas,3);
+AreaMutInfoAvg_summary = nan(NumAllTargetAreas,4);
 for cA = 1 : NumAllTargetAreas
     cA_SesssInds = AreaInds == cA;
     if sum(cA_SesssInds)
         cA_SessDatas = UsedAreaSess_SVMpredMutInfoVec(cA_SesssInds);
+        cA_SessSVMAccu = UsedAreaSess_SVMAccu(cA_SesssInds);
         AreaMutInfo_summary(cA,1) = {cA_SessDatas};
         if numel(cA_SessDatas) > 3
-            AreaMutInfoAvg_summary(cA,:) = [mean(cA_SessDatas), std(cA_SessDatas)/sqrt(numel(cA_SessDatas)),numel(cA_SessDatas)];
+            AreaMutInfoAvg_summary(cA,:) = [mean(cA_SessDatas), std(cA_SessDatas)/sqrt(numel(cA_SessDatas)),...
+                numel(cA_SessDatas),mean(cA_SessSVMAccu)];
+            
         else
             AreaMutInfoAvg_summary(cA,1) = mean(cA_SessDatas);
+            AreaMutInfoAvg_summary(cA,4) = mean(cA_SessSVMAccu);
         end
     else
         IsAreaEmpty(cA) = 1;
@@ -541,17 +629,23 @@ AreaMutInfo_summary_NE = AreaMutInfoAvg_summary(NE_AreaInds,:);
 [SortAreaMutInfo_summary_NE, SSortInds] = sort(AreaMutInfo_summary_NE(:,1));
 SortAreaMutInfo_SEM = AreaMutInfo_summary_NE(SSortInds,2);
 AreaNums = AreaMutInfo_summary_NE(SSortInds,3);
+SortAreaAccu = AreaMutInfo_summary_NE(SSortInds,4);
 SortAreaStrs = NE_Areas(SSortInds);
 NumberAreas = numel(SSortInds);
 
-h8f = figure('position',[100 100 420 540]);
+h8f = figure('position',[100 100 420 840]);
 
 hold on
 errorbar(SortAreaMutInfo_summary_NE, (1:NumberAreas)', SortAreaMutInfo_SEM,'horizontal', 'ko', 'linewidth',1.4);
+scatter(SortAreaMutInfo_summary_NE, (1:NumberAreas)',45,SortAreaAccu,'filled');
+colormap cool
+hbar = colorbar;
+set(get(hbar,'title'),'String','SVM accuracy')
+
 xscales = get(gca,'xlim');
 text((xscales(2)+0.02)*ones(NumberAreas,1), 1:NumberAreas, cellstr(num2str(AreaNums(:),'%d')),'Color','m',...
     'FontSize',8);
-set(gca,'xlim',[xscales(1) xscales(2)+0.05])
+set(gca,'xlim',[xscales(1) xscales(2)+0.05],'ylim',[0 NumberAreas+1])
 set(gca,'ytick',1:NumberAreas,'yticklabel',SortAreaStrs(:));
 xlabel('Popu Mutinfo');
 title('SVM pred mutinfo areawise distribution')
