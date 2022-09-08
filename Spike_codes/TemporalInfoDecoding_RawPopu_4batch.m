@@ -116,7 +116,7 @@ for cType = 1 : 2
     end
 end
 %%
-save(fullfile(fullsavePath,'LDAinfo_rawPopuData.mat'), 'AreainfosAll', 'AllTrInds', ...
+save(fullfile(fullsavePath,'LDAinfo_temporalinfo_Data.mat'), 'AreainfosAll', 'AllTrInds', ...
     'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers', '-v7.3');
 
 

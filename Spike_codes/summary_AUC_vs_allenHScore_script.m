@@ -1,5 +1,6 @@
 
-AllenHScoreFullPath = 'E:\datas\anatomy\MouseBrainHierarchy-master\Results\hierarchy_summary_NoCreConf.xlsx';
+AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_NoCreConf.xlsx';
+% AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_NoCreConf.xlsx';
 AllenRegionStrsCell = readcell(AllenHScoreFullPath,'Range','A:A',...
         'Sheet','hierarchy_all_regions');
 AllenRegionStrsUsed = AllenRegionStrsCell(2:end);
@@ -10,18 +11,19 @@ RegionScoresCell = readcell(AllenHScoreFullPath,'Range','H:H',...
 RegionScoresUsed = cell2mat(RegionScoresCell(2:end));
 
 %%
-AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
 BrainAreasStrCC = BrainAreasStrC(2:end);
 % BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
-BrainAreasStr = [BrainAreasStrCC(~EmptyInds);{'Others'}];
+BrainAreasStr = BrainAreasStrCC(~EmptyInds);
 
 NumBrainAreas = length(BrainAreasStr);
 
+% BrainAreasStr = 
 %% load summarized AUC datas
 SumAUCDatapath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\BlockType_ChoiceVecANDAUC\UnitAUC_PopuVecAngle_datas.mat';
 load(SumAUCDatapath);
@@ -42,8 +44,8 @@ AllArea_BTloss_Vec = AllArea_PopuBTloss(NonEmptySessInds);
 AllArea_Choiceloss_Vec = AllArea_PopuChoiceloss(NonEmptySessInds);
 AllArea_AS_AUC_CellVec = AllArea_ASAUCs(NonEmptySessInds);
 
-ValidPopuVecInds = AllArea_UnitNum_Vec > 3 & AllArea_BTloss_Vec < 0.5 ...
-    & AllArea_Choiceloss_Vec < 0.5;
+ValidPopuVecInds = AllArea_UnitNum_Vec > 5; %& AllArea_BTloss_Vec < 0.5 ...
+%     & AllArea_Choiceloss_Vec < 0.5;
 
 ValidPopu_unitNums = AllArea_UnitNum_Vec(ValidPopuVecInds);
 ValidAreaInds = AreaInds(ValidPopuVecInds);
