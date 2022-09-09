@@ -80,7 +80,7 @@ for cType = 1 : 3
     AHS_score_scale(2) = max(AHS_score_scale(2),max(ExistAreaAllenScore));
     
     [r,p] = corr(ExistAreaAllenScore,ExistAreaFracsAll(:,cType));
-    RStrs = sprintf('%s: R = %.3f, p = %.2e',TypeStrs{cType},r,p);
+    RStrs = sprintf('%s: R = %.3f, p = %.3f',TypeStrs{cType},r,p);
     CorrStrs{cType} = RStrs;
 end
 yscales = get(gca,'ylim');
