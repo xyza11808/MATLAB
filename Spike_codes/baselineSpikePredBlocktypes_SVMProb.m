@@ -1,10 +1,10 @@
 clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_All RelagCoefsAll Allxcf Alllags Lags LagCoefMtx
 
-load(fullfile(ksfolder,'SessAreaIndexData.mat'));
-if isempty(fieldnames(SessAreaIndexStrc.ACAv)) && isempty(fieldnames(SessAreaIndexStrc.ACAd))...
-         && isempty(fieldnames(SessAreaIndexStrc.ACA))
-    return;
-end
+load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
+% if isempty(fieldnames(SessAreaIndexStrc.ACAv)) && isempty(fieldnames(SessAreaIndexStrc.ACAd))...
+%          && isempty(fieldnames(SessAreaIndexStrc.ACA))
+%     return;
+% end
 
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
 % load('Chnlocation.mat');
@@ -39,10 +39,10 @@ NumExistAreas = length(ExistAreas_Names);
 SavedFolderPathName = 'BaselinePredofBlocktypeSVM';
 
 fullsavePath = fullfile(ksfolder, SavedFolderPathName);
-if ~isfolder(fullsavePath)
-    mkdir(fullsavePath);
+if isfolder(fullsavePath)
+   rmdir(fullsavePath,'s'); 
 end
-
+mkdir(fullsavePath);
 TargetAreaUnits = false(size(SMBinDataMtxRaw,2),1);
 
 % SVMDecodingAccu_strs = {'SVMScores','mdperfs','RevfreqInds','PredBTANDRealChoice','CrossCoefValues'};

@@ -1,6 +1,7 @@
+cclr
 
-AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_NoCreConf.xlsx';
-% AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_NoCreConf.xlsx';
+% AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_NoCreConf.xlsx';
+AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_NoCreConf.xlsx';
 AllenRegionStrsCell = readcell(AllenHScoreFullPath,'Range','A:A',...
         'Sheet','hierarchy_all_regions');
 AllenRegionStrsUsed = AllenRegionStrsCell(2:end);
@@ -25,7 +26,8 @@ RegionScoresUsed = cell2mat(RegionScoresCell(2:end));
 
 
 %%
-SelectiveAreaDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\RegAreawiseFrac.mat';
+% SelectiveAreaDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\RegAreawiseFrac.mat';
+SelectiveAreaDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\RegAreawiseFrac.mat';
 AreaSelectFracStrc = load(SelectiveAreaDatafile,'AllAreaFracs','NEBrainStrs');
 
 %%
@@ -50,14 +52,207 @@ ExistAreaInds = ~isnan(SelfBrainInds2Allen(:,1));
 ExistAreaAllenScore = SelfBrainInds2Allen(ExistAreaInds,3);
 ExistAreaFracsAll = AreaSelectFracStrc.AllAreaFracs(ExistAreaInds,:);
 
-hf = figure('position',[100 100 500 680]);
+% hf = figure('position',[100 100 500 680]);
+% hold on
+% sc1 = plot(ExistAreaAllenScore,ExistAreaFracsAll(:,1),'ro','linewidth',1.2);
+% sc2 = plot(ExistAreaAllenScore,ExistAreaFracsAll(:,2),'co','linewidth',1.2);
+% sc3 = plot(ExistAreaAllenScore,ExistAreaFracsAll(:,3),'bo','linewidth',1.2);
+% yscales = get(gca,'ylim');
+% line([0 0],yscales,'Color','k','linestyle','--','linewidth',1.2);
+% xlabel('Allen Score');
+% ylabel('Selective ROI fraction');
+% legend([sc1,sc2,sc3],{'Blocktype','Stim','Choice'},'location','northeastoutside','box','off');
+
+
+TypeStrs = {'Blocktype','Stim','Choice'};
+TypeColors = {'r','c','b'};
+CorrStrs = {'','',''};
+AHS_score_scale = [0 0];
+h1f = figure('position',[100 100 500 680]);
 hold on
-sc1 = plot(ExistAreaAllenScore,ExistAreaFracsAll(:,1),'ro','linewidth',1.2);
-sc2 = plot(ExistAreaAllenScore,ExistAreaFracsAll(:,2),'co','linewidth',1.2);
-sc3 = plot(ExistAreaAllenScore,ExistAreaFracsAll(:,3),'bo','linewidth',1.2);
-xlabel('Allen Score');
+for cType = 1 : 3
+    
+%     errorbar(cType_validData(:,3),cType_validData(:,4),cType_validData(:,5)*0.2,'o',...
+%         'Color',TypeColors{cType},'linewidth',1.5);
+    plot(ExistAreaAllenScore,ExistAreaFracsAll(:,cType),'o','Color',TypeColors{cType},...
+        'linewidth',1.5);
+    AHS_score_scale(1) = min(AHS_score_scale(1),min(ExistAreaAllenScore));
+    AHS_score_scale(2) = max(AHS_score_scale(2),max(ExistAreaAllenScore));
+    
+    [r,p] = corr(ExistAreaAllenScore,ExistAreaFracsAll(:,cType));
+    RStrs = sprintf('%s: R = %.3f, p = %.2e',TypeStrs{cType},r,p);
+    CorrStrs{cType} = RStrs;
+end
+yscales = get(gca,'ylim');
+line([0 0],yscales,'Color','k','linestyle','--','linewidth',1.2);
+set(gca,'xlim',AHS_score_scale+[-0.1 0.1],'ylim',yscales+[-0.005 0]);
+xlabel('Allen Hierarchy Score');
 ylabel('Selective ROI fraction');
-legend([sc1,sc2,sc3],{'BT','Stim','Choice'},'location','northeastoutside','box','off');
+lg = legend({'Blocktype','Stim','Choice'},'location','northeastoutside','box','on');
+lgPos = get(lg,'position');
+set(lg,'position',lgPos + [0.05 0.04 0 0]);
+
+annotation('textbox',[0.15 0.55 0.1 0.4],'String',CorrStrs(:),'FitBoxToText','on','Color','k')
+
+%%
+plotfigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\AHSScoreCorrplot';
+if ~isfolder(plotfigSavePath)
+    mkdir(plotfigSavePath);
+end
+
+savename1 = fullfile(plotfigSavePath,'AHSScore with sigFraction plot');
+saveas(h1f,savename1);
+print(h1f,savename1,'-dpng','-r400');
+print(h1f,savename1,'-dpdf','-bestfit');
+
+%% ##############################################################################################
+%%
+SelectiveAreaDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\SigUnit_EVsummaryData.mat';
+AreaSelectEVStrc = load(SelectiveAreaDatafile,'AreaSigUnit_TypeRespEV','BrainAreasStr','Area_RespMtxAll');
+
+%% Selective unit explained variance plot
+
+NumAllBrainAreas = length(AreaSelectEVStrc.BrainAreasStr);
+SelfBrainInds2Allen2 = nan(NumAllBrainAreas,5,3); % for the third dimension, each is BT, Stim, Choice
+for cCol = 1 : 3
+    for cA = 1 : NumAllBrainAreas
+        if length(AreaSelectEVStrc.AreaSigUnit_TypeRespEV{cA,cCol}) >= 1 && (AreaSelectEVStrc.Area_RespMtxAll{cA,3}) >= 3
+            cA_brain_str = AreaSelectEVStrc.BrainAreasStr{cA};
+            TF = matches(AllenRegionStrsModi,cA_brain_str,'IgnoreCase',true);
+            if any(TF)
+                AllenRegionInds = find(TF);
+                if length(AllenRegionInds) > 1
+                    fprintf('Multiple fits exist for area <%s>.\n',cA_brain_str);
+                    continue;
+                end
+                cTypeEVar = AreaSelectEVStrc.AreaSigUnit_TypeRespEV{cA,cCol};
+                if length(cTypeEVar) < 3
+                    SelfBrainInds2Allen2(cA,:,cCol) = [cA, AllenRegionInds, ...
+                        RegionScoresUsed(AllenRegionInds),mean(cTypeEVar),0];
+                else
+                    SelfBrainInds2Allen2(cA,:,cCol) = [cA, AllenRegionInds, ...
+                        RegionScoresUsed(AllenRegionInds),mean(cTypeEVar),std(cTypeEVar)/sqrt(numel(cTypeEVar))];
+                end
+            end
+        end
+    end
+end
+
+%% performing plots
+
+TypeStrs = {'Blocktype','Stim','Choice'};
+TypeColors = {'r','c','b'};
+CorrStrs = {'','',''};
+AHS_score_scale = [0 0];
+h2f = figure('position',[100 100 500 680]);
+hold on
+for cType = 1 : 3
+    cTypeDatas = SelfBrainInds2Allen2(:,:,cType);
+    ValidAreaInds = ~isnan(cTypeDatas(:,1));
+    cType_validData = cTypeDatas(ValidAreaInds,:);
+    
+    errorbar(cType_validData(:,3),cType_validData(:,4),cType_validData(:,5)*0.2,'o',...
+        'Color',TypeColors{cType},'linewidth',1.5);
+%     plot(cType_validData(:,3),cType_validData(:,4),'o','Color',TypeColors{cType},...
+%         'linewidth',1.5);
+    AHS_score_scale(1) = min(AHS_score_scale(1),min(cType_validData(:,3)));
+    AHS_score_scale(2) = max(AHS_score_scale(2),max(cType_validData(:,3)));
+    
+    [r,p] = corr(cType_validData(:,3),cType_validData(:,4));
+    RStrs = sprintf('%s: R = %.3f, p = %.3f',TypeStrs{cType},r,p);
+    CorrStrs{cType} = RStrs;
+end
+yscales = get(gca,'ylim');
+line([0 0],yscales,'Color','k','linestyle','--','linewidth',1.2);
+set(gca,'xlim',AHS_score_scale+[-0.1 0.1]);
+xlabel('Allen Hierarchy Score');
+ylabel('Selective Field Explained Variance');
+lg = legend({'Blocktype','Stim','Choice'},'location','northeastoutside','box','on');
+lgPos = get(lg,'position');
+set(lg,'position',lgPos + [0.05 0.04 0 0]);
+
+annotation('textbox',[0.15 0.55 0.1 0.4],'String',CorrStrs(:),'FitBoxToText','on','Color','k')
+
+%%
+savename2 = fullfile(plotfigSavePath,'AHSScore with SigfieldEV plot');
+saveas(h2f,savename2);
+print(h2f,savename2,'-dpng','-r400');
+print(h2f,savename2,'-dpdf','-bestfit');
+
+%% ##############################################################################################
+%% All unit averaged explained variance plot 
+
+SelectiveAreaDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\SigUnit_EVsummaryData.mat';
+AreaSelectEVStrc2 = load(SelectiveAreaDatafile,'Area_RespMtxAll','BrainAreasStr');
+
+%% Selective unit explained variance plot
+
+NumAllBrainAreas = length(AreaSelectEVStrc2.BrainAreasStr);
+SelfBrainInds2Allen3 = nan(NumAllBrainAreas,5,3); % for the third dimension, each is BT, Stim, Choice
+for cCol = 1 : 3
+    for cA = 1 : NumAllBrainAreas
+        if size(AreaSelectEVStrc2.Area_RespMtxAll{cA,2},1) >= 3 && (AreaSelectEVStrc2.Area_RespMtxAll{cA,3}) >= 3
+            cA_brain_str = AreaSelectEVStrc2.BrainAreasStr{cA};
+            TF = matches(AllenRegionStrsModi,cA_brain_str,'IgnoreCase',true);
+            if any(TF)
+                AllenRegionInds = find(TF);
+                if length(AllenRegionInds) > 1
+                    fprintf('Multiple fits exist for area <%s>.\n',cA_brain_str);
+                    continue;
+                end
+                cTypeEVar = AreaSelectEVStrc2.Area_RespMtxAll{cA,2};
+                for cType = 1 : 3
+                    cTypeAllEVData = cTypeEVar(:,cType); 
+                    SelfBrainInds2Allen3(cA,:,cType) = [cA, AllenRegionInds, ...
+                        RegionScoresUsed(AllenRegionInds),mean(cTypeAllEVData),std(cTypeAllEVData)/sqrt(numel(cTypeAllEVData))];
+                end
+            end
+        end
+    end
+end
+
+%% performing plots
+
+TypeStrs = {'Blocktype','Stim','Choice'};
+TypeColors = {'r','c','b'};
+CorrStrs = {'','',''};
+AHS_score_scale = [0 0];
+h3f = figure('position',[100 100 500 680]);
+hold on
+for cType = 1 : 3
+    cTypeDatas = SelfBrainInds2Allen3(:,:,cType);
+    ValidAreaInds = ~isnan(cTypeDatas(:,1));
+    cType_validData = cTypeDatas(ValidAreaInds,:);
+    
+    errorbar(cType_validData(:,3),cType_validData(:,4),cType_validData(:,5)*0.2,'o',...
+        'Color',TypeColors{cType},'linewidth',1.5);
+%     plot(cType_validData(:,3),cType_validData(:,4),'o','Color',TypeColors{cType},...
+%         'linewidth',1.5);
+    AHS_score_scale(1) = min(AHS_score_scale(1),min(cType_validData(:,3)));
+    AHS_score_scale(2) = max(AHS_score_scale(2),max(cType_validData(:,3)));
+    
+    [r,p] = corr(cType_validData(:,3),cType_validData(:,4));
+    RStrs = sprintf('%s: R = %.3f, p = %.3f',TypeStrs{cType},r,p);
+    CorrStrs{cType} = RStrs;
+end
+yscales = get(gca,'ylim');
+line([0 0],yscales,'Color','k','linestyle','--','linewidth',1.2);
+set(gca,'xlim',AHS_score_scale+[-0.1 0.1]);
+xlabel('Allen Hierarchy Score');
+ylabel('Selective Unit Explained Variance');
+lg = legend({'Blocktype','Stim','Choice'},'location','northeastoutside','box','on');
+lgPos = get(lg,'position');
+set(lg,'position',lgPos + [0.05 0.04 0 0]);
+
+annotation('textbox',[0.15 0.55 0.1 0.4],'String',CorrStrs(:),'FitBoxToText','on','Color','k')
+
+%%
+savename3 = fullfile(plotfigSavePath,'AHSScore with sigUnit AllEVfieldAvg plot');
+saveas(h3f,savename3);
+print(h3f,savename3,'-dpng','-r400');
+print(h3f,savename3,'-dpdf','-bestfit');
+
+
 
 
 
