@@ -16,8 +16,8 @@ for cP = 1 : NumprocessedNPSess
      fprintf('Processing session %d...\n',cP);
 %     cPath = SessionFolders{cP};
 %     cPath = strrep(SessionFolders{cP},'F:\','E:\NPCCGs\');
-    cPath = fullfile(strrep(SessionFolders{cP},'F:','I:\ksOutput_backup'),sortingcode_string); %
-%     cPath = fullfile(strrep(SessionFolders{cP},'F:','P:'));
+%     cPath = fullfile(strrep(SessionFolders{cP},'F:','I:\ksOutput_backup'),sortingcode_string); %
+    cPath = fullfile(strrep(SessionFolders{cP},'F:','P:'),sortingcode_string);
     if ~isfolder(fullfile(cPath,'TobeDeleted'))
         mkdir(fullfile(cPath,'TobeDeleted'));
     end
@@ -60,5 +60,10 @@ for cP = 1 : NumprocessedNPSess
         movefile(fullfile(cPath,'Old_BTANDChoiceAUC_compPlot'),...
             fullfile(cPath,'TobeDeleted'),'f');
     end
-    
+    try
+        rmdir(fullfile(cPath,'BaselinePredofBlocktype'),'s');
+        rmdir(fullfile(cPath,'BaselinePredofBlocktypeSVM'),'s');
+        rmdir(fullfile(cPath,'BTANDChoiceAUC_compPlot'),'s');
+        rmdir(fullfile(cPath,'BTANDChoiceAUC_TrWise'),'s');
+    end
 end

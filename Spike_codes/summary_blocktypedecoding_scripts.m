@@ -115,9 +115,9 @@ end
 %%
 Areawise_sessDecPerfRaw = Areawise_sessDecPerf;
 % Areawise_sessDecPerf(:,end,:) = [];
-AllAreaSess_SVMperfs = squeeze(Areawise_sessDecPerf(:,:,1));
-AllAreaSess_SVMThres = squeeze(Areawise_sessDecPerf(:,:,2));
-AllAreaSess_SVMunitnums = squeeze(Areawise_sessDecPerf(:,:,3));
+AllAreaSess_SVMperfs = (Areawise_sessDecPerf(:,:,1));
+AllAreaSess_SVMThres = (Areawise_sessDecPerf(:,:,2));
+AllAreaSess_SVMunitnums = (Areawise_sessDecPerf(:,:,3));
 
 NonEmptyInds = find(cellfun(@(x) ~isempty(x),AllAreaSess_SVMperfs));
 [row,AreaInds] = ind2sub([NumUsedSess,NumAllTargetAreas-1],NonEmptyInds);

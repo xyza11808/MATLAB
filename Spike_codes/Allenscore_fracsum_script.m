@@ -1,7 +1,7 @@
 cclr
 
-% AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_NoCreConf.xlsx';
-AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_NoCreConf.xlsx';
+% AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
+AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
 AllenRegionStrsCell = readcell(AllenHScoreFullPath,'Range','A:A',...
         'Sheet','hierarchy_all_regions');
 AllenRegionStrsUsed = AllenRegionStrsCell(2:end);
@@ -9,8 +9,17 @@ AllenRegionStrsModi = strrep(AllenRegionStrsUsed,'-','');
 
 RegionScoresCell = readcell(AllenHScoreFullPath,'Range','H:H',...
         'Sheet','hierarchy_all_regions');
+% RegionScoresCell = readcell(AllenHScoreFullPath,'Range','F:F',...
+%     'Sheet','hierarchy_all_regions');
+IsCellMissing = cellfun(@(x) any(ismissing(x)),RegionScoresCell);
+RegionScoresCell(IsCellMissing) = {NaN};
 RegionScoresUsed = cell2mat(RegionScoresCell(2:end));
 
+NanInds = isnan(RegionScoresUsed);
+if any(NanInds)
+    RegionScoresUsed(NanInds) = [];
+    AllenRegionStrsModi(NanInds) = [];
+end
 % %%
 % AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 % % AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
@@ -95,7 +104,7 @@ set(lg,'position',lgPos + [0.05 0.04 0 0]);
 annotation('textbox',[0.15 0.55 0.1 0.4],'String',CorrStrs(:),'FitBoxToText','on','Color','k')
 
 %%
-plotfigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\AHSScoreCorrplot';
+plotfigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\AHSScoreCorrplot\CC_TC_CT';
 if ~isfolder(plotfigSavePath)
     mkdir(plotfigSavePath);
 end
@@ -116,7 +125,8 @@ NumAllBrainAreas = length(AreaSelectEVStrc.BrainAreasStr);
 SelfBrainInds2Allen2 = nan(NumAllBrainAreas,5,3); % for the third dimension, each is BT, Stim, Choice
 for cCol = 1 : 3
     for cA = 1 : NumAllBrainAreas
-        if length(AreaSelectEVStrc.AreaSigUnit_TypeRespEV{cA,cCol}) >= 1 && (AreaSelectEVStrc.Area_RespMtxAll{cA,3}) >= 3
+        if length(AreaSelectEVStrc.AreaSigUnit_TypeRespEV{cA,cCol}) >= 1 && (AreaSelectEVStrc.Area_RespMtxAll{cA,3}) >= 3 ...
+            && size(AreaSelectEVStrc.Area_RespMtxAll{cA,1},1) >= 10
             cA_brain_str = AreaSelectEVStrc.BrainAreasStr{cA};
             TF = matches(AllenRegionStrsModi,cA_brain_str,'IgnoreCase',true);
             if any(TF)
@@ -191,7 +201,8 @@ NumAllBrainAreas = length(AreaSelectEVStrc2.BrainAreasStr);
 SelfBrainInds2Allen3 = nan(NumAllBrainAreas,5,3); % for the third dimension, each is BT, Stim, Choice
 for cCol = 1 : 3
     for cA = 1 : NumAllBrainAreas
-        if size(AreaSelectEVStrc2.Area_RespMtxAll{cA,2},1) >= 3 && (AreaSelectEVStrc2.Area_RespMtxAll{cA,3}) >= 3
+        if size(AreaSelectEVStrc2.Area_RespMtxAll{cA,2},1) >= 1 && (AreaSelectEVStrc2.Area_RespMtxAll{cA,3}) >= 3 ...
+            && size(AreaSelectEVStrc.Area_RespMtxAll{cA,1},1) >= 10
             cA_brain_str = AreaSelectEVStrc2.BrainAreasStr{cA};
             TF = matches(AllenRegionStrsModi,cA_brain_str,'IgnoreCase',true);
             if any(TF)

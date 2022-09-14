@@ -24,7 +24,7 @@ TrialIsError = TrialIsCorrect & double(behavResults.Action_choice(:)) ~= 2;
 % try
 %     NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
 % catch ME % some added sessions do not have file named "SessAreaIndexDataNew.mat"
-    NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+    NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
 % end
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);

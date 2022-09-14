@@ -263,10 +263,15 @@ tic
 NumCalculations = (Numfieldnames-1)*Numfieldnames/2;
 CalResults = cell(NumCalculations,5);
 NumRepeats = 100;
+NumShufRepeats = 100;
 TrialNums = size(NewBinnedDatas,1);
 SampleTrNums = round(TrialNums*0.8);
 RandIndsData = rand(SampleTrNums,NumCalculations,NumRepeats);
 sampleInds = rand(TrialNums,NumCalculations,NumRepeats);
+NumofCaledEvents = length(EventStrs);
+NumofBins = size(NewBinnedDatas,3);
+EventSpeciCCR = cell(NumCalculations,2);
+MaxShiftAmounts = round(NumofBins/2)-5;
 
 k = 1;
 for cAr = 1 : Numfieldnames
@@ -296,8 +301,54 @@ for cAr = 1 : Numfieldnames
                 5,[],5);
             jPECC_val_Rep(cRepeat,:) = {jPECC_val,jPECC_shuf};
         end
-            
-            
+        
+        % calculate event specific correlations
+        EventBinCoefValues = zeros(NumofCaledEvents, NumofBins);
+        EventShufCoefValues = zeros(NumofCaledEvents, NumofBins,NumShufRepeats);
+        
+        cAr1_data = NewBinnedDatas(:,ExistField_ClusIDs{cAr,2},:);
+        cAr2_data = NewBinnedDatas(:,ExistField_ClusIDs{cAr2,2},:);
+        ShufShiftsMtx = round((rand(TrialNums,NumShufRepeats)-0.5)*2*MaxShiftAmounts);
+        for cEvents = 1 : NumofCaledEvents
+           cEvent_loadCeofData = EventRespCalResults{k,cEvents};
+           cEvent_cAr_load = cEvent_loadCeofData{1};
+           cEvent_cAr2_load = cEvent_loadCeofData{2};
+           % real data calculation
+           for cBin = 1 : NumofBins
+               cBin_cAr1_Data = cAr1_data(:,:,cBin);
+               cBin_cAr2_Data = cAr2_data(:,:,cBin);
+               
+               cBin_cAr1_U = (cBin_cAr1_Data - mean(cBin_cAr1_Data)) * cEvent_cAr_load;
+               cBin_cAr2_V = (cBin_cAr2_Data - mean(cBin_cAr2_Data)) * cEvent_cAr2_load;
+               
+               EventBinCoefValues(cEvents,cBin) = corr(cBin_cAr1_U(:,1),cBin_cAr2_V(:,1));
+           end
+           
+           % shuf matrix data anlysis
+           ShufDataSize = size(NewBinnedDatas);
+           parfor cRepeat = 1 : NumShufRepeats
+               ShufBinDatas = zeros(ShufDataSize);
+               cRepeatAmounts = ShufShiftsMtx(:,cRepeat);
+               for cRow = 1 : TrialNums
+                   cRow_Realdata = NewBinnedDatas(cRow,:,:);
+                   ShufBinDatas(cRow,:,:) = circshift(cRow_Realdata,cRepeatAmounts(cRow),3);
+               end
+               cAr1_data = ShufBinDatas(:,ExistField_ClusIDs{cAr,2},:);
+               cAr2_data = ShufBinDatas(:,ExistField_ClusIDs{cAr2,2},:);
+               for cBin = 1 : NumofBins
+                   cBin_cAr1_Data = cAr1_data(:,:,cBin);
+                   cBin_cAr2_Data = cAr2_data(:,:,cBin);
+
+                   cBin_cAr1_U = (cBin_cAr1_Data - mean(cBin_cAr1_Data)) * cEvent_cAr_load;
+                   cBin_cAr2_V = (cBin_cAr2_Data - mean(cBin_cAr2_Data)) * cEvent_cAr2_load;
+
+                   EventShufCoefValues(cEvents,cBin,cRepeat) = corr(cBin_cAr1_U(:,1),cBin_cAr2_V(:,1));
+               end
+
+           end
+       end
+
+        EventSpeciCCR(k,:) = {EventBinCoefValues,EventShufCoefValues};
         CalResults(k,:) = {jPECC_val_Rep(:,1), jPECC_val_Rep(:,2), ...
             NewAdd_ExistAreaNames{cAr},NewAdd_ExistAreaNames{cAr2},...
             [numel(ExistField_ClusIDs{cAr,1}),numel(ExistField_ClusIDs{cAr2,1})]};
@@ -313,7 +364,7 @@ end
 dataSavePath = fullfile(Savepath,'JeccDataNew.mat');
 
 save(dataSavePath,'CalResults','EventRespCalResults','OutDataStrc','EventDatas','EventStrs',...
-    'ExistField_ClusIDs','NewAdd_ExistAreaNames','EventRespCalAreaIndsANDName','-v7.3')
+    'ExistField_ClusIDs','NewAdd_ExistAreaNames','EventRespCalAreaIndsANDName','EventSpeciCCR','-v7.3');
 %%
 % CalTimeBinNums = [min(OutDataStrc.BinCenters),max(OutDataStrc.BinCenters)];
 % StimOnBinTime = 0; %OutDataStrc.BinCenters(OutDataStrc.TriggerStartBin);
