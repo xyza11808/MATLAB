@@ -61,7 +61,7 @@ if ~isfolder(fullsavePath)
     mkdir(fullsavePath);
 end
 
-CommonUnitNums = 10;
+CommonUnitNums = 15;
 
 ActionInds = double(behavResults.Action_choice(:));
 NMTrInds = ActionInds ~= 2;
@@ -103,7 +103,7 @@ for cType = 1 : 2
             Final_test_Inds = TrainBaseAll;
             Final_test_Inds(cc.test(2)) = true;
             
-            [DisScore,MdPerfs,~,~] = LDAclassifierFun(RespDataUsedMtx(:,SampleInds), TrTypes, {FI_training_Inds,Final_test_Inds});
+            [DisScore,MdPerfs,~,beta] = LDAclassifierFun(RespDataUsedMtx(:,SampleInds), TrTypes, {FI_training_Inds,Final_test_Inds});
             NumCol_infos(cR,:) = DisScore;
             SVMLossAll(cR,:) = MdPerfs;
         end

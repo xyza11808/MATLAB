@@ -1,4 +1,4 @@
-function [DisScore,LDA_Accuracy,PredClassLabels,beta] = ...
+function [DisScore,LDA_Accuracy,TrainANDtestScores,beta] = ...
     LDAclassifierFun(X, y, varargin)
 % function used for LDA classifier analysis, return the decoding accuracy
 % and discrimination scores
@@ -121,5 +121,5 @@ DisScore = [D_sqr, d_opt_sqr];
 
 LDA_Accuracy = [TrainPerfAccu, PredAccuracy];
 
-
+TrainANDtestScores = {TrainScores,NewPredScore,ClassBoundScore,PredClassLabels};
 
