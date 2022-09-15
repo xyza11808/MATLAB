@@ -919,8 +919,8 @@ save(datasavename4,'Area_AllsigUnitLags', 'BrainAreasStr', 'IsMultiUnitExists','
 %
 cclr
 %
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -954,7 +954,7 @@ Areawise_unitStimRespAUC = cell(NumUsedSess,NumAllTargetAreas,2); % used to stor
 for cS = 1 : NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
 %     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
-    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:','F:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     try
@@ -999,8 +999,8 @@ end
 
 
 %%
-% summarySavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas';
-summarySavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas';
+summarySavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas';
+% summarySavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas';
 
 % TotalCalcuNumber = size(NSMUnitOmegaSqrData,1);
 % CaledStimOnsetBin = 149; % stimonset bin is 151, and the calculation window is 50ms (5 bins)
@@ -1192,8 +1192,8 @@ save(datasaveName5,'AllArea_anovaEVdatas','Areawise_unitAnovaSigNum',...
 %% summary analysis 6, regressor analysis summary
 cclr
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -1224,7 +1224,7 @@ IsColRespTypeExists = 0;
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
 %     cSessPath = strrep(SessionFolders{cS},'F:\','P:\'); % 'E:\NPCCGs\'
-    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:','F:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     try
@@ -1329,7 +1329,8 @@ BrainRegionIndex = BrainRegionStrc.BrainRegions;
 %%
 % plot sagital and topdown plots
 % UsedTypeInds = 3;
-savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary';
+% savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary';
+savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary';
 for UsedTypeInds = 1 : length(AllAreaFracStr)
     UsedTypeFracStr = AllAreaFracStr{UsedTypeInds};
     UsedAreaFracs = AllAreaFracs(:,UsedTypeInds);
@@ -1385,44 +1386,99 @@ dataSavepath = fullfile(savePathfolder,'RegAreawiseFrac.mat');
 save(dataSavepath, 'AllAreaFracStr','NEBrainStrs','AllAreaFracs',...
     'BrainAreaFracs','FracTypeStrs','Areawise_RespUnitInds','BrainAreasStr','-v7.3');
 
+%% load allen score
+AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
+% AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
+AllenRegionStrsCell = readcell(AllenHScoreFullPath,'Range','A:A',...
+        'Sheet','hierarchy_all_regions');
+AllenRegionStrsUsed = AllenRegionStrsCell(2:end);
+AllenRegionStrsModi = strrep(AllenRegionStrsUsed,'-','');
+
+RegionScoresCell = readcell(AllenHScoreFullPath,'Range','H:H',...
+        'Sheet','hierarchy_all_regions');
+% RegionScoresCell = readcell(AllenHScoreFullPath,'Range','F:F',...
+%     'Sheet','hierarchy_all_regions');
+IsCellMissing = cellfun(@(x) any(ismissing(x)),RegionScoresCell);
+RegionScoresCell(IsCellMissing) = {NaN};
+RegionScoresUsed = cell2mat(RegionScoresCell(2:end));
+
+NanInds = isnan(RegionScoresUsed);
+if any(NanInds)
+    RegionScoresUsed(NanInds) = [];
+    AllenRegionStrsModi(NanInds) = [];
+end
+
+%% find areas matched with allen area names
+SelfBrainInds2Allen = nan(NumNEAreas,3);
+
+for cA = 1 : NumNEAreas
+    cA_brain_str = NEBrainStrs{cA};
+    TF = matches(AllenRegionStrsModi,cA_brain_str,'IgnoreCase',true);
+    if any(TF)
+        AllenRegionInds = find(TF);
+        if length(AllenRegionInds) > 1
+            fprintf('Multiple fits exist for area <%s>.\n',cA_brain_str);
+            continue;
+        end
+        SelfBrainInds2Allen(cA,:) = [cA, AllenRegionInds, RegionScoresUsed(AllenRegionInds)];
+    elseif strcmpi(cA_brain_str,'RSP')
+        SelfBrainInds2Allen(cA,:) = [cA, 37, -0.0175]; % averaged of dosal and ventral part
+    end
+end
+
+NonexistedAreaInds = isnan(SelfBrainInds2Allen(:,1));
 %%
-
-hhu1f = figure('position',[100 100 500 400]);
+hhu1f = figure('position',[100 100 580 400]);
 hold on
-plot(AllAreaFracs(:,1),AllAreaFracs(:,2),'ko','MarkerSize',6);
-
+plot(AllAreaFracs(NonexistedAreaInds,1),AllAreaFracs(NonexistedAreaInds,2),'d','MarkerSize',6,...
+    'Color',[.7 .7 .7],'linewidth',1.5);
+scatter(AllAreaFracs(~NonexistedAreaInds,1),AllAreaFracs(~NonexistedAreaInds,2),20,SelfBrainInds2Allen(~NonexistedAreaInds,3),...
+    'filled');
+colormap cool
 UpperDataInds = AllAreaFracs(:,1) > AllAreaFracs(:,2);
 up_txt_h = labelpoints(AllAreaFracs(~UpperDataInds,1),AllAreaFracs(~UpperDataInds,2),...
-    NEBrainStrs(~UpperDataInds),'W',0.05,1,'Color','r','FontSize', 8); %,'stacked','down'
+    NEBrainStrs(~UpperDataInds),'W',0.05,1,'Color','k','FontSize', 8); %,'stacked','down'
 down_txt_h = labelpoints(AllAreaFracs(UpperDataInds,1),AllAreaFracs(UpperDataInds,2),...
-    NEBrainStrs(UpperDataInds),'E',0.05,1,'Color','r','FontSize', 8); %,'stacked','down'
-xlabel('BlockType','FontSize',10);
-ylabel('Stimulus','FontSize',10);
+    NEBrainStrs(UpperDataInds),'E',0.05,1,'Color','k','FontSize', 8); %,'stacked','down'
+xscales = get(gca,'xlim');
+yscales = get(gca,'ylim');
+CommonScales = [min(xscales(1),yscales(1)),max(xscales(2),yscales(2))];
+line(CommonScales,CommonScales,'Color',[.5 .5 .5],'linestyle','--','linewidth',1);
+xlabel('BlockType selective fraction','FontSize',10);
+ylabel('Stimulus selective fraction','FontSize',10);
 title('Selective unit fraction');
-
-
+colorbar;
+%
 % NEBrainStrs
-hhu2f = figure('position',[100 100 500 400]);
+hhu2f = figure('position',[100 100 580 400]);
 hold on
-plot(AllAreaFracs(:,1),AllAreaFracs(:,3),'ko','MarkerSize',6);
-
+plot(AllAreaFracs(NonexistedAreaInds,1),AllAreaFracs(NonexistedAreaInds,3),'d','MarkerSize',6,...
+    'Color',[.7 .7 .7],'linewidth',1.5);
+scatter(AllAreaFracs(~NonexistedAreaInds,1),AllAreaFracs(~NonexistedAreaInds,3),20,SelfBrainInds2Allen(~NonexistedAreaInds,3),...
+    'filled');
+colormap cool
 UpperDataInds = AllAreaFracs(:,1) > AllAreaFracs(:,3);
 up_txt_h = labelpoints(AllAreaFracs(~UpperDataInds,1),AllAreaFracs(~UpperDataInds,3),...
-    NEBrainStrs(~UpperDataInds),'W',0.05,1,'Color','b','FontSize', 8); %,'stacked','down'
+    NEBrainStrs(~UpperDataInds),'W',0.05,1,'Color','k','FontSize', 8); %,'stacked','down'
 down_txt_h = labelpoints(AllAreaFracs(UpperDataInds,1),AllAreaFracs(UpperDataInds,3),...
-    NEBrainStrs(UpperDataInds),'E',0.05,1,'Color','b','FontSize', 8); %,'stacked','down'
-xlabel('BlockType','FontSize',10);
-ylabel('Choice','FontSize',10);
+    NEBrainStrs(UpperDataInds),'E',0.05,1,'Color','k','FontSize', 8); %,'stacked','down'
+xscales = get(gca,'xlim');
+yscales = get(gca,'ylim');
+CommonScales = [min(xscales(1),yscales(1)),max(xscales(2),yscales(2))];
+line(CommonScales,CommonScales,'Color',[.5 .5 .5],'linestyle','--','linewidth',1);
+xlabel('BlockType selective fraction','FontSize',10);
+ylabel('Choice selective fraction','FontSize',10);
 title('Selective unit fraction');
-
-SaveNames1 = fullfile(savePathfolder,'AreaFraction scatter plot save StimANDBT');
+colorbar;
+%%
+SaveNames1 = fullfile(savePathfolder,'AreaFraction scatter plot save StimANDBT2 addline');
 saveas(hhu1f,SaveNames1);
 
 print(hhu1f,SaveNames1,'-dpng','-r500');
 print(hhu1f,SaveNames1,'-dpdf','-bestfit');
 
 
-SaveNames2 = fullfile(savePathfolder,'AreaFraction scatter plot save ChoiceANDBT');
+SaveNames2 = fullfile(savePathfolder,'AreaFraction scatter plot save ChoiceANDBT2 addline');
 saveas(hhu2f,SaveNames2);
 
 print(hhu2f,SaveNames2,'-dpng','-r500');

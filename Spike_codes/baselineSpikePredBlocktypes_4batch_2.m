@@ -1,7 +1,7 @@
 clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_First BaselineResp_Last
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
 % load('Chnlocation.mat');
-load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
 % if isempty(ProbNPSess.ChannelAreaStrs)
 %     ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
 % end
@@ -24,6 +24,7 @@ SMBinDataMtxRaw = SMBinDataMtx;
 Allfieldnames = fieldnames(SessAreaIndexStrc);
 ExistAreas_Indexes = find(SessAreaIndexStrc.UsedAbbreviations);
 ExistAreas_Names = Allfieldnames(SessAreaIndexStrc.UsedAbbreviations);
+ExistAreas_Names(strcmpi(ExistAreas_Names,'Others')) = [];
 NumExistAreas = length(ExistAreas_Names);
 BlockTypesAll = double(behavResults.BlockType(:));
 if NumExistAreas< 1
@@ -34,51 +35,37 @@ end
 SavedFolderPathName = 'BasePredofBT_foldslogressor';
 
 fullsavePath = fullfile(ksfolder, SavedFolderPathName);
-if ~isfolder(fullsavePath)
-    mkdir(fullsavePath);
+if isfolder(fullsavePath)
+    rmdir(fullsavePath,'s');
 end
+mkdir(fullsavePath);
+TriggerAlignBin = ProbNPSess.TriggerStartBin{ProbNPSess.CurrentSessInds};
+%     halfBaselineWinInds = round((TriggerAlignBin-1)/2);
+
+BlockSectionInfo = Bev2blockinfoFun(behavResults);
 
 TargetAreaUnits = false(size(SMBinDataMtxRaw,2),1);
 
 SVMDecodingAccu_strs = {'SVMaccuracy','ShufAccu','SVMmodel','UsedUnitInds(NotRealIndex)'};
 SVMDecodingAccuracy = cell(NumExistAreas,4);
 logRegressorProb_strs = {'logregressorMD', 'Predprob','NMFreqChoice','NMFreqTrialIndex','CrossCoefValues'};
-logRegressorProbofBlock = cell(NumExistAreas,5);
+logRegressorProbofBlock = cell(NumExistAreas,7);
 % logRegressorUnitSampleDec = cell(NumExistAreas+1,2);
 AreaPredInfo = cell(NumExistAreas, 2);
 %
 for cArea = 1 : NumExistAreas
-    if cArea <= NumExistAreas
-        cUsedAreas = ExistAreas_Names{cArea};
-        if isempty(SessAreaIndexStrc.(cUsedAreas))
-            error('Something wrong, no unit was found in the input channel position file.');
-        end
-        cAUnitInds = SessAreaIndexStrc.(cUsedAreas).MatchedUnitInds;
-        SMBinDataMtx = SMBinDataMtxRaw(:,cAUnitInds,:);
-    else
-        cAUnitInds = find(~TargetAreaUnits);
-        SMBinDataMtx = SMBinDataMtxRaw(:,cAUnitInds,:);
-        cUsedAreas = 'OtherAreas';
+    
+    cUsedAreas = ExistAreas_Names{cArea};
+    if isempty(SessAreaIndexStrc.(cUsedAreas))
+        error('Something wrong, no unit was found in the input channel position file.');
     end
+    cAUnitInds = SessAreaIndexStrc.(cUsedAreas).MatchedUnitInds;
+    SMBinDataMtx = SMBinDataMtxRaw(:,cAUnitInds,:);
+    
     NumberOfUnits = length(cAUnitInds); % number of units will be used for population decoding
     
-    if NumberOfUnits == 0
-        warning('All units were target area units.');
-        continue;
-    end
-    %
     [TrNum, ~, ~] = size(SMBinDataMtx);
-
-    TriggerAlignBin = ProbNPSess.TriggerStartBin{ProbNPSess.CurrentSessInds};
-%     halfBaselineWinInds = round((TriggerAlignBin-1)/2);
     BaselineResp_All = mean(SMBinDataMtx(:,:,1:TriggerAlignBin),3);
-%     BaselineResp_Last = mean(SMBinDataMtx(:,:,(halfBaselineWinInds+1):(TriggerAlignBin-1)),3);
-
-    % RespTimeWin = round(1/ProbNPSess.USedbin(2));
-    % BaselineResp_First = mean(SMBinDataMtx(:,:,(TriggerAlignBin+1):(TriggerAlignBin+RespTimeWin)),3);
-
-    BlockSectionInfo = Bev2blockinfoFun(behavResults);
-    %
     
     sampleInds = randsample(TrNum,round(TrNum*0.7));
     IsTrainingSet = false(TrNum,1);
@@ -97,13 +84,17 @@ for cArea = 1 : NumExistAreas
     PredictionAccu = mean(TestSet_labels == predTestLabels);
 
     RepeatNum = 100;
-    IsTrainingSet = false(TrNum,1);
     shufPredCorr = zeros(RepeatNum,1);
+    randIndsData = rand(TrNum,RepeatNum);
+    randSampleIndsData = rand(TrNum,RepeatNum);
+    SampleThres = repmat(prctile(randSampleIndsData,71),TrNum,1);
+    randSampleIndsMtx = randSampleIndsData < SampleThres;
     parfor cR = 1 : RepeatNum
-        shufBlocks = Vshuffle(BlockTypesAll);
-        sampleInds = randsample(TrNum,round(TrNum*0.7));
-        TrainInds = IsTrainingSet;
-        TrainInds(sampleInds) = true;
+        [~,RandShufInds] = sort(randIndsData(:,cR));
+        shufBlocks = BlockTypesAll(RandShufInds);
+%         sampleInds = randsample(TrNum,round(TrNum*0.7));
+%         TrainInds = IsTrainingSet;
+        TrainInds = randSampleIndsMtx(:,cR);
 
         shuftrainSet_resps = BaselineResp_All(TrainInds,:);
         shufTrainSet_labels = shufBlocks(TrainInds);
@@ -141,20 +132,20 @@ for cArea = 1 : NumExistAreas
         PerdTrInds = cell2mat(cFoldInds(:)); % predicting the rest datas
         
         [BTrain,~,statsTrain] = mnrfit(BaselineResp_All(TrainInds,:)+1e-6,categorical(BlockTypesAll(TrainInds)));
-        [pihatNewPerf,~,~] = mnrval(BTrain,BaselineResp_All(MDPerfInds,:),statsTrain);
+        [pihatNewPerf,~,~] = mnrval(BTrain,BaselineResp_All(MDPerfInds,:)+1e-6,statsTrain);
         
-        MDProbNewPerf = double(pihatNewPerf(:,1)>0.5);
+        MDProbNewPerf = double(pihatNewPerf(:,2)>0.5);
 %         mdEvaluates = predict(mdl, BaselineResp_All(MDPerfInds,:));
         MDPerfs = mean(MDProbNewPerf == BlockTypesAll(MDPerfInds));
         
 %         [mdPredTypes, PredScores] = predict(mdl, BaselineResp_All(PerdTrInds,:)); % predDatas
-        [pihatNewPred,~,~] = mnrval(BTrain,BaselineResp_All(PerdTrInds,:),statsTrain);
-        mdPredTypes = double(pihatNewPred(:,1) > 0.5);
+        [pihatNewPred,~,~] = mnrval(BTrain,BaselineResp_All(PerdTrInds,:)+1e-6,statsTrain);
+        mdPredTypes = double(pihatNewPred(:,2) > 0.5);
         PredPerfs = mean(mdPredTypes == BlockTypesAll(PerdTrInds));
         
         Trmdperfs(cfold,:) = [MDPerfs, PredPerfs];
         
-        TrPredBlockTypes(cfold,:) = {PerdTrInds,mdPredTypes,pihatNewPred(:,1),BlockTypesAll(PerdTrInds),BTrain};
+        TrPredBlockTypes(cfold,:) = {PerdTrInds,mdPredTypes,pihatNewPred(:,2),BlockTypesAll(PerdTrInds),BTrain};
     end
     %
     fprintf('Model self lost is %.4f.\n',1-mean(Trmdperfs(:,1)));
@@ -201,7 +192,8 @@ for cArea = 1 : NumExistAreas
     hf3 = figure; 
     crosscorr(NMRevFreqChoice,predProb4Revfreqs,'NumLags',50,'NumSTD',3);
 %
-    logRegressorProbofBlock(cArea,:) = {AllUsedTrInds, AllUsedTrPredTypes, NMRevFreqPredTypes, NMRevFreqChoice,{xcf,lags,bounds}};
+    logRegressorProbofBlock(cArea,:) = {AllUsedTrInds, AllUsedTrPredTypes, NMRevFreqPredTypes, NMRevFreqChoice,...
+        {xcf,lags,bounds},TrPredBlockTypes,NumberOfUnits};
     
     logregressorSaveName = fullfile(fullsavePath,sprintf('Area_%s logregressor prob plot save',cUsedAreas));
     saveas(lhf2,logregressorSaveName);
