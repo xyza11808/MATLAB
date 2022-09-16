@@ -21,7 +21,7 @@ end
 if ~IsPartitionIndsGiven
     NumofTotalDatas = length(y);
     % uniform labels into numbers
-    TrainIndex = randsample(NumofTotalDatas,round(NumofTotalDatas*0.7));
+    TrainIndex = randsample(NumofTotalDatas,round(NumofTotalDatas*0.5));
     TrainInds = false(NumofTotalDatas,1);
     TrainInds(TrainIndex) = true;
     TestInds = ~TrainInds;

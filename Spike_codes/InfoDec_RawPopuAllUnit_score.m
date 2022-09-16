@@ -85,7 +85,7 @@ TrialFreqsAll = double(behavResults.Stim_toneFreq(:));
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
 RevFreqs = BlockSectionInfo.BlockFreqTypes(logical(BlockSectionInfo.IsFreq_asReverse));
 RevFreqInds = (ismember(TrialFreqsAll,RevFreqs));
-NMRevFreqInds = RevFreqInds(NMTrInds);
+NMRevFreqIndsRaw = RevFreqInds(NMTrInds);
 
 AreaDecodeDataCell = cell(Numfieldnames,5);
 AreaProcessDatas = cell(Numfieldnames,4);
@@ -93,13 +93,13 @@ for cArea = 1 : Numfieldnames
 
     cUsedAreas = NewAdd_ExistAreaNames{cArea};
     cAUnits = ExistField_ClusIDs{cArea,2};
-    if length(cAUnits) < CommonUnitNums
-        continue;
-    elseif length(cAUnits) < CommonUnitNums+4
+%     if length(cAUnits) < CommonUnitNums
+%         continue;
+%     elseif length(cAUnits) < CommonUnitNums+4
         RepeatNums = 200;
-    else
-        RepeatNums = 1000;
-    end
+%     else
+%         RepeatNums = 1000;
+%     end
     
     BaselineData = mean(NewBinnedDatas(NMTrInds,cAUnits,1:(OutDataStrc.TriggerStartBin-1)),3);
     
@@ -109,19 +109,32 @@ for cArea = 1 : Numfieldnames
     
     BaseSubRespData = RespDataUsedMtx - BaselineData;
     RepeatData = cell(RepeatNums,1);
-    sampleScoreMtx = zeros(RepeatNums,8);
+    sampleScoreMtx = zeros(RepeatNums,9);
     BlockScoreMtx = zeros(RepeatNums,4);
     dSqrANDperfMtx = zeros(RepeatNums,6,2);
     BaseBTLDAscore = zeros(RepeatNums,5);
     for cR = 1 : RepeatNums
-        SampleInds = randsample(cAROINum,CommonUnitNums);
-        
-        % start with low block training
-%         LowBoundChoices = NMActionChoices(LowBoundBlockInds);
+        SampleInds = true(cAROINum,1); %randsample
+        NMRevTrNum = sum(NMRevFreqIndsRaw);
+        NonRevTrNum = sum(~NMRevFreqIndsRaw);
+        if NMRevTrNum < NonRevTrNum
+            NMRevFreqInds = NMRevFreqIndsRaw;
+            NonRevTrIndex = find(~NMRevFreqIndsRaw);
+            sampleInds = randsample(NonRevTrNum,  NonRevTrNum - NMRevTrNum);
+            NonRevFreqInds = ~NMRevFreqIndsRaw;
+            NonRevFreqInds(NonRevTrIndex(sampleInds)) = false;
+        else
+            NonRevFreqInds = ~NMRevFreqIndsRaw;
+            RevTrIndex = find(NMRevFreqIndsRaw);
+            sampleInds = randsample(NMRevTrNum, NMRevTrNum - NonRevTrNum);
+            NMRevFreqInds = NMRevFreqIndsRaw;
+            NMRevFreqInds(RevTrIndex(sampleInds)) = false;
+        end
+        AllUsedTrInds = (NMRevFreqInds | NonRevFreqInds);
         [DisScore,MdPerfs,SampleScores,beta] = LDAclassifierFun(BaseSubRespData(:,SampleInds), ...
-            NMActionChoices, {~NMRevFreqInds,NMRevFreqInds});
+            NMActionChoices, {NonRevFreqInds,NMRevFreqInds});
         NRevTr_baseSubPointScore = SampleScores{1};
-        NRevTrChoices = NMActionChoices(~NMRevFreqInds);
+        NRevTrChoices = NMActionChoices(NonRevFreqInds);
         RevTr_baseSubPointScore = SampleScores{2};
         RevTrChoices = NMActionChoices(NMRevFreqInds);
         
@@ -134,7 +147,7 @@ for cArea = 1 : Numfieldnames
         [RevTrChoiceD_sqr,RevTrChoiceAccu,RevTrChoiceScores] = ...
             LDAclassifierFun_Score(RespDataUsedMtx(NMRevFreqInds,SampleInds), NMActionChoices(NMRevFreqInds),beta,SampleScores{3});
         [NRevTrChoiceD_sqr,NRevTrChoiceAccu,NRevTrChoiceScores] = ...
-            LDAclassifierFun_Score(RespDataUsedMtx(~NMRevFreqInds,SampleInds), NMActionChoices(~NMRevFreqInds),beta,SampleScores{3});
+            LDAclassifierFun_Score(RespDataUsedMtx(NonRevFreqInds,SampleInds), NMActionChoices(NonRevFreqInds),beta,SampleScores{3});
         
         [TrBaseD_sqr,TrBaseAccu,TrBaseScores] = ...
             LDAclassifierFun_Score(BaselineData(:,SampleInds), NMBlockTypes,beta,SampleScores{3});
@@ -145,8 +158,8 @@ for cArea = 1 : Numfieldnames
         ChoiceScoresSum.BS_RevTr_score = [mean(RevTr_baseSubPointScore(RevTrChoices == 0)),...
             mean(RevTr_baseSubPointScore(RevTrChoices == 1))];
         
-        ChoiceScoresSum.RespData_NRT_score = [mean(NRevTrChoiceScores(NMActionChoices(~NMRevFreqInds) == 0)),...
-            mean(NRevTrChoiceScores(NMActionChoices(~NMRevFreqInds) == 1))];
+        ChoiceScoresSum.RespData_NRT_score = [mean(NRevTrChoiceScores(NMActionChoices(NonRevFreqInds) == 0)),...
+            mean(NRevTrChoiceScores(NMActionChoices(NonRevFreqInds) == 1))];
         ChoiceScoresSum.RespData_RT_score = [mean(RevTrChoiceScores(NMActionChoices(NMRevFreqInds) == 0)),...
             mean(RevTrChoiceScores(NMActionChoices(NMRevFreqInds) == 1))];
         
@@ -157,7 +170,7 @@ for cArea = 1 : Numfieldnames
         
         % calculate block type decoding vector
         [DisScore_BT,MdPerfs_BT,SampleScores_BT,beta_BT] = ...
-            LDAclassifierFun(BaselineData(:,SampleInds), NMBlockTypes,{~NMRevFreqInds,NMRevFreqInds});
+            LDAclassifierFun(BaselineData(:,SampleInds), NMBlockTypes,{NonRevFreqInds,NMRevFreqInds});
         ChoiceScoresSum.Base_BT_dsqr = DisScore_BT;
         ChoiceScoresSum.Base_BT_perf = MdPerfs_BT;
         ChoiceScoresSum.Base_SampleScoreAll = SampleScores_BT;
@@ -166,7 +179,7 @@ for cArea = 1 : Numfieldnames
         RepeatData{cR} = ChoiceScoresSum;
         
         sampleScoreMtx(cR,:) = [ChoiceScoresSum.BS_NRevTr_score,ChoiceScoresSum.BS_RevTr_score,...
-            ChoiceScoresSum.RespData_NRT_score,ChoiceScoresSum.RespData_RT_score];
+            ChoiceScoresSum.RespData_NRT_score,ChoiceScoresSum.RespData_RT_score,SampleScores{3}];
         BlockScoreMtx(cR,:) = [ChoiceScoresSum.Base_LHBound_score,SampleScores{3},VecAnglesFun(beta,beta_BT)];
         dSqrANDperfMtx(cR,:,1) = ChoiceScoresSum.All_dsqrs;
         dSqrANDperfMtx(cR,:,2) = ChoiceScoresSum.All_perfs;
@@ -179,7 +192,7 @@ end
 
 
 %%
-save(fullfile(fullsavePath,'LDAinfo_ChoiceScores.mat'), 'AreaDecodeDataCell', 'BlockpsyInfo',...
+save(fullfile(fullsavePath,'LDAinfo_ChoiceScoresAllUnit.mat'), 'AreaDecodeDataCell', 'BlockpsyInfo',...
     'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers', 'AreaProcessDatas','OutDataStrc','-v7.3');
 
 % figure;hold on

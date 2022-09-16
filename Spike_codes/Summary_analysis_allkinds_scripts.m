@@ -1856,8 +1856,8 @@ save(summaryDatapath8,'Area_RespMtxAll','Areawise_RespUnitEVars','Areawise_RespU
 %
 cclr
 %
-AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -1877,12 +1877,13 @@ SessionFolders = SessionFoldersRaw(~EmptyInds);
 NumUsedSess = length(SessionFolders);
 NumAllTargetAreas = length(BrainAreasStr);
 %%
-AreaWise_ChoiceScoreData = cell(NumUsedSess,NumAllTargetAreas,2);
+AreaWise_ChoiceScoreData = cell(NumUsedSess,NumAllTargetAreas,4);
 AreaWise_ChoiceScoreDiffData = cell(NumUsedSess,NumAllTargetAreas);
+AreaWise_dsqrSummaryData = cell(NumUsedSess,NumAllTargetAreas,3);
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
-    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
-%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     
@@ -1900,6 +1901,8 @@ for cS = 1 :  NumUsedSess
             AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
             cA_ChoiceScoresData = cS_ChoiceScoreData_Strc.AreaProcessDatas{cAreaInds,1};
             cA_BT2ChoiceScore = cS_ChoiceScoreData_Strc.AreaProcessDatas{cAreaInds,2};
+            cA_dsqrANDperf = cS_ChoiceScoreData_Strc.AreaProcessDatas{cAreaInds,3};
+            cA_BTscore = cS_ChoiceScoreData_Strc.AreaProcessDatas{cAreaInds,4};
             % ChoiceScore, difference between baselineSub. NRevTrs and
             % RawResp NRevTrs
             NRevTr_choiceScoreDiff = cA_ChoiceScoresData(1) - cA_ChoiceScoresData(5);
@@ -1908,21 +1911,41 @@ for cS = 1 :  NumUsedSess
             RevTr_choiceScoreDiff = [cA_ChoiceScoresData(3) - cA_ChoiceScoresData(7),...
                 cA_ChoiceScoresData(4) - cA_ChoiceScoresData(8)];
             
-            AreaWise_ChoiceScoreData(cS,AreaMatchInds,:) = {cA_ChoiceScoresData,cA_BT2ChoiceScore}; 
+            cA_RevTrDsqrAndPerf = [cA_dsqrANDperf(2,:),cA_dsqrANDperf(3,:),cA_dsqrANDperf(6,:)]; % the last two is the score calculation control
+            cA_NonRevTrDsqrAndPerf = [cA_dsqrANDperf(1,:),cA_dsqrANDperf(4,:)];
+            cA_BaseDataDsqr = [cA_dsqrANDperf(5,:),cA_BT2ChoiceScore(3),cA_BT2ChoiceScore(4)];
+            
+            AreaWise_ChoiceScoreData(cS,AreaMatchInds,:) = {cA_ChoiceScoresData,cA_BT2ChoiceScore,cA_dsqrANDperf,cA_BTscore}; 
             AreaWise_ChoiceScoreDiffData{cS,AreaMatchInds} = [NRevTr_choiceScoreDiff,RevTr_choiceScoreDiff,...
                 cA_BT2ChoiceScore([1,3])];
+            AreaWise_dsqrSummaryData(cS,AreaMatchInds,:) = {cA_RevTrDsqrAndPerf,cA_NonRevTrDsqrAndPerf,cA_BaseDataDsqr};
         end
     end
 end
 
 %%
+AreaWise_RevTrDataMtx = AreaWise_dsqrSummaryData(:,:,1);
+AreaWise_NonRevTrDataMtx = AreaWise_dsqrSummaryData(:,:,2);
+AreaWise_AllTrDataMtx = AreaWise_dsqrSummaryData(:,:,3);
 
-
-
-
-
-
-
+ColTypeStrsRev = {'BS_RevTrdsqr','RevTrdsqr','BS_RevTrChoicePerf','RevTrChoicePerf','RevTrdsqrRatio'};
+ColTypeStrsNRev = {'BS_NRevTrdsqr','NRevTrdsqr','BS_NRevTrChoicePerf','NRevTrChoicePerf','NRevTrdsqrRatio'};
+BaseColStrAllTr = {'BaseDataChoiceScore','BaseDataChoicePerf','ChoiceDecisionBound','ChoiceANDBTVecAngle'};
+RevTrdSqrANDperf = cell(NumAllTargetAreas,1);
+NRevTrdSqrANDperf = cell(NumAllTargetAreas,1);
+BaseData_AllTrDatas = cell(NumAllTargetAreas,1);
+for cA = 1 : NumAllTargetAreas
+    cA_data_RevTr = cat(1,AreaWise_RevTrDataMtx{:,cA});
+    if ~isempty(cA_data_RevTr)
+        cA_sessNum = size(cA_data_RevTr,1); 
+        cA_data_NRevTr = cat(1,AreaWise_NonRevTrDataMtx{:,cA});
+        BaseData_AllTrDatas{cA,1} = cat(1,AreaWise_AllTrDataMtx{:,cA});
+        
+        RevTrdSqrANDperf{cA,1} = [cA_data_RevTr(:,[1,3,2,4]),cA_data_RevTr(:,3)./cA_data_RevTr(:,1)];
+        NRevTrdSqrANDperf{cA,1} = [cA_data_NRevTr(:,[1,3,2,4]),cA_data_NRevTr(:,3)./cA_data_NRevTr(:,1)];
+        
+    end
+end
 % cclr
 % 
 % AllSessFolderPathfile = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';

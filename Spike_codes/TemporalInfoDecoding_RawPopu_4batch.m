@@ -1,5 +1,5 @@
 
-clearvars SessAreaIndexStrc ProbNPSess AreainfosAll
+clearvars SessAreaIndexStrc AreaTypeDecTrainsets  AreainfosAll
 
 % load('Chnlocation.mat');
 
@@ -8,7 +8,7 @@ clearvars SessAreaIndexStrc ProbNPSess AreainfosAll
 %          && isempty(fieldnames(SessAreaIndexStrc.ACA))
 %     return;
 % end
-load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
+% load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 4],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
@@ -65,7 +65,11 @@ ActionInds = double(behavResults.Action_choice(:));
 NMTrInds = ActionInds ~= 2;
 ActTrs = ActionInds(NMTrInds);
 
-AreainfosAll = cell(Numfieldnames,2,2);
+ChoiceRespData = mean(NewBinnedDatas(NMTrInds,:,OutDataStrc.TriggerStartBin+(1:15)),3);
+BaselineData = mean(NewBinnedDatas(NMTrInds,:,1:(OutDataStrc.TriggerStartBin-1)),3);
+
+AreainfosAll = cell(Numfieldnames,2);
+AreaTypeDecTrainsets = cell(Numfieldnames,2,4);
 AllTrInds = {double(behavResults.Action_choice(:)),double(behavResults.BlockType(:))};
 for cType = 1 : 2
     TrTypesAll = AllTrInds{cType}; % Action_choice / BlockType
@@ -77,123 +81,50 @@ for cType = 1 : 2
         cAUnitInds = NewSessAreaStrc.SessAreaIndexStrc.(cUsedAreas).MatchedUnitInds;
         
         cAUnits = ExistField_ClusIDs{cArea,2};
-        MaxROINum = length(cAUnits);
-        MaxPlsDim = min(30,MaxROINum);
-        Repeat = 100;
         
-        FrameBin_infos = zeros(Repeat,2,NumFrameBins);
-        FrameBin_Accuracy = zeros(Repeat,2,NumFrameBins);
+        if cType == 1
+            CaledRespData = ChoiceRespData;
+        elseif cType == 2
+            CaledRespData = BaselineData;
+        end
+        
+        Repeat = 200;
+        TypeRepeatDatas = cell(Repeat,4);
+        TrainBaseAll = false(nTrs,1);
+        for cR = 1 : Repeat
+            cc = cvpartition(nTrs,'kFold',2);
+            FI_training_Inds = TrainBaseAll;
+            FI_training_Inds(cc.test(1)) = true;
+
+            Final_test_Inds = TrainBaseAll;
+            Final_test_Inds(cc.test(2)) = true;
+            % calculate type specific kernal
+            
+            [DisScore,MdPerfs,SampleScore,beta] = LDAclassifierFun(CaledRespData(:,cAUnits), ...
+                 TrTypes, {FI_training_Inds,Final_test_Inds});
+            TypeRepeatDatas(cR,:) = {DisScore,MdPerfs,SampleScore{3},beta'};
+        end
+        TypeDsqr_Mtx = cat(1,TypeRepeatDatas{:,1});
+        TypeDsqr_Avg = mean(TypeDsqr_Mtx);
+        TypePref_Mtx = cat(1,TypeRepeatDatas{:,2});
+        TypePref_Avg = mean(TypePref_Mtx);
+        TypeBoundScore = mean(cat(1,TypeRepeatDatas{:,3}));
+        Type_beta_mtx = cat(1,TypeRepeatDatas{:,4});
+        Type_beta_Avg = (mean(Type_beta_mtx))';
+        
+        AreaTypeDecTrainsets(cArea,cType,:) = {TypeDsqr_Avg,TypePref_Avg,TypeBoundScore,Type_beta_Avg};
+        
+        FrameBin_infos = zeros(2,NumFrameBins);
         for cframe = 1 : NumFrameBins
-%             RespDataUsedMtx = NewBinnedDatas(NMTrInds,cAUnits,OutDataStrc.TriggerStartBin+(1:15));
-%             RespDataUsedMtx = mean(RespDataUsedMtx,3);
             RespDataUsedMtx = NewBinnedDatas(NMTrInds,cAUnits,cframe);
             
-
-            % [Xloadings,Yloadings,Xscores,Yscores,betaPLS10,PLSPctVar] = plsregress(...
-            % 	X,y,10);
-            
-            NumCol_infos = zeros(Repeat,2);
-            SVMLossAll = zeros(Repeat,2);
-            TrainBaseAll = false(nTrs,1);
-            for cR = 1 : Repeat
-                %     TrainInds = randsample(nTrs,round(nTrs/2));
-                cc = cvpartition(nTrs,'kFold',2);
-
-                FI_training_Inds = TrainBaseAll;
-                FI_training_Inds(cc.test(1)) = true;
-
-                Final_test_Inds = TrainBaseAll;
-                Final_test_Inds(cc.test(2)) = true;
-
-                [DisScore,MdPerfs,~,~] = LDAclassifierFun(RespDataUsedMtx, TrTypes, {FI_training_Inds,Final_test_Inds});
-                NumCol_infos(cR,:) = DisScore;
-                SVMLossAll(cR,:) = MdPerfs;
-            end
-            FrameBin_infos(:,:,cframe) = NumCol_infos;
-            FrameBin_Accuracy(:,:,cframe) = SVMLossAll;
+            [cType_dsqr,cType_perfs,~] = LDAclassifierFun_Score(RespDataUsedMtx, TrTypes, Type_beta_Avg, TypeBoundScore);
+            FrameBin_infos(:,cframe) = [cType_dsqr,cType_perfs];
         end
-        AreainfosAll(cArea,cType,:) = {FrameBin_infos, FrameBin_Accuracy};
+        AreainfosAll(cArea,cType) = {FrameBin_infos};
     end
 end
 %%
 save(fullfile(fullsavePath,'LDAinfo_temporalinfo_Data.mat'), 'AreainfosAll', 'AllTrInds', ...
-    'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers', '-v7.3');
+    'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers','OutDataStrc', 'AreaTypeDecTrainsets','-v7.3');
 
-
-% ################################################################################################
-% cclr
-% AnmSess_sourcepath = 'F:\b107a08_ksoutput';
-%
-% xpath = genpath(AnmSess_sourcepath);
-% nameSplit = (strsplit(xpath,';'))';
-%
-% if isempty(nameSplit{end})
-%     nameSplit(end) = [];
-% end
-% % DirLength = length(nameSplit);
-% % PossibleInds = cellfun(@(x) ~isempty(dir(fullfile(x,'*imec*.ap.bin'))),nameSplit);
-% % PossDataPath = nameSplit(PossibleInds);
-% sortingcode_string = 'ks2_5';
-% % Find processed folders
-% ProcessedFoldInds = cellfun(@(x) exist(fullfile(x,sortingcode_string,'NPClassHandleSaved.mat'),'file') && ...
-%    exist(fullfile(x,sortingcode_string,'SessAreaIndexData.mat'),'file') ,nameSplit);
-% NPsessionfolders = nameSplit((ProcessedFoldInds>0));
-% NumprocessedNPSess = length(NPsessionfolders);
-% if NumprocessedNPSess < 1
-%     warning('No valid NP session was found in current path.');
-% end
-%
-% %%
-%
-% for cfff = 1 : NumprocessedNPSess
-%     ksfolder = fullfile(NPsessionfolders{cfff},sortingcode_string);
-%     baselineSpikePredBlocktypes_4batch;
-% end
-
-% ############################################################################
-
-% % batched through all used sessions
-% cclr
-%
-% % AllSessFolderPathfile = 'K\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-% sortingcode_string = 'ks2_5';
-%
-% SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-%         'Sheet',1);
-% SessionFolders = SessionFoldersC(2:end);
-% NumprocessedNPSess = length(SessionFolders);
-%
-%
-% %%
-% for cfff = 1 : NumprocessedNPSess
-%
-%     ksfolder = fullfile(SessionFolders{cfff},sortingcode_string);
-%     cSessFolder = ksfolder;
-% %     ksfolder = fullfile(strrep(SessionFolders{cfff},'F:','I:\ksOutput_backup'),sortingcode_string);
-%     fprintf('Processing session %d...\n', cfff);
-% % % %     OldFolderName = fullfile(cSessFolder,'BaselinePredofBlocktype');
-% % % %     if isfolder(OldFolderName)
-% % % % %         stats = rmdir(OldFolderName,'s');
-% % % %
-% % % %         stats = movefile(OldFolderName,fullfile(cSessFolder,'Old_BaselinePredofBT'),'f');
-% % % %         if ~stats
-% % % %             error('Unable to delete folder in Session %d.',cfff);
-% % % %         end
-% % % %     end
-%     OldFolderName = fullfile(cSessFolder,'UnitRespTypeCoef.mat');
-%     if exist(OldFolderName,'file')
-%         delete(OldFolderName);
-%
-% %         stats = movefile(OldFolderName,fullfile(cSessFolder,'Old_BaselinePredofBT'),'f');
-% %         if ~stats
-% %             error('Unable to delete folder in Session %d.',cfff);
-% %         end
-%     end
-%
-% %     baselineSpikePredBlocktypes_SVMProb;
-% %     BlockType_Choice_decodingScript;
-% %     baselineSpikePredBlocktypes_4batch;
-% %     BT_Choice_decodingScript_trialtypeWise;
-%     EventResp_avg_codes_tempErrorProcess;
-% end

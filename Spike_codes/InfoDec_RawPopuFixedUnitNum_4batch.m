@@ -1,18 +1,11 @@
 
-clearvars SessAreaIndexStrc ProbNPSess AreainfosAll InfoCodingStrc ChoiceInfos BTInfos
+% clearvars SessAreaIndexStrc ProbNPSess AreainfosAll InfoCodingStrc ChoiceInfos BTInfos
+clearvars  InfoCodingStrc AreainfosAll ChoiceInfos BTInfos 
+% load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 
-% load('Chnlocation.mat');
-
-% load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
-% if isempty(fieldnames(SessAreaIndexStrc.ACAv)) && isempty(fieldnames(SessAreaIndexStrc.ACAd))...
-%          && isempty(fieldnames(SessAreaIndexStrc.ACA))
-%     return;
-% end
-load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
-
-ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
-OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
-NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
+% ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
+% OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
+% NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 
 
 %% find target cluster inds and IDs
