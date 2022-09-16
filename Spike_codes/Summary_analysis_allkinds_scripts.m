@@ -778,12 +778,6 @@ BrainAreasStrCC = BrainAreasStrC(2:end);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
 BrainAreasStr = [BrainAreasStrCC(~EmptyInds);{'Others'}];
 
-FullBrainStrC = readcell(AllSessFolderPathfile,'Range','E:E',...
-        'Sheet',1);
-FullBrainStrCC = FullBrainStrC(2:end);
-% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
-% EmptyInds2 = cellfun(@(x) isempty(x) ||any(ismissing(x)),FullBrainStrCC);
-FullBrainStr = [FullBrainStrCC(~EmptyInds);{'Others'}];
 %%
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
@@ -795,7 +789,7 @@ SessionFolders = SessionFoldersRaw(~EmptyInds);
 NumUsedSess = length(SessionFolders);
 NumAllTargetAreas = length(BrainAreasStr);
 
-Areawise_unitSigAUC_peakLag = cell(NumUsedSess,NumAllTargetAreas);
+AreaWise_ChoiceScoreData = cell(NumUsedSess,NumAllTargetAreas);
 
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
@@ -823,16 +817,16 @@ for cS = 1 :  NumUsedSess
         
         AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
         
-        Areawise_unitSigAUC_peakLag(cS,AreaMatchInds) = AreaUnitPeaklag_Strc.SessAreaUnitlagDatas(cAreaInds,2); 
+        AreaWise_ChoiceScoreData(cS,AreaMatchInds) = AreaUnitPeaklag_Strc.SessAreaUnitlagDatas(cAreaInds,2); 
         
     end
 end
 
 %%
-IsEmptyAreaSess = cellfun(@(x) ~isempty(x), Areawise_unitSigAUC_peakLag);
+IsEmptyAreaSess = cellfun(@(x) ~isempty(x), AreaWise_ChoiceScoreData);
 [SessInds, AreaInds] = find(IsEmptyAreaSess);
 
-ExistSess_unitSigAUClags = Areawise_unitSigAUC_peakLag(IsEmptyAreaSess);
+ExistSess_unitSigAUClags = AreaWise_ChoiceScoreData(IsEmptyAreaSess);
 Area_AllsigUnitLags = cell(NumAllTargetAreas,2);
 IsMultiUnitExists = false(NumAllTargetAreas,1);
 for cA = 1 : NumAllTargetAreas
@@ -1856,6 +1850,78 @@ save(summaryDatapath8,'Area_RespMtxAll','Areawise_RespUnitEVars','Areawise_RespU
     'RespUnit_ColStr','BrainAreasStr','AreaSigUnit_TypeRespEV','-v7.3');
 
 %%
+%%
+% ###################################################################################################
+% Summary codes 9: summary of choice decoding score analysis
+%
+cclr
+%
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+
+BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
+        'Sheet',1);
+BrainAreasStrCC = BrainAreasStrC(2:end);
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
+BrainAreasStr = [BrainAreasStrCC(~EmptyInds)];
+
+%
+
+SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
+        'Sheet',1);
+SessionFoldersRaw = SessionFoldersC(2:end);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
+SessionFolders = SessionFoldersRaw(~EmptyInds);
+
+NumUsedSess = length(SessionFolders);
+NumAllTargetAreas = length(BrainAreasStr);
+%%
+AreaWise_ChoiceScoreData = cell(NumUsedSess,NumAllTargetAreas,2);
+AreaWise_ChoiceScoreDiffData = cell(NumUsedSess,NumAllTargetAreas);
+for cS = 1 :  NumUsedSess
+%     cSessPath = SessionFolders{cS}; %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    
+    ksfolder = fullfile(cSessPath,'ks2_5');
+    
+    cS_ChoiceScoreDatafile = fullfile(ksfolder,'ChoiceANDBT_LDAinfo_ana','LDAinfo_ChoiceScores.mat');
+    cS_ChoiceScoreData_Strc = load(cS_ChoiceScoreDatafile,'AreaProcessDatas','ExistField_ClusIDs',...
+        'NewAdd_ExistAreaNames','AreaUnitNumbers');
+    
+    
+    AreaNames = cS_ChoiceScoreData_Strc.NewAdd_ExistAreaNames;
+    NumAreas = length(AreaNames);
+    
+    for cAreaInds = 1 : NumAreas % including the 'Others' region at the end
+        cAreaStr = AreaNames{cAreaInds};
+        if ~isempty(cS_ChoiceScoreData_Strc.AreaProcessDatas{cAreaInds,1})
+            AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
+            cA_ChoiceScoresData = cS_ChoiceScoreData_Strc.AreaProcessDatas{cAreaInds,1};
+            cA_BT2ChoiceScore = cS_ChoiceScoreData_Strc.AreaProcessDatas{cAreaInds,2};
+            % ChoiceScore, difference between baselineSub. NRevTrs and
+            % RawResp NRevTrs
+            NRevTr_choiceScoreDiff = cA_ChoiceScoresData(1) - cA_ChoiceScoresData(5);
+            % ChoiceScore, difference between baselineSub. RevTrs and
+            % RawResp RevTrs
+            RevTr_choiceScoreDiff = [cA_ChoiceScoresData(3) - cA_ChoiceScoresData(7),...
+                cA_ChoiceScoresData(4) - cA_ChoiceScoresData(8)];
+            
+            AreaWise_ChoiceScoreData(cS,AreaMatchInds,:) = {cA_ChoiceScoresData,cA_BT2ChoiceScore}; 
+            AreaWise_ChoiceScoreDiffData{cS,AreaMatchInds} = [NRevTr_choiceScoreDiff,RevTr_choiceScoreDiff,...
+                cA_BT2ChoiceScore([1,3])];
+        end
+    end
+end
+
+%%
+
+
+
+
+
+
 
 % cclr
 % 

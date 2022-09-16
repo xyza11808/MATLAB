@@ -80,8 +80,9 @@ RevFreqs = BlockSectionInfo.BlockFreqTypes(logical(BlockSectionInfo.IsFreq_asRev
 RevFreqInds = (ismember(TrialFreqsAll,RevFreqs));
 NMRevFreqInds = RevFreqInds(NMTrInds);
 
-AreaDecodeDataCell = cell(Numfieldnames,4);
-for cArea = 1 : Numfieldnames
+AreaDecodeDataCell = cell(Numfieldnames,5);
+AreaProcessDatas = cell(Numfieldnames,4);
+for cArea = 1 : 1%Numfieldnames
 
     cUsedAreas = NewAdd_ExistAreaNames{cArea};
     cAUnits = ExistField_ClusIDs{cArea,2};
@@ -104,15 +105,10 @@ for cArea = 1 : Numfieldnames
     sampleScoreMtx = zeros(RepeatNums,8);
     BlockScoreMtx = zeros(RepeatNums,3);
     dSqrANDperfMtx = zeros(RepeatNums,5,2);
+    BaseBTLDAscore = zeros(RepeatNums,4);
     for cR = 1 : RepeatNums
         SampleInds = randsample(cAROINum,CommonUnitNums);
-        cc = cvpartition(size(BaseSubRespData,1),'kFold',2);
-
-        FI_training_Inds = TrainBaseAll;
-        FI_training_Inds(cc.test(1)) = true;
-
-        Final_test_Inds = TrainBaseAll;
-        Final_test_Inds(cc.test(2)) = true;
+        
         % start with low block training
 %         LowBoundChoices = NMActionChoices(LowBoundBlockInds);
         [DisScore,MdPerfs,SampleScores,beta] = LDAclassifierFun(BaseSubRespData(:,SampleInds), ...
@@ -153,52 +149,25 @@ for cArea = 1 : Numfieldnames
             LDAclassifierFun(BaselineData(:,SampleInds), NMBlockTypes,{~NMRevFreqInds,NMRevFreqInds});
         ChoiceScoresSum.Base_BT_dsqr = DisScore_BT;
         ChoiceScoresSum.Base_BT_perf = MdPerfs_BT;
-        ChoiceScoresSum.Base_SampleScore = SampleScores_BT;
+        ChoiceScoresSum.Base_SampleScoreAll = SampleScores_BT;
         ChoiceScoresSum.Choice_BT_Vec = {beta,beta_BT};
         
         RepeatData{cR} = ChoiceScoresSum;
         
         sampleScoreMtx(cR,:) = [ChoiceScoresSum.BS_NRevTr_score,ChoiceScoresSum.BS_RevTr_score,...
             ChoiceScoresSum.RespData_NRT_score,ChoiceScoresSum.RespData_RT_score];
-        BlockScoreMtx(cR,:) = [ChoiceScoresSum.Base_LHBound_score,VecAnglesFun(beta,beta_BT)];
+        BlockScoreMtx(cR,:) = [ChoiceScoresSum.Base_LHBound_score,SampleScores{3},VecAnglesFun(beta,beta_BT)];
         dSqrANDperfMtx(cR,:,1) = ChoiceScoresSum.All_dsqrs;
         dSqrANDperfMtx(cR,:,2) = ChoiceScoresSum.All_perfs;
+        BaseBTLDAscore(cR,:) = [DisScore_BT,MdPerfs_BT,SampleScores_BT{3}];
     end
     
-    AreaDecodeDataCell(cArea,:) = {RepeatData,sampleScoreMtx,BlockScoreMtx,dSqrANDperfMtx};
+    AreaDecodeDataCell(cArea,:) = {RepeatData,sampleScoreMtx,BlockScoreMtx,dSqrANDperfMtx,BaseBTLDAscore};
+    AreaProcessDatas(cArea,:) = {mean(sampleScoreMtx),mean(BlockScoreMtx),squeeze(mean(dSqrANDperfMtx)),mean(BaseBTLDAscore)};
 end
 
 
-%% performing some post processing
-if Numfieldnames == 1
-    ChoiceInfos = (squeeze(AreainfosAll(:,1,:)))';
-    BTInfos = (squeeze(AreainfosAll(:,2,:)))';
-else
-    ChoiceInfos = squeeze(AreainfosAll(:,1,:));
-    BTInfos = squeeze(AreainfosAll(:,2,:));
-end
-IsAreaCaled = ~cellfun(@isempty,ChoiceInfos(:,1));
-if sum(IsAreaCaled)
-    ChoiceInfoAvgs = cellfun(@mean,ChoiceInfos,'un',0);
-    ChoiceInfo_train = cellfun(@(x) x(1),ChoiceInfoAvgs(IsAreaCaled,:));
-    ChoiceInfo_test = cellfun(@(x) x(2),ChoiceInfoAvgs(IsAreaCaled,:));
-    
-    
-    BTInfoAvgs = cellfun(@mean,BTInfos,'un',0);
-    BTInfo_train = cellfun(@(x) x(1),BTInfoAvgs(IsAreaCaled,:));
-    BTInfo_test = cellfun(@(x) x(2),BTInfoAvgs(IsAreaCaled,:));
-
-    InfoCodingStrc = struct();
-    InfoCodingStrc.ExistField_ClusIDs_used = ExistField_ClusIDs(IsAreaCaled,:);
-    InfoCodingStrc.CalAreaInds = IsAreaCaled;
-    InfoCodingStrc.ChoiceInfo_train = ChoiceInfo_train;
-    InfoCodingStrc.ChoiceInfo_test = ChoiceInfo_test;
-    InfoCodingStrc.BTInfo_train = BTInfo_train;
-    InfoCodingStrc.BTInfo_test = BTInfo_test;
-else
-    InfoCodingStrc = [];
-end
 %%
-save(fullfile(fullsavePath,'LDAinfo_fixedSizePopuData.mat'), 'AreainfosAll', 'AllTrInds', ...
-    'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers', 'InfoCodingStrc', '-v7.3');
+save(fullfile(fullsavePath,'LDAinfo_ChoiceScores.mat'), 'AreaDecodeDataCell', ...
+    'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers', 'AreaProcessDatas','-v7.3');
 
