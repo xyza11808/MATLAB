@@ -106,7 +106,7 @@ C2_cov_test = cov(C2_data_test);
 Cov_test_Avg = (C1_cov_test + C2_cov_test)/2;
 
 % test data discrimination ability
-d_opt_sqr = (((C1_Avg_test - C2_Avg_test)/2) * beta).^2/(beta' * Cov_test_Avg * beta);
+d_opt_sqr = ((C1_Avg_test - C2_Avg_test) * beta).^2/(beta' * Cov_test_Avg * beta);
 
 % fprintf('TestData discrimination distance is %.3f.\n',d_opt_sqr);
 

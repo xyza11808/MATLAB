@@ -19,9 +19,38 @@ LowblockInds = NMBlockTypes == 0;
 LowblockTrOcts = NMFreq2Octs(LowblockInds);
 LowblockTrChoices = NMChoces(LowblockInds);
 
-UL = [0.5, 0.5, max(SessFreqOcts), 100];
-SP = [min(ChoiceProbs),1 - max(ChoiceProbs)-min(ChoiceProbs), mean(SessFreqOcts), 1];
-LM = [0, 0, min(SessFreqOcts), 0];
+LowChoiceProbs = zeros(NumFreqTypes,1);
+for cf = 1 : NumFreqTypes
+    LowChoiceProbs(cf) = mean(LowblockTrChoices(OctTypes(1) == LowblockTrOcts));
+end
+
+UL = [0.5, 0.5, max(OctTypes), 100];
+SP = [min(LowChoiceProbs),1 - max(LowChoiceProbs)-min(LowChoiceProbs), mean(OctTypes), 1];
+LM = [0, 0, min(OctTypes), 0];
 ParaBoundLim = ([UL;SP;LM]);
-fit_curveAll = FitPsycheCurveWH_nx(cBTrFreqOcts,cBTrChoiceNM,ParaBoundLim);
-CurveBounds = fit_curveAll.ffit.u;
+lowfit_curveAll = FitPsycheCurveWH_nx(LowblockTrOcts,LowblockTrChoices,ParaBoundLim);
+lowCurveBounds = lowfit_curveAll.ffit.u;
+
+% block 1 (high bound block) psychometric curves
+HighblockInds = NMBlockTypes == 1;
+HighblockTrOcts = NMFreq2Octs(HighblockInds);
+HighblockTrChoices = NMChoces(HighblockInds);
+
+HighChoiceProbs = zeros(NumFreqTypes,1);
+for cf = 1 : NumFreqTypes
+    HighChoiceProbs(cf) = mean(HighblockTrChoices(OctTypes(1) == HighblockTrOcts));
+end
+
+UL = [0.5, 0.5, max(OctTypes), 100];
+SP = [min(HighChoiceProbs),1 - max(HighChoiceProbs)-min(HighChoiceProbs), mean(OctTypes), 1];
+LM = [0, 0, min(OctTypes), 0];
+ParaBoundLim = ([UL;SP;LM]);
+Highfit_curveAll = FitPsycheCurveWH_nx(HighblockTrOcts,HighblockTrChoices,ParaBoundLim);
+HighCurveBounds = Highfit_curveAll.ffit.u;
+
+BlockpsyInfo.lowBound = lowCurveBounds;
+BlockpsyInfo.highBound = HighCurveBounds;
+BlockpsyInfo.lowfitmd = lowfit_curveAll;
+BlockpsyInfo.highfitmd = Highfit_curveAll;
+
+

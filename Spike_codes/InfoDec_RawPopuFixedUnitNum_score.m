@@ -62,6 +62,7 @@ if ~isfolder(fullsavePath)
 end
 %%
 CommonUnitNums = 15;
+BlockpsyInfo = behav2blockcurve(behavResults);
 
 ActionInds = double(behavResults.Action_choice(:));
 NMTrInds = ActionInds ~= 2;
@@ -82,7 +83,7 @@ NMRevFreqInds = RevFreqInds(NMTrInds);
 
 AreaDecodeDataCell = cell(Numfieldnames,5);
 AreaProcessDatas = cell(Numfieldnames,4);
-for cArea = 1 : 1%Numfieldnames
+for cArea = 1 : Numfieldnames
 
     cUsedAreas = NewAdd_ExistAreaNames{cArea};
     cAUnits = ExistField_ClusIDs{cArea,2};
@@ -103,9 +104,9 @@ for cArea = 1 : 1%Numfieldnames
     BaseSubRespData = RespDataUsedMtx - BaselineData;
     RepeatData = cell(RepeatNums,1);
     sampleScoreMtx = zeros(RepeatNums,8);
-    BlockScoreMtx = zeros(RepeatNums,3);
-    dSqrANDperfMtx = zeros(RepeatNums,5,2);
-    BaseBTLDAscore = zeros(RepeatNums,4);
+    BlockScoreMtx = zeros(RepeatNums,4);
+    dSqrANDperfMtx = zeros(RepeatNums,6,2);
+    BaseBTLDAscore = zeros(RepeatNums,5);
     for cR = 1 : RepeatNums
         SampleInds = randsample(cAROINum,CommonUnitNums);
         
@@ -119,6 +120,10 @@ for cArea = 1 : 1%Numfieldnames
         RevTrChoices = NMActionChoices(NMRevFreqInds);
         
         ClassBound = SampleScores{3};
+        % just used as a control of score calculation, compared with the
+        % second term in the DisScore and MdPerfs data
+        [BSRevTrChoiceD_sqr,BSRevTrChoiceAccu,~] = ...
+            LDAclassifierFun_Score(BaseSubRespData(NMRevFreqInds,SampleInds), NMActionChoices(NMRevFreqInds),beta,SampleScores{3});
         
         [RevTrChoiceD_sqr,RevTrChoiceAccu,RevTrChoiceScores] = ...
             LDAclassifierFun_Score(RespDataUsedMtx(NMRevFreqInds,SampleInds), NMActionChoices(NMRevFreqInds),beta,SampleScores{3});
@@ -141,8 +146,8 @@ for cArea = 1 : 1%Numfieldnames
         
         ChoiceScoresSum.Base_LHBound_score = [mean(TrBaseScores(NMBlockTypes == 0)),mean(TrBaseScores(NMBlockTypes == 1))];
         
-        ChoiceScoresSum.All_dsqrs = [DisScore,RevTrChoiceD_sqr,NRevTrChoiceD_sqr,TrBaseD_sqr];
-        ChoiceScoresSum.All_perfs = [MdPerfs,RevTrChoiceAccu,NRevTrChoiceAccu,TrBaseAccu];
+        ChoiceScoresSum.All_dsqrs = [DisScore,RevTrChoiceD_sqr,NRevTrChoiceD_sqr,TrBaseD_sqr,BSRevTrChoiceD_sqr]; % last term is a control for DisScore
+        ChoiceScoresSum.All_perfs = [MdPerfs,RevTrChoiceAccu,NRevTrChoiceAccu,TrBaseAccu,BSRevTrChoiceAccu];% last term is a control for MdPerfs
         
         % calculate block type decoding vector
         [DisScore_BT,MdPerfs_BT,SampleScores_BT,beta_BT] = ...
@@ -168,6 +173,9 @@ end
 
 
 %%
-save(fullfile(fullsavePath,'LDAinfo_ChoiceScores.mat'), 'AreaDecodeDataCell', ...
+save(fullfile(fullsavePath,'LDAinfo_ChoiceScores.mat'), 'AreaDecodeDataCell', 'BlockpsyInfo',...
     'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers', 'AreaProcessDatas','-v7.3');
 
+% figure;hold on
+% plot(BlockpsyInfo.lowfitmd.curve(:,1),BlockpsyInfo.lowfitmd.curve(:,2),'k');
+% plot(BlockpsyInfo.highfitmd.curve(:,1),BlockpsyInfo.highfitmd.curve(:,2),'r');
