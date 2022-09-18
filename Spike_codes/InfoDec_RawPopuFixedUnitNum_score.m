@@ -86,7 +86,7 @@ BlockSectionInfo = Bev2blockinfoFun(behavResults);
 RevFreqs = BlockSectionInfo.BlockFreqTypes(logical(BlockSectionInfo.IsFreq_asReverse));
 RevFreqInds = (ismember(TrialFreqsAll,RevFreqs));
 NMRevFreqInds = RevFreqInds(NMTrInds);
-
+%%
 AreaDecodeDataCell = cell(Numfieldnames,5);
 AreaProcessDatas = cell(Numfieldnames,4);
 for cArea = 1 : Numfieldnames
