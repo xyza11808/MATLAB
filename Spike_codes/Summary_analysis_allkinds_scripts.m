@@ -1217,8 +1217,8 @@ Areawise_RespUnitInds = cell(NumUsedSess,NumAllTargetAreas);
 IsColRespTypeExists = 0;
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
-%     cSessPath = strrep(SessionFolders{cS},'F:\','P:\'); % 'E:\NPCCGs\'
-    cSessPath = strrep(SessionFolders{cS},'F:','F:\ksOutput_backup'); %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
+%     cSessPath = strrep(SessionFolders{cS},'F:','F:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     try
@@ -1308,14 +1308,14 @@ AllAreaFracStr = FracTypeStrs([2,4,5]-1);
 % set(gca,'box','off');
 %%
 
-% allen_atlas_path = 'E:\AllenCCF';
-allen_atlas_path = 'E:\MatCode\AllentemplateData';
+allen_atlas_path = 'E:\AllenCCF';
+% allen_atlas_path = 'E:\MatCode\AllentemplateData';
 tv = readNPY([allen_atlas_path filesep 'template_volume_10um.npy']);
 av = readNPY([allen_atlas_path filesep 'annotation_volume_10um_by_index.npy']);
 st = loadStructureTree([allen_atlas_path filesep 'structure_tree_safe_2017.csv']);
 
-TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
-% TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+% TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
 
 BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
 BrainRegionIndex = BrainRegionStrc.BrainRegions;
