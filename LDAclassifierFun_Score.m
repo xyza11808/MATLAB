@@ -1,5 +1,8 @@
 function [D_sqr,PerfAccu,TrainScores] = ...
     LDAclassifierFun_Score(X, y, beta, BoundScore)
+if ~exist('BoundScore','var')
+    BoundScore = 0;
+end
 
 [Alluniqlabel,~,Alltruelabels] = unique(y);
 

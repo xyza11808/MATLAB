@@ -129,15 +129,15 @@ for cArea = 1 : Numfieldnames
         % just used as a control of score calculation, compared with the
         % second term in the DisScore and MdPerfs data
         [BSRevTrChoiceD_sqr,BSRevTrChoiceAccu,~] = ...
-            LDAclassifierFun_Score(BaseSubRespData(NMRevFreqInds,SampleInds), NMActionChoices(NMRevFreqInds),beta,SampleScores{3});
+            LDAclassifierFun_Score(BaseSubRespData(NMRevFreqInds,SampleInds), NMActionChoices(NMRevFreqInds),beta);
         
         [RevTrChoiceD_sqr,RevTrChoiceAccu,RevTrChoiceScores] = ...
-            LDAclassifierFun_Score(RespDataUsedMtx(NMRevFreqInds,SampleInds), NMActionChoices(NMRevFreqInds),beta,SampleScores{3});
+            LDAclassifierFun_Score(RespDataUsedMtx(NMRevFreqInds,SampleInds), NMActionChoices(NMRevFreqInds),beta);
         [NRevTrChoiceD_sqr,NRevTrChoiceAccu,NRevTrChoiceScores] = ...
-            LDAclassifierFun_Score(RespDataUsedMtx(~NMRevFreqInds,SampleInds), NMActionChoices(~NMRevFreqInds),beta,SampleScores{3});
+            LDAclassifierFun_Score(RespDataUsedMtx(~NMRevFreqInds,SampleInds), NMActionChoices(~NMRevFreqInds),beta);
         
         [TrBaseD_sqr,TrBaseAccu,TrBaseScores] = ...
-            LDAclassifierFun_Score(BaselineData(:,SampleInds), NMBlockTypes,beta,SampleScores{3});
+            LDAclassifierFun_Score(BaselineData(:,SampleInds), NMBlockTypes,beta);
         
         ChoiceScoresSum = struct();
         ChoiceScoresSum.BS_NRevTr_score = [mean(NRevTr_baseSubPointScore(NRevTrChoices == 0)),...

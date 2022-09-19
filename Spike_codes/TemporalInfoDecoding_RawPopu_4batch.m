@@ -8,7 +8,7 @@ clearvars SessAreaIndexStrc AreaTypeDecTrainsets  AreainfosAll
 %          && isempty(fieldnames(SessAreaIndexStrc.ACA))
 %     return;
 % end
-% load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
+load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 4],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
@@ -64,11 +64,13 @@ end
 ActionInds = double(behavResults.Action_choice(:));
 NMTrInds = ActionInds ~= 2;
 ActTrs = ActionInds(NMTrInds);
+NumNMTrs = sum(NMTrInds);
 
 ChoiceRespData = mean(NewBinnedDatas(NMTrInds,:,OutDataStrc.TriggerStartBin+(1:15)),3);
 BaselineData = mean(NewBinnedDatas(NMTrInds,:,1:(OutDataStrc.TriggerStartBin-1)),3);
 
 AreainfosAll = cell(Numfieldnames,2);
+ShufAreainfosAll = cell(Numfieldnames,2);
 AreaTypeDecTrainsets = cell(Numfieldnames,2,4);
 AllTrInds = {double(behavResults.Action_choice(:)),double(behavResults.BlockType(:))};
 for cType = 1 : 2
@@ -114,17 +116,27 @@ for cType = 1 : 2
         
         AreaTypeDecTrainsets(cArea,cType,:) = {TypeDsqr_Avg,TypePref_Avg,TypeBoundScore,Type_beta_Avg};
         
+        ShufRepeat = 1000;
         FrameBin_infos = zeros(2,NumFrameBins);
+        ShufFrameBin_infos = zeros(NumFrameBins,ShufRepeat,2);
         for cframe = 1 : NumFrameBins
             RespDataUsedMtx = NewBinnedDatas(NMTrInds,cAUnits,cframe);
             
-            [cType_dsqr,cType_perfs,~] = LDAclassifierFun_Score(RespDataUsedMtx, TrTypes, Type_beta_Avg, TypeBoundScore);
+            [cType_dsqr,cType_perfs,~] = LDAclassifierFun_Score(RespDataUsedMtx, TrTypes, Type_beta_Avg);
             FrameBin_infos(:,cframe) = [cType_dsqr,cType_perfs];
+            rng('shuffle'); %NumNMTrs
+%             cRshufData = zeros(ShufRepeat,2);
+            for ccR = 1 : ShufRepeat
+                [shuf_dsqr,shuf_perfs,~] = LDAclassifierFun_Score(RespDataUsedMtx, TrTypes(randperm(NumNMTrs)), Type_beta_Avg);
+                ShufFrameBin_infos(cframe,ccR,:) = [shuf_dsqr,shuf_perfs];
+            end
+            
         end
         AreainfosAll(cArea,cType) = {FrameBin_infos};
+        ShufAreainfosAll(cArea,cType) = {ShufFrameBin_infos};
     end
 end
 %%
 save(fullfile(fullsavePath,'LDAinfo_temporalinfo_Data.mat'), 'AreainfosAll', 'AllTrInds', ...
-    'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers','OutDataStrc', 'AreaTypeDecTrainsets','-v7.3');
+    'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers','OutDataStrc', 'AreaTypeDecTrainsets','ShufAreainfosAll','-v7.3');
 

@@ -1,5 +1,8 @@
-function [DisScore,LDA_Accuracy,TrainANDtestScores,beta] = ...
+function varargout = ...
     LDAclassifierFun(X, y, varargin)
+% default outputs: [DisScore,LDA_Accuracy,TrainANDtestScores,beta]
+% if output number is larger than 4, the fifth output is ShufScores
+
 % function used for LDA classifier analysis, return the decoding accuracy
 % and discrimination scores
 
@@ -26,6 +29,15 @@ if ~IsPartitionIndsGiven
     TrainInds(TrainIndex) = true;
     TestInds = ~TrainInds;
 end
+
+% check whether to calculate the shuffle threshold
+IsShufCal = 0;
+if nargin > 3
+    if ~isempty(varargin{2})
+        IsShufCal = varargin{2};
+    end
+end
+
 % DataMtx = rand(100,25);
 % TrainLabels = double(rand(100,1) > 0.5);
 % TestData = rand(24,25);
@@ -58,8 +70,8 @@ C2_Avg = mean(C2_rawData);
 
 C1_cov = cov(C1_rawData);
 C2_cov = cov(C2_rawData);
-
-MtxStableTerm = 1e-6; % served to stabilize matrix inversion
+%%
+MtxStableTerm = 1e-6; %1e-6; % served to stabilize matrix inversion
 pooled_cov = (C1_SampleNum*C1_cov + C2_SampleNum*C2_cov)/(C1_SampleNum + C2_SampleNum);
 pooled_cov = pooled_cov + eye(size(pooled_cov))*MtxStableTerm; 
 % pooled_cov = (C1_cov + C2_cov)/2;
@@ -68,12 +80,13 @@ beta = (pooled_cov)\((C1_Avg - C2_Avg))'; % hyperplane normal to beta is the cla
 
 % similar to number of standard distance, a value of 3 indicates the mean
 % differ by 3 standard deviations. the larger value, the smaller overlaps
-% D_sqr = beta' * ((C1_Avg - C2_Avg))'; % effectiveness of the discrimination, or the Mahalanobis distance between groups
-D_sqr = (beta' * ((C1_Avg - C2_Avg))')^2/(beta' * (C1_cov+C2_cov)/2 * beta)'; % another method from: https://www.nature.com/articles/s41586-022-04724-y#Sec8
+D_sqr = beta' * ((C1_Avg - C2_Avg))'; % effectiveness of the discrimination, or the Mahalanobis distance between groups
+% D_sqr = (beta' * ((C1_Avg - C2_Avg))')^2/(beta' * (C1_cov+C2_cov)/2 * beta)'; % another method from: https://www.nature.com/articles/s41586-022-04724-y#Sec8
 % fprintf('The discrimination distance is %.3f.\n',D_sqr);
-
+%%
 TrainScores = (DataMtx - (C1_Avg + C2_Avg)/2)*beta;  % training data score, sign indicates class label
-ClassBoundScore = log(C1_SampleNum/C2_SampleNum);
+% ClassBoundScore = log(C1_SampleNum/C2_SampleNum);
+ClassBoundScore = 0; % the real prior is 0, although in reality there could be different
 
 Trainc1_scoreInds = TrainScores > ClassBoundScore;
 TrainClassLabels = nan(numel(TrainLabels),1);
@@ -107,6 +120,7 @@ Cov_test_Avg = (C1_cov_test + C2_cov_test)/2;
 
 % test data discrimination ability
 d_opt_sqr = ((C1_Avg_test - C2_Avg_test) * beta).^2/(beta' * Cov_test_Avg * beta);
+% d_opt_sqr = (C1_Avg_test - C2_Avg_test) * beta;
 
 % fprintf('TestData discrimination distance is %.3f.\n',d_opt_sqr);
 
@@ -123,3 +137,23 @@ LDA_Accuracy = [TrainPerfAccu, PredAccuracy];
 
 TrainANDtestScores = {TrainScores,NewPredScore,ClassBoundScore,PredClassLabels};
 
+if IsShufCal
+   % calculate the shuffle threshold for further comparison
+   TestDataTrNum = size(TestData,1); %TestLabels
+   NumRepeat = 1000;
+   ShufScores = zeros(NumRepeat,2); % only used for test dataset comparison, not for trained score compare
+   for cR = 1 : NumRepeat
+        [shufD_sqr,ShufAccu,~] = ...
+            LDAclassifierFun_Score(TestData, TestLabels(randperm(TestDataTrNum)),beta);
+        ShufScores(cR,:) = [shufD_sqr,ShufAccu];
+   end    
+end
+
+if nargout == 4
+    varargout = {DisScore,LDA_Accuracy,TrainANDtestScores,beta};
+elseif nargout == 5
+    if ~IsShufCal
+        ShufScores = [];
+    end
+    varargout = {DisScore,LDA_Accuracy,TrainANDtestScores,beta,ShufScores};
+end

@@ -110,7 +110,7 @@ for cArea = 1 : Numfieldnames
     BaseSubRespData = RespDataUsedMtx - BaselineData;
     RepeatData = cell(RepeatNums,1);
     sampleScoreMtx = zeros(RepeatNums,9);
-    BlockScoreMtx = zeros(RepeatNums,4);
+    BlockScoreMtx = zeros(RepeatNums,6);
     dSqrANDperfMtx = zeros(RepeatNums,6,2);
     BaseBTLDAscore = zeros(RepeatNums,5);
     for cR = 1 : RepeatNums
@@ -118,7 +118,7 @@ for cArea = 1 : Numfieldnames
         NMRevTrNum = sum(NMRevFreqIndsRaw);
         NonRevTrNum = sum(~NMRevFreqIndsRaw);
         if NMRevTrNum < NonRevTrNum
-            NMRevFreqInds = NMRevFreqIndsRaw;
+            NMRevFreqInds = NMRevFreqIndsRaw; 
             NonRevTrIndex = find(~NMRevFreqIndsRaw);
             sampleInds = randsample(NonRevTrNum,  NonRevTrNum - NMRevTrNum);
             NonRevFreqInds = ~NMRevFreqIndsRaw;
@@ -138,19 +138,23 @@ for cArea = 1 : Numfieldnames
         RevTr_baseSubPointScore = SampleScores{2};
         RevTrChoices = NMActionChoices(NMRevFreqInds);
         
+        [DisScoreRawResp,MdPerfsRawResp,~,betaRawResp] = LDAclassifierFun(RespDataUsedMtx(:,SampleInds), ...
+            NMActionChoices, {NonRevFreqInds,NMRevFreqInds});
+        
+        
         ClassBound = SampleScores{3};
         % just used as a control of score calculation, compared with the
         % second term in the DisScore and MdPerfs data
         [BSRevTrChoiceD_sqr,BSRevTrChoiceAccu,~] = ...
-            LDAclassifierFun_Score(BaseSubRespData(NMRevFreqInds,SampleInds), NMActionChoices(NMRevFreqInds),beta,SampleScores{3});
+            LDAclassifierFun_Score(BaseSubRespData(NMRevFreqInds,SampleInds), NMActionChoices(NMRevFreqInds),beta);
         
         [RevTrChoiceD_sqr,RevTrChoiceAccu,RevTrChoiceScores] = ...
-            LDAclassifierFun_Score(RespDataUsedMtx(NMRevFreqInds,SampleInds), NMActionChoices(NMRevFreqInds),beta,SampleScores{3});
+            LDAclassifierFun_Score(RespDataUsedMtx(NMRevFreqInds,SampleInds), NMActionChoices(NMRevFreqInds),beta);
         [NRevTrChoiceD_sqr,NRevTrChoiceAccu,NRevTrChoiceScores] = ...
-            LDAclassifierFun_Score(RespDataUsedMtx(NonRevFreqInds,SampleInds), NMActionChoices(NonRevFreqInds),beta,SampleScores{3});
+            LDAclassifierFun_Score(RespDataUsedMtx(NonRevFreqInds,SampleInds), NMActionChoices(NonRevFreqInds),beta);
         
         [TrBaseD_sqr,TrBaseAccu,TrBaseScores] = ...
-            LDAclassifierFun_Score(BaselineData(:,SampleInds), NMBlockTypes,beta,SampleScores{3});
+            LDAclassifierFun_Score(BaselineData(:,SampleInds), NMBlockTypes,beta);
         
         ChoiceScoresSum = struct();
         ChoiceScoresSum.BS_NRevTr_score = [mean(NRevTr_baseSubPointScore(NRevTrChoices == 0)),...
@@ -165,8 +169,10 @@ for cArea = 1 : Numfieldnames
         
         ChoiceScoresSum.Base_LHBound_score = [mean(TrBaseScores(NMBlockTypes == 0)),mean(TrBaseScores(NMBlockTypes == 1))];
         
-        ChoiceScoresSum.All_dsqrs = [DisScore,RevTrChoiceD_sqr,NRevTrChoiceD_sqr,TrBaseD_sqr,BSRevTrChoiceD_sqr]; % last term is a control for DisScore
-        ChoiceScoresSum.All_perfs = [MdPerfs,RevTrChoiceAccu,NRevTrChoiceAccu,TrBaseAccu,BSRevTrChoiceAccu];% last term is a control for MdPerfs
+        ChoiceScoresSum.All_dsqrs = [DisScore,RevTrChoiceD_sqr,NRevTrChoiceD_sqr,TrBaseD_sqr,...
+            BSRevTrChoiceD_sqr,DisScoreRawResp]; 
+        ChoiceScoresSum.All_perfs = [MdPerfs,RevTrChoiceAccu,NRevTrChoiceAccu,TrBaseAccu,...
+            BSRevTrChoiceAccu,MdPerfsRawResp];
         
         % calculate block type decoding vector
         [DisScore_BT,MdPerfs_BT,SampleScores_BT,beta_BT] = ...
@@ -174,16 +180,17 @@ for cArea = 1 : Numfieldnames
         ChoiceScoresSum.Base_BT_dsqr = DisScore_BT;
         ChoiceScoresSum.Base_BT_perf = MdPerfs_BT;
         ChoiceScoresSum.Base_SampleScoreAll = SampleScores_BT;
-        ChoiceScoresSum.Choice_BT_Vec = {beta,beta_BT};
+        ChoiceScoresSum.Choice_BT_Vec = {beta,beta_BT,betaRawResp};
         
         RepeatData{cR} = ChoiceScoresSum;
         
         sampleScoreMtx(cR,:) = [ChoiceScoresSum.BS_NRevTr_score,ChoiceScoresSum.BS_RevTr_score,...
-            ChoiceScoresSum.RespData_NRT_score,ChoiceScoresSum.RespData_RT_score,SampleScores{3}];
-        BlockScoreMtx(cR,:) = [ChoiceScoresSum.Base_LHBound_score,SampleScores{3},VecAnglesFun(beta,beta_BT)];
+            ChoiceScoresSum.RespData_NRT_score,ChoiceScoresSum.RespData_RT_score];
+        BlockScoreMtx(cR,:) = [ChoiceScoresSum.Base_LHBound_score,VecAnglesFun(beta,beta_BT),...
+            VecAnglesFun(beta,betaRawResp),VecAnglesFun(betaRawResp,beta_BT)];
         dSqrANDperfMtx(cR,:,1) = ChoiceScoresSum.All_dsqrs;
         dSqrANDperfMtx(cR,:,2) = ChoiceScoresSum.All_perfs;
-        BaseBTLDAscore(cR,:) = [DisScore_BT,MdPerfs_BT,SampleScores_BT{3}];
+        BaseBTLDAscore(cR,:) = [DisScore_BT,MdPerfs_BT];
     end
     
     AreaDecodeDataCell(cArea,:) = {RepeatData,sampleScoreMtx,BlockScoreMtx,dSqrANDperfMtx,BaseBTLDAscore};
