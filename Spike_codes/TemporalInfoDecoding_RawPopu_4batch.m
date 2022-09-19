@@ -1,5 +1,5 @@
 
-clearvars SessAreaIndexStrc AreaTypeDecTrainsets  AreainfosAll
+clearvars SessAreaIndexStrc AreaTypeDecTrainsets  AreainfosAll Frame_BTType2CHoice
 
 % load('Chnlocation.mat');
 
@@ -68,8 +68,10 @@ NumNMTrs = sum(NMTrInds);
 
 ChoiceRespData = mean(NewBinnedDatas(NMTrInds,:,OutDataStrc.TriggerStartBin+(1:15)),3);
 BaselineData = mean(NewBinnedDatas(NMTrInds,:,1:(OutDataStrc.TriggerStartBin-1)),3);
+BaseSubData = ChoiceRespData - BaselineData;
 
 AreainfosAll = cell(Numfieldnames,2);
+Areainfos_BT2C = cell(Numfieldnames,1);
 ShufAreainfosAll = cell(Numfieldnames,2);
 AreaTypeDecTrainsets = cell(Numfieldnames,2,4);
 AllTrInds = {double(behavResults.Action_choice(:)),double(behavResults.BlockType(:))};
@@ -85,7 +87,7 @@ for cType = 1 : 2
         cAUnits = ExistField_ClusIDs{cArea,2};
         
         if cType == 1
-            CaledRespData = ChoiceRespData;
+            CaledRespData = BaseSubData; % ChoiceRespData;
         elseif cType == 2
             CaledRespData = BaselineData;
         end
@@ -118,12 +120,20 @@ for cType = 1 : 2
         
         ShufRepeat = 1000;
         FrameBin_infos = zeros(2,NumFrameBins);
+        Frame_BTType2CHoice = zeros(4,NumFrameBins);
         ShufFrameBin_infos = zeros(NumFrameBins,ShufRepeat,2);
         for cframe = 1 : NumFrameBins
             RespDataUsedMtx = NewBinnedDatas(NMTrInds,cAUnits,cframe);
             
             [cType_dsqr,cType_perfs,~] = LDAclassifierFun_Score(RespDataUsedMtx, TrTypes, Type_beta_Avg);
             FrameBin_infos(:,cframe) = [cType_dsqr,cType_perfs];
+            
+            if cType == 1
+                BTTypess = AllTrInds{2}(NMTrInds);
+                [BT2C_dsqr,BT2C_perfs,TypeScoresAll] = LDAclassifierFun_Score(RespDataUsedMtx, BTTypess, Type_beta_Avg);
+                Frame_BTType2CHoice(:,cframe) = [BT2C_dsqr,BT2C_perfs,mean(TypeScoresAll(BTTypess == 0)),...
+                    mean(TypeScoresAll(BTTypess == 1))];
+            end
             rng('shuffle'); %NumNMTrs
 %             cRshufData = zeros(ShufRepeat,2);
             for ccR = 1 : ShufRepeat
@@ -131,6 +141,9 @@ for cType = 1 : 2
                 ShufFrameBin_infos(cframe,ccR,:) = [shuf_dsqr,shuf_perfs];
             end
             
+        end
+        if cType == 1
+            Areainfos_BT2C(cArea,cType) = {Frame_BTType2CHoice};
         end
         AreainfosAll(cArea,cType) = {FrameBin_infos};
         ShufAreainfosAll(cArea,cType) = {ShufFrameBin_infos};

@@ -86,10 +86,11 @@ BlockSectionInfo = Bev2blockinfoFun(behavResults);
 RevFreqs = BlockSectionInfo.BlockFreqTypes(logical(BlockSectionInfo.IsFreq_asReverse));
 RevFreqInds = (ismember(TrialFreqsAll,RevFreqs));
 NMRevFreqIndsRaw = RevFreqInds(NMTrInds);
+NMTrFreqsAll = TrialFreqsAll(NMTrInds);
 
 AreaDecodeDataCell = cell(Numfieldnames,5);
 AreaProcessDatas = cell(Numfieldnames,4);
-for cArea = 1 : Numfieldnames
+for cArea = 3 : 3%Numfieldnames
 
     cUsedAreas = NewAdd_ExistAreaNames{cArea};
     cAUnits = ExistField_ClusIDs{cArea,2};
@@ -109,11 +110,11 @@ for cArea = 1 : Numfieldnames
     
     BaseSubRespData = RespDataUsedMtx - BaselineData;
     RepeatData = cell(RepeatNums,1);
-    sampleScoreMtx = zeros(RepeatNums,9);
-    BlockScoreMtx = zeros(RepeatNums,6);
-    dSqrANDperfMtx = zeros(RepeatNums,6,2);
-    BaseBTLDAscore = zeros(RepeatNums,5);
-    for cR = 1 : RepeatNums
+    sampleScoreMtx = zeros(RepeatNums,8);
+    BlockScoreMtx = zeros(RepeatNums,5);
+    dSqrANDperfMtx = zeros(RepeatNums,8,2);
+    BaseBTLDAscore = zeros(RepeatNums,4);
+    for cR = 2 : 2%RepeatNums
         SampleInds = true(cAROINum,1); %randsample
         NMRevTrNum = sum(NMRevFreqIndsRaw);
         NonRevTrNum = sum(~NMRevFreqIndsRaw);
