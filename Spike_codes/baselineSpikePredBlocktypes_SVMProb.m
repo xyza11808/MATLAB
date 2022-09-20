@@ -45,6 +45,20 @@ end
 mkdir(fullsavePath);
 TargetAreaUnits = false(size(SMBinDataMtxRaw,2),1);
 
+BlockSectionInfo = Bev2blockinfoFun(behavResults);
+RevFreqs = BlockSectionInfo.BlockFreqTypes(logical(BlockSectionInfo.IsFreq_asReverse));
+TriggerAlignBin = ProbNPSess.TriggerStartBin{ProbNPSess.CurrentSessInds};
+BaselineResp_Raw = mean(SMBinDataMtx(:,:,1:TriggerAlignBin-1),3);
+BlockTypesRaw = double(behavResults.BlockType(:));
+TrialFreqsRaw = double(behavResults.Stim_toneFreq(:));
+TrialAnmChoiceRaw = double(behavResults.Action_choice(:));
+NMTrialIndex = find(TrialAnmChoiceRaw ~= 2);
+
+BaselineResp_All = BaselineResp_Raw(NMTrialIndex,:);
+BlockTypesAll = BlockTypesRaw(NMTrialIndex);
+TrialFreqsAll = TrialFreqsRaw(NMTrialIndex);
+TrialAnmChoice = TrialAnmChoiceRaw(NMTrialIndex);
+    
 % SVMDecodingAccu_strs = {'SVMScores','mdperfs','RevfreqInds','PredBTANDRealChoice','CrossCoefValues'};
 % SVMDecodingAccuracy = cell(NumExistAreas,4);
 SVMSCoreProb_strs = {'SVMScores','mdperfs','RevfreqInds','PredBTANDRealChoice','CrossCoefValues','UnitNumber','SampledecodLags'};
@@ -73,15 +87,6 @@ for cArea = 1 : NumExistAreas
     end
     fprintf('        Processing Session Area %s...\n',cUsedAreas);
     %
-    TriggerAlignBin = ProbNPSess.TriggerStartBin{ProbNPSess.CurrentSessInds};
-    BaselineResp_All = mean(SMBinDataMtx(:,:,1:TriggerAlignBin-1),3);
-    
-    BlockSectionInfo = Bev2blockinfoFun(behavResults);
-    BlockTypesAll = double(behavResults.BlockType(:));
-    RevFreqs = BlockSectionInfo.BlockFreqTypes(logical(BlockSectionInfo.IsFreq_asReverse));
-    TrialFreqsAll = double(behavResults.Stim_toneFreq(:));
-    TrialAnmChoice = double(behavResults.Action_choice(:));
-    NMTrialIndex = find(TrialAnmChoice ~= 2);
     
     NumofFolds = 10;
     GrWithinIndsSet = seqpartitionFun(NMTrialIndex, NumofFolds); % default partition fraction
@@ -129,7 +134,7 @@ for cArea = 1 : NumExistAreas
     RevFreqInds = ismember(UsedTrFreqs,RevFreqs);
     
     RevFreqChoices = UsedTrChoices(RevFreqInds);
-    RevFreqRealInds = AllUsedTrInds(RevFreqInds);
+    RevFreqRealInds = NMTrialIndex(AllUsedTrInds(RevFreqInds));
     RevFreqPredProb = PredScore2Prob(RevFreqInds);
 %     RevFreqPredProb = AllUsedTrPredTypes(RevFreqInds);
     
@@ -178,10 +183,10 @@ for cArea = 1 : NumExistAreas
     if NumberOfUnits > 25
         nRepeats = 100;
         sampleNumber = round(NumberOfUnits*0.8);
-        SampleScore2Prob = randomUnitPrediction(BaselineResp_All(NMTrialIndex,:), BlockTypesAll(NMTrialIndex), sampleNumber, nRepeats);
+        SampleScore2Prob = randomUnitPrediction(BaselineResp_All, BlockTypesAll, sampleNumber, nRepeats);
         AreaPredInfo{cArea,2} = cell2mat(SampleScore2Prob(:,5)); % sample unit decoding info
-        NMTrialFreqs = TrialFreqsAll(NMTrialIndex);
-        NMTrialChoice = TrialAnmChoice(NMTrialIndex);
+        NMTrialFreqs = TrialFreqsAll;
+        NMTrialChoice = TrialAnmChoice;
 
         Re_RevFreqInds = ismember(NMTrialFreqs,RevFreqs);
         Re_RevFreqChoices = NMTrialChoice(Re_RevFreqInds);
