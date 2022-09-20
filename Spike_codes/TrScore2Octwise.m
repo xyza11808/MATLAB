@@ -1,7 +1,8 @@
-% function TrScore2Octwise(NMTrFreqsAll,TrainANDtestInds,NMBlockTypes,TrBaseScores,SampleScores)
-% 
-% NMRevFreqInds = TrainANDtestInds{1};
-% NonRevFreqInds = TrainANDtestInds{2};
+function OutPutFreqwiseScores = TrScore2Octwise(NMTrFreqsAll,TrainANDtestInds,...
+    NMBlockTypes,TrBaseScores,SampleScores,RawRespScores)
+
+NMRevFreqInds = TrainANDtestInds{1};
+NonRevFreqInds = TrainANDtestInds{2};
 
 RevTrFreqs_test = NMTrFreqsAll(NMRevFreqInds);
 NonRevTrfreqs_train = NMTrFreqsAll(NonRevFreqInds);
@@ -11,7 +12,7 @@ TrainANDtestFreqs = [NonRevTrfreqs_train;RevTrFreqs_test];
 TrainANDtestBTs = [NMBlockTypes(NonRevFreqInds);NMBlockTypes(NMRevFreqInds)];
 
 FreqTypes = unique(NMTrFreqsAll);
-FreqType2Octs = log2(FreqTypes/FreqTypes(1));
+% FreqType2Octs = log2(FreqTypes/FreqTypes(1));
 FreqTypeNum = length(FreqTypes);
 FreqTypeScores = zeros(FreqTypeNum,3,2);
 for cF = 1 : FreqTypeNum
@@ -25,11 +26,13 @@ for cF = 1 : FreqTypeNum
     
 end
 
-figure;
-errorbar(FreqType2Octs,-FreqTypeScores(:,1,1),FreqTypeScores(:,2,1),'g-o','linewidth',1.2)
-hold on;
-errorbar(FreqType2Octs,-FreqTypeScores(:,1,2),FreqTypeScores(:,2,2),'y-o','linewidth',1.2)
+% figure;
+% errorbar(FreqType2Octs,-FreqTypeScores(:,1,1),FreqTypeScores(:,2,1),'g-o','linewidth',1.2)
+% hold on;
+% errorbar(FreqType2Octs,-FreqTypeScores(:,1,2),FreqTypeScores(:,2,2),'y-o','linewidth',1.2)
 %
+NRevTrChoiceScores = RawRespScores{2};
+RevTrChoiceScores = RawRespScores{1};
 RawRespScores = [NRevTrChoiceScores;RevTrChoiceScores];
 FreqTypeNum = length(FreqTypes);
 FreqTypeScoresRaw = zeros(FreqTypeNum,3,2);
@@ -44,13 +47,13 @@ for cF = 1 : FreqTypeNum
     
 end
 
-errorbar(FreqType2Octs,-FreqTypeScoresRaw(:,1,1),FreqTypeScoresRaw(:,2,1),'b-o','linewidth',1.2)
-
-errorbar(FreqType2Octs,-FreqTypeScoresRaw(:,1,2),FreqTypeScoresRaw(:,2,2),'m-o','linewidth',1.2)
+% errorbar(FreqType2Octs,-FreqTypeScoresRaw(:,1,1),FreqTypeScoresRaw(:,2,1),'b-o','linewidth',1.2)
+% 
+% errorbar(FreqType2Octs,-FreqTypeScoresRaw(:,1,2),FreqTypeScoresRaw(:,2,2),'m-o','linewidth',1.2)
 
 %% baseline project to choice plot, frequency wise
 FreqTypes = unique(NMTrFreqsAll);
-FreqType2Octs = log2(FreqTypes/FreqTypes(1));
+% FreqType2Octs = log2(FreqTypes/FreqTypes(1));
 FreqTypeNum = length(FreqTypes);
 
 FreqTypeScores_BT2C = zeros(FreqTypeNum,3,2);
@@ -65,10 +68,10 @@ for cF = 1 : FreqTypeNum
     
 end
 
-figure;
-hold on
-errorbar(FreqType2Octs,-FreqTypeScores_BT2C(:,1,1),FreqTypeScores_BT2C(:,2,1),'g-o','linewidth',1.2)
-
-errorbar(FreqType2Octs,-FreqTypeScores_BT2C(:,1,2),FreqTypeScores_BT2C(:,2,2),'y-o','linewidth',1.2)
-
-
+% figure;
+% hold on
+% errorbar(FreqType2Octs,-FreqTypeScores_BT2C(:,1,1),FreqTypeScores_BT2C(:,2,1),'g-o','linewidth',1.2)
+% 
+% errorbar(FreqType2Octs,-FreqTypeScores_BT2C(:,1,2),FreqTypeScores_BT2C(:,2,2),'y-o','linewidth',1.2)
+% 
+OutPutFreqwiseScores = {FreqTypes,FreqTypeScores,FreqTypeScoresRaw,FreqTypeScores_BT2C};

@@ -87,10 +87,13 @@ RevFreqs = BlockSectionInfo.BlockFreqTypes(logical(BlockSectionInfo.IsFreq_asRev
 RevFreqInds = (ismember(TrialFreqsAll,RevFreqs));
 NMRevFreqIndsRaw = RevFreqInds(NMTrInds);
 NMTrFreqsAll = TrialFreqsAll(NMTrInds);
+FreqTypes = unique(NMTrFreqsAll);
+FreqTypeNum = length(FreqTypes);
 
 AreaDecodeDataCell = cell(Numfieldnames,5);
 AreaProcessDatas = cell(Numfieldnames,4);
-for cArea = 3 : 3%Numfieldnames
+AreaFreqwiseScores = cell(Numfieldnames,3);
+for cArea = 3 : 3 %Numfieldnames
 
     cUsedAreas = NewAdd_ExistAreaNames{cArea};
     cAUnits = ExistField_ClusIDs{cArea,2};
@@ -109,12 +112,18 @@ for cArea = 3 : 3%Numfieldnames
     cAROINum = size(RespDataUsedMtx,2);
     
     BaseSubRespData = RespDataUsedMtx - BaselineData;
+    
     RepeatData = cell(RepeatNums,1);
     sampleScoreMtx = zeros(RepeatNums,8);
     BlockScoreMtx = zeros(RepeatNums,5);
     dSqrANDperfMtx = zeros(RepeatNums,8,2);
     BaseBTLDAscore = zeros(RepeatNums,4);
-    for cR = 2 : 2%RepeatNums
+    
+    BaseSub_freqwiseScore = zeros(RepeatNums,FreqTypeNum,2);
+    RawResp_freqwiseScore = zeros(RepeatNums,FreqTypeNum,2);
+    BaseData_freqwiseScore = zeros(RepeatNums,FreqTypeNum,2);
+    
+    for cR = 1 : RepeatNums
         SampleInds = true(cAROINum,1); %randsample
         NMRevTrNum = sum(NMRevFreqIndsRaw);
         NonRevTrNum = sum(~NMRevFreqIndsRaw);
@@ -157,6 +166,12 @@ for cArea = 3 : 3%Numfieldnames
         [TrBaseD_sqr,TrBaseAccu,TrBaseScores] = ...
             LDAclassifierFun_Score(BaselineData(:,SampleInds), NMBlockTypes,beta);
         
+        OutPutFreqwiseScores = TrScore2Octwise(NMTrFreqsAll,{NMRevFreqInds,NonRevFreqInds},...
+            NMBlockTypes,TrBaseScores,SampleScores,{RevTrChoiceScores,NRevTrChoiceScores});
+        BaseSub_freqwiseScore(cR,:,:) = squeeze(OutPutFreqwiseScores{2}(:,1,:));
+        RawResp_freqwiseScore(cR,:,:) = squeeze(OutPutFreqwiseScores{3}(:,1,:));
+        BaseData_freqwiseScore(cR,:,:) = squeeze(OutPutFreqwiseScores{4}(:,1,:));
+        
         ChoiceScoresSum = struct();
         ChoiceScoresSum.BS_NRevTr_score = [mean(NRevTr_baseSubPointScore(NRevTrChoices == 0)),...
             mean(NRevTr_baseSubPointScore(NRevTrChoices == 1))];
@@ -196,12 +211,14 @@ for cArea = 3 : 3%Numfieldnames
     
     AreaDecodeDataCell(cArea,:) = {RepeatData,sampleScoreMtx,BlockScoreMtx,dSqrANDperfMtx,BaseBTLDAscore};
     AreaProcessDatas(cArea,:) = {mean(sampleScoreMtx),mean(BlockScoreMtx),squeeze(mean(dSqrANDperfMtx)),mean(BaseBTLDAscore)};
+    AreaFreqwiseScores(cArea,:) = {BaseSub_freqwiseScore,RawResp_freqwiseScore,BaseData_freqwiseScore};
 end
 
 
 %%
 save(fullfile(fullsavePath,'LDAinfo_ChoiceScoresAllUnit.mat'), 'AreaDecodeDataCell', 'BlockpsyInfo',...
-    'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers', 'AreaProcessDatas','OutDataStrc','-v7.3');
+    'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers', 'AreaProcessDatas',...
+    'OutDataStrc','AreaFreqwiseScores','-v7.3');
 
 % figure;hold on
 % plot(BlockpsyInfo.lowfitmd.curve(:,1),BlockpsyInfo.lowfitmd.curve(:,2),'k');
