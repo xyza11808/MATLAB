@@ -52,6 +52,7 @@ end
 %%
 AllExistAreaStrInds = find(~isnan(SelfBrainInds2Allen(:,1)));
 NumAHSAreas = length(AllExistAreaStrInds);
+MatchesStrs = cell(NumAHSAreas,1);
 AHSAreaUnitNums = zeros(NumAHSAreas,1);
 for cAA =  1 : NumAHSAreas
     cA_AHS_Str = NEBrainStrs{SelfBrainInds2Allen(AllExistAreaStrInds(cAA),1)};
@@ -60,6 +61,7 @@ for cAA =  1 : NumAHSAreas
         fprintf('Something wrong for area %s.\n',cA_AHS_Str);
     else
         AHSAreaUnitNums(cAA) = AreaNumsSum(FindMatches);
+        MatchesStrs{cAA} = cA_AHS_Str;
     end
 end
 

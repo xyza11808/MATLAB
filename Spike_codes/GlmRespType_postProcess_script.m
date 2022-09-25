@@ -5,7 +5,7 @@ clearvars ProbNPSess FullRegressorInfosCell
 load(fullfile(ksfolder,'NPClassHandleSaved.mat'),'behavResults');
 
 load(fullfile(ksfolder,'Regressor_ANA','RegressorDataAligned.mat'),'FullRegressorInfosCell',...
-    'NewExistField_ClusIDs','IsUnitNeedProcessed');
+    'NewExistField_ClusIDs','RegressorInfosCell');
 %% check whether extra unit calculation is existed
 % if sum(IsUnitNeedProcessed(:,1)) % check whether extra unit calculation is needed
 %     if exist(fullfile(ksfolder,'Regressor_ANA','ExtraUnitRegress.mat'),'file')
@@ -99,28 +99,35 @@ elseif BlockSectionInfo.NumBlocks == 2
     BTEVAlls(IndexBTUnit) = UsedIndexBTEVs;
     
 end
-    
-ResiMD_EV_Stim = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,1,3))),NMUnitRegInfos(:,1));
+
+ResiMD_EV_Stim = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,1,3))),RegressorInfosCell(:,1));
 StimRespUnit = ResiMD_EV_Stim >= 0.02;
 
-ResiMD_EV_ChoiceL = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,2,3))),NMUnitRegInfos(:,1));
-ResiMD_EV_ChoiceR = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,3,3))),NMUnitRegInfos(:,1));
-% ChoiceRespUnit = AloneMD_EV_ChoiceL >= 0.02 | AloneMD_EV_ChoiceR >= 0.02;
+ResiMD_EV_ChoiceL = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,2,3))),RegressorInfosCell(:,1));
+ResiMD_EV_ChoiceR = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,3,3))),RegressorInfosCell(:,1));
+
+
+% ResiMD_EV_Stim = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,1,3))),NMUnitRegInfos(:,1));
+% StimRespUnit = ResiMD_EV_Stim >= 0.02;
+% 
+% ResiMD_EV_ChoiceL = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,2,3))),NMUnitRegInfos(:,1));
+% ResiMD_EV_ChoiceR = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,3,3))),NMUnitRegInfos(:,1));
+% % ChoiceRespUnit = AloneMD_EV_ChoiceL >= 0.02 | AloneMD_EV_ChoiceR >= 0.02;
 
 
 IsUnitGLMResp = false(AllWithinAreaUnitNums,5);
 IsUnitGLMResp(NMFullMDInds(BInaryBTUnit), 1) = true; % binary BT
 IsUnitGLMResp(NMFullMDInds(IndexBTUnit), 2) = true; % ramping BT, Or pure ramping
-IsUnitGLMResp(NMFullMDInds(StimRespUnit), 3) = true; % Stim selective
-IsUnitGLMResp(NMFullMDInds(ResiMD_EV_ChoiceL >= 0.02), 4) = true; % Left choice selective
-IsUnitGLMResp(NMFullMDInds(ResiMD_EV_ChoiceR >= 0.02), 5) = true; % right selective
+IsUnitGLMResp(StimRespUnit, 3) = true; % Stim selective
+IsUnitGLMResp(ResiMD_EV_ChoiceL >= 0.02, 4) = true; % Left choice selective
+IsUnitGLMResp(ResiMD_EV_ChoiceR >= 0.02, 5) = true; % right selective
 
 GLMRespUnitEVs = zeros(AllWithinAreaUnitNums,4);
 GLMRespUnitEVs(NMFullMDInds,1) = BTEVAlls;
-GLMRespUnitEVs(NMFullMDInds,2) = ResiMD_EV_Stim;
+GLMRespUnitEVs(:,2) = ResiMD_EV_Stim;
 
-GLMRespUnitEVs(NMFullMDInds,3) = ResiMD_EV_ChoiceL;
-GLMRespUnitEVs(NMFullMDInds,4) = ResiMD_EV_ChoiceR;
+GLMRespUnitEVs(:,3) = ResiMD_EV_ChoiceL;
+GLMRespUnitEVs(:,4) = ResiMD_EV_ChoiceR;
 
 ColRespTypeStr = {'BinaryBT','Ramping','Stimulus','ChoiceL','ChoiceR'};
 

@@ -1,5 +1,9 @@
-function BlockpsyInfo = behav2blockcurve(behavResults)
+function BlockpsyInfo = behav2blockcurve(behavResults,isplot)
 % function to calculate block wise psychometric curve
+
+if ~exist('isplot','Var')
+    isplot = 0;
+end
 TrFreqsAll = double(behavResults.Stim_toneFreq(:));
 TrBlocksAll = double(behavResults.BlockType(:));
 TrChoicesAll = double(behavResults.Action_choice(:));
@@ -21,7 +25,7 @@ LowblockTrChoices = NMChoces(LowblockInds);
 
 LowChoiceProbs = zeros(NumFreqTypes,1);
 for cf = 1 : NumFreqTypes
-    LowChoiceProbs(cf) = mean(LowblockTrChoices(OctTypes(1) == LowblockTrOcts));
+    LowChoiceProbs(cf) = mean(LowblockTrChoices(OctTypes(cf) == LowblockTrOcts));
 end
 
 UL = [0.5, 0.5, max(OctTypes), 100];
@@ -38,7 +42,7 @@ HighblockTrChoices = NMChoces(HighblockInds);
 
 HighChoiceProbs = zeros(NumFreqTypes,1);
 for cf = 1 : NumFreqTypes
-    HighChoiceProbs(cf) = mean(HighblockTrChoices(OctTypes(1) == HighblockTrOcts));
+    HighChoiceProbs(cf) = mean(HighblockTrChoices(OctTypes(cf) == HighblockTrOcts));
 end
 
 UL = [0.5, 0.5, max(OctTypes), 100];
@@ -52,5 +56,19 @@ BlockpsyInfo.lowBound = lowCurveBounds;
 BlockpsyInfo.highBound = HighCurveBounds;
 BlockpsyInfo.lowfitmd = lowfit_curveAll;
 BlockpsyInfo.highfitmd = Highfit_curveAll;
+BlockpsyInfo.lowOctChoiceProb = LowChoiceProbs;
+BlockpsyInfo.highOctChoiceProb = HighChoiceProbs;
 
-
+if isplot
+    hf = figure;
+    hold on
+    plot(Highfit_curveAll.curve(:,1),Highfit_curveAll.curve(:,2),'Color',[0.8 0.5 0.2],'linewidth',1.2);
+    plot(OctTypes,HighChoiceProbs,'o','Color',[0.8 0.5 0.2],'linewidth',1);
+    plot(lowfit_curveAll.curve(:,1),lowfit_curveAll.curve(:,2),'Color',[0.2 0.8 0.2],'linewidth',1.2)
+    plot(OctTypes,LowChoiceProbs,'o','Color',[0.2 0.8 0.2],'linewidth',1);
+    set(gca,'xtick',OctTypes,'xticklabel',cellstr(num2str(FreqTypes(:)/1000,'%.2f')));
+    xlabel('Frequency (kHz)');
+    ylabel('Rightward Choice');
+    
+end
+    
