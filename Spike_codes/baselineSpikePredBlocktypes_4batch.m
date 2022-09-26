@@ -1,13 +1,17 @@
 clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_First BaselineResp_Last SMBinDataMtx
 
 % load('Chnlocation.mat');
-load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+try
+    load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
+catch
+    load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+end
 % if isempty(fieldnames(SessAreaIndexStrc.ACAv)) && isempty(fieldnames(SessAreaIndexStrc.ACAd))...
 %          && isempty(fieldnames(SessAreaIndexStrc.ACA))
 %     return;
 % end
 
-load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
+    load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
 % if isempty(ProbNPSess.ChannelAreaStrs)
 %     ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
 % end
@@ -26,7 +30,7 @@ if ~isempty(ProbNPSess.SurviveInds)
 end
 SMBinDataMtxRaw = SMBinDataMtx;
 % SMBinDataMtxRaw = SMBinDataMtx(:,:,:);
-
+%%
 Allfieldnames = fieldnames(SessAreaIndexStrc);
 ExistAreas_Indexes = find(SessAreaIndexStrc.UsedAbbreviations);
 ExistAreas_Names = Allfieldnames(SessAreaIndexStrc.UsedAbbreviations);

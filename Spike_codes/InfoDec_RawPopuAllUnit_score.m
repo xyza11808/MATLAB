@@ -87,13 +87,14 @@ RevFreqs = BlockSectionInfo.BlockFreqTypes(logical(BlockSectionInfo.IsFreq_asRev
 RevFreqInds = (ismember(TrialFreqsAll,RevFreqs));
 NMRevFreqIndsRaw = RevFreqInds(NMTrInds);
 NMTrFreqsAll = TrialFreqsAll(NMTrInds);
+
 FreqTypes = unique(NMTrFreqsAll);
 FreqTypeNum = length(FreqTypes);
 
 AreaDecodeDataCell = cell(Numfieldnames,5);
 AreaProcessDatas = cell(Numfieldnames,4);
 AreaFreqwiseScores = cell(Numfieldnames,3);
-for cArea = 3 : 3 %Numfieldnames
+for cArea = 1 : Numfieldnames
 
     cUsedAreas = NewAdd_ExistAreaNames{cArea};
     cAUnits = ExistField_ClusIDs{cArea,2};
@@ -218,7 +219,7 @@ end
 %%
 save(fullfile(fullsavePath,'LDAinfo_ChoiceScoresAllUnit.mat'), 'AreaDecodeDataCell', 'BlockpsyInfo',...
     'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers', 'AreaProcessDatas',...
-    'OutDataStrc','AreaFreqwiseScores','-v7.3');
+    'OutDataStrc','AreaFreqwiseScores','FreqTypes','-v7.3');
 
 % figure;hold on
 % plot(BlockpsyInfo.lowfitmd.curve(:,1),BlockpsyInfo.lowfitmd.curve(:,2),'k');

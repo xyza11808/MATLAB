@@ -1186,8 +1186,8 @@ save(datasaveName5,'AllArea_anovaEVdatas','Areawise_unitAnovaSigNum',...
 %% summary analysis 6, regressor analysis summary
 cclr
 
-AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -1217,8 +1217,8 @@ Areawise_RespUnitInds = cell(NumUsedSess,NumAllTargetAreas);
 IsColRespTypeExists = 0;
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
-    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
-%     cSessPath = strrep(SessionFolders{cS},'F:','F:\ksOutput_backup'); %(2:end-1)
+%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     try
@@ -1308,14 +1308,14 @@ AllAreaFracStr = FracTypeStrs([2,4,5]-1);
 % set(gca,'box','off');
 %%
 
-allen_atlas_path = 'E:\AllenCCF';
-% allen_atlas_path = 'E:\MatCode\AllentemplateData';
+% allen_atlas_path = 'E:\AllenCCF';
+allen_atlas_path = 'E:\MatCode\AllentemplateData';
 tv = readNPY([allen_atlas_path filesep 'template_volume_10um.npy']);
 av = readNPY([allen_atlas_path filesep 'annotation_volume_10um_by_index.npy']);
 st = loadStructureTree([allen_atlas_path filesep 'structure_tree_safe_2017.csv']);
 
-% TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
-TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+% TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
 
 BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
 BrainRegionIndex = BrainRegionStrc.BrainRegions;
@@ -1323,8 +1323,8 @@ BrainRegionIndex = BrainRegionStrc.BrainRegions;
 %%
 % plot sagital and topdown plots
 % UsedTypeInds = 3;
-% savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary';
-savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary';
+savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary';
+% savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary';
 for UsedTypeInds = 1 : length(AllAreaFracStr)
     UsedTypeFracStr = AllAreaFracStr{UsedTypeInds};
     UsedAreaFracs = AllAreaFracs(:,UsedTypeInds);
@@ -1381,8 +1381,8 @@ save(dataSavepath, 'AllAreaFracStr','NEBrainStrs','AllAreaFracs',...
     'BrainAreaFracs','FracTypeStrs','Areawise_RespUnitInds','BrainAreasStr','-v7.3');
 
 %% load allen score
-AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
-% AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
+% AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
+AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
 AllenRegionStrsCell = readcell(AllenHScoreFullPath,'Range','A:A',...
         'Sheet','hierarchy_all_regions');
 AllenRegionStrsUsed = AllenRegionStrsCell(2:end);
@@ -1877,9 +1877,11 @@ SessionFolders = SessionFoldersRaw(~EmptyInds);
 NumUsedSess = length(SessionFolders);
 NumAllTargetAreas = length(BrainAreasStr);
 %%
+FreqTypes = [4000,5040,6350,8000,10079,12699,16000];
 AreaWise_ChoiceScoreData = cell(NumUsedSess,NumAllTargetAreas,4);
 AreaWise_ChoiceScoreDiffData = cell(NumUsedSess,NumAllTargetAreas);
 AreaWise_dsqrSummaryData = cell(NumUsedSess,NumAllTargetAreas,3);
+AreaWise_FreqwiseScoreData = cell(NumUsedSess,NumAllTargetAreas,3,2);
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
 %     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
@@ -1887,15 +1889,15 @@ for cS = 1 :  NumUsedSess
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     
-    cS_ChoiceScoreDatafile = fullfile(ksfolder,'ChoiceANDBT_LDAinfo_ana','LDAinfo_ChoiceScores.mat');
+    cS_ChoiceScoreDatafile = fullfile(ksfolder,'ChoiceANDBT_LDAinfo_ana','LDAinfo_ChoiceScoresAllUnit.mat');
     cS_ChoiceScoreData_Strc = load(cS_ChoiceScoreDatafile,'AreaProcessDatas','ExistField_ClusIDs',...
-        'NewAdd_ExistAreaNames','AreaUnitNumbers');
+        'NewAdd_ExistAreaNames','AreaUnitNumbers','AreaFreqwiseScores');
     
     
     AreaNames = cS_ChoiceScoreData_Strc.NewAdd_ExistAreaNames;
     NumAreas = length(AreaNames);
     
-    for cAreaInds = 1 : NumAreas % including the 'Others' region at the end
+    for cAreaInds = 1 : NumAreas
         cAreaStr = AreaNames{cAreaInds};
         if ~isempty(cS_ChoiceScoreData_Strc.AreaProcessDatas{cAreaInds,1})
             AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
@@ -1919,6 +1921,28 @@ for cS = 1 :  NumUsedSess
             AreaWise_ChoiceScoreDiffData{cS,AreaMatchInds} = [NRevTr_choiceScoreDiff,RevTr_choiceScoreDiff,...
                 cA_BT2ChoiceScore([1,3])];
             AreaWise_dsqrSummaryData(cS,AreaMatchInds,:) = {cA_RevTrDsqrAndPerf,cA_NonRevTrDsqrAndPerf,cA_BaseDataDsqr};
+        end
+        if cS_ChoiceScoreData_Strc.AreaUnitNumbers(cAreaInds) > 10
+            % calculate the frequency wise datas
+            BaseSub_freqwiseScore = cS_ChoiceScoreData_Strc.AreaFreqwiseScores{cAreaInds,1};
+            BaseSub_freqwiseAvgScore = squeeze(mean(BaseSub_freqwiseScore,1,'omitnan'));
+            BaseSub_freqwiseSTDScore = squeeze(std(BaseSub_freqwiseScore,1,'omitnan'))/sqrt(size(BaseSub_freqwiseScore,1));
+%             if any(isnan(BaseSub_freqwiseAvgScore))
+%                 fprintf('NaN value for session %d Area %d.\n',cS,cAreaInds);
+%                 return;
+%             end
+            RawResp_freqwiseScore = cS_ChoiceScoreData_Strc.AreaFreqwiseScores{cAreaInds,2};
+            RawResp_freqwiseAvgScore = squeeze(mean(RawResp_freqwiseScore,1,'omitnan'));
+            RawResp_freqwiseSTDScore = squeeze(std(RawResp_freqwiseScore,1,'omitnan'))/sqrt(size(RawResp_freqwiseScore,1));
+%             if any(isnan(RawResp_freqwiseAvgScore))
+%                 fprintf('NaN value for session %d Area %d.\n',cS,cAreaInds);
+%             end
+            BaseData_freqwiseScore = cS_ChoiceScoreData_Strc.AreaFreqwiseScores{cAreaInds,3};
+            BaseData_freqwiseAvgScore = squeeze(mean(BaseData_freqwiseScore,1,'omitnan'));
+            BaseData_freqwiseSTDScore = squeeze(std(BaseData_freqwiseScore,1,'omitnan'))/sqrt(size(BaseData_freqwiseScore,1));
+
+            AreaWise_FreqwiseScoreData(cS,AreaMatchInds,:,1) = {BaseSub_freqwiseAvgScore,RawResp_freqwiseAvgScore,BaseData_freqwiseAvgScore};
+            AreaWise_FreqwiseScoreData(cS,AreaMatchInds,:,2) = {BaseSub_freqwiseSTDScore,RawResp_freqwiseSTDScore,BaseData_freqwiseSTDScore};
         end
     end
 end
@@ -1945,6 +1969,90 @@ for cA = 1 : NumAllTargetAreas
         NRevTrdSqrANDperf{cA,1} = [cA_data_NRevTr(:,[1,3,2,4]),cA_data_NRevTr(:,3)./cA_data_NRevTr(:,1)];
         
     end
+end
+
+%% freq-wise Choice scores
+SummarySavePath9 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary';
+% SummarySavePath9 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary';
+
+OctTypes = log2(FreqTypes/FreqTypes(1));
+AreaWise_freqwise_avgScore = AreaWise_FreqwiseScoreData(:,:,:,1);
+% BaseSub_freqwiseAvgScore,RawResp_freqwiseAvgScore,BaseData_freqwiseAvgScore
+for cA = 1 : NumAllTargetAreas
+%     cA = 104;
+    
+    cA_Basesub_Avgscore = AreaWise_freqwise_avgScore(:,cA,1);
+    cA_Basesub_scoreMtx = cat(3,cA_Basesub_Avgscore{:});
+    if isempty(cA_Basesub_scoreMtx)
+        continue;
+    end
+    
+    cA_RawResp_Avgscore = AreaWise_freqwise_avgScore(:,cA,2);
+    cA_BaseData_Avgscore = AreaWise_freqwise_avgScore(:,cA,3);
+    
+    cA_RawResp_scoreMtx = cat(3,cA_RawResp_Avgscore{:});
+    cA_BaseData_scoreMtx = cat(3,cA_BaseData_Avgscore{:});
+    
+    NumSess = size(cA_Basesub_scoreMtx,3);
+    cA_Basesub_ZS_score = zeros(size(cA_Basesub_scoreMtx));
+    cA_RawResp_ZS_score = zeros(size(cA_RawResp_scoreMtx));
+    cA_BaseData_ZS_score = zeros(size(cA_BaseData_scoreMtx));
+    for cS = 1 : NumSess
+        cA_Basesub_ZS_score(:,:,cS) = (cA_Basesub_scoreMtx(:,:,cS) - mean(cA_Basesub_scoreMtx(:,:,cS),'all'))/...
+            std(cA_Basesub_scoreMtx(:,:,cS),[],'all');
+        cA_RawResp_ZS_score(:,:,cS) = (cA_RawResp_scoreMtx(:,:,cS) - mean(cA_RawResp_scoreMtx(:,:,cS),'all'))/...
+            std(cA_RawResp_scoreMtx(:,:,cS),[],'all');
+        cA_BaseData_ZS_score(:,:,cS) = (cA_BaseData_scoreMtx(:,:,cS) - mean(cA_BaseData_scoreMtx(:,:,cS),'all'))/...
+            std(cA_BaseData_scoreMtx(:,:,cS),[],'all');
+    end
+    cA_Basesub_scoreAvg = -mean(cA_Basesub_scoreMtx,3);
+    cA_Basesub_ZSscoreAvg = -mean(cA_Basesub_ZS_score,3);
+    
+    cA_RawResp_scoreAvg = -mean(cA_RawResp_scoreMtx,3);
+    cA_RawResp_ZSscoreAvg = -mean(cA_RawResp_ZS_score,3);
+    
+    cA_BaseData_scoreAvg = -mean(cA_BaseData_scoreMtx,3);
+    cA_BaseData_ZSscoreAvg = -mean(cA_BaseData_ZS_score,3);
+    
+    hf9 = figure('position',[80 450 760 320]);
+    ax1 = subplot(121);
+    hold on
+    plot(OctTypes,cA_Basesub_scoreAvg(:,1),'b','linewidth',1);
+    plot(OctTypes,cA_Basesub_scoreAvg(:,2),'r','linewidth',1);
+    
+    plot(OctTypes,cA_RawResp_scoreAvg(:,1),'b','linewidth',1,'linestyle','--');
+    plot(OctTypes,cA_RawResp_scoreAvg(:,2),'r','linewidth',1,'linestyle','--');
+    
+    plot(OctTypes,cA_BaseData_scoreAvg(:,1),'g','linewidth',1);
+    plot(OctTypes,cA_BaseData_scoreAvg(:,2),'y','linewidth',1);
+    title(sprintf('NumUsed Sess = %d',NumSess))
+    line([OctTypes(1) OctTypes(end)],[0 0],'Color','k','linewidth',0.8,'linestyle','--');
+    ylabel('Averaged Score');
+    set(ax1,'xtick',OctTypes,'xticklabel',cellstr(num2str(FreqTypes(:)/1000,'%.2f')));
+    xlabel('Frequency (Hz)');
+    
+    ax2 = subplot(122);
+    hold on
+    plot(OctTypes,cA_Basesub_ZSscoreAvg(:,1),'b','linewidth',1);
+    plot(OctTypes,cA_Basesub_ZSscoreAvg(:,2),'r','linewidth',1);
+    
+    plot(OctTypes,cA_RawResp_ZSscoreAvg(:,1),'b','linewidth',1,'linestyle','--');
+    plot(OctTypes,cA_RawResp_ZSscoreAvg(:,2),'r','linewidth',1,'linestyle','--');
+    
+    plot(OctTypes,cA_BaseData_ZSscoreAvg(:,1),'g','linewidth',1);
+    plot(OctTypes,cA_BaseData_ZSscoreAvg(:,2),'y','linewidth',1);
+    title(sprintf('Area %s',BrainAreasStr{cA}));
+    line([OctTypes(1) OctTypes(end)],[0 0],'Color','k','linewidth',0.8,'linestyle','--');
+    ylabel('Averaged Zscored Score');
+    set(ax2,'xtick',OctTypes,'xticklabel',cellstr(num2str(FreqTypes(:)/1000,'%.2f')));
+    xlabel('Frequency (Hz)');
+    
+    filesavePath = fullfile(SummarySavePath9,sprintf('Area_%s Choice score plots',BrainAreasStr{cA}));
+    saveas(hf9, filesavePath);
+    print(hf9,filesavePath,'-dpng','-r400');
+    print(hf9,filesavePath,'-dpdf','-bestfit');
+    close(hf9);
+    
 end
 % cclr
 % 

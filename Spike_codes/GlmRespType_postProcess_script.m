@@ -6,6 +6,11 @@ load(fullfile(ksfolder,'NPClassHandleSaved.mat'),'behavResults');
 
 load(fullfile(ksfolder,'Regressor_ANA','RegressorDataAligned.mat'),'FullRegressorInfosCell',...
     'NewExistField_ClusIDs','RegressorInfosCell');
+StimRegInfo = load(fullfile(ksfolder,'Regressor_ANA','REgressorDataSaveStim.mat'),'FullRegressorInfosCell');
+if size(FullRegressorInfosCell,1) ~= size(StimRegInfo.FullRegressorInfosCell,1)
+    disp(ksfolder);
+    warning('The Stim regressor is not equeal sized as full regressor.\n');
+end
 %% check whether extra unit calculation is existed
 % if sum(IsUnitNeedProcessed(:,1)) % check whether extra unit calculation is needed
 %     if exist(fullfile(ksfolder,'Regressor_ANA','ExtraUnitRegress.mat'),'file')
@@ -78,7 +83,7 @@ elseif BlockSectionInfo.NumBlocks == 2
     BTUnitIndex = find(AllBTUnit); % real index of all index significant units
     
     AllBTUnit_DataInds = NMFullMDInds(AllBTUnit);
-    UnitCriterias = BinaryRespCheck(ProbNPSess,AllBTUnit_DataInds);
+    UnitCriterias = BinaryRespCheck(ProbNPSess,NewExistField_ClusIDs(AllBTUnit_DataInds,2),BlockSectionInfo.BlockTrScales(2,2));
     BTUnitBase = false(length(BTUnitIndex),1);
     
     BInaryBTUnit1 = BTUnitBase;
@@ -99,9 +104,14 @@ elseif BlockSectionInfo.NumBlocks == 2
     BTEVAlls(IndexBTUnit) = UsedIndexBTEVs;
     
 end
-
+%%
 ResiMD_EV_Stim = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,1,3))),RegressorInfosCell(:,1));
 StimRespUnit = ResiMD_EV_Stim >= 0.02;
+% StimRespUnitFull = ResiMD_EV_Stim >= 0.02;
+% % consider extra stimResp unit
+% ExtraUnitEVars = cellfun(@(x) mean(x.fullmodel_explain_var(:,1)),StimRegInfo.FullRegressorInfosCell(:,1));
+% ExtraStimRespUnit = ExtraUnitEVars >= 0.02;
+% StimRespUnit = StimRespUnitFull | ExtraStimRespUnit;
 
 ResiMD_EV_ChoiceL = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,2,3))),RegressorInfosCell(:,1));
 ResiMD_EV_ChoiceR = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,3,3))),RegressorInfosCell(:,1));

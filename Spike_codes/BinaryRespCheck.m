@@ -1,4 +1,4 @@
-function UnitCriterias = BinaryRespCheck(ProbNPSess,InDataUnitIndsAll)
+function UnitCriterias = BinaryRespCheck(ProbNPSess,InDataUnitIndsAll,MaxTrInds)
 % currently only works for two block sessions
 
 
@@ -10,6 +10,9 @@ if ~isempty(ProbNPSess.SurviveInds)
 end
 % SMBinDataMtxRaw = SMBinDataMtx;
 
+if ~exist('MaxTrInds','Var')
+    MaxTrInds = size(SMBinDataMtx,1);
+end
 
 % AllUnitBT_Evar = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,BTTypeInds,2))),RegressorInfosCell(:,1)); %alone model
 % BTInds = AllUnitBT_Evar > 0.02;
@@ -18,7 +21,7 @@ end
 % % BTPartEVsMtx = cat(3,BTPartEVs{:});
 % 
 % InDataUnitIndsAll = ExistField_ClusIDs(BTInds,2);
-BaseDataAll = squeeze(mean(SMBinDataMtx(:,InDataUnitIndsAll,1:ProbNPSess.TriggerStartBin{1}),3));
+BaseDataAll = squeeze(mean(SMBinDataMtx(1:MaxTrInds,InDataUnitIndsAll,1:ProbNPSess.TriggerStartBin{1}),3));
 
 %%
 % close
