@@ -1,7 +1,7 @@
 cclr
 
-AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
-% AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
+% AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
+AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
 AllenRegionStrsCell = readcell(AllenHScoreFullPath,'Range','A:A',...
         'Sheet','hierarchy_all_regions');
 AllenRegionStrsUsed = AllenRegionStrsCell(2:end);
@@ -35,8 +35,8 @@ end
 
 
 %%
-SelectiveAreaDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\RegAreawiseFrac.mat';
-% SelectiveAreaDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\RegAreawiseFrac.mat';
+% SelectiveAreaDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\RegAreawiseFrac.mat';
+SelectiveAreaDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\RegAreawiseFrac.mat';
 AreaSelectFracStrc = load(SelectiveAreaDatafile,'AllAreaFracs','NEBrainStrs');
 
 %%
@@ -104,8 +104,8 @@ set(lg,'position',lgPos + [0.05 0.04 0 0]);
 annotation('textbox',[0.15 0.55 0.1 0.4],'String',CorrStrs(:),'FitBoxToText','on','Color','k')
 
 %%
-% plotfigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\AHSScoreCorrplot\CC_TC_CT';
-plotfigSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\AHSScoreCorrplot\CC_TC_CT';
+plotfigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\AHSScoreCorrplot\CC_TC_CT';
+% plotfigSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\AHSScoreCorrplot\CC_TC_CT';
 
 if ~isfolder(plotfigSavePath)
     mkdir(plotfigSavePath);
@@ -118,8 +118,8 @@ print(h1f,savename1,'-dpdf','-bestfit');
 
 %% ##############################################################################################
 %%
-% SelectiveAreaDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\SigUnit_EVsummaryData.mat';
-SelectiveAreaDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\SigUnit_EVsummaryData.mat';
+SelectiveAreaDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\SigUnit_EVsummaryData.mat';
+% SelectiveAreaDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\SigUnit_EVsummaryData.mat';
 AreaSelectEVStrc = load(SelectiveAreaDatafile,'AreaSigUnit_TypeRespEV','BrainAreasStr','Area_RespMtxAll');
 
 %% Selective unit explained variance plot
@@ -202,7 +202,8 @@ set(gca,'xlim',[0.5 3.5],'xtick',1:3,'xticklabel',SortedTypeStr(:),'ylim',[0.02 
 ylabel('Explained variance');
 legend([hl1,hl2],{'Low Score','High Score'},'location','northwest','box','off','autoupdate','off');
 %%
-plotfigSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\AHSScoreCorrplot';
+% plotfigSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\AHSScoreCorrplot';
+plotfigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\AHSScoreCorrplot';
 savename2 = fullfile(plotfigSavePath,'AHSScore class EVs Areawise');
 saveas(h5f,savename2);
 print(h5f,savename2,'-dpng','-r300');
@@ -252,8 +253,8 @@ print(h2f,savename2,'-dpdf','-bestfit');
 %% ##############################################################################################
 %% All unit averaged explained variance plot 
 
-% SelectiveAreaDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\SigUnit_EVsummaryData.mat';
-SelectiveAreaDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\SigUnit_EVsummaryData.mat';
+SelectiveAreaDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\SigUnit_EVsummaryData.mat';
+% SelectiveAreaDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\SigUnit_EVsummaryData.mat';
 AreaSelectEVStrc2 = load(SelectiveAreaDatafile,'Area_RespMtxAll','BrainAreasStr');
 
 %% Selective unit explained variance plot

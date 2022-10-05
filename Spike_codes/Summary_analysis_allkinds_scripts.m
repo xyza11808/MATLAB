@@ -1889,7 +1889,7 @@ for cS = 1 :  NumUsedSess
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     
-    cS_ChoiceScoreDatafile = fullfile(ksfolder,'ChoiceANDBT_LDAinfo_ana','LDAinfo_ChoiceScoresAllUnit.mat');
+    cS_ChoiceScoreDatafile = fullfile(ksfolder,'ChoiceANDBT_LDAinfo_ana','LDAinfo_FreqwiseScoresAllUnit.mat');
     cS_ChoiceScoreData_Strc = load(cS_ChoiceScoreDatafile,'AreaProcessDatas','ExistField_ClusIDs',...
         'NewAdd_ExistAreaNames','AreaUnitNumbers','AreaFreqwiseScores');
     
@@ -1977,6 +1977,8 @@ SummarySavePath9 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\Choice
 
 OctTypes = log2(FreqTypes/FreqTypes(1));
 AreaWise_freqwise_avgScore = AreaWise_FreqwiseScoreData(:,:,:,1);
+AreaBoundCurveFits = cell(NumAllTargetAreas,3);
+AreaFitDataStrc = cell(NumAllTargetAreas,2);
 % BaseSub_freqwiseAvgScore,RawResp_freqwiseAvgScore,BaseData_freqwiseAvgScore
 for cA = 1 : NumAllTargetAreas
 %     cA = 104;
@@ -2005,6 +2007,14 @@ for cA = 1 : NumAllTargetAreas
         cA_BaseData_ZS_score(:,:,cS) = (cA_BaseData_scoreMtx(:,:,cS) - mean(cA_BaseData_scoreMtx(:,:,cS),'all'))/...
             std(cA_BaseData_scoreMtx(:,:,cS),[],'all');
     end
+    % calculate the fitted curve
+    if NumSess >= 3
+        BaseSubOutDataStrc = FreqScore2psyCurve(-cA_Basesub_ZS_score, OctTypes);
+        RawRespOutDataStrc = FreqScore2psyCurve(-cA_RawResp_ZS_score, OctTypes);
+        AreaBoundCurveFits(cA,:) = {BaseSubOutDataStrc, RawRespOutDataStrc,NumSess};
+        AreaFitDataStrc(cA,:) = {BaseSubOutDataStrc, RawRespOutDataStrc};
+    end
+    
     cA_Basesub_scoreAvg = -mean(cA_Basesub_scoreMtx,3);
     cA_Basesub_ZSscoreAvg = -mean(cA_Basesub_ZS_score,3);
     
@@ -2047,13 +2057,55 @@ for cA = 1 : NumAllTargetAreas
     set(ax2,'xtick',OctTypes,'xticklabel',cellstr(num2str(FreqTypes(:)/1000,'%.2f')));
     xlabel('Frequency (Hz)');
     
-    filesavePath = fullfile(SummarySavePath9,sprintf('Area_%s Choice score plots',BrainAreasStr{cA}));
+    filesavePath = fullfile(SummarySavePath9,sprintf('Area_%s freqwise choice score plots',BrainAreasStr{cA}));
     saveas(hf9, filesavePath);
     print(hf9,filesavePath,'-dpng','-r400');
     print(hf9,filesavePath,'-dpdf','-bestfit');
     close(hf9);
     
 end
+%%
+summaryDatapath9 = fullfile(SummarySavePath9,'SessFreqwiseScoreData.mat');
+save(summaryDatapath9,'AreaWise_FreqwiseScoreData','AreaBoundCurveFits','BrainAreasStr',...
+    'OctTypes','AreaFitDataStrc','-v7.3');
+
+%%
+IsEmptySess = cellfun(@isempty,AreaBoundCurveFits(:,1));
+UsedSessData = AreaBoundCurveFits(~IsEmptySess,:);
+
+BaseSub_dataBound = cellfun(@(x) x.BoundAll,UsedSessData(:,1),'un',0);
+BaseSub_BoundMtx = cat(1,BaseSub_dataBound{:});
+
+RawResp_dataBound = cellfun(@(x) x.BoundAll,UsedSessData(:,2),'un',0);
+RawResp_BoundMtx = cat(1,RawResp_dataBound{:});
+UsedSessNums = cat(1,UsedSessData{:,3});
+
+BaseSub_BoundDiff = BaseSub_BoundMtx(:,2) - BaseSub_BoundMtx(:,1);
+RawResp_BoundDiff = RawResp_BoundMtx(:,2) - RawResp_BoundMtx(:,1);
+
+BoundData = [BaseSub_BoundDiff, RawResp_BoundDiff];
+UsedSessInds = UsedSessNums > 5;
+[~,p] = ttest(BaseSub_BoundDiff(UsedSessInds), RawResp_BoundDiff(UsedSessInds));
+
+% sum(UsedSessNums > 5);
+UpperThresData = max(BoundData(UsedSessInds,:),[],'all')+0.1;
+
+h99f = figure('position',[100 100 330 280]);
+hold on
+plot([1,2],BoundData(UsedSessInds,:)','Color',[.7 .7 .7],'linewidth',1.2);
+plot([1,2],mean(BoundData(UsedSessInds,:)),'Color','k','linewidth',1.5);
+line([1,2],[UpperThresData UpperThresData],'Color','c','linewidth',1.5);
+text(1.5,UpperThresData+0.2,num2str(p,'p = %.4f'),'HorizontalAlignment','center');
+text(0.7,UpperThresData+0.4,num2str(sum(UsedSessInds),'N = %d'));
+set(gca,'xlim',[0.5 2.5],'xtick',1:2,'xticklabel',{'BaseSub','RawResp'},'ylim',[0 2]);
+ylabel(gca,'Boundary shiftment in octave');
+
+filesavePath99 = fullfile(SummarySavePath9,'BaseSubAndRawResp_boundShiftData');
+saveas(h99f, filesavePath99);
+print(h99f,filesavePath99,'-dpng','-r400');
+print(h99f,filesavePath99,'-dpdf','-bestfit');
+
+%%
 % cclr
 % 
 % AllSessFolderPathfile = 'H:\file_from_N\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths.xlsx';
