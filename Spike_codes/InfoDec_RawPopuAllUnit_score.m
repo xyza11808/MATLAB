@@ -56,6 +56,15 @@ if sum(USedAreas)
 end
 
 BlockTypesAll = double(behavResults.BlockType(:));
+%% Use this section to perform some extra data processing
+RegRawDataSavePath = fullfile(ksfolder,'Regressor_ANA');
+RegRawDatafilePath = fullfile(RegRawDataSavePath,'RegRespDataANDTrIndex.mat');
+
+[BinnedSPdatas,FinalUsedBinTrInds] = BinnedRespDataCalFun(ProbNPSess, NewSessAreaStrc,behavResults);
+
+save(RegRawDatafilePath,'BinnedSPdatas','FinalUsedBinTrInds','-v7.3');
+
+
 %%
 
 % if isfolder(fullsavePath)
@@ -131,7 +140,7 @@ for cArea = 1 : Numfieldnames
         if NMRevTrNum < NonRevTrNum
             NMRevFreqInds = NMRevFreqIndsRaw; 
             NonRevTrIndex = find(~NMRevFreqIndsRaw);
-            sampleInds = randsample(NonRevTrNum,  NonRevTrNum - NMRevTrNum);
+            sampleInds = randsample(NonRevTrNum, NonRevTrNum - NMRevTrNum);
             NonRevFreqInds = ~NMRevFreqIndsRaw;
             NonRevFreqInds(NonRevTrIndex(sampleInds)) = false;
         else
@@ -153,7 +162,7 @@ for cArea = 1 : Numfieldnames
             NMActionChoices, {NonRevFreqInds,NMRevFreqInds});
         
         
-        ClassBound = SampleScores{3};
+%         ClassBound = SampleScores{3};
         % just used as a control of score calculation, compared with the
         % second term in the DisScore and MdPerfs data
         [BSRevTrChoiceD_sqr,BSRevTrChoiceAccu,~] = ...
@@ -217,7 +226,7 @@ end
 
 
 %%
-save(fullfile(fullsavePath,'LDAinfo_ChoiceScoresAllUnit.mat'), 'AreaDecodeDataCell', 'BlockpsyInfo',...
+save(fullfile(fullsavePath,'LDAinfo_FreqwiseScoresAllUnit.mat'), 'AreaDecodeDataCell', 'BlockpsyInfo',...
     'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers', 'AreaProcessDatas',...
     'OutDataStrc','AreaFreqwiseScores','FreqTypes','-v7.3');
 
