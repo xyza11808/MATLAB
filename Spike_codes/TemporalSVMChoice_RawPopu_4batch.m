@@ -89,7 +89,7 @@ NonRevTr_C1Num = sum(NonRevTrChoices == 1);
 NonRevTrBaseSubData = BaseSubData(NonRevFreqIndsRaw,:);
 NMRevTrBaseSubData = BaseSubData(NMRevFreqIndsRaw,:);
 NonRevTrChoiceRespData = ChoiceRespData(NonRevFreqIndsRaw,:);
-NumRepeat = 200;
+NumRepeat = 40;
 AreaChoiceSVMaccu = zeros(Numfieldnames, NumRepeat, 3);
 FrameAccu = zeros(Numfieldnames, NumRepeat, NumFrameBins,2);
 FrameChoiceProb = zeros(Numfieldnames, NumRepeat, NumFrameBins,8);
@@ -170,6 +170,8 @@ for cArea = 1 : Numfieldnames
 end
 
 AreaChoiceSVM_Avg = squeeze(mean(AreaChoiceSVMaccu,2));
+AreaChoiceSVM_Thres = squeeze(prctile(AreaChoiceSVMaccu(:,:,3),95,2));
+
 RepeatAvgFrameAccu = squeeze(mean(FrameAccu,2));
 RepeatAvgFrameChoiceP = squeeze(mean(FrameChoiceProb,2));
 
@@ -177,27 +179,35 @@ RepeatAvgFrameChoiceP = squeeze(mean(FrameChoiceProb,2));
 %%
 save(fullfile(fullsavePath,'ChoiceSVMperfs_Data.mat'), 'FrameAccu', 'AreaChoiceSVMaccu', 'FrameChoiceProb',...
     'ExistField_ClusIDs', 'NewAdd_ExistAreaNames','AreaUnitNumbers','OutDataStrc',...
-    'AreaChoiceSVM_Avg','RepeatAvgFrameAccu','RepeatAvgFrameChoiceP','-v7.3');
+    'AreaChoiceSVM_Avg','RepeatAvgFrameAccu','RepeatAvgFrameChoiceP','AreaChoiceSVM_Thres','-v7.3');
 
 
-% %%
-% 
+%%
 % figure('position',[50 450 780 360])
+% cA = 7;
+% cAChoicePData = squeeze(RepeatAvgFrameChoiceP(cA,:,:));
+% % boxWin = ones(5,1)/5;
+% % SMcAChoicePData = conv2(cAChoicePData,boxWin,'same');
 % 
-% cAChoicePData = squeeze(RepeatAvgFrameChoiceP(1,:,:));
+% FullFrameNum = size(cAChoicePData,1);
+% % UsedInds = 3:(FullFrameNum-3);
+% UsedInds = 1:FullFrameNum;
+% % red colors indicate NonReversal trials
 % subplot(121)
 % hold on
-% plot(cAChoicePData(:,1),'Color',[.7 .7 .7]);
-% plot(cAChoicePData(:,3),'Color','k');
-% plot(cAChoicePData(:,2),'Color',[1 0.4 0.4]);
-% plot(cAChoicePData(:,4),'Color','r');
-% title('Left Choice')
+% plot(cAChoicePData(UsedInds,1),'Color',[.7 .7 .7]);
+% plot(cAChoicePData(UsedInds,3),'Color','k');
+% plot(cAChoicePData(UsedInds,2),'Color',[1 0.4 0.4]);
+% plot(cAChoicePData(UsedInds,4),'Color','r');
+% line([11 11],[0 1],'linewidth',1.2,'Color','m','linestyle','--');
+% title(sprintf('Left Choice, cA = %s',NewAdd_ExistAreaNames{cA}));
 % 
 % subplot(122)
 % hold on
-% plot(cAChoicePData(:,5),'Color',[.7 .7 .7]);
-% plot(cAChoicePData(:,7),'Color','k');
-% plot(cAChoicePData(:,6),'Color',[1 0.4 0.4]);
-% plot(cAChoicePData(:,8),'Color','r');
-% title('Right Choice')
-
+% plot(cAChoicePData(UsedInds,5),'Color',[.7 .7 .7]);
+% plot(cAChoicePData(UsedInds,7),'Color','k');
+% plot(cAChoicePData(UsedInds,6),'Color',[1 0.4 0.4]);
+% plot(cAChoicePData(UsedInds,8),'Color','r');
+% line([11 11],[0 1],'linewidth',1.2,'Color','m','linestyle','--');
+% % title('Right Choice')
+% title(sprintf('Right Choice, cA = %s',NewAdd_ExistAreaNames{cA}));

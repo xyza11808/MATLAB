@@ -229,6 +229,8 @@ Behav_SessStimOnBin = round(Behav_SessStimOnTime/TimeBinSize);
 UsedDataBinScales = round([-1,4]/TimeBinSize);
 TotalTrNum = numel(Behav_SessStimOnTime);
 UsedTimeBins = false(1,NumofSPcounts);
+UsedBinTrIndex = zeros(1,NumofSPcounts,'single');
+TrUsedBinLen = zeros(TotalTrNum,1);
 cTrExcludedBins = zeros(TotalTrNum,2);
 for cTr = 1 : TotalTrNum
     if cTr < TotalTrNum
@@ -239,6 +241,8 @@ for cTr = 1 : TotalTrNum
             Behav_SessStimOnBin(cTr) + UsedDataBinScales(2)];
     end
     UsedTimeBins(cTrUsedBins(1):cTrUsedBins(2)) = true;
+    UsedBinTrIndex(cTrUsedBins(1):cTrUsedBins(2)) = cTr;
+    TrUsedBinLen(cTr) = diff(cTrUsedBins)+1;
     cTrExcludedBins(cTr,1) = cTrUsedBins(1) - Behav_SessTrOnBin(cTr);
     if cTr < TotalTrNum
        cTrExcludedBins(cTr,2) =  Behav_SessTrOnBin(cTr+1) - cTrUsedBins(2);
@@ -254,7 +258,7 @@ BTEventshiftMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),BTEventshiftMtxs(1,:),'un'
 TrIndexMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),TrIndexEventshiftMtxs(1,:),'un',0);TrIndexEventshiftMtxs(2,:)];
 % BTprobMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),BlockProbEventshiftMtxs(1,:),'un',0);BlockProbEventshiftMtxs(2,:)];
 % DeltaMtxsNew = [cellfun(@(x) x(UsedTimeBins,:),DeltaEventshiftMtxs(1,:),'un',0);DeltaEventshiftMtxs(2,:)];
-%%
+%
 
 BinnedSPdatas = BinnedSPdatas(:,UsedTimeBins);
 
@@ -269,8 +273,8 @@ if eventMerge == 1
     ReEventshiftMtxs_Used = {cat(2,ReEventshiftMtxsNew{1,:});cat(2,ReEventshiftMtxsNew{2,:})};
     BTEventshiftMtxs_Used = {cat(2,BTEventshiftMtxsNew{1,:});cat(2,BTEventshiftMtxsNew{2,:})};
     TrIndexMtxsNew_Used = TrIndexMtxsNew;
-    BTprobMtxsNew_Used = BTprobMtxsNew;
-    DeltaMtxsNew_Used = DeltaMtxsNew;
+%     BTprobMtxsNew_Used = BTprobMtxsNew;
+%     DeltaMtxsNew_Used = DeltaMtxsNew;
 else
     StimEventshiftMtxs_Used = StimEventshiftMtxsNew;
     Choice1EventshiftMtxs_Used = ChoiceEventshiftMtxsNew(:,1);
@@ -278,8 +282,8 @@ else
     ReEventshiftMtxs_Used = ReEventshiftMtxsNew;
     BTEventshiftMtxs_Used = BTEventshiftMtxsNew;
     TrIndexMtxsNew_Used = TrIndexMtxsNew;
-    BTprobMtxsNew_Used = BTprobMtxsNew;
-    DeltaMtxsNew_Used = DeltaMtxsNew;
+%     BTprobMtxsNew_Used = BTprobMtxsNew;
+%     DeltaMtxsNew_Used = DeltaMtxsNew;
 end
 %%
 AllTaskEventsFull = [StimEventshiftMtxs_Used,Choice1EventshiftMtxs_Used,Choice2EventshiftMtxs_Used,...
