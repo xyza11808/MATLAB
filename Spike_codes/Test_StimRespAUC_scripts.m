@@ -1,7 +1,7 @@
 % cclr
 % ksfolder = pwd;
 % ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
-clearvars ProbNPSess StimRespAUC ExistField_ClusIDs
+% clearvars ProbNPSess StimRespAUC ExistField_ClusIDs
 % if exist(fullfile(ksfolder,'AnovanAnA','TemporalAUCdataSave.mat'),'file')
 %     return;
 % end
@@ -10,7 +10,7 @@ dataSaveNames = fullfile(ksfolder,'AnovanAnA','StimrespAUCdataSave.mat');
 %     return;
 % end
 
-load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
+% load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 
@@ -85,7 +85,7 @@ end
 
 RevFreqTrInds = double(ismember(NMTrFreqs, RevFreqs));
 
-clearvars ProbNPSess SMBinDataMtx
+% clearvars ProbNPSess SMBinDataMtx
 %% processing binned datas
 t1 = tic;
 StimRespWin = 0.5; % seconds after stimlulus onset

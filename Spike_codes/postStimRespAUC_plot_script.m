@@ -1,6 +1,6 @@
 
 clearvars NSMUnitOmegaSqrData AUCValidInfoDatas
-ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
+% ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
 %%
 figSavefolder = fullfile(ksfolder, 'AnovanAnA');
 
@@ -8,7 +8,7 @@ figSavefolder = fullfile(ksfolder, 'AnovanAnA');
 %     return;
 % end
 
-AnovaDatafile = fullfile(figSavefolder,'SigAnovaTracedataSave.mat');
+AnovaDatafile = fullfile(figSavefolder,'SigAnovaTracedataSave2.mat');
 load(AnovaDatafile,'AreaValidInfoDatas','SeqAreaNames','AccumedUnitNums','SeqAreaUnitNums','SeqFieldClusIDs');
 load(fullfile(figSavefolder,'StimrespAUCdataSave.mat'),'StimRespAUC');
 

@@ -1209,6 +1209,7 @@ FreqwiseStr = {'NonRevF','RevF'};
 
 StimEdges = [0,0.2,0.3,0.4,2]; % the last term could indicates inf, but use 2s for more resonable definition
 AreaStimPeakTime = squeeze(ValueAllAreaDatas(:,5,1));
+AreaStimPeakWidth = squeeze(ValueAllAreaDatas(:,6,1));
 
 NumAreas = size(AreaBT_AvgDatasAll,1);
 AreaBTAvgsAll = nan(NumAreas,4);
@@ -1223,12 +1224,22 @@ end
 
 NonNanInds = ~isnan(AreaStimPeakTime) & ~isnan(AreaBTAvgsAll(:,1));
 NonNanStimPT = AreaStimPeakTime(NonNanInds);
+NonNanStimPW = AreaStimPeakWidth(NonNanInds);
 NonNanBTAvgs = AreaBTAvgsAll(NonNanInds,:);
+
+PTbinData = cell(length(StimEdges)-1,3);
 for cSEdge = 1 : length(StimEdges)-1
-    
-
-
-
-
+    cPTbin_edges = [StimEdges(cSEdge),StimEdges(cSEdge+1)];
+    cPTbin_Inds = NonNanStimPT > cPTbin_edges(1) & NonNanStimPT <= cPTbin_edges(2);
+    cPTbin_Datas = NonNanBTAvgs(cPTbin_Inds,:);
+    PTbinData(cSEdge,:) = {cPTbin_Datas, cSEdge*ones(size(cPTbin_Datas,1),1),...
+        NonNanStimPW(cPTbin_Inds)};
 end
+
+PTbinDataMtx = cell2mat(PTbinData(:,1));
+PTbinDataGrInds = cell2mat(PTbinData(:,2));
+PWbinDataMtx = cat(1,PTbinData{:,3});
+
+
+
 

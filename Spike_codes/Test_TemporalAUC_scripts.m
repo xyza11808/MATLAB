@@ -77,7 +77,7 @@ NMAnsTimeAFOnset = TrAnsAfterStimOnsetTime(TrNMInds);
 
 RevFreqTrInds = double(ismember(NMTrFreqs, RevFreqs));
 
-clearvars ProbNPSess SMBinDataMtx
+% clearvars ProbNPSess SMBinDataMtx
 %% processing binned datas
 t1 = tic;
 DataBinTimeWin = 0.05; %seconds

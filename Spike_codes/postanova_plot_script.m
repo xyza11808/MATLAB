@@ -11,7 +11,8 @@ figSavefolder = fullfile(ksfolder, 'AnovanAnA');
 
 AnovaDatafile = fullfile(figSavefolder,'OmegaSqrDatas.mat');
 load(AnovaDatafile,'NSMUnitOmegaSqrData','AllNullThres_Mtx','CalWinUnitOmegaSqrs');
-AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
+AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
+RegUnitTypes = load(fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypes2.mat'),'IsUnitGLMResp');
 AllFieldNames = fieldnames(AreaIndexStrc.SessAreaIndexStrc);
 UsedNames = AllFieldNames(1:end-1);
 ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);
@@ -55,6 +56,7 @@ for AreaInds = 1 : NumofExistAreas
     cA_UnitNullDatas = AllNullThres_Mtx(:,cA_UnitInds,:);
     cA_UnitBTOsDatas_nonRev = NonRevFreqOs(:,cA_UnitInds);
     cA_UnitBTOsDatas_Revfreq = RevFreqOs(:,cA_UnitInds);
+    cA_UnitRespTypes = RegUnitTypes.IsUnitGLMResp(cA_UnitInds,:);
     cA_unitNums = size(cA_UnitDatas,2);
 
     factorNum = size(cA_UnitNullDatas,3);
@@ -108,13 +110,14 @@ for AreaInds = 1 : NumofExistAreas
     
     % freqtype sepecific blocktype varaince analysis
     cA_BT_unitDatas = {cA_UnitBTOsDatas_nonRev,cA_UnitBTOsDatas_Revfreq};
+    UsedBTUnit_Inds = (sum(isnan(cA_BT_unitDatas{1})) | sum(isnan(cA_BT_unitDatas{1})) | cA_UnitRespTypes(:,2)');
     BTVarTraces = cell(2,5);
     BTVarThresAvg = cell(2,1);
     BTVarSigUnitDatasAll = cell(2,2);
     for cc = 1 : 2
         ccData = cA_BT_unitDatas{cc};
         
-        cfUsedAreaInds = logical(AllFactorAbove(:,factorNum)) & (~(sum(isnan(ccData))))';
+        cfUsedAreaInds = logical(AllFactorAbove(:,factorNum)) & ~UsedBTUnit_Inds';
         
         cBTUsedDatas = ccData(:,cfUsedAreaInds);
         cBT_AvgTrace = mean(cBTUsedDatas,2);
@@ -195,7 +198,7 @@ for AreaInds = 1 : NumofExistAreas
     
 end
 %%
-dataSavePath = fullfile(figSavefolder,'SigAnovaTracedataSave.mat');
+dataSavePath = fullfile(figSavefolder,'SigAnovaTracedataSave2.mat');
 save(dataSavePath,'SeqAreaNames','AreaValidInfoDatas','AreaWise_BTfreqseqDatas',...
     'AccumedUnitNums','SeqFieldClusIDs','SeqAreaUnitNums','CaledStimOnsetBin','winGoesStep','-v7.3');
 
