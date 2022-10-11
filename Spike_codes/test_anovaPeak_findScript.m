@@ -1,15 +1,17 @@
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+cclr
+
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
 BrainAreasStrCC = BrainAreasStrC(2:end);
 % BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
-BrainAreasStr = [BrainAreasStrCC(~EmptyInds);{'Others'}];
+BrainAreasStr = [BrainAreasStrCC(~EmptyInds)];
 
-AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas\AllArea_anovaEV_ANDAUC_datas.mat';
-% AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas\AllArea_anovaEV_ANDAUC_datas.mat';
+AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2\AllArea_anovaEV_ANDAUC_datas.mat';
+% AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2\AllArea_anovaEV_ANDAUC_datas.mat';
 load(AnovaDataSumDatafile,'AllArea_anovaEVdatas','AllArea_BTAnova_freqwise');
 StimOnsetBin = 149;
 winGoesStep = 0.01;
@@ -166,12 +168,13 @@ end
 
 
 %%
-AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas';
-% AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas';
+AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2';
+% AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2';
 AnovasumPlotPath = fullfile(AnovaDataSumDatafile,'AnovaPeak_sumPlot');
 if ~isfolder(AnovasumPlotPath)
     mkdir(AnovasumPlotPath);
 end
+%%
 UnitNumThres = 5;
 ValueAllAreaDatas = nan(NumAreas,6,4); % the last dimension is median and mean
 % ValueAllAreaCIs = nan(NumAreas,6,2); % CIs 
@@ -754,8 +757,8 @@ set(ax14,'ytick',ChoiceAreaInds,'yticklabel',SortChoiceAreaStr,'ylim',[0 numel(C
 title('Size (PeakWidth)');
 
 %%
-AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas\AnovaPeak_sumPlot';
-% AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas\AnovaPeak_sumPlot';
+AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2\AnovaPeak_sumPlot';
+% AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2\AnovaPeak_sumPlot';
 AnovasumPlotPath2 = fullfile(AnovaDataSumDatafile,'AreaSummaryPlots');
 if ~isfolder(AnovasumPlotPath2)
     mkdir(AnovasumPlotPath2);
@@ -770,8 +773,8 @@ print(h3f,sortSavePath,'-dpdf','-bestfit');
 %% ￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥
 % only the first peak was considered  in the analysis
 cclr
-AnovaDataSumDataPath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas';
-% AnovaDataSumDataPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas';
+AnovaDataSumDataPath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2';
+% AnovaDataSumDataPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2';
 % AnovasumPlotPath = fullfile(AnovaDataSumDatafile,'AnovaPeak_sumPlot');
 % % if ~isfolder(AnovasumPlotPath)
 % %     mkdir(AnovasumPlotPath);
@@ -779,15 +782,15 @@ AnovaDataSumDataPath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\an
 % saveFilePath = fullfile(AnovasumPlotPath,'AnovaPeakSumData.mat');
 
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
 BrainAreasStrCC = BrainAreasStrC(2:end);
 % BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
-BrainAreasStr = [BrainAreasStrCC(~EmptyInds);{'Others'}];
+BrainAreasStr = [BrainAreasStrCC(~EmptyInds)];
 
 AnovaDataSumDatafile = fullfile(AnovaDataSumDataPath,'AllArea_anovaEV_ANDAUC_datas.mat');
 load(AnovaDataSumDatafile,'AllArea_anovaEVdatas');
@@ -1191,8 +1194,8 @@ set(ax14,'ytick',ChoiceAreaInds,'yticklabel',SortChoiceAreaStr,'ylim',[0 numel(C
 title('Size (PeakWidth)');
 
 %%
-AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas\AnovaPeak_sumPlot\FirstPeakAnaPlot';
-% AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas\AnovaPeak_sumPlot\FirstPeakAnaPlot';
+AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2\AnovaPeak_sumPlot\FirstPeakAnaPlot';
+% AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2\AnovaPeak_sumPlot\FirstPeakAnaPlot';
 % AnovasumPlotPath3 = fullfile(AnovaDataSumDatafile,'AreaSummaryPlots');
 % if ~isfolder(AnovasumPlotPath2)
 %     mkdir(AnovasumPlotPath2);
@@ -1207,9 +1210,12 @@ print(h3f,sortSavePath,'-dpdf','-bestfit');
 %% stim peak time ranges
 FreqwiseStr = {'NonRevF','RevF'};
 
-StimEdges = [0,0.2,0.3,0.4,2]; % the last term could indicates inf, but use 2s for more resonable definition
+StimEdges = [0,0.25,0.45,2]; % the last term could indicates inf, but use 2s for more resonable definition
 AreaStimPeakTime = squeeze(ValueAllAreaDatas(:,5,1));
 AreaStimPeakWidth = squeeze(ValueAllAreaDatas(:,6,1));
+AreaStimPeakValue = squeeze(ValueAllAreaDatas(:,4,1));
+AreaChoicePV = squeeze(ValueAllAreaDatas(:,1,1));
+AreaChoicePW = squeeze(ValueAllAreaDatas(:,3,1));
 
 NumAreas = size(AreaBT_AvgDatasAll,1);
 AreaBTAvgsAll = nan(NumAreas,4);
@@ -1225,21 +1231,82 @@ end
 NonNanInds = ~isnan(AreaStimPeakTime) & ~isnan(AreaBTAvgsAll(:,1));
 NonNanStimPT = AreaStimPeakTime(NonNanInds);
 NonNanStimPW = AreaStimPeakWidth(NonNanInds);
+NonNanStimPV = AreaStimPeakValue(NonNanInds);
+NonNanChoicePV = AreaChoicePV(NonNanInds);
+NonNanChoicePW = AreaChoicePW(NonNanInds);
 NonNanBTAvgs = AreaBTAvgsAll(NonNanInds,:);
 
-PTbinData = cell(length(StimEdges)-1,3);
+
+PTbinData = cell(length(StimEdges)-1,6);
 for cSEdge = 1 : length(StimEdges)-1
     cPTbin_edges = [StimEdges(cSEdge),StimEdges(cSEdge+1)];
     cPTbin_Inds = NonNanStimPT > cPTbin_edges(1) & NonNanStimPT <= cPTbin_edges(2);
     cPTbin_Datas = NonNanBTAvgs(cPTbin_Inds,:);
     PTbinData(cSEdge,:) = {cPTbin_Datas, cSEdge*ones(size(cPTbin_Datas,1),1),...
-        NonNanStimPW(cPTbin_Inds)};
+        NonNanStimPW(cPTbin_Inds),NonNanStimPV(cPTbin_Inds),...
+        NonNanChoicePV(cPTbin_Inds),NonNanChoicePW(cPTbin_Inds)};
 end
 
 PTbinDataMtx = cell2mat(PTbinData(:,1));
 PTbinDataGrInds = cell2mat(PTbinData(:,2));
 PWbinDataMtx = cat(1,PTbinData{:,3});
+StimPVbinDataMtx = cat(1,PTbinData{:,4});
+ChoicePVbinDataMtx = cat(1,PTbinData{:,5});
+ChoicePWbinDataMtx = cat(1,PTbinData{:,6});
+
+%% compare
+
+FPdataSavePath = fullfile(AnovaDataSumDataPath,'AnovaPeak_sumPlot','FirstPeakAnaPlot');
+AllPlotDatas = {PTbinDataMtx(:,3),PTbinDataMtx(:,4),StimPVbinDataMtx,PWbinDataMtx,ChoicePVbinDataMtx,ChoicePWbinDataMtx};
+DataStrs = {'NonRevFBT','RevFBT','StimPV','StimPW','ChoicePV','ChoicePW'};
+
+PlotDataAvgDatas = cell(6,3);
+for cInds = 1 : length(AllPlotDatas)
+    cData = AllPlotDatas{cInds};
+    [p,~,stats] = anova1(cData,PTbinDataGrInds,'off');
+    c = multcompare(stats,'Display','off');
+    cDataGrwiseSum = zeros(3,3);
+    for cGrInds = 1 : 3
+        cTypeInds = PTbinDataGrInds == cGrInds;
+        cTypeData = cData(cTypeInds);
+        cDataGrwiseSum(cGrInds,:) = [mean(cTypeData),numel(cTypeData),std(cTypeData)/sqrt(numel(cTypeData))];
+    end
+    PlotDataAvgDatas(cInds,:) = {cDataGrwiseSum, c, p};
+end
 
 
+%%
+h7f = figure('position',[100 100 580 820]);
+Datalabels = {'Explained Variance','Explained Variance','Explained Variance','Time (s)','Explained Variance','Time (s)'};
+for cA = 1 : 6
+    
+    cAData = PlotDataAvgDatas{cA,1};
+    cMCData = PlotDataAvgDatas{cA,2};
+    
+    ax = subplot(3,2,cA);
+    hold on
+    hl1 = errorbar(1:3,cAData(:,1),cAData(:,3),'k-o','linewidth',1.2);
+    xtickStr = cellstr(num2str(cAData(:,2),'n=%d'));
+    MaxY = max(cAData(:,1)+cAData(:,3));
+    GroupSigIndication(cMCData(1,1:2),[MaxY MaxY],cMCData(1,6),ax,1.01);
+    GroupSigIndication(cMCData(2,1:2),[MaxY MaxY],cMCData(2,6),ax,1.1);
+    GroupSigIndication(cMCData(3,1:2),[MaxY MaxY],cMCData(3,6),ax,1.2);
+    set(ax,'xlim',[0.5 3.5],'xtick',1:3,'xticklabel',xtickStr);
+    ylabel(ax,Datalabels{cA});
+    title(sprintf('%s (p = %.4f)',DataStrs{cA},PlotDataAvgDatas{cA,3}),'Color','m');
+    
+    yscales = get(ax,'ylim');
+    set(ax,'ylim',yscales + [0 0.1*yscales(2)]);
 
+end
+
+%%
+sumplotSavePath7 = fullfile(FPdataSavePath,'StimPT_grCompPlotSave');
+saveas(h7f,sumplotSavePath7);
+
+print(h7f,sumplotSavePath7,'-dpng','-r350');
+print(h7f,sumplotSavePath7,'-dpdf','-bestfit');
+
+dataSavePath7 = fullfile(FPdataSavePath,'StimPT_grCompDataSave.mat');
+save(dataSavePath7,'PlotDataAvgDatas','DataStrs','AllPlotDatas','ValueAllAreaDatas','-v7.3');
 

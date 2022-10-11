@@ -23,6 +23,7 @@ OutDataStrc.HighGof = HighfitGOF;
 
 
 function [FitCurve, fit_model, FitSlope, fitgof] = fitFun(AllScores, AllOctaves)
+AvgScores = mean(AllScores,2);
 NorTundata = AllScores(:);%/mean(cROITunData);
 OctaveData = AllOctaves(:);
 
@@ -32,9 +33,9 @@ opts.RobustWgtFun = 'bisquare';
 opts.MaxIter = 1000;
 modelfunb = @(b1,b2,b3,b4,x) (b1+ b2./(1+exp(-(x - b3)./b4)));
 % using the new model function
-UL = [max(NorTundata)+abs(min(NorTundata)), Inf, max(OctaveData), 100];
-SP = [min(NorTundata),max(NorTundata) - min(NorTundata), mean(OctaveData), 1];
-LM = [-Inf,-Inf, min(OctaveData), -100];
+UL = [max(AvgScores)+abs(min(AvgScores)), (max(AvgScores) - min(AvgScores)), max(OctaveData), 100];
+SP = [min(AvgScores),max(AvgScores) - min(AvgScores), mean(OctaveData), 1];
+LM = [min(AvgScores)-0.0*abs(min(AvgScores)),0, min(OctaveData), -100];
 
 [fit_model,fitgof] = fit(OctaveData,NorTundata,modelfunb,'StartPoint',SP,'Upper',UL,'Lower',LM);
 OctaveRange = linspace(min(OctaveData),max(OctaveData),500);

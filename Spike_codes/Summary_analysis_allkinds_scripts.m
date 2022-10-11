@@ -907,8 +907,7 @@ saveas(hs4f,figsavename4,'pdf');
 datasavename4 = fullfile(summarySaveFolder4,'UnitFRCrossCoef_peaklagSummary.mat');
 save(datasavename4,'Area_AllsigUnitLags', 'BrainAreasStr', 'IsMultiUnitExists','-v7.3')
 
-%%
-% ###################################################################################################
+%% ###################################################################################################
 % Summary codes 5: summary of anovan results for each regions
 %
 cclr
@@ -993,8 +992,11 @@ end
 
 
 %%
-summarySavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas';
-% summarySavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas';
+% summarySavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2';
+summarySavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2';
+if ~isfolder(summarySavePath)
+    mkdir(summarySavePath);
+end
 
 % TotalCalcuNumber = size(NSMUnitOmegaSqrData,1);
 % CaledStimOnsetBin = 149; % stimonset bin is 151, and the calculation window is 50ms (5 bins)
@@ -1009,7 +1011,7 @@ AllArea_tempAUC_datas = cell(NumAllTargetAreas, FactorNum, 2);
 AllArea_StimRespAUC_datas = cell(NumAllTargetAreas, 2);
 AllArea_BTAnova_freqwise = cell(NumAllTargetAreas, 2, 2);
 %%
-for cA = 1 :NumAllTargetAreas
+for cA = 1 : NumAllTargetAreas
 %     cA = 4;
     cA_nameStr = BrainAreasStr{cA};
     cA_summaryData_real = squeeze(Areawise_unitAnovaTrace(:,cA,:,1));
@@ -1027,7 +1029,7 @@ for cA = 1 :NumAllTargetAreas
     cA_summary_StimAUC_thres = squeeze(Areawise_unitStimRespAUC(:,cA,2));
     
     cF_unitNums = cat(1,cA_summary_unitNums{:});
-    if isempty(cF_unitNums) || sum(sum(cF_unitNums)) == 0
+    if isempty(cF_unitNums) || sum(cF_unitNums,'all') == 0
         continue;
     end
     huf = figure('position',[100 100 1440 600]);
@@ -2007,6 +2009,10 @@ for cA = 1 : NumAllTargetAreas
         cA_BaseData_ZS_score(:,:,cS) = (cA_BaseData_scoreMtx(:,:,cS) - mean(cA_BaseData_scoreMtx(:,:,cS),'all'))/...
             std(cA_BaseData_scoreMtx(:,:,cS),[],'all');
     end
+%     cA_Basesub_ZS_score = (cA_Basesub_scoreMtx - mean(cA_Basesub_scoreMtx,'all'))/std(cA_Basesub_scoreMtx,[],'all');
+%     cA_RawResp_ZS_score = (cA_RawResp_scoreMtx - mean(cA_RawResp_scoreMtx,'all'))/std(cA_RawResp_scoreMtx,[],'all');
+%     cA_BaseData_ZS_score = (cA_BaseData_scoreMtx - mean(cA_BaseData_scoreMtx,'all'))/std(cA_BaseData_scoreMtx,[],'all');
+    
     % calculate the fitted curve
     if NumSess >= 3
         BaseSubOutDataStrc = FreqScore2psyCurve(-cA_Basesub_ZS_score, OctTypes);
@@ -2024,8 +2030,17 @@ for cA = 1 : NumAllTargetAreas
     cA_BaseData_scoreAvg = -mean(cA_BaseData_scoreMtx,3);
     cA_BaseData_ZSscoreAvg = -mean(cA_BaseData_ZS_score,3);
     
-    hf9 = figure('position',[80 450 760 320]);
-    ax1 = subplot(121);
+    if NumSess >= 3
+        hf9 = figure('position',[80 450 1080 320]);
+        ax1 = subplot(131);
+        ax2 = subplot(132);
+    else
+        hf9 = figure('position',[80 450 760 320]);
+        ax1 = subplot(121);
+        ax2 = subplot(122);
+    end
+    
+    axes(ax1);
     hold on
     plot(OctTypes,cA_Basesub_scoreAvg(:,1),'b','linewidth',1);
     plot(OctTypes,cA_Basesub_scoreAvg(:,2),'r','linewidth',1);
@@ -2041,7 +2056,7 @@ for cA = 1 : NumAllTargetAreas
     set(ax1,'xtick',OctTypes,'xticklabel',cellstr(num2str(FreqTypes(:)/1000,'%.2f')));
     xlabel('Frequency (Hz)');
     
-    ax2 = subplot(122);
+    axes(ax2);
     hold on
     plot(OctTypes,cA_Basesub_ZSscoreAvg(:,1),'b','linewidth',1);
     plot(OctTypes,cA_Basesub_ZSscoreAvg(:,2),'r','linewidth',1);
@@ -2056,11 +2071,35 @@ for cA = 1 : NumAllTargetAreas
     ylabel('Averaged Zscored Score');
     set(ax2,'xtick',OctTypes,'xticklabel',cellstr(num2str(FreqTypes(:)/1000,'%.2f')));
     xlabel('Frequency (Hz)');
+
+    if NumSess >= 3
+        % add fitting curve plots
+        cax = subplot(133);
+        hold on
+        plot(BaseSubOutDataStrc.LowFitCurve(:,1),BaseSubOutDataStrc.LowFitCurve(:,2),'b')
+        plot(BaseSubOutDataStrc.HighFitCurve(:,1),BaseSubOutDataStrc.HighFitCurve(:,2),'r')
+
+        plot(RawRespOutDataStrc.HighFitCurve(:,1),RawRespOutDataStrc.HighFitCurve(:,2),'r','linestyle','--')
+        plot(RawRespOutDataStrc.LowFitCurve(:,1),RawRespOutDataStrc.LowFitCurve(:,2),'b','linestyle','--')
+        
+        plot(OctTypes,cA_Basesub_ZSscoreAvg(:,1),'bo','linewidth',1,'MarkerSize',12);
+        plot(OctTypes,cA_Basesub_ZSscoreAvg(:,2),'ro','linewidth',1,'MarkerSize',12);
+
+        plot(OctTypes,cA_RawResp_ZSscoreAvg(:,1),'b*','linewidth',1,'MarkerSize',8);
+        plot(OctTypes,cA_RawResp_ZSscoreAvg(:,2),'r*','linewidth',1,'MarkerSize',8);
+        
+        title('Fitted Curve');
+        line([OctTypes(1) OctTypes(end)],[0 0],'Color','k','linewidth',0.8,'linestyle','--');
+        ylabel('Averaged Zscored Score');
+        set(cax,'xtick',OctTypes,'xticklabel',cellstr(num2str(FreqTypes(:)/1000,'%.2f')));
+        xlabel('Frequency (Hz)');
+    end
     
     filesavePath = fullfile(SummarySavePath9,sprintf('Area_%s freqwise choice score plots',BrainAreasStr{cA}));
     saveas(hf9, filesavePath);
     print(hf9,filesavePath,'-dpng','-r400');
     print(hf9,filesavePath,'-dpdf','-bestfit');
+%       pause(5);
     close(hf9);
     
 end
@@ -2084,7 +2123,7 @@ BaseSub_BoundDiff = BaseSub_BoundMtx(:,2) - BaseSub_BoundMtx(:,1);
 RawResp_BoundDiff = RawResp_BoundMtx(:,2) - RawResp_BoundMtx(:,1);
 
 BoundData = [BaseSub_BoundDiff, RawResp_BoundDiff];
-UsedSessInds = UsedSessNums > 5;
+UsedSessInds = UsedSessNums > 4;
 [~,p] = ttest(BaseSub_BoundDiff(UsedSessInds), RawResp_BoundDiff(UsedSessInds));
 
 % sum(UsedSessNums > 5);
@@ -2097,13 +2136,182 @@ plot([1,2],mean(BoundData(UsedSessInds,:)),'Color','k','linewidth',1.5);
 line([1,2],[UpperThresData UpperThresData],'Color','c','linewidth',1.5);
 text(1.5,UpperThresData+0.2,num2str(p,'p = %.4f'),'HorizontalAlignment','center');
 text(0.7,UpperThresData+0.4,num2str(sum(UsedSessInds),'N = %d'));
-set(gca,'xlim',[0.5 2.5],'xtick',1:2,'xticklabel',{'BaseSub','RawResp'},'ylim',[0 2]);
+set(gca,'xlim',[0.5 2.5],'xtick',1:2,'xticklabel',{'BaseSub','RawResp'},'ylim',[0 1.6]);%
 ylabel(gca,'Boundary shiftment in octave');
 
 filesavePath99 = fullfile(SummarySavePath9,'BaseSubAndRawResp_boundShiftData');
 saveas(h99f, filesavePath99);
 print(h99f,filesavePath99,'-dpng','-r400');
 print(h99f,filesavePath99,'-dpdf','-bestfit');
+
+
+%% ###################################################################################################
+% Summary codes 10: single unit PSTH data summary
+%
+cclr
+%
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+
+BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
+        'Sheet',1);
+BrainAreasStrCC = BrainAreasStrC(2:end);
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
+BrainAreasStr = [BrainAreasStrCC(~EmptyInds)];
+
+%
+
+SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
+        'Sheet',1);
+SessionFoldersRaw = SessionFoldersC(2:end);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
+SessionFolders = SessionFoldersRaw(~EmptyInds);
+
+NumUsedSess = length(SessionFolders);
+NumAllTargetAreas = length(BrainAreasStr);
+%%
+
+PSTHColStrs = {'cUCorrectTrace','cUCorrectSEM','cUErrorTrace','cUErrorSEM','TrialNumMtx','UnitIDs',...
+    'UnitAreas','AreaIndex','SessIndex','RespMtxTypes'};
+
+AllSessUnitPSTH = cell(NumUsedSess,1);
+
+UsedFolderPath = cell(NumUsedSess,1);
+SessTrialTypeNums = cell(NumUsedSess,2);
+for cS = 1 : NumUsedSess
+    
+%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    
+    ksfolder = fullfile(cSessPath,'ks2_5');
+    UsedFolderPath{cS} = ksfolder;
+    
+    cSessPSTHDatafile = fullfile(ksfolder,'SessPSTHdataSave.mat');
+    cSessPSTHDataStrc = load(cSessPSTHDatafile,'ExpendTraceAll');
+    UnitTypefile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypes2.mat');
+    SessUnitTypeMtxStrc = load(UnitTypefile,'IsUnitGLMResp');
+    
+    cSessCorrTrNum = cSessPSTHDataStrc.ExpendTraceAll{1,5};
+    cSessCorrTrNumVec = cSessCorrTrNum(:);
+    cSessAllAreaStrs = cSessPSTHDataStrc.ExpendTraceAll(:,7);
+    [AreaTypes, ~, AreaInds] = unique(cSessAllAreaStrs);
+    
+    UsedUnitNums = length(AreaInds);
+    NumAreas = length(AreaTypes);
+    Match2AllAreaInds = zeros(UsedUnitNums,1);
+    for cA = 1 : NumAreas
+        cA_Str = AreaTypes{cA};
+        cA_matchinds = find(matches(BrainAreasStr,cA_Str,'IgnoreCase',true));
+        Match2AllAreaInds(AreaInds == cA) = cA_matchinds;
+    end
+    AllTypeTrNums = cSessPSTHDataStrc.ExpendTraceAll{1,5};
+    SessTrialTypeNums(cS,:) = {([AllTypeTrNums(:,1);AllTypeTrNums(:,3)])',...
+        ([AllTypeTrNums(:,2);AllTypeTrNums(:,4)])'};
+    
+    FolderPathIndex = cS * ones(UsedUnitNums,1);
+    
+    TypeMtx = mat2cell(SessUnitTypeMtxStrc.IsUnitGLMResp,ones(UsedUnitNums,1),size(SessUnitTypeMtxStrc.IsUnitGLMResp,2));
+    
+    SessMergedUnitPSTH = [cSessPSTHDataStrc.ExpendTraceAll,num2cell(Match2AllAreaInds),...
+        num2cell(FolderPathIndex),TypeMtx];
+    
+    AllSessUnitPSTH(cS) = {SessMergedUnitPSTH};
+    
+end
+
+AllUnitPSTHExpends = cat(1,AllSessUnitPSTH{:});
+
+%%
+SummarySavePath10 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+% SummarySavePath10 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+if ~isfolder(SummarySavePath10)
+    mkdir(SummarySavePath10);
+end
+
+SumDataSavefile = fullfile(SummarySavePath10,'UnitPSTHDatas.mat');
+save(SumDataSavefile,'AllUnitPSTHExpends','SessTrialTypeNums','UsedFolderPath','PSTHColStrs','BrainAreasStr','-v7.3');
+
+%%
+SessTrTypeNumMtx = cat(1,SessTrialTypeNums{:,1});
+TrTypeLessInds = sum(SessTrTypeNumMtx < 3,2);
+ExcludedSessInds = find(TrTypeLessInds);
+
+AllUnitSessIndex = cat(1,AllUnitPSTHExpends{:,9});
+TotalUnitSess_excluInds = ismember(AllUnitSessIndex,ExcludedSessInds);
+
+UsedUnitCellDatasAll = AllUnitPSTHExpends(~TotalUnitSess_excluInds,:);
+UsedAreaTypes = cat(1,UsedUnitCellDatasAll{:,8});
+[ExistAreas,~,UsedAreaNewIndex] = unique(UsedAreaTypes);
+NumExistArea = length(ExistAreas);
+
+ExistAreaUnitPSTHAll = cell(NumExistArea,6);
+for cA = 1 : NumExistArea
+    cA_UnitInds = UsedAreaTypes == ExistAreas(cA);
+    cA_UnitNums = sum(cA_UnitInds);
+    cA_UnitDatas = UsedUnitCellDatasAll(cA_UnitInds,:);
+    cA_UnitPSTHMtx = cat(1,cA_UnitDatas{:,1});
+    cA_UnitPSTHSEM = cat(1,cA_UnitDatas{:,2});
+    cA_UnitRespTypeMtx = cat(1,cA_UnitDatas{:,10});
+    
+    cA_strs = BrainAreasStr{ExistAreas(cA)};
+    
+    ExistAreaUnitPSTHAll(cA,:) = {cA_strs, cA_UnitPSTHMtx, cA_UnitPSTHSEM, ...
+        cA_UnitNums,UsedAreaNewIndex(cA_UnitInds),cA_UnitRespTypeMtx};
+end
+
+%%
+ExistAreaPSTHDataAll = cat(1,ExistAreaUnitPSTHAll{:,2});
+ExistAreaPSTHAreaInds = cat(1,ExistAreaUnitPSTHAll{:,5});
+ExistAreaPSTHUnitRespType = cat(1,ExistAreaUnitPSTHAll{:,6});
+
+ExistAreaPSTHData_zs = zscore(ExistAreaPSTHDataAll,0,2);
+
+
+%% test with tsne clustering
+% figure('position',[100 100 1200 840])
+% figure;
+Perplexitys = 80;
+nPCs = 100;
+Algorithm = 'barneshut'; %'barneshut' for N > 1000 % 'exact' for small N
+Exag = 12;
+UnitPSTHzs = ExistAreaPSTHData_zs;
+AreaStrs = ExistAreaPSTHAreaInds;
+
+% rng('shuffle') % for fair comparison
+% Y = tsne(UnitPSTHzs,'Algorithm',Algorithm,'Distance','correlation','Perplexity',Perplexitys,...
+%     'NumPCAComponents',nPCs,'Exaggeration',Exag);
+% subplot(2,2,1)
+% gscatter(Y(:,1),Y(:,2),AreaStrs)
+% title('correlation')
+AllYs = cell(5,2);
+% UsedYInds = UnitInterROI ~= 17;
+for cR = 1 : 5
+    figure
+    rng('shuffle') % for fair comparison
+    [Y,loss] = tsne(UnitPSTHzs,'Algorithm',Algorithm,'Distance','cosine','Perplexity',Perplexitys,...
+        'NumPCAComponents',nPCs,'Exaggeration',Exag);
+    % subplot(2,2,2)
+%     gscatter(Y(UsedYInds,1),Y(UsedYInds,2),UnitInterROI2)
+    scatter(Y(:,1),Y(:,2),'ko');
+    title('Cosine')
+    AllYs(cR,:) = {Y,loss};
+end
+% rng('shuffle') % for fair comparison
+% Y = tsne(UnitPSTHzs,'Algorithm',Algorithm,'Distance','chebychev','Perplexity',Perplexitys,...
+%     'NumPCAComponents',nPCs,'Exaggeration',Exag);
+% subplot(2,2,3)
+% gscatter(Y(:,1),Y(:,2),AreaStrs)
+% title('Chebychev')
+% 
+% rng('shuffle') % for fair comparison
+% Y = tsne(UnitPSTHzs,'Algorithm',Algorithm,'Distance','euclidean','Perplexity',Perplexitys,...
+%     'NumPCAComponents',nPCs,'Exaggeration',Exag);
+% subplot(2,2,4)
+% gscatter(Y(:,1),Y(:,2),AreaStrs)
+% title('Euclidean')
+
+
 
 %%
 % cclr

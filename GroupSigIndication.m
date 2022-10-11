@@ -42,7 +42,7 @@ else
         error('Invalid input handle');
     end
 end
-TextUppSacle = 0.15;
+TextUppSacle = 0.05;
 LineUpperScale = 0.02;
 StarLineWidth = 1;
 if p > 0.05

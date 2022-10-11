@@ -28,14 +28,14 @@ for cA = 1 : Numfieldnames
     AreaUnitNumbers(cA) = numel(cA_clus_inds);
     
 end
-%
-USedAreas = cell2mat(ExistField_ClusIDs(:,3)) < 1;
-if sum(USedAreas)
-    ExistField_ClusIDs(USedAreas,:) = [];
-    AreaUnitNumbers(USedAreas) = [];
-    Numfieldnames = Numfieldnames - sum(USedAreas);
-    NewAdd_ExistAreaNames(USedAreas) = [];
-end
+%%
+% USedAreas = cell2mat(ExistField_ClusIDs(:,3)) < 1;
+% if sum(USedAreas)
+%     ExistField_ClusIDs(USedAreas,:) = [];
+%     AreaUnitNumbers(USedAreas) = [];
+%     Numfieldnames = Numfieldnames - sum(USedAreas);
+%     NewAdd_ExistAreaNames(USedAreas) = [];
+% end
 
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
 
@@ -138,7 +138,9 @@ for cU = 1 : UsedUnitNum
         UnitPSTHdataAll{cU,3},UnitPSTHdataAll{cU,4},UnitPSTHdataAll{cU,5}};
     
 end
-
+% UnitPSTHMtx = cat(1,ExpendTraceAll{:,1});
+% UnitPSTHzs = zscore(UnitPSTHMtx,0,2);
+% AreaStrs = ExpendTraceAll(:,end);
 
 %%
 
