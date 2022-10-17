@@ -5,10 +5,11 @@ if ~isempty(Data)
     Data_data = Data;
     Data_TrNum = size(Data_data,1);
     if Data_TrNum == 1
-        Data_Avg = (smooth(Data_data,7))';
+%         Data_Avg = (smooth(Data_data,7))';
+        Data_Avg = smooth(medfilt1(Data_data,5),3)';
         Data_SEM = zeros(size(Data_data));
     elseif Data_TrNum == 2
-        Data_Avg = (smooth(mean(Data_data),7))';
+        Data_Avg = smooth(medfilt1(mean(Data_data),5),3)';
         Data_SEM = zeros(1,NumFrameBins);
     else
         Data_Avg = mean(Data_data);

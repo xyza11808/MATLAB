@@ -2245,7 +2245,7 @@ UsedAreaTypes = cat(1,UsedUnitCellDatasAll{:,8});
 [ExistAreas,~,UsedAreaNewIndex] = unique(UsedAreaTypes);
 NumExistArea = length(ExistAreas);
 
-ExistAreaUnitPSTHAll = cell(NumExistArea,6);
+ExistAreaUnitPSTHAll = cell(NumExistArea,8);
 for cA = 1 : NumExistArea
     cA_UnitInds = UsedAreaTypes == ExistAreas(cA);
     cA_UnitNums = sum(cA_UnitInds);
@@ -2254,28 +2254,62 @@ for cA = 1 : NumExistArea
     cA_UnitPSTHSEM = cat(1,cA_UnitDatas{:,2});
     cA_UnitRespTypeMtx = cat(1,cA_UnitDatas{:,10});
     
+    cA_UnitErrorPSTHMtx = cat(1,cA_UnitDatas{:,3});
+    cA_UnitErrorPSTHSEM = cat(1,cA_UnitDatas{:,4});
+    
     cA_strs = BrainAreasStr{ExistAreas(cA)};
     
     ExistAreaUnitPSTHAll(cA,:) = {cA_strs, cA_UnitPSTHMtx, cA_UnitPSTHSEM, ...
-        cA_UnitNums,UsedAreaNewIndex(cA_UnitInds),cA_UnitRespTypeMtx};
+        cA_UnitNums,UsedAreaNewIndex(cA_UnitInds),cA_UnitRespTypeMtx,cA_UnitErrorPSTHMtx,cA_UnitErrorPSTHSEM};
 end
 
 %%
 ExistAreaPSTHDataAll = cat(1,ExistAreaUnitPSTHAll{:,2});
+ExistAreaErrorPSTHData = cat(1,ExistAreaUnitPSTHAll{:,7});
 ExistAreaPSTHAreaInds = cat(1,ExistAreaUnitPSTHAll{:,5});
 ExistAreaPSTHUnitRespType = cat(1,ExistAreaUnitPSTHAll{:,6});
 
-ExistAreaPSTHData_zs = zscore(ExistAreaPSTHDataAll,0,2);
+[ExistAreaPSTHData_zs, mu, sigma] = zscore(ExistAreaPSTHDataAll,0,2);
+ExistAreaErrorPSTHData_zs = ((ExistAreaErrorPSTHData' - mu')./sigma')';
+%% Unit response type matrix
+NonRespUnits = ~sum(ExistAreaPSTHUnitRespType,2);
+ChoiceRespType = ExistAreaPSTHUnitRespType(:,4) | ExistAreaPSTHUnitRespType(:,5);
+NewRespTypeMtx = [ExistAreaPSTHUnitRespType(:,1:3),ChoiceRespType];
 
+TrialIndexOnlyUnit = NewRespTypeMtx(:,2) & ~sum(NewRespTypeMtx(:,[1,3,4]),2);
+BTOnlyUnit = NewRespTypeMtx(:,1) & ~sum(NewRespTypeMtx(:,2:4),2);
+StimOnlyUnit = NewRespTypeMtx(:,3) & ~sum(NewRespTypeMtx(:,[1,2,4]),2);
+ChoiceOnlyUnit = NewRespTypeMtx(:,4) & ~sum(NewRespTypeMtx(:,1:3),2);
+BTANDStim_unit = (NewRespTypeMtx(:,1) & NewRespTypeMtx(:,3)) &  ~sum(NewRespTypeMtx(:,[2,4]),2);
+BTANDChoice_unit = (NewRespTypeMtx(:,1) & NewRespTypeMtx(:,4)) &  ~sum(NewRespTypeMtx(:,[2,3]),2);
+StimANDChoice_unit = (NewRespTypeMtx(:,3) & NewRespTypeMtx(:,4)) &  ~sum(NewRespTypeMtx(:,[2,1]),2);
+TrialIndexANDstim_unit = (NewRespTypeMtx(:,2) & NewRespTypeMtx(:,3)) & ~sum(NewRespTypeMtx(:,[4,1]),2);
+TrialIndexANDchoice_unit = (NewRespTypeMtx(:,2) & NewRespTypeMtx(:,4)) & ~sum(NewRespTypeMtx(:,[3,1]),2);
+TrialIndexANDAllOther_unit = NewRespTypeMtx(:,2) & NewRespTypeMtx(:,3) & NewRespTypeMtx(:,4);
+
+RespTypeGrInds = nan(size(ExistAreaPSTHUnitRespType,1),1);
+
+RespTypeGrInds(TrialIndexOnlyUnit) = 1;
+RespTypeGrInds(BTOnlyUnit) = 2;
+RespTypeGrInds(StimOnlyUnit) = 3;
+RespTypeGrInds(ChoiceOnlyUnit) = 4;
+RespTypeGrInds(BTANDStim_unit) = 5;
+RespTypeGrInds(BTANDChoice_unit) = 6;
+RespTypeGrInds(StimANDChoice_unit) = 7;
+RespTypeGrInds(TrialIndexANDstim_unit) = 8;
+RespTypeGrInds(TrialIndexANDchoice_unit) = 9;
+RespTypeGrInds(TrialIndexANDAllOther_unit) = 10;
+RespTypeGrInds(isnan(RespTypeGrInds)) = 11;
 
 %% test with tsne clustering
 % figure('position',[100 100 1200 840])
 % figure;
-Perplexitys = 80;
+Perplexitys = 100;
 nPCs = 100;
 Algorithm = 'barneshut'; %'barneshut' for N > 1000 % 'exact' for small N
 Exag = 12;
-UnitPSTHzs = ExistAreaPSTHData_zs;
+% UnitPSTHzs = ExistAreaPSTHData_zs;
+UnitPSTHzs = ExistAreaPSTHData_zsSM;
 AreaStrs = ExistAreaPSTHAreaInds;
 
 % rng('shuffle') % for fair comparison
@@ -2285,14 +2319,22 @@ AreaStrs = ExistAreaPSTHAreaInds;
 % gscatter(Y(:,1),Y(:,2),AreaStrs)
 % title('correlation')
 AllYs = cell(5,2);
-% UsedYInds = UnitInterROI ~= 17;
+% UsedYInds = UnitInterROI ~= 21;
+% ClusColors = linspecer(20);
+% UsedYInds = RespTypeGrInds ~= 11 & RespTypeGrInds ~= 1;
 for cR = 1 : 5
     figure
+%     hold on
+    
     rng('shuffle') % for fair comparison
     [Y,loss] = tsne(UnitPSTHzs,'Algorithm',Algorithm,'Distance','cosine','Perplexity',Perplexitys,...
         'NumPCAComponents',nPCs,'Exaggeration',Exag);
+    
+%     scatter(Y(~UsedYInds,1),Y(~UsedYInds,2),6,'o','MarkerFaceColor',[.7 .7 .7],'MarkerEdgeColor','none')
     % subplot(2,2,2)
-%     gscatter(Y(UsedYInds,1),Y(UsedYInds,2),UnitInterROI2)
+%     gscatter(Y(UsedYInds,1),Y(UsedYInds,2),RespTypeGrInds(UsedYInds));
+    
+%     gscatter(Y(UsedYInds,1),Y(UsedYInds,2),UnitInterROI(UsedYInds));
     scatter(Y(:,1),Y(:,2),'ko');
     title('Cosine')
     AllYs(cR,:) = {Y,loss};

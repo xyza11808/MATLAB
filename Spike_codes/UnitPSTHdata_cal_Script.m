@@ -144,7 +144,7 @@ end
 
 %%
 
-DataSavePath = fullfile(ksfolder,'SessPSTHdataSave.mat');
+DataSavePath = fullfile(ksfolder,'SessPSTHdataSaveSM.mat');
 save(DataSavePath,'UnitPSTHdataAll','ExistField_ClusIDs','FreqTypes','Numfieldnames',...
     'NewAdd_ExistAreaNames', 'AreaUnitNumbers','OutDataStrc','BlockSectionInfo',...
     'ExpendTraceAll','NumFrameBins','-v7.3');
