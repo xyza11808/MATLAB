@@ -2304,12 +2304,12 @@ RespTypeGrInds(isnan(RespTypeGrInds)) = 11;
 %% test with tsne clustering
 % figure('position',[100 100 1200 840])
 % figure;
-Perplexitys = 100;
+Perplexitys = 60;
 nPCs = 100;
 Algorithm = 'barneshut'; %'barneshut' for N > 1000 % 'exact' for small N
 Exag = 12;
-% UnitPSTHzs = ExistAreaPSTHData_zs;
-UnitPSTHzs = ExistAreaPSTHData_zsSM;
+UnitPSTHzs = ExistAreaPSTHData_zs;
+% UnitPSTHzs = ExistAreaPSTHData_zsSM;
 AreaStrs = ExistAreaPSTHAreaInds;
 
 % rng('shuffle') % for fair comparison

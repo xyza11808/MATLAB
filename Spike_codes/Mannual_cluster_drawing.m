@@ -143,7 +143,7 @@ for cClus = 1 : NumClus
 end
 
 %%
-hf = figure('position',[100 100 1020 980]);
+hf = figure('position',[100 100 1020 820]);
 hold on
 
 ybase = 5;
@@ -247,7 +247,7 @@ end
 
  [rr,pp] = corrcoef(ReClusAvgTraceANDnum');
 %%
-hf = figure('position',[100 100 1020 980]);
+hf = figure('position',[100 100 1020 840]);
 hold on
 
 ybase = 5;
@@ -287,7 +287,7 @@ for cClus = 1 : NumClus
     
     cGr_corrs = NewClusCorr(~OtherGrInds, cClus);
     
-    Thres = max(prctile(OtherGr_cGr_corrs,95),0.5);
+    Thres = max(prctile(OtherGr_cGr_corrs,95),0.3);
     IsUnitSigCorr = cGr_corrs > Thres;
     
     SigUnitGrInds(~OtherGrInds) = IsUnitSigCorr;
@@ -305,69 +305,117 @@ SigGrErrorData = SecondSortErrData(SigUnitGrInds,:);
 SecondSortTsnePoint = AllDataPoints(Clus2RawInds,:);
 SigtsnePoints = SecondSortTsnePoint(SigUnitGrInds,:);
 
-[SigCorrAvgData, SigCorrSEMData, SigCorrGrNums] = DataTypeClassification(SigGrDatas,SigGrIndsAll);
+s2 = silhouette(SigtsnePoints,SigGrIndsAll,'CityBlock');
+sIndexInds = s2 > -0.2;
+FinalGrPSTHs = SigGrDatas(sIndexInds,:);
+FinalGrInds = SigGrIndsAll(sIndexInds);
+FinaltsnePoints = SigtsnePoints(sIndexInds,:);
+FinalGrErrPSTH = SigGrErrorData(sIndexInds,:);
 
-[SigErroAvgData, SigErroSEMData, SigErroGrNums] = DataTypeClassification(SigGrErrorData,SigGrIndsAll);
+LeftGrTypes = unique(FinalGrInds); % in case some cluster have no points left
+IsClusLefted = zeros(NumClus,1);
+IsClusLefted(LeftGrTypes) = 1;
+[SigCorrAvgData, SigCorrSEMData, SigCorrGrNums] = DataTypeClassification(FinalGrPSTHs,FinalGrInds);
 
-%% replot the scatter points
-% figure;
-% hold on
-% UsedYInds = SigGrIndsAll ~= 22;
-% 
-% ClusColors = linspecer(NumClus - 1);
-% gscatter(SigtsnePoints(UsedYInds,1),SigtsnePoints(UsedYInds,2),...
-%     SigGrIndsAll(UsedYInds),ClusColors,'o',6);
-% #####################
-% make plots to visualize one or two clusters
-close
+[SigErroAvgData, SigErroSEMData, SigErroGrNums] = DataTypeClassification(FinalGrErrPSTH,FinalGrInds);
+%%
+ClusColors = linspecer(NumClus);
 figure;
 hold on
-PlotGr1 = 14;
-PlotGr2 = 30;
-NonColorInds = SigGrIndsAll ~= PlotGr1 & SigGrIndsAll ~= PlotGr2;
-GrInds1 = SigGrIndsAll == PlotGr1;
-GrInds2 = SigGrIndsAll == PlotGr2;
-scatter(SigtsnePoints(NonColorInds,1),SigtsnePoints(NonColorInds,2),6,...
-    'MarkerEdgeColor',[.6 .6 .6]);
-Gr1Data = SigGrDatas(GrInds1,:);
-SelfCorrData = corrcoef(Gr1Data');
-MeanCorrs = mean(SelfCorrData-eye(size(SelfCorrData)));
-cGrUsedInds = MeanCorrs >= 0.3;
-Gr1PointDatas = SigtsnePoints(GrInds1,:);
-% scatter(Gr1PointDatas(cGrUsedInds,1),Gr1PointDatas(cGrUsedInds,2),20,MeanCorrs(cGrUsedInds),'filled');
-scatter(Gr1PointDatas(:,1),Gr1PointDatas(:,2),20,MeanCorrs,'filled'); %,...
-%     'MarkerEdgeColor','r');
-f_CI = EclipseCI_2DgaussianFun(Gr1PointDatas(cGrUsedInds,:));
-plot(f_CI(:,1), f_CI(:,2),'--r');
-f_CI2 = EclipseCI_2DgaussianFun(SigtsnePoints(GrInds1,:),0.5);
-plot(f_CI2(:,1), f_CI2(:,2),'--c');
+scatter(AllDataPoints(:,1),AllDataPoints(:,2),6,'o','MarkerEdgeColor',[.7 .7 .7],'MarkerFaceColor',[.7 .7 .7]);
+scatter(FinaltsnePoints(:,1),FinaltsnePoints(:,2),10,FinalGrInds,'o','filled');
+% colormap(ClusColors);
 
-if sum(GrInds2)
-    scatter(SigtsnePoints(GrInds2,1),SigtsnePoints(GrInds2,2),8,...
-        'MarkerEdgeColor','b');
-end
+% %% replot the scatter points
+% % figure;
+% % hold on
+% % UsedYInds = SigGrIndsAll ~= 22;
+% % 
+% % ClusColors = linspecer(NumClus - 1);
+% % gscatter(SigtsnePoints(UsedYInds,1),SigtsnePoints(UsedYInds,2),...
+% %     SigGrIndsAll(UsedYInds),ClusColors,'o',6);
+% % #####################
+% % make plots to visualize one or two clusters
+% close
+% figure;
+% hold on
+% PlotGr1 = 14;
+% PlotGr2 = 30;
+% NonColorInds = SigGrIndsAll ~= PlotGr1 & SigGrIndsAll ~= PlotGr2;
+% GrInds1 = SigGrIndsAll == PlotGr1;
+% GrInds2 = SigGrIndsAll == PlotGr2;
+% scatter(SigtsnePoints(NonColorInds,1),SigtsnePoints(NonColorInds,2),6,...
+%     'MarkerEdgeColor',[.6 .6 .6]);
+% Gr1Data = SigGrDatas(GrInds1,:);
+% SelfCorrData = corrcoef(Gr1Data');
+% MeanCorrs = mean(SelfCorrData-eye(size(SelfCorrData)));
+% cGrUsedInds = MeanCorrs >= 0.3;
+% Gr1PointDatas = SigtsnePoints(GrInds1,:);
+% % scatter(Gr1PointDatas(cGrUsedInds,1),Gr1PointDatas(cGrUsedInds,2),20,MeanCorrs(cGrUsedInds),'filled');
+% scatter(Gr1PointDatas(:,1),Gr1PointDatas(:,2),20,MeanCorrs,'filled'); %,...
+% %     'MarkerEdgeColor','r');
+% f_CI = EclipseCI_2DgaussianFun(Gr1PointDatas(cGrUsedInds,:));
+% plot(f_CI(:,1), f_CI(:,2),'--r');
+% f_CI2 = EclipseCI_2DgaussianFun(SigtsnePoints(GrInds1,:),0.5);
+% plot(f_CI2(:,1), f_CI2(:,2),'--c');
+% 
+% if sum(GrInds2)
+%     scatter(SigtsnePoints(GrInds2,1),SigtsnePoints(GrInds2,2),8,...
+%         'MarkerEdgeColor','b');
+% end
 
 %%
-figure;
-imagesc(SigGrDatas,[-2 5])
 
-Counts = accumarray(SigGrIndsAll,1);
-AccumGrCounts = cumsum(Counts);
-for cGr = 1 : numel(AccumGrCounts)
-    line([1 NumPoints],[AccumGrCounts(cGr) AccumGrCounts(cGr)],'Color','m',...
-        'linewidth',1.5);
-end
+% Step1_ExclusionInds = false(numel(s),1);
+% for cClus = 1 : NumClus
+%     cClusInds = SigGrIndsAll == cClus;
+%     if mean(s(cClusInds)<0) ~= 1
+%         Step1_ExclusionInds(cClusInds) = s(cClusInds) < 0;
+%     end
+% end
+% Step1_leftPoints = SigtsnePoints(~Step1_ExclusionInds,:);
+% Step1_leftGrInds = SigGrIndsAll(~Step1_ExclusionInds);
+% 
+% s2=silhouette(Step1_leftPoints,Step1_leftGrInds,'CityBlock');
+
+%%
+% close;
+Step1_leftPoints = FinaltsnePoints;
+Step1_leftGrInds = FinalGrInds;
+close
+cClus = 34;
+cClusInds = Step1_leftGrInds == cClus;
+% cClusInds_sig = Step1_leftGrInds == cClus & s2 > -0.20;
+figure;
+hold on
+scatter(Step1_leftPoints(~cClusInds,1),Step1_leftPoints(~cClusInds,2),6,'o','MarkerEdgeColor',[.7 .7 .7]);
+scatter(Step1_leftPoints(cClusInds,1),Step1_leftPoints(cClusInds,2),14,'ro','filled');
+% scatter(Step1_leftPoints(cClusInds_sig,1),Step1_leftPoints(cClusInds_sig,2),10,'r*');
+
+
+
+%%
+% figure;
+% imagesc(SigGrDatas,[-2 5])
+% 
+% Counts = accumarray(SigGrIndsAll,1);
+% AccumGrCounts = cumsum(Counts);
+% for cGr = 1 : numel(AccumGrCounts)
+%     line([1 NumPoints],[AccumGrCounts(cGr) AccumGrCounts(cGr)],'Color','m',...
+%         'linewidth',1.5);
+% end
  
  
 
 %% correlation value exclusion group average trace plot
-h3f = figure('position',[100 100 1020 980]);
+h3f = figure('position',[100 100 1020 840]);
 hold on
 
 ybase = 5;
 ystep = 3;
-TraceTickCent = zeros(NumClus,1);
-for cplot = 1 : NumClus
+PlottedClusNum = length(LeftGrTypes);
+TraceTickCent = zeros(PlottedClusNum,1);
+for cplot = 1 : PlottedClusNum
     cTraceData = SigCorrAvgData(cplot,:);
     cTraceData_minSub = cTraceData - min(cTraceData);
     cTraceData_plot = cTraceData_minSub + ybase;
@@ -380,19 +428,19 @@ end
 BlockChangePoints = NumPoints/2 + 0.5;
 yscales = get(gca,'ylim');
 line(BlockChangePoints*[1 1],[0 ybase],'Color',[1 0 0 0.3],'linewidth',2);
-set(gca,'ylim',[0 ybase],'ytick',TraceTickCent,'yticklabel',(1:NumClus)',...
+set(gca,'ylim',[0 ybase],'ytick',TraceTickCent,'yticklabel',LeftGrTypes(:),...
     'xtick',[NumPoints/4 NumPoints*3/4],'xticklabel',{'LowBlock';'HighBlock'});
 ylabel('Clusters');
 title('Correlation threshold, Correct trials');
 
 %% error trials plot
-h4f = figure('position',[100 100 1020 980]);
+h4f = figure('position',[100 100 1020 840]);
 hold on
 
 ybase = 5;
 ystep = 3;
-TraceTickCent = zeros(NumClus,1);
-for cplot = 1 : NumClus
+TraceTickCent = zeros(PlottedClusNum,1);
+for cplot = 1 : PlottedClusNum
     cTraceData = SigErroAvgData(cplot,:);
     cTraceData_minSub = cTraceData - min(cTraceData);
     cTraceData_plot = cTraceData_minSub + ybase;
@@ -405,20 +453,22 @@ end
 BlockChangePoints = NumPoints/2 + 0.5;
 yscales = get(gca,'ylim');
 line(BlockChangePoints*[1 1],[0 ybase],'Color',[1 0 0 0.3],'linewidth',2);
-set(gca,'ylim',[0 ybase],'ytick',TraceTickCent,'yticklabel',(1:NumClus)',...
+set(gca,'ylim',[0 ybase],'ytick',TraceTickCent,'yticklabel',LeftGrTypes(:),...
     'xtick',[NumPoints/4 NumPoints*3/4],'xticklabel',{'LowBlock';'HighBlock'});
 ylabel('Clusters');
 title('Correlation threshold, Error trials');
 
 %%
-savePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
-savefile = fullfile(savePath,'Mannual_clustering_data_7.mat'); 
-save(savefile,'AllDataPoints', 'UnitInterROI', 'GrInds', 'Clus2RawInds', 'NewClusInds', 'SigUnitGrInds','-v7.3');
-saveas(h3f,fullfile(savePath,'Mannual clustering 7 CorrTrials PSTH plot'));
-saveas(h3f,fullfile(savePath,'Mannual clustering 7 CorrTrials PSTH plot'),'png');
+% savePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+savePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+savefile = fullfile(savePath,'Mannual_clustering_data_9.mat'); 
+save(savefile,'AllDataPoints', 'UnitInterROI', 'GrInds', 'Clus2RawInds', 'NewClusInds',...
+    'SigUnitGrInds','sIndexInds','SigCorrAvgData','SigErroAvgData','-v7.3');
+saveas(h3f,fullfile(savePath,'Mannual clustering 9 CorrTrials PSTH plot'));
+saveas(h3f,fullfile(savePath,'Mannual clustering 9 CorrTrials PSTH plot'),'png');
 
-saveas(h4f,fullfile(savePath,'Mannual clustering 7 ErrorTrials PSTH plot'));
-saveas(h4f,fullfile(savePath,'Mannual clustering 7 ErrorTrials PSTH plot'),'png');
+saveas(h4f,fullfile(savePath,'Mannual clustering 9 ErrorTrials PSTH plot'));
+saveas(h4f,fullfile(savePath,'Mannual clustering 9 ErrorTrials PSTH plot'),'png');
 
 %%  plot back of all plotted groups
 SecondSortRawPoint = AllDataPoints(Clus2RawInds,:);
