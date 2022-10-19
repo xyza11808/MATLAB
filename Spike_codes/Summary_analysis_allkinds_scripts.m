@@ -2187,7 +2187,7 @@ for cS = 1 : NumUsedSess
     ksfolder = fullfile(cSessPath,'ks2_5');
     UsedFolderPath{cS} = ksfolder;
     
-    cSessPSTHDatafile = fullfile(ksfolder,'SessPSTHdataSave.mat');
+    cSessPSTHDatafile = fullfile(ksfolder,'SessPSTHdataSaveSM.mat');
     cSessPSTHDataStrc = load(cSessPSTHDatafile,'ExpendTraceAll');
     UnitTypefile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypes2.mat');
     SessUnitTypeMtxStrc = load(UnitTypefile,'IsUnitGLMResp');
@@ -2229,7 +2229,7 @@ if ~isfolder(SummarySavePath10)
     mkdir(SummarySavePath10);
 end
 
-SumDataSavefile = fullfile(SummarySavePath10,'UnitPSTHDatas.mat');
+SumDataSavefile = fullfile(SummarySavePath10,'UnitPSTHDatasSM.mat');
 save(SumDataSavefile,'AllUnitPSTHExpends','SessTrialTypeNums','UsedFolderPath','PSTHColStrs','BrainAreasStr','-v7.3');
 
 %%
@@ -2271,6 +2271,25 @@ ExistAreaPSTHUnitRespType = cat(1,ExistAreaUnitPSTHAll{:,6});
 
 [ExistAreaPSTHData_zs, mu, sigma] = zscore(ExistAreaPSTHDataAll,0,2);
 ExistAreaErrorPSTHData_zs = ((ExistAreaErrorPSTHData' - mu')./sigma')';
+
+% %% test PSTH direct kmeans clustering
+% [Coeff, Score, ~, ~, explain, mu] = pca(ExistAreaPSTHData_zs);
+% UsedScoredims = Score(:,1:200);
+% 
+% ClusNums = 1:40;
+% NumTestClus = length(ClusNums);
+% ClusIdxANDCent = cell(NumTestClus, 3);
+% 
+% for cClus = 1 : NumTestClus
+%     cClusNum = ClusNums(cClus);
+%     [idx, C] = kmeans(UsedScoredims, cClusNum, 'Distance','cityblock',...
+%         'Replicates',5,'MaxIter',1000,'EmptyAction','drop');
+%     silh = silhouette(UsedScoredims, idx, 'cosine');
+%     
+%     ClusIdxANDCent(cClus,:) = {idx, C, silh};
+% end
+
+
 %% Unit response type matrix
 NonRespUnits = ~sum(ExistAreaPSTHUnitRespType,2);
 ChoiceRespType = ExistAreaPSTHUnitRespType(:,4) | ExistAreaPSTHUnitRespType(:,5);
@@ -2304,11 +2323,21 @@ RespTypeGrInds(isnan(RespTypeGrInds)) = 11;
 %% test with tsne clustering
 % figure('position',[100 100 1200 840])
 % figure;
-Perplexitys = 60;
+Perplexitys = 100;
 nPCs = 100;
 Algorithm = 'barneshut'; %'barneshut' for N > 1000 % 'exact' for small N
 Exag = 12;
+
+% % NumUnits = size(ExistAreaPSTHData_zs,1);
+% % UnitNormPSTH = zeros(size(ExistAreaPSTHData_zs));
+% % 
+% % for cU = 1 : NumUnits
+% %     cUData = ExistAreaPSTHData_zs(cU,:);
+% %     UnitNormPSTH(cU,:) = cUData/norm(cUData);
+% % end
+
 UnitPSTHzs = ExistAreaPSTHData_zs;
+% UnitPSTHzs = UnitNormPSTH;
 % UnitPSTHzs = ExistAreaPSTHData_zsSM;
 AreaStrs = ExistAreaPSTHAreaInds;
 
