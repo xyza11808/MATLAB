@@ -1,7 +1,11 @@
 
+cSessPath = strrep(SessionFolders{15},'F:','I:\ksOutput_backup');
+cd(cSessPath);
+load('NPClassHandleSaved.mat')
 
+%%
 ksfolder = pwd;
-obj.ksFolder = ksfolder;
+ProbNPSess.ksFolder = ksfolder;
 
 %%
 AllTrStimOnTime = double(behavResults.Time_stimOnset(:));
@@ -28,7 +32,9 @@ BlockTypeColors = {[0.2 0.6 0.2],[0.7 0.4 0.1]};
 ExtraEventStrs = {'Choice'};
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 
-
+cFolderChnAreaStrc = load(fullfile(ksfolder,'Chnlocation.mat'),'AlignedAreaStrings');
+ChnAreaStrs = cFolderChnAreaStrc.AlignedAreaStrings{2};
+ProbNPSess.ChannelAreaStrs = ChnAreaStrs;
 ProbNPSess.RawRasterplot(EventAignTimes,NMTrFreqs,...
     {NMTrChoices,ChoiceTypeColors}, NMBlockTypes, BlockTypeColors,NMTrInds);
 

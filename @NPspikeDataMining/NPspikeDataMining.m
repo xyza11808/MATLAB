@@ -769,6 +769,7 @@ classdef NPspikeDataMining
                 %%
                 cUnitData = UsedUintSlignSPTimes(cUnit,:);
                 cUnitChnID = obj.UsedClus_IDs(cUnit);
+                cUnitChnArea = obj.ChannelAreaStrs{obj.ChannelUseds_id(cUnit)};
                 
                 hcf = figure('position',[50 150 900 750],'visible','on'); %
                 ax1 = subplot(3,2,[1,3]);
@@ -801,7 +802,7 @@ classdef NPspikeDataMining
                 set(ax1,'xlim',[xtimescale(1) min(4,xtimescale(2))],'ylim',[0.5 TrNum+0.5],'YDir','Reverse');
                 xlabel('Time (s)');
                 ylabel('# Trials');
-                title(sprintf('Unit %d, chn %d',cUnit,cUnitChnID));
+                title(sprintf('Unit %d, chn %d, Area %s',cUnit,cUnitChnID,cUnitChnArea));
                 
                 % mean psth plot
                 cuPSTHData = squeeze(SMBinDataMtx(:,cUnit,:));

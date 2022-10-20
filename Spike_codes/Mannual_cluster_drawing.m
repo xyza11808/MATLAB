@@ -45,7 +45,7 @@ while IsROIAdd
 end
 
 %%
-AllDataPoints = AllYs{5,1}(:,:);
+AllDataPoints = AllYs{4,1}(:,:);
 NumROIs = length(ROIinfos);
 UnitInterROI = nan(size(AllDataPoints,1),1);
 UnitGrIndsNum = zeros(NumROIs+1,1);
@@ -65,7 +65,7 @@ UnitInterROI(isnan(UnitInterROI)) = NumROIs + 1;
 %%
 savePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
 % savePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
-savefile = fullfile(savePath,'Mannual_clustering_data_15.mat'); 
+savefile = fullfile(savePath,'Mannual_clustering_data_30.mat'); 
 save(savefile,'AllDataPoints', 'UnitInterROI','-v7.3');
 % 
 % save(savefile,'AllDataPoints', 'UnitInterROI', 'GrInds', 'Clus2RawInds', 'NewClusInds',...
