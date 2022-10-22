@@ -61,7 +61,7 @@ for cA = 1 : NumAreas
         % close
         % cU = 121;
         TotalUnitNum = size(cfRealData,2);
-        PeakFinds = cell(TotalUnitNum, 4);
+        PeakFinds = cell(TotalUnitNum, 5);
         IsUnitNoPeakFind = false(TotalUnitNum, 1);
         for cU = 1 :TotalUnitNum 
             cU_Trace = cfRealData(:,cU);
@@ -99,31 +99,54 @@ for cA = 1 : NumAreas
                   end
                   if any(NewLocs < StimOnsetBin)
                       UsedPeakInds = NewLocs >= StimOnsetBin;
-                      PeakFinds(cU,:) = {NewPeaks(UsedPeakInds), NewLocs(UsedPeakInds),...
+                      PeakFinds(cU,1:4) = {NewPeaks(UsedPeakInds), NewLocs(UsedPeakInds),...
                           NewWidths(UsedPeakInds,:),NewWidths(UsedPeakInds,2) - NewWidths(UsedPeakInds,1)};
                   else
-                      PeakFinds(cU,:) = {NewPeaks, NewLocs,NewWidths,NewWidths(:,2) - NewWidths(:,1)};
+                      PeakFinds(cU,1:4) = {NewPeaks, NewLocs,NewWidths,NewWidths(:,2) - NewWidths(:,1)};
                   end
                else
                    if any(NegLocs < StimOnsetBin)
                        UsedPeakInds = NegLocs >= StimOnsetBin;
-                       PeakFinds(cU,:) = {NegPeak(UsedPeakInds), NegLocs(UsedPeakInds),...
+                       PeakFinds(cU,1:4) = {NegPeak(UsedPeakInds), NegLocs(UsedPeakInds),...
                           widths(UsedPeakInds,:),widths(UsedPeakInds,2) - widths(UsedPeakInds,1)};
                    else
-                        PeakFinds(cU,:) = {NegPeak, NegLocs, widths, widths(:,2) - widths(:,1)}; 
+                        PeakFinds(cU,1:4) = {NegPeak, NegLocs, widths, widths(:,2) - widths(:,1)}; 
                    end
                end
             elseif length(NegPeak) == 1
                 if NegLocs < StimOnsetBin
                     IsUnitNoPeakFind(cU) = true;
                 else
-                    PeakFinds(cU,:) = {NegPeak, NegLocs, widths, widths(:,2) - widths(:,1)};
+                    PeakFinds(cU,1:4) = {NegPeak, NegLocs, widths, widths(:,2) - widths(:,1)};
                 end
             else
                 IsUnitNoPeakFind(cU) = true;
             end
         end
+        
+        for cU = 1 : TotalUnitNum
+            cU_Trace = cfRealData(:,cU);
+            sgf = sgolayfilt(cU_Trace,3,41);
+            cUPeakData = PeakFinds(cU,:);
+            if ~isempty(cUPeakData)
+                % find the half peak time
+                cEventNum = length(cUPeakData{1});
+                EventHalfPeakpos = zeros(cEventNum,1);
+                for cEvent = 1 : cEventNum
+                    cPeakV = cUPeakData{1}(cEvent);
+%                     cEventPeak = cUPeakData{2}(cEvent);
+                    cEventWidScale = round(cUPeakData{3}(cEvent,:));
+                    halfPeakPassInds = find(sgf(cEventWidScale(1):end) > cPeakV/2,1,'first');
+                    if isempty(halfPeakPassInds)
+                        halfPeakPassInds = 0;
+                    end
+                    EventHalfPeakpos(cEvent) = cEventWidScale(1)+halfPeakPassInds;
+                end
+                PeakFinds{cU,5} = EventHalfPeakpos;
+            end
+        end
         PeakFinds(IsUnitNoPeakFind,:) = [];
+
         
         AreaPeakFactor_peakDatasAll(cA,cf) = {PeakFinds};
     end
@@ -191,7 +214,7 @@ for cA = 1 : NumAreas
     hf = figure('position',[100 100 1080 520]);
     if ~isempty(cA_ChoiceData)
         cA_ChoicePeakAmp = cat(1,cA_ChoiceData{:,1});
-        cA_ChoiceFirstPeakBin = cellfun(@(x) x(1),cA_ChoiceData(:,2));
+        cA_ChoiceFirstPeakBin = cellfun(@(x) x(1),cA_ChoiceData(:,5));
         cA_ChoiceFirstPeakTime = (cA_ChoiceFirstPeakBin - StimOnsetBin)*winGoesStep;
         ChoiceANDEventNum = [size(cA_ChoiceData,1),numel(cA_ChoicePeakAmp)];
     else
@@ -261,7 +284,7 @@ for cA = 1 : NumAreas
     % stim EV plots
     if ~isempty(cA_StimData)
         cA_StimPeakAmp = cat(1,cA_StimData{:,1});
-        cA_StimFirstPeakBin = cellfun(@(x) x(1),cA_StimData(:,2));
+        cA_StimFirstPeakBin = cellfun(@(x) x(1),cA_StimData(:,5));
         cA_StimFirstPeakTime = (cA_StimFirstPeakBin - StimOnsetBin)*winGoesStep;
         StimANDEventNum = [size(cA_StimData,1),numel(cA_StimPeakAmp)];
     else
@@ -806,6 +829,30 @@ end
 saveFilePath = fullfile(AnovaDataSumDataPath,'AnovaPeak_sumPlot','AnovaPeakSumData.mat');
 load(saveFilePath,'AreaPeakFactor_peakDatasAll','AreaBT_AvgDatasAll')
 
+%% add allen scores
+
+% AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
+AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
+AllenRegionStrsCell = readcell(AllenHScoreFullPath,'Range','A:A',...
+        'Sheet','hierarchy_all_regions');
+AllenRegionStrsUsed = AllenRegionStrsCell(2:end);
+AllenRegionStrsModi = strrep(AllenRegionStrsUsed,'-','');
+
+RegionScoresCell = readcell(AllenHScoreFullPath,'Range','H:H',...
+        'Sheet','hierarchy_all_regions');
+% RegionScoresCell = readcell(AllenHScoreFullPath,'Range','F:F',...
+%     'Sheet','hierarchy_all_regions');
+IsCellMissing = cellfun(@(x) any(ismissing(x)),RegionScoresCell);
+RegionScoresCell(IsCellMissing) = {NaN};
+RegionScoresUsed = cell2mat(RegionScoresCell(2:end));
+
+NanInds = isnan(RegionScoresUsed);
+if any(NanInds)
+    RegionScoresUsed(NanInds) = [];
+    AllenRegionStrsModi(NanInds) = [];
+end
+
+
 %%
 UnitNumThres = 10;
 NumAreas = length(BrainAreasStr);
@@ -824,7 +871,7 @@ for cA = 1 : NumAreas
     h6f = figure('position',[100 100 1080 520]);
     if ~isempty(cA_ChoiceData)
         cA_ChoicePeakAmp = cellfun(@(x) x(1),cA_ChoiceData(:,1)); %cat(1,cA_ChoiceData{:,1});
-        cA_ChoiceFirstPeakBin = cellfun(@(x) x(1),cA_ChoiceData(:,2));
+        cA_ChoiceFirstPeakBin = cellfun(@(x) x(1),cA_ChoiceData(:,5));
         cA_ChoiceFirstPeakTime = (cA_ChoiceFirstPeakBin - StimOnsetBin)*winGoesStep;
         ChoiceANDEventNum = size(cA_ChoiceData,1);
     else
@@ -894,7 +941,7 @@ for cA = 1 : NumAreas
     % stim EV plots
     if ~isempty(cA_StimData)
         cA_StimPeakAmp = cellfun(@(x) x(1),cA_StimData(:,1)); %cat(1,cA_StimData{:,1});
-        cA_StimFirstPeakBin = cellfun(@(x) x(1),cA_StimData(:,2));
+        cA_StimFirstPeakBin = cellfun(@(x) x(1),cA_StimData(:,5));
         cA_StimFirstPeakTime = (cA_StimFirstPeakBin - StimOnsetBin)*winGoesStep;
         StimANDEventNum = size(cA_StimData,1);
     else
@@ -1210,7 +1257,7 @@ print(h3f,sortSavePath,'-dpdf','-bestfit');
 %% stim peak time ranges
 FreqwiseStr = {'NonRevF','RevF'};
 
-StimEdges = [0,0.25,0.45,2]; % the last term could indicates inf, but use 2s for more resonable definition
+StimEdges = [0,0.1,0.25,2]; % the last term could indicates inf, but use 2s for more resonable definition
 AreaStimPeakTime = squeeze(ValueAllAreaDatas(:,5,1));
 AreaStimPeakWidth = squeeze(ValueAllAreaDatas(:,6,1));
 AreaStimPeakValue = squeeze(ValueAllAreaDatas(:,4,1));

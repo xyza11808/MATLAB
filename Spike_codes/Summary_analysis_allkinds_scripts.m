@@ -66,8 +66,11 @@ for cS = 1 :  NumUsedSess
         if isempty(cAreaStr)
             continue;
         end
-        cA_unitInds = SessAreaIndexData.SessAreaIndexStrc.(cAreaStr).MatchedUnitInds;
         AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
+        if ~sum(AreaMatchInds)
+            continue;
+        end
+        cA_unitInds = SessAreaIndexData.SessAreaIndexStrc.(cAreaStr).MatchedUnitInds;
         
         cA_SVMVec = BTANDChoiceAUCStrc.SVMDecVecs(cAreaInds,2:5);
         cA_SVMPerfs = BTANDChoiceAUCStrc.SVMDecVecs{cAreaInds,6};
@@ -972,7 +975,9 @@ for cS = 1 : NumUsedSess
             end
 
             AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
-
+            if ~sum(AreaMatchInds)
+                continue;
+            end
             cA_SigUnitTraces = AreaUnitAnovaEV_Strc.AreaValidInfoDatas{cAreaInds,5};
             Areawise_unitAnovaTrace(cS, AreaMatchInds, :, :) = cA_SigUnitTraces; % althrough maybe empty unit exists
 
@@ -1901,8 +1906,11 @@ for cS = 1 :  NumUsedSess
     
     for cAreaInds = 1 : NumAreas
         cAreaStr = AreaNames{cAreaInds};
-        if ~isempty(cS_ChoiceScoreData_Strc.AreaProcessDatas{cAreaInds,1})
-            AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
+        AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
+        if ~sum(AreaMatchInds)
+            continue;
+        end
+        if ~isempty(cS_ChoiceScoreData_Strc.AreaProcessDatas{cAreaInds,1}) 
             cA_ChoiceScoresData = cS_ChoiceScoreData_Strc.AreaProcessDatas{cAreaInds,1};
             cA_BT2ChoiceScore = cS_ChoiceScoreData_Strc.AreaProcessDatas{cAreaInds,2};
             cA_dsqrANDperf = cS_ChoiceScoreData_Strc.AreaProcessDatas{cAreaInds,3};
@@ -2392,7 +2400,7 @@ end
 % Summary codes 11: boundary shiftment summary
 %
 cclr
-%
+
 AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 % AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
@@ -2420,7 +2428,7 @@ SessionFolders = SessionFoldersRaw(~EmptyInds);
 NumUsedSess = length(SessionFolders);
 
 SessbehavBoundNums = zeros(NumUsedSess,3);
-SessBehavBoundsAll = cell(NumUsedSess,3);
+SessBehavBoundsAll = cell(NumUsedSess,4);
 for cS = 1 : NumUsedSess
     
     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
@@ -2445,7 +2453,7 @@ for cS = 1 : NumUsedSess
     [MaxBoundDiff, MaxInds] = max(ConsecBoundDiffs);
     MaxDifBounds = AllBlockBounds([MaxInds,MaxInds+1]);
     MaxBoundShift = [max(MaxDifBounds),min(MaxDifBounds),MaxBoundDiff];
-    SessBehavBoundsAll(cS,:) = {OverAllBoundShift, MaxBoundShift, SessBoundStrc.BlockCurveFitAll};
+    SessBehavBoundsAll(cS,:) = {OverAllBoundShift, MaxBoundShift, SessBoundStrc.BlockCurveFitAll, SessBoundStrc.BlockpsyInfo};
 end
 
 %%
@@ -2490,7 +2498,9 @@ ylabel('Boundary shiftments(Octaves)');
 title(sprintf('Mean=%.3f, Max=%.3f, Thres=%.2f',AbouveThresMean(1),AbouveThresMean(2),UsedShiftThres));
 set(gca,'FontSize',10);
 %%
-savePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\sessbehaviorsummary';
+% savePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\sessbehaviorsummary';
+savePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\sessbehaviorsummary';
+
 figSavePath = fullfile(savePath,'BoundShiftment summary plots');
 saveas(h11f,figSavePath);
 print(h11f,figSavePath,'-dpdf','-bestfit');
@@ -2500,15 +2510,65 @@ dataSave = fullfile(savePath,'SessBehaviorData.mat');
 save(dataSave,'SessBehavBoundsAll','UsedBehavSessInds','-v7.3');
 
 %% calculate single point prob and then fit overall performance
+UsedBehavSessBounds = SessBehavBoundsAll(UsedBehavSessInds,:);
 NumUsedSess = size(UsedBehavSessBounds,1);
-for cSess = 1 : 1 %NumUsedSess
+LowANDHighBoundProbs = zeros(7,NumUsedSess,2);
+for cSess = 1 : NumUsedSess
     cSessPointProbs = UsedBehavSessBounds{cSess,3};
     cSessBlockInds = cat(1,cSessPointProbs{:,1});
     cSessBlockProb = cat(3,cSessPointProbs{:,4});
+    LowBoundInds = cSessBlockInds == 0;
+    LowBoundProbs = mean(squeeze(cSessBlockProb(:,1,LowBoundInds)),2);
+    HighBoundInds = cSessBlockInds == 1;
+    HighBoundProbs = mean(squeeze(cSessBlockProb(:,1,HighBoundInds)),2);
     
-    
-    
+    LowANDHighBoundProbs(:,cSess,1) = LowBoundProbs;
+    LowANDHighBoundProbs(:,cSess,2) = HighBoundProbs;
 end
+
+%%
+AllFreqs = [4000, 5040,6350, 8000, 10079, 12699, 16000];
+AllOctaves = log2(AllFreqs/min(AllFreqs));
+
+LowBoundProbs = LowANDHighBoundProbs(:,:,1);
+HighBoundProbs = LowANDHighBoundProbs(:,:,2);
+OctaveMtx = repmat(AllOctaves(:),1,NumUsedSess);
+
+LowBoundProbsAvg = mean(LowBoundProbs,2);
+HighBoundProbsAvg = mean(HighBoundProbs,2);
+
+LowBoundProbsSEM = std(LowBoundProbs,[],2)/sqrt(size(LowBoundProbs,2));
+HighBoundProbsSEM = std(HighBoundProbs,[],2)/sqrt(size(HighBoundProbs,2));
+
+UL = [0.5, 0.5, max(AllOctaves), 100];
+LowSP = [min(LowBoundProbs(:)),1 - max(LowBoundProbs(:))-min(LowBoundProbs(:)), mean(AllOctaves), 1];
+LM = [0, 0, min(AllOctaves), 0];
+ParaBoundLim = ([UL;LowSP;LM]);
+LowBlockfit_curveAll = FitPsycheCurveWH_nx(OctaveMtx(:),LowBoundProbs(:),ParaBoundLim);
+LowCurveBounds = LowBlockfit_curveAll.ffit.u;
+
+HighSP = [min(HighBoundProbs(:)),1 - max(HighBoundProbs(:))-min(HighBoundProbs(:)), mean(AllOctaves), 1];
+ParaBoundLim = ([UL;HighSP;LM]);
+HighBlockfit_curveAll = FitPsycheCurveWH_nx(OctaveMtx(:),HighBoundProbs(:),ParaBoundLim);
+HighCurveBounds = HighBlockfit_curveAll.ffit.u;
+
+hf = figure('position',[100 100 400 320]);
+hold on
+plot(LowBlockfit_curveAll.curve(:,1),LowBlockfit_curveAll.curve(:,2),'Color',[0.2 0.8 0.2],'linewidth',1.4);
+plot(HighBlockfit_curveAll.curve(:,1),HighBlockfit_curveAll.curve(:,2),'Color',[0.8 0.5 0.2],'linewidth',1.4);
+errorbar(AllOctaves, LowBoundProbsAvg, LowBoundProbsSEM, 'o', 'Color',[0.2 0.8 0.2]);
+errorbar(AllOctaves, HighBoundProbsAvg, HighBoundProbsSEM, 'o', 'Color',[0.8 0.5 0.2]);
+
+line([LowCurveBounds LowCurveBounds],[0 1],'Color',[0.2 0.8 0.2 0.7],'linewidth',0.75,'linestyle','--');
+line([HighCurveBounds HighCurveBounds],[0 1],'Color',[0.8 0.5 0.2 0.7],'linewidth',0.75,'linestyle','--');
+% line([0 2],[0.5 0.5],'Color','k','linewidth',1,'linestyle','--');
+xlabel('Frequency (kHz)');
+ylabel('Rightward choice');
+text(1.5,0.1,sprintf('N = %d',NumUsedSess),'FontSize',10);
+title(sprintf('Shifts = %.4f',HighCurveBounds - LowCurveBounds));
+set(gca,'xtick',AllOctaves,'xticklabel',cellstr(num2str(AllFreqs(:)/1000,'%.2f')),'ytick',0:0.2:1,...
+    'xlim',[-0.1 2.1],'ylim',[-0.05 1.05],'FontSize',12);
+
 
 %%
 % % sum(UsedSessNums > 5);
