@@ -24,8 +24,12 @@ LowblockTrOcts = NMFreq2Octs(LowblockInds);
 LowblockTrChoices = NMChoces(LowblockInds);
 
 LowChoiceProbs = zeros(NumFreqTypes,1);
+LowChoiceProbCI = zeros(NumFreqTypes,2);
 for cf = 1 : NumFreqTypes
-    LowChoiceProbs(cf) = mean(LowblockTrChoices(OctTypes(cf) == LowblockTrOcts));
+    cfTypeChoice = LowblockTrChoices(OctTypes(cf) == LowblockTrOcts);
+    [phat,pci] = binofit(sum(cfTypeChoice),numel(cfTypeChoice));
+    LowChoiceProbs(cf) = phat;
+    LowChoiceProbCI(cf,:) = abs(pci-phat);
 end
 
 UL = [0.5, 0.5, max(OctTypes), 100];
@@ -41,8 +45,12 @@ HighblockTrOcts = NMFreq2Octs(HighblockInds);
 HighblockTrChoices = NMChoces(HighblockInds);
 
 HighChoiceProbs = zeros(NumFreqTypes,1);
+HighChoiceProbCI = zeros(NumFreqTypes,2);
 for cf = 1 : NumFreqTypes
-    HighChoiceProbs(cf) = mean(HighblockTrChoices(OctTypes(cf) == HighblockTrOcts));
+    cfTypeChoice = HighblockTrChoices(OctTypes(cf) == HighblockTrOcts);
+    [phat,pci] = binofit(sum(cfTypeChoice),numel(cfTypeChoice));
+    HighChoiceProbs(cf) = phat;
+    HighChoiceProbCI(cf,:) = abs(pci-phat);
 end
 
 UL = [0.5, 0.5, max(OctTypes), 100];
@@ -58,17 +66,25 @@ BlockpsyInfo.lowfitmd = lowfit_curveAll;
 BlockpsyInfo.highfitmd = Highfit_curveAll;
 BlockpsyInfo.lowOctChoiceProb = LowChoiceProbs;
 BlockpsyInfo.highOctChoiceProb = HighChoiceProbs;
+BlockpsyInfo.lowprobCI = LowChoiceProbCI;
+BlockpsyInfo.highprobCI = HighChoiceProbCI;
 
 if isplot
-    hf = figure;
+    hf = figure('position',[100 100 420 350]);
     hold on
     plot(Highfit_curveAll.curve(:,1),Highfit_curveAll.curve(:,2),'Color',[0.8 0.5 0.2],'linewidth',1.2);
-    plot(OctTypes,HighChoiceProbs,'o','Color',[0.8 0.5 0.2],'linewidth',1);
+    errorbar(OctTypes,HighChoiceProbs,HighChoiceProbCI(:,1),HighChoiceProbCI(:,2),...
+        'o','Color',[0.8 0.5 0.2],'linewidth',1)
+    line([HighCurveBounds HighCurveBounds],[0 1],'Color',[0.8 0.5 0.2],'linewidth',0.75,'linestyle','--');
+%     plot(OctTypes,HighChoiceProbs,'o','Color',[0.8 0.5 0.2],'linewidth',1);
     plot(lowfit_curveAll.curve(:,1),lowfit_curveAll.curve(:,2),'Color',[0.2 0.8 0.2],'linewidth',1.2)
-    plot(OctTypes,LowChoiceProbs,'o','Color',[0.2 0.8 0.2],'linewidth',1);
+    errorbar(OctTypes,LowChoiceProbs,LowChoiceProbCI(:,1),LowChoiceProbCI(:,2),...
+        'o','Color',[0.2 0.8 0.2],'linewidth',1);
+    line([lowCurveBounds lowCurveBounds],[0 1],'Color',[0.2 0.8 0.2],'linewidth',0.75,'linestyle','--');
+    title(sprintf('BoundaryShift = %.4f',HighCurveBounds-lowCurveBounds));
     set(gca,'xtick',OctTypes,'xticklabel',cellstr(num2str(FreqTypes(:)/1000,'%.2f')));
     xlabel('Frequency (kHz)');
     ylabel('Rightward Choice');
-    
+    set(gca,'FontSize',12);
 end
-    
+ 

@@ -768,7 +768,7 @@ classdef NPspikeDataMining
             for cUnit = 1 : unitNum
                 %%
                 cUnitData = UsedUintSlignSPTimes(cUnit,:);
-                cUnitChnID = obj.UsedClus_IDs(cUnit);
+                cUnitChnID = obj.ChannelUseds_id(cUnit);
                 cUnitChnArea = obj.ChannelAreaStrs{obj.ChannelUseds_id(cUnit)};
                 
                 hcf = figure('position',[50 150 900 750],'visible','on'); %

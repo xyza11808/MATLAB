@@ -1,10 +1,14 @@
 
-cSessPath = strrep(SessionFolders{15},'F:','I:\ksOutput_backup');
-cd(cSessPath);
-load('NPClassHandleSaved.mat')
+clearvars ProbNPSess
+if isfolder(fullfile(ksfolder,'RawRasterPlot'))
+    return;
+end
+% cSessPath = strrep(SessionFolders{31},'F:','E:\NPCCGs');
+% cd(fullfile(cSessPath,'ks2_5'));
+load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
 
 %%
-ksfolder = pwd;
+% ksfolder = pwd;
 ProbNPSess.ksFolder = ksfolder;
 
 %%

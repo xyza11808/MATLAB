@@ -29,7 +29,7 @@ for cA = 1 : Numfieldnames
 end
 
 %%
-OldRegResultFile = fullfile(ksfolder,'Regressor_ANA','REgressorDataSave4.mat');
+OldRegResultFile = fullfile(ksfolder,'Regressor_ANA','RegressorDataAligned.mat');
 OldRegResultStrc = load(OldRegResultFile);
 
 %%
@@ -40,7 +40,7 @@ FullRegressorInfosCell = cell(NumofUnits,3);
 rrr_RegressorInfosCell = cell(NumofUnits,3);
 IsUnitNeedProcessed = zeros(NumofUnits,2);
 for cU = 1 : NumofUnits
-    cU_2Old_inds = find(OldRegResultStrc.ExistField_ClusIDs(:,1) == NewExistField_ClusIDs(cU,1));
+    cU_2Old_inds = find(OldRegResultStrc.NewExistField_ClusIDs(:,1) == NewExistField_ClusIDs(cU,1));
     if numel(cU_2Old_inds) ~= 1
         IsUnitNeedProcessed(cU,1) = 1;
         IsUnitNeedProcessed(cU,2) = nan;
