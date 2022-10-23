@@ -2252,10 +2252,12 @@ TrTypeLessInds = sum(SessTrTypeNumMtx < 3,2);
 ExcludedSessInds = find(TrTypeLessInds);
 
 AllUnitSessIndex = cat(1,AllUnitPSTHExpends{:,9});
-TotalUnitSess_excluInds = ismember(AllUnitSessIndex,ExcludedSessInds);
+AllAreaTypes = cat(1,AllUnitPSTHExpends{:,8});
+
+TotalUnitSess_excluInds = ismember(AllUnitSessIndex,ExcludedSessInds) | isnan(AllAreaTypes);
 
 UsedUnitCellDatasAll = AllUnitPSTHExpends(~TotalUnitSess_excluInds,:);
-UsedAreaTypes = cat(1,UsedUnitCellDatasAll{:,8});
+UsedAreaTypes = AllAreaTypes(~TotalUnitSess_excluInds);
 [ExistAreas,~,UsedAreaNewIndex] = unique(UsedAreaTypes);
 NumExistArea = length(ExistAreas);
 
@@ -2337,7 +2339,7 @@ RespTypeGrInds(isnan(RespTypeGrInds)) = 11;
 %% test with tsne clustering
 % figure('position',[100 100 1200 840])
 % figure;
-Perplexitys = 80;
+Perplexitys = 120;
 nPCs = 100;
 Algorithm = 'barneshut'; %'barneshut' for N > 1000 % 'exact' for small N
 Exag = 12;
@@ -2512,6 +2514,11 @@ save(dataSave,'SessBehavBoundsAll','UsedBehavSessInds','-v7.3');
 %% calculate single point prob and then fit overall performance
 UsedBehavSessBounds = SessBehavBoundsAll(UsedBehavSessInds,:);
 NumUsedSess = size(UsedBehavSessBounds,1);
+
+h11_1f = figure('position',[100 100 420 340]);
+hold on
+BoundColors = {[0.2 0.8 0.2 0.3],[0.8 0.5 0.2 0.3]};
+
 LowANDHighBoundProbs = zeros(7,NumUsedSess,2);
 for cSess = 1 : NumUsedSess
     cSessPointProbs = UsedBehavSessBounds{cSess,3};
@@ -2524,6 +2531,13 @@ for cSess = 1 : NumUsedSess
     
     LowANDHighBoundProbs(:,cSess,1) = LowBoundProbs;
     LowANDHighBoundProbs(:,cSess,2) = HighBoundProbs;
+    
+    cSessCurves = UsedBehavSessBounds{cSess,4};
+    cSesslowFitCurve = cSessCurves.lowfitmd.curve;
+    cSesshighFitCurve = cSessCurves.highfitmd.curve;
+    
+    plot(cSesslowFitCurve(:,1),cSesslowFitCurve(:,2),'Color',BoundColors{1},'linewidth',0.6);
+    plot(cSesshighFitCurve(:,1),cSesshighFitCurve(:,2),'Color',BoundColors{2},'linewidth',0.6);
 end
 
 %%
@@ -2552,7 +2566,7 @@ ParaBoundLim = ([UL;HighSP;LM]);
 HighBlockfit_curveAll = FitPsycheCurveWH_nx(OctaveMtx(:),HighBoundProbs(:),ParaBoundLim);
 HighCurveBounds = HighBlockfit_curveAll.ffit.u;
 
-hf = figure('position',[100 100 400 320]);
+h11_2f = figure('position',[100 100 400 340]);
 hold on
 plot(LowBlockfit_curveAll.curve(:,1),LowBlockfit_curveAll.curve(:,2),'Color',[0.2 0.8 0.2],'linewidth',1.4);
 plot(HighBlockfit_curveAll.curve(:,1),HighBlockfit_curveAll.curve(:,2),'Color',[0.8 0.5 0.2],'linewidth',1.4);
@@ -2568,6 +2582,32 @@ text(1.5,0.1,sprintf('N = %d',NumUsedSess),'FontSize',10);
 title(sprintf('Shifts = %.4f',HighCurveBounds - LowCurveBounds));
 set(gca,'xtick',AllOctaves,'xticklabel',cellstr(num2str(AllFreqs(:)/1000,'%.2f')),'ytick',0:0.2:1,...
     'xlim',[-0.1 2.1],'ylim',[-0.05 1.05],'FontSize',12);
+
+figure(h11_1f);
+plot(LowBlockfit_curveAll.curve(:,1),LowBlockfit_curveAll.curve(:,2),'Color',[0.2 0.8 0.2],'linewidth',2);
+plot(HighBlockfit_curveAll.curve(:,1),HighBlockfit_curveAll.curve(:,2),'Color',[0.8 0.5 0.2],'linewidth',2);
+xlabel('Frequency (kHz)');
+ylabel('Rightward choice');
+text(1.5,0.1,sprintf('N = %d',NumUsedSess),'FontSize',10);
+title(sprintf('Shifts = %.4f',HighCurveBounds - LowCurveBounds));
+set(gca,'xtick',AllOctaves,'xticklabel',cellstr(num2str(AllFreqs(:)/1000,'%.2f')),'ytick',0:0.2:1,...
+    'xlim',[-0.1 2.1],'ylim',[-0.05 1.05],'FontSize',12);
+
+%%
+% savePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\sessbehaviorsummary';
+savePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\sessbehaviorsummary';
+
+figSavePath1 = fullfile(savePath,'BoundShiftment Allcurve plots');
+
+saveas(h11_2f,figSavePath1);
+print(h11_2f,figSavePath1,'-dpdf','-bestfit');
+print(h11_2f,figSavePath1,'-dpng','-r350');
+
+figSavePath2 = fullfile(savePath,'BoundShiftment IndividualSess plots');
+
+saveas(h11_1f,figSavePath2);
+print(h11_1f,figSavePath2,'-dpdf','-bestfit');
+print(h11_1f,figSavePath2,'-dpng','-r350');
 
 
 %%
