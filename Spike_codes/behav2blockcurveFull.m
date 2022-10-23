@@ -17,6 +17,7 @@ OctTypes = log2(FreqTypes/FreqTypes(1));
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
 BlockCurveFitAll = cell(BlockSectionInfo.NumBlocks,4);
 LowANDHighColor = {[0.2 0.8 0.2],[0.8 0.5 0.2]};
+BlockLabel_xPos = linspace(0.4,1.6,BlockSectionInfo.NumBlocks);
 for cB = 1 : BlockSectionInfo.NumBlocks
     cB_trInds = BlockSectionInfo.BlockTrScales(cB,1):BlockSectionInfo.BlockTrScales(cB,2);
     cB_OctavAll = TrOctsAll(cB_trInds);
@@ -36,7 +37,9 @@ for cB = 1 : BlockSectionInfo.NumBlocks
         errorbar(OctTypes,BlockChoiceProbs,BlockChoiceProbCI(:,1),BlockChoiceProbCI(:,2),...
             'o','Color',cBColor,'linewidth',1)
         line([CurveBounds CurveBounds],[0 1],'Color',cBColor,'linewidth',0.75,'linestyle','--');
-        
+        BlockIndex_label_y = feval(Blockfit_curveAll.ffit,BlockLabel_xPos(cB));
+        text(BlockLabel_xPos(cB),BlockIndex_label_y,num2str(cB,'%d'),'Color','m','FontSize',...
+            14,'HorizontalAlignment','center');
     end
 end
 AllBlockTypes = cat(1,BlockCurveFitAll{:,1});

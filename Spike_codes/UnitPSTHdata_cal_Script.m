@@ -6,6 +6,9 @@ OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 4],[300 100],ProbNPSess.StimAlignedTim
 NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 NumFrameBins = size(NewBinnedDatas,3);
 
+OnsetBin = ProbNPSess.TriggerStartBin{ProbNPSess.CurrentSessInds} - 1;
+BaselineResp = mean(NewBinnedDatas(:,:,1:OnsetBin),3);
+
 %% find target cluster inds and IDs
 
 NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
@@ -144,7 +147,7 @@ end
 
 %%
 
-DataSavePath = fullfile(ksfolder,'SessPSTHdataSaveSM.mat');
+DataSavePath = fullfile(ksfolder,'SessPSTHdataSave.mat');
 save(DataSavePath,'UnitPSTHdataAll','ExistField_ClusIDs','FreqTypes','Numfieldnames',...
     'NewAdd_ExistAreaNames', 'AreaUnitNumbers','OutDataStrc','BlockSectionInfo',...
     'ExpendTraceAll','NumFrameBins','-v7.3');
