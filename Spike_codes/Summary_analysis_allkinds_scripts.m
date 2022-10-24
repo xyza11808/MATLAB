@@ -2610,6 +2610,127 @@ print(h11_1f,figSavePath2,'-dpdf','-bestfit');
 print(h11_1f,figSavePath2,'-dpng','-r350');
 
 
+%% ###################################################################################################
+% Summary codes 12: unit baseline response data summary
+%
+cclr
+%
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+
+BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
+        'Sheet',1);
+BrainAreasStrCC = BrainAreasStrC(2:end);
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
+BrainAreasStr = [BrainAreasStrCC(~EmptyInds)];
+
+%
+
+SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
+        'Sheet',1);
+SessionFoldersRaw = SessionFoldersC(2:end);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
+SessionFolders = SessionFoldersRaw(~EmptyInds);
+
+NumUsedSess = length(SessionFolders);
+NumAllTargetAreas = length(BrainAreasStr);
+%%
+TypeStrings = {'CorrRevTrs','CorrNonRevTrs','ErroRevTrs','ErroNonTrs'};
+
+AllSessUnitBaseFRzs = cell(NumUsedSess,1);
+
+for cS = 1 : NumUsedSess
+    
+%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    
+    ksfolder = fullfile(cSessPath,'ks2_5');
+    UsedFolderPath{cS} = ksfolder;
+    %
+    cSessbaseDatafile = fullfile(ksfolder,'BaselineRespData.mat');
+    cSessbaseDataStrc = load(cSessbaseDatafile,'BlockTypeResps','LowBlockBaseData',...
+        'HighBlockBaseData','BlockSectionInfo','AllUnitAreaStrs');
+    UnitTypefile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypes2.mat');
+    SessUnitTypeMtxStrc = load(UnitTypefile,'IsUnitGLMResp');
+    
+    cSessBlockTypeResp = cSessbaseDataStrc.BlockTypeResps;
+    cSessLowBlockBase = cSessbaseDataStrc.LowBlockBaseData;
+    cSessHighBlockBase = cSessbaseDataStrc.HighBlockBaseData;
+    BlockTypes = cSessbaseDataStrc.BlockSectionInfo.BlockTypes;
+    
+    cSessAllAreaStrs = cSessbaseDataStrc.AllUnitAreaStrs;
+    [AreaTypes, ~, AreaInds] = unique(cSessAllAreaStrs);
+    
+    UsedUnitNums = length(AreaInds);
+    NumAreas = length(AreaTypes);
+    Match2AllAreaInds = zeros(UsedUnitNums,1);
+    for cA = 1 : NumAreas
+        cA_Str = AreaTypes{cA};
+        cA_matchinds = find(matches(BrainAreasStr,cA_Str,'IgnoreCase',true));
+        if isempty(cA_matchinds)
+            cA_matchinds = NaN;
+        end
+        Match2AllAreaInds(AreaInds == cA) = cA_matchinds;
+    end
+    %
+    cSessLowANDHighBaseData = mat2cell([cSessLowBlockBase,cSessHighBlockBase],ones(UsedUnitNums,1),size(cSessLowBlockBase,2)*2);
+    cSessBlockwiseBaseCell_raw = mat2cell(cSessBlockTypeResp,ones(UsedUnitNums,1),size(cSessBlockTypeResp,2),...
+        size(cSessBlockTypeResp,3));
+    cSessBlockwiseBaseCell = cellfun(@squeeze,cSessBlockwiseBaseCell_raw,'un',0);
+    
+    FolderPathIndex = cS * ones(UsedUnitNums,1);
+    % temp solution
+    if size(SessUnitTypeMtxStrc.IsUnitGLMResp,1) > UsedUnitNums
+        SessUnitTypeMtxStrc.IsUnitGLMResp((UsedUnitNums+1):end,:) = [];
+    end
+    TypeMtx = mat2cell(SessUnitTypeMtxStrc.IsUnitGLMResp,ones(UsedUnitNums,1),size(SessUnitTypeMtxStrc.IsUnitGLMResp,2));
+    
+    SessMergedUnitPSTH = [cSessLowANDHighBaseData,cSessBlockwiseBaseCell,num2cell(Match2AllAreaInds),...
+        num2cell(FolderPathIndex),TypeMtx];
+    
+    AllSessUnitBaseFRzs(cS) = {SessMergedUnitPSTH};
+    
+end
+
+AllUnitBaseFR_zsed = cat(1,AllSessUnitBaseFRzs{:});
+
+%%
+
+AllUnitAreaInds = cat(1,AllUnitBaseFR_zsed{:,3});
+AllUnitBaseResp = cat(1,AllUnitBaseFR_zsed{:,1});
+% AllUnitBlockwiseResp = cat(3,AllUnitBaseFR_zsed{:,2}); % the blocknum is
+% different between sessions
+UsedDataInds = ~(sum(isnan(AllUnitBaseResp),2) | isnan(AllUnitAreaInds));
+
+UsedBaseResp = AllUnitBaseResp(UsedDataInds,:);
+UsedUnitAreaInds = AllUnitAreaInds(UsedDataInds);
+% UsedUnitBlockwiseResp = AllUnitBlockwiseResp(:,:,UsedDataInds);
+
+UsedUnitBaseResp_blockDiff = mean(UsedBaseResp(:,1:4),2) - mean(UsedBaseResp(:,5:8),2);
+[~, RespSortInds] = sort(UsedUnitBaseResp_blockDiff,'ascend');
+h12f = figure('position',[100 100 440 760]);
+imagesc(UsedBaseResp(RespSortInds,:),[-0.5 1]);%,[-0.5 1]
+colormap hot
+axispos = get(gca,'position');
+hbar = colorbar;
+Oldpos = get(hbar,'position');
+set(hbar,'position',[Oldpos(1)+0.08,Oldpos(2),Oldpos(3),Oldpos(4)*0.2]);
+set(gca,'position',[axispos(1)-0.02,axispos(2:4)]);
+set(gca,'xtick',1:8,'xticklabel',{'LowRTcorr','LowNRTcorr','LowRTerro','LowNRTerro',...
+    'HighRTcorr','HighNRTcorr','HighRTerro','HighNRTerro'},'ytick',[1 size(UsedBaseResp,1)],'FontSize',8);
+ylabel('Units')
+title('BlockWise baseline datas');
+set(gca,'FontSize',12);
+%%
+figSavePath12 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
+
+figfileSavePath12_1 = fullfile(figSavePath12,'Used unit baseline resp plot');
+saveas(h12f,figfileSavePath12_1);
+print(h12f,figfileSavePath12_1,'-dpdf','-bestfit');
+print(h12f,figfileSavePath12_1,'-dpng','-r350');
+
+
 %%
 % % sum(UsedSessNums > 5);
 % UpperThresData = max(MeanBoundData,[],'all');

@@ -129,7 +129,7 @@ for cClusIdInds = 1 : UnitClusIDNums
         text(cb_BlockEndsInds-1100,yscales(2)*0.98,num2str(BlockFRs(cB),'FR=%.2f'),'Color','m','FontSize',10);
     end
     xlabel('Time (s)');
-    ylabel('Firing rate (Hz)');
+    ylabel('Spike Amplitude (a.u.)');
     title(sprintf('ClusID = %d, OverAllFR = %.3f',cClusID,OverAllFR));
     set(gca,'FontSize',12);
     

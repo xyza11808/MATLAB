@@ -6,7 +6,7 @@ OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 4],[300 100],ProbNPSess.StimAlignedTim
 NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 NumFrameBins = size(NewBinnedDatas,3);
 
-OnsetBin = ProbNPSess.TriggerStartBin{ProbNPSess.CurrentSessInds} - 1;
+OnsetBin = OutDataStrc.TriggerStartBin - 1;
 BaselineResp = mean(NewBinnedDatas(:,:,1:OnsetBin),3);
 
 %% find target cluster inds and IDs

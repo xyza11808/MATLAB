@@ -1,4 +1,4 @@
-function correlograms = Spikeccgfun(SpikeTimes,SpikeClus,winsize,binsize,isSymmetrize)
+function correlograms = Spikeccgfun(SpikeTimes,SpikeClus,winsize,binsize,isSymmetrize,ClusterType)
 % function used to calculate the auto- and cross-correlation histograms
 % based on the discription in the book "theoritical neuroscience" page 28
 
@@ -18,7 +18,11 @@ end
 SpikeClus = SpikeClus(:);
 
 SpikeClus_inds = zeros(numel(SpikeClus),1);
-ClusterType = unique(SpikeClus);
+
+if ~exist('ClusterType','var')
+    ClusterType = unique(SpikeClus);
+end
+
 NumClus = length(ClusterType);
 for cClus = 1 : NumClus
     SpikeClus_inds(SpikeClus == ClusterType(cClus)) = cClus; % find the cluster Inds for each cluster
