@@ -1,3 +1,6 @@
+
+cclr
+
 FolderPath = pwd;
 load(fullfile(FolderPath,'NPClassHandleSaved.mat'));
 %%
@@ -38,7 +41,7 @@ ClusTemplate = readNPY(fullfile(FolderPath,'templates.npy'));
 WhiteningMtxInv = readNPY(fullfile(FolderPath,'whitening_mat_inv.npy'));
 TempMaxChn = readNPY(fullfile(FolderPath,'templates_maxChn.npy'));
 % unwhiten all the templates
-tempsUnW = zeros(size(ClusTemplate));
+tempsUnW = zeros(size(ClusTemplate),'single');
 for t = 1:size(ClusTemplate,1)
     tempsUnW(t,:,:) = squeeze(ClusTemplate(t,:,:))*WhiteningMtxInv;
 end
@@ -207,6 +210,12 @@ end
 %%
 if MergeOpInds == 1
     fprintf('No merge operation is needed in current session.\n');
+    FinalSPClusters = SpikeClus;
+    FinalSPMaxChn = TempMaxChn-1;
+    FinalTemplateUW = tempsUnW;
+    FinalksLabels = ksLabels;
+    FinalSPTimeSample = SpikeTimeSample;
+    return;
 end
 
 %% merge the found clusters that need further processing
@@ -221,8 +230,9 @@ AfterMergeSpikeClus = SpikeClus;
 AfterMergeSpikeTimeSample = SpikeTimeSample;
 AfterMergeksLabels = ksLabels;
 % AfterMergeSpikeAmps = SpikeAmplitude;
-AfterMergetempsUnW = [tempsUnW;zeros(CurrentMergeTimes,size(tempsUnW,2),size(tempsUnW,3))];
+AfterMergetempsUnW = [tempsUnW;zeros(CurrentMergeTimes,size(tempsUnW,2),size(tempsUnW,3),'single')];
 AfterMergeMaxChn = [TempMaxChn-1;zeros(CurrentMergeTimes,1)];
+%
 for cMer = 1 : CurrentMergeTimes
     cMerClus_inds = goodClus_Ismerged == cMer;
     cMerClus_IDs = GoodClusIDs(cMerClus_inds);
@@ -235,15 +245,15 @@ for cMer = 1 : CurrentMergeTimes
     Targettemplate = squeeze(tempsUnW(cMerTargetID+1,:,:));
     NumMergeClus = length(cMerClus_IDs);
     
-    fprintf('Merge %d of clusters:\n',NumMergeClus);
+    fprintf('Merge %d clusters:\n',NumMergeClus);
     disp(cMerClus_IDs');
-    fprintf('Into new cluster %d',NewClusIDs);
+    fprintf('Into new cluster %d.\n',NewClusIDs);
     
     for cMergClus = 1 : NumMergeClus
         AfterMergeSpikeClus(SpikeClus == cMerClus_IDs(cMergClus)) = NewClusIDs;
         AfterMergetempsUnW(cMerClus_IDs(cMergClus)+1,:,:) = 0;
         cMerClus_waveform = squeeze(tempsUnW(cMerClus_IDs(cMergClus)+1,:,cMerClus_MaxChn+1));
-        [xcf,lags,~] = crosscorr(TargetID_waveform,cMerClus_waveform);
+        [xcf,lags,~] = crosscorr(double(TargetID_waveform),double(cMerClus_waveform));
         [~,maxinds] = max(xcf);
         AfterMergeSpikeTimeSample(SpikeClus == cMerClus_IDs(cMergClus)) = SpikeTimeSample(SpikeClus == cMerClus_IDs(cMergClus))...
             - lags(maxinds);
@@ -422,6 +432,16 @@ AfterMerge1SPtimes = double(AfterMergeSpikeTimeSample)/SpikeStrc.sample_rate;
 %     end
 % 
 % end
+if sum(goodClus_Ismerged2 > 0) == 0
+    fprintf('Merge operation completes after one merge.\n');
+    FinalSPClusters = AfterMergeSpikeClus;
+    FinalSPMaxChn = AfterMergeMaxChn;
+    FinalTemplateUW = AfterMergetempsUnW;
+    FinalksLabels = AfterMergeksLabels;
+    FinalSPTimeSample = AfterMergeSpikeTimeSample;
+    return;
+end
+
 %% performing second time merge
 AM1NeedCheckClusIDs = AM1GoodClus(AM1NeedCheckInds);
 AM1NeedCheckClusMaxChn = AM1GoodClusMaxChn(AM1NeedCheckInds);
@@ -434,7 +454,7 @@ AM2SpikeClus = AfterMergeSpikeClus;
 AM2SpikeTimeSample = AfterMergeSpikeTimeSample;
 AM2ksLabels = AfterMergeksLabels;
 % AfterMergeSpikeAmps = SpikeAmplitude;
-AM2tempsUnW = [AfterMergetempsUnW;zeros(CurrentMergeTimes,size(AfterMergetempsUnW,2),size(AfterMergetempsUnW,3))];
+AM2tempsUnW = [AfterMergetempsUnW;zeros(CurrentMergeTimes,size(AfterMergetempsUnW,2),size(AfterMergetempsUnW,3),'single')];
 AM2MaxChn = [AfterMergeMaxChn;zeros(CurrentMergeTimes,1)];
 for cMer = 1 : CurrentMergeTimes
     cMerClus_inds = goodClus_Ismerged2 == cMer;
@@ -447,15 +467,15 @@ for cMer = 1 : CurrentMergeTimes
     NewClusIDs = BeforeMergeMaxClusID + cMer;
     Targettemplate = squeeze(AfterMergetempsUnW(cMerTargetID+1,:,:));
     NumMergeClus = length(cMerClus_IDs);
-    fprintf('Merge %d of clusters:\n',NumMergeClus);
+    fprintf('Merge %d clusters:\n',NumMergeClus);
     disp(cMerClus_IDs');
     fprintf('Into new cluster %d.\n',NewClusIDs);
     for cMergClus = 1 : NumMergeClus
         OldClusInds = AfterMergeSpikeClus == cMerClus_IDs(cMergClus);
-        AfterMergeSpikeClus(OldClusInds) = NewClusIDs;
-        AfterMergetempsUnW(cMerClus_IDs(cMergClus)+1,:,:) = 0;
+        AM2SpikeClus(OldClusInds) = NewClusIDs;
+        AM2tempsUnW(cMerClus_IDs(cMergClus)+1,:,:) = 0;
         cMerClus_waveform = squeeze(AfterMergetempsUnW(cMerClus_IDs(cMergClus)+1,:,cMerClus_MaxChn+1));
-        [xcf,lags,~] = crosscorr(TargetID_waveform,cMerClus_waveform);
+        [xcf,lags,~] = crosscorr(double(TargetID_waveform),double(cMerClus_waveform));
         [~,maxinds] = max(xcf);
         
         AM2SpikeTimeSample(OldClusInds) = AfterMergeSpikeTimeSample(OldClusInds)...
@@ -469,6 +489,84 @@ for cMer = 1 : CurrentMergeTimes
     AM2MaxChn(NewClusIDs+1) = cMerClus_MaxChn;
     
 end
+
+%% third time check
+[AM2NeedCheckInds,AM2GoodClusWaveShape,AM2GoodClusMaxChn,AM2GoodClus,AM2GoodClusFRs,AM2AllFRs,AM2ClusTypes] = ...
+    locateNeedCheckClus(AM2SpikeClus,...
+    AM2SpikeTimeSample,SpikeStrc,...
+    AM2tempsUnW,AM2MaxChn,AM2ksLabels,BlockEdgeTimes,TotalSampleTime);
+%%
+AM2SPtimes = double(AM2SpikeTimeSample)/SpikeStrc.sample_rate;
+[AM2CheckedID_targetIDs,goodClus_Ismerged3] = findMergeFun(AM2GoodClus, AM2GoodClusMaxChn, AM2NeedCheckInds,...
+    AM2GoodClusWaveShape,AM2GoodClusFRs,...
+    AM2SPtimes,AM2SpikeClus);
+
+if sum(goodClus_Ismerged3) == 0
+    fprintf('Merge operation completes after two merges.\n');
+    FinalSPClusters = AM2SpikeClus;
+    FinalSPMaxChn = AM2MaxChn;
+    FinalTemplateUW = AM2tempsUnW;
+    FinalksLabels = AM2ksLabels;
+    FinalSPTimeSample = AM2SpikeTimeSample;
+    return;
+end
+    
+%% performing third time merge
+if sum(goodClus_Ismerged3) == 0
+    fprintf('No merge operation is existed after the last check.\n');
+    return;
+end
+
+AM2NeedCheckClusIDs = AM2GoodClus(AM2NeedCheckInds);
+AM2NeedCheckClusMaxChn = AM2GoodClusMaxChn(AM2NeedCheckInds);
+AM2NeedCheckClusNums = length(AM2NeedCheckClusIDs);
+
+CurrentMergeTimes = max(goodClus_Ismerged3);
+BeforeMergeMaxClusID = max(AM2ClusTypes);
+% cMer = 1;
+AM3SpikeClus = AM2SpikeClus;
+AM3SpikeTimeSample = AM2SpikeTimeSample;
+AM3ksLabels = AM2ksLabels;
+% AfterMergeSpikeAmps = SpikeAmplitude;
+AM3tempsUnW = [AM2tempsUnW;zeros(CurrentMergeTimes,size(AM2tempsUnW,2),size(AM2tempsUnW,3))];
+AM3MaxChn = [AM2MaxChn;zeros(CurrentMergeTimes,1)];
+for cMer = 1 : CurrentMergeTimes
+    cMerClus_inds = goodClus_Ismerged3 == cMer;
+    cMerClus_IDs = AM2GoodClus(cMerClus_inds);
+    
+    cMerTargetID = AM2NeedCheckClusIDs(AM2CheckedID_targetIDs == cMer);
+    cMerClus_MaxChn = AM2NeedCheckClusMaxChn(AM2CheckedID_targetIDs == cMer);
+    TargetID_waveform = squeeze(AM2tempsUnW(cMerTargetID+1,:,cMerClus_MaxChn+1));
+    % assign a new clusterID to all merged IDs
+    NewClusIDs = BeforeMergeMaxClusID + cMer;
+    Targettemplate = squeeze(AM2tempsUnW(cMerTargetID+1,:,:));
+    NumMergeClus = length(cMerClus_IDs);
+    fprintf('Merge %d clusters:\n',NumMergeClus);
+    disp(cMerClus_IDs');
+    fprintf('Into new cluster %d.\n',NewClusIDs);
+    for cMergClus = 1 : NumMergeClus
+        OldClusInds = AM2SpikeClus == cMerClus_IDs(cMergClus);
+        AM3SpikeClus(OldClusInds) = NewClusIDs;
+        AM3tempsUnW(cMerClus_IDs(cMergClus)+1,:,:) = 0;
+        cMerClus_waveform = squeeze(AM2tempsUnW(cMerClus_IDs(cMergClus)+1,:,cMerClus_MaxChn+1));
+        [xcf,lags,~] = crosscorr(TargetID_waveform,cMerClus_waveform);
+        [~,maxinds] = max(xcf);
+        
+        AM3SpikeTimeSample(OldClusInds) = AM2SpikeTimeSample(OldClusInds)...
+            - lags(maxinds);
+%         cIDExcludeInds = AfterMergeksLabels.cluster_id == cMerClus_IDs(cMergClus);
+%         AfterMergeksLabels(cIDExcludeInds,:) = [];
+%         AfterMergeSpikeAmps(SpikeClus == cMerClus_IDs(cMergClus)) = SpikeAmplitude(SpikeClus == cMerClus_IDs(cMergClus))/ChangeRatio;
+    end
+    AM3ksLabels = [AM3ksLabels;{NewClusIDs,'good'}]; %#ok<*AGROW>
+    AM3tempsUnW(NewClusIDs+1,:,:) = Targettemplate;
+    AM3MaxChn(NewClusIDs+1) = cMerClus_MaxChn;
+    
+end
+
+
+
+
 
 
 

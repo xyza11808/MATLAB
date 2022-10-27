@@ -5,7 +5,7 @@ function [AM1NeedCheckInds,AM1GoodClusWaveShape,AM1GoodClusMaxChn,AM1GoodClus,AM
 
 AfterMerg1ClusTypes = unique(AfterMergeSpikeClus);
 % AfterMerg1ClusNum = length(AfterMerg1ClusTypes);
-AfterMerge1SPtimes = double(AfterMergeSpikeTimeSample)/SpikeStrc.sample_rate;
+AfterMerge1SPtimes = single(AfterMergeSpikeTimeSample)/SpikeStrc.sample_rate;
 
 AM1sedtempsUnW = AfterMergetempsUnW(AfterMerg1ClusTypes+1,:,:);
 AM1sedMaxChn = AfterMergeMaxChn(AfterMerg1ClusTypes+1);

@@ -55,11 +55,11 @@ for cCheckClus = 1 : AM1NeedCheckClusNums
                 PostMaxChnClusWave(:,cID) = squeeze(SameMaxChn_WaveDatas(cID,:,cCheckClusMaxChn+2));
             end
         end
-        corrs = corrcoef([CheckClusWaveShape',SameMaxChnClusWave]);
+        corrs = round(corrcoef([CheckClusWaveShape',SameMaxChnClusWave]),2);
 %         corrs = corrs - eye(size(corrs));
-        preCorrs = corrcoef([CheckClus_preWaveShap',PreMaxChnClusWave]);
+        preCorrs = round(corrcoef([CheckClus_preWaveShap',PreMaxChnClusWave]),2);
 %         preCorrs = preCorrs - eye(size(preCorrs));
-        postCorrs = corrcoef([CheckClus_afterWaveShap',PostMaxChnClusWave]);
+        postCorrs = round(corrcoef([CheckClus_afterWaveShap',PostMaxChnClusWave]),2);
 %         postCorrs = postCorrs - eye(size(postCorrs));
         
         AllCheckClusters = [cCheckClusID;SameMaxChn_clusIDs(:)];
@@ -86,15 +86,19 @@ for cCheckClus = 1 : AM1NeedCheckClusNums
 %             fprintf('In operation %d:\n',MergeOpInds);
 %             MergeOpInds = MergeOpInds + 1;
 %         end
-%
-        refracCond1 = tril(RefracBin,-1) >= 5 & (triu(RefracBin,1) >= 5)'...
-            & tril(SameMaxChn_Mtx,-1) < 3;
-        if RefracBin(1,1) > 4
-            SameWaveShapeCond2 = tril(corrs,-1) > 0.95 & (tril(preCorrs,-1) > 0.90 & tril(postCorrs,-1) > 0.90) ...
-                & RefracBin == -1;
-        else
-            SameWaveShapeCond2 = tril(corrs,-1) > 0.95 & (tril(preCorrs,-1) > 0.90 & tril(postCorrs,-1) > 0.90);
-        end
+        refracCond1_1 = tril(corrs,-1) > 0.7 & (tril(preCorrs,-1) > 0.90 & tril(postCorrs,-1) > 0.90) ;
+        refracCond1_2 = tril(corrs,-1) > 0.95 & (tril(preCorrs,-1) > 0.90 | tril(postCorrs,-1) > 0.90) ;
+        
+        refracCond1 = tril(RefracBin,-1) >= 4 & (triu(RefracBin,1) >= 4)'...
+            & tril(SameMaxChn_Mtx,-1) < 3 & (refracCond1_1 | refracCond1_2);
+        
+%         if RefracBin(1,1) > 4
+%             SameWaveShapeCond2 = tril(corrs,-1) >= 0.95 & (tril(preCorrs,-1) >= 0.95 & tril(postCorrs,-1) >= 0.95) ...
+%                 & RefracBin == -1;
+%         else
+            SameWaveShapeCond2 = tril(corrs,-1) >= 0.98 & (tril(preCorrs,-1) >= 0.95 & tril(postCorrs,-1) >= 0.95) ...
+                & tril(SameMaxChn_Mtx,-1) < 1;
+%         end
         FinalCheckMtx = refracCond1 | SameWaveShapeCond2;
         FinalCheckMtx(2:end,2:end) = false; % only the check Cluster ID related IDs were merged
         [MergeRow,MergeCol] = find(FinalCheckMtx); % in case of a single-direction inhibition effect
