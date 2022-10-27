@@ -47,7 +47,7 @@ end
 
 %%
 
-[ClusNeedCheckInds,GoodClusWaveShape,GoodClusMaxChn,GoodClusIDs,GoodClusFRs,AllFRs] = locateNeedCheckClus(SpikeClus,...
+[ClusNeedCheckInds,GoodClusWaveShape,GoodClusMaxChn,GoodClusIDs,GoodClusFRs,AllFRs,ClusTypesAll] = locateNeedCheckClus(SpikeClus,...
     SpikeTimeSample,SpikeStrc,...
     tempsUnW,TempMaxChn-1,ksLabels,BlockEdgeTimes,TotalSampleTime);
 
@@ -209,7 +209,7 @@ if MergeOpInds == 1
     fprintf('No merge operation is needed in current session.\n');
 end
 
-%% merge the found clusters needed processing
+%% merge the found clusters that need further processing
 NeedCheckClusIDs = GoodClusIDs(ClusNeedCheckInds);
 NeedCheckClusMaxChn = GoodClusMaxChn(ClusNeedCheckInds);
 NeedCheckClusNums = length(NeedCheckClusIDs);
@@ -234,6 +234,11 @@ for cMer = 1 : CurrentMergeTimes
     NewClusIDs = BeforeMergeMaxClusID + cMer;
     Targettemplate = squeeze(tempsUnW(cMerTargetID+1,:,:));
     NumMergeClus = length(cMerClus_IDs);
+    
+    fprintf('Merge %d of clusters:\n',NumMergeClus);
+    disp(cMerClus_IDs');
+    fprintf('Into new cluster %d',NewClusIDs);
+    
     for cMergClus = 1 : NumMergeClus
         AfterMergeSpikeClus(SpikeClus == cMerClus_IDs(cMergClus)) = NewClusIDs;
         AfterMergetempsUnW(cMerClus_IDs(cMergClus)+1,:,:) = 0;
@@ -253,7 +258,8 @@ for cMer = 1 : CurrentMergeTimes
 end
 
 %% calculate the cluster types after first time merge
-[AM1NeedCheckInds,AM1GoodClusWaveShape,AM1GoodClusMaxChn,AM1GoodClus,AM1GoodClusFRs,AM1AllFRs] = locateNeedCheckClus(AfterMergeSpikeClus,...
+[AM1NeedCheckInds,AM1GoodClusWaveShape,AM1GoodClusMaxChn,AM1GoodClus,AM1GoodClusFRs,AM1AllFRs,AM1ClusTypes] = ...
+    locateNeedCheckClus(AfterMergeSpikeClus,...
     AfterMergeSpikeTimeSample,SpikeStrc,...
     AfterMergetempsUnW,AfterMergeMaxChn,AfterMergeksLabels,BlockEdgeTimes,TotalSampleTime);
 
@@ -417,6 +423,52 @@ AfterMerge1SPtimes = double(AfterMergeSpikeTimeSample)/SpikeStrc.sample_rate;
 % 
 % end
 %% performing second time merge
+AM1NeedCheckClusIDs = AM1GoodClus(AM1NeedCheckInds);
+AM1NeedCheckClusMaxChn = AM1GoodClusMaxChn(AM1NeedCheckInds);
+AM1NeedCheckClusNums = length(AM1NeedCheckClusIDs);
+
+CurrentMergeTimes = max(goodClus_Ismerged2);
+BeforeMergeMaxClusID = max(AM1ClusTypes);
+% cMer = 1;
+AM2SpikeClus = AfterMergeSpikeClus;
+AM2SpikeTimeSample = AfterMergeSpikeTimeSample;
+AM2ksLabels = AfterMergeksLabels;
+% AfterMergeSpikeAmps = SpikeAmplitude;
+AM2tempsUnW = [AfterMergetempsUnW;zeros(CurrentMergeTimes,size(AfterMergetempsUnW,2),size(AfterMergetempsUnW,3))];
+AM2MaxChn = [AfterMergeMaxChn;zeros(CurrentMergeTimes,1)];
+for cMer = 1 : CurrentMergeTimes
+    cMerClus_inds = goodClus_Ismerged2 == cMer;
+    cMerClus_IDs = AM1GoodClus(cMerClus_inds);
+    
+    cMerTargetID = AM1NeedCheckClusIDs(AM1CheckedID_targetIDs == cMer);
+    cMerClus_MaxChn = AM1NeedCheckClusMaxChn(AM1CheckedID_targetIDs == cMer);
+    TargetID_waveform = squeeze(AfterMergetempsUnW(cMerTargetID+1,:,cMerClus_MaxChn+1));
+    % assign a new clusterID to all merged IDs
+    NewClusIDs = BeforeMergeMaxClusID + cMer;
+    Targettemplate = squeeze(AfterMergetempsUnW(cMerTargetID+1,:,:));
+    NumMergeClus = length(cMerClus_IDs);
+    fprintf('Merge %d of clusters:\n',NumMergeClus);
+    disp(cMerClus_IDs');
+    fprintf('Into new cluster %d.\n',NewClusIDs);
+    for cMergClus = 1 : NumMergeClus
+        OldClusInds = AfterMergeSpikeClus == cMerClus_IDs(cMergClus);
+        AfterMergeSpikeClus(OldClusInds) = NewClusIDs;
+        AfterMergetempsUnW(cMerClus_IDs(cMergClus)+1,:,:) = 0;
+        cMerClus_waveform = squeeze(AfterMergetempsUnW(cMerClus_IDs(cMergClus)+1,:,cMerClus_MaxChn+1));
+        [xcf,lags,~] = crosscorr(TargetID_waveform,cMerClus_waveform);
+        [~,maxinds] = max(xcf);
+        
+        AM2SpikeTimeSample(OldClusInds) = AfterMergeSpikeTimeSample(OldClusInds)...
+            - lags(maxinds);
+%         cIDExcludeInds = AfterMergeksLabels.cluster_id == cMerClus_IDs(cMergClus);
+%         AfterMergeksLabels(cIDExcludeInds,:) = [];
+%         AfterMergeSpikeAmps(SpikeClus == cMerClus_IDs(cMergClus)) = SpikeAmplitude(SpikeClus == cMerClus_IDs(cMergClus))/ChangeRatio;
+    end
+    AM2ksLabels = [AM2ksLabels;{NewClusIDs,'good'}]; %#ok<*AGROW>
+    AM2tempsUnW(NewClusIDs+1,:,:) = Targettemplate;
+    AM2MaxChn(NewClusIDs+1) = cMerClus_MaxChn;
+    
+end
 
 
 
