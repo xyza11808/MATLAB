@@ -4,6 +4,9 @@ function correlograms = Spikeccgfun(SpikeTimes,SpikeClus,winsize,binsize,isSymme
 
 % binsize should be in ms format, as well as the winsize variable
 % the spikeTimes is in seconds format
+[~,SortInds] = sort(SpikeTimes);
+SpikeTimes = SpikeTimes(SortInds);
+SpikeClus = SpikeClus(SortInds);
 if isempty(isSymmetrize)
     IsSymOuts = false;
 else
@@ -69,9 +72,12 @@ while any(spmasks(1:TotalSPNums-spshifts))
 %         disp(max(sptimebins));
 %         error('Somewhere is wrong!');
 %     end
-    
-    AddIndices = sub2ind(ccgdims,former_clusterInds(shift_mask_backup),...
-        latter_clusterInds(shift_mask_backup),sptimebins+1);
+    try
+        AddIndices = sub2ind(ccgdims,former_clusterInds(shift_mask_backup),...
+            latter_clusterInds(shift_mask_backup),min(sptimebins+1,ccgdims(3)));
+    catch ME
+        fprintf('Inds error.\n');
+    end
 %     [Types,Counts] = uniAndcount(AddIndices); % very very slow...
     Counts = accumarray(AddIndices,1);
     Types = find(Counts);

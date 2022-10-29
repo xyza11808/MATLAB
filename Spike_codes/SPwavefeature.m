@@ -1,4 +1,4 @@
-function wavefeature = SPwavefeature(waveform,timewin)
+function wavefeature = SPwavefeature(waveform,timewin,toughpeakinds)
 % this function is used to extract waveform features 
 % used features:
 %       tough-to-peak time:             tough2peakT
@@ -8,10 +8,13 @@ function wavefeature = SPwavefeature(waveform,timewin)
 %           indication of neuritic spike
 BaselineAvgInds = min(abs(timewin(1)),10);
 waveform = waveform - mean(waveform(1:BaselineAvgInds)); % adjust baseline to 0 position
-
-[~, toughInds] = min(waveform); %abs(timewin(1))+1;
-[postPeakValue, postPeakInds] = max(waveform(toughInds:end));
-postPeakIndex = postPeakInds + toughInds-1;
+% 
+% [~, toughInds] = min(waveform(10:end)); %abs(timewin(1))+1;
+% toughInds = toughInds + 9;
+% [postPeakValue, postPeakInds] = max(waveform(toughInds:end));
+% postPeakIndex = postPeakInds + toughInds-1;
+toughInds = toughpeakinds(1);
+postPeakIndex = toughpeakinds(2);
 
 wavefeature.toughPeakInds = [toughInds, postPeakIndex];
 wavefeature.WaveAmplitude = postPeakValue - waveform(toughInds);

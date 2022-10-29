@@ -1,0 +1,74 @@
+[
+  {
+    "directory": "E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves",
+    "command": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2021a\\3P.instrset\\mingw_w64.instrset\\bin\\g++ -c -fexceptions -fno-omit-frame-pointer -std=c++11 -m64 -DMATLAB_MEX_FILE  -DMATLAB_MEX_FILE -O2 -fwrapv -DNDEBUG -std=c++11 -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\\interface\" -I \"C:\\Program Files\\Polyspace\\R2021a\\extern\\include\" -I \".\" -DMODEL=ReadSampleWaves_mex -D__USE_MINGW_ANSI_STDIO=1 -DMW_NEEDS_VERSION_H -fopenmp  ReadSampleWaves_data.cpp -o build/win64/ReadSampleWaves_data.o",
+    "file": "ReadSampleWaves_data.cpp",
+    "output": "build/win64/ReadSampleWaves_data.o"
+  },
+  {
+    "directory": "E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves",
+    "command": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2021a\\3P.instrset\\mingw_w64.instrset\\bin\\g++ -c -fexceptions -fno-omit-frame-pointer -std=c++11 -m64 -DMATLAB_MEX_FILE  -DMATLAB_MEX_FILE -O2 -fwrapv -DNDEBUG -std=c++11 -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\\interface\" -I \"C:\\Program Files\\Polyspace\\R2021a\\extern\\include\" -I \".\" -DMODEL=ReadSampleWaves_mex -D__USE_MINGW_ANSI_STDIO=1 -DMW_NEEDS_VERSION_H -fopenmp  rt_nonfinite.cpp -o build/win64/rt_nonfinite.o",
+    "file": "rt_nonfinite.cpp",
+    "output": "build/win64/rt_nonfinite.o"
+  },
+  {
+    "directory": "E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves",
+    "command": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2021a\\3P.instrset\\mingw_w64.instrset\\bin\\g++ -c -fexceptions -fno-omit-frame-pointer -std=c++11 -m64 -DMATLAB_MEX_FILE  -DMATLAB_MEX_FILE -O2 -fwrapv -DNDEBUG -std=c++11 -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\\interface\" -I \"C:\\Program Files\\Polyspace\\R2021a\\extern\\include\" -I \".\" -DMODEL=ReadSampleWaves_mex -D__USE_MINGW_ANSI_STDIO=1 -DMW_NEEDS_VERSION_H -fopenmp  ReadSampleWaves_initialize.cpp -o build/win64/ReadSampleWaves_initialize.o",
+    "file": "ReadSampleWaves_initialize.cpp",
+    "output": "build/win64/ReadSampleWaves_initialize.o"
+  },
+  {
+    "directory": "E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves",
+    "command": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2021a\\3P.instrset\\mingw_w64.instrset\\bin\\g++ -c -fexceptions -fno-omit-frame-pointer -std=c++11 -m64 -DMATLAB_MEX_FILE  -DMATLAB_MEX_FILE -O2 -fwrapv -DNDEBUG -std=c++11 -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\\interface\" -I \"C:\\Program Files\\Polyspace\\R2021a\\extern\\include\" -I \".\" -DMODEL=ReadSampleWaves_mex -D__USE_MINGW_ANSI_STDIO=1 -DMW_NEEDS_VERSION_H -fopenmp  ReadSampleWaves_terminate.cpp -o build/win64/ReadSampleWaves_terminate.o",
+    "file": "ReadSampleWaves_terminate.cpp",
+    "output": "build/win64/ReadSampleWaves_terminate.o"
+  },
+  {
+    "directory": "E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves",
+    "command": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2021a\\3P.instrset\\mingw_w64.instrset\\bin\\g++ -c -fexceptions -fno-omit-frame-pointer -std=c++11 -m64 -DMATLAB_MEX_FILE  -DMATLAB_MEX_FILE -O2 -fwrapv -DNDEBUG -std=c++11 -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\\interface\" -I \"C:\\Program Files\\Polyspace\\R2021a\\extern\\include\" -I \".\" -DMODEL=ReadSampleWaves_mex -D__USE_MINGW_ANSI_STDIO=1 -DMW_NEEDS_VERSION_H -fopenmp  ReadSampleWaves.cpp -o build/win64/ReadSampleWaves.o",
+    "file": "ReadSampleWaves.cpp",
+    "output": "build/win64/ReadSampleWaves.o"
+  },
+  {
+    "directory": "E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves",
+    "command": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2021a\\3P.instrset\\mingw_w64.instrset\\bin\\g++ -c -fexceptions -fno-omit-frame-pointer -std=c++11 -m64 -DMATLAB_MEX_FILE  -DMATLAB_MEX_FILE -O2 -fwrapv -DNDEBUG -std=c++11 -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\\interface\" -I \"C:\\Program Files\\Polyspace\\R2021a\\extern\\include\" -I \".\" -DMODEL=ReadSampleWaves_mex -D__USE_MINGW_ANSI_STDIO=1 -DMW_NEEDS_VERSION_H -fopenmp  eml_i64dplus.cpp -o build/win64/eml_i64dplus.o",
+    "file": "eml_i64dplus.cpp",
+    "output": "build/win64/eml_i64dplus.o"
+  },
+  {
+    "directory": "E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves",
+    "command": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2021a\\3P.instrset\\mingw_w64.instrset\\bin\\g++ -c -fexceptions -fno-omit-frame-pointer -std=c++11 -m64 -DMATLAB_MEX_FILE  -DMATLAB_MEX_FILE -O2 -fwrapv -DNDEBUG -std=c++11 -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\\interface\" -I \"C:\\Program Files\\Polyspace\\R2021a\\extern\\include\" -I \".\" -DMODEL=ReadSampleWaves_mex -D__USE_MINGW_ANSI_STDIO=1 -DMW_NEEDS_VERSION_H -fopenmp  fileManager.cpp -o build/win64/fileManager.o",
+    "file": "fileManager.cpp",
+    "output": "build/win64/fileManager.o"
+  },
+  {
+    "directory": "E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves",
+    "command": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2021a\\3P.instrset\\mingw_w64.instrset\\bin\\g++ -c -fexceptions -fno-omit-frame-pointer -std=c++11 -m64 -DMATLAB_MEX_FILE  -DMATLAB_MEX_FILE -O2 -fwrapv -DNDEBUG -std=c++11 -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\\interface\" -I \"C:\\Program Files\\Polyspace\\R2021a\\extern\\include\" -I \".\" -DMODEL=ReadSampleWaves_mex -D__USE_MINGW_ANSI_STDIO=1 -DMW_NEEDS_VERSION_H -fopenmp  interface/_coder_ReadSampleWaves_api.cpp -o build/win64/_coder_ReadSampleWaves_api.o",
+    "file": "interface/_coder_ReadSampleWaves_api.cpp",
+    "output": "build/win64/_coder_ReadSampleWaves_api.o"
+  },
+  {
+    "directory": "E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves",
+    "command": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2021a\\3P.instrset\\mingw_w64.instrset\\bin\\g++ -c -fexceptions -fno-omit-frame-pointer -std=c++11 -m64 -DMATLAB_MEX_FILE  -DMATLAB_MEX_FILE -O2 -fwrapv -DNDEBUG -std=c++11 -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\\interface\" -I \"C:\\Program Files\\Polyspace\\R2021a\\extern\\include\" -I \".\" -DMODEL=ReadSampleWaves_mex -D__USE_MINGW_ANSI_STDIO=1 -DMW_NEEDS_VERSION_H -fopenmp  interface/_coder_ReadSampleWaves_mex.cpp -o build/win64/_coder_ReadSampleWaves_mex.o",
+    "file": "interface/_coder_ReadSampleWaves_mex.cpp",
+    "output": "build/win64/_coder_ReadSampleWaves_mex.o"
+  },
+  {
+    "directory": "E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves",
+    "command": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2021a\\3P.instrset\\mingw_w64.instrset\\bin\\g++ -c -fexceptions -fno-omit-frame-pointer -std=c++11 -m64 -DMATLAB_MEX_FILE  -DMATLAB_MEX_FILE -O2 -fwrapv -DNDEBUG -std=c++11 -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\\interface\" -I \"C:\\Program Files\\Polyspace\\R2021a\\extern\\include\" -I \".\" -DMODEL=ReadSampleWaves_mex -D__USE_MINGW_ANSI_STDIO=1 -DMW_NEEDS_VERSION_H -fopenmp  ReadSampleWaves_mexutil.cpp -o build/win64/ReadSampleWaves_mexutil.o",
+    "file": "ReadSampleWaves_mexutil.cpp",
+    "output": "build/win64/ReadSampleWaves_mexutil.o"
+  },
+  {
+    "directory": "E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves",
+    "command": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2021a\\3P.instrset\\mingw_w64.instrset\\bin\\g++ -c -fexceptions -fno-omit-frame-pointer -std=c++11 -m64 -DMATLAB_MEX_FILE  -DMATLAB_MEX_FILE -O2 -fwrapv -DNDEBUG -std=c++11 -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\\interface\" -I \"C:\\Program Files\\Polyspace\\R2021a\\extern\\include\" -I \".\" -DMODEL=ReadSampleWaves_mex -D__USE_MINGW_ANSI_STDIO=1 -DMW_NEEDS_VERSION_H -fopenmp  interface/_coder_ReadSampleWaves_info.cpp -o build/win64/_coder_ReadSampleWaves_info.o",
+    "file": "interface/_coder_ReadSampleWaves_info.cpp",
+    "output": "build/win64/_coder_ReadSampleWaves_info.o"
+  },
+  {
+    "directory": "E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves",
+    "command": "C:\\ProgramData\\MATLAB\\SupportPackages\\R2021a\\3P.instrset\\mingw_w64.instrset\\bin\\g++ -c -fexceptions -fno-omit-frame-pointer -std=c++11 -m64 -DMATLAB_MEX_FILE  -DMATLAB_MEX_FILE -O2 -fwrapv -DNDEBUG -std=c++11 -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\" -I \"E:\\codes\\matcodes\\MATLAB\\Spike_codes\\codegen\\mex\\ReadSampleWaves\\interface\" -I \"C:\\Program Files\\Polyspace\\R2021a\\extern\\include\" -I \".\" -DMODEL=ReadSampleWaves_mex -D__USE_MINGW_ANSI_STDIO=1 -DMW_NEEDS_VERSION_H -fopenmp  \"C:/Program Files/Polyspace/R2021a/extern/version/cpp_mexapi_version.cpp\" -o build/win64/cpp_mexapi_version.o",
+    "file": "C:/Program Files/Polyspace/R2021a/extern/version/cpp_mexapi_version.cpp",
+    "output": "build/win64/cpp_mexapi_version.o"
+  }
+]

@@ -1,0 +1,53 @@
+# CompilerName=mingw64
+# Mode=optim
+ninja_required_version = 1.3
+
+# Basic folders
+root = .
+builddir = $root/build/win64
+matlabdir = C:/Program Files/Polyspace/R2021a
+startdir = E:/codes/matcodes/MATLAB/Spike_codes
+
+# Toolchain information
+cc = C:\ProgramData\MATLAB\SupportPackages\R2021a\3P.instrset\mingw_w64.instrset\bin\gcc
+cxx = C:\ProgramData\MATLAB\SupportPackages\R2021a\3P.instrset\mingw_w64.instrset\bin\g++
+linker = C:\ProgramData\MATLAB\SupportPackages\R2021a\3P.instrset\mingw_w64.instrset\bin\gcc
+linkerxx = C:\ProgramData\MATLAB\SupportPackages\R2021a\3P.instrset\mingw_w64.instrset\bin\g++
+
+cflags =  -c -fexceptions -fno-omit-frame-pointer -m64 -DMATLAB_MEX_FILE  -DMATLAB_MEX_FILE -O2 -fwrapv -DNDEBUG -std=c99 -I "E:\codes\matcodes\MATLAB\Spike_codes\codegen\mex\ReadSampleWaves" -I "E:\codes\matcodes\MATLAB\Spike_codes" -I "E:\codes\matcodes\MATLAB\Spike_codes\codegen\mex\ReadSampleWaves\interface" -I "C:\Program Files\Polyspace\R2021a\extern\include" -I "." -DMODEL=ReadSampleWaves_mex -D__USE_MINGW_ANSI_STDIO=1 -DMW_NEEDS_VERSION_H -fopenmp 
+
+cxxflags =  -c -fexceptions -fno-omit-frame-pointer -std=c++11 -m64 -DMATLAB_MEX_FILE  -DMATLAB_MEX_FILE -O2 -fwrapv -DNDEBUG -std=c++11 -I "E:\codes\matcodes\MATLAB\Spike_codes\codegen\mex\ReadSampleWaves" -I "E:\codes\matcodes\MATLAB\Spike_codes" -I "E:\codes\matcodes\MATLAB\Spike_codes\codegen\mex\ReadSampleWaves\interface" -I "C:\Program Files\Polyspace\R2021a\extern\include" -I "." -DMODEL=ReadSampleWaves_mex -D__USE_MINGW_ANSI_STDIO=1 -DMW_NEEDS_VERSION_H -fopenmp 
+
+ldflags =  -m64 -Wl,--no-undefined -shared -static -L"C:\Program Files\Polyspace\R2021a\extern\lib\win64\mingw64" -llibmx -llibmex -llibmat -lm -llibmwlapack -llibmwblas -llibMatlabDataArray -llibMatlabEngine  -o "ReadSampleWaves_mex.mexw64" -llibemlrt -llibcovrt -llibut -llibmwmathutil -fopenmp
+
+# Build Rules
+rule cc
+    command = $cc $cflags $in -o $out
+
+rule cxx
+    command = $cxx $cxxflags $in -o $out
+
+rule link
+    command = $linker @$out.rsp $ldflags
+    rspfile = $out.rsp
+    rspfile_content = $in
+
+rule linkxx
+    command = $linkerxx $in $ldflags
+
+# Build
+build $builddir/ReadSampleWaves_data.o : cxx $root/ReadSampleWaves_data.cpp
+build $builddir/rt_nonfinite.o : cxx $root/rt_nonfinite.cpp
+build $builddir/ReadSampleWaves_initialize.o : cxx $root/ReadSampleWaves_initialize.cpp
+build $builddir/ReadSampleWaves_terminate.o : cxx $root/ReadSampleWaves_terminate.cpp
+build $builddir/ReadSampleWaves.o : cxx $root/ReadSampleWaves.cpp
+build $builddir/eml_i64dplus.o : cxx $root/eml_i64dplus.cpp
+build $builddir/fileManager.o : cxx $root/fileManager.cpp
+build $builddir/_coder_ReadSampleWaves_api.o : cxx $root/interface/_coder_ReadSampleWaves_api.cpp
+build $builddir/_coder_ReadSampleWaves_mex.o : cxx $root/interface/_coder_ReadSampleWaves_mex.cpp
+build $builddir/ReadSampleWaves_mexutil.o : cxx $root/ReadSampleWaves_mexutil.cpp
+build $builddir/_coder_ReadSampleWaves_info.o : cxx $root/interface/_coder_ReadSampleWaves_info.cpp
+build $builddir/cpp_mexapi_version.o : cxx $matlabdir/extern/version/cpp_mexapi_version.cpp
+
+# Link
+build $root\ReadSampleWaves_mex.mexw64 : linkxx $builddir/ReadSampleWaves_data.o $builddir/rt_nonfinite.o $builddir/ReadSampleWaves_initialize.o $builddir/ReadSampleWaves_terminate.o $builddir/ReadSampleWaves.o $builddir/eml_i64dplus.o $builddir/fileManager.o $builddir/_coder_ReadSampleWaves_api.o $builddir/_coder_ReadSampleWaves_mex.o $builddir/ReadSampleWaves_mexutil.o $builddir/_coder_ReadSampleWaves_info.o $builddir/cpp_mexapi_version.o 
