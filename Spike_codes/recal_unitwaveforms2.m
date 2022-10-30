@@ -9,11 +9,12 @@ TrigTimeData = load(fullfile(ksfolder,'TrigTimeANDallSampNum.mat'));
 
 SPClusTypes = unique(FinalSPClusters);
 SPClusLabels = FinalksLabels.KSLabel(SPClusTypes+1);
+SPClusMaxChn = FinalSPMaxChn(SPClusTypes+1);
 SPClusGoodClusInds = cellfun(@(x) strcmpi(x,'good'),SPClusLabels);
 SPTimes = single(FinalSPTimeSample)/30000;
 
 GoodClusTypes = SPClusTypes(SPClusGoodClusInds);
-GoodClusMaxChn = FinalSPMaxChn(SPClusGoodClusInds);
+GoodClusMaxChn = SPClusMaxChn(SPClusGoodClusInds);
 
 OnAndOffTime4Task = [TrigTimeData.TaskTrigOnTimes(1), TrigTimeData.TaskTrigOnTimes(end)];
 TaskDur = diff(OnAndOffTime4Task);
@@ -54,10 +55,21 @@ ftempid = fopen(fullpaths);
 WaveWinSamples = [-30,51];
 WaveSampleLen = diff(WaveWinSamples);
 NumofUnit = length(AboveThresClusIDs);
-UnitDatas = cell(NumofUnit,2);
-UnitFeatures = cell(NumofUnit,5);
+SavingClusLen = 150; % num of clusters to be saved after certain number of units
+SavingTimes = ceil(NumofUnit/SavingClusLen);
+cSavIndex = 1;
 for cUnit = 1 : NumofUnit
     % cUnit = 137;
+    if mod(cUnit, SavingClusLen) == 1
+        if (NumofUnit - cUnit) > SavingClusLen
+            UnitDatas = cell(SavingClusLen,3);
+            UnitFeatures = cell(SavingClusLen,5);
+        else
+            cBLength = NumofUnit - cUnit;
+            UnitDatas = cell(cBLength,3);
+            UnitFeatures = cell(cBLength,5);
+        end
+    end
     cClusInds = AboveThresClusIDs(cUnit);
     cClusChannel = AboveThresClusMaxChn(cUnit)+1;
     cClus_Sptimes = FinalSPTimeSample(FinalSPClusters == cClusInds);
@@ -97,9 +109,11 @@ for cUnit = 1 : NumofUnit
         AvgWaves = mean(cspWaveform,'omitnan');
         UnitDatas{cUnit,2} = squeeze(mean(AllChannelWaveData,'omitnan'));
     end
-    UnitDatas{cUnit,1} = cspWaveform;
+    UnitDatas{cUnit,1} = single(cspWaveform);
+%     UnitDatas{cUnit,2} = single(AllChannelWaveData);
+    UnitDatas{cUnit,3} = cClusInds;
+    clearvars AllChannelWaveData cspWaveform
     
-    %
     plot(AvgWaves);
     try
         [isabnorm,isUsedVec,waveAmplitude,toughPeakInds] = iswaveformatypical(AvgWaves,WaveWinSamples,false);
@@ -112,7 +126,7 @@ for cUnit = 1 : NumofUnit
     %         fprintf('Too few spikes for calculation.\n');
     %     end
     try
-        wavefeature = SPwavefeature(AvgWaves,WaveWinSamples);
+        wavefeature = SPwavefeature(AvgWaves,WaveWinSamples,toughPeakInds);
         text(6,0.8*max(AvgWaves),{sprintf('tough2peak = %d',wavefeature.tough2peakT);...
             sprintf('posthyper = %d',wavefeature.postHyperT)},'FontSize',8);
         
@@ -123,6 +137,13 @@ for cUnit = 1 : NumofUnit
         wavefeature = [];
     end
     UnitFeatures(cUnit,:) = {wavefeature,isabnorm,isUsedVec,waveAmplitude,toughPeakInds};
+    
+    if mod(cUnit, SavingClusLen) == 0
+        TempSaveFile = fullfile(ksfolder,'AdjUnitWaveforms',sprintf('TempSavingData%d.mat',cSavIndex));
+        save(TempSaveFile,'UnitDatas', 'UnitFeatures', '-v7.3');
+        clearvars UnitDatas UnitFeatures 
+        cSavIndex = cSavIndex + 1;
+    end
     %
     set(gca,'FontSize',10);
     saveName = fullfile(waveformDataSavefile,sprintf('ClusID %d waveform plot save',cClusInds));
@@ -136,7 +157,7 @@ fclose(ftempid);
 toc
 %% obj.UnitWaves = UnitDatas;
 % obj.UnitWaveFeatures = UnitFeatures;
-save(fullfile(ksfolder,'AdjUnitWaveforms','AdjUnitwaveformDatas.mat'), 'UnitDatas', 'UnitFeatures', '-v7.3');
+% save(fullfile(ksfolder,'AdjUnitWaveforms','AdjUnitwaveformDatas.mat'), 'UnitDatas', 'UnitFeatures', '-v7.3');
 
 % %% using freqd in mex file
 %

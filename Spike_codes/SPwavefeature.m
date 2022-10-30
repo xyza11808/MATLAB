@@ -15,12 +15,13 @@ waveform = waveform - mean(waveform(1:BaselineAvgInds)); % adjust baseline to 0 
 % postPeakIndex = postPeakInds + toughInds-1;
 toughInds = toughpeakinds(1);
 postPeakIndex = toughpeakinds(2);
+postPeakValue = waveform(postPeakIndex);
 
 wavefeature.toughPeakInds = [toughInds, postPeakIndex];
 wavefeature.WaveAmplitude = postPeakValue - waveform(toughInds);
 wavefeature.NormWaves = waveform / wavefeature.WaveAmplitude; % normalize the waveform using wave amplitude
 
-wavefeature.tough2peakT = postPeakInds-1; % sample number, not in time
+wavefeature.tough2peakT = diff(toughpeakinds); % sample number, not in time
 
 % calculate reflection time
 % using second deviation peak after positive peak

@@ -9,11 +9,12 @@ TrigTimeData = load(fullfile(ksfolder,'TrigTimeANDallSampNum.mat'));
 
 SPClusTypes = unique(FinalSPClusters);
 SPClusLabels = FinalksLabels.KSLabel(SPClusTypes+1);
+SPClusMaxChn = FinalSPMaxChn(SPClusTypes+1);
 SPClusGoodClusInds = cellfun(@(x) strcmpi(x,'good'),SPClusLabels);
 SPTimes = single(FinalSPTimeSample)/30000;
 
 GoodClusTypes = SPClusTypes(SPClusGoodClusInds);
-GoodClusMaxChn = FinalSPMaxChn(SPClusGoodClusInds);
+GoodClusMaxChn = SPClusMaxChn(SPClusGoodClusInds);
 
 OnAndOffTime4Task = [TrigTimeData.TaskTrigOnTimes(1), TrigTimeData.TaskTrigOnTimes(end)];
 TaskDur = diff(OnAndOffTime4Task);
@@ -34,7 +35,7 @@ NumAboveThresClus = length(AboveThresClusIDs);
 
 
 %%
-RawFilePath = 'D:\tempdata\imec2';
+RawFilePath = 'K:\NPdatas\rawdata\b107a08_raw\A2021226_b107a08_NPSess02_g0\A2021226_b107a08_NPSess02_g0_imec0';
 RawFileStrc = dir(fullfile(RawFilePath,'*.ap.bin'));
 if length(RawFileStrc) < 1
     warning('Raw data file cannot be found.\n');
@@ -52,6 +53,7 @@ tic
 ftempid = fopen(fullpaths);
 
 WaveWinSamples = [-30,51];
+MaxSampleSps = 2000;
 WaveSampleLen = diff(WaveWinSamples);
 NumofUnit = length(AboveThresClusIDs);
 UnitDatas = cell(NumofUnit,2);
@@ -61,12 +63,12 @@ for cUnit = 1 : NumofUnit
     cClusInds = AboveThresClusIDs(cUnit);
     cClusChannel = AboveThresClusMaxChn(cUnit)+1;
     cClus_Sptimes = FinalSPTimeSample(FinalSPClusters == cClusInds);
-    if numel(cClus_Sptimes) < 2000
+    if numel(cClus_Sptimes) < MaxSampleSps
         UsedSptimes = cClus_Sptimes;
         SPNums = length(UsedSptimes);
     else
-        UsedSptimes = cClus_Sptimes(randsample(numel(cClus_Sptimes),2000));
-        SPNums = 2000;
+        UsedSptimes = cClus_Sptimes(randsample(numel(cClus_Sptimes),MaxSampleSps));
+        SPNums = MaxSampleSps;
     end
     cspWaveform = nan(SPNums,WaveSampleLen);
     AllChannelWaveData = nan(SPNums,384,WaveSampleLen);
@@ -89,16 +91,16 @@ for cUnit = 1 : NumofUnit
         end
     end
     
-    huf = figure('position',[100 100 320 220],'visible','off');
-    if size(cspWaveform,1) == 1
-        AvgWaves = cspWaveform;
-        UnitDatas{cUnit,2} = squeeze(AllChannelWaveData);
-    else
-        AvgWaves = mean(cspWaveform,'omitnan');
-        UnitDatas{cUnit,2} = squeeze(mean(AllChannelWaveData,'omitnan'));
-    end
+    huf = figure('position',[100 100 320 220],'visible','on');
+%     if size(cspWaveform,1) == 1
+%         AvgWaves = cspWaveform;
+%         UnitDatas{cUnit,2} = squeeze(AllChannelWaveData);
+%     else
+%         AvgWaves = mean(cspWaveform,'omitnan');
+%         UnitDatas{cUnit,2} = squeeze(mean(AllChannelWaveData,'omitnan'));
+%     end
     UnitDatas{cUnit,1} = cspWaveform;
-    
+    UnitDatas{cUnit,2} = single(AllChannelWaveData);
     %
     plot(AvgWaves);
     try
@@ -108,11 +110,9 @@ for cUnit = 1 : NumofUnit
     end
 %     title([num2str(cClusChannel,'chn=%d'),'  ',num2str(1-isabnorm,'Ispass = %d')]);
     title(sprintf('ClusID %d, Chn %d, IsPass %d',cClusInds,cClusChannel,1-isabnorm));
-%     if length(AvgWaves) == 1
-%         fprintf('Too few spikes for calculation.\n');
-%     end
+
     try
-        wavefeature = SPwavefeature(AvgWaves,WaveWinSamples);
+        wavefeature = SPwavefeature(AvgWaves,WaveWinSamples,toughPeakInds);
         text(6,0.8*max(AvgWaves),{sprintf('tough2peak = %d',wavefeature.tough2peakT);...
             sprintf('posthyper = %d',wavefeature.postHyperT)},'FontSize',8);
 
@@ -126,8 +126,9 @@ for cUnit = 1 : NumofUnit
     %
     set(gca,'FontSize',10);
     saveName = fullfile(waveformDataSavefile,sprintf('ClusID %d waveform plot save',cClusInds));
+    
     saveas(huf,saveName);
-    saveas(huf,saveName,'png');
+    print(huf,saveName,'-dpng');
     
     close(huf);
     

@@ -1,5 +1,5 @@
 cclr
-AssignFilePath = 'D:\UnitwaveRecalPath.xlsx';
+AssignFilePath = 'K:\UnitwaveRecalPath.xlsx';
 
 sortingcode_string = 'ks2_5';
 
@@ -18,17 +18,18 @@ RawFileFolders = RawFileFoldersAll(UsedFolderInds);
 
 %%
 
-for cProcess = 2 : 2% NumprocessedNPSess
+for cProcess = 1 : NumprocessedNPSess
     
-    try
-        ksfolder = fullfile(strrep(SessionFolders{cProcess},'F:','E:\NPCCGs'));
+%     try
+        ksfolder = fullfile(strrep(SessionFolders{cProcess},'E:\NPCCGs','I:\ksOutput_backup'));
+        
         fprintf('Processing session %d...\n', cProcess);
         RawFilePath = RawFileFolders{cProcess};
         recal_unitwaveforms2;
-    catch ME
-        disp(ME);
-        fprintf('Error processing for session %d.\n',cProcess);
-    end
+%     catch ME
+%         disp(ME);
+%         fprintf('Error processing for session %d.\n',cProcess);
+%     end
     
 end 
         
