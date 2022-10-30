@@ -15,7 +15,7 @@ DefaultValues = struct('Unitwaveform',false,...
     'SessSpiketimeCheck',false,...
     'Amplitude',20,... % threshold amplitude value, default is 20uv (70 uV for subcortical neurons, for cortical neurons the Amp should be smaller)
     'WaveformSpread',1000,... % 1000um, about 50 channels?.
-    'FiringRate',1,... % 1Hz
+    'FiringRate',0.01,... % 1Hz
     'SNR',3); 
 opsFieldName = fieldnames(selectops);
 NumInputFields = length(opsFieldName);

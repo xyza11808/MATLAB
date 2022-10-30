@@ -102,16 +102,20 @@ for cUnit = 1 : NumofUnit
     end
     
     huf = figure('position',[100 100 320 220],'visible','off');
+    cTempSaveInds = mod(cUnit,SavingClusLen);
+    if cTempSaveInds == 0
+        cTempSaveInds = SavingClusLen;
+    end
     if size(cspWaveform,1) == 1
         AvgWaves = cspWaveform;
-        UnitDatas{cUnit,2} = squeeze(AllChannelWaveData);
+        UnitDatas{cTempSaveInds,2} = squeeze(AllChannelWaveData);
     else
         AvgWaves = mean(cspWaveform,'omitnan');
-        UnitDatas{cUnit,2} = squeeze(mean(AllChannelWaveData,'omitnan'));
+        UnitDatas{cTempSaveInds,2} = squeeze(mean(AllChannelWaveData,'omitnan'));
     end
-    UnitDatas{cUnit,1} = single(cspWaveform);
-%     UnitDatas{cUnit,2} = single(AllChannelWaveData);
-    UnitDatas{cUnit,3} = cClusInds;
+    UnitDatas{cTempSaveInds,1} = single(cspWaveform);
+%     UnitDatas{cTempSaveInds,2} = single(AllChannelWaveData);
+    UnitDatas{cTempSaveInds,3} = cClusInds;
     clearvars AllChannelWaveData cspWaveform
     
     plot(AvgWaves);
@@ -136,9 +140,9 @@ for cUnit = 1 : NumofUnit
     catch
         wavefeature = [];
     end
-    UnitFeatures(cUnit,:) = {wavefeature,isabnorm,isUsedVec,waveAmplitude,toughPeakInds};
+    UnitFeatures(cTempSaveInds,:) = {wavefeature,isabnorm,isUsedVec,waveAmplitude,toughPeakInds};
     
-    if mod(cUnit, SavingClusLen) == 0
+    if mod(cUnit, SavingClusLen) == 0 || cUnit == NumofUnit
         TempSaveFile = fullfile(ksfolder,'AdjUnitWaveforms',sprintf('TempSavingData%d.mat',cSavIndex));
         save(TempSaveFile,'UnitDatas', 'UnitFeatures', '-v7.3');
         clearvars UnitDatas UnitFeatures 
