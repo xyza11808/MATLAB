@@ -37,7 +37,7 @@ end
 if nargin == 2 
     % if the inpput structure already contains the target data fields
    if ~isempty(obj.UnitWaves) && ~isempty(obj.UnitWaveFeatures)
-       if size(obj.UnitWaves,2) == 2 && size(obj.UnitWaveFeatures,2) == 5 % check whether the field data format is the latest
+       if size(obj.UnitWaves,2) == 3 && size(obj.UnitWaveFeatures,2) == 5 % check whether the field data format is the latest
            IsWaveDataGiven = 1;
            UnitWaves  = obj.UnitWaves;
            UnitFeature= obj.UnitWaveFeatures;
@@ -58,18 +58,18 @@ if FullClusSelectionops.Unitwaveform % whether performing isoform waveform exclu
 else
     waveformExclusion = false;
 end
-
+SpikeTimes = double(obj.SpikeTimeSample)/30000;
 if ~isempty(FullClusSelectionops.ISIviolation)
    ViolationFracThres = FullClusSelectionops.ISIviolation; % the default threshold fraction is 0.1
    refDur = 0.002;
    minISI = 0.0005;
-
-   AllClus = obj.FRIncludeClus;
+   
+   AllClus = obj.GoodClusIDs;
    NumClusters = length(AllClus);
    ClusISIvolFrac = zeros(NumClusters,1);
    for cClus = 1 : NumClusters
-       cClusSpiketime = obj.SpikeTimes(obj.SpikeClus == AllClus(cClus));
-       if obj.FRIncludeClusFRs(cClus) > 10 % in case of a fast spiking neuron, the refDur should be less
+       cClusSpiketime = SpikeTimes(obj.SpikeClus == AllClus(cClus));
+       if obj.GoodClusFRs(cClus) > 10 % in case of a fast spiking neuron, the refDur should be less
             [ClusISIvolFrac(cClus),~] = ISIViolations(cClusSpiketime, minISI, refDur/2);
        else
            [ClusISIvolFrac(cClus),~] = ISIViolations(cClusSpiketime, minISI, refDur);
@@ -128,7 +128,7 @@ if ~isempty(FullClusSelectionops.WaveformSpread) % waveform spread of all channe
     ToughPeakInds = cell2mat(UnitFeatures(:,5));
     SpreadLengthAll = zeros(size(UnitAllchnWaveData,1),1);
     for cUnit = 1 : size(UnitAllchnWaveData,1)
-        SpreadLengthAll(cUnit) = peakAmpSpreadFun(UnitAllchnWaveData{cUnit,2}, ToughPeakInds(cUnit,:), obj.FRIncludeChans(cUnit));
+        SpreadLengthAll(cUnit) = peakAmpSpreadFun(UnitAllchnWaveData{cUnit,2}, ToughPeakInds(cUnit,:), obj.GoodClusMaxChn(cUnit)+1);
     end
     AmpSpreadExcludeInds = SpreadLengthAll > FullClusSelectionops.WaveformSpread; % larger value indicates noise across all channels
     fprintf('AmpSpread exclusion fraction is %d/%d, %.4f...\n',sum(AmpSpreadExcludeInds),...
@@ -140,15 +140,17 @@ end
 
 if ~isempty(FullClusSelectionops.FiringRate) % check task period FR, make it larger than 1 Hz
     TaskSessStartTime = obj.UsedTrigOnTime{1}(1);
-    TaskSessEndTime = obj.UsedTrigOnTime{1}(end)+30; % extra 30 seconds after last trigger
-    TaskFrs = zeros(numel(obj.FRIncludeClus),1);
-    for cUU = 1 : numel(obj.FRIncludeClus)
-       cUSPTimes =  obj.SpikeTimes(obj.SpikeClus == obj.FRIncludeClus(cUU));
+    TaskSessEndTime = obj.UsedTrigOnTime{1}(end)+10; % extra 30 seconds after last trigger
+    TaskDur = TaskSessEndTime - TaskSessStartTime;
+    TaskFrs = zeros(numel(obj.GoodClusIDs),1);
+    for cUU = 1 : numel(obj.GoodClusIDs)
+       cUSPTimes =  obj.SpikeTimes(obj.SpikeClus == obj.GoodClusIDs(cUU));
        cUTask_sptimes = cUSPTimes(cUSPTimes > TaskSessStartTime & cUSPTimes < TaskSessEndTime);
-       TaskFrs(cUU) = numel(cUTask_sptimes)/(TaskSessEndTime - TaskSessStartTime);
+       TaskFrs(cUU) = numel(cUTask_sptimes)/TaskDur;
     end
     
     FRExcludeInds = TaskFrs < FullClusSelectionops.FiringRate; %obj.FRIncludeClusFRs <= FullClusSelectionops.FiringRate;
+%     FRExcludeInds = NewNPClusHandle.GoodClusFRs < FullClusSelectionops.FiringRate;
     fprintf('FR exclusion fraction is %d/%d, %.4f...\n',sum(FRExcludeInds),numel(FRExcludeInds),mean(FRExcludeInds));
 else
     FRExcludeInds = false;

@@ -28,7 +28,7 @@ for cClus = 1 : NumGoodClus
     WithinTaskFRs(cClus) = sum(TaskSPClus == GoodClusTypes(cClus))/TaskDur;
 end
 
-FRThres = WithinTaskFRs >= 0.1;
+FRThres = WithinTaskFRs >= 0.01;
 AboveThresClusIDs = GoodClusTypes(FRThres);
 AboveThresClusMaxChn = GoodClusMaxChn(FRThres);
 NumAboveThresClus = length(AboveThresClusIDs);
@@ -159,6 +159,7 @@ for cUnit = 1 : NumofUnit
 end
 fclose(ftempid);
 toc
+save(fullfile(ksfolder,'AdjUnitWaveforms','AboveThresClusters.mat'),'AboveThresClusIDs', 'AboveThresClusMaxChn','-v7.3');
 %% obj.UnitWaves = UnitDatas;
 % obj.UnitWaveFeatures = UnitFeatures;
 % save(fullfile(ksfolder,'AdjUnitWaveforms','AdjUnitwaveformDatas.mat'), 'UnitDatas', 'UnitFeatures', '-v7.3');

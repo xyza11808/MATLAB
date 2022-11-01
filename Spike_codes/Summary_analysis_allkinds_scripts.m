@@ -2403,8 +2403,8 @@ end
 %
 cclr
 
-AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 % BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
 %         'Sheet',1);
@@ -2419,7 +2419,14 @@ SessNumIndexCC = SessNumIndexC(2:end);
 % BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessNumIndexCC);
 SessNumIndex = SessNumIndexCC(~EmptyInds);
-%
+
+AnmLabelIndexC = readcell(AllSessFolderPathfile,'Range','F:F',...
+        'Sheet',1);
+AnmLabelIndexCC = AnmLabelIndexC(2:end);
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),AnmLabelIndexCC);
+AnmLabelIndex = AnmLabelIndexCC(~EmptyInds);
+AnmLabelIndex = cat(1,AnmLabelIndex{:});
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
         'Sheet',1);
@@ -2433,8 +2440,8 @@ SessbehavBoundNums = zeros(NumUsedSess,3);
 SessBehavBoundsAll = cell(NumUsedSess,4);
 for cS = 1 : NumUsedSess
     
-    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
-%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     UsedFolderPath{cS} = ksfolder;
@@ -2458,7 +2465,7 @@ for cS = 1 : NumUsedSess
     SessBehavBoundsAll(cS,:) = {OverAllBoundShift, MaxBoundShift, SessBoundStrc.BlockCurveFitAll, SessBoundStrc.BlockpsyInfo};
 end
 
-%%
+%% Session wise calculation plots
 SessIndexVec = cat(1,SessNumIndex{:});
 SessIndexType = unique(SessIndexVec);
 NumBehavSess = length(SessIndexType);
@@ -2469,6 +2476,7 @@ for cBehavSes = 1 : NumBehavSess
 end
 
 UsedBehavSessBounds = SessBehavBoundsAll(UsedBehavSessInds,:);
+UsedBehavSessAnmIndex = AnmLabelIndex(UsedBehavSessInds);
 %%
 MeanBoundDataAll = cat(1,UsedBehavSessBounds{:,1});
 MeanBoundData = MeanBoundDataAll(:,1:2);
@@ -2593,7 +2601,7 @@ title(sprintf('Shifts = %.4f',HighCurveBounds - LowCurveBounds));
 set(gca,'xtick',AllOctaves,'xticklabel',cellstr(num2str(AllFreqs(:)/1000,'%.2f')),'ytick',0:0.2:1,...
     'xlim',[-0.1 2.1],'ylim',[-0.05 1.05],'FontSize',12);
 
-%%
+%% save the results
 % savePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\sessbehaviorsummary';
 savePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\sessbehaviorsummary';
 
@@ -2610,6 +2618,120 @@ print(h11_1f,figSavePath2,'-dpdf','-bestfit');
 print(h11_1f,figSavePath2,'-dpng','-r350');
 
 
+%% plot the behavior results in animal wise manner
+
+AllFreqs = [4000, 5040,6350, 8000, 10079, 12699, 16000];
+AllOctaves = log2(AllFreqs/min(AllFreqs));
+UL = [0.5, 0.5, max(AllOctaves), 100];
+% LowSP = [min(LowBoundProbs(:)),1 - max(LowBoundProbs(:))-min(LowBoundProbs(:)), mean(AllOctaves), 1];
+LM = [0, 0, min(AllOctaves), 0];
+
+UsedBehavSessBounds = SessBehavBoundsAll(UsedBehavSessInds,:);
+UsedBehavSessAnmIndex = AnmLabelIndex(UsedBehavSessInds);
+AnmIndexTypes = unique(UsedBehavSessAnmIndex);
+
+NumUsedSess = size(UsedBehavSessBounds,1);
+NumAnms = length(AnmIndexTypes);
+
+LowANDHighBoundProbs = zeros(7,NumUsedSess,2);
+for cSess = 1 : NumUsedSess
+    cSessPointProbs = UsedBehavSessBounds{cSess,3};
+    cSessBlockInds = cat(1,cSessPointProbs{:,1});
+    cSessBlockProb = cat(3,cSessPointProbs{:,4});
+    LowBoundInds = cSessBlockInds == 0;
+    LowBoundProbs = mean(squeeze(cSessBlockProb(:,1,LowBoundInds)),2);
+    HighBoundInds = cSessBlockInds == 1;
+    HighBoundProbs = mean(squeeze(cSessBlockProb(:,1,HighBoundInds)),2);
+    
+    LowANDHighBoundProbs(:,cSess,1) = LowBoundProbs;
+    LowANDHighBoundProbs(:,cSess,2) = HighBoundProbs;
+    
+%     cSessCurves = UsedBehavSessBounds{cSess,4};
+%     cSesslowFitCurve = cSessCurves.lowfitmd.curve;
+%     cSesshighFitCurve = cSessCurves.highfitmd.curve;
+    
+%     plot(cSesslowFitCurve(:,1),cSesslowFitCurve(:,2),'Color',BoundColors{1},'linewidth',0.6);
+%     plot(cSesshighFitCurve(:,1),cSesshighFitCurve(:,2),'Color',BoundColors{2},'linewidth',0.6);
+end
+
+%% Construct_anmwiseCurve.
+UL = [0.5, 0.5, max(AllOctaves), 100];
+LM = [0, 0, min(AllOctaves), 0];
+
+h11_4f = figure('position',[100 100 420 340]);
+hold on
+BoundColors = {[0.2 0.8 0.2 0.4],[0.8 0.5 0.2 0.4]};
+AnmLowHighBounds = zeros(NumAnms,2);
+AnmBehavCurves = cell(NumAnms,2);
+for cAnm = 1 : NumAnms
+    cAnm_sessInds = UsedBehavSessAnmIndex == AnmIndexTypes(cAnm);
+    cAnm_LowHighBoundProbs = LowANDHighBoundProbs(:,cAnm_sessInds,:);
+    cAnmLowBoundProbs = cAnm_LowHighBoundProbs(:,:,1);
+    cAnmHighBoundProbs = cAnm_LowHighBoundProbs(:,:,2);
+    
+    OctaveMtx = repmat(AllOctaves(:),1,size(cAnmLowBoundProbs,2));
+    LowSP = [min(cAnmLowBoundProbs(:)),1 - max(cAnmLowBoundProbs(:))-min(cAnmLowBoundProbs(:)), mean(AllOctaves), 1];
+    HighSP = [min(cAnmHighBoundProbs(:)),1 - max(cAnmHighBoundProbs(:))-min(cAnmHighBoundProbs(:)), mean(AllOctaves), 1];
+    
+    ParaBoundLim = [UL;LowSP;LM];
+    LowBlockfit_curveAll = FitPsycheCurveWH_nx(OctaveMtx(:),cAnmLowBoundProbs(:),ParaBoundLim);
+    LowCurveBounds = LowBlockfit_curveAll.ffit.u;
+    
+    ParaBoundLim = [UL;HighSP;LM];
+    HighBlockfit_curveAll = FitPsycheCurveWH_nx(OctaveMtx(:),cAnmHighBoundProbs(:),ParaBoundLim);
+    HighCurveBounds = HighBlockfit_curveAll.ffit.u;
+    
+    cSesslowFitCurve = LowBlockfit_curveAll.curve;
+    cSesshighFitCurve = HighBlockfit_curveAll.curve;
+    plot(cSesslowFitCurve(:,1),cSesslowFitCurve(:,2),'Color',BoundColors{1},'linewidth',0.9);
+    plot(cSesshighFitCurve(:,1),cSesshighFitCurve(:,2),'Color',BoundColors{2},'linewidth',0.9);
+    
+    AnmLowHighBounds(cAnm,:) = [LowCurveBounds, HighCurveBounds];
+    AnmBehavCurves(cAnm,:) = {LowBlockfit_curveAll, HighBlockfit_curveAll};
+end
+
+LowBoundProbs = LowANDHighBoundProbs(:,:,1);
+HighBoundProbs = LowANDHighBoundProbs(:,:,2);
+OctaveMtx = repmat(AllOctaves(:),1,NumUsedSess);
+
+LowBoundProbsAvg = mean(LowBoundProbs,2);
+HighBoundProbsAvg = mean(HighBoundProbs,2);
+
+LowBoundProbsSEM = std(LowBoundProbs,[],2)/sqrt(size(LowBoundProbs,2));
+HighBoundProbsSEM = std(HighBoundProbs,[],2)/sqrt(size(HighBoundProbs,2));
+
+UL = [0.5, 0.5, max(AllOctaves), 100];
+LowSP = [min(LowBoundProbs(:)),1 - max(LowBoundProbs(:))-min(LowBoundProbs(:)), mean(AllOctaves), 1];
+LM = [0, 0, min(AllOctaves), 0];
+ParaBoundLim = ([UL;LowSP;LM]);
+LowBlockfit_curveAll = FitPsycheCurveWH_nx(OctaveMtx(:),LowBoundProbs(:),ParaBoundLim);
+LowCurveBounds = LowBlockfit_curveAll.ffit.u;
+
+HighSP = [min(HighBoundProbs(:)),1 - max(HighBoundProbs(:))-min(HighBoundProbs(:)), mean(AllOctaves), 1];
+ParaBoundLim = ([UL;HighSP;LM]);
+HighBlockfit_curveAll = FitPsycheCurveWH_nx(OctaveMtx(:),HighBoundProbs(:),ParaBoundLim);
+HighCurveBounds = HighBlockfit_curveAll.ffit.u;
+
+plot(LowBlockfit_curveAll.curve(:,1),LowBlockfit_curveAll.curve(:,2),'Color',[0.2 0.8 0.2],'linewidth',2);
+plot(HighBlockfit_curveAll.curve(:,1),HighBlockfit_curveAll.curve(:,2),'Color',[0.8 0.5 0.2],'linewidth',2);
+xlabel('Frequency (kHz)');
+ylabel('Rightward choice');
+text(1.5,0.1,sprintf('nAnm = %d',NumAnms),'FontSize',10);
+title(sprintf('Shifts = %.4f',HighCurveBounds - LowCurveBounds));
+set(gca,'xtick',AllOctaves,'xticklabel',cellstr(num2str(AllFreqs(:)/1000,'%.2f')),'ytick',0:0.2:1,...
+    'xlim',[-0.1 2.1],'ylim',[-0.05 1.05],'FontSize',12);
+
+%%
+% savePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\sessbehaviorsummary';
+savePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\sessbehaviorsummary';
+
+figSavePath4 = fullfile(savePath,'BoundShiftment IndividualAnm plots');
+
+saveas(h11_4f,figSavePath4);
+print(h11_4f,figSavePath4,'-dpdf','-bestfit');
+print(h11_4f,figSavePath4,'-dpng','-r350');
+
+save(fullfile(savePath,'AnmWiseBehavData_curveData.mat'),'AnmLowHighBounds','AnmBehavCurves','-v7.3')
 %% ###################################################################################################
 % Summary codes 12: unit baseline response data summary
 %

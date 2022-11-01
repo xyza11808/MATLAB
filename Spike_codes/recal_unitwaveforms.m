@@ -28,7 +28,7 @@ for cClus = 1 : NumGoodClus
     WithinTaskFRs(cClus) = sum(TaskSPClus == GoodClusTypes(cClus))/TaskDur;
 end
 
-FRThres = WithinTaskFRs >= 0.1;
+FRThres = WithinTaskFRs >= 0.01;
 AboveThresClusIDs = GoodClusTypes(FRThres);
 AboveThresClusMaxChn = GoodClusMaxChn(FRThres);
 NumAboveThresClus = length(AboveThresClusIDs);

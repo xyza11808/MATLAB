@@ -132,7 +132,7 @@ for cP = 1 : NumprocessedNPSess
         IstargetfieldExist(end) = true;
     end
     SessAreaIndexStrc.UsedAbbreviations = IstargetfieldExist;
-    SessAreaIndex_saveName = fullfile(cPath,'SessAreaIndexDataAligned.mat');
+    SessAreaIndex_saveName = fullfile(cPath,'SessAreaIndexDataNewAlign.mat');
     save(SessAreaIndex_saveName,'SessAreaIndexStrc','-v7.3');
     %
 end

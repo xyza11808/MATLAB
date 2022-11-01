@@ -18,21 +18,24 @@ classdef NPspikeDataMining
         SpikeClus
         SpikeTimeSample % spike time, in integer format, for indexing
         SpikeTimes % in seconds, float values
-        chnMaps
+%         chnMaps
         
         ClusterInfoAll
-        FRIncludeClus % only used units with higher than 1Hz FrameRate
-        FRIncludeChans % corresponded channel inds
-        FRUsedClusinds
-        FRIncludeClusFRs
-        FRUsedChnDepth
+%         FRIncludeClus % only used units with higher than 1Hz FrameRate
+%         FRIncludeChans % corresponded channel inds
+%         FRUsedClusinds
+%         FRIncludeClusFRs
+%         FRUsedChnDepth
+        GoodClusIDs
+        GoodClusFRs
+        GoodClusMaxChn
         SurviveInds = [] % used to indicate which cluster was kept after quality control
         
         UsedClus_IDs % Really
         ChannelUseds_id % used channel index
         RawClusANDchan_ids_All = {[],[]};
         UsedClusinds % inds indicating which cluster is to be used
-        UsedChnDepth
+%         UsedChnDepth
         ChannelAreaStrs = {}; % channel area strings
         UnitInclusionCriteria = [];
         
@@ -188,16 +191,16 @@ classdef NPspikeDataMining
                     'SessSpiketimeCheck',true,...
                     'Amplitude',10,... % threshold amplitude value, default is 70uv for subcortical neurons
                     'WaveformSpread',1000,... % 1000um, about 50 channels?.
-                    'FiringRate',1,... % 1Hz
+                    'FiringRate',0.02,... % 1Hz
                     'SNR',2); 
            end
            
            OverAllExcludeInds = UsedClusIndsCheckFun(obj,InputOps);
            
-           obj.UsedClus_IDs = obj.FRIncludeClus(~OverAllExcludeInds);
-           obj.ChannelUseds_id  = obj.FRIncludeChans(~OverAllExcludeInds);
-           obj.UsedClusinds  = obj.FRUsedClusinds(~OverAllExcludeInds);
-           obj.UsedChnDepth = obj.FRUsedChnDepth(~OverAllExcludeInds);
+           obj.UsedClus_IDs = obj.GoodClusIDs(~OverAllExcludeInds);
+           obj.ChannelUseds_id  = obj.GoodClusMaxChn(~OverAllExcludeInds);
+           obj.UsedClusinds  = find(~OverAllExcludeInds);
+%            obj.UsedChnDepth = obj.FRUsedChnDepth(~OverAllExcludeInds);
            obj.SurviveInds = ~OverAllExcludeInds;
            obj.UnitInclusionCriteria = InputOps;
         end
@@ -453,7 +456,7 @@ classdef NPspikeDataMining
                 return;
             end
             IsEventDataGiven = 0;
-            if length(varargin) > 0
+            if ~isempty(varargin)
                 if ~isempty(varargin{1})
                     StimEventTime = varargin{1}/1000; % convert into seconds
                     IsEventDataGiven = 1;
@@ -468,7 +471,7 @@ classdef NPspikeDataMining
                 end
             end
             smoothbin = smoothbin / 1000;
-            smoothbinfactor = smoothbin(1)/smoothbin(2);
+%             smoothbinfactor = smoothbin(1)/smoothbin(2);
             
             if isempty(obj.UsedTrigOnTime{obj.CurrentSessInds})
                 % load trigger scale time file
@@ -485,16 +488,16 @@ classdef NPspikeDataMining
             else
                obj.TrigAlignType{obj.CurrentSessInds} = 'trigger'; % zeros Bin is trigger
             end
-            %%
+            %
             
             histbin = [timeWin(1):smoothbin(2):0,smoothbin(2):smoothbin(2):timeWin(2)];
             obj.BinCenters = histbin(1:end-1)+smoothbin(2)/2;
             obj.TriggerStartBin{obj.CurrentSessInds} = find(obj.BinCenters > 0,1,'first');
             
             TrigNums = length(obj.UsedTrigOnTime{obj.CurrentSessInds});
-            TrigBinDatas = cell(TrigNums,2);
+            TrigBinDatas = cell(TrigNums,1);
 %             if isempty(obj.UsedClus_IDs)
-                calClusters = obj.FRIncludeClus;
+                calClusters = obj.GoodClusIDs;
 %             else
 %                 calClusters = obj.UsedClus_IDs;
 %             end
@@ -523,11 +526,11 @@ classdef NPspikeDataMining
                 cTrigWin_spClus = obj.SpikeClus(WithinTimewinInds);
                 
                 cTrig_binClusCount = nan(NumUsedClus,length(obj.BinCenters));
-                cTrig_binCountSM = nan(NumUsedClus,length(obj.BinCenters));
+%                 cTrig_binCountSM = nan(NumUsedClus,length(obj.BinCenters));
                 %
                 for cClus = 1 : NumUsedClus
                     cClusTime = cTrigWin_spTimes(cTrigWin_spClus == calClusters(cClus)) - cTrigTime;
-                    cTrig_TrialSPtimes(cClus,ctrig) = {cClusTime};
+                    cTrig_TrialSPtimes(cClus,ctrig) = {single(cClusTime)};
                     [bincounts,~] = histcounts(cClusTime,histbin);
                     
                     cTrig_binClusCount(cClus,:) = bincounts;
@@ -539,26 +542,27 @@ classdef NPspikeDataMining
                     %
                     %                     Aftercounts = bincounts(obj.BinCenters >= 0);
                     %                     cTrig_binCountSM(cClus,obj.BinCenters >= 0) = smooth(Aftercounts,smoothbinfactor);
-                    cTrig_binCountSM(cClus,:) = smooth(bincounts,smoothbinfactor);
+%                     cTrig_binCountSM(cClus,:) = smooth(bincounts,smoothbinfactor);
                 end
-                TrigBinDatas(ctrig,:) = {cTrig_binClusCount/smoothbin(2), cTrig_binCountSM/smoothbin(2)}; % convert into Hz
+                TrigBinDatas(ctrig,:) = {sparse(cTrig_binClusCount/smoothbin(2))}; % convert into Hz
             end
-            %%
+            %
             obj.USedbin = smoothbin;
-            TrigData_Bins = cell(NumUsedClus,2);
+            TrigData_Bins = cell(NumUsedClus,1);
             obj.TrTrigSpikeTimes{obj.CurrentSessInds} = cTrig_TrialSPtimes;
             for cClus = 1 : NumUsedClus
                 cClus_trigTimeC = cellfun(@(x) x(cClus,:),TrigBinDatas(:,1),'uniformOutput',false);
-                cClus_trigTimeSMC = cellfun(@(x) x(cClus,:),TrigBinDatas(:,2),'uniformOutput',false);
+%                 cClus_trigTimeSMC = cellfun(@(x) x(cClus,:),TrigBinDatas(:,2),'uniformOutput',false);
                 cClus_trigTime = cell2mat(cClus_trigTimeC);
-                cClus_trigTimeSM = cell2mat(cClus_trigTimeSMC);
-                TrigData_Bins(cClus,:) = {cClus_trigTime, cClus_trigTimeSM};
+%                 cClus_trigTimeSM = cell2mat(cClus_trigTimeSMC);
+                TrigData_Bins(cClus,:) = {cClus_trigTime}; %, cClus_trigTimeSM
             end
             obj.TrigData_Bin{obj.CurrentSessInds} = TrigData_Bins;
         end
         
         % external function used for re-calculate binned spike train, but
-        % not change the precalcualted datas in Obj
+        % not change the precalcualted datas in Obj. only the used Clusters
+        % will be calculated with psth in this condition
         function OutDataStrc = TrigPSTH_Ext(obj,timeWin,smoothbin,varargin)
             % smoothbin should be a [a,b] vector, a must be larger than b,
             % indicating the smoothed bin steps
@@ -581,7 +585,7 @@ classdef NPspikeDataMining
                 smoothbin = obj.USedbin * 1000;
              end
             smoothbin = smoothbin / 1000;
-            smoothbinfactor = smoothbin(1)/smoothbin(2);
+%             smoothbinfactor = smoothbin(1)/smoothbin(2);
             
             if isempty(obj.UsedTrigOnTime{obj.CurrentSessInds})
                 % load trigger scale time file
@@ -609,7 +613,7 @@ classdef NPspikeDataMining
             end
             
             TrigNums = length(obj.UsedTrigOnTime{obj.CurrentSessInds});
-            TrigBinDatas = cell(TrigNums,2);
+            TrigBinDatas = cell(TrigNums,1);
 %             if isempty(obj.UsedClus_IDs)
                 calClusters = obj.UsedClus_IDs;
 %             else
@@ -640,11 +644,11 @@ classdef NPspikeDataMining
                 cTrigWin_spClus = obj.SpikeClus(WithinTimewinInds);
                 
                 cTrig_binClusCount = nan(NumUsedClus,length(OutDataStrc.BinCenters));
-                cTrig_binCountSM = nan(NumUsedClus,length(OutDataStrc.BinCenters));
+%                 cTrig_binCountSM = nan(NumUsedClus,length(OutDataStrc.BinCenters));
                 %
                 for cClus = 1 : NumUsedClus
                     cClusTime = cTrigWin_spTimes(cTrigWin_spClus == calClusters(cClus)) - cTrigTime;
-                    cTrig_TrialSPtimes(cClus,ctrig) = {cClusTime};
+                    cTrig_TrialSPtimes(cClus,ctrig) = {single(cClusTime)};
                     [bincounts,~] = histcounts(cClusTime,histbin);
                     
                     cTrig_binClusCount(cClus,:) = bincounts;
@@ -656,20 +660,20 @@ classdef NPspikeDataMining
                     %
                     %                     Aftercounts = bincounts(obj.BinCenters >= 0);
                     %                     cTrig_binCountSM(cClus,obj.BinCenters >= 0) = smooth(Aftercounts,smoothbinfactor);
-                    cTrig_binCountSM(cClus,:) = smooth(bincounts, max(smoothbinfactor,3));
+%                     cTrig_binCountSM(cClus,:) = smooth(bincounts, max(smoothbinfactor,3));
                 end
-                TrigBinDatas(ctrig,:) = {cTrig_binClusCount/smoothbin(2), cTrig_binCountSM/smoothbin(2)}; % convert into Hz
+                TrigBinDatas(ctrig,:) = {cTrig_binClusCount/smoothbin(2)}; % convert into Hz
             end
             %%
             OutDataStrc.USedbin = smoothbin;
-            TrigData_Bins = cell(NumUsedClus,2);
+            TrigData_Bins = cell(NumUsedClus,1);
             OutDataStrc.TrTrigSpikeTimes = cTrig_TrialSPtimes;
             for cClus = 1 : NumUsedClus
                 cClus_trigTimeC = cellfun(@(x) x(cClus,:),TrigBinDatas(:,1),'uniformOutput',false);
-                cClus_trigTimeSMC = cellfun(@(x) x(cClus,:),TrigBinDatas(:,2),'uniformOutput',false);
+%                 cClus_trigTimeSMC = cellfun(@(x) x(cClus,:),TrigBinDatas(:,2),'uniformOutput',false);
                 cClus_trigTime = cell2mat(cClus_trigTimeC);
-                cClus_trigTimeSM = cell2mat(cClus_trigTimeSMC);
-                TrigData_Bins(cClus,:) = {cClus_trigTime, cClus_trigTimeSM};
+%                 cClus_trigTimeSM = cell2mat(cClus_trigTimeSMC);
+                TrigData_Bins(cClus,:) = {cClus_trigTime}; %, cClus_trigTimeSM
             end
             OutDataStrc.TrigData_Bin = TrigData_Bins;
         end
@@ -687,15 +691,15 @@ classdef NPspikeDataMining
             
             for cUnit = 1 : UnitNum
                 cUnitData = BaseFRSubData{cUnit,1};
-                cUnitDataSM = BaseFRSubData{cUnit,2};
+%                 cUnitDataSM = BaseFRSubData{cUnit,2};
                 for cTr = 1 : TrNums
                     cTrOnsetBin = EventBinLength(cTr);
                     cUnitData(cTr,:) = cUnitData(cTr,:) - mean(cUnitData(cTr,5:cTrOnsetBin)); % not start from inds 1, to avoid trigger signal artifact
-                    cUnitDataSM(cTr,:) = cUnitDataSM(cTr,:) - mean(cUnitDataSM(cTr,5:cTrOnsetBin));
+%                     cUnitDataSM(cTr,:) = cUnitDataSM(cTr,:) - mean(cUnitDataSM(cTr,5:cTrOnsetBin));
                 end
                 
                 BaseFRSubData{cUnit,1} = cUnitData;
-                BaseFRSubData{cUnit,2} = cUnitDataSM;
+%                 BaseFRSubData{cUnit,2} = cUnitDataSM;
             end
             obj.TrigDataBin_FRSub{obj.CurrentSessInds} = BaseFRSubData;
             
@@ -734,7 +738,7 @@ classdef NPspikeDataMining
             NumOfEvents = size(ExtraEventTimes,2); % each events take one column
             AllEventTypesCell = ExtraEventPlotColor(:,1);
             AllEventTypesColors = ExtraEventPlotColor(:,2);
-            %%
+            %
             EventPlotAll = cell(NumOfEvents,1);
             for cEvent = 1 : NumOfEvents
                 cEventTimes = EventTAfTrig(:,cEvent);
@@ -750,13 +754,14 @@ classdef NPspikeDataMining
                 end
                 EventPlotAll(cEvent) = {cEvTypePlotData};
             end
-            %%
+            %
             
             if ~isdir(fullfile(obj.ksFolder,'RawRasterPlot'))
                 mkdir(fullfile(obj.ksFolder,'RawRasterPlot'));
             end
             %             cd(fullfile(obj.ksFolder,'RawRasterPlot'));
-            SMBinDataMtx = permute(cat(3,obj.TrigData_Bin{obj.CurrentSessInds}{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+            SMDataFull = cellfun(@full,obj.TrigData_Bin{obj.CurrentSessInds},'un',0);
+            SMBinDataMtx = permute(cat(3,SMDataFull{:}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
             SMBinDataMtx = SMBinDataMtx(UsedTrInds,:,:);
             if ~isempty(obj.SurviveInds)
                 SMBinDataMtx = SMBinDataMtx(:,obj.SurviveInds,:);
@@ -764,9 +769,9 @@ classdef NPspikeDataMining
             UsedBinLength = size(SMBinDataMtx,3);
             AlignedEventOnBin = obj.TriggerStartBin{obj.CurrentSessInds}-0.5;
             xTs = ((1:UsedBinLength) - AlignedEventOnBin)*obj.USedbin(2);
-            %%
+            %
             for cUnit = 1 : unitNum
-                %%
+                %
                 cUnitData = UsedUintSlignSPTimes(cUnit,:);
                 cUnitChnID = obj.ChannelUseds_id(cUnit);
                 cUnitChnArea = obj.ChannelAreaStrs{obj.ChannelUseds_id(cUnit)};
@@ -774,18 +779,28 @@ classdef NPspikeDataMining
                 hcf = figure('position',[50 150 900 750],'visible','on'); %
                 ax1 = subplot(3,2,[1,3]);
                 hold on
-                
+                %
+                SPxANDyTicks = cell(3,TrNum);
                 for cTrig = 1 : TrNum
                     cTrigSPtimes = cUnitData{cTrig};
                     cTrBlockType = TrBlockTypes(cTrig);
-                    cTrBlockColor = BlockColors{cTrBlockType+1};
+%                     cTrBlockColor = BlockColors{cTrBlockType+1};
                     if ~isempty(cTrigSPtimes)
                         TrNumSpikes = numel(cTrigSPtimes);
                         xtimes = ([cTrigSPtimes(:) cTrigSPtimes(:) nan(TrNumSpikes,1)])';
                         yticks = ([zeros(TrNumSpikes,1)+cTrig-0.3,zeros(TrNumSpikes,1)+cTrig+0.3,nan(TrNumSpikes,1)])';
-                        plot(xtimes(:),yticks(:),'Color',cTrBlockColor,'linewidth',1);
+                        SPxANDyTicks(:,cTrig) = {xtimes,yticks,zeros(3,numel(cTrigSPtimes),'uint8')+uint8(cTrBlockType)};
                     end
                 end
+                %
+                AllxTimes = cat(2,SPxANDyTicks{1,:});
+                AllxTimes = AllxTimes(:);
+                Allyticks = cat(2,SPxANDyTicks{2,:});
+                Allyticks = Allyticks(:);
+                BlockIndexes = cat(2,SPxANDyTicks{3,:});
+                BlockIndexes = BlockIndexes(:);
+                plot(AllxTimes(BlockIndexes==0),Allyticks(BlockIndexes==0),'Color',BlockColors{1},'linewidth',1);
+                plot(AllxTimes(BlockIndexes==1),Allyticks(BlockIndexes==1),'Color',BlockColors{2},'linewidth',1);
                 %                 set(hcf,'visible','on')
 %                 line(ax1,[0 0],[0.5 TrNum+0.5],'Color','m','linewidth',1);
                 patch(ax1,[0 0.3 0.3 0],[0.5 0.5 TrNum+0.5 TrNum+0.5],1, 'FaceColor','m',...
@@ -803,7 +818,7 @@ classdef NPspikeDataMining
                 xlabel('Time (s)');
                 ylabel('# Trials');
                 title(sprintf('Unit %d, chn %d, Area %s',cUnit,cUnitChnID,cUnitChnArea));
-                
+                %
                 % mean psth plot
                 cuPSTHData = squeeze(SMBinDataMtx(:,cUnit,:));
                 
@@ -863,7 +878,7 @@ classdef NPspikeDataMining
                     set(AxAlls(ca),'ylim',CommonYScales);
                 end
                 
-                %%
+                %
                 savefileName = fullfile(obj.ksFolder,'RawRasterPlot',sprintf('Unit%03d raw spike raster color plot',obj.UsedClus_IDs(cUnit)));
                 saveas(hcf,savefileName);
                 print(hcf,savefileName,'-dpng');
@@ -1124,7 +1139,8 @@ classdef NPspikeDataMining
             
             % sort and align the binned data according to the event times
             % only input trials will be plotted
-            SMBinDataMtx = permute(cat(3,obj.TrigData_Bin{obj.CurrentSessInds}{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+            FullData = cellfun(@full,obj.TrigData_Bin{obj.CurrentSessInds},'un',0);
+            SMBinDataMtx = permute(cat(3,FullData{:}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
             SMBinDataMtx = SMBinDataMtx(PlotTrInds,:,:);
             if ~isempty(obj.SurviveInds)
                 SMBinDataMtx = SMBinDataMtx(:,obj.SurviveInds,:);

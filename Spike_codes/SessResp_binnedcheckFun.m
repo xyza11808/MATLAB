@@ -1,6 +1,6 @@
 function RemainedInds = SessResp_binnedcheckFun(ProbNPSess)
-
-SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds}{:,1}),[1,3,2]);
+TrigDataFull = cellfun(@full,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds}(:,1),'un',0);
+SMBinDataMtx = permute(cat(3,TrigDataFull{:}),[1,3,2]);
 
 TrBatchSize = 10;
 TrAvgSPnums = mean(SMBinDataMtx,3);
@@ -81,16 +81,16 @@ criteria2_inds(UsedInds2_Real(isnan(IsGivenasNaN))) = false;
 RemainedInds = criteria1_inds | criteria2_inds;
 
 
-if exist(fullfile(ProbNPSess.ksFolder,'UnitspikeAmpSave.mat'),'file') 
-    % load unit amplitude data if exists
-   cAmpfData = load(fullfile(ProbNPSess.ksFolder,'UnitspikeAmpSave.mat'));
-   UintExplainV = cellfun(@(x) x.Ordinary,cAmpfData.UnitLlmfits(:,2));
-   AmpExcludeInds = UintExplainV(:) > 0.5 & binLessThanhalfPeak(:) > 0.1; % is the varience explain is too large, excluded it
-   
-   RemainedInds = RemainedInds & ~AmpExcludeInds;
-else
-   warning('Unable to load spike amplitude datas.\n'); 
-end
+% if exist(fullfile(ProbNPSess.ksFolder,'UnitspikeAmpSave.mat'),'file') 
+%     % load unit amplitude data if exists
+%    cAmpfData = load(fullfile(ProbNPSess.ksFolder,'UnitspikeAmpSave.mat'));
+%    UintExplainV = cellfun(@(x) x.Ordinary,cAmpfData.UnitLlmfits(:,2));
+%    AmpExcludeInds = UintExplainV(:) > 0.5 & binLessThanhalfPeak(:) > 0.1; % is the varience explain is too large, excluded it
+%    
+%    RemainedInds = RemainedInds & ~AmpExcludeInds;
+% else
+%    warning('Unable to load spike amplitude datas.\n'); 
+% end
 
 % %%
 % cfff = 35;
