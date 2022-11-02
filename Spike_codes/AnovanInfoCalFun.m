@@ -1,49 +1,51 @@
+function [AllNullThres_Mtx, NSMUnitOmegaSqrData, CalWinUnitOmegaSqrs, NullOmegaSqrDatas] = ...
+    AnovanInfoCalFun(ksfolder,ProbNPSess,CaledUnitIDANDinds,behavResults)
+% CaledUnitIDANDinds was not in a sorted manner
+
 % "Cortical information flow during flexible sensorimotor decisions"
 % ksfolder = pwd;
 % ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
-clearvars ProbNPSess AllNullThres_Mtx NSMUnitOmegaSqrData CalWinUnitOmegaSqrs NullOmegaSqrDatas
 
-load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
+% load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 savefoldname = fullfile(ksfolder,'AnovanAnA');
-if isfolder(savefoldname)
-   rmdir(savefoldname,'s');
+if ~isfolder(savefoldname)
+   mkdir(savefoldname);
 end
 
-mkdir(savefoldname);
-
 % transfromed into trial-by-units-by-bin matrix
-SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds}{:,1}),[1,3,2]); 
+FullDataAll = cellfun(@full,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds},'un',0);
+SMBinDataMtx = permute(cat(3,FullDataAll{:}),[1,3,2]); 
 if ~isempty(ProbNPSess.SurviveInds)
     SMBinDataMtx = SMBinDataMtx(:,ProbNPSess.SurviveInds,:);
 end
-SMBinDataMtxRaw = SMBinDataMtx;
+% SMBinDataMtxRaw = SMBinDataMtx;
 
-AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
-AllFieldNames = fieldnames(AreaIndexStrc.SessAreaIndexStrc);
-UsedNames = AllFieldNames(1:end-1);
-ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);
-
-if strcmpi(ExistAreaNames(end),'Others')
-    ExistAreaNames(end) = [];
-end
+% AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
+% AllFieldNames = fieldnames(AreaIndexStrc.SessAreaIndexStrc);
+% UsedNames = AllFieldNames(1:end-1);
+% ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);
+% 
+% if strcmpi(ExistAreaNames(end),'Others')
+%     ExistAreaNames(end) = [];
+% end
+% %%
+% Numfieldnames = length(ExistAreaNames);
+% ExistField_ClusIDs = [];
+% AreaUnitNumbers = zeros(Numfieldnames,1);
+% for cA = 1 : Numfieldnames
+%     cA_Clus_IDs = AreaIndexStrc.SessAreaIndexStrc.(ExistAreaNames{cA}).MatchUnitRealIndex;
+%     cA_clus_inds = AreaIndexStrc.SessAreaIndexStrc.(ExistAreaNames{cA}).MatchedUnitInds;
+%     ExistField_ClusIDs = [ExistField_ClusIDs;[cA_Clus_IDs,cA_clus_inds]]; % real Clus_IDs and Clus indexing inds
+%     AreaUnitNumbers(cA) = numel(cA_clus_inds);
+%  end
 %%
-Numfieldnames = length(ExistAreaNames);
-ExistField_ClusIDs = [];
-AreaUnitNumbers = zeros(Numfieldnames,1);
-for cA = 1 : Numfieldnames
-    cA_Clus_IDs = AreaIndexStrc.SessAreaIndexStrc.(ExistAreaNames{cA}).MatchUnitRealIndex;
-    cA_clus_inds = AreaIndexStrc.SessAreaIndexStrc.(ExistAreaNames{cA}).MatchedUnitInds;
-    ExistField_ClusIDs = [ExistField_ClusIDs;[cA_Clus_IDs,cA_clus_inds]]; % real Clus_IDs and Clus indexing inds
-    AreaUnitNumbers(cA) = numel(cA_clus_inds);
-end
-%%
-if isempty(ExistField_ClusIDs)
-    fprintf('No target region units within current session.\n');
-    return;
-end
-CalUnitInds = ExistField_ClusIDs(:,2);
+% if isempty(ExistField_ClusIDs)
+%     fprintf('No target region units within current session.\n');
+%     return;
+% end
+CalUnitInds = CaledUnitIDANDinds(:,2);
 NumCaledUnits = length(CalUnitInds);
 
 SPTimeBinSize = ProbNPSess.USedbin;
@@ -60,15 +62,15 @@ TrNMInds = ActionChoices ~= 2;
 
 TrFreqs = double(behavResults.Stim_toneFreq(:));
 TrBlockTypes = double(behavResults.BlockType(:));
-TrAnsTimes = double(behavResults.Time_answer(:));
-TrStimOnsets = double(behavResults.Time_stimOnset(:));
-TrAnsAfterStimOnsetTime = TrAnsTimes - TrStimOnsets;
+% TrAnsTimes = double(behavResults.Time_answer(:));
+% TrStimOnsets = double(behavResults.Time_stimOnset(:));
+% TrAnsAfterStimOnsetTime = TrAnsTimes - TrStimOnsets;
 % adding other behavior model fitting results latter
 
 NMTrChoices = ActionChoices(TrNMInds);
 NMTrFreqs =TrFreqs(TrNMInds);
 NMTrBlockTypes = TrBlockTypes(TrNMInds);
-NMAnsTimeAFOnset = TrAnsAfterStimOnsetTime(TrNMInds);
+% NMAnsTimeAFOnset = TrAnsAfterStimOnsetTime(TrNMInds);
 
 RevFreqTrInds = double(ismember(NMTrFreqs, RevFreqs));
 
@@ -76,10 +78,10 @@ RevFreqTrInds = double(ismember(NMTrFreqs, RevFreqs));
 %% processing binned datas
 DataBinTimeWin = 0.05; %seconds
 winGoesStep = 0.01; %seconds, moving steps, partially overlapped windows 
-calDataBinSize = DataBinTimeWin/ProbNPSess.USedbin(2);
-calDataStepBin = winGoesStep/ProbNPSess.USedbin(2);
+calDataBinSize = DataBinTimeWin/SPTimeBinSize(2);
+calDataStepBin = winGoesStep/SPTimeBinSize(2);
 OverAllUsedTime = 5; % seconds, used time length for each trial, this time including prestim periods
-TotalCalcuNumber = (OverAllUsedTime/ProbNPSess.USedbin(2))/calDataStepBin - (calDataBinSize - calDataStepBin);
+TotalCalcuNumber = (OverAllUsedTime/SPTimeBinSize(2))/calDataStepBin - (calDataBinSize - calDataStepBin);
 CaledStartBin = ceil(calDataBinSize/2);
 CaledStimOnsetBin = StimOnsetBin - CaledStartBin + 1;
 SmoothWin = hann(calDataBinSize*2+1);
@@ -225,11 +227,11 @@ AllNullThres_Cell = cellfun(@(x) squeeze(prctile(x,99,1)),NullOmegaSqrDatas,'un'
 AllNullThres_Mtx = permute(cat(3,AllNullThres_Cell{:}),[3,1,2]);
 
 %%
-if ~isfolder(fullfile(ksfolder,'AnovanAnA'))
-    mkdir(fullfile(ksfolder,'AnovanAnA'))
-end
-savename = fullfile(ksfolder,'AnovanAnA','OmegaSqrDatas.mat');
-save(savename,'AllNullThres_Mtx', 'NSMUnitOmegaSqrData', 'CalWinUnitOmegaSqrs', 'NullOmegaSqrDatas','-v7.3');
+% if ~isfolder(fullfile(ksfolder,'AnovanAnA'))
+%     mkdir(fullfile(ksfolder,'AnovanAnA'))
+% end
+% savename = fullfile(ksfolder,'AnovanAnA','OmegaSqrDatas.mat');
+% save(savename,'AllNullThres_Mtx', 'NSMUnitOmegaSqrData', 'CalWinUnitOmegaSqrs', 'NullOmegaSqrDatas','-v7.3');
 %%
 % close;
 % % nan values meaning there is not enough valid data within calculation
