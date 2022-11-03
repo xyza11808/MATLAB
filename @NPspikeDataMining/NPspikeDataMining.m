@@ -194,7 +194,9 @@ classdef NPspikeDataMining
                     'FiringRate',0.02,... % 1Hz
                     'SNR',2); 
            end
-           
+           if isempty(obj.SpikeTimes)
+               obj.SpikeTimes = double(obj.SpikeTimeSample)/30000;
+           end
            OverAllExcludeInds = UsedClusIndsCheckFun(obj,InputOps);
            
            obj.UsedClus_IDs = obj.GoodClusIDs(~OverAllExcludeInds);

@@ -37,7 +37,7 @@ end
 if nargin == 2 
     % if the inpput structure already contains the target data fields
    if ~isempty(obj.UnitWaves) && ~isempty(obj.UnitWaveFeatures)
-       if size(obj.UnitWaves,2) == 3 && size(obj.UnitWaveFeatures,2) == 5 % check whether the field data format is the latest
+       if (size(obj.UnitWaves,2) == 2 || size(obj.UnitWaves,2) == 3) && size(obj.UnitWaveFeatures,2) == 5 % check whether the field data format is the latest
            IsWaveDataGiven = 1;
            UnitWaves  = obj.UnitWaves;
            UnitFeature= obj.UnitWaveFeatures;
@@ -106,8 +106,8 @@ if ~isempty(FullClusSelectionops.Amplitude)
     else
         UnitFeatures = SpikeWaveFeature(obj);
     end
-    UnitAmps = cell2mat(UnitFeatures(:,4));
-    AmpExcludeInds = UnitAmps < FullClusSelectionops.Amplitude;
+    UnitAmps = cat(1,UnitFeatures{:,4});
+    AmpExcludeInds = isnan(UnitAmps) | UnitAmps < FullClusSelectionops.Amplitude;
     fprintf('Amplitude exclusion fraction is %d/%d, %.4f...\n',sum(AmpExcludeInds),numel(AmpExcludeInds),mean(AmpExcludeInds));
 else
     AmpExcludeInds = false;
@@ -128,7 +128,11 @@ if ~isempty(FullClusSelectionops.WaveformSpread) % waveform spread of all channe
     ToughPeakInds = cell2mat(UnitFeatures(:,5));
     SpreadLengthAll = zeros(size(UnitAllchnWaveData,1),1);
     for cUnit = 1 : size(UnitAllchnWaveData,1)
-        SpreadLengthAll(cUnit) = peakAmpSpreadFun(UnitAllchnWaveData{cUnit,2}, ToughPeakInds(cUnit,:), obj.GoodClusMaxChn(cUnit)+1);
+        if any(isnan(ToughPeakInds(cUnit,:)))
+            SpreadLengthAll(cUnit) = 3800; % make the spread length longer enough
+        else
+            SpreadLengthAll(cUnit) = peakAmpSpreadFun(UnitAllchnWaveData{cUnit,2}, ToughPeakInds(cUnit,:), obj.GoodClusMaxChn(cUnit));
+        end
     end
     AmpSpreadExcludeInds = SpreadLengthAll > FullClusSelectionops.WaveformSpread; % larger value indicates noise across all channels
     fprintf('AmpSpread exclusion fraction is %d/%d, %.4f...\n',sum(AmpSpreadExcludeInds),...
@@ -168,26 +172,29 @@ if ~isempty(FullClusSelectionops.SNR) % Amplitude SNR
         UnitAllchnWaveData = AllchnData.UnitDatas; % SPNums,channel(384),spikewindowlength    
     end
     
-    UnitAmps = cell2mat(UnitFeatures(:,4));
-    
+    UnitAmps = cat(1,UnitFeatures{:,4});
+    %%
     UnitSPWaveformAll = UnitAllchnWaveData(:,1);
     UnitNums = length(UnitSPWaveformAll);
     UnitSNRs = zeros(UnitNums, 1);
     for cUnit = 1 : UnitNums 
-        cUnitSPwaves = UnitSPWaveformAll{cUnit};
-        nanSPs = sum(isnan(cUnitSPwaves),2) > 0;
-        cUnitSPwaves(nanSPs,:) = [];
-        
-        AvgWaveform = mean(cUnitSPwaves);
-        Residues = cUnitSPwaves - AvgWaveform;
-        ResValueSTD = std(Residues(:));
-        
-        % from siegle et al, 2021 nature paper, the SNR is defined as the
-        % ratio between amplitude and residue std
-        UnitSNRs(cUnit) = UnitAmps(cUnit) / ResValueSTD;
-        
+        if isnan(UnitAmps(cUnit))
+            UnitSNRs(cUnit) = 0;
+        else
+            cUnitSPwaves = UnitSPWaveformAll{cUnit};
+            nanSPs = sum(isnan(cUnitSPwaves),2) > 0;
+            cUnitSPwaves(nanSPs,:) = [];
+
+            AvgWaveform = mean(cUnitSPwaves);
+            Residues = cUnitSPwaves - AvgWaveform;
+            ResValueSTD = std(Residues(:));
+
+            % from siegle et al, 2021 nature paper, the SNR is defined as the
+            % ratio between amplitude and residue std
+            UnitSNRs(cUnit) = UnitAmps(cUnit) / ResValueSTD;
+        end
     end
-    
+    %%
     SNRExcludeInds = UnitSNRs < FullClusSelectionops.SNR;
     fprintf('AmpSNR exclusion fraction is %d/%d, %.4f...\n',sum(SNRExcludeInds),numel(SNRExcludeInds),mean(SNRExcludeInds));
 else

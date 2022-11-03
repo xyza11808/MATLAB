@@ -9,7 +9,9 @@ function SpreadLength = peakAmpSpreadFun(AllChnAmpData, toughPeakInds, MaxChnInd
 try
     ChnAmp_spikeAvg = AllChnAmpData(:,toughPeakInds(2)) - AllChnAmpData(:,toughPeakInds(1));
 catch ME
+    SpreadLength = 2000;
    fprintf('Something is wrong.\n'); 
+    return;
 end
 MaximumAmp = ChnAmp_spikeAvg(MaxChnIndex);
 AmpThres = MaximumAmp * 0.12;
@@ -29,7 +31,10 @@ end
 RealEndInds = HigherChnThresInds - 1;
 
 if RealEndInds < RealStartInds
-    fprintf('Something is wrong 2.\n'); 
+    % abnormal distribution for current unit
+    fprintf('Something is wrong 2.\n');
+    SpreadLength = 2000;
+    return;
 end
 SpreadLength = (RealEndInds - RealStartInds) * 20; % in um, for NP 1.0 probe
 

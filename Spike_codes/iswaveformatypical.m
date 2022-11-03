@@ -5,21 +5,51 @@ function varargout = iswaveformatypical(waveform,timewin,IsNormedwave)
 % adjust baseline to 0
 BaselineAvgInds = min(abs(timewin(1)),10);
 waveform = waveform - mean(waveform(1:BaselineAvgInds)); % adjust baseline to 0 position
+if abs(timewin(1)) < 10
+    error('The baseline sample data should be larger than 10 samples.');
+end
+
+SearchStartInds = abs(timewin(1)) - 10;
+[~,toughIndsTemp] = min(waveform(SearchStartInds:end));
+if (toughIndsTemp+abs(timewin(1)) - 11) >= numel(waveform)-2
+    fprintf('Abnormal waveform.\n');
+    Isatypical = 1;
+    atypicalVec = [-2,-2,-2,-2];
+    if nargout == 1
+        varargout{1} = Isatypical;
+    elseif nargout == 2
+        varargout{1} = Isatypical;
+        varargout{2} = atypicalVec;
+    elseif nargout == 3
+        varargout{1} = Isatypical;
+        varargout{2} = atypicalVec;
+        varargout{3} = NaN;
+    elseif nargout == 4
+        varargout{1} = Isatypical;
+        varargout{2} = atypicalVec;
+        varargout{3} = NaN;
+        varargout{4} = [NaN, NaN];
+    end
+    return;
+end
+toughInds = toughIndsTemp+abs(timewin(1)) - 11;
+[postPeakValue, postPeakInds] = max(waveform(toughInds:end));
+postPeakIndex = postPeakInds + toughInds-1;
 
 if IsNormedwave
     % the input wavefrom is already normalized by amplitude
     
-    toughInds = abs(timewin(1))+1;
-    [~, postPeakInds] = max(waveform(toughInds:end));
-    postPeakIndex = postPeakInds + toughInds-1;
+%     toughInds = abs(timewin(1))+1;
+%     [~, postPeakInds] = max(waveform(toughInds:end));
+%     postPeakIndex = postPeakInds + toughInds-1;
     NormedWave = waveform;
     WaveAmplitude = NaN;
 else
    % normalize the waveform using amplitude
-%     [~,toughInds] = min(waveform);
-    toughInds = abs(timewin(1))+1;
-    [postPeakValue, postPeakInds] = max(waveform(toughInds:end));
-    postPeakIndex = postPeakInds + toughInds-1;
+%     [~,toughInds] = min(waveform());
+%     toughInds = abs(timewin(1))+1;
+%     [postPeakValue, postPeakInds] = max(waveform(toughInds:end));
+%     postPeakIndex = postPeakInds + toughInds-1;
 
     WaveAmplitude = postPeakValue - waveform(toughInds);
     NormedWave = waveform / WaveAmplitude; % normalize the waveform using wave amplitude
@@ -61,7 +91,7 @@ if abs(upsampleWave(upsample_toughInds)) < abs(upsampleWave(upsample_postpeakInd
 end
 
 % criteria 2
-[pks,~] = findpeaks(upsampleWave,upsamplexx,'MinPeakProminence',0.01);
+[pks,locs,~,p] = findpeaks(upsampleWave,upsamplexx,'MinPeakProminence',0.02);
 if length(pks) >= 6
     Isatypical = 1;
     atypicalVec(2) = 1;

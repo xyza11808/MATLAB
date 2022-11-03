@@ -1,5 +1,5 @@
-
-% ksfolder = pwd;
+cclr
+ksfolder = pwd;
 
 load(fullfile(ksfolder,'AdjustedClusterInfo.mat'))
 TrigTimeData = load(fullfile(ksfolder,'TrigTimeANDallSampNum.mat'));
@@ -35,7 +35,7 @@ NumAboveThresClus = length(AboveThresClusIDs);
 
 
 %%
-% RawFilePath = 'F:\b107a08_raw\A2021226_b107a08_NPSess02_g0\A2021226_b107a08_NPSess02_g0_imec2';
+RawFilePath = 'F:\b107a08_raw\A2021226_b107a08_NPSess02_g0\A2021226_b107a08_NPSess02_g0_imec2';
 RawFileStrc = dir(fullfile(RawFilePath,'*.ap.bin'));
 if length(RawFileStrc) < 1
     warning('Raw data file cannot be found.\n');
@@ -101,7 +101,7 @@ for cUnit = 1 : NumofUnit
         end
     end
     
-    huf = figure('position',[100 100 320 220],'visible','off');
+%     huf = figure('position',[100 100 320 220],'visible','off');
     cTempSaveInds = mod(cUnit,SavingClusLen);
     if cTempSaveInds == 0
         cTempSaveInds = SavingClusLen;
@@ -118,25 +118,25 @@ for cUnit = 1 : NumofUnit
     UnitDatas{cTempSaveInds,3} = cClusInds;
     clearvars AllChannelWaveData cspWaveform
     
-    plot(AvgWaves);
+%     plot(AvgWaves);
     try
         [isabnorm,isUsedVec,waveAmplitude,toughPeakInds] = iswaveformatypical(AvgWaves,WaveWinSamples,false);
     catch ME
         fprintf('Errors');
     end
     %     title([num2str(cClusChannel,'chn=%d'),'  ',num2str(1-isabnorm,'Ispass = %d')]);
-    title(sprintf('ClusID %d, Chn %d, IsPass %d',cClusInds,cClusChannel,1-isabnorm));
+%     title(sprintf('ClusID %d, Chn %d, IsPass %d',cClusInds,cClusChannel,1-isabnorm));
     %     if length(AvgWaves) == 1
     %         fprintf('Too few spikes for calculation.\n');
     %     end
     try
         wavefeature = SPwavefeature(AvgWaves,WaveWinSamples,toughPeakInds);
-        text(6,0.8*max(AvgWaves),{sprintf('tough2peak = %d',wavefeature.tough2peakT);...
-            sprintf('posthyper = %d',wavefeature.postHyperT)},'FontSize',8);
-        
-        if wavefeature.IsPrePosPeak
-            text(50,0.5*max(AvgWaves),{sprintf('pre2postpospeakratio = %.3f',wavefeature.pre2post_peakratio)},'color','r','FontSize',8);
-        end
+%         text(6,0.8*max(AvgWaves),{sprintf('tough2peak = %d',wavefeature.tough2peakT);...
+%             sprintf('posthyper = %d',wavefeature.postHyperT)},'FontSize',8);
+%         
+%         if wavefeature.IsPrePosPeak
+%             text(50,0.5*max(AvgWaves),{sprintf('pre2postpospeakratio = %.3f',wavefeature.pre2post_peakratio)},'color','r','FontSize',8);
+%         end
     catch
         wavefeature = [];
     end
@@ -149,12 +149,12 @@ for cUnit = 1 : NumofUnit
         cSavIndex = cSavIndex + 1;
     end
     %
-    set(gca,'FontSize',10);
-    saveName = fullfile(waveformDataSavefile,sprintf('ClusID %d waveform plot save',cClusInds));
-    saveas(huf,saveName);
-    saveas(huf,saveName,'png');
-    
-    close(huf);
+%     set(gca,'FontSize',10);
+%     saveName = fullfile(waveformDataSavefile,sprintf('ClusID %d waveform plot save',cClusInds));
+%     saveas(huf,saveName);
+%     saveas(huf,saveName,'png');
+%     
+%     close(huf);
     
 end
 fclose(ftempid);

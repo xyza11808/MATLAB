@@ -1,6 +1,7 @@
-cclr
+% cclr
 
-ksfolder = pwd;
+% ksfolder = pwd;
+clearvars AdjKlClusters PreNPClusHandle NewNPClusHandle waveformdatafile
 
 AdjKlClusters = load(fullfile(ksfolder,'AdjustedClusterInfo.mat'));
 PreNPClusHandle = load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
@@ -13,7 +14,8 @@ NewNPClusHandle.ClusterInfoAll = AdjKlClusters.FinalksLabels;
 NewNPClusHandle.SpikeTimes = double(AdjKlClusters.FinalSPTimeSample)/30000;
 %% 
 waveformdatafile = fullfile(ksfolder,'AdjUnitWaveforms','AdjUnitWaveforms.mat');
-if ~exist(waveformdatafile,'file')
+% waveformdatafile2 = fullfile(ksfolder,'AdjUnitWaveforms','AdjUnitwaveformDatas.mat');
+if ~exist(waveformdatafile,'file') && ~exist(waveformdatafile2,'file')
     % the data should have been saved in blockwise format
     TargetChunkDatafile = dir(fullfile(ksfolder,'AdjUnitWaveforms','TempSavingData*.mat'));
     if isempty(TargetChunkDatafile)
@@ -38,10 +40,14 @@ if ~exist(waveformdatafile,'file')
     AboveThresClusIDs = AboveThresClusStrc.AboveThresClusIDs;
     AboveThresClusMaxChn = AboveThresClusStrc.AboveThresClusMaxChn+1;
     save(waveformdatafile,'UnitDatas', 'UnitFeatures','AboveThresClusIDs', 'AboveThresClusMaxChn', '-v7.3');
+    fprintf('Saved seperated file into a summary file.\n');
     clearvars UnitDataAllUnit UnitFeaturesAllUnit
 else
-    WaveData = load(waveformdatafile);
-    
+%     try
+        WaveData = load(waveformdatafile);
+%     catch
+%         WaveData = load(waveformdatafile2);
+%     end
     if ndims(WaveData.UnitDatas{2}) == 3
         AllDimDatas = WaveData.UnitDatas{2};
         WaveData.UnitDatas{2} = squeeze(mean(AllDimDatas,'omitnan'));
@@ -85,8 +91,13 @@ NewNPClusHandle.ChannelAreaStrs = ChnAreaStrsStrc.AlignedAreaStrings;
 
 
 %%
+NewNPClusHandle.ksFolder = ksfolder;
 NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
-NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],[6,2],[]);
+if contains(ksfolder,'b103a04_20210408')
+    NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],[2,6],[]);
+else
+    NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],[6,2],[]);
+end
 TrStimOnsets = double(PreNPClusHandle.behavResults.Time_stimOnset(:));
 TimeWin = [-1.5,4]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
 Smoothbin = [50,10]; % time window for smooth psth, in ms format
@@ -103,43 +114,42 @@ NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
 
 %% check the clusters going to use
 NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
-
+NewNPClusHandle.ksFolder = ksfolder;
 NewNPClusHandle = NewNPClusHandle.ClusScreeningFun;
 
-%%
-NewNPClusHandle.ksFolder = ksfolder;
-
-%%
-behavResults = PreNPClusHandle.behavResults;
-AllTrStimOnTime = double(behavResults.Time_stimOnset(:));
-AllTrAnsTime = double(behavResults.Time_answer(:));
-TrActionChoice = double(behavResults.Action_choice(:));
-TrBlockTypes = double(behavResults.BlockType(:));
-TrStimFreqs = double(behavResults.Stim_toneFreq(:));
-
-NMTrInds = TrActionChoice ~= 2;
-NMTrStimOnTime = AllTrStimOnTime(NMTrInds);
-NMTrAnsTime = AllTrAnsTime(NMTrInds);
-NMTrChoices = TrActionChoice(NMTrInds);
-NMBlockTypes = TrBlockTypes(NMTrInds);
-NMTrFreqs = TrStimFreqs(NMTrInds);
-
-BlockSectionInfo = Bev2blockinfoFun(behavResults);
-BlockSecEdgeInds = [0.5;BlockSectionInfo.BlockTrScales(:,2)+0.5;numel(NMTrInds)+0.5];
-BlockMissTrCount = histcounts(find(~NMTrInds),BlockSecEdgeInds);
-BlockEndTrInds = BlockSectionInfo.BlockTrScales(:,2) - BlockMissTrCount(1:end-1)';
-
-EventAignTimes = NMTrAnsTime - NMTrStimOnTime; % time difference between stim-on and answer
-ChoiceTypeColors = {'b','r'};
-BlockTypeColors = {[0.2 0.6 0.2],[0.7 0.4 0.1]};
-ExtraEventStrs = {'Choice'};
-NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
-
-cFolderChnAreaStrc = load(fullfile(ksfolder,'Chnlocation.mat'),'AlignedAreaStrings');
-ChnAreaStrs = cFolderChnAreaStrc.AlignedAreaStrings{2};
-NewNPClusHandle.ChannelAreaStrs = ChnAreaStrs;
-NewNPClusHandle.RawRasterplot(EventAignTimes,NMTrFreqs,...
-    {NMTrChoices,ChoiceTypeColors}, NMBlockTypes, BlockTypeColors,NMTrInds);
+fprintf('\nOld Cluster have %d used unit, while new cluster have %d used unit.\n',...
+    numel(PreNPClusHandle.ProbNPSess.UsedClus_IDs),numel(NewNPClusHandle.UsedClus_IDs));
+%% %% plot the rasters
+% behavResults = PreNPClusHandle.behavResults;
+% AllTrStimOnTime = double(behavResults.Time_stimOnset(:));
+% AllTrAnsTime = double(behavResults.Time_answer(:));
+% TrActionChoice = double(behavResults.Action_choice(:));
+% TrBlockTypes = double(behavResults.BlockType(:));
+% TrStimFreqs = double(behavResults.Stim_toneFreq(:));
+% 
+% NMTrInds = TrActionChoice ~= 2;
+% NMTrStimOnTime = AllTrStimOnTime(NMTrInds);
+% NMTrAnsTime = AllTrAnsTime(NMTrInds);
+% NMTrChoices = TrActionChoice(NMTrInds);
+% NMBlockTypes = TrBlockTypes(NMTrInds);
+% NMTrFreqs = TrStimFreqs(NMTrInds);
+% 
+% BlockSectionInfo = Bev2blockinfoFun(behavResults);
+% BlockSecEdgeInds = [0.5;BlockSectionInfo.BlockTrScales(:,2)+0.5;numel(NMTrInds)+0.5];
+% BlockMissTrCount = histcounts(find(~NMTrInds),BlockSecEdgeInds);
+% BlockEndTrInds = BlockSectionInfo.BlockTrScales(:,2) - BlockMissTrCount(1:end-1)';
+% 
+% EventAignTimes = NMTrAnsTime - NMTrStimOnTime; % time difference between stim-on and answer
+% ChoiceTypeColors = {'b','r'};
+% BlockTypeColors = {[0.2 0.6 0.2],[0.7 0.4 0.1]};
+% ExtraEventStrs = {'Choice'};
+% NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
+% 
+% cFolderChnAreaStrc = load(fullfile(ksfolder,'Chnlocation.mat'),'AlignedAreaStrings');
+% ChnAreaStrs = cFolderChnAreaStrc.AlignedAreaStrings{2};
+% NewNPClusHandle.ChannelAreaStrs = ChnAreaStrs;
+% NewNPClusHandle.RawRasterplot(EventAignTimes,NMTrFreqs,...
+%     {NMTrChoices,ChoiceTypeColors}, NMBlockTypes, BlockTypeColors,NMTrInds);
 
 %%
 NewNPClusHandle.SpikeTimes = [];
@@ -147,6 +157,9 @@ behavResults = PreNPClusHandle.behavResults;
 PassSoundDatas = PreNPClusHandle.PassSoundDatas;
 save(fullfile(ksfolder,'NewClassHandle.mat'),'NewNPClusHandle','behavResults','PassSoundDatas','-v7.3');
 
+SessAreaIndexReCal(ksfolder, NewNPClusHandle,BrainRegionStrc);
+
+return;
 %% find target cluster inds and IDs
 NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
