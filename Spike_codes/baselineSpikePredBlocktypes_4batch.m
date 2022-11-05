@@ -1,17 +1,19 @@
 clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_First BaselineResp_Last SMBinDataMtx
 
 % load('Chnlocation.mat');
-try
-    load(fullfile(ksfolder,'SessAreaIndexDataNew.mat'));
-catch
-    load(fullfile(ksfolder,'SessAreaIndexData.mat'));
-end
+% try
+    load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
+% catch
+%     load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+% end
 % if isempty(fieldnames(SessAreaIndexStrc.ACAv)) && isempty(fieldnames(SessAreaIndexStrc.ACAd))...
 %          && isempty(fieldnames(SessAreaIndexStrc.ACA))
 %     return;
 % end
-
-    load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
+% load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
+load(fullfile(ksfolder,'NewClassHandle.mat'))
+ProbNPSess = NewNPClusHandle;
+clearvars NewNPClusHandle
 % if isempty(ProbNPSess.ChannelAreaStrs)
 %     ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
 % end
@@ -21,8 +23,8 @@ ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 % Smoothbin = [50,10]; %
 % ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, Smoothbin, double(behavResults.Time_stimOnset(:)));
 % save(fullfile(pwd,'ks2_5','NPClassHandleSaved.mat'),'ProbNPSess', 'PassSoundDatas', 'behavResults', '-v7.3');
-
-SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds}{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+fullData = cellfun(@full,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds},'un',0);
+SMBinDataMtx = permute(cat(3,fullData{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
 
 
 if ~isempty(ProbNPSess.SurviveInds)
@@ -46,10 +48,8 @@ fullsavePath = fullfile(ksfolder, SavedFolderPathName);
 if isfolder(fullsavePath)
     rmdir(fullsavePath,'s');
 end
-
-    mkdir(fullsavePath);
+mkdir(fullsavePath);
  
-
 TargetAreaUnits = false(size(SMBinDataMtxRaw,2),1);
 
 SVMDecodingAccu_strs = {'SVMaccuracy','ShufAccu','SVMmodel','UsedUnitInds(NotRealIndex)'};

@@ -1,12 +1,17 @@
 % ksfolder = pwd;
 clearvars UnitAfterStimAUC UnitAS_BLSubAUC UnitBaselineAUC SVMDecVecs SMBinDataMtx ProbNPSess
 % calculate AUC for each unit in distinguish choice and block type
-load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
-% load('Chnlocation.mat');
-load(fullfile(ksfolder,'SessAreaIndexData.mat'));
-% if isempty(ProbNPSess.ChannelAreaStrs)
-%     ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
-% end
+% % load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
+% % % load('Chnlocation.mat');
+% % load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+% % % if isempty(ProbNPSess.ChannelAreaStrs)
+% % %     ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
+% % % end
+
+load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
+load(fullfile(ksfolder,'NewClassHandle.mat'))
+ProbNPSess = NewNPClusHandle;
+clearvars NewNPClusHandle
 %%
 figSaveFolder = fullfile(ksfolder,'BTANDChoiceAUC_compPlot');
 if isfolder(figSaveFolder)
@@ -21,8 +26,8 @@ ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 % Smoothbin = [50,10]; %
 % ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, Smoothbin, double(behavResults.Time_stimOnset(:)));
 % save(fullfile(pwd,'ks2_5','NPClassHandleSaved.mat'),'ProbNPSess', 'PassSoundDatas', 'behavResults', '-v7.3');
-
-SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds}{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+fullData = cellfun(@full,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds},'un',0);
+SMBinDataMtx = permute(cat(3,fullData{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
 
 
 if ~isempty(ProbNPSess.SurviveInds)
