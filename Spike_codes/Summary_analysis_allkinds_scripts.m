@@ -2158,8 +2158,8 @@ print(h99f,filesavePath99,'-dpdf','-bestfit');
 %
 cclr
 %
-AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -2189,16 +2189,17 @@ UsedFolderPath = cell(NumUsedSess,1);
 SessTrialTypeNums = cell(NumUsedSess,2);
 for cS = 1 : NumUsedSess
     
-    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
-%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     UsedFolderPath{cS} = ksfolder;
     
-    cSessPSTHDatafile = fullfile(ksfolder,'SessPSTHdataSave.mat');
+    cSessPSTHDatafile = fullfile(ksfolder,'SessPSTHdataSaveNew2.mat');
     cSessPSTHDataStrc = load(cSessPSTHDatafile,'ExpendTraceAll');
-    UnitTypefile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypes2.mat');
-    SessUnitTypeMtxStrc = load(UnitTypefile,'IsUnitGLMResp');
+%     UnitTypefile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypes2.mat');
+%     SessUnitTypeMtxStrc = load(UnitTypefile,'IsUnitGLMResp');
+    SessUnitTypeMtxStrc.IsUnitGLMResp = zeros(size(cSessPSTHDataStrc.ExpendTraceAll,1),5); % false data for testing for now
     
     cSessCorrTrNum = cSessPSTHDataStrc.ExpendTraceAll{1,5};
     cSessCorrTrNumVec = cSessCorrTrNum(:);
@@ -2261,7 +2262,7 @@ UsedAreaTypes = AllAreaTypes(~TotalUnitSess_excluInds);
 [ExistAreas,~,UsedAreaNewIndex] = unique(UsedAreaTypes);
 NumExistArea = length(ExistAreas);
 
-ExistAreaUnitPSTHAll = cell(NumExistArea,8);
+ExistAreaUnitPSTHAll = cell(NumExistArea,9);
 for cA = 1 : NumExistArea
     cA_UnitInds = UsedAreaTypes == ExistAreas(cA);
     cA_UnitNums = sum(cA_UnitInds);
@@ -2272,11 +2273,12 @@ for cA = 1 : NumExistArea
     
     cA_UnitErrorPSTHMtx = cat(1,cA_UnitDatas{:,3});
     cA_UnitErrorPSTHSEM = cat(1,cA_UnitDatas{:,4});
+    cA_UnitSessInds = cat(1,cA_UnitDatas{:,9});
     
     cA_strs = BrainAreasStr{ExistAreas(cA)};
     
     ExistAreaUnitPSTHAll(cA,:) = {cA_strs, cA_UnitPSTHMtx, cA_UnitPSTHSEM, ...
-        cA_UnitNums,UsedAreaNewIndex(cA_UnitInds),cA_UnitRespTypeMtx,cA_UnitErrorPSTHMtx,cA_UnitErrorPSTHSEM};
+        cA_UnitNums,UsedAreaNewIndex(cA_UnitInds),cA_UnitRespTypeMtx,cA_UnitErrorPSTHMtx,cA_UnitErrorPSTHSEM,cA_UnitSessInds};
 end
 
 %%
@@ -2284,6 +2286,7 @@ ExistAreaPSTHDataAll = cat(1,ExistAreaUnitPSTHAll{:,2});
 ExistAreaErrorPSTHData = cat(1,ExistAreaUnitPSTHAll{:,7});
 ExistAreaPSTHAreaInds = cat(1,ExistAreaUnitPSTHAll{:,5});
 ExistAreaPSTHUnitRespType = cat(1,ExistAreaUnitPSTHAll{:,6});
+ExistAreaPSTHUnitSessInds = cat(1,ExistAreaUnitPSTHAll{:,9});
 
 [ExistAreaPSTHData_zs, mu, sigma] = zscore(ExistAreaPSTHDataAll,0,2);
 ExistAreaErrorPSTHData_zs = ((ExistAreaErrorPSTHData' - mu')./sigma')';
@@ -2339,7 +2342,7 @@ RespTypeGrInds(isnan(RespTypeGrInds)) = 11;
 %% test with tsne clustering
 % figure('position',[100 100 1200 840])
 % figure;
-Perplexitys = 120;
+Perplexitys = 80;
 nPCs = 100;
 Algorithm = 'barneshut'; %'barneshut' for N > 1000 % 'exact' for small N
 Exag = 12;
@@ -2770,11 +2773,12 @@ for cS = 1 : NumUsedSess
     ksfolder = fullfile(cSessPath,'ks2_5');
     UsedFolderPath{cS} = ksfolder;
     %
-    cSessbaseDatafile = fullfile(ksfolder,'BaselineRespData.mat');
+    cSessbaseDatafile = fullfile(ksfolder,'BaselineRespDataNew.mat');
     cSessbaseDataStrc = load(cSessbaseDatafile,'BlockTypeResps','LowBlockBaseData',...
         'HighBlockBaseData','BlockSectionInfo','AllUnitAreaStrs');
-    UnitTypefile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypes2.mat');
-    SessUnitTypeMtxStrc = load(UnitTypefile,'IsUnitGLMResp');
+%     UnitTypefile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypes2.mat');
+%     SessUnitTypeMtxStrc = load(UnitTypefile,'IsUnitGLMResp');
+    
     
     cSessBlockTypeResp = cSessbaseDataStrc.BlockTypeResps;
     cSessLowBlockBase = cSessbaseDataStrc.LowBlockBaseData;
@@ -2785,6 +2789,8 @@ for cS = 1 : NumUsedSess
     [AreaTypes, ~, AreaInds] = unique(cSessAllAreaStrs);
     
     UsedUnitNums = length(AreaInds);
+    
+    SessUnitTypeMtxStrc.IsUnitGLMResp = false(UsedUnitNums,5);
     NumAreas = length(AreaTypes);
     Match2AllAreaInds = zeros(UsedUnitNums,1);
     for cA = 1 : NumAreas
@@ -2843,7 +2849,7 @@ set(gca,'xtick',1:8,'xticklabel',{'LowRTcorr','LowNRTcorr','LowRTerro','LowNRTer
     'HighRTcorr','HighNRTcorr','HighRTerro','HighNRTerro'},'ytick',[1 size(UsedBaseResp,1)],'FontSize',8);
 ylabel('Units')
 title('BlockWise baseline datas');
-set(gca,'FontSize',12);
+set(gca,'FontSize',12,'box','off');
 %%
 figSavePath12 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
 

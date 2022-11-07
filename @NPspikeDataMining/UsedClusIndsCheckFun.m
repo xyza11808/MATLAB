@@ -131,7 +131,7 @@ if ~isempty(FullClusSelectionops.WaveformSpread) % waveform spread of all channe
         if any(isnan(ToughPeakInds(cUnit,:)))
             SpreadLengthAll(cUnit) = 3800; % make the spread length longer enough
         else
-            SpreadLengthAll(cUnit) = peakAmpSpreadFun(UnitAllchnWaveData{cUnit,2}, ToughPeakInds(cUnit,:), obj.GoodClusMaxChn(cUnit));
+            SpreadLengthAll(cUnit) = peakAmpSpreadFun(UnitAllchnWaveData{cUnit,2}, ToughPeakInds(cUnit,:), obj.GoodClusMaxChn(cUnit)+1);
         end
     end
     AmpSpreadExcludeInds = SpreadLengthAll > FullClusSelectionops.WaveformSpread; % larger value indicates noise across all channels

@@ -200,7 +200,7 @@ classdef NPspikeDataMining
            OverAllExcludeInds = UsedClusIndsCheckFun(obj,InputOps);
            
            obj.UsedClus_IDs = obj.GoodClusIDs(~OverAllExcludeInds);
-           obj.ChannelUseds_id  = obj.GoodClusMaxChn(~OverAllExcludeInds);
+           obj.ChannelUseds_id  = obj.GoodClusMaxChn(~OverAllExcludeInds)+1;
            obj.UsedClusinds  = find(~OverAllExcludeInds);
 %            obj.UsedChnDepth = obj.FRUsedChnDepth(~OverAllExcludeInds);
            obj.SurviveInds = ~OverAllExcludeInds;

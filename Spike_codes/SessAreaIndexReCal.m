@@ -31,5 +31,5 @@ if sum(OtherRegionsUnit)
     IstargetfieldExist(end) = true;
 end
 SessAreaIndexStrc.UsedAbbreviations = IstargetfieldExist;
-SessAreaIndex_saveName = fullfile(cPath,'SessAreaIndexDataNewAlign.mat');
+SessAreaIndex_saveName = fullfile(cPath,'SessAreaIndexDataNewAlign2.mat');
 save(SessAreaIndex_saveName,'SessAreaIndexStrc','-v7.3');

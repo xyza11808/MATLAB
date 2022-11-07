@@ -1,76 +1,79 @@
 % cclr
 
 % ksfolder = pwd;
-clearvars AdjKlClusters PreNPClusHandle NewNPClusHandle waveformdatafile
+clearvars AdjKlClusters NewNPClusHandle waveformdatafile behavResults PassSoundDatas
 
 AdjKlClusters = load(fullfile(ksfolder,'AdjustedClusterInfo.mat'));
-PreNPClusHandle = load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
-PreNPClusHandle.ProbNPSess.SpikeTimes = [];
+% PreNPClusHandle = load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
+% PreNPClusHandle.ProbNPSess.SpikeTimes = [];
+load(fullfile(ksfolder,'NewClassHandle.mat'));
 TotalSampleANDtaskT = load(fullfile(ksfolder,'TrigTimeANDallSampNum.mat'));
 
-NewNPClusHandle = PreNPClusHandle.ProbNPSess;
+% NewNPClusHandle = PreNPClusHandle.ProbNPSess;
 NewNPClusHandle.SpikeClus = AdjKlClusters.FinalSPClusters;
 NewNPClusHandle.ClusterInfoAll = AdjKlClusters.FinalksLabels;
 NewNPClusHandle.SpikeTimes = double(AdjKlClusters.FinalSPTimeSample)/30000;
 %% 
-waveformdatafile = fullfile(ksfolder,'AdjUnitWaveforms','AdjUnitWaveforms.mat');
-% waveformdatafile2 = fullfile(ksfolder,'AdjUnitWaveforms','AdjUnitwaveformDatas.mat');
-if ~exist(waveformdatafile,'file') && ~exist(waveformdatafile2,'file')
-    % the data should have been saved in blockwise format
-    TargetChunkDatafile = dir(fullfile(ksfolder,'AdjUnitWaveforms','TempSavingData*.mat'));
-    if isempty(TargetChunkDatafile)
-        error('No waveform data file have been found, please check current data path.\n');
-    end
-    NumTempFiles = length(TargetChunkDatafile);
-    ChunkLen = 150;
-    UnitDataAll = cell(NumTempFiles,1);
-    UnitFeatures = cell(NumTempFiles,1);
-    for cChunkFileInds = 1 : NumTempFiles
-        cdataStrc = load(fullfile(ksfolder,'AdjUnitWaveforms',TargetChunkDatafile(cChunkFileInds).name));
-        UnitDataAll{cChunkFileInds} = cdataStrc.UnitDatas;
-        UnitFeatures{cChunkFileInds} = cdataStrc.UnitFeatures;
-    end
-    UnitDataAllUnit = cat(1,UnitDataAll{:});
-    UnitFeaturesAllUnit = cat(1,UnitFeatures{:});
-    
-    UnitDatas = UnitDataAllUnit;
-    UnitFeatures = UnitFeaturesAllUnit;
-    
-    AboveThresClusStrc = load(fullfile(ksfolder,'AdjUnitWaveforms','AboveThresClusters.mat'));
-    AboveThresClusIDs = AboveThresClusStrc.AboveThresClusIDs;
-    AboveThresClusMaxChn = AboveThresClusStrc.AboveThresClusMaxChn+1;
-    save(waveformdatafile,'UnitDatas', 'UnitFeatures','AboveThresClusIDs', 'AboveThresClusMaxChn', '-v7.3');
-    fprintf('Saved seperated file into a summary file.\n');
-    clearvars UnitDataAllUnit UnitFeaturesAllUnit
-else
-%     try
-        WaveData = load(waveformdatafile);
-%     catch
-%         WaveData = load(waveformdatafile2);
+waveformdatafile = fullfile(ksfolder,'AdjUnitWaveforms','AdjUnitWaveforms2.mat');
+waveDataStrc = load(waveformdatafile);
+% % waveformdatafile2 = fullfile(ksfolder,'AdjUnitWaveforms','AdjUnitwaveformDatas.mat');
+% if ~exist(waveformdatafile,'file') && ~exist(waveformdatafile2,'file')
+%     % the data should have been saved in blockwise format
+%     TargetChunkDatafile = dir(fullfile(ksfolder,'AdjUnitWaveforms','TempSavingData*.mat'));
+%     if isempty(TargetChunkDatafile)
+%         error('No waveform data file have been found, please check current data path.\n');
 %     end
-    if ndims(WaveData.UnitDatas{2}) == 3
-        AllDimDatas = WaveData.UnitDatas{2};
-        WaveData.UnitDatas{2} = squeeze(mean(AllDimDatas,'omitnan'));
-        clearvars AllDimDatas
-    end
-    UnitDatas = WaveData.UnitDatas;
-    UnitFeatures = WaveData.UnitFeatures;
-    AboveThresClusIDs = WaveData.AboveThresClusIDs;
-    AboveThresClusMaxChn = WaveData.AboveThresClusMaxChn+1;
-end
+%     NumTempFiles = length(TargetChunkDatafile);
+%     ChunkLen = 150;
+%     UnitDataAll = cell(NumTempFiles,1);
+%     UnitFeatures = cell(NumTempFiles,1);
+%     for cChunkFileInds = 1 : NumTempFiles
+%         cdataStrc = load(fullfile(ksfolder,'AdjUnitWaveforms',TargetChunkDatafile(cChunkFileInds).name));
+%         UnitDataAll{cChunkFileInds} = cdataStrc.UnitDatas;
+%         UnitFeatures{cChunkFileInds} = cdataStrc.UnitFeatures;
+%     end
+%     UnitDataAllUnit = cat(1,UnitDataAll{:});
+%     UnitFeaturesAllUnit = cat(1,UnitFeatures{:});
+%     
+%     UnitDatas = UnitDataAllUnit;
+%     UnitFeatures = UnitFeaturesAllUnit;
+%     
+%     AboveThresClusStrc = load(fullfile(ksfolder,'AdjUnitWaveforms','AboveThresClusters.mat'));
+%     AboveThresClusIDs = AboveThresClusStrc.AboveThresClusIDs;
+%     AboveThresClusMaxChn = AboveThresClusStrc.AboveThresClusMaxChn+1;
+%     save(waveformdatafile,'UnitDatas', 'UnitFeatures','AboveThresClusIDs', 'AboveThresClusMaxChn', '-v7.3');
+%     fprintf('Saved seperated file into a summary file.\n');
+%     clearvars UnitDataAllUnit UnitFeaturesAllUnit
+% else
+% %     try
+%         WaveData = load(waveformdatafile);
+% %     catch
+% %         WaveData = load(waveformdatafile2);
+% %     end
+%     if ndims(WaveData.UnitDatas{2}) == 3
+%         AllDimDatas = WaveData.UnitDatas{2};
+%         WaveData.UnitDatas{2} = squeeze(mean(AllDimDatas,'omitnan'));
+%         clearvars AllDimDatas
+%     end
+%     UnitDatas = WaveData.UnitDatas;
+%     UnitFeatures = WaveData.UnitFeatures;
+%     AboveThresClusIDs = WaveData.AboveThresClusIDs;
+%     AboveThresClusMaxChn = WaveData.AboveThresClusMaxChn+1;
+% end
 
-NewNPClusHandle.UnitWaves = UnitDatas;
-NewNPClusHandle.UnitWaveFeatures = UnitFeatures;
-
+NewNPClusHandle.UnitWaves = waveDataStrc.UnitDatas;
+NewNPClusHandle.UnitWaveFeatures = waveDataStrc.UnitFeatures;
+AboveThresClusIDs = waveDataStrc.AboveThresClusIDs;
+AboveThresClusMaxChn = waveDataStrc.AboveThresClusMaxChn;
 %% reassign good cluster IDs and FR values ans so on
 
-SPClusTypes = unique(AdjKlClusters.FinalSPClusters);
-SPClusLabels = AdjKlClusters.FinalksLabels.KSLabel(SPClusTypes+1);
-SPClusMaxChn = AdjKlClusters.FinalSPMaxChn(SPClusTypes+1);
-SPClusGoodClusInds = cellfun(@(x) strcmpi(x,'good'),SPClusLabels);
+% SPClusTypes = unique(AdjKlClusters.FinalSPClusters);
+% SPClusLabels = AdjKlClusters.FinalksLabels.KSLabel(SPClusTypes+1);
+% SPClusMaxChn = AdjKlClusters.FinalSPMaxChn(SPClusTypes+1);
+% SPClusGoodClusInds = cellfun(@(x) strcmpi(x,'good'),SPClusLabels);
 
-GoodClusTypes = SPClusTypes(SPClusGoodClusInds);
-GoodClusMaxChn = SPClusMaxChn(SPClusGoodClusInds);
+GoodClusTypes = AboveThresClusIDs; %SPClusTypes(SPClusGoodClusInds);
+% GoodClusMaxChn = SPClusMaxChn(SPClusGoodClusInds);
 SessDur = TotalSampleANDtaskT.TotalSampleNums/30000;
 
 NumGoodClus = length(GoodClusTypes);
@@ -80,9 +83,9 @@ for cClus = 1 : NumGoodClus
 end
 % AboveThresClusIDs = GoodClusTypes(FRThres);
 % AboveThresClusMaxChn = GoodClusMaxChn(FRThres);
-UsedClusInds = ismember(GoodClusTypes, AboveThresClusIDs);
+% UsedClusInds = ismember(GoodClusTypes, AboveThresClusIDs);
 NewNPClusHandle.GoodClusIDs = AboveThresClusIDs;
-NewNPClusHandle.GoodClusFRs = GoodClusFRs(UsedClusInds);
+NewNPClusHandle.GoodClusFRs = GoodClusFRs;
 NewNPClusHandle.GoodClusMaxChn = AboveThresClusMaxChn;
 
 
@@ -91,34 +94,34 @@ NewNPClusHandle.ChannelAreaStrs = ChnAreaStrsStrc.AlignedAreaStrings;
 
 
 %%
-NewNPClusHandle.ksFolder = ksfolder;
-NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
-if contains(ksfolder,'b103a04_20210408')
-    NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],[2,6],[]);
-else
-    NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],[6,2],[]);
-end
-TrStimOnsets = double(PreNPClusHandle.behavResults.Time_stimOnset(:));
-TimeWin = [-1.5,4]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
-Smoothbin = [50,10]; % time window for smooth psth, in ms format
-% if isempty(ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds})
-    NewNPClusHandle = NewNPClusHandle.TrigPSTH(TimeWin, Smoothbin, TrStimOnsets);
+% NewNPClusHandle.ksFolder = ksfolder;
+% NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
+% if contains(ksfolder,'b103a04_20210408')
+%     NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],[2,6],[]);
+% else
+%     NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],[6,2],[]);
 % end
-%%
-NewNPClusHandle.CurrentSessInds = strcmpi('passive',NewNPClusHandle.SessTypeStrs);
-NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],4);
-
-TimeWin = [-0.4,3];
-NewNPClusHandle = NewNPClusHandle.TrigPSTH(TimeWin, []);
-NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
+% TrStimOnsets = double(PreNPClusHandle.behavResults.Time_stimOnset(:));
+% TimeWin = [-1.5,4]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
+% Smoothbin = [50,10]; % time window for smooth psth, in ms format
+% % if isempty(ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds})
+%     NewNPClusHandle = NewNPClusHandle.TrigPSTH(TimeWin, Smoothbin, TrStimOnsets);
+% % end
+% %%
+% NewNPClusHandle.CurrentSessInds = strcmpi('passive',NewNPClusHandle.SessTypeStrs);
+% NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],4);
+% 
+% TimeWin = [-0.4,3];
+% NewNPClusHandle = NewNPClusHandle.TrigPSTH(TimeWin, []);
+% NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
 
 %% check the clusters going to use
 NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
 NewNPClusHandle.ksFolder = ksfolder;
 NewNPClusHandle = NewNPClusHandle.ClusScreeningFun;
-
-fprintf('\nOld Cluster have %d used unit, while new cluster have %d used unit.\n',...
-    numel(PreNPClusHandle.ProbNPSess.UsedClus_IDs),numel(NewNPClusHandle.UsedClus_IDs));
+fprintf('\nNew cluster screening left units is %d/%d.\n',numel(NewNPClusHandle.UsedClus_IDs),numel(NewNPClusHandle.GoodClusIDs));
+% fprintf('\nOld Cluster have %d used unit, while new cluster have %d used unit.\n',...
+%     numel(PreNPClusHandle.ProbNPSess.UsedClus_IDs),numel(NewNPClusHandle.UsedClus_IDs));
 %% %% plot the rasters
 % behavResults = PreNPClusHandle.behavResults;
 % AllTrStimOnTime = double(behavResults.Time_stimOnset(:));
@@ -153,9 +156,9 @@ fprintf('\nOld Cluster have %d used unit, while new cluster have %d used unit.\n
 
 %%
 NewNPClusHandle.SpikeTimes = [];
-behavResults = PreNPClusHandle.behavResults;
-PassSoundDatas = PreNPClusHandle.PassSoundDatas;
-save(fullfile(ksfolder,'NewClassHandle.mat'),'NewNPClusHandle','behavResults','PassSoundDatas','-v7.3');
+% behavResults = PreNPClusHandle.behavResults;
+% PassSoundDatas = PreNPClusHandle.PassSoundDatas;
+save(fullfile(ksfolder,'NewClassHandle2.mat'),'NewNPClusHandle','behavResults','PassSoundDatas','-v7.3');
 
 SessAreaIndexReCal(ksfolder, NewNPClusHandle,BrainRegionStrc);
 
@@ -197,6 +200,11 @@ NewAddedClusIDs = ExistField_ClusIDs(~OldExistedClusIDInds,:);
 
 [RegressorInfosCell,FullRegressorInfosCell,PredictorStrc] = ...
     linear_regressor_calFun(ksfolder,NewNPClusHandle,NewAddedClusIDs,behavResults);
+AddedClusterBackup = struct();
+AddedClusterBackup.ExtraIDs = NewAddedClusIDs;
+AddedClusterBackup.RegressorInfosCell = RegressorInfosCell;
+AddedClusterBackup.FullRegressorInfosCell = FullRegressorInfosCell;
+% AddedClusterBackup.PredictorStrc = PredictorStrc;
 
 %%
 TotalNumofUnit = size(ExistField_ClusIDs,1);
@@ -220,7 +228,7 @@ FullRegressorInfosCell = NewFullRegressorCell;
 dataSaveNames = fullfile(ksfolder,'Regressor_ANA','REgressorDataSave5.mat');
 save(dataSaveNames, 'RegressorInfosCell',...
     'ExistField_ClusIDs', 'NewAdd_ExistAreaNames', 'AreaUnitNumbers',...
-    'FullRegressorInfosCell','PredictorStrc','-v7.3');
+    'FullRegressorInfosCell','PredictorStrc','AddedClusterBackup','-v7.3');
 
 %% cehck anova data
 AnovafilePath = fullfile(ksfolder,'AnovanAnA','OmegaSqrDatas.mat');

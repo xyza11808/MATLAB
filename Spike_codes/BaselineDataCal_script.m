@@ -1,7 +1,7 @@
 
 clearvars behavResults OutDataStrc
-load(fullfile(ksfolder,'NPClassHandleSaved.mat'),'behavResults');
-load(fullfile(ksfolder,'SessPSTHdataSave.mat'),'OutDataStrc');
+load(fullfile(ksfolder,'NewClassHandle.mat'),'behavResults');
+load(fullfile(ksfolder,'SessPSTHdataSaveNew.mat'),'OutDataStrc');
 
 NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 
@@ -18,7 +18,7 @@ BlockSectionInfo = Bev2blockinfoFun(behavResults);
 
 %% find target cluster inds and IDs
 
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
@@ -102,7 +102,7 @@ else
 end
 %%
 
-saveMATfile = fullfile(ksfolder,'BaselineRespData.mat');
+saveMATfile = fullfile(ksfolder,'BaselineRespDataNew.mat');
 save(saveMATfile,'BaselineResp','BlockSectionInfo','BehavTrInfo','BlockTypeResps','TypeStrings',...
     'LowBlockBaseData','HighBlockBaseData','AllUnitAreaStrs','NewAdd_ExistAreaNames','-v7.3');
 

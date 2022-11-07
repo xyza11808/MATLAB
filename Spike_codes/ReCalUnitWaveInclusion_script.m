@@ -1,14 +1,17 @@
 
 clearvars UnitDatas UnitFeatures
 %% 
-waveformdatafile = fullfile(ksfolder,'AdjUnitWaveforms','AdjUnitWaveforms.mat');
+waveformdatafile = fullfile(ksfolder,'AdjUnitWaveforms','AdjUnitWaveforms2.mat');
 waveformdatafile2 = fullfile(ksfolder,'AdjUnitWaveforms','AdjUnitwaveformDatas.mat');
-if ~exist(waveformdatafile,'file') && ~exist(waveformdatafile2,'file')
+TargetChunkDatafile = dir(fullfile(ksfolder,'AdjUnitWaveforms','TempSavingData*.mat'));
+
+% if ~exist(waveformdatafile,'file') && ~exist(waveformdatafile2,'file')
+if ~isempty(TargetChunkDatafile)   
     % the data should have been saved in blockwise format
-    TargetChunkDatafile = dir(fullfile(ksfolder,'AdjUnitWaveforms','TempSavingData*.mat'));
-    if isempty(TargetChunkDatafile)
-        error('No waveform data file have been found, please check current data path.\n');
-    end
+%     TargetChunkDatafile = dir(fullfile(ksfolder,'AdjUnitWaveforms','TempSavingData*.mat'));
+%     if isempty(TargetChunkDatafile)
+%         error('No waveform data file have been found, please check current data path.\n');
+%     end
     NumTempFiles = length(TargetChunkDatafile);
     ChunkLen = 150;
     UnitDataAll = cell(NumTempFiles,1);
@@ -26,16 +29,16 @@ if ~exist(waveformdatafile,'file') && ~exist(waveformdatafile2,'file')
     
     AboveThresClusStrc = load(fullfile(ksfolder,'AdjUnitWaveforms','AboveThresClusters.mat'));
     AboveThresClusIDs = AboveThresClusStrc.AboveThresClusIDs;
-    AboveThresClusMaxChn = AboveThresClusStrc.AboveThresClusMaxChn+1;
+    AboveThresClusMaxChn = AboveThresClusStrc.AboveThresClusMaxChn;
 %     save(waveformdatafile,'UnitDatas', 'UnitFeatures','AboveThresClusIDs', 'AboveThresClusMaxChn', '-v7.3');
 %     fprintf('Saved seperated file into a summary file.\n');
 %     clearvars UnitDataAllUnit UnitFeaturesAllUnit
 else
-    try
-        WaveData = load(waveformdatafile);
-    catch
+%     try
         WaveData = load(waveformdatafile2);
-    end
+%     catch
+%         WaveData = load(waveformdatafile);
+%     end
     if ndims(WaveData.UnitDatas{2}) == 3
         AllDimDatas = WaveData.UnitDatas{2};
         WaveData.UnitDatas{2} = squeeze(mean(AllDimDatas,'omitnan'));
@@ -44,7 +47,7 @@ else
     UnitDatas = WaveData.UnitDatas;
 %     UnitFeatures = WaveData.UnitFeatures;
     AboveThresClusIDs = WaveData.AboveThresClusIDs;
-    AboveThresClusMaxChn = WaveData.AboveThresClusMaxChn+1;
+    AboveThresClusMaxChn = WaveData.AboveThresClusMaxChn;
 end
 %%
 
