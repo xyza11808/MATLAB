@@ -164,7 +164,7 @@ SessAreaIndexReCal(ksfolder, NewNPClusHandle,BrainRegionStrc);
 
 return;
 %% find target cluster inds and IDs
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
@@ -186,11 +186,11 @@ for cA = 1 : Numfieldnames
 end
 %
 ExistField_ClusIDs = cat(1,ExistField_ClusIDsCell{:});
-%%
+%% for the second time calculation after the first calculation
 
-OldRegFile = fullfile(ksfolder,'Regressor_ANA','RegressorDataAligned.mat');
+OldRegFile = fullfile(ksfolder,'Regressor_ANA','REgressorDataSave5.mat');
 OldRegData = load(OldRegFile);
-
+OldRegUsedClusIDs = OldRegData.ExistField_ClusIDs;
 %%
 [OldExistedClusIDInds, OldMapInds] = ismember(ExistField_ClusIDs(:,1),OldRegData.NewExistField_ClusIDs(:,1));
 fprintf('Num of processed clusters is %d/%d.\n',sum(OldExistedClusIDInds),numel(OldExistedClusIDInds));
@@ -225,18 +225,18 @@ RegressorInfosCell = NewRregressorCell;
 FullRegressorInfosCell = NewFullRegressorCell;
 
 %% save new regressor datas
-dataSaveNames = fullfile(ksfolder,'Regressor_ANA','REgressorDataSave5.mat');
+dataSaveNames = fullfile(ksfolder,'Regressor_ANA','REgressorDataSave6.mat');
 save(dataSaveNames, 'RegressorInfosCell',...
     'ExistField_ClusIDs', 'NewAdd_ExistAreaNames', 'AreaUnitNumbers',...
     'FullRegressorInfosCell','PredictorStrc','AddedClusterBackup','-v7.3');
 
 %% cehck anova data
-AnovafilePath = fullfile(ksfolder,'AnovanAnA','OmegaSqrDatas.mat');
-OldClusIDfile = fullfile(ksfolder,'AnovanAnA','SigAnovaTracedataSave.mat');
+AnovafilePath = fullfile(ksfolder,'AnovanAnA','OmegaSqrDatasNew.mat');
+% OldClusIDfile = fullfile(ksfolder,'AnovanAnA','SigAnovaTracedataSave.mat');
 OldAnovaDataStrc = load(AnovafilePath);
-OldClusIDs = load(OldClusIDfile,'SeqFieldClusIDs');
+% OldClusIDs = load(OldClusIDfile,'SeqFieldClusIDs');
 %%
-[OldExistedClusIDInds, OldMapInds] = ismember(ExistField_ClusIDs(:,1),OldClusIDs.SeqFieldClusIDs(:,1));
+[OldExistedClusIDInds, OldMapInds] = ismember(ExistField_ClusIDs(:,1),OldRegUsedClusIDs(:,1));
 fprintf('Num of processed clusters is %d/%d.\n',sum(OldExistedClusIDInds),numel(OldExistedClusIDInds));
 NewAddedClusIDs = ExistField_ClusIDs(~OldExistedClusIDInds,:);
 
@@ -273,7 +273,7 @@ for cCalbin = 1 : CaledBinNum
 end
 %%
 
-save(fullfile(ksfolder,'AnovanAnA','OmegaSqrDatasNew.mat'),'NewAllNullThres_Mtx',...
-    'NewCalWinUnitOmegaSqrs','NewNSMUnitOmegaSqrData','NewNullOmegaSqrDatas','-v7.3');
+save(fullfile(ksfolder,'AnovanAnA','OmegaSqrDatasNew2.mat'),'NewAllNullThres_Mtx',...
+    'NewCalWinUnitOmegaSqrs','NewNSMUnitOmegaSqrData','NewNullOmegaSqrDatas','OldRegUsedClusIDs','-v7.3');
 
 

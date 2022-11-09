@@ -1,5 +1,5 @@
 
-load(fullfile(ksfolder,'NewClassHandle.mat'));
+load(fullfile(ksfolder,'NewClassHandle2.mat'));
 ProbNPSess = NewNPClusHandle;
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 if isempty(ProbNPSess.SpikeTimes)
@@ -14,7 +14,7 @@ BaselineResp = mean(NewBinnedDatas(:,:,1:OnsetBin),3);
 BaseLineEndInds = OutDataStrc.TriggerStartBin - 1;
 %% find target cluster inds and IDs
 
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);

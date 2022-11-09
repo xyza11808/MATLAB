@@ -1,47 +1,47 @@
-% clearvars -except ExistAreaPSTHData_zs ExistAreaErrorPSTHData_zs ExistAreaPSTHAreaInds 
-% load template cluster trace and compute the overall correlations for each
-% unit
-load('finalClusterTemplatefrom11.mat');
-
-%%
-[Corr, ~] = corr(ExistAreaPSTHData_zs',SigCorrAvgData');
-[~, MaxCorrInds] = max(Corr,[],2);
-[NewClusInds, NewClusSortInds] = sort(MaxCorrInds);
-
-AllCorrSortData = ExistAreaPSTHData_zs(NewClusSortInds,:);
-
-[AllCorAvgData, AllCorSEMData, AllCorGrNums] = DataTypeClassification(AllCorrSortData,NewClusInds);
-[NewClusCorr,~] = corr(AllCorrSortData',AllCorAvgData');
-NumPoints = size(AllCorrSortData,2);
-RawUnitIDs = 1:size(AllCorrSortData,1);
-AllCorrSortUnitIDs = RawUnitIDs(NewClusSortInds);
-
-ClusTypes = unique(NewClusInds);
-NumClus = length(ClusTypes);
-
-SigUnitGrInds = nan(NumPoints,1);
-% cClus = 4;
-for cClus = 1 : NumClus
-    OtherGrInds = NewClusInds ~= ClusTypes(cClus);
-    OtherGr_cGr_corrs = NewClusCorr(OtherGrInds, cClus);
-    
-    cGr_corrs = NewClusCorr(~OtherGrInds, cClus);
-    
-    Thres = max(prctile(OtherGr_cGr_corrs,95),0.3);
-    IsUnitSigCorr = cGr_corrs > Thres;
-    
-    SigUnitGrInds(~OtherGrInds) = IsUnitSigCorr;
-end
-
-SigUnitGrInds = logical(SigUnitGrInds);
-
-SigGrIndsAll = NewClusInds(SigUnitGrInds);
-SigGrDatas = AllCorrSortData(SigUnitGrInds,:);
-SigGrUnitID = AllCorrSortUnitIDs(SigUnitGrInds);
+% % clearvars -except ExistAreaPSTHData_zs ExistAreaErrorPSTHData_zs ExistAreaPSTHAreaInds 
+% % load template cluster trace and compute the overall correlations for each
+% % unit
+% load('finalClusterTemplatefrom11.mat');
+% 
+% %%
+% [Corr, ~] = corr(ExistAreaPSTHData_zs',SigCorrAvgData');
+% [~, MaxCorrInds] = max(Corr,[],2);
+% [NewClusInds, NewClusSortInds] = sort(MaxCorrInds);
+% 
+% AllCorrSortData = ExistAreaPSTHData_zs(NewClusSortInds,:);
+% 
+% [AllCorAvgData, AllCorSEMData, AllCorGrNums] = DataTypeClassification(AllCorrSortData,NewClusInds);
+% [NewClusCorr,~] = corr(AllCorrSortData',AllCorAvgData');
+% NumPoints = size(AllCorrSortData,2);
+% RawUnitIDs = 1:size(AllCorrSortData,1);
+% AllCorrSortUnitIDs = RawUnitIDs(NewClusSortInds);
+% 
+% ClusTypes = unique(NewClusInds);
+% NumClus = length(ClusTypes);
+% 
+% SigUnitGrInds = nan(NumPoints,1);
+% % cClus = 4;
+% for cClus = 1 : NumClus
+%     OtherGrInds = NewClusInds ~= ClusTypes(cClus);
+%     OtherGr_cGr_corrs = NewClusCorr(OtherGrInds, cClus);
+%     
+%     cGr_corrs = NewClusCorr(~OtherGrInds, cClus);
+%     
+%     Thres = max(prctile(OtherGr_cGr_corrs,95),0.3);
+%     IsUnitSigCorr = cGr_corrs > Thres;
+%     
+%     SigUnitGrInds(~OtherGrInds) = IsUnitSigCorr;
+% end
+% 
+% SigUnitGrInds = logical(SigUnitGrInds);
+% 
+% SigGrIndsAll = NewClusInds(SigUnitGrInds);
+% SigGrDatas = AllCorrSortData(SigUnitGrInds,:);
+% SigGrUnitID = AllCorrSortUnitIDs(SigUnitGrInds);
 
 %%
 FileNamePrefix = 'Mannual_clustering_data_';
-PosFiles = dir('Mannual_clustering_data_*.mat');
+PosFiles = dir('Mannual_clustering_Newdata_*.mat');
 
 NumFiles = length(PosFiles);
 
@@ -96,6 +96,89 @@ savefilePath = fullfile(summaryDataPath,'MannualClusterfinalsave.mat');
 save(savefilePath,'FileDatas','SessUnit2ClusInds','SessUnittsnePoints','SigGrUnitID','SigGrIndsAll','SigGrDatas',...
     'ExistAreaPSTHData_zs','FinalGrPSTHs','FinalGrInds','FSigCorrAvgData','FSigCorrGrNums','NonEmptyUnitIDs','-v7.3');
 
+%% find all the averaged cluster trace and unique them
+
+% FileNamePrefix = 'Mannual_clustering_data_';
+DataSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+PosFiles = dir(fullfile(DataSavePath,'Mannual_clustering_data_NewData*.mat'));
+
+NumFiles = length(PosFiles);
+
+FileDatas = cell(NumFiles,2);
+
+for cf = 1 : NumFiles
+    cfName = PosFiles(cf).name;
+    cfileData = load(cfName);
+    cf_CorrAvgDatas = cfileData.SigCorrAvgData;
+    FileDatas(cf,:) = {cf_CorrAvgDatas,cf*ones(size(cf_CorrAvgDatas,1),1)};
+end
+
+%%
+AllAvgTraces = cat(1,FileDatas{:,1});
+AllTraceSessIDs = cat(1,FileDatas{:,2});
+
+Perplexitys = 50;
+nPCs = 150;
+Algorithm = 'barneshut'; %'barneshut' for N > 1000 % 'exact' for small N
+Exag = 12;
+
+
+AllYs = cell(5,2);
+for cR = 1 : 5
+    figure
+%     hold on
+    
+    rng('shuffle') % for fair comparison
+    [Y,loss] = tsne(AllAvgTraces,'Algorithm',Algorithm,'Distance','cosine','Perplexity',Perplexitys,...
+        'NumPCAComponents',nPCs,'Exaggeration',Exag);
+    scatter(Y(:,1),Y(:,2),'ko');
+    title('Cosine')
+    AllYs(cR,:) = {Y,loss};
+end
+%%
+AlltsneScores = cat(1,AllYs{:,2});
+[~,MinInds] = min(AlltsneScores);
+BestTsnePoints = AllYs{MinInds,1};
+
+UsedNumClusters = 5:100;
+TestClusterNum = length(UsedNumClusters);
+AllClusANDsindex = cell(TestClusterNum,2);
+for cK = 1 : TestClusterNum
+    idx = kmedoids(BestTsnePoints,UsedNumClusters(cK),'Replicates',5);
+    s = silhouette(BestTsnePoints,idx,'cityblock');
+    AllClusANDsindex(cK,:) = {idx,s};
+end
+
+%%
+AllSilIndex = cellfun(@mean,AllClusANDsindex(:,2));
+[~,MaxInds] = max(AllSilIndex);
+UsedAvgTraceClusInds = AllClusANDsindex{MaxInds,1};
+UsedAvgClusSilIndex = AllClusANDsindex{MaxInds,2};
+
+UsedClusInds = UsedAvgClusSilIndex > 0.1;
+UsedClus_clusIndex = UsedAvgTraceClusInds(UsedClusInds);
+UsedClus_clusAvgTraces = AllAvgTraces(UsedClus_clusIndex,:);
+
+[ClusInds, ClusSortInds] = sort(UsedClus_clusIndex);
+SortedAvgPSTH = UsedClus_clusAvgTraces(ClusSortInds,:);
+Corrs = corrcoef(SortedAvgPSTH');
+figure;
+imagesc(Corrs,[0.5 1]);
+Counts = accumarray(ClusInds,1);
+AccumGrCounts = cumsum(Counts);
+for cGr = 1 : numel(AccumGrCounts)
+    line([1 numel(ClusInds)],[AccumGrCounts(cGr) AccumGrCounts(cGr)],'Color','m',...
+        'linewidth',1.5);
+    line([AccumGrCounts(cGr) AccumGrCounts(cGr)],[1 numel(ClusInds)],'Color','m',...
+        'linewidth',1.5);
+end
+
+
+% hf = figure;
+% hold on
+% % gscatter(BestTsnePoints(:,1),BestTsnePoints(:,2),UsedAvgTraceClusInds);
+% scatter(BestTsnePoints(:,1),BestTsnePoints(:,2),20,UsedAvgClusSilIndex);
+% scatter(BestTsnePoints(UsedAvgClusSilIndex > 0.1,1),BestTsnePoints(UsedAvgClusSilIndex > 0.1,2),18,'r*');
 
 %% Following parts only used for test usage
 %% loop across maximum cluster numbers
