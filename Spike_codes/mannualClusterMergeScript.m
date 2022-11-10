@@ -99,7 +99,8 @@ save(savefilePath,'FileDatas','SessUnit2ClusInds','SessUnittsnePoints','SigGrUni
 %% find all the averaged cluster trace and unique them
 
 % FileNamePrefix = 'Mannual_clustering_data_';
-DataSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+% DataSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+DataSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
 PosFiles = dir(fullfile(DataSavePath,'Mannual_clustering_data_NewData*.mat'));
 
 NumFiles = length(PosFiles);
@@ -107,7 +108,7 @@ NumFiles = length(PosFiles);
 FileDatas = cell(NumFiles,2);
 
 for cf = 1 : NumFiles
-    cfName = PosFiles(cf).name;
+    cfName = fullfile(DataSavePath,PosFiles(cf).name);
     cfileData = load(cfName);
     cf_CorrAvgDatas = cfileData.SigCorrAvgData;
     FileDatas(cf,:) = {cf_CorrAvgDatas,cf*ones(size(cf_CorrAvgDatas,1),1)};
@@ -125,14 +126,14 @@ Exag = 12;
 
 AllYs = cell(5,2);
 for cR = 1 : 5
-    figure
+%     figure
 %     hold on
     
     rng('shuffle') % for fair comparison
     [Y,loss] = tsne(AllAvgTraces,'Algorithm',Algorithm,'Distance','cosine','Perplexity',Perplexitys,...
         'NumPCAComponents',nPCs,'Exaggeration',Exag);
-    scatter(Y(:,1),Y(:,2),'ko');
-    title('Cosine')
+%     scatter(Y(:,1),Y(:,2),'ko');
+%     title('Cosine')
     AllYs(cR,:) = {Y,loss};
 end
 %%
@@ -172,6 +173,139 @@ for cGr = 1 : numel(AccumGrCounts)
     line([AccumGrCounts(cGr) AccumGrCounts(cGr)],[1 numel(ClusInds)],'Color','m',...
         'linewidth',1.5);
 end
+%%
+[SigCorrAvgData, SigCorrSEMData, SigCorrGrNums] = DataTypeClassification(SortedAvgPSTH,ClusInds);
+
+%%
+LeftGrTypes = unique(ClusInds);
+NumPoints = size(SigCorrAvgData,2);
+h00f = figure('position',[100 100 1020 840]);
+hold on
+
+ybase = 5;
+ystep = 3;
+PlottedClusNum = length(LeftGrTypes);
+TraceTickCent = zeros(PlottedClusNum,1);
+for cplot = 1 : PlottedClusNum
+    cTraceData = SigCorrAvgData(cplot,:);
+    cTraceData_minSub = cTraceData - min(cTraceData);
+    cTraceData_plot = cTraceData_minSub + ybase;
+    plot(cTraceData_plot,'k','linewidth',1.5);
+    text(NumPoints+10, mean(cTraceData_plot),num2str(SigCorrGrNums(cplot),'%d'),'Color','m');
+    TraceTickCent(cplot) = mean(cTraceData_plot);
+    ybase = ybase + ystep + max(cTraceData_minSub);
+end
+
+BlockChangePoints = NumPoints/2 + 0.5;
+yscales = get(gca,'ylim');
+line(BlockChangePoints*[1 1],[0 ybase],'Color',[1 0 0 0.3],'linewidth',2);
+set(gca,'ylim',[0 ybase],'ytick',TraceTickCent,'yticklabel',LeftGrTypes(:),...
+    'xtick',[NumPoints/4 NumPoints*3/4],'xticklabel',{'LowBlock';'HighBlock'});
+ylabel('Clusters');
+title('Correlation threshold, Correct trials');
+
+
+%% example plots
+close
+cLus = 47;
+cClusInds = ClusInds == cLus;
+cClusTraces = SortedAvgPSTH(cClusInds,:);
+figure;
+plot(cClusTraces','Color',[.7 .7 .7]);
+
+%%
+[Corr, p] = corr(ExistAreaPSTHData_zs',SigCorrAvgData');
+NumClusters = size(SigCorrAvgData,1);
+[MaxCorrValue, MaxCorrInds] = max(Corr,[],2);
+[NewClusInds, NewClusSortInds] = sort(MaxCorrInds);
+SortedPSTHs = ExistAreaPSTHData_zs(NewClusSortInds,:);
+SortedMaxCorrs = MaxCorrValue(NewClusSortInds);
+figure;imagesc(SortedPSTHs,[-2 5])
+
+Counts = accumarray(NewClusInds,1);
+AccumGrCounts = cumsum(Counts);
+for cGr = 1 : numel(AccumGrCounts)
+    line([1 700],[AccumGrCounts(cGr) AccumGrCounts(cGr)],'Color','m',...
+        'linewidth',1.5);
+end
+
+%% example cluster color plot
+cClus = 3;
+cClusPSTHs = SortedPSTHs(NewClusInds == cClus,:);
+cClusCorrs = SortedMaxCorrs(NewClusInds == cClus);
+[SortedCorrs,CorrSortInds] = sort(cClusCorrs);
+cClusPSTHs_sorted = cClusPSTHs(CorrSortInds,:);
+cClusCorrs_sorted = cClusCorrs(CorrSortInds);
+
+%% using the top 20% correlation units to recalculate the avg tracefor each cluster
+NewClusAvgTrace = zeros(size(SigCorrAvgData));
+for cClus = 1 : NumClusters
+    cClusPSTHs = SortedPSTHs(NewClusInds == cClus,:);
+    cClusCorrs = SortedMaxCorrs(NewClusInds == cClus);
+    Thres = prctile(cClusCorrs,80);
+    UsedUnitInds = cClusCorrs >= Thres;
+    UsedUnitPSTHs = cClusPSTHs(UsedUnitInds,:);
+    NewClusAvgTrace(cClus,:) = mean(UsedUnitPSTHs);
+end
+
+LowClusAvg_AllMean = mean(NewClusAvgTrace(:,1:350),2);
+HighClusAvg_AllMean = mean(NewClusAvgTrace(:,351:700),2);
+LowByHighDiff = LowClusAvg_AllMean - HighClusAvg_AllMean;
+[~,LHsortInds] = sort(LowByHighDiff,'descend');
+
+LHsortAvgTraces = NewClusAvgTrace(LHsortInds,:);
+
+%% recalculate all units cluster and cutting threshold at 0.4 correlation
+[Corr, p] = corr(ExistAreaPSTHData_zs',LHsortAvgTraces');
+NumClusters = size(LHsortAvgTraces,1);
+[MaxCorrValue, MaxCorrInds] = max(Corr,[],2);
+[NewClusInds, NewClusSortInds] = sort(MaxCorrInds);
+SortedPSTHs = ExistAreaPSTHData_zs(NewClusSortInds,:);
+SortedMaxCorrs = MaxCorrValue(NewClusSortInds);
+CorrThres = 0.4;
+ThresCut_unitInds = SortedMaxCorrs > CorrThres;
+CorrThres_SortPSTH = SortedPSTHs(ThresCut_unitInds,:);
+CorrThres_MaxCorr = SortedMaxCorrs(ThresCut_unitInds);
+CorrThres_ClusInds = NewClusInds(ThresCut_unitInds);
+
+
+figure;imagesc(CorrThres_SortPSTH,[-1 3])
+
+%%
+[SigCorrAvgDataFinal, SigCorrSEMDataFinal, SigCorrGrNumsFinal] = ...
+    DataTypeClassification(CorrThres_SortPSTH,CorrThres_ClusInds);
+
+
+%%
+LeftGrTypes = unique(CorrThres_ClusInds);
+NumPoints = size(SigCorrAvgDataFinal,2);
+h00f = figure('position',[100 100 1020 840]);
+hold on
+
+ybase = 5;
+ystep = 3;
+PlottedClusNum = length(LeftGrTypes);
+TraceTickCent = zeros(PlottedClusNum,1);
+for cplot = 1 : PlottedClusNum
+    cTraceData = SigCorrAvgDataFinal(cplot,:);
+    cTraceData_minSub = cTraceData - min(cTraceData);
+    cTraceData_plot = cTraceData_minSub + ybase;
+    plot(cTraceData_plot,'k','linewidth',1.5);
+    text(NumPoints+10, mean(cTraceData_plot),num2str(SigCorrGrNumsFinal(cplot),'%d'),'Color','m');
+    TraceTickCent(cplot) = mean(cTraceData_plot);
+    ybase = ybase + ystep + max(cTraceData_minSub);
+end
+
+BlockChangePoints = NumPoints/2 + 0.5;
+yscales = get(gca,'ylim');
+line(BlockChangePoints*[1 1],[0 ybase],'Color',[1 0 0 0.3],'linewidth',2);
+set(gca,'ylim',[0 ybase],'ytick',TraceTickCent,'yticklabel',LeftGrTypes(:),...
+    'xtick',[NumPoints/4 NumPoints*3/4],'xticklabel',{'LowBlock';'HighBlock'});
+ylabel('Clusters');
+title('Correlation threshold, Correct trials');
+
+
+
 
 
 % hf = figure;
