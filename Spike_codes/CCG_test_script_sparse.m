@@ -86,12 +86,12 @@ CalUnitInds = ExistField_ClusIDs(:,2);
 NumCaledUnits = length(CalUnitInds);
 
 %%
-TauValueScale = [-800,800];
+TauValueScale = [-500,500];
 totalCalNumber = NumCaledUnits*((NumCaledUnits-1)/2+1);
 cSess = cfff;
 
 TrialTime = diff(TrialTimeScale);
-CombinedUnitInds = zeros(totalCalNumber,2);
+CombinedUnitInds = uint16(zeros(totalCalNumber,2));
 t = tic;
 f = waitbar(0,sprintf('Session %d, Calculation Start...',cSess));
 k = 1;
@@ -163,7 +163,7 @@ for cInds = 1 : NumofBatches % totalCalNumber
     %
     clearvars Cell1Data_SparseCell Cell2Data_SparseCell Cell1DataJitterData Cell2DataJitterData
     %
-    AllPairedUnit_CCGs(cInds, :) = {[unit1Inds,unit2Inds], TauCCGs, jitterAllCCGs};
+    AllPairedUnit_CCGs(cInds, :) = {uint16([unit1Inds,unit2Inds]), single(TauCCGs), single(jitterAllCCGs)};
 %     if mod(k,10) == 0
         Progress = cInds/NumofBatches;
         waitbar(Progress,f,sprintf('Session %d, Processing %.2f%% of all calculation...',cSess, Progress*100));
