@@ -18,11 +18,19 @@ if ~exist('shadowColor','var') || isempty(shadowColor)
 end
 
 [nROws,nCloumns] = size(data);
-% MeanTrace = (smooth(mean(data),7))';
-MeanTrace = (sgolayfilt(mean(data),3,7));
-% MeanTrace = mean(data);
-% MeanTrace = wdenoise(mean(data));
-TraceSem = std(data)/sqrt(nROws) * SEMratio; 
+if nROws == 1
+    MeanTrace = (sgolayfilt(data,3,7));
+    TraceSem = zeros(size(MeanTrace));
+elseif nROws == 2
+    MeanTrace = (sgolayfilt(mean(data),3,7));
+    TraceSem = zeros(size(MeanTrace));
+else
+    % MeanTrace = (smooth(mean(data),7))';
+    MeanTrace = (sgolayfilt(mean(data),3,7));
+    % MeanTrace = mean(data);
+    % MeanTrace = wdenoise(mean(data));
+    TraceSem = std(data)/sqrt(nROws) * SEMratio; 
+end
 if isempty(xticks)
     xticks = 1 : nCloumns;
     xpatch = [xticks,fliplr(xticks)];

@@ -1,3 +1,5 @@
+
+% ROINum = length(ROIinfos)+1;
 ROIinfos = struct('ROIpos',[],'ROImask',[]);
 ROINum = 1;
 IsROIAdd = true;
@@ -65,8 +67,8 @@ UnitInterROI(isnan(UnitInterROI)) = NumROIs + 1;
 %%
 savePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
 % savePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
-savefile = fullfile(savePath,'Mannual_clustering_data_30.mat'); 
-save(savefile,'AllDataPoints', 'UnitInterROI','-v7.3');
+savefile = fullfile(savePath,'Mannual_clustering_data_RawNew10.mat'); 
+save(savefile,'AllDataPoints', 'UnitInterROI','ExistAreaPSTHData_zs','ExistAreaPSTHAreaInds','ExistAreaErrorPSTHData_zs','-v7.3');
 % 
 % save(savefile,'AllDataPoints', 'UnitInterROI', 'GrInds', 'Clus2RawInds', 'NewClusInds',...
 %     'SigUnitGrInds','sIndexInds','SigCorrAvgData','SigErroAvgData','-v7.3');
@@ -77,10 +79,15 @@ save(savefile,'AllDataPoints', 'UnitInterROI','-v7.3');
 % % ClusColors = linspecer(NumROIs);
 % % gscatter(AllDataPoints(UsedYInds,1),AllDataPoints(UsedYInds,2),...
 % %     UnitInterROI(UsedYInds),ClusColors,'o',6);
-figure;
+h2_0f = figure;
 hold on
 silh = silhouette(AllDataPoints, UnitInterROI, 'cityblock');
 scatter(AllDataPoints(:,1),AllDataPoints(:,2),10,silh,'o','filled');
+colorbar
+xlabel('tsne 1');
+ylabel('tsne 2');
+set(gca,'FontSize',12);
+
 % AboveThresInds = silh > -0.2;
 % scatter(AllDataPoints(AboveThresInds,1),AllDataPoints(AboveThresInds,2),8,'r*');
 
@@ -121,7 +128,7 @@ for cGr = 1 : numel(AccumGrCounts)
     line([1 700],[AccumGrCounts(cGr) AccumGrCounts(cGr)],'Color','m',...
         'linewidth',1.5);
 end
-NumClus = length(ROIinfos);
+NumClus = length(Counts)-1;
 
 %% small group data list and plot
 % TargetGrInds = [2,3,6,7,8,9,10,14,15,16,18:23];
@@ -208,34 +215,34 @@ for cGr = 1 : numel(AccumGrCounts)
     line([1 NumClus],[AccumGrCounts(cGr) AccumGrCounts(cGr)],'Color','m',...
         'linewidth',1.5);
 end
-%% plot the scatter points after first reclustering
-close
-SortGrPoints = AllDataPoints(Clus2RawInds,:);
-figure;
-hold on
-PlotGr1 = 1;
-PlotGr2 = 30;
-NonColorInds = NewClusInds ~= PlotGr1 & NewClusInds ~= PlotGr2;
-GrInds1 = NewClusInds == PlotGr1;
-GrInds2 = NewClusInds == PlotGr2;
-GrInds1_points = SortGrPoints(GrInds1,:);
-
-scatter(SortGrPoints(NonColorInds,1),SortGrPoints(NonColorInds,2),6,...
-    'MarkerEdgeColor',[.6 .6 .6]);
-scatter(GrInds1_points(:,1),GrInds1_points(:,2),8,...
-    'MarkerEdgeColor','r');
-f_CI = EclipseCI_2DgaussianFun(SortGrPoints(GrInds1,:),0.5);
-plot(f_CI(:,1), f_CI(:,2),'--r');
-pgon = polyshape(f_CI(:,1),f_CI(:,2));
-ROIisInter = isinterior(pgon, GrInds1_points(:,1), GrInds1_points(:,2));
-WithinPoints = GrInds1_points(ROIisInter,:);
-f_CI2 = EclipseCI_2DgaussianFun(WithinPoints,0.01);
-plot(f_CI2(:,1), f_CI2(:,2),'--c');
-
-if sum(GrInds2)
-    scatter(SortGrPoints(GrInds2,1),SortGrPoints(GrInds2,2),8,...
-        'MarkerEdgeColor','b');
-end
+% %% plot the scatter points after first reclustering
+% close
+% SortGrPoints = AllDataPoints(Clus2RawInds,:);
+% figure;
+% hold on
+% PlotGr1 = 1;
+% PlotGr2 = 30;
+% NonColorInds = NewClusInds ~= PlotGr1 & NewClusInds ~= PlotGr2;
+% GrInds1 = NewClusInds == PlotGr1;
+% GrInds2 = NewClusInds == PlotGr2;
+% GrInds1_points = SortGrPoints(GrInds1,:);
+% 
+% scatter(SortGrPoints(NonColorInds,1),SortGrPoints(NonColorInds,2),6,...
+%     'MarkerEdgeColor',[.6 .6 .6]);
+% scatter(GrInds1_points(:,1),GrInds1_points(:,2),8,...
+%     'MarkerEdgeColor','r');
+% f_CI = EclipseCI_2DgaussianFun(SortGrPoints(GrInds1,:),0.5);
+% plot(f_CI(:,1), f_CI(:,2),'--r');
+% pgon = polyshape(f_CI(:,1),f_CI(:,2));
+% ROIisInter = isinterior(pgon, GrInds1_points(:,1), GrInds1_points(:,2));
+% WithinPoints = GrInds1_points(ROIisInter,:);
+% f_CI2 = EclipseCI_2DgaussianFun(WithinPoints,0.01);
+% plot(f_CI2(:,1), f_CI2(:,2),'--c');
+% 
+% if sum(GrInds2)
+%     scatter(SortGrPoints(GrInds2,1),SortGrPoints(GrInds2,2),8,...
+%         'MarkerEdgeColor','b');
+% end
 
 
 
@@ -304,7 +311,7 @@ for cClus = 1 : NumClus
     
     cGr_corrs = NewClusCorr(~OtherGrInds, cClus);
     
-    Thres = max(prctile(OtherGr_cGr_corrs,95),0.3);
+    Thres = max(prctile(OtherGr_cGr_corrs,95),0.5);
     IsUnitSigCorr = cGr_corrs > Thres;
     
     SigUnitGrInds(~OtherGrInds) = IsUnitSigCorr;
@@ -322,35 +329,60 @@ SigGrErrorData = SecondSortErrData(SigUnitGrInds,:);
 SecondSortTsnePoint = AllDataPoints(Clus2RawInds,:);
 SigtsnePoints = SecondSortTsnePoint(SigUnitGrInds,:);
 
+SecondSortsilh = silh(Clus2RawInds);
+SigtsneSilh = SecondSortsilh(SigUnitGrInds);
+
 s2 = silhouette(SigtsnePoints,SigGrIndsAll,'CityBlock');
-sIndexInds = s2 > -0.2;
+% sIndexInds = SigtsneSilh > 0;
+sIndexInds = SigtsneSilh > 0;
 FinalGrPSTHs = SigGrDatas(sIndexInds,:);
 FinalGrInds = SigGrIndsAll(sIndexInds);
 FinaltsnePoints = SigtsnePoints(sIndexInds,:);
 FinalGrErrPSTH = SigGrErrorData(sIndexInds,:);
 
+
+CrNumCounts = accumarray(FinalGrInds,1);
+ClusTypes = find(CrNumCounts > 0);
+ExistClusCounts = CrNumCounts(ClusTypes);
+if any(ExistClusCounts < 10)
+    % clusters with too small cluster size
+    TinyGrInds = ExistClusCounts < 10;
+    TinyGrIndex = ClusTypes(TinyGrInds);
+    ExcludeInds = ismember(FinalGrInds, TinyGrIndex);
+    FinalGrInds(ExcludeInds) = [];
+    FinalGrPSTHs(ExcludeInds,:) = [];
+    FinalGrErrPSTH(ExcludeInds,:) = [];
+    FinaltsnePoints(ExcludeInds,:) = [];
+end
+
 LeftGrTypes = unique(FinalGrInds); % in case some cluster have no points left
 IsClusLefted = zeros(NumClus,1);
 IsClusLefted(LeftGrTypes) = 1;
+
 [SigCorrAvgData, SigCorrSEMData, SigCorrGrNums] = DataTypeClassification(FinalGrPSTHs,FinalGrInds);
 
 [SigErroAvgData, SigErroSEMData, SigErroGrNums] = DataTypeClassification(FinalGrErrPSTH,FinalGrInds);
-%% cluster units color plots view
-close
-cClus = 32;
-cClusInds = FinalGrInds == cClus;
-cClusData = FinalGrPSTHs(cClusInds,:);
-figure;
-imagesc(cClusData,[-2 4]);
+
+% %% cluster units color plots view
+% close
+% cClus = 32;
+% cClusInds = FinalGrInds == cClus;
+% cClusData = FinalGrPSTHs(cClusInds,:);
+% figure;
+% imagesc(cClusData,[-2 4]);
 
 
 %%
 ClusColors = linspecer(NumClus);
-figure;
+h2_1f = figure;
 hold on
 scatter(AllDataPoints(:,1),AllDataPoints(:,2),6,'o','MarkerEdgeColor',[.7 .7 .7],'MarkerFaceColor',[.7 .7 .7]);
 scatter(FinaltsnePoints(:,1),FinaltsnePoints(:,2),10,FinalGrInds,'o','filled');
 colormap jet
+xlabel('tsne 1');
+ylabel('tsne 2');
+set(gca,'FontSize',12);
+
 % colormap(ClusColors);
 
 % %% replot the scatter points
@@ -486,14 +518,20 @@ title('Correlation threshold, Error trials');
 %%
 savePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
 % savePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
-savefile = fullfile(savePath,'Mannual_clustering_data_11.mat'); 
+savefile = fullfile(savePath,'Mannual_clustering_data_NewData10.mat'); 
 save(savefile,'AllDataPoints', 'UnitInterROI', 'GrInds', 'Clus2RawInds', 'NewClusInds',...
-    'SigUnitGrInds','sIndexInds','SigCorrAvgData','SigErroAvgData','-v7.3');
-saveas(h3f,fullfile(savePath,'Mannual clustering 11 CorrTrials PSTH plot'));
-saveas(h3f,fullfile(savePath,'Mannual clustering 11 CorrTrials PSTH plot'),'png');
+    'SigUnitGrInds','sIndexInds','SigCorrAvgData','SigErroAvgData','TinyGrIndex','-v7.3');
+saveas(h3f,fullfile(savePath,'Mannual clustering NewData10 CorrTrials PSTH plot'));
+saveas(h3f,fullfile(savePath,'Mannual clustering NewData10 CorrTrials PSTH plot'),'png');
 
-saveas(h4f,fullfile(savePath,'Mannual clustering 11 ErrorTrials PSTH plot'));
-saveas(h4f,fullfile(savePath,'Mannual clustering 11 ErrorTrials PSTH plot'),'png');
+saveas(h4f,fullfile(savePath,'Mannual clustering NewData10 ErrorTrials PSTH plot'));
+saveas(h4f,fullfile(savePath,'Mannual clustering NewData10 ErrorTrials PSTH plot'),'png');
+
+saveas(h2_1f,fullfile(savePath,'Mannual clustering NewData10 final clusters plot'));
+saveas(h2_1f,fullfile(savePath,'Mannual clustering NewData10 final clusters plot'),'png');
+
+saveas(h2_0f,fullfile(savePath,'Mannual clustering NewData10 initial clusters plot'));
+saveas(h2_0f,fullfile(savePath,'Mannual clustering NewData10 initial clusters plot'),'png');
 
 %%  plot back of all plotted groups
 SecondSortRawPoint = AllDataPoints(Clus2RawInds,:);

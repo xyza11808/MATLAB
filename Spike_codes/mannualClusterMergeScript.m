@@ -99,9 +99,10 @@ save(savefilePath,'FileDatas','SessUnit2ClusInds','SessUnittsnePoints','SigGrUni
 %% find all the averaged cluster trace and unique them
 
 % FileNamePrefix = 'Mannual_clustering_data_';
-% DataSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
-DataSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+DataSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+% DataSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
 PosFiles = dir(fullfile(DataSavePath,'Mannual_clustering_data_NewData*.mat'));
+load(fullfile(DataSavePath,'AllPSTHData.mat'));
 
 NumFiles = length(PosFiles);
 
@@ -141,17 +142,19 @@ AlltsneScores = cat(1,AllYs{:,2});
 [~,MinInds] = min(AlltsneScores);
 BestTsnePoints = AllYs{MinInds,1};
 
-UsedNumClusters = 5:100;
+UsedNumClusters = 10:80;
 TestClusterNum = length(UsedNumClusters);
 AllClusANDsindex = cell(TestClusterNum,2);
 for cK = 1 : TestClusterNum
     idx = kmedoids(BestTsnePoints,UsedNumClusters(cK),'Replicates',5);
-    s = silhouette(BestTsnePoints,idx,'cityblock');
+    s = silhouette(BestTsnePoints,idx,'Cityblock');
     AllClusANDsindex(cK,:) = {idx,s};
 end
-
-%%
 AllSilIndex = cellfun(@mean,AllClusANDsindex(:,2));
+figure;
+plot(AllSilIndex)
+%%
+
 [~,MaxInds] = max(AllSilIndex);
 UsedAvgTraceClusInds = AllClusANDsindex{MaxInds,1};
 UsedAvgClusSilIndex = AllClusANDsindex{MaxInds,2};
@@ -304,10 +307,56 @@ set(gca,'ylim',[0 ybase],'ytick',TraceTickCent,'yticklabel',LeftGrTypes(:),...
 ylabel('Clusters');
 title('Correlation threshold, Correct trials');
 
+%% 
 
+PerplexitysAll = 10:20:150;
+nPCs = 150;
+Algorithm = 'barneshut'; %'barneshut' for N > 1000 % 'exact' for small N
+Exag = 12;
 
+NumPerplex = length(PerplexitysAll);
+AllNumTsnePoints = cell(NumPerplex,5,2);
+for cP = 1 : NumPerplex
+    cPerplex = PerplexitysAll(cP);
+    AllYs = cell(5,2);
+    for cR = 1 : 5
+        rng('shuffle') % for fair comparison
+        [Y,loss] = tsne(ExistAreaPSTHData_zs,'Algorithm',Algorithm,'Distance','cosine','Perplexity',cPerplex,...
+            'NumPCAComponents',nPCs,'Exaggeration',Exag);
+        AllYs(cR,:) = {Y,loss};
+    end
+    AllNumTsnePoints(cP,:,:) = AllYs;
+end
 
+%%
+AllTsnePoints = AllNumTsnePoints(:,:,1);
+AllPlexiSilIndex = cell(NumPerplex,2);
+for cP = 1 : NumPerplex
+    TestPoints = AllTsnePoints{cP,1};
+    % hf = figure;
+    % hold on
+    % plot(TestPoints(:,1),TestPoints(:,2),'o','Color',[.7 .7 .7]);
+    cTsneSortPoints = TestPoints(NewClusSortInds,:);
+    cTsne_thresPoints = cTsneSortPoints(ThresCut_unitInds,:);
+    % CorrThres_ClusInds
+    % scatter(cTsne_thresPoints(:,1),cTsne_thresPoints(:,2),15,CorrThres_ClusInds,'filled');
+    cRealIndex = silhouette(cTsne_thresPoints,CorrThres_ClusInds,'cityblock');
 
+    NumIncludedInds = numel(CorrThres_ClusInds);
+    TotalPoints = size(cTsneSortPoints,1);
+    ShufNum = 200;
+    RandInds = single(rand(ShufNum,NumIncludedInds));
+    ShufSilIndex = zeros(ShufNum,1);
+    parfor cshuf = 1 : ShufNum
+%         cShufInds = randsample(TotalPoints,NumIncludedInds);
+        [~,SortInds] = sort(RandInds(cshuf,:));
+%         cShufPoints = cTsneSortPoints(cShufInds,:);
+        sShufSilIndexAll = silhouette(cTsne_thresPoints,CorrThres_ClusInds(SortInds),'cityblock');
+        ShufSilIndex(cshuf) = mean(sShufSilIndexAll);
+    end
+    
+    AllPlexiSilIndex(cP,:) = {cRealIndex,ShufSilIndex};
+end
 % hf = figure;
 % hold on
 % % gscatter(BestTsnePoints(:,1),BestTsnePoints(:,2),UsedAvgTraceClusInds);

@@ -107,12 +107,12 @@ elseif BlockSectionInfo.NumBlocks == 2
 end
 %%
 ResiMD_EV_Stim = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,1,3))),RegressorInfosCell(:,1));
-StimRespUnit = ResiMD_EV_Stim >= 0.02;
-% StimRespUnitFull = ResiMD_EV_Stim >= 0.02;
-% % consider extra stimResp unit
-% ExtraUnitEVars = cellfun(@(x) mean(x.fullmodel_explain_var(:,1)),StimRegInfo.FullRegressorInfosCell(:,1));
-% ExtraStimRespUnit = ExtraUnitEVars >= 0.02;
-% StimRespUnit = StimRespUnitFull | ExtraStimRespUnit;
+% StimRespUnit = ResiMD_EV_Stim >= 0.02;
+StimRespUnitFull = ResiMD_EV_Stim >= 0.02;
+% consider extra stimResp unit
+ExtraUnitEVars = cellfun(@(x) mean(x.fullmodel_explain_var(:,1)),StimRegInfo.FullRegressorInfosCell(:,1));
+ExtraStimRespUnit = ExtraUnitEVars >= 0.02;
+StimRespUnit = StimRespUnitFull | ExtraStimRespUnit;
 
 ResiMD_EV_ChoiceL = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,2,3))),RegressorInfosCell(:,1));
 ResiMD_EV_ChoiceR = cellfun(@(x) squeeze(mean(x.PartialMd_explain_var(:,3,3))),RegressorInfosCell(:,1));
@@ -143,7 +143,7 @@ GLMRespUnitEVs(:,4) = ResiMD_EV_ChoiceR;
 ColRespTypeStr = {'BinaryBT','Ramping','Stimulus','ChoiceL','ChoiceR'};
 
 %%
-saveName = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypesNew.mat');
+saveName = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypes_stim.mat');
 
 save(saveName,'ExistField_ClusIDs','IsUnitGLMResp','ColRespTypeStr','GLMRespUnitEVs','-v7.3');
 
