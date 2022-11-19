@@ -15,13 +15,14 @@ dataSaveNames = fullfile(ksfolder,'AnovanAnA','StimrespAUCdataSave.mat');
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 
 % transfromed into trial-by-units-by-bin matrix
-SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds}{:,1}),[1,3,2]); 
+DataFull = cellfun(@full,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds},'un',0);
+SMBinDataMtx = permute(cat(3,DataFull{:,1}),[1,3,2]); 
 if ~isempty(ProbNPSess.SurviveInds)
     SMBinDataMtx = SMBinDataMtx(:,ProbNPSess.SurviveInds,:);
 end
 SMBinDataMtxRaw = SMBinDataMtx;
 
-AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
+AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
 AllFieldNames = fieldnames(AreaIndexStrc.SessAreaIndexStrc);
 UsedNames = AllFieldNames(1:end-1);
 ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);

@@ -230,18 +230,18 @@ save(dataSaveNames, 'RegressorInfosCell',...
     'ExistField_ClusIDs', 'NewAdd_ExistAreaNames', 'AreaUnitNumbers',...
     'FullRegressorInfosCell','PredictorStrc','AddedClusterBackup','-v7.3');
 
-%% cehck anova data
+%% check anova data
 AnovafilePath = fullfile(ksfolder,'AnovanAnA','OmegaSqrDatasNew.mat');
-% OldClusIDfile = fullfile(ksfolder,'AnovanAnA','SigAnovaTracedataSave.mat');
+OldClusIDfile = fullfile(ksfolder,'AnovanAnA','SigAnovaTracedataSave.mat');
 OldAnovaDataStrc = load(AnovafilePath);
-% OldClusIDs = load(OldClusIDfile,'SeqFieldClusIDs');
+OldClusIDs = load(OldClusIDfile,'SeqFieldClusIDs');
 %%
-[OldExistedClusIDInds, OldMapInds] = ismember(ExistField_ClusIDs(:,1),OldRegUsedClusIDs(:,1));
+[OldExistedClusIDInds, OldMapInds] = ismember(ExistField_ClusIDs(:,1),OldClusIDs.SeqFieldClusIDs(:,1));
 fprintf('Num of processed clusters is %d/%d.\n',sum(OldExistedClusIDInds),numel(OldExistedClusIDInds));
 NewAddedClusIDs = ExistField_ClusIDs(~OldExistedClusIDInds,:);
 
 TotalNumofUnit = size(ExistField_ClusIDs,1);
-[CaledBinNum,~,FactorNum] = size(OldAnovaDataStrc.AllNullThres_Mtx);
+[CaledBinNum,~,FactorNum] = size(OldAnovaDataStrc.NewAllNullThres_Mtx);
 NewAllNullThres_Mtx = zeros(CaledBinNum,TotalNumofUnit,FactorNum,'single');
 NewCalWinUnitOmegaSqrs = cell(CaledBinNum,TotalNumofUnit,FactorNum);
 NewNSMUnitOmegaSqrData = zeros(CaledBinNum,TotalNumofUnit,FactorNum,'single');
@@ -253,21 +253,21 @@ NewNSMUnitOmegaSqrData = zeros(CaledBinNum,TotalNumofUnit,FactorNum,'single');
 oldmap2NewIndex = OldMapInds(OldExistedClusIDInds);
 
 % value assignments
-NewAllNullThres_Mtx(:,OldExistedClusIDInds,:) = single(OldAnovaDataStrc.AllNullThres_Mtx(:,oldmap2NewIndex,:));
+NewAllNullThres_Mtx(:,OldExistedClusIDInds,:) = single(OldAnovaDataStrc.NewAllNullThres_Mtx(:,oldmap2NewIndex,:));
 NewAllNullThres_Mtx(:,~OldExistedClusIDInds,:) = single(AddAllNullThres_Mtx);
 
-NewNSMUnitOmegaSqrData(:,OldExistedClusIDInds,:) = single(OldAnovaDataStrc.NSMUnitOmegaSqrData(:,oldmap2NewIndex,:));
+NewNSMUnitOmegaSqrData(:,OldExistedClusIDInds,:) = single(OldAnovaDataStrc.NewNSMUnitOmegaSqrData(:,oldmap2NewIndex,:));
 NewNSMUnitOmegaSqrData(:,~OldExistedClusIDInds,:) = single(AddNSMUnitOmegaSqrData);
 
-NewCalWinUnitOmegaSqrs(:,OldExistedClusIDInds,:) = OldAnovaDataStrc.CalWinUnitOmegaSqrs(:,oldmap2NewIndex,:);
+NewCalWinUnitOmegaSqrs(:,OldExistedClusIDInds,:) = OldAnovaDataStrc.NewCalWinUnitOmegaSqrs(:,oldmap2NewIndex,:);
 NewCalWinUnitOmegaSqrs(:,~OldExistedClusIDInds,:) = AddCalWinUnitOmegaSqrs;
 NewCalWinUnitOmegaSqrs = cellfun(@single,NewCalWinUnitOmegaSqrs,'un',0);
 
-[nRepeat,~,cFactor] = size(OldAnovaDataStrc.NullOmegaSqrDatas{1});
+[nRepeat,~,cFactor] = size(OldAnovaDataStrc.NewNullOmegaSqrDatas{1});
 NewNullOmegaSqrDatas = cell(CaledBinNum,1);
 for cCalbin = 1 : CaledBinNum
     cBinCal = zeros(nRepeat,TotalNumofUnit,cFactor);
-    cBinCal(:,OldExistedClusIDInds,:) = OldAnovaDataStrc.NullOmegaSqrDatas{cCalbin}(:,oldmap2NewIndex,:);
+    cBinCal(:,OldExistedClusIDInds,:) = OldAnovaDataStrc.NewNullOmegaSqrDatas{cCalbin}(:,oldmap2NewIndex,:);
     cBinCal(:,~OldExistedClusIDInds,:) = AddNullOmegaSqrDatas{cCalbin};
     NewNullOmegaSqrDatas{cCalbin} = single(cBinCal); 
 end

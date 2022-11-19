@@ -3,12 +3,12 @@ clearvars CalResults OutDataStrc ExistField_ClusIDs
 
 % ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
 % ksfolder = pwd;
-load(fullfile(ksfolder,'NewClassHandle.mat'));
+load(fullfile(ksfolder,'NewClassHandle2.mat'));
 ProbNPSess = NewNPClusHandle;
 clearvars NewNPClusHandle
 ProbNPSess.SpikeTimes = double(ProbNPSess.SpikeTimeSample)/30000;
 %% find target cluster inds and IDs
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);

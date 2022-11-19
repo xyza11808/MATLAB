@@ -12,7 +12,7 @@ AnovaDatafile = fullfile(figSavefolder,'SigAnovaTracedataSave2.mat');
 load(AnovaDatafile,'AreaValidInfoDatas');
 load(fullfile(figSavefolder,'TemporalAUCdataSave.mat'));
 
-AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
+AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
 AllFieldNames = fieldnames(AreaIndexStrc.SessAreaIndexStrc);
 UsedNames = AllFieldNames(1:end-1);
 ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);

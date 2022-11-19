@@ -9,10 +9,14 @@ figSavefolder = fullfile(ksfolder, 'AnovanAnA');
 %     return;
 % end
 
-AnovaDatafile = fullfile(figSavefolder,'OmegaSqrDatas.mat');
-load(AnovaDatafile,'NSMUnitOmegaSqrData','AllNullThres_Mtx','CalWinUnitOmegaSqrs');
-AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
-RegUnitTypes = load(fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypes2.mat'),'IsUnitGLMResp');
+AnovaDatafile = fullfile(figSavefolder,'OmegaSqrDatasNew.mat');
+AnovaDataStrc = load(AnovaDatafile,'NewNSMUnitOmegaSqrData','NewAllNullThres_Mtx','NewCalWinUnitOmegaSqrs');
+NSMUnitOmegaSqrData = AnovaDataStrc.NewNSMUnitOmegaSqrData;
+AllNullThres_Mtx = AnovaDataStrc.NewAllNullThres_Mtx;
+CalWinUnitOmegaSqrs = AnovaDataStrc.NewCalWinUnitOmegaSqrs;
+clearvars AnovaDataStrc
+AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
+RegUnitTypes = load(fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypesNew.mat'),'IsUnitGLMResp');
 AllFieldNames = fieldnames(AreaIndexStrc.SessAreaIndexStrc);
 UsedNames = AllFieldNames(1:end-1);
 ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);

@@ -4,12 +4,12 @@
 clearvars AdjKlClusters NewNPClusHandle waveformdatafile behavResults PassSoundDatas
 
 AdjKlClusters = load(fullfile(ksfolder,'AdjustedClusterInfo.mat'));
-% PreNPClusHandle = load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
-% PreNPClusHandle.ProbNPSess.SpikeTimes = [];
-load(fullfile(ksfolder,'NewClassHandle.mat'));
+PreNPClusHandle = load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
+PreNPClusHandle.ProbNPSess.SpikeTimes = [];
+% load(fullfile(ksfolder,'NewClassHandle.mat'));
 TotalSampleANDtaskT = load(fullfile(ksfolder,'TrigTimeANDallSampNum.mat'));
 
-% NewNPClusHandle = PreNPClusHandle.ProbNPSess;
+NewNPClusHandle = PreNPClusHandle.ProbNPSess;
 NewNPClusHandle.SpikeClus = AdjKlClusters.FinalSPClusters;
 NewNPClusHandle.ClusterInfoAll = AdjKlClusters.FinalksLabels;
 NewNPClusHandle.SpikeTimes = double(AdjKlClusters.FinalSPTimeSample)/30000;
@@ -94,26 +94,26 @@ NewNPClusHandle.ChannelAreaStrs = ChnAreaStrsStrc.AlignedAreaStrings;
 
 
 %%
-% NewNPClusHandle.ksFolder = ksfolder;
-% NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
-% if contains(ksfolder,'b103a04_20210408')
-%     NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],[2,6],[]);
-% else
-%     NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],[6,2],[]);
+NewNPClusHandle.ksFolder = ksfolder;
+NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
+if contains(ksfolder,'b103a04_20210408')
+    NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],[2,6],[]);
+else
+    NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],[6,2],[]);
+end
+TrStimOnsets = double(PreNPClusHandle.behavResults.Time_stimOnset(:));
+TimeWin = [-1.5,4]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
+Smoothbin = [50,10]; % time window for smooth psth, in ms format
+% if isempty(ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds})
+    NewNPClusHandle = NewNPClusHandle.TrigPSTH(TimeWin, Smoothbin, TrStimOnsets);
 % end
-% TrStimOnsets = double(PreNPClusHandle.behavResults.Time_stimOnset(:));
-% TimeWin = [-1.5,4]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
-% Smoothbin = [50,10]; % time window for smooth psth, in ms format
-% % if isempty(ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds})
-%     NewNPClusHandle = NewNPClusHandle.TrigPSTH(TimeWin, Smoothbin, TrStimOnsets);
-% % end
-% %%
-% NewNPClusHandle.CurrentSessInds = strcmpi('passive',NewNPClusHandle.SessTypeStrs);
-% NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],4);
-% 
-% TimeWin = [-0.4,3];
-% NewNPClusHandle = NewNPClusHandle.TrigPSTH(TimeWin, []);
-% NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
+%%
+NewNPClusHandle.CurrentSessInds = strcmpi('passive',NewNPClusHandle.SessTypeStrs);
+NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],4);
+
+TimeWin = [-0.4,3];
+NewNPClusHandle = NewNPClusHandle.TrigPSTH(TimeWin, []);
+NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
 
 %% check the clusters going to use
 NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
@@ -156,15 +156,15 @@ fprintf('\nNew cluster screening left units is %d/%d.\n',numel(NewNPClusHandle.U
 
 %%
 NewNPClusHandle.SpikeTimes = [];
-% behavResults = PreNPClusHandle.behavResults;
-% PassSoundDatas = PreNPClusHandle.PassSoundDatas;
+behavResults = PreNPClusHandle.behavResults;
+PassSoundDatas = PreNPClusHandle.PassSoundDatas;
 save(fullfile(ksfolder,'NewClassHandle2.mat'),'NewNPClusHandle','behavResults','PassSoundDatas','-v7.3');
 
 SessAreaIndexReCal(ksfolder, NewNPClusHandle,BrainRegionStrc);
 
 return;
 %% find target cluster inds and IDs
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);

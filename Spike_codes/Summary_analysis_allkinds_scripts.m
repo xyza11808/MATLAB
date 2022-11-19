@@ -46,7 +46,7 @@ for cS = 1 :  NumUsedSess
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     
-    SessAreaIndexDatafile = fullfile(ksfolder,'SessAreaIndexDataAligned.mat');
+    SessAreaIndexDatafile = fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat');
     SessAreaIndexData = load(SessAreaIndexDatafile);
     BTANDChoiceAUC_file = fullfile(ksfolder,'BTANDChoiceAUC_compPlot','BTANDChoiceAUC_popuVec.mat');
     BTANDChoiceAUCStrc = load(BTANDChoiceAUC_file,'UnitAfterStimAUC','UnitAS_BLSubAUC',...
@@ -134,8 +134,8 @@ for cA = 1 : NumBrainAreas
 end
 
 %%
-summarySaveFolder1 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\BlockType_ChoiceVecANDAUC';
-% summarySaveFolder1 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\BlockType_ChoiceVecANDAUCAdd';
+% summarySaveFolder1 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\BlockType_ChoiceVecANDAUCAdd';
+summarySaveFolder1 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\BlockType_ChoiceVecANDAUCAdd';
 if ~isfolder(summarySaveFolder1)
     mkdir(summarySaveFolder1);
 end
@@ -395,7 +395,7 @@ for cS = 1 :  NumUsedSess
     
     ksfolder = fullfile(cSessPath,'ks2_5');
         
-    SessAreaIndexDatafile = fullfile(ksfolder,'SessAreaIndexDataAligned.mat');
+    SessAreaIndexDatafile = fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat');
     SessAreaIndexData = load(SessAreaIndexDatafile);
     BTANDChoiceAUC_file = fullfile(ksfolder,'BTANDChoiceAUC_TrWise','BTANDChoiceAUC_TrTypeWise.mat');
     BTANDChoiceAUCStrc = load(BTANDChoiceAUC_file,'UnitAfterStimAUC','UnitAS_BLSubAUC',...
@@ -417,7 +417,9 @@ for cS = 1 :  NumUsedSess
         end
         cA_unitInds = SessAreaIndexData.SessAreaIndexStrc.(cAreaStr).MatchedUnitInds;
         AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
-        
+        if ~sum(AreaMatchInds)
+            continue;
+        end
         cA_SVMPerfs = BTANDChoiceAUCStrc.SVMDecVecs{cAreaInds,6};
         cA_unitNums = BTANDChoiceAUCStrc.SVMDecVecs{cAreaInds,5};
         
@@ -619,8 +621,8 @@ save(filesavename,'Areawise_BTANDChoiceAUC','Areawise_PopuBTChoicePerf','BrainAr
 
 cclr
 %
-AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -1037,7 +1039,7 @@ for cA = 1 : NumAllTargetAreas
     if isempty(cF_unitNums) || sum(cF_unitNums,'all') == 0
         continue;
     end
-    huf = figure('position',[100 100 1440 600]);
+    huf = figure('position',[100 100 940 320]);
     for cF = 1 : FactorNum
         cx = subplot(2,FactorNum+1,cF);
         hold on
@@ -1148,9 +1150,9 @@ for cA = 1 : NumAllTargetAreas
                 AllArea_BTAnova_freqwise(cA, ccA,:) = {ccA_anovaEV_real, ccA_anovaEV_thres};
                 
                 [SigUnitNum, FreqTypeNum] = size(ccA_anovaEV_real);
-                Summary_BTEV_Avg = mean(ccA_anovaEV_real,2);
+                Summary_BTEV_Avg = mean(ccA_anovaEV_real,2,'omitnan');
                 
-                Summary_BTEV_sem = std(ccA_anovaEV_real,[],2) / sqrt(SigUnitNum);
+                Summary_BTEV_sem = std(ccA_anovaEV_real,[],2,'omitnan') / sqrt(SigUnitNum);
                 Summary_BTEV_thres = mean(ccA_anovaEV_thres,2);
                 
                 semPatch_x = [UnitCalWinTimes;flipud(UnitCalWinTimes)];
@@ -1513,10 +1515,10 @@ hf = brainRegionsMesh(st,ANames,objFilePath, Value2Colors, 0.6);
 
 
 %% summary analysis 7, canonical correlation value
-% cclr
+cclr
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_new.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -1546,12 +1548,12 @@ Sess_CCAdatasAll = cell(NumUsedSess,5);
 
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
-    cSessPath = strrep(SessionFolders{cS},'F:\','P:\'); % 'E:\NPCCGs\'
+    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
 %     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     try
-        CCADatafile = fullfile(ksfolder,'jeccAnA','JeccData.mat');
+        CCADatafile = fullfile(ksfolder,'jeccAnA','JeccDataNew.mat');
         CCADataStrc = load(CCADatafile);
         
     catch ME
@@ -1565,10 +1567,26 @@ for cS = 1 :  NumUsedSess
     UsedAreaNames = CCADataStrc.NewAdd_ExistAreaNames;
     CCA_timeBin = CCADataStrc.OutDataStrc.BinCenters;
     
-    Sess_CCAdatasAll(cS,:) = {CCA_pairsData};
-    
+    NumPairs = size(CCA_pairsData,1);
+    CCA_DataCell = cell(NumPairs,5);
+    for cP = 1 : NumPairs
+       cca_real = cat(3,CCA_pairsData{cP,1}{:});
+       cca_null = cat(3,CCA_pairsData{cP,2}{:});
+       CCA_DataCell(cP,1:2) = {mean(cca_real,3),prctile(cca_null,95,3)};
+    end
+    CCA_DataCell(:,3:5) = CCA_pairsData(:,3:5);
+    Sess_CCAdatasAll(cS,:) = {CCA_DataCell};
+    clearvars CCA_pairsData
     
 end
+
+
+%% 
+summaryfolder7 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\AreaCrossCorrPlots';
+% summaryfolder7 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\AreaCrossCorrPlots';
+
+dataSavefile7 = fullfile(summaryfolder7,'CCAData_pairedAreaSum.mat');
+save(dataSavefile7,'Sess_CCAdatasAll','CCA_timeBin','BrainAreasStr','-v7.3');
 
 %%
 SessCCAData_2rows = cat(1,Sess_CCAdatasAll{:});
@@ -1576,40 +1594,96 @@ PairStrings = cellfun(@(x,y) [x,'-',y],SessCCAData_2rows(:,3),SessCCAData_2rows(
 [UniPairStrs,~,UniPairTyppes] = unique(PairStrings);
 SessPairCounts = accumarray(UniPairTyppes,1);
 
+%% summary all the correlation diag datas, the plot data is given in the next section
+NumPairs = length(UniPairStrs);
+AllPairDatas = cell(NumPairs,4);
+for cT = 1 : NumPairs
+%     cT = 1;
+    TypeInds = UniPairTyppes == cT;
+    cTypeDatas = SessCCAData_2rows(TypeInds,[1,2,5]);
+    cType_pairUnitSize = cTypeDatas(:,3);
+    cTypeDataMtx = cat(3,cTypeDatas{:,1});
+    cTypeDataMtx_thres = cat(3,cTypeDatas{:,2});
+    AvgCCAMtx = mean(cTypeDataMtx, 3);
+    AvgCCAMtx_Thres = mean(cTypeDataMtx_thres,3);
+    
+    [nBins,~,nPairs] = size(cTypeDataMtx);
+    PairDiagValues = zeros(nPairs,nBins,2);
+    for ccP = 1 : nPairs
+        PairDiagValues(ccP,:,1) = diag(cTypeDataMtx(:,:,ccP));
+        PairDiagValues(ccP,:,2) = diag(cTypeDataMtx_thres(:,:,ccP));
+    end
+    AllPairDatas(cT,:) = {{AvgCCAMtx,AvgCCAMtx_Thres}, PairDiagValues,cType_pairUnitSize,...
+        {cTypeDataMtx,cTypeDataMtx_thres}};
+end
+
+dataSavefile7 = fullfile(summaryfolder7,'CCAData_UniPairAvgData.mat');
+save(dataSavefile7,'AllPairDatas','CCA_timeBin','UniPairStrs','SessPairCounts','-v7.3');
+
+%%
+close
+cTT = 285;
+hf = figure;
+hold on
+MeanSemPlot(AllPairDatas{cTT,2}(:,:,1),CCA_timeBin,hf,[],[.7 .7 .7],'Color','k','linewidth',1.5);
+MeanSemPlot(AllPairDatas{cTT,2}(:,:,2),CCA_timeBin,hf,[],[.7 .7 .7],'Color','b','linewidth',1.5);
+title(UniPairStrs{cTT});
 %% 2d plot of the correlation
-close;
-cT = 150;
+% close;
+% the string pair is too many, so we will not plot all area pairs in one
+% time, individual areas can be plotted later is needed
+
+cT = 1;
 TypeInds = UniPairTyppes == cT;
 cTypeDatas = SessCCAData_2rows(TypeInds,[1,5]);
-cTypeDataAll = cat(3,cTypeDatas{:,1});
+% cTypeDataAll = cat(3,cTypeDatas{:,1});
+% cTypeDataCell = cellfun(@(x) mean(cat(3,x{:}),3),cTypeDatas(:,1),'un',0);
+cType_pairUnitSize = cTypeDatas(:,2);
+cTypeDataMtx = cat(3,cTypeDatas{:,1});
 
-AvgCCAMtx = mean(cTypeDataAll, 3);
+AvgCCAMtx = mean(cTypeDataMtx, 3);
 axisTimeScale = [min(CCA_timeBin), max(CCA_timeBin)];
 
 SMData = imgaussfilt(AvgCCAMtx,'FilterSize',5);
-figure('position',[100 200 560 420]);
+h2df = figure('position',[100 100 650 220]);
+ax1 = subplot(121);
 hold on
 imagesc(CCA_timeBin, CCA_timeBin, SMData); %,[-0.05 0.4]
 line([0 0],axisTimeScale,'Color', 'r','linewidth',1.8);
 line(axisTimeScale,[0 0],'Color', 'r','linewidth',1.8);
 line(axisTimeScale,axisTimeScale,'Color', 'c','linewidth',1.8);
 hb = colorbar;
-
 TypeAreasSep = strsplit(UniPairStrs{cT},'-');
 xlabel(sprintf('(%s) Time (s)',TypeAreasSep{1}));
 ylabel(sprintf('(%s) Time (s)',TypeAreasSep{2}));
+set(ax1,'xlim',[-1 5],'ylim',[-1 5],'xtick',-1:5,'ytick',-1:5);
+title(sprintf('Regions %s (%d sessions)',strrep(UniPairStrs{cT},'-','->'), SessPairCounts(cT)));
 
-title(sprintf('Regions %s (%d sessions)',UniPairStrs{cT}, SessPairCounts(cT)));
-
-
-
-%% 3d plot of the correlation
-cT = 2;
-TypeInds = UniPairTyppes == cT;
-cTypeDatas = SessCCAData_2rows(TypeInds,[1,5]);
-cTypeDataAll = cat(3,cTypeDatas{:,1});
-
-AvgCCAMtx = mean(cTypeDataAll, 3);
+[nBins,~,nPairs] = size(cTypeDataMtx);
+PairDiagValues = zeros(nPairs,nBins);
+for cP = 1 : nPairs
+    PairDiagValues(cP,:) = diag(cTypeDataMtx(:,:,cP));
+end
+ax2 = subplot(122);
+MeanSemPlot(PairDiagValues,CCA_timeBin,ax2,[],[.7 .7 .7],'Color','k','linewidth',1.5);
+set(ax2,'xlim',[-1 5],'xtick',-1:5);
+xlabel(ax2,'Time (s)');
+yscales = get(ax2,'ylim');
+line([0 0],yscales,'Color','m','linewidth',1,'linestyle','--');
+title(ax2,'Diag Correlation');
+ylabel('Cross Corrcoef')
+ax2pos = get(ax2,'position');
+set(ax2,'position',ax2pos.*[1 1 0.9 0.9]+[0 0.05 0 0]);
+% %% 3d plot of the correlation
+% cT = 2;
+% TypeInds = UniPairTyppes == cT;
+% cTypeDatas = SessCCAData_2rows(TypeInds,[1,5]);
+% % cTypeDataAll = cat(3,cTypeDatas{:,1});
+% cTypeDataCell = cellfun(@(x) mean(cat(3,x{:}),3),cTypeDatas(:,1),'un',0);
+% vType_pairUnitSize = cTypeDatas(:,2);
+% cTypeDataMtx = cat(3,cTypeDataCell{:});
+% 
+% AvgCCAMtx = mean(cTypeDataMtx, 3);
 Zerosdatas = zeros(size(AvgCCAMtx,1),1);
 
 %
@@ -1617,25 +1691,26 @@ Zerosdatas = zeros(size(AvgCCAMtx,1),1);
 [xx,yy] = meshgrid(CCA_timeBin);
 
 SMData = imgaussfilt(AvgCCAMtx,'FilterSize',5);
-figure('position',[100 200 660 440]);
+h3df = figure('position',[800 100 430 260]);
 hold on
 surf(xx,yy,SMData,SMData,'facealpha',0.8,'FaceColor','interp','LineStyle','none');
 plot3(Zerosdatas, CCA_timeBin, SMData(CCADataStrc.OutDataStrc.TriggerStartBin,:),'r','linewidth',1.8);
 plot3(CCA_timeBin, Zerosdatas, SMData(:,CCADataStrc.OutDataStrc.TriggerStartBin),'r','linewidth',1.8);
 hb = colorbar;
 
-xlabel('(From) Time (s)');
-ylabel('(To) Time (s)');
+xlabel('(Source) Time (s)');
+ylabel('(Target) Time (s)');
 zlabel('Canonical Correlation');
 view([-15 75])
-
+timeScale = [round(CCA_timeBin(1)),round(CCA_timeBin(end))];
+set(gca,'xlim',timeScale,'ylim',timeScale,'zlim',[min(SMData(:)),max(SMData(:))]);
 title(sprintf('Regions %s',UniPairStrs{cT}))
 
 %% summary analysis 8, regressor analysis summary part 2
 cclr
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -1671,7 +1746,7 @@ for cS = 1 :  NumUsedSess
     ksfolder = fullfile(cSessPath,'ks2_5');
     try
         
-        UnitSltFile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypes_stim.mat');
+        UnitSltFile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypes.mat');
         UnitSltDataStrc = load(UnitSltFile);
         RegressorDatafile = fullfile(ksfolder,'Regressor_ANA','RegressorDataSave6.mat');
         RegressorDataStrc = load(RegressorDatafile,'AreaUnitNumbers','NewAdd_ExistAreaNames','FullRegressorInfosCell');
@@ -2348,7 +2423,7 @@ RespTypeGrInds(isnan(RespTypeGrInds)) = 11;
 %% test with tsne clustering
 % figure('position',[100 100 1200 840])
 % figure;
-Perplexitys = 110;
+Perplexitys = 80;
 nPCs = 100;
 Algorithm = 'barneshut'; %'barneshut' for N > 1000 % 'exact' for small N
 Exag = 12;
@@ -2984,29 +3059,152 @@ for cS = 1 : NumUsedSess
 end
 
 %%
-figSavePath13 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceDecodingSum';
-% figSavePath13 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceDecodingSum';
+% figSavePath13 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceDecodingSum';
+figSavePath13 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceDecodingSum';
 dataSaveName = fullfile(figSavePath13,'DecweightsSummary.mat');
 save(dataSaveName,'Area_Data_BlockBetaVec','Area_Data_CrossValiScore',...
     'Area_Data_RespUnitWeights','BrainAreasStr', 'SessionFolders','Area_Data_UnitSize','-v7.3');
 
 %% Summary the choice scores, for sub and raw datas seperatedly
+NumAllTargetAreas = length(BrainAreasStr);
 SubDataValidScore = Area_Data_CrossValiScore(:,:,1);
 RawDataValidScore = Area_Data_CrossValiScore(:,:,2);
 
-% for cArea = 1 : NumAllTargetAreas
-    cArea = 1;
+cASubBlockAngleVec = Area_Data_BlockBetaVec(:,:,1);
+cASubBlockPairInds = Area_Data_BlockBetaVec(:,:,2);
+cARawBlockAngleVec = Area_Data_BlockBetaVec(:,:,3);
+cARawBlockPairInds = Area_Data_BlockBetaVec(:,:,4);
+
+AreaChoiceScoreData = cell(NumAllTargetAreas,2);
+AreaTypeAngleANDTypeStr = cell(NumAllTargetAreas,4);
+for cArea = 1 : NumAllTargetAreas
+%     cArea = 1;
+    cA_Str = BrainAreasStr{cArea};
     cA_SubData = cat(1,SubDataValidScore{:,cArea});
-    cA_SelfBlockScore = cellfun(@mean,cA_SubData(:,1));
-    cA_OtherBlockScore = cellfun(@mean,cA_SubData(:,2),'un',0);
+    cA_RawData = cat(1,RawDataValidScore{:,cArea});
+    if size(cA_SubData) < 5
+        continue;
+    end
+    AreaChoiceScoreData(cArea,:) = {cA_SubData, cA_RawData};
+    [DifBlockCom_selfScore,DifBlockCom_otherScore,...
+        SimBlockCom_selfScore,SimBlockCom_otherScore,DBScoreP,SBScoreP,...
+        BoxPlotData_x,BoxPlotData_GrInds,Grlabels] = ScoreDataExtraction(cA_SubData,'Sub');
+     [DifBlockCom_selfScoreRaw,DifBlockCom_otherScoreRaw,...
+        SimBlockCom_selfScoreRaw,SimBlockCom_otherScoreRaw,DBScorePRaw,SBScorePRaw,...
+        BoxPlotData_xRaw,BoxPlotData_GrIndsRaw,GrlabelsRaw] = ScoreDataExtraction(cA_RawData,'Raw');
     
-    cA_OtherDifBlockScore = cellfun(@(x, y) mean(x(y == 1)),cA_OtherBlockScore,cA_SubData(:,3));
-    cA_OtherSimiBlockScore = cellfun(@(x, y) mean(x(y == 0)),cA_OtherBlockScore,cA_SubData(:,3));
+    hf13 = figure('position',[100 100 940 420]);
+    ax1 = subplot(2,6,7:10);
+    hold on
+    boxplot([BoxPlotData_x;BoxPlotData_xRaw],[BoxPlotData_GrInds;BoxPlotData_GrIndsRaw+4],'Notch','on','labels',[Grlabels,GrlabelsRaw]);
+    set(gca,'box','off');
+    yscales = get(gca,'ylim');
+    if length(Grlabels) == 4
+        text(1.5,yscales(2)*0.8,{sprintf('p = %.2e',DBScoreP);sprintf('n=%d',numel(DifBlockCom_selfScore))},'FontSize',6);
+        text(3.5,yscales(2)*0.8,{sprintf('p = %.2e',SBScoreP);sprintf('n=%d',numel(SimBlockCom_selfScore))},'FontSize',6);
+        text(5.5,yscales(2)*0.8,{sprintf('p = %.2e',DBScorePRaw);sprintf('n=%d',numel(DifBlockCom_selfScoreRaw))},'FontSize',6);
+        text(7.5,yscales(2)*0.8,{sprintf('p = %.2e',SBScorePRaw);sprintf('n=%d',numel(SimBlockCom_selfScoreRaw))},'FontSize',6);
+    else
+        text(1.5,yscales(2)*0.8,{sprintf('p = %.2e',DBScoreP);sprintf('n=%d',numel(DifBlockCom_selfScore))},'FontSize',6);
+        text(3.5,yscales(2)*0.8,{sprintf('p = %.2e',DBScorePRaw);sprintf('n=%d',numel(DifBlockCom_selfScoreRaw))},'FontSize',6);
+    end
+    title(ax1,'CV score AND OtherBlock score')
+    ylabel('Choice Scores');
+%     axPos = get(ax1,'position');
+%     set(ax1,'position',axPos.*[1 1 0.95 0.8]+[0 0.12 0 0]);
+    
+    AllBoxPlotDatas = [BoxPlotData_x;BoxPlotData_xRaw];
+    AllBoxPlotGrInds = [BoxPlotData_GrInds;BoxPlotData_GrIndsRaw+4];
+    OBGroupInds = mod(AllBoxPlotGrInds,2) == 0;
+    OBBoxplotDatas = AllBoxPlotDatas(OBGroupInds);
+    OBBoxplotGrInds = AllBoxPlotGrInds(OBGroupInds);
+%     figure('position',[600 100 360 200]);
+    ax2 = subplot(2,6,[11 12]);
+    hold on
+
+    if length(Grlabels) == 4
+        boxplot(OBBoxplotDatas,OBBoxplotGrInds,'Notch','on','labels',[Grlabels([2,4]),GrlabelsRaw([2,4])]);
+        DBSub2RawComp = ranksum(DifBlockCom_otherScore,DifBlockCom_otherScoreRaw);
+        SBSub2RawComp = ranksum(SimBlockCom_otherScore,SimBlockCom_otherScoreRaw);
+        title(ax2,sprintf('DB-p = %.2e, SB-p = %.2e',DBSub2RawComp,SBSub2RawComp));
+        set(ax2,'xlim',[0.5 4.5])
+    else
+        boxplot(OBBoxplotDatas,OBBoxplotGrInds,'Notch','on','labels',[Grlabels([2]),GrlabelsRaw([2])]);
+        DBSub2RawComp = ranksum(DifBlockCom_otherScore,DifBlockCom_otherScoreRaw);
+        title(ax2,sprintf('DB-p = %.2e',DBSub2RawComp));
+        set(ax2,'xlim',[0.5 2.5])
+    end
+    set(gca,'box','off');
     
     
 
-% end
+    % there are maximum 6 pairs in current dataset
+    
+    IsAreaEmptySub = ~(cellfun(@isempty,cASubBlockAngleVec(:,cArea)));
+    if sum(IsAreaEmptySub) >= 3
+        
+        cA_SubBlockAngleVec_all = cASubBlockAngleVec(IsAreaEmptySub,cArea);
+        cA_SubBlockAngleVec_CMtx = cellfun(@(x) [mean(x),nan(1,6-size(x,2))],cA_SubBlockAngleVec_all,'un',0);
+        cA_SubBlockAngleVec_Mtx = cat(1,cA_SubBlockAngleVec_CMtx{:});
+        MtxNanInds = ~isnan(cA_SubBlockAngleVec_Mtx);
+        cA_SubBlockPairInds_all = cASubBlockPairInds(IsAreaEmptySub,cArea);
+        cA_SubBlockPair2str = cellfun(@(x) PairInds2str(x,6),cA_SubBlockPairInds_all,'un',0);
+        cA_SubBlockPairCMtx = cat(1,cA_SubBlockPair2str{:});
+        SubUsedData_AvgAngle = cA_SubBlockAngleVec_Mtx(MtxNanInds);
+        SubUsedData_TypeStr = cA_SubBlockPairCMtx(MtxNanInds);
 
+        cA_RawBlockAngleVec_all = cARawBlockAngleVec(IsAreaEmptySub,cArea);
+        cA_RawBlockAngleVec_CMtx = cellfun(@(x) [mean(x),nan(1,6-size(x,2))],cA_RawBlockAngleVec_all,'un',0);
+        cA_RawBlockAngleVec_Mtx = cat(1,cA_RawBlockAngleVec_CMtx{:});
+        cA_RawBlockPairInds_all = cARawBlockPairInds(IsAreaEmptySub,cArea);
+        cA_RawBlockPair2str = cellfun(@(x) PairInds2str(x,6),cA_RawBlockPairInds_all,'un',0);
+        cA_RawBlockPairCMtx = cat(1,cA_RawBlockPair2str{:});
+        RawUsedData_AvgAngle = cA_RawBlockAngleVec_Mtx(MtxNanInds);
+        RawUsedData_TypeStr = cA_RawBlockPairCMtx(MtxNanInds);
+
+        [SubDataTypeStr_types, ~, SubDataTypeInds] = unique(SubUsedData_TypeStr);
+        [RawDataTypeStr_types, ~, RawDataTypeInds] = unique(RawUsedData_TypeStr);
+
+        AreaTypeAngleANDTypeStr(cArea,:) = {SubUsedData_AvgAngle,SubUsedData_TypeStr,RawUsedData_AvgAngle,RawUsedData_TypeStr};
+        NumStrtypes = length(SubDataTypeStr_types);
+    %     Paired_pvalues = zeros(1,NumStrtypes);
+        % figure('position',[100 100 940 200]);
+        for cTypeInds = 1 : NumStrtypes
+            ax = subplot(2,6,cTypeInds); % maximum 6 groups
+            hold on
+            cTypeStr = SubDataTypeStr_types{cTypeInds};
+
+            cSubTypeInds = SubDataTypeInds == cTypeInds;
+            cSubTypeAngle = SubUsedData_AvgAngle(cSubTypeInds);
+
+            cRawTypeInds = RawDataTypeInds == cTypeInds;
+            cRawTypeAngle = RawUsedData_AvgAngle(cRawTypeInds);
+
+            cBoxData = [cSubTypeAngle(:);cRawTypeAngle(:)];
+            cBoxGroup = [zeros(numel(cSubTypeAngle),1);ones(numel(cRawTypeAngle),1)];
+            Raw2Sub_p = ranksum(cSubTypeAngle,cRawTypeAngle);
+            boxplot(cBoxData,cBoxGroup,'Notch','on','labels',{'SubData','RawData'});
+            set(ax,'box','off','xlim',[0.7 2.3]);
+            yscales = get(ax,'ylim');
+            text(1,yscales(2)*0.1,{sprintf('p = %.2e',Raw2Sub_p);sprintf('n=%d',numel(cSubTypeAngle))},'FontSize',6,'Color','m');
+            title(ax,sprintf('Group %s',cTypeStr));
+            if cTypeInds == 1
+                ylabel('Choice BoundVec Angle');
+            end
+        end 
+    end
+    annotation('textbox',[0.01 0.02 0.1 0.1],'String',{sprintf('Area %s',cA_Str);...
+        sprintf('SessNum %d',length(cA_SubBlockAngleVec_all))},'Color',[0.1 0.4 0.1]);
+    %
+    cFigSavefile = fullfile(figSavePath13,sprintf('Area %s Choice score and angle vec plot',cA_Str));
+    saveas(hf13,cFigSavefile);
+    print(hf13,cFigSavefile,'-dpng','-r300');
+    print(hf13,cFigSavefile,'-dpdf','-bestfit');
+    close(hf13);
+end
+%%
+Sum13DataSavefile2 = fullfile(figSavePath13,'ScoreAndAngledata.mat');
+save(Sum13DataSavefile2,'AreaChoiceScoreData','AreaTypeAngleANDTypeStr','-v7.3');
 %%
 % % sum(UsedSessNums > 5);
 % UpperThresData = max(MeanBoundData,[],'all');

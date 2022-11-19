@@ -3,24 +3,26 @@
 % ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
 clearvars ProbNPSess AllNullThres_Mtx NSMUnitOmegaSqrData CalWinUnitOmegaSqrs NullOmegaSqrDatas
 
-load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
-
+load(fullfile(ksfolder,'NewClassHandle2.mat'));
+ProbNPSess = NewNPClusHandle;
+clearvars NewNPClusHandle
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 savefoldname = fullfile(ksfolder,'AnovanAnA');
-if isfolder(savefoldname)
-   rmdir(savefoldname,'s');
-end
-
-mkdir(savefoldname);
+% if isfolder(savefoldname)
+%    rmdir(savefoldname,'s');
+% end
+% 
+% mkdir(savefoldname);
 
 % transfromed into trial-by-units-by-bin matrix
-SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds}{:,1}),[1,3,2]); 
+FullData = cellfun(@full,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds},'un',0);
+SMBinDataMtx = permute(cat(3,FullData{:,1}),[1,3,2]); 
 if ~isempty(ProbNPSess.SurviveInds)
     SMBinDataMtx = SMBinDataMtx(:,ProbNPSess.SurviveInds,:);
 end
 SMBinDataMtxRaw = SMBinDataMtx;
-
-AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
+%%
+AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
 AllFieldNames = fieldnames(AreaIndexStrc.SessAreaIndexStrc);
 UsedNames = AllFieldNames(1:end-1);
 ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);
@@ -28,7 +30,7 @@ ExistAreaNames = UsedNames(AreaIndexStrc.SessAreaIndexStrc.UsedAbbreviations);
 if strcmpi(ExistAreaNames(end),'Others')
     ExistAreaNames(end) = [];
 end
-%%
+%
 Numfieldnames = length(ExistAreaNames);
 ExistField_ClusIDs = [];
 AreaUnitNumbers = zeros(Numfieldnames,1);
@@ -228,7 +230,7 @@ AllNullThres_Mtx = permute(cat(3,AllNullThres_Cell{:}),[3,1,2]);
 if ~isfolder(fullfile(ksfolder,'AnovanAnA'))
     mkdir(fullfile(ksfolder,'AnovanAnA'))
 end
-savename = fullfile(ksfolder,'AnovanAnA','OmegaSqrDatas.mat');
+savename = fullfile(ksfolder,'AnovanAnA','OmegaSqrDatasNew.mat');
 save(savename,'AllNullThres_Mtx', 'NSMUnitOmegaSqrData', 'CalWinUnitOmegaSqrs', 'NullOmegaSqrDatas','-v7.3');
 %%
 % close;

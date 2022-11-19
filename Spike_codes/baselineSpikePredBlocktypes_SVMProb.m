@@ -12,8 +12,8 @@ clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_All RelagCoefsAll
 % % % if isempty(ProbNPSess.ChannelAreaStrs)
 % % %     ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
 % % % end
-load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
-load(fullfile(ksfolder,'NewClassHandle.mat'))
+load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
+load(fullfile(ksfolder,'NewClassHandle2.mat'))
 ProbNPSess = NewNPClusHandle;
 clearvars NewNPClusHandle
 %%
@@ -246,7 +246,7 @@ end
 
 save(fullfile(fullsavePath,'PopudecodingDatas.mat'), 'SVMSCoreProbofBlock', ...
     'SVMSCoreProb_strs', 'ExistAreas_Names', 'SampleScore2ProbAlls', 'AreaPredInfo', '-v7.3');
-
+SMBinDataMtx = SMBinDataMtxRaw;
 % %% ROC test for each unit
 % [TrNum, unitNum, BinNum] = size(SMBinDataMtxRaw);
 % 

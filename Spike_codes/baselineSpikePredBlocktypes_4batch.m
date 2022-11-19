@@ -1,36 +1,36 @@
-clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_First BaselineResp_Last SMBinDataMtx
+clearvars cAUnitInds BaselineResp_First BaselineResp_Last
 
-% load('Chnlocation.mat');
-% try
-    load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
-% catch
-%     load(fullfile(ksfolder,'SessAreaIndexData.mat'));
-% end
-% if isempty(fieldnames(SessAreaIndexStrc.ACAv)) && isempty(fieldnames(SessAreaIndexStrc.ACAd))...
-%          && isempty(fieldnames(SessAreaIndexStrc.ACA))
-%     return;
-% end
-% load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
-load(fullfile(ksfolder,'NewClassHandle.mat'))
-ProbNPSess = NewNPClusHandle;
-clearvars NewNPClusHandle
-% if isempty(ProbNPSess.ChannelAreaStrs)
-%     ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
-% end
+% % load('Chnlocation.mat');
+% % try
+%     load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
+% % catch
+% %     load(fullfile(ksfolder,'SessAreaIndexData.mat'));
+% % end
+% % if isempty(fieldnames(SessAreaIndexStrc.ACAv)) && isempty(fieldnames(SessAreaIndexStrc.ACAd))...
+% %          && isempty(fieldnames(SessAreaIndexStrc.ACA))
+% %     return;
+% % end
+% % load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
+% load(fullfile(ksfolder,'NewClassHandle2.mat'))
+% ProbNPSess = NewNPClusHandle;
+% clearvars NewNPClusHandle
+% % if isempty(ProbNPSess.ChannelAreaStrs)
+% %     ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
+% % end
 %%
-ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
-% TimeWin = [-1.5,8]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
-% Smoothbin = [50,10]; %
-% ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, Smoothbin, double(behavResults.Time_stimOnset(:)));
-% save(fullfile(pwd,'ks2_5','NPClassHandleSaved.mat'),'ProbNPSess', 'PassSoundDatas', 'behavResults', '-v7.3');
-fullData = cellfun(@full,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds},'un',0);
-SMBinDataMtx = permute(cat(3,fullData{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+% ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
+% % TimeWin = [-1.5,8]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
+% % Smoothbin = [50,10]; %
+% % ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, Smoothbin, double(behavResults.Time_stimOnset(:)));
+% % save(fullfile(pwd,'ks2_5','NPClassHandleSaved.mat'),'ProbNPSess', 'PassSoundDatas', 'behavResults', '-v7.3');
+% fullData = cellfun(@full,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds},'un',0);
+% SMBinDataMtx = permute(cat(3,fullData{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
 
 
-if ~isempty(ProbNPSess.SurviveInds)
-    SMBinDataMtx = SMBinDataMtx(:,ProbNPSess.SurviveInds,:);
-end
-SMBinDataMtxRaw = SMBinDataMtx;
+% if ~isempty(ProbNPSess.SurviveInds)
+%     SMBinDataMtx = SMBinDataMtx(:,ProbNPSess.SurviveInds,:);
+% end
+% SMBinDataMtxRaw = SMBinDataMtx;
 % SMBinDataMtxRaw = SMBinDataMtx(:,:,:);
 %%
 Allfieldnames = fieldnames(SessAreaIndexStrc);
@@ -251,7 +251,7 @@ AUCSaveName = fullfile(fullsavePath,'Unit AUC distributions');
 saveas(h4f,AUCSaveName);
 saveas(h4f,AUCSaveName,'png');
 close(h4f);
-
+SMBinDataMtx = SMBinDataMtxRaw;
 % ################################################################################################
 % cclr
 % AnmSess_sourcepath = 'F:\b107a08_ksoutput';
