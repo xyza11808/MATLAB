@@ -12,8 +12,10 @@ BrainAreasStr = [BrainAreasStrCC(~EmptyInds)]; %;{'Others'}
 
 %%
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-        'Sheet',1);
-SessionFolders = SessionFoldersC(2:end);
+    'Sheet',1);
+SessionFoldersRaw = SessionFoldersC(2:end);
+EmptyInds2 = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
+SessionFolders = SessionFoldersRaw(~EmptyInds2);
 NumUsedSess = length(SessionFolders);
 NumAllTargetAreas = length(BrainAreasStr);
 
@@ -43,7 +45,7 @@ for cS = 1 :  NumUsedSess
     try
         BehavBlockchoiceDiff = load(behavFilePath,'H2L_choiceprob_diff');
     catch
-        behavfilepath = fullfile(cSessPath,'ks2_5','NPClassHandleSaved.mat');
+        behavfilepath = fullfile(cSessPath,'ks2_5','SessPSTHdataSaveNew2.mat');
         SavePlotFolder = fullfile(cSessPath,'ks2_5');
         behavSwitchplot_script;
         clearvars behavfilepath SavePlotFolder behavResults BlockSectionInfo
@@ -68,6 +70,9 @@ for cS = 1 :  NumUsedSess
         cAreaUnitInds = SessblocktypeDecDataStrc.SVMDecodingAccuracy{cAreaInds,4};
         
         AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
+        if ~sum(AreaMatchInds)
+            continue;
+        end
         Areawise_sessDecPerf(cS,AreaMatchInds,:) = {cAreaSVMperf, cAreaSVMShufthres, numel(cAreaUnitInds)}; % realperf, shufthres, observation numbers
         
         % set AUC values
@@ -334,7 +339,7 @@ SortAreaAccu = UsedAreaSVMPerf(SortInds,1);
 
 AreaNames = UsedAreaNames(SortInds);
 
-h5f = figure('position',[100 100 880 840]);
+h5f = figure('position',[100 100 500 750]);
 subplot(121)
 hold on
 errorbar(SortLagValues, (1:NumUsedAreas)', SEMValues,'horizontal', 'k.', 'linewidth',1.4);
@@ -343,10 +348,10 @@ colormap cool
 xscales = get(gca,'xlim');
 text((xscales(2)+10)*ones(NumUsedAreas,1), 1:NumUsedAreas, cellstr(num2str(AreaNums(:),'%d')),'Color','m',...
     'FontSize',8);
-set(gca,'xlim',[xscales(1) xscales(2)+12])
+set(gca,'xlim',[xscales(1) xscales(2)+12],'ylim',[0 NumUsedAreas_sig+1])
 set(gca,'ytick',1:NumUsedAreas,'yticklabel',AreaNames(:));
 xlabel('Peak lags');
-title('logistic regressor crosscoef peaklag distribution')
+title('logReg peaklag')
 
 [SortLagValues_sig, SortInds_sig] = sort(UsedAreaDatas_sig(:,1),'descend');
 SEMValues_sig = UsedAreaDatas_sig(SortInds_sig,2);
@@ -361,14 +366,16 @@ scatter(SortLagValues_sig, (1:NumUsedAreas_sig)',45,SortAreaAccu_sig,'filled');
 
 colormap cool
 hbar = colorbar;
-set(get(hbar,'title'),'String','SVM accuracy')
+barpos = get(hbar,'position');
+set(get(hbar,'title'),'String',{'SVM';'accuracy'});
+set(hbar,'position',barpos.*[1 1 0.8 0.3]+[0.11 0 0 0]);
 xscales = get(gca,'xlim');
 text((xscales(2)+10)*ones(NumUsedAreas_sig,1), 1:NumUsedAreas_sig, cellstr(num2str(AreaNums_sig(:),'%d')),'Color','m',...
     'FontSize',8);
-set(gca,'xlim',[xscales(1) xscales(2)+12])
+set(gca,'xlim',[xscales(1) xscales(2)+12],'ylim',[0 NumUsedAreas_sig+1])
 set(gca,'ytick',1:NumUsedAreas_sig,'yticklabel',AreaNames_sig(:));
 xlabel('Peak lags');
-title('Sig coef session lags')
+title('Sig sessions Peaklags')
 %%
 saveName = fullfile(sumfigsavefolder,'Areawise Crosscoef peakcoef lag plot');
 saveas(h5f,saveName);
@@ -394,7 +401,7 @@ for cA = 1 : NumAreas
     end
 end
 
-h6f = figure('position',[100 100 900 760]);
+h6f = figure('position',[100 100 420 740]);
 ax1 = subplot(121);
 hold on
 ValidAreaInds = ~isnan(AreaAvgAUCs(:,1));
@@ -417,7 +424,7 @@ text((xscales(2)+0.05)*ones(Num_UsedAreas,1), 1:Num_UsedAreas, cellstr(num2str(A
     'FontSize',8);
 text((xscales(2)+0.07)*ones(Num_UsedAreas,1), 1:Num_UsedAreas, cellstr(num2str(Sessnum_sorts(:),'/ %d')),'Color','b',...
     'FontSize',8);
-set(gca,'xlim',[xscales(1) xscales(2)+0.1])
+set(gca,'xlim',[xscales(1) xscales(2)+0.1],'ylim',[0 Num_UsedAreas])
 set(gca,'ytick',1:Num_UsedAreas,'yticklabel',AllAUCNames(:));
 xlabel('Averaged AUCs');
 title('AllAUCAvg session lags')
@@ -440,7 +447,7 @@ errorbar(SigAUCSort, (1:Num_SigAreas)', SigAUCSEMs,'horizontal', 'ko', 'linewidt
 xscales = get(ax2,'xlim');
 text((xscales(2)+0.05)*ones(Num_SigAreas,1), 1:Num_SigAreas, cellstr(num2str(SigAUC_Nums(:),'%d')),'Color','m',...
     'FontSize',8);
-set(gca,'xlim',[xscales(1) xscales(2)+0.1])
+set(gca,'xlim',[xscales(1) xscales(2)+0.1],'ylim',[0 Num_UsedAreas]);
 set(gca,'ytick',1:Num_SigAreas,'yticklabel',SigAUCNames(:));
 xlabel('Averaged AUCs');
 title('Sig AUCAvg session lags')
@@ -544,7 +551,7 @@ SortAreaAccu = UsedAreaSVMPerf(SortInds,1);
 
 AreaNames = UsedAreaNames(SortInds);
 
-h7f = figure('position',[100 100 880 840]);
+h7f = figure('position',[100 100 460 780]);
 subplot(121)
 hold on
 errorbar(SortLagValues, (1:NumUsedAreas)', SEMValues,'horizontal', 'k.', 'linewidth',1.4);
@@ -553,10 +560,10 @@ colormap cool
 xscales = get(gca,'xlim');
 text((xscales(2)+10)*ones(NumUsedAreas,1), 1:NumUsedAreas, cellstr(num2str(AreaNums(:),'%d')),'Color','m',...
     'FontSize',8);
-set(gca,'xlim',[xscales(1) xscales(2)+12])
+set(gca,'xlim',[xscales(1) xscales(2)+12],'ylim',[0 NumUsedAreas+1])
 set(gca,'ytick',1:NumUsedAreas,'yticklabel',AreaNames(:));
 xlabel('Peak lags');
-title('SVM regressor crosscoef peaklag distribution')
+title('SVMreg peaklag')
 
 [SortLagValues_sig, SortInds_sig] = sort(UsedAreaDatas_sig(:,1),'descend');
 SEMValues_sig = UsedAreaDatas_sig(SortInds_sig,2);
@@ -572,14 +579,15 @@ scatter(SortLagValues_sig, (1:NumUsedAreas_sig)',45,SortAreaAccu_sig,'filled');
 
 colormap cool
 hbar = colorbar;
-set(get(hbar,'title'),'String','SVM accuracy')
+set(get(hbar,'label'),'String','SVM accuracy')
+% set(hbar,'label','SVM accuracy');
 xscales = get(gca,'xlim');
 text((xscales(2)+10)*ones(NumUsedAreas_sig,1), 1:NumUsedAreas_sig, cellstr(num2str(AreaNums_sig(:),'%d')),'Color','m',...
     'FontSize',8);
-set(gca,'xlim',[xscales(1) xscales(2)+12])
+set(gca,'xlim',[xscales(1) xscales(2)+12],'ylim',[0 NumUsedAreas_sig+1])
 set(gca,'ytick',1:NumUsedAreas_sig,'yticklabel',AreaNames_sig(:));
 xlabel('Peak lags');
-title('Sig coef session lags')
+title('Sigsess peaklags')
 %%
 saveName = fullfile(sumfigsavefolder,'Areawise SVMScore Crosscoef peakcoef lag plot');
 saveas(h7f,saveName);
@@ -633,14 +641,14 @@ SortAreaAccu = AreaMutInfo_summary_NE(SSortInds,4);
 SortAreaStrs = NE_Areas(SSortInds);
 NumberAreas = numel(SSortInds);
 
-h8f = figure('position',[100 100 420 840]);
+h8f = figure('position',[100 100 320 750]);
 
 hold on
 errorbar(SortAreaMutInfo_summary_NE, (1:NumberAreas)', SortAreaMutInfo_SEM,'horizontal', 'ko', 'linewidth',1.4);
 scatter(SortAreaMutInfo_summary_NE, (1:NumberAreas)',45,SortAreaAccu,'filled');
 colormap cool
 hbar = colorbar;
-set(get(hbar,'title'),'String','SVM accuracy')
+set(get(hbar,'label'),'String','SVM accuracy')
 
 xscales = get(gca,'xlim');
 text((xscales(2)+0.02)*ones(NumberAreas,1), 1:NumberAreas, cellstr(num2str(AreaNums(:),'%d')),'Color','m',...
@@ -648,7 +656,7 @@ text((xscales(2)+0.02)*ones(NumberAreas,1), 1:NumberAreas, cellstr(num2str(AreaN
 set(gca,'xlim',[xscales(1) xscales(2)+0.05],'ylim',[0 NumberAreas+1])
 set(gca,'ytick',1:NumberAreas,'yticklabel',SortAreaStrs(:));
 xlabel('Popu Mutinfo');
-title('SVM pred mutinfo areawise distribution')
+title('SVM predion mutinfo')
 
 %%
 saveName = fullfile(sumfigsavefolder,'Areawise mutinfo sorted plot');

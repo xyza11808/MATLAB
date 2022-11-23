@@ -99,8 +99,8 @@ save(savefilePath,'FileDatas','SessUnit2ClusInds','SessUnittsnePoints','SigGrUni
 %% find all the averaged cluster trace and unique them
 
 % FileNamePrefix = 'Mannual_clustering_data_';
-DataSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
-% DataSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+% DataSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+DataSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
 PosFiles = dir(fullfile(DataSavePath,'Mannual_clustering_data_NewData*.mat'));
 load(fullfile(DataSavePath,'AllPSTHData.mat'));
 
@@ -155,7 +155,8 @@ figure;
 plot(AllSilIndex)
 %%
 
-[~,MaxInds] = max(AllSilIndex);
+% [~,MaxInds] = max(AllSilIndex);
+MaxInds = 29; % mannually checked cluster number. THIS IS NOT THE REAL CLUSTER NUMBER, THE REAL NUMBER SHOULD BE: UsedNumClusters(MaxInds)
 UsedAvgTraceClusInds = AllClusANDsindex{MaxInds,1};
 UsedAvgClusSilIndex = AllClusANDsindex{MaxInds,2};
 
@@ -218,19 +219,37 @@ plot(cClusTraces','Color',[.7 .7 .7]);
 
 %%
 [Corr, p] = corr(ExistAreaPSTHData_zs',SigCorrAvgData');
+[UnitNum, PSTHLen] = size(ExistAreaPSTHData_zs);
 NumClusters = size(SigCorrAvgData,1);
 [MaxCorrValue, MaxCorrInds] = max(Corr,[],2);
 [NewClusInds, NewClusSortInds] = sort(MaxCorrInds);
-SortedPSTHs = ExistAreaPSTHData_zs(NewClusSortInds,:);
+SortedPSTHs = single(ExistAreaPSTHData_zs(NewClusSortInds,:));
 SortedMaxCorrs = MaxCorrValue(NewClusSortInds);
-figure;imagesc(SortedPSTHs,[-2 5])
-
+hf = figure('position',[50 50 430 400]);
+imagesc(SortedPSTHs,[-2 5]);
+axesPos = get(gca,'position');
+set(gca,'position',axesPos+[-0.015 0 -0.02 -0.02])
+hbar = colorbar;
+barpos = get(hbar,'position');
+set(get(hbar,'label'),'String','Zscored firing rate');
+set(hbar,'position',barpos.*[1 1 0.6 0.3]+[0.15 0 0 0]);
 Counts = accumarray(NewClusInds,1);
 AccumGrCounts = cumsum(Counts);
-for cGr = 1 : numel(AccumGrCounts)
-    line([1 700],[AccumGrCounts(cGr) AccumGrCounts(cGr)],'Color','m',...
-        'linewidth',1.5);
-end
+% for cGr = 1 : numel(AccumGrCounts)
+%     line([1 700],[AccumGrCounts(cGr) AccumGrCounts(cGr)],'Color','m',...
+%         'linewidth',1.5);
+% end
+line([1 1]*PSTHLen/2,[0.5 UnitNum+0.5],'Color','m','linewidth',2);
+set(gca,'xtick',[PSTHLen/4,3*PSTHLen/4],'xticklabel',{'LowBound Block','HighBound Block'},'ytick',[1 UnitNum]);
+set(gca,'FontSize',10);
+
+%%
+FigSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult';
+% FigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult';
+figAllPSTHsaveName = fullfile(FigSavePath,'All unit PSTH colorplot');
+saveas(hf,figAllPSTHsaveName);
+print(hf,figAllPSTHsaveName,'-dpng','-r350');
+print(hf,figAllPSTHsaveName,'-dpdf','-bestfit');
 
 %% example cluster color plot
 cClus = 3;
@@ -265,7 +284,7 @@ NumClusters = size(LHsortAvgTraces,1);
 [NewClusInds, NewClusSortInds] = sort(MaxCorrInds);
 SortedPSTHs = ExistAreaPSTHData_zs(NewClusSortInds,:);
 SortedMaxCorrs = MaxCorrValue(NewClusSortInds);
-CorrThres = 0.4;
+CorrThres = 0.5;
 ThresCut_unitInds = SortedMaxCorrs > CorrThres;
 CorrThres_SortPSTH = SortedPSTHs(ThresCut_unitInds,:);
 CorrThres_MaxCorr = SortedMaxCorrs(ThresCut_unitInds);
@@ -282,7 +301,7 @@ figure;imagesc(CorrThres_SortPSTH,[-1 3])
 %%
 LeftGrTypes = unique(CorrThres_ClusInds);
 NumPoints = size(SigCorrAvgDataFinal,2);
-h00f = figure('position',[100 100 1020 840]);
+h00f = figure('position',[100 100 740 700]);
 hold on
 
 ybase = 5;
@@ -306,6 +325,47 @@ set(gca,'ylim',[0 ybase],'ytick',TraceTickCent,'yticklabel',LeftGrTypes(:),...
     'xtick',[NumPoints/4 NumPoints*3/4],'xticklabel',{'LowBlock';'HighBlock'});
 ylabel('Clusters');
 title('Correlation threshold, Correct trials');
+%% PSTH fig save name
+saveName3 = fullfile(FigSavePath,'All cluster Averaged PSTH trace plot');
+saveas(h00f,saveName3);
+print(h00f,saveName3,'-dpng','-r350');
+print(h00f,saveName3,'-dpdf','-bestfit');
+
+%% save results
+saveName4 = fullfile(FigSavePath,'FinalClusterData.mat');
+save(saveName4,'LHsortAvgTraces','NewClusSortInds','NewClusInds','ThresCut_unitInds',...
+    'SigCorrAvgDataFinal','SigCorrGrNumsFinal','SigCorrSEMDataFinal','CorrThres_ClusInds','CorrThres_SortPSTH','-v7.3');
+
+%% resort all clusters based on mannually defined types
+ClusTypefile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult\cluster2Type.txt';
+% ClusTypefile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult\cluster2Type.txt';
+
+fid = fopen(ClusTypefile,'r');
+k = 1;
+ClusStrANDInds = {};
+Lastline = '';
+cLine = fgetl(fid);
+while ischar(cLine)
+    if ~isempty(str2num(cLine)) % if there are numbers in current line
+        ClusStrANDInds(k,:) = {Lastline, str2num(cLine)};
+        k = k + 1;
+    end
+    Lastline = cLine;
+    cLine = fgetl(fid);
+end
+fclose(fid);
+
+%%
+dataSaveName = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult',...
+    'ClusterTypeDesp.mat');
+save(dataSaveName,'ClusStrANDInds','-v7.3');
+
+%%
+cType = 1;
+cTypeClusInds = ClusStrANDInds{cType,2};
+cTypeStr = ClusStrANDInds{cType,1};
+NumClusInds = length(cTypeClusInds);
+
 
 %% 
 
@@ -362,6 +422,13 @@ end
 % % gscatter(BestTsnePoints(:,1),BestTsnePoints(:,2),UsedAvgTraceClusInds);
 % scatter(BestTsnePoints(:,1),BestTsnePoints(:,2),20,UsedAvgClusSilIndex);
 % scatter(BestTsnePoints(UsedAvgClusSilIndex > 0.1,1),BestTsnePoints(UsedAvgClusSilIndex > 0.1,2),18,'r*');
+
+
+
+
+
+
+
 
 %% Following parts only used for test usage
 %% loop across maximum cluster numbers
