@@ -297,6 +297,32 @@ figure;imagesc(CorrThres_SortPSTH,[-1 3])
 [SigCorrAvgDataFinal, SigCorrSEMDataFinal, SigCorrGrNumsFinal] = ...
     DataTypeClassification(CorrThres_SortPSTH,CorrThres_ClusInds);
 
+%% Used cluster unit color plot
+h0cf = figure('position',[100 100 340 780]);
+imagesc(CorrThres_SortPSTH,[-1 3]);
+Counts = accumarray(CorrThres_ClusInds,1);
+[NumUnits, NumPSTHLen] = size(CorrThres_SortPSTH);
+AccumGrCounts = cumsum(Counts);
+for cGr = 1 : numel(AccumGrCounts)
+    line([1 NumPSTHLen],[AccumGrCounts(cGr) AccumGrCounts(cGr)],'Color','c',...
+        'linewidth',0.75);
+end
+axispos = get(gca,'position');
+hbar = colorbar;
+Oldpos = get(hbar,'position');
+set(hbar,'position',[Oldpos(1)+0.12,Oldpos(2),Oldpos(3)*0.5,Oldpos(4)*0.2]);
+set(gca,'position',[axispos(1)-0.02,axispos(2:4)]);
+line([NumPSTHLen/2 NumPSTHLen/2],[0.5 NumUnits+0.5],'Color','m','linewidth',0.75);
+set(gca,'xtick',[NumPSTHLen/4 3*NumPSTHLen/4],'xticklabel',{'Low boundary block','Low boundary block'},...
+    'ytick',[1 NumUnits],'yDir','normal');
+ylabel('# Units');
+
+%%
+saveName3c = fullfile(FigSavePath,'..','All cluster Used units PSTH color plot');
+saveas(h0cf,saveName3c);
+print(h0cf,saveName3c,'-dpng','-r350');
+print(h0cf,saveName3c,'-dpdf','-bestfit');
+
 
 %%
 LeftGrTypes = unique(CorrThres_ClusInds);
@@ -322,7 +348,7 @@ BlockChangePoints = NumPoints/2 + 0.5;
 yscales = get(gca,'ylim');
 line(BlockChangePoints*[1 1],[0 ybase],'Color',[1 0 0 0.3],'linewidth',2);
 set(gca,'ylim',[0 ybase],'ytick',TraceTickCent,'yticklabel',LeftGrTypes(:),...
-    'xtick',[NumPoints/4 NumPoints*3/4],'xticklabel',{'LowBlock';'HighBlock'});
+    'xtick',[NumPoints/4 NumPoints*3/4],'xticklabel',{'Low Boundary Block';'High Boundary Block'},'FontSize',12);
 ylabel('Clusters');
 title('Correlation threshold, Correct trials');
 %% PSTH fig save name
@@ -330,6 +356,7 @@ saveName3 = fullfile(FigSavePath,'All cluster Averaged PSTH trace plot');
 saveas(h00f,saveName3);
 print(h00f,saveName3,'-dpng','-r350');
 print(h00f,saveName3,'-dpdf','-bestfit');
+
 
 %% save results
 saveName4 = fullfile(FigSavePath,'FinalClusterData.mat');
