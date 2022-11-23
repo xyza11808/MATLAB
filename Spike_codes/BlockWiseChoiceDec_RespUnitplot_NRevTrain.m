@@ -47,14 +47,15 @@ end
 % end
 
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
-FreqTypes = unique(UsedTrInds_NMFreqs);
+TrFreqs = double(behavResults.Stim_toneFreq(:));
+FreqTypes = unique(TrFreqs);
 FreqTypeNum = length(FreqTypes);
 RevFreqs = BlockSectionInfo.BlockFreqTypes(BlockSectionInfo.IsFreq_asReverse > 0);
 
 
 UsedBlockInds = 1 : BlockSectionInfo.BlockTrScales(end,2);
 ActionChoices = double(behavResults.Action_choice(:));
-TrFreqs = double(behavResults.Stim_toneFreq(:));
+
 TrBlockTypes = double(behavResults.BlockType(:));
 TrTrialType = double(behavResults.Trial_Type(:));
 TrRewardTime = double(behavResults.Time_reward(:));
@@ -72,8 +73,10 @@ UsedTrInds_NMSeqIndex = TrBlockSeqIndex(UsedTrInds_NMInds);
 UsedTrInds_NMTrTtypes = TrTrialType(UsedTrInds_NMInds);
 UsedTrInds_NMIsRevTr = TrIsRevtrials(UsedTrInds_NMInds);
 
+NonRevTrChoices = UsedTrInds_NMChoice(~UsedTrInds_NMIsRevTr);
+NonRevTrSampleInds = IndsTypeBalanceSample(NonRevTrChoices);
 %%
-saveFolder = fullfile(ksfolder,'BlockChoiceDecWeight');
+saveFolder = fullfile(ksfolder,'BlockChoiceDecWeightNonRevTr');
 if ~isfolder(saveFolder)
     mkdir(saveFolder);
 end
@@ -91,12 +94,15 @@ for cA = 1 : length(NewAdd_ExistAreaNames)
     UsedTrNMDatas = BaseSubData(UsedTrInds_NMInds,UsedUnitInds,:);
     UsedTrNMDatas_raw = NewBinnedDatas(UsedTrInds_NMInds,UsedUnitInds,:);
     
-    [NumNMTrials, ~, NumTimeBins] = size(UsedTrNMDatas);
+    NonRevTrNMDatas = UsedTrNMDatas(~UsedTrInds_NMIsRevTr,:,:);
+    NonRevTrNMDatas_raw = UsedTrNMDatas_raw(~UsedTrInds_NMIsRevTr,:,:);
     
-    RepeatNum = 10;
+    NumTimeBins = size(UsedTrNMDatas, 3);
+    NumNMTrials =sum(NonRevTrSampleInds);
+    
+    RepeatNum = 20;
     RepeatInfo = zeros(RepeatNum,NumTimeBins,2);
     AllRepeatBetas = cell(RepeatNum,NumTimeBins);
-    
     for cR = 1 : RepeatNum
         
         cR_TrainIndex = randsample(NumNMTrials,round(NumNMTrials*0.6));
@@ -106,9 +112,9 @@ for cA = 1 : length(NewAdd_ExistAreaNames)
         
         TimeBinInfos = zeros(NumTimeBins,2);
         for cBin = 1 : NumTimeBins
-            cBinData = UsedTrNMDatas(:,:,cBin);
-            
-            [InfoScore,~,~,beta] = LDAclassifierFun(cBinData,UsedTrInds_NMChoice,...
+            cBinData = NonRevTrNMDatas(NonRevTrSampleInds,:,cBin);
+            cBinChoice = UsedTrInds_NMChoice(NonRevTrSampleInds);
+            [InfoScore,~,~,beta] = LDAclassifierFun(cBinData,cBinChoice,...
                 {cR_TrainBaseInds,cR_TestInds});
             TimeBinInfos(cBin,:) = InfoScore;
             AllRepeatBetas(cR,cBin) = {beta};
@@ -126,13 +132,13 @@ for cA = 1 : length(NewAdd_ExistAreaNames)
     baseSubData_maxframeZS = zscore(baseSubData_maxframe);
     [RepeatInfo_Sub,RepeatAccu_Sub,AllRepeatBetas_Sub,BlockChoiceVecAngleSub,BlockIndsSub,BlockShufDecsSub,BlockDataCSub] = ...
         BlockWiseChoiceDecVec(baseSubData_maxframeZS, UsedTrInds_NMSeqIndex, ...
-        UsedTrInds_NMChoice, BlockSectionInfo.NumBlocks, [], RepeatNum);
+        UsedTrInds_NMChoice, BlockSectionInfo.NumBlocks, [], RepeatNum); %true(size(UsedTrInds_NMIsRevTr))
     
     RawDataMaxF = UsedTrNMDatas_raw(:,:,MaxInds);
     RawDataMaxF_zs = zscore(RawDataMaxF);
     [RepeatInfo_Raw,RepeatAccu_Raw,AllRepeatBetas_Raw,BlockChoiceVecAngleRaw,BlockIndsRaw,BlockShufDecsRaw,BlockDataCRaw] = ...
         BlockWiseChoiceDecVec(RawDataMaxF_zs, UsedTrInds_NMSeqIndex, ...
-        UsedTrInds_NMChoice, BlockSectionInfo.NumBlocks, [], RepeatNum);
+        UsedTrInds_NMChoice, BlockSectionInfo.NumBlocks, ~UsedTrInds_NMIsRevTr, RepeatNum); %~UsedTrInds_NMIsRevTr
     
     %
     hf = figure('position',[50 50 680 540]);
@@ -200,7 +206,7 @@ for cA = 1 : length(NewAdd_ExistAreaNames)
         end
     end
 end
-
+%%
 datasavepath = fullfile(saveFolder,'ChoiceDecWeights.mat');
 save(datasavepath,'AreaChocieDecData',...
     'ExistField_ClusIDs','NewAdd_ExistAreaNames','CalMtxAll','CalMtx','-v7.3');

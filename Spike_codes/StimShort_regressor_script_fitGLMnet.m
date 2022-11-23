@@ -12,11 +12,12 @@ dataSaveNames = fullfile(savefolder,'REgressorDataSaveStim.mat');
 %     return;
 % end
 
-load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
+load(fullfile(ksfolder,'NewClassHandle2.mat'));
 clearvars RegressorInfosCell
-
+ProbNPSess = NewNPClusHandle;
+clearvars NewNPClusHandle
 %% find target cluster inds and IDs
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
@@ -98,7 +99,7 @@ Behav_SessTrOnBin = round(TaskTrigTimeAligns/TimeBinSize);
 %% including only some times before stim onset and offset, exclude extra time binns
 Behav_SessStimOnBin = round(Behav_SessStimOnTime/TimeBinSize);
 
-UsedDataBinScales = round([-0.1,0.4]/TimeBinSize);
+UsedDataBinScales = round([-0.2,0.5]/TimeBinSize);
 TotalTrNum = numel(Behav_SessStimOnTime);
 UsedTimeBins = false(1,NumofSPcounts);
 cTrExcludedBins = zeros(TotalTrNum,2);
@@ -125,7 +126,6 @@ BinnedSPdatas = BinnedSPdatas(:,UsedTimeBins);
 
 % clearvars StimEventshiftMtxs
 
-
 FullEvents_predictor = StimEventshiftMtxsNew(1,:);
 FullEvents_Predlabel = StimEventshiftMtxsNew(2,:);
 
@@ -136,7 +136,7 @@ FullRegressorInfosCell = cell(size(BinnedSPdatas,1),3);
 NumNeurons = size(BinnedSPdatas,1);
 fprintf('Processing %d units...\n',NumNeurons);
 ErrorU = zeros(NumNeurons,1);
-for cU = 1:NumNeurons
+parfor cU = 1:NumNeurons
     try
         [ExplainVarStrc, RegressorCoefs, RegressorPreds] = ...
             lassoelasticRegressor(BinnedSPdatas(cU,:), FullEvents_predictor, 5);

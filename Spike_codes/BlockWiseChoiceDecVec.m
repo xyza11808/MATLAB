@@ -1,11 +1,16 @@
 function [RepeatInfo_check,RepeatAccu_check,AllRepeatBetas_check,BlockChoiceVec,BlockInds,BlockShufDecs,BlockChoiceANDData] = ...
     BlockWiseChoiceDecVec(UsedTrNMDatas_maxBin, TrialBlockIndex, ...
-    TrialChoices, NumBlocks, RepeatNum)
+    TrialChoices, NumBlocks, UsedTrIsRevTr, RepeatNum)
 % function used to perform blockwise decoding of the given data set
-if ~exist('RepeatNum','var')
+if ~exist('RepeatNum','var') || isempty(RepeatNum)
     RepeatNum = 50;
 end
 shufRepeatNum = 500;
+IsSubTrUsed = 1;
+if isempty(UsedTrIsRevTr)
+%     UsedTrIsRevTr = true(numel(TrialBlockIndex),1);
+    IsSubTrUsed = 0;
+end
 
 RepeatInfo_check = zeros(NumBlocks,RepeatNum,2);
 RepeatAccu_check = zeros(NumBlocks,RepeatNum,2);
@@ -13,11 +18,22 @@ AllRepeatBetas_check = cell(NumBlocks,RepeatNum);
 BlockShufDecs = cell(NumBlocks,3);
 BlockChoiceANDData = cell(NumBlocks,2);
 for cB = 1:NumBlocks
-    cB_TrInds = TrialBlockIndex == cB;
-    cBNMTrNums = sum(cB_TrInds);
-    cBData = UsedTrNMDatas_maxBin(cB_TrInds,:);
-    cBChoices = TrialChoices(cB_TrInds);
+    
     for cR = 1 : RepeatNum
+        if ~IsSubTrUsed
+            cB_TrInds = TrialBlockIndex == cB;
+            cBNMTrNums = sum(cB_TrInds);
+            cBData = UsedTrNMDatas_maxBin(cB_TrInds,:);
+            cBChoices = TrialChoices(cB_TrInds);
+        else
+            cB_TrInds = TrialBlockIndex == cB & UsedTrIsRevTr;
+            cBDataAll = UsedTrNMDatas_maxBin(cB_TrInds,:);
+            cBChoicesAll = TrialChoices(cB_TrInds);
+            SampleInds = IndsTypeBalanceSample(cBChoicesAll); % balance sampling of two choice types
+            cBData = cBDataAll(SampleInds,:);
+            cBChoices = cBChoicesAll(SampleInds);
+            cBNMTrNums = numel(cBChoices);
+        end
 
         cR_TrainIndex = randsample(cBNMTrNums,round(cBNMTrNums*0.8));
         cR_TrainBaseInds = false(cBNMTrNums,1);

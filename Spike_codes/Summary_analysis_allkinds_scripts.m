@@ -2244,8 +2244,8 @@ print(h99f,filesavePath99,'-dpdf','-bestfit');
 %
 cclr
 %
-AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -2275,8 +2275,8 @@ UsedFolderPath = cell(NumUsedSess,1);
 SessTrialTypeNums = cell(NumUsedSess,2);
 for cS = 1 : NumUsedSess
     
-    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
-%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     UsedFolderPath{cS} = ksfolder;
@@ -2385,16 +2385,52 @@ ExistAreaErrorPSTHData_zs = ((ExistAreaErrorPSTHData' - mu')./sigma')';
 %     ClusIdxANDCent(cClus,:) = {idx, C, silh};
 % end
 %%
-% SummarySavePath10 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
-SummarySavePath10 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+[UnitNum, PSTHLen] = size(ExistAreaPSTHData_zs);
+[AreaIndexTypes,~,AreaNewInds] = unique(ExistAreaPSTHAreaInds); % areaIndex is already sorted
+BoundInds = find([true;abs(diff(ExistAreaPSTHAreaInds(:)))>0]);
+if BoundInds(end) ~= UnitNum
+    BoundInds = [BoundInds;UnitNum];
+end
+AreaBoundCents = (BoundInds(1:end-1)+BoundInds(2:end))/2;
+AreaStrs = BrainAreasStr(AreaIndexTypes);
+
+hf100 = figure('position',[100 100 380 620]);
+ExistAreaPSTHData_zsSM = single(conv2(ones(1,5)/5,1,ExistAreaPSTHData_zs,'same'));
+imagesc(ExistAreaPSTHData_zsSM,[-0.5 2]);%,[-0.5 1]
+% colormap hot
+axispos = get(gca,'position');
+hbar = colorbar;
+Oldpos = get(hbar,'position');
+set(hbar,'position',[Oldpos(1)+0.15,Oldpos(2),Oldpos(3)*0.5,Oldpos(4)*0.2]);
+set(gca,'position',[axispos(1)-0.02,axispos(2:4)]);
+set(get(hbar,'title'),'String','ZS FR');
+ylabel('Units')
+title('Unit PSTH datas');
+set(gca,'FontSize',8,'box','off');
+line([1 1]*PSTHLen/2,[0.5 UnitNum+0.5],'Color','m','linewidth',2);
+set(gca,'xtick',[PSTHLen/4,3*PSTHLen/4],'xticklabel',{'LowBound Block','HighBound Block'},...
+    'ytick',[1 UnitNum]); %AreaBoundCents,'yticklabel',AreaStrs(:)
+set(gca,'FontSize',10);
+ylabel('# Units');
+
+%%
+SummarySavePath10 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+% SummarySavePath10 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
 if ~isfolder(SummarySavePath10)
     mkdir(SummarySavePath10);
 end
 
+% save the PSTH color plots
+saveName = fullfile(SummarySavePath10,'Raw unit PSTH color plots');
+saveas(hf100,saveName);
+print(hf100,saveName,'-dpng','-r350');
+print(hf100,saveName,'-dpdf','-bestfit');
+
+%%
 SumDataSavefile = fullfile(SummarySavePath10,'UnitPSTHDatasTemp.mat');
 save(SumDataSavefile,'AllUnitPSTHExpends','SessTrialTypeNums','UsedFolderPath','PSTHColStrs','BrainAreasStr',...
     'ExistAreaPSTHData_zs','ExistAreaErrorPSTHData_zs','ExistAreaPSTHAreaInds','ExistAreaPSTHUnitRespType',...
-    'ExistAreaPSTHUnitSessInds','-v7.3');
+    'ExistAreaPSTHUnitSessInds','TotalUnitSess_excluInds','-v7.3');
 
 
 %% Unit response type matrix
@@ -2828,8 +2864,8 @@ save(fullfile(savePath,'AnmWiseBehavData_curveData.mat'),'AnmLowHighBounds','Anm
 %
 cclr
 %
-AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -2855,8 +2891,8 @@ AllSessUnitBaseFRzs = cell(NumUsedSess,1);
 
 for cS = 1 : NumUsedSess
     
-    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
-%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     UsedFolderPath{cS} = ksfolder;
@@ -2864,8 +2900,8 @@ for cS = 1 : NumUsedSess
     cSessbaseDatafile = fullfile(ksfolder,'BaselineRespDataNew.mat');
     cSessbaseDataStrc = load(cSessbaseDatafile,'BlockTypeResps','LowBlockBaseData',...
         'HighBlockBaseData','BlockSectionInfo','AllUnitAreaStrs');
-%     UnitTypefile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypes2.mat');
-%     SessUnitTypeMtxStrc = load(UnitTypefile,'IsUnitGLMResp');
+    UnitTypefile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypesNew.mat');
+    SessUnitTypeMtxStrc = load(UnitTypefile,'IsUnitGLMResp');
     
     
     cSessBlockTypeResp = cSessbaseDataStrc.BlockTypeResps;
@@ -2878,7 +2914,7 @@ for cS = 1 : NumUsedSess
     
     UsedUnitNums = length(AreaInds);
     
-    SessUnitTypeMtxStrc.IsUnitGLMResp = false(UsedUnitNums,5);
+%     SessUnitTypeMtxStrc.IsUnitGLMResp = false(UsedUnitNums,5);
     NumAreas = length(AreaTypes);
     Match2AllAreaInds = zeros(UsedUnitNums,1);
     for cA = 1 : NumAreas
@@ -2917,8 +2953,14 @@ AllUnitAreaInds = cat(1,AllUnitBaseFR_zsed{:,3});
 AllUnitBaseResp = cat(1,AllUnitBaseFR_zsed{:,1});
 % AllUnitBlockwiseResp = cat(3,AllUnitBaseFR_zsed{:,2}); % the blocknum is
 % different between sessions
-UsedDataInds = ~(sum(isnan(AllUnitBaseResp),2) | isnan(AllUnitAreaInds));
 
+% % % UsedDataInds = ~(sum(isnan(AllUnitBaseResp),2) | isnan(AllUnitAreaInds));
+% load used unit inds from the PSTH dataset
+PSTHSumfile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\UnitPSTHDatasTemp.mat';
+% PSTHSumfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\UnitPSTHDatasTemp.mat';
+PSTHIndsStrc = load(PSTHSumfile,'TotalUnitSess_excluInds');
+UsedDataInds = ~PSTHIndsStrc.TotalUnitSess_excluInds;
+%%
 UsedBaseResp = AllUnitBaseResp(UsedDataInds,:);
 UsedUnitAreaInds = AllUnitAreaInds(UsedDataInds);
 % UsedUnitBlockwiseResp = AllUnitBlockwiseResp(:,:,UsedDataInds);
@@ -2939,10 +2981,10 @@ ylabel('Units')
 title('BlockWise baseline datas');
 set(gca,'FontSize',8,'box','off');
 %%
-% figSavePath12 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
-figSavePath12 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
+figSavePath12 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
+% figSavePath12 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
 
-figfileSavePath12_1 = fullfile(figSavePath12,'Used unit baseline resp plot');
+figfileSavePath12_1 = fullfile(figSavePath12,'Used unit baseline resp plot PSTHunits');
 saveas(h12f,figfileSavePath12_1);
 print(h12f,figfileSavePath12_1,'-dpdf','-bestfit');
 print(h12f,figfileSavePath12_1,'-dpng','-r350');

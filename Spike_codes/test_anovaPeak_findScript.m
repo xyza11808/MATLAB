@@ -32,8 +32,8 @@ for cA = 1 : NumAreas
     % AllArea_BTAnova_freqwise
 
     for cf = 1 : 2 %nFactors
-        cfRealData = AllArea_anovaEVdatas{cA,cf,1};
-        cfThresData = AllArea_anovaEVdatas{cA,cf,2};
+        cfRealData = double(AllArea_anovaEVdatas{cA,cf,1});
+        cfThresData = double(AllArea_anovaEVdatas{cA,cf,2});
         if isempty(cfRealData)
             continue;
         end
@@ -156,7 +156,7 @@ for cA = 1 : NumAreas
     if ~isempty(cA_BT_freqwiseData{1})
         cA_BT_BaseAvgs = cellfun(@(x) (mean(x(1:StimOnsetBin,:)))',cA_BT_freqwiseData,'un',0);
         
-        cA_BT_AfterRespAvgs = cellfun(@(x) (mean(x((1+StimOnsetBin):(StimOnsetBin+150),:)))',cA_BT_freqwiseData,'un',0);
+        cA_BT_AfterRespAvgs = cellfun(@(x) (mean(x((1+StimOnsetBin):(StimOnsetBin+100),:)))',cA_BT_freqwiseData,'un',0);
         
         cA_BTAvg_Mtx = {[cA_BT_BaseAvgs{1,1},cA_BT_BaseAvgs{1,2},cA_BT_AfterRespAvgs{1,1},cA_BT_AfterRespAvgs{1,2}],... % NonRevF 
             [cA_BT_BaseAvgs{2,1},cA_BT_BaseAvgs{2,2},cA_BT_AfterRespAvgs{2,1},cA_BT_AfterRespAvgs{2,2}]}; % RevF
@@ -499,9 +499,9 @@ set(hbar,'position',[0.05 0.1 oldBarPos(3) oldBarPos(4)*0.2]);
 set(get(hbar,'title'),'String','AllenScores');
 
 yscales = get(ax11,'ylim');
-line([0.2 0.2],yscales,'Color','c','linewidth',1.4,'linestyle','--');
-line([0.3 0.3],yscales,'Color','c','linewidth',1.4,'linestyle','--');
-line([0.6 0.6],yscales,'Color','c','linewidth',1.4,'linestyle','--');
+% line([0.2 0.2],yscales,'Color','c','linewidth',1.4,'linestyle','--');
+% line([0.3 0.3],yscales,'Color','c','linewidth',1.4,'linestyle','--');
+% line([0.6 0.6],yscales,'Color','c','linewidth',1.4,'linestyle','--');
 xlabel('StimPeakTime (s)');
 set(ax11,'ytick',StimAreaInds,'yticklabel',SortStimAreaStr,'ylim',[0 numel(StimPeakTimeSort)+1]);
 title('StimPeakTime sort');
@@ -683,7 +683,7 @@ title('Size (PeakValue)');
 
 % stim peak width sort plot
 StimPWSort = StimValidPeakWidth(StimPTsortInds,1);
-StimPeakWidth2Size = (StimPWSort - mean(StimPWSort)) * 600+50;
+StimPeakWidth2Size = (StimPWSort - mean(StimPWSort)) * 600+60;
 
 ax12 = subplot(142);
 hold on
@@ -827,7 +827,7 @@ if ~isfolder(FirstPeakplotSavePath)
     mkdir(FirstPeakplotSavePath);
 end
 saveFilePath = fullfile(AnovaDataSumDataPath,'AnovaPeak_sumPlot','AnovaPeakSumData.mat');
-load(saveFilePath,'AreaPeakFactor_peakDatasAll','AreaBT_AvgDatasAll')
+load(saveFilePath,'AreaPeakFactor_peakDatasAll','AreaBT_AvgDatasAll');
 
 %% add allen scores
 
@@ -1257,7 +1257,7 @@ print(h3f,sortSavePath,'-dpdf','-bestfit');
 %% stim peak time ranges
 FreqwiseStr = {'NonRevF','RevF'};
 
-StimEdges = [0,0.1,0.25,2]; % the last term could indicates inf, but use 2s for more resonable definition
+StimEdges = [0,0.07,0.18,2]; % the last term could indicates inf, but use 2s for more resonable definition
 AreaStimPeakTime = squeeze(ValueAllAreaDatas(:,5,1));
 AreaStimPeakWidth = squeeze(ValueAllAreaDatas(:,6,1));
 AreaStimPeakValue = squeeze(ValueAllAreaDatas(:,4,1));
@@ -1268,14 +1268,16 @@ NumAreas = size(AreaBT_AvgDatasAll,1);
 AreaBTAvgsAll = nan(NumAreas,4);
 for cA = 1 : size(AreaBT_AvgDatasAll,1)
     cA_nonRevTr_BTs = AreaBT_AvgDatasAll{cA,1};
-    if ~isempty(cA_nonRevTr_BTs) && size(cA_nonRevTr_BTs,1) >= 10
-        AreaBTAvgsAll(cA,:) = [mean(cA_nonRevTr_BTs(:,1)),mean(cA_nonRevTr_BTs(:,3)),...
-            mean(cA_nonRevTr_BTs(cA_nonRevTr_BTs(:,1) > cA_nonRevTr_BTs(:,2),1)),...
-            mean(cA_nonRevTr_BTs(cA_nonRevTr_BTs(:,3) > cA_nonRevTr_BTs(:,4),3))];
+    cA_RevTr_BTs = AreaBT_AvgDatasAll{cA,2};
+    if ~isempty(cA_nonRevTr_BTs) && size(cA_nonRevTr_BTs,1) >= 5
+        AreaBTAvgsAll(cA,:) = [mean(cA_nonRevTr_BTs(cA_nonRevTr_BTs(:,1) > cA_nonRevTr_BTs(:,2),1)),... % baseline
+            mean(cA_nonRevTr_BTs(cA_nonRevTr_BTs(:,3) > cA_nonRevTr_BTs(:,4),3)),... % after response
+            mean(cA_RevTr_BTs(cA_RevTr_BTs(:,1) > cA_RevTr_BTs(:,2),1)),... % baseline 
+            mean(cA_RevTr_BTs(cA_RevTr_BTs(:,3) > cA_RevTr_BTs(:,4),3))];% after response
     end
 end
 
-NonNanInds = ~isnan(AreaStimPeakTime) & ~isnan(AreaBTAvgsAll(:,1));
+NonNanInds = ~isnan(AreaStimPeakTime) & ~sum(isnan(AreaBTAvgsAll),2);
 NonNanStimPT = AreaStimPeakTime(NonNanInds);
 NonNanStimPW = AreaStimPeakWidth(NonNanInds);
 NonNanStimPV = AreaStimPeakValue(NonNanInds);
@@ -1304,7 +1306,7 @@ ChoicePWbinDataMtx = cat(1,PTbinData{:,6});
 %% compare
 
 FPdataSavePath = fullfile(AnovaDataSumDataPath,'AnovaPeak_sumPlot','FirstPeakAnaPlot');
-AllPlotDatas = {PTbinDataMtx(:,3),PTbinDataMtx(:,4),StimPVbinDataMtx,PWbinDataMtx,ChoicePVbinDataMtx,ChoicePWbinDataMtx};
+AllPlotDatas = {PTbinDataMtx(:,1),PTbinDataMtx(:,3),StimPVbinDataMtx,PWbinDataMtx,ChoicePVbinDataMtx,ChoicePWbinDataMtx};
 DataStrs = {'NonRevFBT','RevFBT','StimPV','StimPW','ChoicePV','ChoicePW'};
 
 PlotDataAvgDatas = cell(6,3);
@@ -1355,5 +1357,5 @@ print(h7f,sumplotSavePath7,'-dpng','-r350');
 print(h7f,sumplotSavePath7,'-dpdf','-bestfit');
 
 dataSavePath7 = fullfile(FPdataSavePath,'StimPT_grCompDataSave.mat');
-save(dataSavePath7,'PlotDataAvgDatas','DataStrs','AllPlotDatas','ValueAllAreaDatas','-v7.3');
+save(dataSavePath7,'PlotDataAvgDatas','DataStrs','AllPlotDatas','ValueAllAreaDatas','StimEdges','-v7.3');
 

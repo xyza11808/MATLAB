@@ -86,7 +86,7 @@ DataStr = {'RawDsqrScore','RawPerf','RawScoresAll','SubDsqrScore','SubPerf','Sub
 NumAreas = size(ExistField_ClusIDs,1);
 ChoiceANDBT_beta = cell(NumAreas,2);
 ChoiceANDBT_Scores = cell(NumAreas,2);
-RevFreqChoiceScores = cell(NumAreas,2);
+RevFreqChoiceScores = cell(NumAreas,4);
 for cA = 1 : NumAreas
     UsedUnitInds = ExistField_ClusIDs{cA,2};
     AreaPopuSize = numel(UsedUnitInds);
@@ -245,12 +245,14 @@ for cA = 1 : NumAreas
     BlockNum = BlockSectionInfo.NumBlocks;
     
     
-    figSize = [280*BlockNum, 540];
+    figSize = [280*BlockNum, 720];
     hf = figure('position',[50 50 figSize]);
     IsLegendHasPlot = 0;
     
-    ChoiceInfoDatas = cell(BlockNum,NumRevFreqs,4);
-    PopuUnitSizes = zeros(BlockNum,NumRevFreqs,2);
+    ChoiceInfoDatas = cell(BlockNum,NumRevFreqs+1,4);
+    PopuUnitSizes = zeros(BlockNum,NumRevFreqs+1,2);
+    RevTrChoiceScores = cell(BlockNum,2,3); % the second dimension is left and right choice, the third dimension is before and after score
+    RevTrBTScores = cell(BlockNum,2,3); % the second dimension is left and right choice, the third dimension is before and after score
     for cB = 1 : BlockNum
         
         cB_TrInds = UsedTrInds_NMSeqIndex == cB;
@@ -263,29 +265,28 @@ for cA = 1 : NumAreas
         cB_TrBin_choiceScores = BinChoiceScores(cB_TrInds,:);
         cB_TrBin_BTScores = BinBTScores(cB_TrInds,:);
         
-        cB_Base_choiceScores = mean(BinChoiceScores(cB_TrInds,1:OnsetBin),2);
-        cB_Base_BTScores = mean(BinBTScores(cB_TrInds,1:OnsetBin),2);
-        
+        cB_TrBin_ChoiceScoresSM = conv2(1,ones(1,5)/5,cB_TrBin_choiceScores,'same');
+%             cf_Bin_BTScoresSM = conv2(1,ones(1,5)/5,cf_Bin_BTScores,'same');
+            
         cB_RevTr_CorrInds = cB_TrIsCorrect & cB_TrIsRev;
         cB_RevTr_ErroInds = ~cB_TrIsCorrect & cB_TrIsRev;
         cBType = BlockSectionInfo.BlockTypes(cB);
         for TestFreq = 1 : NumRevFreqs
-            
-            cf_inds = cB_TrFreqs == AllFreqTypes(TestFreq);
+            cFreq = AllFreqTypes(RevFreqIndex(TestFreq));
+            cf_inds = cB_TrFreqs == cFreq;
             cf_Bin_ChoiceScores = cB_TrBin_choiceScores(cf_inds,:);
+            cf_Bin_ChoiceScoresSM = cB_TrBin_ChoiceScoresSM(cf_inds,:);
             cf_Bin_BTScores = cB_TrBin_BTScores(cf_inds,:);
             cf_Choice = cB_TrChoice(cf_inds);
             cf_ChoiceIsCorr = cB_TrIsCorrect(cf_inds);
             
             ChoiceInfoDatas(cB,TestFreq,:) = {cf_Bin_ChoiceScores(cf_Choice==0,:),cf_Bin_ChoiceScores(cf_Choice==1,:),...
-                cB_Base_BTScores(cf_Choice==0,:),cB_Base_BTScores(cf_Choice==1,:)};
+                cf_Bin_BTScores(cf_Choice==0,:),cf_Bin_BTScores(cf_Choice==1,:)};
             PopuUnitSizes(cB,TestFreq,:) = [sum(cf_Choice==0),sum(cf_Choice)];
             %         cf_IsleftChoiceType = mean(cf_ChoiceIsCorr(cf_Choice == 0));
-            cf_Bin_ChoiceScoresSM = conv2(1,ones(1,5)/5,cf_Bin_ChoiceScores,'same');
-            cf_Bin_BTScoresSM = conv2(1,ones(1,5)/5,cf_Bin_BTScores,'same');
             
             SubAxIndex = (TestFreq - 1) * BlockNum + cB;
-            Choiceax = subplot(NumRevFreqs,BlockNum, SubAxIndex);
+            Choiceax = subplot(NumRevFreqs+1,BlockNum, SubAxIndex);
             %         figure;
             hold on
             if sum(cf_Choice==0) > 0
@@ -315,11 +316,11 @@ for cA = 1 : NumAreas
             line(Choiceax,xTimeScales,[0 0],'Color','k','linewidth',1,'linestyle','--')
             yscale_C = get(Choiceax,'ylim');
             line(Choiceax,[0 0],yscale_C,'Color','c','linewidth',1.2,'linestyle','--');
-            if TestFreq == NumRevFreqs
-                xlabel(Choiceax,sprintf('Time (s), BlockSeq %d', cB));
-            end
+%             if TestFreq == NumRevFreqs
+%                 xlabel(Choiceax,sprintf('Time (s), BlockSeq %d', cB));
+%             end
             if cB == 1
-                ylabel(Choiceax,{'Choice scores';sprintf('%d Hz, Block %d',AllFreqTypes(TestFreq),cBType)});
+                ylabel(Choiceax,{'Choice scores';sprintf('%d Hz, Block %d',cFreq,cBType)});
             else
                 ylabel(Choiceax,sprintf('Block %d',cBType));
             end
@@ -332,10 +333,65 @@ for cA = 1 : NumAreas
             set(Choiceax,'FontSize',10,'xlim',xTimeScales);
             
         end
+        % #####################################################
+        % plot all reverse frequency together for left and right choices
+        SumChoiceax = subplot(NumRevFreqs+1,BlockNum, NumRevFreqs*BlockNum+cB);
+        hold on
+        cB_RevTrInds = ismember(cB_TrFreqs, RevFreqs);
+        cRevTr_ChoiceScores = cB_TrBin_choiceScores(cB_RevTrInds,:);
+        cf_Bin_ChoiceScoresSM = cB_TrBin_ChoiceScoresSM(cB_RevTrInds,:);
+        cRevTr_BTScores = cB_TrBin_BTScores(cB_RevTrInds,:);
+        cRevTr_Choice = cB_TrChoice(cB_RevTrInds);
+        cRevTr_ChoiceIsCorr = cB_TrIsCorrect(cB_RevTrInds);
         
+        ChoiceInfoDatas(cB,TestFreq+1,:) = {cRevTr_ChoiceScores(cRevTr_Choice==0,:),cRevTr_ChoiceScores(cRevTr_Choice==1,:),...
+            cRevTr_BTScores(cRevTr_Choice==0,:),cRevTr_BTScores(cRevTr_Choice==1,:)};
+        PopuUnitSizes(cB,TestFreq+1,:) = [sum(cRevTr_Choice==0),sum(cRevTr_Choice)];
+        %         cf_IsleftChoiceType = mean(cf_ChoiceIsCorr(cf_Choice == 0));
+
+        [~,~,hl1] = MeanSemPlot(cf_Bin_ChoiceScoresSM(cRevTr_Choice==0,:),OutDataStrc.BinCenters,SumChoiceax,1,[.7 .7 .7],...
+            'Color','b','linewidth',1.6);
+        [~,~,hl2] = MeanSemPlot(cf_Bin_ChoiceScoresSM(cRevTr_Choice==1,:),OutDataStrc.BinCenters,SumChoiceax,1,[.7 .7 .7],...
+            'Color','r','linewidth',1.6);
+        
+        xTimeScales = [round(OutDataStrc.BinCenters(1)),round(OutDataStrc.BinCenters(end))];
+        line(SumChoiceax,xTimeScales,[0 0],'Color','k','linewidth',1,'linestyle','--')
+        yscale_C = get(SumChoiceax,'ylim');
+        line(SumChoiceax,[0 0],yscale_C,'Color','c','linewidth',1.2,'linestyle','--');
+
+        xlabel(SumChoiceax,sprintf('Time (s), BlockSeq %d', cB));
+
+        if cB == 1
+            ylabel(SumChoiceax,{'Choice scores';sprintf('RevTrials, Block %d',cBType)});
+        else
+            ylabel(SumChoiceax,sprintf('Block %d',cBType));
+        end
+        title(SumChoiceax,sprintf('Choice L(%d) R(%d) (%.2f%%)',sum(cRevTr_Choice==0),sum(cRevTr_Choice==1),mean(cRevTr_Choice)*100));
+        if cBType
+            text(2.5,yscale_C(2)*0.8,'Left reward','Color',[0.2 0.5 0.2]);
+        else
+            text(2.5,yscale_C(2)*0.8,'Right reward','Color',[0.2 0.5 0.2]);
+        end
+        set(SumChoiceax,'FontSize',10,'xlim',xTimeScales);
+        
+        % calculate the choice score for before and after stim onsets
+        BeforeWin1 = OutDataStrc.BinCenters >= -1 & OutDataStrc.BinCenters < -0.5;
+        BeforeWin2 = OutDataStrc.BinCenters >= -0.5 & OutDataStrc.BinCenters < 0;
+        AfterWin = OutDataStrc.BinCenters >= 0 & OutDataStrc.BinCenters < 1;
+        UsedWins = {BeforeWin1,BeforeWin2,AfterWin};
+        
+        for cWin = 1 : 3
+            cWinInds = UsedWins{cWin};
+            RevTrChoiceScores(cB,:,cWin) = {mean(cRevTr_ChoiceScores(cRevTr_Choice==0,cWinInds),2),...
+                mean(cRevTr_ChoiceScores(cRevTr_Choice==1,cWinInds),2)};
+            RevTrBTScores(cB,:,cWin) = {mean(cRevTr_BTScores(cRevTr_Choice==0,cWinInds),2),...
+                mean(cRevTr_BTScores(cRevTr_Choice==1,cWinInds),2)};
+        end
+        % ###############
+        % end of block loop
     end
     
-    annotation('textbox',[0.02 0.01 0.1 0.1],'String',{sprintf('Area %s',AreaStrs),sprintf('UnitNum: %d',AreaPopuSize)},...
+    annotation('textbox',[0.02 0.01 0.1 0.05],'String',{sprintf('Area %s',AreaStrs),sprintf('UnitNum: %d',AreaPopuSize)},...
         'FitBoxToText','on','Color','m','FontSize',8);
     
     figSaveName = fullfile(savePath,sprintf('Area %s temporal choice scores for Revfreqs',AreaStrs));
@@ -344,8 +400,10 @@ for cA = 1 : NumAreas
     print(hf,figSaveName,'-dpdf','-bestfit');
     close(hf);
     
-    RevFreqChoiceScores(cA,:) = {ChoiceInfoDatas,PopuUnitSizes};
+    RevFreqChoiceScores(cA,:) = {ChoiceInfoDatas,PopuUnitSizes,RevTrChoiceScores,RevTrBTScores};
 end
+
+%%
 
 DataSaveName = fullfile(savePath,'ChoiceInfoDataSummary.mat');
 save(DataSaveName,'ExistField_ClusIDs','NewAdd_ExistAreaNames','ChoiceANDBT_beta','ChoiceANDBT_Scores','RevFreqChoiceScores','-v7.3');

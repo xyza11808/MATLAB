@@ -1,9 +1,9 @@
 function UnitCriterias = BinaryRespCheck(ProbNPSess,InDataUnitIndsAll,MaxTrInds)
 % currently only works for two block sessions
 
-
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
-SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds}{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+FullDataRaw = cellfun(@full,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds},'un',0);
+SMBinDataMtx = permute(cat(3,FullDataRaw{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
 
 if ~isempty(ProbNPSess.SurviveInds)
     SMBinDataMtx = SMBinDataMtx(:,ProbNPSess.SurviveInds,:);
