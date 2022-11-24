@@ -3302,6 +3302,9 @@ for cS = 1 : NumUsedSess
     %
     cSessDatafile = fullfile(ksfolder,'BlockChoiceDecWeight','AreawiseChoiceinfoSave.mat');
     cSessDataStrc = load(cSessDatafile,'AreaWiseChoiceInfoData','SessTargetAreas','BlockTypes','RevTrTypeNums');
+%     if cS == 1
+%         DataStrc = load(fullfile(ksfolder,'jeccANA','JeccDataNew.mat'),'OutDataStrc');
+%     end
     
     NumAreas = length(cSessDataStrc.SessTargetAreas);
     
@@ -3320,7 +3323,10 @@ for cS = 1 : NumUsedSess
     
 end
 
-
+% xTickCents = DataStrc.OutDataStrc.BinCenters;
+% OnsetBin = DataStrc.OutDataStrc.TriggerStartBin;
+xTickCents = -0.95:0.1:3.95;
+OnsetBin = 11;
 %%
 LeftTempScoreTrace = AreaData_ChoiceInfoSummary(:,:,1);
 RightTempScoreTrace = AreaData_ChoiceInfoSummary(:,:,2);
@@ -3328,20 +3334,106 @@ WindowInfoScores = AreaData_ChoiceInfoSummary(:,:,3); % window, Types, blockNum
 BlockTypesAll = AreaData_BlockTypeANDNum(:,:,1);
 RevTrialNums = AreaData_BlockTypeANDNum(:,:,2);
 
+%%
+close all
+BehavThres = 0.5;
+
 cA = 1;
-cA_leftScoreTrace = cat(1,LeftTempScoreTrace{:});
-if isempty(cA_leftScoreTrace)
+cA_Str = BrainAreasStr{cA};
+cA_leftScoreTrace = cat(1,LeftTempScoreTrace{:,cA});
+if isempty(cA_leftScoreTrace) || size(cA_leftScoreTrace,1) < 5
+    return;
 %     continue;
 end
-cA_rightScoreTrace = cat(1,RightTempScoreTrace{:});
-cA_UsefulSessNum = sum(~cellfun(@isempty,LeftTempScoreTrace));
-cA_AllSessBlockTypes = cat(1,BlockTypesAll{:});
-cA_AllSessRevTrialNum = cat(1,RevTrialNums{:});
+cA_rightScoreTrace = cat(1,RightTempScoreTrace{:,cA});
+cA_UsefulSessNum = sum(~cellfun(@isempty,LeftTempScoreTrace(:,cA)));
+cA_AllSessBlockTypes = cat(1,BlockTypesAll{:,cA});
+cA_AllSessRevTrialNum = cat(1,RevTrialNums{:,cA});
+cA_RT_LeftChoiceProb = cA_AllSessRevTrialNum(:,1)./sum(cA_AllSessRevTrialNum,2);
 % WindowInfoScoresRe = cellfun(@(x) permute(x,[3,1,2]),WindowInfoScores,'un',0);
-WindowInfoScoresMtx = permute(cat(3,WindowInfoScores{:}),[3,1,2]); % AllblockNum, window, Types 
+WindowInfoScoresMtxRaw = permute(cat(3,WindowInfoScores{:,cA}),[3,1,2]); % Allblocks, window, Types 
+WindowInfoScoresMtx = cat(2,WindowInfoScoresMtxRaw,mean(WindowInfoScoresMtxRaw(:,[1,2],:),2));
+
+Block0Inds = cA_AllSessBlockTypes == 0 & (1-cA_RT_LeftChoiceProb) > BehavThres;
+Block0LeftChoiceProb = cA_RT_LeftChoiceProb(Block0Inds);
+Block0TraceAll_L = cA_leftScoreTrace(Block0Inds,:);
+Block0TraceAll_R = cA_rightScoreTrace(Block0Inds,:);
 
 
+Block1Inds = cA_AllSessBlockTypes == 1 & cA_RT_LeftChoiceProb > BehavThres;
+Block1TraceAll_L = cA_leftScoreTrace(Block1Inds,:);
+Block1TraceAll_R = cA_rightScoreTrace(Block1Inds,:);
+Block1LeftChoiceProb = cA_RT_LeftChoiceProb(Block1Inds);
+% BlockCorrrate(Block1Inds) = 1 - Block1LeftChoiceProb;
 
+
+h14f1 = figure('position',[50 50 980 540]);
+ax1 = subplot(241);
+hold on
+hl1_L = MeanSemPlot(Block0TraceAll_L,xTickCents,ax1,1,[0.4 0.4 0.8],'Color','b','linewidth',1.5);
+hl1_R = MeanSemPlot(Block0TraceAll_R,xTickCents,ax1,1,[0.8 0.4 0.4],'Color','r','linewidth',1.8);
+line(ax1,[xTickCents(1) xTickCents(end)],[0 0],'Color','k','linewidth',1.4,'linestyle','--');
+set(ax1,'xlim',[-1 4]);
+xlabel('Time (s)');
+ylabel('Choice score');
+title('Low boundary block');
+
+ax2 = subplot(242);
+hold on
+hl2_L = MeanSemPlot(Block1TraceAll_L,xTickCents,ax2,1,[0.4 0.4 0.8],'Color','b','linewidth',1.5);
+hl2_R = MeanSemPlot(Block1TraceAll_R,xTickCents,ax2,1,[0.8 0.4 0.4],'Color','r','linewidth',1.8);
+line(ax2,[xTickCents(1) xTickCents(end)],[0 0],'Color','k','linewidth',1.4,'linestyle','--');
+set(ax2,'xlim',[-1 4]);
+xlabel('Time (s)');
+ylabel('Choice score');
+title('High boundary block');
+
+% add the time window averaged scores
+WinDespStrs = {'Basetime1','Basetime2','AfterResp','BaseAllAvg'};
+
+for cWin = 1 : 4
+    % cWin = 1;
+    cWin_Block0Data_LAvg = WindowInfoScoresMtx(Block0Inds,cWin,1);
+    cWin_Block0Data_RAvg = WindowInfoScoresMtx(Block0Inds,cWin,2);
+
+    cWin_Block1Data_LAvg = WindowInfoScoresMtx(Block1Inds,cWin,1);
+    cWin_Block1Data_RAvg = WindowInfoScoresMtx(Block1Inds,cWin,2);
+    
+    AllData2Cell = {cWin_Block0Data_LAvg,cWin_Block0Data_RAvg,cWin_Block1Data_LAvg,cWin_Block1Data_RAvg};
+    
+    [AllDataAvg,AllDataSem,AllDataNum] = cellfun(@(x) dataSEMmean(x),AllData2Cell);
+    DataLabels = {'LBleft';'LBright';'HBleft';'HBright'};
+%     if any(isnan(cWin_Block0Data_LAvg)) || any(isnan(cWin_Block0Data_RAvg)) || isempty (cWin_Block0Data_LAvg) || isempty(cWin_Block0Data_RAvg)
+%         LowB_p = nan;
+%     else
+%         LowB_p = ranksum(cWin_Block0Data_LAvg,cWin_Block0Data_RAvg);
+%     end
+%     if any(isnan(cWin_Block1Data_LAvg)) || any(isnan(cWin_Block1Data_RAvg)) || isempty (cWin_Block1Data_LAvg) || isempty(cWin_Block1Data_RAvg)
+%         HighB_p = nan;
+%     else
+%         HighB_p = ranksum(cWin_Block1Data_LAvg,cWin_Block1Data_RAvg);
+%     end
+    [~, LowB_p] = ttest(cWin_Block0Data_LAvg,cWin_Block0Data_RAvg);
+    [~, HighB_p] = ttest(cWin_Block1Data_LAvg,cWin_Block1Data_RAvg);
+    
+    
+
+    axn = subplot(2,4,cWin+4);
+    hold on
+    bar([1,3],AllDataAvg([1,3]),0.6,'FaceColor',[0.4 0.4 0.8],'EdgeColor','none');
+    bar([2,4],AllDataAvg([2,4]),0.6,'FaceColor',[0.8 0.4 0.4],'EdgeColor','none');
+    errorbar(1:4,AllDataAvg,AllDataSem,'ko','linewidth',1.4,'MarkerSize',6);
+    yscales = get(axn,'ylim');
+    text(1.1, yscales(2)*0.9,sprintf('p = %.2e',LowB_p),'FontSize',8,'Color','m');
+    text(3.1, yscales(2)*0.9,sprintf('p = %.2e',HighB_p),'FontSize',8,'Color','m');
+    set(axn,'xlim',[0 5],'xtick',1:4,'xticklabel',DataLabels);
+    title(WinDespStrs{cWin});
+    if cWin == 1
+        ylabel('Averaged Choice Score');
+    end
+end
+annotation('textbox',[0.7 0.7 0.2 0.2],'String',{cA_Str;sprintf('SessNum = %d',cA_UsefulSessNum);...
+    sprintf('LowBlockNum:%d',AllDataNum(1));sprintf('HighBlockNum:%d',AllDataNum(3))},'FontSize',12);
 
 %%
 % % sum(UsedSessNums > 5);

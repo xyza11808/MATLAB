@@ -37,7 +37,7 @@ for cA = 1 : NumTargetAreas
     cA_LeftTempAvgTraceMtx = cat(1,cA_LeftTempAvgTrace{:});
     
     cA_RightTempChoice = RightChoiceInfoData{cA};
-    cA_RightTempAvgTrace = cellfun(@mean,cA_LeftTempChoice,'un',0);
+    cA_RightTempAvgTrace = cellfun(@mean,cA_RightTempChoice,'un',0);
     cA_RightTempAvgTraceMtx = cat(1,cA_RightTempAvgTrace{:});
     
     
