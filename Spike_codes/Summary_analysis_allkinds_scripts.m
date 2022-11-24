@@ -3259,6 +3259,90 @@ end
 %%
 Sum13DataSavefile2 = fullfile(figSavePath13,'ScoreAndAngledata.mat');
 save(Sum13DataSavefile2,'AreaChoiceScoreData','AreaTypeAngleANDTypeStr','-v7.3');
+
+
+%% ###################################################################################################
+% Summary codes 14: Choice info temporal score analysis summary
+%
+cclr
+%
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+
+BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
+        'Sheet',1);
+BrainAreasStrCC = BrainAreasStrC(2:end);
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
+BrainAreasStr = [BrainAreasStrCC(~EmptyInds)];
+
+%
+
+SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
+        'Sheet',1);
+SessionFoldersRaw = SessionFoldersC(2:end);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
+SessionFolders = SessionFoldersRaw(~EmptyInds);
+
+NumUsedSess = length(SessionFolders);
+NumAllTargetAreas = length(BrainAreasStr);
+
+%%
+
+AreaData_ChoiceInfoSummary = cell(NumUsedSess,NumAllTargetAreas,3);
+AreaData_BlockTypeANDNum = cell(NumUsedSess,NumAllTargetAreas,2); % the third dimension, for blocktype, leftTrNum, RightNum
+% 
+
+for cS = 1 : NumUsedSess
+    
+%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    
+    ksfolder = fullfile(cSessPath,'ks2_5');
+    %
+    cSessDatafile = fullfile(ksfolder,'BlockChoiceDecWeight','AreawiseChoiceinfoSave.mat');
+    cSessDataStrc = load(cSessDatafile,'AreaWiseChoiceInfoData','SessTargetAreas','BlockTypes','RevTrTypeNums');
+    
+    NumAreas = length(cSessDataStrc.SessTargetAreas);
+    
+    for cA = 1 : NumAreas
+        cA_Str = cSessDataStrc.SessTargetAreas{cA};
+        cA_matchinds = find(matches(BrainAreasStr,cA_Str,'IgnoreCase',true));
+        if isempty(cA_matchinds)
+            continue;
+        end
+        
+        AreaData_ChoiceInfoSummary(cS,cA_matchinds,:) = {cat(1,cSessDataStrc.AreaWiseChoiceInfoData{cA,:,1}),...
+            cat(1,cSessDataStrc.AreaWiseChoiceInfoData{cA,:,2}),cat(3,cSessDataStrc.AreaWiseChoiceInfoData{cA,:,3})};
+        AreaData_BlockTypeANDNum(cS,cA_matchinds,:) = {cSessDataStrc.BlockTypes,cSessDataStrc.RevTrTypeNums}; % rows are blocks
+        
+    end
+    
+end
+
+
+%%
+LeftTempScoreTrace = AreaData_ChoiceInfoSummary(:,:,1);
+RightTempScoreTrace = AreaData_ChoiceInfoSummary(:,:,2);
+WindowInfoScores = AreaData_ChoiceInfoSummary(:,:,3); % window, Types, blockNum
+BlockTypesAll = AreaData_BlockTypeANDNum(:,:,1);
+RevTrialNums = AreaData_BlockTypeANDNum(:,:,2);
+
+cA = 1;
+cA_leftScoreTrace = cat(1,LeftTempScoreTrace{:});
+if isempty(cA_leftScoreTrace)
+%     continue;
+end
+cA_rightScoreTrace = cat(1,RightTempScoreTrace{:});
+cA_UsefulSessNum = sum(~cellfun(@isempty,LeftTempScoreTrace));
+cA_AllSessBlockTypes = cat(1,BlockTypesAll{:});
+cA_AllSessRevTrialNum = cat(1,RevTrialNums{:});
+% WindowInfoScoresRe = cellfun(@(x) permute(x,[3,1,2]),WindowInfoScores,'un',0);
+WindowInfoScoresMtx = permute(cat(3,WindowInfoScores{:}),[3,1,2]); % AllblockNum, window, Types 
+
+
+
+
 %%
 % % sum(UsedSessNums > 5);
 % UpperThresData = max(MeanBoundData,[],'all');
