@@ -3266,8 +3266,8 @@ save(Sum13DataSavefile2,'AreaChoiceScoreData','AreaTypeAngleANDTypeStr','-v7.3')
 %
 cclr
 %
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -3287,16 +3287,25 @@ SessionFolders = SessionFoldersRaw(~EmptyInds);
 NumUsedSess = length(SessionFolders);
 NumAllTargetAreas = length(BrainAreasStr);
 
+SessHemisphere = readcell(AllSessFolderPathfile,'Range','G:G','Sheet',1);
+SessHemisphereC = SessHemisphere(2:end);
+SessHemispheres = SessHemisphereC(~EmptyInds);
+
+
 %%
 
 AreaData_ChoiceInfoSummary = cell(NumUsedSess,NumAllTargetAreas,3);
-AreaData_BlockTypeANDNum = cell(NumUsedSess,NumAllTargetAreas,2); % the third dimension, for blocktype, leftTrNum, RightNum
-% 
+AreaData_BlockTypeANDNum = cell(NumUsedSess,NumAllTargetAreas,2); % the third dimension, for blocktype, [leftTrNum, RightNum]
+% reassign choice data according to contra and ipsi types
+AreaData_ContraInfoSummary = cell(NumUsedSess,NumAllTargetAreas,3);
+AreaData_ContraBANDNum = cell(NumUsedSess,NumAllTargetAreas,2); % the third dimension, for blocktype, [leftTrNum, RightNum]
+
 
 for cS = 1 : NumUsedSess
     
-%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
-    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    cSessHemisphere = SessHemispheres{cS};
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     %
@@ -3319,6 +3328,19 @@ for cS = 1 : NumUsedSess
             cat(1,cSessDataStrc.AreaWiseChoiceInfoData{cA,:,2}),cat(3,cSessDataStrc.AreaWiseChoiceInfoData{cA,:,3})};
         AreaData_BlockTypeANDNum(cS,cA_matchinds,:) = {cSessDataStrc.BlockTypes,cSessDataStrc.RevTrTypeNums}; % rows are blocks
         
+        if strcmpi(cSessHemisphere,'R') % probe at right hemisphere
+            % same as upper lines, but now it means contra and ipsi trials
+            AreaData_ContraInfoSummary(cS,cA_matchinds,:) = {cat(1,cSessDataStrc.AreaWiseChoiceInfoData{cA,:,1}),...
+                cat(1,cSessDataStrc.AreaWiseChoiceInfoData{cA,:,2}),cat(3,cSessDataStrc.AreaWiseChoiceInfoData{cA,:,3})};
+            AreaData_ContraBANDNum(cS,cA_matchinds,:) = {cSessDataStrc.BlockTypes,cSessDataStrc.RevTrTypeNums}; % rows are blocks
+        elseif strcmpi(cSessHemisphere,'L') % probe at left hemisphere
+            ContraWinTypeData = cat(3,cSessDataStrc.AreaWiseChoiceInfoData{cA,:,3});
+            ContraWinTypeData = ContraWinTypeData(:,[2,1,3,4],:);
+            AreaData_ContraInfoSummary(cS,cA_matchinds,:) = {cat(1,cSessDataStrc.AreaWiseChoiceInfoData{cA,:,2}),...
+                cat(1,cSessDataStrc.AreaWiseChoiceInfoData{cA,:,1}),ContraWinTypeData};
+            AreaData_ContraBANDNum(cS,cA_matchinds,:) = {cSessDataStrc.BlockTypes,cSessDataStrc.RevTrTypeNums(:,[2,1])}; % rows are blocks
+        end
+            
     end
     
 end
@@ -3328,15 +3350,21 @@ end
 xTickCents = -0.95:0.1:3.95;
 OnsetBin = 11;
 %%
-LeftTempScoreTrace = AreaData_ChoiceInfoSummary(:,:,1);
-RightTempScoreTrace = AreaData_ChoiceInfoSummary(:,:,2);
-WindowInfoScores = AreaData_ChoiceInfoSummary(:,:,3); % window, Types, blockNum
-BlockTypesAll = AreaData_BlockTypeANDNum(:,:,1);
-RevTrialNums = AreaData_BlockTypeANDNum(:,:,2);
+% LeftTempScoreTrace = AreaData_ChoiceInfoSummary(:,:,1);
+% RightTempScoreTrace = AreaData_ChoiceInfoSummary(:,:,2);
+% WindowInfoScores = AreaData_ChoiceInfoSummary(:,:,3); % window, Types, blockNum
+% BlockTypesAll = AreaData_BlockTypeANDNum(:,:,1);
+% RevTrialNums = AreaData_BlockTypeANDNum(:,:,2);
+
+LeftTempScoreTrace = AreaData_ContraInfoSummary(:,:,1);
+RightTempScoreTrace = AreaData_ContraInfoSummary(:,:,2);
+WindowInfoScores = AreaData_ContraInfoSummary(:,:,3); % window, Types, blockNum
+BlockTypesAll = AreaData_ContraBANDNum(:,:,1);
+RevTrialNums = AreaData_ContraBANDNum(:,:,2);
 
 %%
-close all
-BehavThres = 0.5;
+% close
+BehavThres = 0;
 
 cA = 1;
 cA_Str = BrainAreasStr{cA};
