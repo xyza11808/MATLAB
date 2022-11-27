@@ -491,7 +491,9 @@ classdef NPspikeDataMining
                obj.TrigAlignType{obj.CurrentSessInds} = 'trigger'; % zeros Bin is trigger
             end
             %
-            
+            if isempty(obj.SpikeTimes)
+                obj.SpikeTimes = double(obj.SpikeTimeSample)/30000;
+            end
             histbin = [timeWin(1):smoothbin(2):0,smoothbin(2):smoothbin(2):timeWin(2)];
             obj.BinCenters = histbin(1:end-1)+smoothbin(2)/2;
             obj.TriggerStartBin{obj.CurrentSessInds} = find(obj.BinCenters > 0,1,'first');
@@ -574,7 +576,9 @@ classdef NPspikeDataMining
             if isempty(timeWin)
                 timeWin = obj.psthTimeWin{obj.CurrentSessInds}; % in seconds
             end
-            
+            if isempty(obj.SpikeTimes)
+                obj.SpikeTimes = double(obj.SpikeTimeSample)/30000;
+            end
             IsEventDataGiven = 0;
             if length(varargin) > 0
                 if ~isempty(varargin{1})

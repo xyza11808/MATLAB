@@ -40,34 +40,37 @@ end
 
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 
-% TaskTrigOnTimes = ProbNPSess.UsedTrigOnTime{ProbNPSess.CurrentSessInds};
-% 
-% BeforeFirstTrigLen = 10; % seconds
-% AfterLastTrigLen = 30; % seconds
-% TaskUsedTimeScale = [TaskTrigOnTimes(1) - BeforeFirstTrigLen,...
-%     TaskTrigOnTimes(end) + AfterLastTrigLen];
-% TotalBinSpikeLen = diff(TaskUsedTimeScale);
-% TaskTrigTimeAligns = TaskTrigOnTimes - TaskTrigOnTimes(1) + BeforeFirstTrigLen;
-% TotalTrialNum = length(TaskTrigTimeAligns); % number of trials in total
-% 
-% UsedUnitIDs_All = cell2mat(ExistField_ClusIDs(:,1));
-% UsedClusInds = ismember(ProbNPSess.SpikeClus, UsedUnitIDs_All);
-% UsedSpTimes = ProbNPSess.SpikeTimes > TaskUsedTimeScale(1) & ...
-%     ProbNPSess.SpikeTimes < TaskUsedTimeScale(2);
-
-% UsedClusPos = ProbNPSess.SpikeClus(UsedClusInds & UsedSpTimes);
-% UsedSPTimes = ProbNPSess.SpikeTimes(UsedClusInds & UsedSpTimes) - ...
-%     TaskTrigOnTimes(1) + BeforeFirstTrigLen; % realigned to first trigger on time
-
-% SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds}{:,1}),[1,3,2]);
-% if ~isempty(ProbNPSess.SurviveInds)
-%     SMBinDataMtx = SMBinDataMtx(:,ProbNPSess.SurviveInds,:);
-% end
 OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
 NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 % SMBinDataMtxRaw = SMBinDataMtx;
 % clearvars ProbNPSess
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
+
+%% performing trialtype average subtraction for each frequency types
+AllTrFreqs = double(behavResults.Stim_toneFreq(:));
+AllTrBlocks = double(behavResults.BlockType(:));
+AllTrChoices = double(behavResults.Action_choice(:));
+NMTrInds = AllTrChoices ~= 2;
+NMTrFreqs = AllTrFreqs(NMTrInds);
+NMBlockTypes = AllTrBlocks(NMTrInds);
+NMActionChoice = AllTrChoices(NMTrInds);
+NMBinDatas = NewBinnedDatas(NMTrInds,:,:);
+
+% subtracted frequency averaged mean for each frequency types
+FreqTypes = unique(NMTrFreqs);
+NumFreqs = length(FreqTypes);
+FreqAvgSubDatas = zeros(size(NewBinnedDatas));
+
+for cf = 1 : NumFreqs
+    cfInds = NMTrFreqs == FreqTypes(cf);
+    cfData = NMBinDatas(cfInds,:,:);
+    cfAvgData = mean(cfData);
+    cfSubData = cfData - repmat(cfAvgData,sum(cfInds),1,1);
+    FreqAvgSubDatas(cfInds,:,:) = cfSubData;
+end
+
+FreqAvgSubConcentraData = (reshape(permute(FreqAvgSubDatas,[2,3,1]),size(FreqAvgSubDatas,2),[]))';
+
 
 %% calculate event evoked response
 AnsTimes = round((double(behavResults.Time_answer - behavResults.Time_stimOnset))/1000/0.1); % bins

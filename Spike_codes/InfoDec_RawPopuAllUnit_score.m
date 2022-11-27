@@ -8,14 +8,12 @@ clearvars SessAreaIndexStrc ProbNPSess AreaDecodeDataCell AreaProcessDatas Block
 %          && isempty(fieldnames(SessAreaIndexStrc.ACA))
 %     return;
 % end
-load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
-
+load(fullfile(ksfolder,'NewClassHandle2.mat'));
+ProbNPSess = NewNPClusHandle;
+clearvars NewNPClusHandle
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
 NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
-
-SavedFolderPathName = 'ChoiceANDBT_LDAinfo_ana';
-fullsavePath = fullfile(ksfolder, SavedFolderPathName);
 
 % load(fullfile(fullsavePath,'LDAinfo_ChoiceScores.mat'));
 % save(fullfile(fullsavePath,'LDAinfo_ChoiceScores.mat'), 'AreaDecodeDataCell', 'BlockpsyInfo',...
@@ -26,7 +24,7 @@ fullsavePath = fullfile(ksfolder, SavedFolderPathName);
 %% find target cluster inds and IDs
 % ksfolder = pwd;
 
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
@@ -56,17 +54,19 @@ if sum(USedAreas)
 end
 
 BlockTypesAll = double(behavResults.BlockType(:));
-%% Use this section to perform some extra data processing
-RegRawDataSavePath = fullfile(ksfolder,'Regressor_ANA');
-RegRawDatafilePath = fullfile(RegRawDataSavePath,'RegRespDataANDTrIndex.mat');
 
-[BinnedSPdatas,FinalUsedBinTrInds] = BinnedRespDataCalFun(ProbNPSess, NewSessAreaStrc,behavResults);
-
-save(RegRawDatafilePath,'BinnedSPdatas','FinalUsedBinTrInds','-v7.3');
+% %% Use this section to perform some extra data processing
+% RegRawDataSavePath = fullfile(ksfolder,'Regressor_ANA');
+% RegRawDatafilePath = fullfile(RegRawDataSavePath,'RegRespDataANDTrIndex.mat');
+% 
+% [BinnedSPdatas,FinalUsedBinTrInds] = BinnedRespDataCalFun(ProbNPSess, NewSessAreaStrc,behavResults);
+% 
+% save(RegRawDatafilePath,'BinnedSPdatas','FinalUsedBinTrInds','-v7.3');
 
 
 %%
-
+SavedFolderPathName = 'ChoiceANDBT_LDAinfo_ana';
+fullsavePath = fullfile(ksfolder, SavedFolderPathName);
 % if isfolder(fullsavePath)
 %     rmdir(fullsavePath,'s');
 % end
