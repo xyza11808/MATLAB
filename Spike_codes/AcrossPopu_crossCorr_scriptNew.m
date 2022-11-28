@@ -1,5 +1,5 @@
 
-clearvars CalResults OutDataStrc ExistField_ClusIDs
+clearvars TypeRespCalResults TypeRespCalAvgs TypeAreaPairInfo OutDataStrc ExistField_ClusIDs
 
 % ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
 % ksfolder = pwd;
@@ -50,9 +50,11 @@ BlockSectionInfo = Bev2blockinfoFun(behavResults);
 AllTrFreqs = double(behavResults.Stim_toneFreq(:));
 AllTrBlocks = double(behavResults.BlockType(:));
 AllTrChoices = double(behavResults.Action_choice(:));
-NMTrInds = AllTrChoices ~= 2;
+NMTrInds = AllTrChoices(1:sum(BlockSectionInfo.BlockLens)) ~= 2;
 NMTrFreqs = AllTrFreqs(NMTrInds);
 NMBlockTypes = AllTrBlocks(NMTrInds);
+NMBlockBoundVec = [1;abs(diff(NMBlockTypes))];
+NMBlockBoundIndex = cumsum(NMBlockBoundVec);
 NMActionChoice = AllTrChoices(NMTrInds);
 NMBinDatas = NewBinnedDatas(NMTrInds,:,:);
 
@@ -69,311 +71,174 @@ for cf = 1 : NumFreqs
     FreqAvgSubDatas(cfInds,:,:) = cfSubData;
 end
 
-FreqAvgSubConcentraData = (reshape(permute(FreqAvgSubDatas,[2,3,1]),size(FreqAvgSubDatas,2),[]))';
+% select calculation time range
+BeforeWin1 = round([-1 0]/OutDataStrc.USedbin(2));
+AfterWin1 = round([0 2]/OutDataStrc.USedbin(2));
+ExpandedRange = round(1/OutDataStrc.USedbin(2)); % extra time window used for validation calculation
 
+OnsetBin = OutDataStrc.TriggerStartBin;
+BeforeWinData = FreqAvgSubDatas(:,:,(OnsetBin+BeforeWin1(1)):(OnsetBin+BeforeWin1(2)-1));
+BaseValidExpData = FreqAvgSubDatas(:,:,(OnsetBin+BeforeWin1(1)):(OnsetBin+BeforeWin1(2)+ExpandedRange-1));
 
-%% calculate event evoked response
-AnsTimes = round((double(behavResults.Time_answer - behavResults.Time_stimOnset))/1000/0.1); % bins
-UsedNMTrInds = AnsTimes > 0;
-NMAnsTimeBin = AnsTimes(UsedNMTrInds);
+AfterWinData = FreqAvgSubDatas(:,:,(OnsetBin+AfterWin1(1)):(OnsetBin+AfterWin1(2)-1));
+AfterValidExpData = FreqAvgSubDatas(:,:,(OnsetBin+AfterWin1(1)):(OnsetBin+AfterWin1(2)+ExpandedRange-1));
 
-BaselineResp = mean(NewBinnedDatas(UsedNMTrInds,:,1:OutDataStrc.TriggerStartBin-1),3);
+%% #############################################################
+% reperforming trial type avg subtraction using block wise manner
 
-StimRespWin = 0.3/0.1; 
-StimOnResp = mean(NewBinnedDatas(UsedNMTrInds,:,(OutDataStrc.TriggerStartBin):(OutDataStrc.TriggerStartBin+StimRespWin)),3);
+% NMTrFreqs = AllTrFreqs(NMTrInds);
+% NMBlockTypes = AllTrBlocks(NMTrInds);
+% NMBlockBoundVec = [1;abs(diff(NMBlockTypes))];
+% NMBlockBoundIndex = cumsum(NMBlockBoundVec);
+% NMActionChoice = AllTrChoices(NMTrInds);
+% NMBinDatas = NewBinnedDatas(NMTrInds,:,:);
 
-ChoiceRespWin = 1/0.1;
-ChoiceRespData1 = zeros(size(NewBinnedDatas,1),size(NewBinnedDatas,2),ChoiceRespWin);
-% ChoiceRespData2 = zeros(size(NewBinnedDatas,1),size(NewBinnedDatas,2),ChoiceRespWin);
-for cUTr = 1:sum(UsedNMTrInds)
-    cUTr_AnsTimeBin1 = NMAnsTimeBin(cUTr)+OutDataStrc.TriggerStartBin;
-    ChoiceRespData1(cUTr,:,:) = NewBinnedDatas(cUTr,:,cUTr_AnsTimeBin1:(cUTr_AnsTimeBin1+ChoiceRespWin-1));
-    
-%     cUTr_AnsTimeBin2 = NMAnsTimeBin(cUTr)+OutDataStrc.TriggerStartBin+ChoiceRespWin;
-%     ChoiceRespData2(cUTr,:,:) = NewBinnedDatas(cUTr,:,cUTr_AnsTimeBin2:(cUTr_AnsTimeBin2+ChoiceRespWin-1));
+% subtracted frequency averaged mean for each frequency types
+% FreqTypes = unique(NMTrFreqs);
+% NumFreqs = length(FreqTypes);
+BlockTypes = unique(NMBlockBoundIndex);
+NumBlockTypes = length(BlockTypes);
+FreqAvgSubDatas2 = zeros(size(NewBinnedDatas));
+for cB = 1 : NumBlockTypes
+    for cf = 1 : NumFreqs
+        cfInds = NMTrFreqs == FreqTypes(cf) & NMBlockBoundIndex == cB;
+        cfData = NMBinDatas(cfInds,:,:);
+        cfAvgData = mean(cfData);
+        cfSubData = cfData - repmat(cfAvgData,sum(cfInds),1,1);
+        FreqAvgSubDatas2(cfInds,:,:) = cfSubData;
+    end
 end
-ChoiceResps1 = mean(ChoiceRespData1,3);
-% ChoiceResps2 = mean(ChoiceRespData2,3);
+% select calculation time range
+BeforeWin1 = round([-1 0]/OutDataStrc.USedbin(2));
+AfterWin1 = round([0 2]/OutDataStrc.USedbin(2));
+ExpandedRange = round(1/OutDataStrc.USedbin(2)); % extra time window used for validation calculation
 
+OnsetBin = OutDataStrc.TriggerStartBin;
+BeforeWinData2 = FreqAvgSubDatas2(:,:,(OnsetBin+BeforeWin1(1)):(OnsetBin+BeforeWin1(2)-1));
+BaseValidExpData2 = FreqAvgSubDatas2(:,:,(OnsetBin+BeforeWin1(1)):(OnsetBin+BeforeWin1(2)+ExpandedRange-1));
 
-%%
+AfterWinData2 = FreqAvgSubDatas2(:,:,(OnsetBin+AfterWin1(1)):(OnsetBin+AfterWin1(2)-1));
+AfterValidExpData2 = FreqAvgSubDatas2(:,:,(OnsetBin+AfterWin1(1)):(OnsetBin+AfterWin1(2)+ExpandedRange-1));
+
+AllTimeWin = {BeforeWin1, AfterWin1, ExpandedRange, OnsetBin};
+%% loop to calculate for each area pair
 NumCalculations = (Numfieldnames-1)*Numfieldnames/2;
-EventRespCalResults = cell(NumCalculations,3);
-EventRespCalAreaIndsANDName = cell(NumCalculations,4);
+TypeRespCalResults = cell(NumCalculations,4);
+TypeRespCalAvgs = cell(NumCalculations,4);
+TypeAreaPairInfo = cell(NumCalculations,3);
 ks = 1;
 for cAr = 1 : Numfieldnames
     for cAr2 = cAr+1 : Numfieldnames
-        % baseline
-        Area1_binned_datas = BaselineResp(:,ExistField_ClusIDs{cAr,2});
-        Area2_binned_datas = BaselineResp(:,ExistField_ClusIDs{cAr2,2});
         
-        [A_base,B_base,R_base] = canoncorr(Area1_binned_datas,Area2_binned_datas); % U = (X - mean(X))*A; V = (Y - mean(Y))*B; R(x) = corrcoef(U(:,1),V(:,1));
+        BaseRepeatCorrSum = crossValCCA(BeforeWinData,BaseValidExpData,{ExistField_ClusIDs{cAr,2},ExistField_ClusIDs{cAr2,2}},0.5);
         
-        % stimulus
-        Area1_binned_datas = StimOnResp(:,ExistField_ClusIDs{cAr,2});
-        Area2_binned_datas = StimOnResp(:,ExistField_ClusIDs{cAr2,2});
+        % Train data correlation
+        BaseTrainCorrs = cat(1,BaseRepeatCorrSum{:,3});
+        % test data correlation
+        BaseTestCorrs = cellfun(@diag,BaseRepeatCorrSum(:,4),'un',0);
+        BaseTestCorrs = cat(2,BaseTestCorrs{:});
+        % valid data correlation
+        BaseValidTimeCorr = cat(3,BaseRepeatCorrSum{:,5});
+        BaseValidTimeCorrAvg = mean(BaseValidTimeCorr,3);
+        BaseValidTimeCorrSTD = std(BaseValidTimeCorr,[],3);
         
-        [A_stim,B_stim,R_stim] = canoncorr(Area1_binned_datas,Area2_binned_datas); % U = (X - mean(X))*A; V = (Y - mean(Y))*B; R(1) = corrcoef(U(:,1),V(:,1));
+        % shuf threshold for thres calculation
+        BaseShufCorrs = cat(2,BaseRepeatCorrSum{:,6});
+        BaseShufCorrThres = prctile(BaseShufCorrs,95,2);
         
-        % choice1
-        Area1_binned_datas = ChoiceResps1(:,ExistField_ClusIDs{cAr,2});
-        Area2_binned_datas = ChoiceResps1(:,ExistField_ClusIDs{cAr2,2});
+        BaseTrainCorrAvg = dataSEMmean(BaseTrainCorrs);
+        BaseTestCorrsAvg = dataSEMmean(BaseTestCorrs');
         
-        [A_choice1,B_choice1,R_choice1] = canoncorr(Area1_binned_datas,Area2_binned_datas);
+        BaseAvgs = {BaseTrainCorrAvg, BaseTestCorrsAvg, BaseValidTimeCorrAvg,BaseValidTimeCorrSTD,BaseShufCorrThres};
+        % after Stim calculation
+        AfRepeatCorrSum = crossValCCA(AfterWinData,AfterValidExpData,{ExistField_ClusIDs{cAr,2},ExistField_ClusIDs{cAr2,2}},0.5);
+        
+        % Train data correlation
+        AfterTrainCorrs = cat(1,AfRepeatCorrSum{:,3});
+        % test data correlation
+        AfterTestCorrs = cellfun(@diag,AfRepeatCorrSum(:,4),'un',0);
+        AfterTestCorrs = cat(2,AfterTestCorrs{:});
+        % valid data correlation
+        AfterValidTimeCorr = cat(3,AfRepeatCorrSum{:,5});
+        AfterValidTimeCorrAvg = mean(AfterValidTimeCorr,3);
+        AfterValidTimeCorrSTD = std(AfterValidTimeCorr,[],3);
+        
+        % shuf threshold for thres calculation
+        AfterShufCorrs = cat(2,AfRepeatCorrSum{:,6});
+        AfterShufCorrThres = prctile(AfterShufCorrs,95,2);
+        
+        AfterTrainCorrAvg = dataSEMmean(AfterTrainCorrs);
+        AfterTestCorrsAvg = dataSEMmean(AfterTestCorrs');
+        
+        AfterAvgs = {AfterTrainCorrAvg, AfterTestCorrsAvg, AfterValidTimeCorrAvg, AfterValidTimeCorrSTD, AfterShufCorrThres};
+        % Recalculate for block-type-wise trial type subtraction datas
+        Base2RepeatCorrSum = crossValCCA(BeforeWinData2,BaseValidExpData2,{ExistField_ClusIDs{cAr,2},ExistField_ClusIDs{cAr2,2}},0.5);
+        
+        % Train data correlation
+        Base2TrainCorrs = cat(1,Base2RepeatCorrSum{:,3});
+        % test data correlation
+        Base2TestCorrs = cellfun(@diag,Base2RepeatCorrSum(:,4),'un',0);
+        Base2TestCorrs = cat(2,Base2TestCorrs{:});
+        % valid data correlation
+        Base2ValidTimeCorr = cat(3,Base2RepeatCorrSum{:,5});
+        Base2ValidTimeCorrAvg = mean(Base2ValidTimeCorr,3);
+        Base2ValidTimeCorrSTD = std(Base2ValidTimeCorr,[],3);
+        
+        % shuf threshold for thres calculation
+        Base2ShufCorrs = cat(2,Base2RepeatCorrSum{:,6});
+        Base2ShufCorrThres = prctile(Base2ShufCorrs,95,2);
+        
+        Base2TrainCorrAvg = dataSEMmean(Base2TrainCorrs);
+        Base2TestCorrsAvg = dataSEMmean(Base2TestCorrs');
+        Base2Avgs = {Base2TrainCorrAvg, Base2TestCorrsAvg, Base2ValidTimeCorrAvg,Base2ValidTimeCorrSTD,Base2ShufCorrThres};
+        % after Stim calculation
+        Af2RepeatCorrSum = crossValCCA(AfterWinData2,AfterValidExpData2,{ExistField_ClusIDs{cAr,2},ExistField_ClusIDs{cAr2,2}},0.5);
+        
+        % Train data correlation
+        After2TrainCorrs = cat(1,Af2RepeatCorrSum{:,3});
+        % test data correlation
+        After2TestCorrs = cellfun(@diag,Af2RepeatCorrSum(:,4),'un',0);
+        After2TestCorrs = cat(2,After2TestCorrs{:});
+        % valid data correlation
+        After2ValidTimeCorr = cat(3,Af2RepeatCorrSum{:,5});
+        After2ValidTimeCorrAvg = mean(After2ValidTimeCorr,3);
+        After2ValidTimeCorrSTD = std(After2ValidTimeCorr,[],3);
+        
+        % shuf threshold for thres calculation
+        After2ShufCorrs = cat(2,Af2RepeatCorrSum{:,6});
+        After2ShufCorrThres = prctile(After2ShufCorrs,95,2);
+        
+        After2TrainCorrAvg = dataSEMmean(After2TrainCorrs);
+        After2TestCorrsAvg = dataSEMmean(After2TestCorrs');
+        
+        After2Avgs = {After2TrainCorrAvg, After2TestCorrsAvg, After2ValidTimeCorrAvg, After2ValidTimeCorrSTD, After2ShufCorrThres};
         
         
-        EventRespCalResults(ks,:) = {{A_base,B_base,R_base},{A_stim,B_stim,R_stim},...
-            {A_choice1,B_choice1,R_choice1}}; %{A_choice2,B_choice2,R_choice2}
-        EventRespCalAreaIndsANDName(ks,:) = {ExistField_ClusIDs{cAr,2},ExistField_ClusIDs{cAr2,2},...
-            NewAdd_ExistAreaNames{cAr},NewAdd_ExistAreaNames{cAr2}};
+        TypeRespCalResults(ks,:) = {BaseRepeatCorrSum, AfRepeatCorrSum, Base2RepeatCorrSum, Af2RepeatCorrSum};
+        TypeRespCalAvgs(ks,:) = {BaseAvgs, AfterAvgs, Base2Avgs, After2Avgs};
+        TypeAreaPairInfo(ks,:) = {NewAdd_ExistAreaNames{cAr},NewAdd_ExistAreaNames{cAr2},[numel(ExistField_ClusIDs{cAr,2}),numel(ExistField_ClusIDs{cAr2,2})]};
+        
         ks = ks + 1;
     end
 end
-
-EventDatas = {BaselineResp,StimOnResp,ChoiceResps1}; %,ChoiceResps2
-EventStrs = {'Baseline','Stim','Choice1'}; %,'Choice2'
-
-%%
-% 
-% NumTimeBins = size(NewBinnedDatas,3);
-% IsCalTypeEmpty = cellfun(@isempty,EventRespCalResults(1,:));
-% EventRespCalResultsRaw = EventRespCalResults;
-% EventRespCalResults(:,IsCalTypeEmpty) = [];
-% [NumofCalculations, TypeCalculations] = size(EventRespCalResults);
-% % TypeCalculations = size(EventRespCalResults,2);
-% 
-% cBinTypeFixedCoefs = zeros(NumofCalculations,TypeCalculations,NumTimeBins);
-% for cBin = 1 : NumTimeBins
-%     cBinData = NewBinnedDatas(:,:,cBin);
-%     for cTypeCal = 1 : TypeCalculations
-%         for cCalNum = 1 : NumofCalculations
-%             cCal1_data_raw = NewBinnedDatas(:,EventRespCalAreaIndsANDName{cCalNum,1},cBin);
-%             cCal2_data_raw = NewBinnedDatas(:,EventRespCalAreaIndsANDName{cCalNum,2},cBin);
-%             
-%             if isempty(EventRespCalResults{cCalNum,cTypeCal})
-%                 cBinTypeFixedCoefs(cCalNum, cTypeCal, cBin) = NaN;
-%             else
-%                 cCal1_coef_A = EventRespCalResults{cCalNum,cTypeCal}{1};
-%                 cCal2_coef_B = EventRespCalResults{cCalNum,cTypeCal}{2};
-%                 U = (cCal1_data_raw - mean(cCal1_data_raw)) * cCal1_coef_A;
-%                 V = (cCal2_data_raw - mean(cCal2_data_raw)) * cCal2_coef_B;
-% 
-%                 cBinCoef = corr(U(:,1),V(:,1));
-%                 cBinTypeFixedCoefs(cCalNum, cTypeCal, cBin) = cBinCoef;
-%             end
-%         end
-%     end
-%     
-% end
-
-
-
-%%
-% TimeBinSize = single(0.05);
-% 
-% % unique and binned cluster spikes through the whole session
-% UsedClusNum = size(UsedUnitIDs_All,1);
-% BinEdges = 0:TimeBinSize:TotalBinSpikeLen;
-% BinCenters = BinEdges(1:end-1) + TimeBinSize/2;
-% NumofSPcounts = numel(BinCenters);
-% BinnedSPdatas = zeros(UsedClusNum,NumofSPcounts,'single');
-% for cClus = 1 : UsedClusNum
-%     cClusSPCounts = histcounts(UsedSPTimes(UsedClusPos == UsedUnitIDs_All(cClus,1)),...
-%         BinEdges);
-%     BinnedSPdatas(cClus, :) = cClusSPCounts;
-% end
-% BinnedSPdatas = BinnedSPdatas./nanstd(BinnedSPdatas,[],2);
-% 
-% %% extract blocktypes to tiral times info
-% BlockSectionInfo = Bev2blockinfoFun(behavResults);
-% % TotalTrialNum
-% BTDataBin = zeros(1, NumofSPcounts,'single');
-% for cB = 1 : length(BlockSectionInfo.BlockTypes)
-%     cBlockTrialInds = BlockSectionInfo.BlockTrScales(cB,:);
-%     if cB == 1
-%         cB_startTrTime = 0;
-%     else
-%         cB_startTrTime = TaskTrigTimeAligns(cBlockTrialInds(1));
-%     end
-%     cB_endTrTime = TaskTrigTimeAligns(cBlockTrialInds(2)+1) - TimeBinSize;
-%     BTDataBin(1,BinEdges(1:end-1) >= cB_startTrTime & BinEdges(1:end-1) < cB_endTrTime) = ...
-%         BlockSectionInfo.BlockTypes(cB);
-% end
-% if BlockSectionInfo.BlockTrScales(end,2) < TotalTrialNum
-%     % extra block trial exists, but not longer longer enough to be included
-%     % as another block
-%     UsedBlockEndInds = TaskTrigTimeAligns(BlockSectionInfo.BlockTrScales(end,2)+1);
-%     BTDataBin(1,BinEdges(1:end-1) > UsedBlockEndInds) = 1 - BlockSectionInfo.BlockTypes(end);
-% end
-% % BTDataBin(2,:) = 1 - BTDataBin(1,:);
-% Behav_stimOnset = single(behavResults.Time_stimOnset(:))/1000; % seconds
-% Behav_SessStimOnTime = Behav_stimOnset + TaskTrigTimeAligns(:);
-
-%% define center block trInds for training
-% CenterTrUsedWins = [-60,60]; % block center used trial windows
-% SessBin_trainInds = false(NumofSPcounts,2);
-% for cB = 1 : length(BlockSectionInfo.BlockTypes)
-%     cBlockTrialScales = BlockSectionInfo.BlockTrScales(cB,:);
-%     BlockCenterInds = round(mean(cBlockTrialScales));
-%     TrainWinTrs = BlockCenterInds + CenterTrUsedWins;
-%     TrainTr_trigTimes = TaskTrigTimeAligns([TrainWinTrs(1),(TrainWinTrs(2)+1)]) - [0;TimeBinSize]; % using whole time win datas as training inds
-%     TrainTr_2Bin = round((TrainTr_trigTimes/TimeBinSize));
-%     SessBin_trainInds(TrainTr_2Bin(1):TrainTr_2Bin(2),1) = true;
-%     
-%     % using only baseline bins for training
-%     TrainTr_TrigBinAll = round(TaskTrigTimeAligns(TrainWinTrs(1):TrainWinTrs(2))/TimeBinSize);
-%     TrainTr_StimOnTimeAll = round(Behav_SessStimOnTime(TrainWinTrs(1):TrainWinTrs(2))/TimeBinSize);
-%     for cTT = 1 : numel(TrainTr_TrigBinAll)
-%         SessBin_trainInds((TrainTr_TrigBinAll(cTT)+1):TrainTr_StimOnTimeAll(cTT),2) = true;
-%     end
-% end
-
-% %% population decoding for each group units within same area
-% % BinCenters
-% UnitInds_perPopu = cellfun(@numel,ExistField_ClusIDs(:,2));
-% AreaUnitScaleInds = cumsum([1;UnitInds_perPopu]);
-% UsedTrainDataType = 2;
-% for cA = 3 : 3%Numfieldnames
-%     cAInds = AreaUnitScaleInds(cA):(AreaUnitScaleInds(cA+1)-1);
-% %     cA_UnitDatas = BinnedSPdatas(cAInds,:);
-%     cA_UnitResp_training = BinnedSPdatas(cAInds,SessBin_trainInds(:,UsedTrainDataType));
-%     cA_TrBT_training = BTDataBin(1,SessBin_trainInds(:,UsedTrainDataType));
-%     
-%     fitMD = fitcsvm(cA_UnitResp_training',cA_TrBT_training');
-%     cA_UnitResp_test = BinnedSPdatas(cAInds,~SessBin_trainInds(:,UsedTrainDataType));
-%     cA_TrBT_test = BTDataBin(1,~SessBin_trainInds(:,UsedTrainDataType));
-%     [PredBT, PredBTScore] = predict(fitMD, cA_UnitResp_test');
-% %     Score2Prob = 1./(1 + exp(-PredBTScore));
-%     Score2Prob = PredBTScore;
-%     disp(kfoldLoss(crossval(fitMD)));
-% end
-% 
-% 
-% %%
-% figure;
-% hold on
-% plot(BinCenters(~SessBin_trainInds(:,1)),cA_TrBT_test,'k*');
-% plot(BinCenters(~SessBin_trainInds(:,1)),smooth(PredBT,15),'bo');
-
-%% joint-correlation analysis
-% if isempty(gcp('nocreate'))
-%     parpool('local',6);
-% end
-tic
-NumCalculations = (Numfieldnames-1)*Numfieldnames/2;
-CalResults = cell(NumCalculations,5);
-NumRepeats = 100;
-NumShufRepeats = 100;
-TrialNums = size(NewBinnedDatas,1);
-SampleTrNums = round(TrialNums*0.8);
-RandIndsData = rand(SampleTrNums,NumCalculations,NumRepeats);
-sampleInds = rand(TrialNums,NumCalculations,NumRepeats);
-NumofCaledEvents = length(EventStrs);
-NumofBins = size(NewBinnedDatas,3);
-EventSpeciCCR = cell(NumCalculations,2);
-MaxShiftAmounts = round(NumofBins/2)-5;
-
-k = 1;
-for cAr = 1 : Numfieldnames
-    for cAr2 = cAr+1 : Numfieldnames
-        
-        % repeated sampling of 80% of all trials
-        jPECC_val_Rep = cell(NumRepeats,2);
-        parfor cRepeat = 1 : NumRepeats
-            RandsampleV = sampleInds(:,k,cRepeat);
-            RandsampleMore = RandsampleV(RandsampleV > 0.1);
-            RandsampleMoreIndex = find(RandsampleV > 0.1);
-            [~,RandsampleII] = sort(RandsampleMore);
-            RandSampleShufIndex = RandsampleMoreIndex(RandsampleII);
-            cR_sample_Index = RandSampleShufIndex(1:SampleTrNums);
-            
-%             Area1_binned_datas = permute(NewBinnedDatas(cR_sample_Index,ExistField_ClusIDs{cAr,2},:),[1,3,2]);
-%             Area2_binned_datas = permute(NewBinnedDatas(cR_sample_Index,ExistField_ClusIDs{cAr2,2},:),[1,3,2]);
-            Area1_binned_datas = NewBinnedDatas(cR_sample_Index,ExistField_ClusIDs{cAr,2},:);
-            Area2_binned_datas = NewBinnedDatas(cR_sample_Index,ExistField_ClusIDs{cAr2,2},:);
-            
-            [jPECC_val, ~] = jPECC(Area1_binned_datas,Area2_binned_datas,...
-                5,[],5);
-            
-            
-            [~, TrialShufInds] = sort(RandIndsData(:,k,cRepeat));
-            [jPECC_shuf, ~] = jPECC(Area1_binned_datas(TrialShufInds,:,:),Area2_binned_datas,...
-                5,[],5);
-            jPECC_val_Rep(cRepeat,:) = {jPECC_val,jPECC_shuf};
-        end
-        
-        % calculate event specific correlations
-        EventBinCoefValues = zeros(NumofCaledEvents, NumofBins);
-        EventShufCoefValues = zeros(NumofCaledEvents, NumofBins,NumShufRepeats);
-        
-        cAr1_data = NewBinnedDatas(:,ExistField_ClusIDs{cAr,2},:);
-        cAr2_data = NewBinnedDatas(:,ExistField_ClusIDs{cAr2,2},:);
-        ShufShiftsMtx = round((rand(TrialNums,NumShufRepeats)-0.5)*2*MaxShiftAmounts);
-        for cEvents = 1 : NumofCaledEvents
-           cEvent_loadCeofData = EventRespCalResults{k,cEvents};
-           cEvent_cAr_load = cEvent_loadCeofData{1};
-           cEvent_cAr2_load = cEvent_loadCeofData{2};
-           % real data calculation
-           for cBin = 1 : NumofBins
-               cBin_cAr1_Data = cAr1_data(:,:,cBin);
-               cBin_cAr2_Data = cAr2_data(:,:,cBin);
-               
-               cBin_cAr1_U = (cBin_cAr1_Data - mean(cBin_cAr1_Data)) * cEvent_cAr_load;
-               cBin_cAr2_V = (cBin_cAr2_Data - mean(cBin_cAr2_Data)) * cEvent_cAr2_load;
-               
-               EventBinCoefValues(cEvents,cBin) = corr(cBin_cAr1_U(:,1),cBin_cAr2_V(:,1));
-           end
-           
-           % shuf matrix data anlysis
-           ShufDataSize = size(NewBinnedDatas);
-           parfor cRepeat = 1 : NumShufRepeats
-               ShufBinDatas = zeros(ShufDataSize);
-               cRepeatAmounts = ShufShiftsMtx(:,cRepeat);
-               for cRow = 1 : TrialNums
-                   cRow_Realdata = NewBinnedDatas(cRow,:,:);
-                   ShufBinDatas(cRow,:,:) = circshift(cRow_Realdata,cRepeatAmounts(cRow),3);
-               end
-               cAr1_data = ShufBinDatas(:,ExistField_ClusIDs{cAr,2},:);
-               cAr2_data = ShufBinDatas(:,ExistField_ClusIDs{cAr2,2},:);
-               for cBin = 1 : NumofBins
-                   cBin_cAr1_Data = cAr1_data(:,:,cBin);
-                   cBin_cAr2_Data = cAr2_data(:,:,cBin);
-
-                   cBin_cAr1_U = (cBin_cAr1_Data - mean(cBin_cAr1_Data)) * cEvent_cAr_load;
-                   cBin_cAr2_V = (cBin_cAr2_Data - mean(cBin_cAr2_Data)) * cEvent_cAr2_load;
-
-                   EventShufCoefValues(cEvents,cBin,cRepeat) = corr(cBin_cAr1_U(:,1),cBin_cAr2_V(:,1));
-               end
-
-           end
-       end
-
-        EventSpeciCCR(k,:) = {EventBinCoefValues,EventShufCoefValues};
-        CalResults(k,:) = {jPECC_val_Rep(:,1), jPECC_val_Rep(:,2), ...
-            NewAdd_ExistAreaNames{cAr},NewAdd_ExistAreaNames{cAr2},...
-            [numel(ExistField_ClusIDs{cAr,1}),numel(ExistField_ClusIDs{cAr2,1})]};
-        k = k + 1;
-    end
-end
-disp(toc);
 %%
 Savepath = fullfile(ksfolder,'jeccAnA');
 if ~isfolder(Savepath)
     mkdir(Savepath);
 end
-dataSavePath = fullfile(Savepath,'JeccDataNew.mat');
+dataSavePath = fullfile(Savepath,'CCA_TypeSubCal.mat');
 
-save(dataSavePath,'CalResults','EventRespCalResults','OutDataStrc','EventDatas','EventStrs',...
-    'ExistField_ClusIDs','NewAdd_ExistAreaNames','EventRespCalAreaIndsANDName','EventSpeciCCR','-v7.3');
+save(dataSavePath,'TypeRespCalResults','TypeRespCalAvgs','OutDataStrc','TypeAreaPairInfo',...
+    'ExistField_ClusIDs','NewAdd_ExistAreaNames','AllTimeWin','-v7.3');
 %%
 % CalTimeBinNums = [min(OutDataStrc.BinCenters),max(OutDataStrc.BinCenters)];
 % StimOnBinTime = 0; %OutDataStrc.BinCenters(OutDataStrc.TriggerStartBin);
 % cCalInds = 10;
 % cCalIndsPopuSize = CalResults{cCalInds,5};
-% 
+%
 % figure;
 % hold on
-% 
+%
 % imagesc(OutDataStrc.BinCenters,OutDataStrc.BinCenters, CalResults{cCalInds,1});
 % line(CalTimeBinNums,CalTimeBinNums,'Color','w','linewidth',1.8);
 % line(CalTimeBinNums,[StimOnBinTime StimOnBinTime],'Color','m','linewidth',1.5);
