@@ -387,11 +387,85 @@ dataSaveName = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\summa
     'ClusterTypeDesp.mat');
 save(dataSaveName,'ClusStrANDInds','-v7.3');
 
+%% Only Meaningful clusters will be used for plotting
+FigSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult';
+% FigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult';
+load(fullfile(FigSavePath,'FinalClusterData.mat'));
+load(fullfile(FigSavePath,'ClusterTypeDesp.mat'));
+SigCorrAvgDataRaw = SigCorrAvgDataFinal;
+
+
 %%
-cType = 1;
-cTypeClusInds = ClusStrANDInds{cType,2};
-cTypeStr = ClusStrANDInds{cType,1};
-NumClusInds = length(cTypeClusInds);
+ExcludedClusInds = ClusStrANDInds{end,2};
+IsUnitExcluded = ismember(CorrThres_ClusInds,ExcludedClusInds);
+
+SigCorrAvgDataFinal(ExcludedClusInds,:) = [];
+SigCorrGrNumsFinal(ExcludedClusInds) = [];
+UsedThresSortedPSTH = CorrThres_SortPSTH(~IsUnitExcluded,:);
+UsedThresClusInds = CorrThres_ClusInds(~IsUnitExcluded);
+%%
+h0cf = figure('position',[100 100 340 780]);
+imagesc(UsedThresSortedPSTH,[-1 3]);
+Counts = accumarray(UsedThresClusInds,1);
+%
+Counts(Counts < 1) = [];
+
+[NumUnits, NumPSTHLen] = size(UsedThresSortedPSTH);
+AccumGrCounts = cumsum(Counts);
+for cGr = 1 : numel(AccumGrCounts)
+    line([1 NumPSTHLen],[AccumGrCounts(cGr) AccumGrCounts(cGr)],'Color','c',...
+        'linewidth',0.75);
+end
+axispos = get(gca,'position');
+hbar = colorbar;
+Oldpos = get(hbar,'position');
+set(hbar,'position',[Oldpos(1)+0.12,Oldpos(2),Oldpos(3)*0.5,Oldpos(4)*0.2]);
+set(gca,'position',[axispos(1)-0.02,axispos(2:4)]);
+line([NumPSTHLen/2 NumPSTHLen/2],[0.5 NumUnits+0.5],'Color','m','linewidth',0.75);
+set(gca,'xtick',[NumPSTHLen/4 3*NumPSTHLen/4],'xticklabel',{'Low boundary block','Low boundary block'},...
+    'ytick',[1 NumUnits],'yDir','normal');
+ylabel('# Units');
+
+%%
+saveName3d = fullfile(FigSavePath,'..','Usedcluster All units PSTH color plot');
+saveas(h0cf,saveName3d);
+print(h0cf,saveName3d,'-dpng','-r350');
+print(h0cf,saveName3d,'-dpdf','-bestfit');
+
+
+%%
+LeftGrTypes = unique(UsedThresClusInds);
+NumPoints = size(SigCorrAvgDataFinal,2);
+h00f = figure('position',[100 100 740 700]);
+hold on
+
+ybase = 5;
+ystep = 3;
+PlottedClusNum = length(LeftGrTypes);
+TraceTickCent = zeros(PlottedClusNum,1);
+for cplot = 1 : PlottedClusNum
+    cTraceData = SigCorrAvgDataFinal(cplot,:);
+    cTraceData_minSub = cTraceData - min(cTraceData);
+    cTraceData_plot = cTraceData_minSub + ybase;
+    plot(cTraceData_plot,'k','linewidth',1.5);
+    text(NumPoints+10, mean(cTraceData_plot),num2str(SigCorrGrNumsFinal(cplot),'%d'),'Color','m');
+    TraceTickCent(cplot) = mean(cTraceData_plot);
+    ybase = ybase + ystep + max(cTraceData_minSub);
+end
+
+BlockChangePoints = NumPoints/2 + 0.5;
+yscales = get(gca,'ylim');
+line(BlockChangePoints*[1 1],[0 ybase],'Color',[1 0 0 0.3],'linewidth',2);
+set(gca,'ylim',[0 ybase],'ytick',TraceTickCent,'yticklabel',LeftGrTypes(:),...
+    'xtick',[NumPoints/4 NumPoints*3/4],'xticklabel',{'Low Boundary Block';'High Boundary Block'},'FontSize',12);
+ylabel('Clusters');
+title('Correlation threshold, Correct trials');
+%% PSTH fig save name
+saveName3 = fullfile(FigSavePath,'Usedcluster Averaged PSTH trace plot');
+saveas(h00f,saveName3);
+print(h00f,saveName3,'-dpng','-r350');
+print(h00f,saveName3,'-dpdf','-bestfit');
+
 
 
 %% 
