@@ -1,54 +1,24 @@
+function IsTopdownShow = SlicedAreaNamePlots(PlotAx, sliceName, LateralPos, uacr, colors, st, av, tpidx)
 
-
-function OverAllNotShow = plotRecLocsMapByColor(sagAx, topdownAx, uacr, colors, st, av, tpidx)
-
-% sagAx2
-
-% st = loadStructureTree();
-if ~exist('tpidx', 'var')
-    [tpidx, tp] = makeSTtree(st);
-end
-
-% steps: 
-% 4. choose a few slices
-
-% coronal
-% avs = squeeze(av(850,:,:));
-% avs = avs(:,1:size(avs,2)/2);
-
-% horiz
-% avs = squeeze(av(:,300,:));
-% avs = avs(:,1:size(avs,2)/2);
-
-% if  ~isempty(sagAx2)
-%     sliceName = 'sagittal'; slicePos = 150; 
-%     avs = squeeze(av(:,:,slicePos))';
-%     
-%     plotRLMBChelp(sagAx2, avs, uacr, colors, st, tpidx);
-%         
-% end
-
-if ~isempty(sagAx)
-    % sagittal
-    sliceName = 'sagittal'; slicePos = 490; 
+if strcmpi(sliceName, 'sagittal')
+    sliceName = 'sagittal'; 
+    
+    slicePos = LateralPos; 
     avs = squeeze(av(:,:,slicePos))';
     
-    IsSagitalShow = plotRLMBChelp(sagAx, avs, uacr, colors, st, tpidx);
-%     colorbar;
+    IsSagitalShow = plotRLMBChelp(PlotAx, avs, uacr, colors, st, tpidx);
 end
-
-if ~isempty(topdownAx)
+if strcmpi(sliceName, 'topdown')
     % sagittal
     [~,ii] = max(av>1, [], 2);
     ii = squeeze(ii);
     [xx,yy] = meshgrid(1:size(ii,2), 1:size(ii,1));
     avs = reshape(av(sub2ind(size(av),yy(:),ii(:),xx(:))), size(av,1), size(av,3));
     % avs = avs(:,1:size(avs,2)/2);
-    sliceName = 'topdown'; slicePos = 0;
+    slicePos = LateralPos;
     
-    IsTopdownShow = plotRLMBChelp(topdownAx, avs, uacr, colors, st, tpidx);
+    IsTopdownShow = plotRLMBChelp(PlotAx, avs, uacr, colors, st, tpidx);
 end
-OverAllNotShow = IsSagitalShow & IsTopdownShow;
 
 
 function IsAreaShow = plotRLMBChelp(ax, avs, uacr, colors, st, tpidx)
@@ -84,6 +54,10 @@ for q = 1:numel(uacr)
         for cidx = 1:numel(coordsReg)
             h = patch(ax, coordsReg(cidx).x,coordsReg(cidx).y, thisColor); hold on;
             h.FaceAlpha = 0.75;
+            
+            CoordCentx = mean(coordsReg(cidx).x);
+            CoordCenty = mean(coordsReg(cidx).y);
+            text(CoordCentx,CoordCenty,uacr{q},'HorizontalAlignment','cent','FontSize',10);
         end                
         
     else

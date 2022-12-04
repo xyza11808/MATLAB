@@ -39,7 +39,13 @@ else
 end
 
 if nargout == 1
-    varargout{1} = [Avg; SEM; Datanum];
+    if numel(Avg) == 1
+        varargout{1} = [Avg; SEM; Datanum];
+    else
+        varargout{1} = [Avg; SEM];
+    end
+elseif nargout == 2
+    varargout = {[Avg; SEM], Datanum};
 elseif nargout == 3
     varargout = {Avg, SEM, Datanum};
 else

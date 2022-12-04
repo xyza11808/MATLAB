@@ -1,6 +1,4 @@
-
-
-function OverAllNotShow = plotRecLocsMapByColor(sagAx, topdownAx, uacr, colors, st, av, tpidx)
+function OverAllNotShow = plotRecLocsMapByColor3A(sagAx, topdownAx, sagAx2, uacr, colors, st, av, tpidx)
 
 % sagAx2
 
@@ -37,6 +35,15 @@ if ~isempty(sagAx)
 %     colorbar;
 end
 
+if ~isempty(sagAx2)
+    % sagittal
+    sliceName = 'sagittal2'; slicePos = 360; 
+    avs = squeeze(av(:,:,slicePos))';
+    
+    IsSagital2Show = plotRLMBChelp(sagAx2, avs, uacr, colors, st, tpidx);
+%     colorbar;
+end
+
 if ~isempty(topdownAx)
     % sagittal
     [~,ii] = max(av>1, [], 2);
@@ -48,7 +55,7 @@ if ~isempty(topdownAx)
     
     IsTopdownShow = plotRLMBChelp(topdownAx, avs, uacr, colors, st, tpidx);
 end
-OverAllNotShow = IsSagitalShow & IsTopdownShow;
+OverAllNotShow = IsSagitalShow & IsTopdownShow & IsSagital2Show;
 
 
 function IsAreaShow = plotRLMBChelp(ax, avs, uacr, colors, st, tpidx)

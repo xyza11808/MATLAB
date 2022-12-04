@@ -111,48 +111,48 @@ Smoothbin = [50,10]; % time window for smooth psth, in ms format
 NewNPClusHandle.CurrentSessInds = strcmpi('passive',NewNPClusHandle.SessTypeStrs);
 NewNPClusHandle = NewNPClusHandle.triggerOnsetTime([],4);
 
-TimeWin = [-0.4,3];
-NewNPClusHandle = NewNPClusHandle.TrigPSTH(TimeWin, []);
-NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
+% TimeWin = [-0.4,3];
+% NewNPClusHandle = NewNPClusHandle.TrigPSTH(TimeWin, []);
+% NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
 
 %% check the clusters going to use
 NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
 NewNPClusHandle.ksFolder = ksfolder;
 NewNPClusHandle = NewNPClusHandle.ClusScreeningFun;
-fprintf('\nNew cluster screening left units is %d/%d.\n',numel(NewNPClusHandle.UsedClus_IDs),numel(NewNPClusHandle.GoodClusIDs));
-% fprintf('\nOld Cluster have %d used unit, while new cluster have %d used unit.\n',...
-%     numel(PreNPClusHandle.ProbNPSess.UsedClus_IDs),numel(NewNPClusHandle.UsedClus_IDs));
+% fprintf('\nNew cluster screening left units is %d/%d.\n',numel(NewNPClusHandle.UsedClus_IDs),numel(NewNPClusHandle.GoodClusIDs));
+fprintf('\nOld Cluster have %d used unit, while new cluster have %d used unit.\n',...
+    numel(PreNPClusHandle.ProbNPSess.UsedClus_IDs),numel(NewNPClusHandle.UsedClus_IDs));
 %% %% plot the rasters
-% behavResults = PreNPClusHandle.behavResults;
-% AllTrStimOnTime = double(behavResults.Time_stimOnset(:));
-% AllTrAnsTime = double(behavResults.Time_answer(:));
-% TrActionChoice = double(behavResults.Action_choice(:));
-% TrBlockTypes = double(behavResults.BlockType(:));
-% TrStimFreqs = double(behavResults.Stim_toneFreq(:));
-% 
-% NMTrInds = TrActionChoice ~= 2;
-% NMTrStimOnTime = AllTrStimOnTime(NMTrInds);
-% NMTrAnsTime = AllTrAnsTime(NMTrInds);
-% NMTrChoices = TrActionChoice(NMTrInds);
-% NMBlockTypes = TrBlockTypes(NMTrInds);
-% NMTrFreqs = TrStimFreqs(NMTrInds);
-% 
-% BlockSectionInfo = Bev2blockinfoFun(behavResults);
-% BlockSecEdgeInds = [0.5;BlockSectionInfo.BlockTrScales(:,2)+0.5;numel(NMTrInds)+0.5];
-% BlockMissTrCount = histcounts(find(~NMTrInds),BlockSecEdgeInds);
-% BlockEndTrInds = BlockSectionInfo.BlockTrScales(:,2) - BlockMissTrCount(1:end-1)';
-% 
-% EventAignTimes = NMTrAnsTime - NMTrStimOnTime; % time difference between stim-on and answer
-% ChoiceTypeColors = {'b','r'};
-% BlockTypeColors = {[0.2 0.6 0.2],[0.7 0.4 0.1]};
-% ExtraEventStrs = {'Choice'};
-% NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
-% 
-% cFolderChnAreaStrc = load(fullfile(ksfolder,'Chnlocation.mat'),'AlignedAreaStrings');
-% ChnAreaStrs = cFolderChnAreaStrc.AlignedAreaStrings{2};
-% NewNPClusHandle.ChannelAreaStrs = ChnAreaStrs;
-% NewNPClusHandle.RawRasterplot(EventAignTimes,NMTrFreqs,...
-%     {NMTrChoices,ChoiceTypeColors}, NMBlockTypes, BlockTypeColors,NMTrInds);
+behavResults = PreNPClusHandle.behavResults;
+AllTrStimOnTime = double(behavResults.Time_stimOnset(:));
+AllTrAnsTime = double(behavResults.Time_answer(:));
+TrActionChoice = double(behavResults.Action_choice(:));
+TrBlockTypes = double(behavResults.BlockType(:));
+TrStimFreqs = double(behavResults.Stim_toneFreq(:));
+
+NMTrInds = TrActionChoice ~= 2;
+NMTrStimOnTime = AllTrStimOnTime(NMTrInds);
+NMTrAnsTime = AllTrAnsTime(NMTrInds);
+NMTrChoices = TrActionChoice(NMTrInds);
+NMBlockTypes = TrBlockTypes(NMTrInds);
+NMTrFreqs = TrStimFreqs(NMTrInds);
+
+BlockSectionInfo = Bev2blockinfoFun(behavResults);
+BlockSecEdgeInds = [0.5;BlockSectionInfo.BlockTrScales(:,2)+0.5;numel(NMTrInds)+0.5];
+BlockMissTrCount = histcounts(find(~NMTrInds),BlockSecEdgeInds);
+BlockEndTrInds = BlockSectionInfo.BlockTrScales(:,2) - BlockMissTrCount(1:end-1)';
+
+EventAignTimes = NMTrAnsTime - NMTrStimOnTime; % time difference between stim-on and answer
+ChoiceTypeColors = {'b','r'};
+BlockTypeColors = {[0.2 0.6 0.2],[0.7 0.4 0.1]};
+ExtraEventStrs = {'Choice'};
+NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
+
+cFolderChnAreaStrc = load(fullfile(ksfolder,'Chnlocation.mat'),'AlignedAreaStrings');
+ChnAreaStrs = cFolderChnAreaStrc.AlignedAreaStrings{2};
+NewNPClusHandle.ChannelAreaStrs = ChnAreaStrs;
+NewNPClusHandle.RawRasterplot(EventAignTimes,NMTrFreqs,...
+    {NMTrChoices,ChoiceTypeColors}, NMBlockTypes, BlockTypeColors,NMTrInds);
 
 %%
 NewNPClusHandle.SpikeTimes = [];
@@ -225,7 +225,7 @@ RegressorInfosCell = NewRregressorCell;
 FullRegressorInfosCell = NewFullRegressorCell;
 
 %% save new regressor datas
-dataSaveNames = fullfile(ksfolder,'Regressor_ANA','REgressorDataSave5.mat');
+dataSaveNames = fullfile(ksfolder,'Regressor_ANA','REgressorDataSave6.mat');
 save(dataSaveNames, 'RegressorInfosCell',...
     'ExistField_ClusIDs', 'NewAdd_ExistAreaNames', 'AreaUnitNumbers',...
     'FullRegressorInfosCell','PredictorStrc','AddedClusterBackup','-v7.3');

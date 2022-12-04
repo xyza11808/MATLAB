@@ -4,6 +4,11 @@ if ~exist('y_labels','var') && size(y_values,2) == 2
     y_labels = y_values(:,2);
     y_values = y_values(:,1);
 end
+[labelType, ~,y_labelsNor] = unique(y_labels);
+
+if ~all(labelType == [0 1])
+    y_labels = y_labelsNor - 1; % mack sure the two types will be 0 and 1
+end
 
 n1 = sum(y_labels == 1);
 n0 = numel(y_labels) - n1;

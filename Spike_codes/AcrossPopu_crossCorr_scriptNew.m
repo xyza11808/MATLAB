@@ -3,10 +3,10 @@ clearvars TypeRespCalResults TypeRespCalAvgs TypeAreaPairInfo OutDataStrc ExistF
 
 % ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
 % ksfolder = pwd;
-load(fullfile(ksfolder,'NewClassHandle2.mat'));
-ProbNPSess = NewNPClusHandle;
-clearvars NewNPClusHandle
-ProbNPSess.SpikeTimes = double(ProbNPSess.SpikeTimeSample)/30000;
+load(fullfile(ksfolder,'NewClassHandle2.mat'),'behavResults');
+% ProbNPSess = NewNPClusHandle;
+% clearvars NewNPClusHandle
+% ProbNPSess.SpikeTimes = double(ProbNPSess.SpikeTimeSample)/30000;
 %% find target cluster inds and IDs
 NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
@@ -38,9 +38,12 @@ if sum(USedAreas)
 end
 %%
 
-ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
-
-OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
+% ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
+% 
+% OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
+Savepath = fullfile(ksfolder,'jeccAnA');
+dataSavePath = fullfile(Savepath,'CCA_TypeSubCal.mat');
+load(dataSavePath,'OutDataStrc');
 NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 % SMBinDataMtxRaw = SMBinDataMtx;
 % clearvars ProbNPSess
@@ -81,7 +84,7 @@ BeforeWinData = FreqAvgSubDatas(:,:,(OnsetBin+BeforeWin1(1)):(OnsetBin+BeforeWin
 BaseValidExpData = FreqAvgSubDatas(:,:,(OnsetBin+BeforeWin1(1)):(OnsetBin+BeforeWin1(2)+ExpandedRange-1));
 
 AfterWinData = FreqAvgSubDatas(:,:,(OnsetBin+AfterWin1(1)):(OnsetBin+AfterWin1(2)-1));
-AfterValidExpData = FreqAvgSubDatas(:,:,(OnsetBin+AfterWin1(1)):(OnsetBin+AfterWin1(2)+ExpandedRange-1));
+AfterValidExpData = FreqAvgSubDatas(:,:,(OnsetBin+AfterWin1(1)-ExpandedRange):(OnsetBin+AfterWin1(2)-1));
 
 %% #############################################################
 % reperforming trial type avg subtraction using block wise manner
@@ -118,7 +121,7 @@ BeforeWinData2 = FreqAvgSubDatas2(:,:,(OnsetBin+BeforeWin1(1)):(OnsetBin+BeforeW
 BaseValidExpData2 = FreqAvgSubDatas2(:,:,(OnsetBin+BeforeWin1(1)):(OnsetBin+BeforeWin1(2)+ExpandedRange-1));
 
 AfterWinData2 = FreqAvgSubDatas2(:,:,(OnsetBin+AfterWin1(1)):(OnsetBin+AfterWin1(2)-1));
-AfterValidExpData2 = FreqAvgSubDatas2(:,:,(OnsetBin+AfterWin1(1)):(OnsetBin+AfterWin1(2)+ExpandedRange-1));
+AfterValidExpData2 = FreqAvgSubDatas2(:,:,(OnsetBin+AfterWin1(1)-ExpandedRange):(OnsetBin+AfterWin1(2)-1));
 
 AllTimeWin = {BeforeWin1, AfterWin1, ExpandedRange, OnsetBin};
 %% loop to calculate for each area pair
@@ -146,8 +149,8 @@ for cAr = 1 : Numfieldnames
         BaseShufCorrs = cat(2,BaseRepeatCorrSum{:,6});
         BaseShufCorrThres = prctile(BaseShufCorrs,95,2);
         
-        BaseTrainCorrAvg = dataSEMmean(BaseTrainCorrs);
-        BaseTestCorrsAvg = dataSEMmean(BaseTestCorrs');
+        BaseTrainCorrAvg = dataSEMmean(BaseTrainCorrs,'Trace');
+        BaseTestCorrsAvg = dataSEMmean(BaseTestCorrs','Trace');
         
         BaseAvgs = {BaseTrainCorrAvg, BaseTestCorrsAvg, BaseValidTimeCorrAvg,BaseValidTimeCorrSTD,BaseShufCorrThres};
         % after Stim calculation
@@ -167,8 +170,8 @@ for cAr = 1 : Numfieldnames
         AfterShufCorrs = cat(2,AfRepeatCorrSum{:,6});
         AfterShufCorrThres = prctile(AfterShufCorrs,95,2);
         
-        AfterTrainCorrAvg = dataSEMmean(AfterTrainCorrs);
-        AfterTestCorrsAvg = dataSEMmean(AfterTestCorrs');
+        AfterTrainCorrAvg = dataSEMmean(AfterTrainCorrs,'Trace');
+        AfterTestCorrsAvg = dataSEMmean(AfterTestCorrs','Trace');
         
         AfterAvgs = {AfterTrainCorrAvg, AfterTestCorrsAvg, AfterValidTimeCorrAvg, AfterValidTimeCorrSTD, AfterShufCorrThres};
         % Recalculate for block-type-wise trial type subtraction datas
@@ -188,8 +191,8 @@ for cAr = 1 : Numfieldnames
         Base2ShufCorrs = cat(2,Base2RepeatCorrSum{:,6});
         Base2ShufCorrThres = prctile(Base2ShufCorrs,95,2);
         
-        Base2TrainCorrAvg = dataSEMmean(Base2TrainCorrs);
-        Base2TestCorrsAvg = dataSEMmean(Base2TestCorrs');
+        Base2TrainCorrAvg = dataSEMmean(Base2TrainCorrs,'Trace');
+        Base2TestCorrsAvg = dataSEMmean(Base2TestCorrs','Trace');
         Base2Avgs = {Base2TrainCorrAvg, Base2TestCorrsAvg, Base2ValidTimeCorrAvg,Base2ValidTimeCorrSTD,Base2ShufCorrThres};
         % after Stim calculation
         Af2RepeatCorrSum = crossValCCA(AfterWinData2,AfterValidExpData2,{ExistField_ClusIDs{cAr,2},ExistField_ClusIDs{cAr2,2}},0.5);
@@ -208,8 +211,8 @@ for cAr = 1 : Numfieldnames
         After2ShufCorrs = cat(2,Af2RepeatCorrSum{:,6});
         After2ShufCorrThres = prctile(After2ShufCorrs,95,2);
         
-        After2TrainCorrAvg = dataSEMmean(After2TrainCorrs);
-        After2TestCorrsAvg = dataSEMmean(After2TestCorrs');
+        After2TrainCorrAvg = dataSEMmean(After2TrainCorrs,'Trace');
+        After2TestCorrsAvg = dataSEMmean(After2TestCorrs','Trace');
         
         After2Avgs = {After2TrainCorrAvg, After2TestCorrsAvg, After2ValidTimeCorrAvg, After2ValidTimeCorrSTD, After2ShufCorrThres};
         
@@ -222,11 +225,11 @@ for cAr = 1 : Numfieldnames
     end
 end
 %%
-Savepath = fullfile(ksfolder,'jeccAnA');
-if ~isfolder(Savepath)
-    mkdir(Savepath);
-end
-dataSavePath = fullfile(Savepath,'CCA_TypeSubCal.mat');
+% Savepath = fullfile(ksfolder,'jeccAnA');
+% if ~isfolder(Savepath)
+%     mkdir(Savepath);
+% end
+% dataSavePath = fullfile(Savepath,'CCA_TypeSubCal.mat');
 
 save(dataSavePath,'TypeRespCalResults','TypeRespCalAvgs','OutDataStrc','TypeAreaPairInfo',...
     'ExistField_ClusIDs','NewAdd_ExistAreaNames','AllTimeWin','-v7.3');

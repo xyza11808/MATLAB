@@ -60,23 +60,27 @@ BlockSecIndsDiff = [1;abs(diff(UsedTrBlockTypes(:)))];
 BlockIndexVec = cumsum(BlockSecIndsDiff);
 TypeStrings = {'CorrRevTrs','CorrNonRevTrs','ErroRevTrs','ErroNonTrs'};
 BlockTypeResps = zeros(size(BaselineResp_zs,2),4,BlockSectionInfo.NumBlocks);
+BlockTrBaseAll = cell(BlockSectionInfo.NumBlocks, 2);
 for cB = 1 : BlockSectionInfo.NumBlocks
     cBInds = BlockIndexVec == cB;
     cB_Choices = UsedTrChoices(cBInds);
     cB_TrReTime = UsedTrReTime(cBInds);
     cB_TrIsRev = UsedTrIsRevTrials(cBInds);
     cB_BaseRespData = BaselineResp_zs(cBInds,:);
+    cB_RawBaseData = BaselineResp(cBInds,UsedAreaUnitInds);
     
-    cB_TrCorrANDRevInds = cB_TrReTime > 0 & cB_TrIsRev;
+    BlockTrBaseAll(cB,:) = {cB_BaseRespData(cB_Choices ~= 2,:), cB_RawBaseData(cB_Choices ~= 2,:)};
+    
+    cB_TrCorrANDRevInds = cB_TrReTime > 0 & cB_TrIsRev & cB_Choices ~= 2;
     cB_TrCorrANDRev_base = mean(cB_BaseRespData(cB_TrCorrANDRevInds,:));
     
-    cB_TrCorrANDNonRevInds = cB_TrReTime > 0 & ~cB_TrIsRev;
+    cB_TrCorrANDNonRevInds = cB_TrReTime > 0 & ~cB_TrIsRev & cB_Choices ~= 2;
     cB_TrCorrANDNonRev_base = mean(cB_BaseRespData(cB_TrCorrANDNonRevInds,:));
     
-    cB_TrErroANDRevInds = cB_TrReTime == 0 & cB_TrIsRev;
+    cB_TrErroANDRevInds = cB_TrReTime == 0 & cB_TrIsRev & cB_Choices ~= 2;
     cB_TrErroANDRev_base = mean(cB_BaseRespData(cB_TrErroANDRevInds,:));
     
-    cB_TrErroANDNonRevInds = cB_TrReTime == 0 & ~cB_TrIsRev;
+    cB_TrErroANDNonRevInds = cB_TrReTime == 0 & ~cB_TrIsRev & cB_Choices ~= 2;
     cB_TrErroANDNonRev_base = mean(cB_BaseRespData(cB_TrErroANDNonRevInds,:));
     
     BlockTypeResps(:,1,cB) = cB_TrCorrANDRev_base;
@@ -100,11 +104,16 @@ if sum(HighBlockInds) == 1
 else
     HighBlockBaseData = mean(BlockTypeResps(:,:,HighBlockInds),3,'omitnan');
 end
+
+% LowBlockInds = BlockSectionInfo.BlockTypes == 0;
+LowBlockAllTrBaseData = cat(1,BlockTrBaseAll{LowBlockInds,2});
+HighBlockAllTrBaseData = cat(1,BlockTrBaseAll{HighBlockInds,2});
+LHAllTrBaseData = {LowBlockAllTrBaseData, HighBlockAllTrBaseData};
 %%
 
-saveMATfile = fullfile(ksfolder,'BaselineRespDataNew.mat');
+saveMATfile = fullfile(ksfolder,'BaselineRespDataNew2.mat');
 save(saveMATfile,'BaselineResp','BlockSectionInfo','BehavTrInfo','BlockTypeResps','TypeStrings',...
-    'LowBlockBaseData','HighBlockBaseData','AllUnitAreaStrs','NewAdd_ExistAreaNames','-v7.3');
+    'LowBlockBaseData','HighBlockBaseData','AllUnitAreaStrs','NewAdd_ExistAreaNames','BlockTrBaseAll','LHAllTrBaseData','-v7.3');
 
 
 

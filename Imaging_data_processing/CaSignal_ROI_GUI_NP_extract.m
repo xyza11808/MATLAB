@@ -1828,7 +1828,7 @@ catch ME
             TempCaTrials_local(nxnx) = CaTrials_local(1);
         end
 %%         TempCaTrials_local = 
-        for TrialNo = 1 : 2%(BlockEnd - BlockStart + 1)    %%%%%%%%%%%%%%%%%%%%%%%% parfor
+        for TrialNo = 1 : (BlockEnd - BlockStart + 1)    %%%%%%%%%%%%%%%%%%%%%%%% parfor
             nRealTrNo = TrialNo+BlockBase;
              fname = filenames{nRealTrNo};
             if ~exist(fname,'file')

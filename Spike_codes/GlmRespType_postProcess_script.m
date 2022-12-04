@@ -6,11 +6,11 @@ load(fullfile(ksfolder,'NewClassHandle2.mat'),'behavResults');
 
 load(fullfile(ksfolder,'Regressor_ANA','REgressorDataSave6.mat'),'FullRegressorInfosCell',...
     'ExistField_ClusIDs','RegressorInfosCell');
-StimRegInfo = load(fullfile(ksfolder,'Regressor_ANA','REgressorDataSaveStim.mat'),'FullRegressorInfosCell');
-if size(FullRegressorInfosCell,1) ~= size(StimRegInfo.FullRegressorInfosCell,1)
-    disp(ksfolder);
-    warning('The Stim regressor is not equeal sized as full regressor.\n');
-end
+% StimRegInfo = load(fullfile(ksfolder,'Regressor_ANA','REgressorDataSaveStim.mat'),'FullRegressorInfosCell');
+% if size(FullRegressorInfosCell,1) ~= size(StimRegInfo.FullRegressorInfosCell,1)
+%     disp(ksfolder);
+%     warning('The Stim regressor is not equeal sized as full regressor.\n');
+% end
 %% check whether extra unit calculation is existed
 % if sum(IsUnitNeedProcessed(:,1)) % check whether extra unit calculation is needed
 %     if exist(fullfile(ksfolder,'Regressor_ANA','ExtraUnitRegress.mat'),'file')

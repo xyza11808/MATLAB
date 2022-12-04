@@ -17,8 +17,13 @@ RawFullDataIn = permute(RawFullDataIn,[1,3,2]);
 for cU = 1 : NumUnit
     cU_rawFullData = RawFullDataIn(:,:,cU);
     cU_DataVar = std(cU_rawFullData(:));
-    RawFullData(:,cU,:) = cU_rawFullData/cU_DataVar;
-    ValidFullData(:,cU,:) = ValidFullDataIn(:,cU,:)/cU_DataVar;
+    if cU_DataVar < 1e-6
+        RawFullData(:,cU,:) = cU_rawFullData;
+        ValidFullData(:,cU,:) = ValidFullDataIn(:,cU,:);
+    else
+        RawFullData(:,cU,:) = cU_rawFullData/cU_DataVar;
+        ValidFullData(:,cU,:) = ValidFullDataIn(:,cU,:)/cU_DataVar;
+    end
 end
 ValidFrameNum = size(ValidFullData,3);
 
@@ -27,8 +32,8 @@ TrCellData = cellfun(@squeeze, TrCellData, 'un',0);
 
 RawFullTrace = (reshape(permute(RawFullData,[2,3,1]),size(RawFullData,2),[]))'; % NumTimepoints by NumUnits
 AllTrIndexTrace = uint16(reshape(repmat(1:AllTrialNum,FrameNum,1),[],1));
-
-
+%%
+warning off
 RepeatNum = 100;
 ShufExtraRePeat = 5; % totally 500 times shuffling
 RepeatCorrSum = cell(RepeatNum,6);
@@ -99,7 +104,7 @@ parfor cR = 1 : RepeatNum
     
 end
 
-
+warning on
 
 
 

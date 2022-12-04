@@ -2892,7 +2892,7 @@ NumAllTargetAreas = length(BrainAreasStr);
 TypeStrings = {'CorrRevTrs','CorrNonRevTrs','ErroRevTrs','ErroNonTrs'};
 
 AllSessUnitBaseFRzs = cell(NumUsedSess,1);
-
+AllSessUnitBaseFR_rawResp = cell(NumUsedSess,4);
 for cS = 1 : NumUsedSess
     
 %     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
@@ -2901,12 +2901,18 @@ for cS = 1 : NumUsedSess
     ksfolder = fullfile(cSessPath,'ks2_5');
     UsedFolderPath{cS} = ksfolder;
     %
-    cSessbaseDatafile = fullfile(ksfolder,'BaselineRespDataNew.mat');
+    cSessbaseDatafile = fullfile(ksfolder,'BaselineRespDataNew2.mat');
     cSessbaseDataStrc = load(cSessbaseDatafile,'BlockTypeResps','LowBlockBaseData',...
-        'HighBlockBaseData','BlockSectionInfo','AllUnitAreaStrs');
+        'HighBlockBaseData','BlockSectionInfo','AllUnitAreaStrs','LHAllTrBaseData');
     UnitTypefile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypesNew.mat');
     SessUnitTypeMtxStrc = load(UnitTypefile,'IsUnitGLMResp');
-    
+    % load baseline AUC datas
+    BaseAUCfile = fullfile(ksfolder,'BTANDChoiceAUC_compPlot','BTANDChoiceAUC_popuVec.mat');
+    BaseAUCDataStrc = load(BaseAUCfile,'UnitBaselineAUC');
+    SessUsedUnitfile = fullfile(ksfolder,'SessPSTHdataSaveNew2.mat');
+    SessUsedUnitStrc = load(SessUsedUnitfile,'ExistField_ClusIDs');
+    UsedUnitInds = cat(1,SessUsedUnitStrc.ExistField_ClusIDs{:,2});
+    UsedUnitBaseAUCs = BaseAUCDataStrc.UnitBaselineAUC(UsedUnitInds,:);
     
     cSessBlockTypeResp = cSessbaseDataStrc.BlockTypeResps;
     cSessLowBlockBase = cSessbaseDataStrc.LowBlockBaseData;
@@ -2936,10 +2942,10 @@ for cS = 1 : NumUsedSess
     cSessBlockwiseBaseCell = cellfun(@squeeze,cSessBlockwiseBaseCell_raw,'un',0);
     
     FolderPathIndex = cS * ones(UsedUnitNums,1);
-    % temp solution
-    if size(SessUnitTypeMtxStrc.IsUnitGLMResp,1) > UsedUnitNums
-        SessUnitTypeMtxStrc.IsUnitGLMResp((UsedUnitNums+1):end,:) = [];
-    end
+%     % temp solution
+%     if size(SessUnitTypeMtxStrc.IsUnitGLMResp,1) > UsedUnitNums
+%         SessUnitTypeMtxStrc.IsUnitGLMResp((UsedUnitNums+1):end,:) = [];
+%     end
     TypeMtx = mat2cell(SessUnitTypeMtxStrc.IsUnitGLMResp,ones(UsedUnitNums,1),size(SessUnitTypeMtxStrc.IsUnitGLMResp,2));
     
     SessMergedUnitPSTH = [cSessLowANDHighBaseData,cSessBlockwiseBaseCell,num2cell(Match2AllAreaInds),...
@@ -2947,9 +2953,28 @@ for cS = 1 : NumUsedSess
     
     AllSessUnitBaseFRzs(cS) = {SessMergedUnitPSTH};
     
+    
+    LowBoundBaseResp = cSessbaseDataStrc.LHAllTrBaseData{1};
+    HighBoundBaseResp = cSessbaseDataStrc.LHAllTrBaseData{2};
+    
+%     BoundLabels = [zeros(size(LowBoundBaseResp,1),1);ones(size(HighBoundBaseResp,1),1)];
+    % UsedUnitBaseAUCs
+    NumofUnits = size(LowBoundBaseResp,2);
+    AllUsedUnit_p2 = zeros(NumofUnits,1);
+    for cu = 1 : NumofUnits
+        [~,p2] = ttest2(LowBoundBaseResp(:,cu),HighBoundBaseResp(:,cu));
+        AllUsedUnit_p2(cu) = p2;
+    end
+    AllSessUnitBaseFR_rawResp(cS,:) = {LowBoundBaseResp,HighBoundBaseResp,AllUsedUnit_p2,UsedUnitBaseAUCs};
 end
 
 AllUnitBaseFR_zsed = cat(1,AllSessUnitBaseFRzs{:});
+
+%%
+figSavePath12 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
+% figSavePath12 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
+dataSavefile = fullfile(figSavePath12,'BaselineDataSummary.mat');
+save(dataSavefile,'AllSessUnitBaseFRzs','AllSessUnitBaseFR_rawResp','-v7.3');
 
 %%
 
@@ -2985,13 +3010,84 @@ ylabel('Units')
 title('BlockWise baseline datas');
 set(gca,'FontSize',8,'box','off');
 %%
-figSavePath12 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
-% figSavePath12 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
+% figSavePath12 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
+% % figSavePath12 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
 
 figfileSavePath12_1 = fullfile(figSavePath12,'Used unit baseline resp plot PSTHunits');
 saveas(h12f,figfileSavePath12_1);
 print(h12f,figfileSavePath12_1,'-dpdf','-bestfit');
 print(h12f,figfileSavePath12_1,'-dpng','-r350');
+
+
+%%
+% allen_atlas_path = 'E:\AllenCCF';
+allen_atlas_path = 'E:\MatCode\AllentemplateData';
+tv = readNPY([allen_atlas_path filesep 'template_volume_10um.npy']);
+av = readNPY([allen_atlas_path filesep 'annotation_volume_10um_by_index.npy']);
+st = loadStructureTree([allen_atlas_path filesep 'structure_tree_safe_2017.csv']);
+
+TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+% TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+
+BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
+BrainRegionIndex = BrainRegionStrc.BrainRegions;
+
+
+
+%% recalculate the significant unit fraction and averaged AUC values for each area
+
+AllUnitAreaInds = cat(1,AllUnitBaseFR_zsed{:,3});
+AllUnitIsSigpValues = cat(1,AllSessUnitBaseFR_rawResp{:,3});
+AllUnitBaseAUCs = cat(1,AllSessUnitBaseFR_rawResp{:,4});
+
+NonNANinds = ~isnan(AllUnitAreaInds);
+ValidAreaInds = AllUnitAreaInds(NonNANinds);
+ValidPValues = AllUnitIsSigpValues(NonNANinds);
+ValidPValue2log = -log10(ValidPValues); % p value should less than 0.01, which is 2 for current calculation
+ValidUnitAUCs = AllUnitBaseAUCs(NonNANinds,:);
+
+ValidAreaIndexes = unique(ValidAreaInds);
+ValidAreaStrs = BrainAreasStr(ValidAreaIndexes);
+
+NumValidAreas = length(ValidAreaIndexes);
+AreawiseAUCANDpvalues = cell(NumValidAreas,6);
+for cA = 1 : NumValidAreas
+    cA_Inds = ValidAreaInds == ValidAreaIndexes(cA);
+    cA_pValues = ValidPValue2log(cA_Inds);
+    cA_AUCs = ValidUnitAUCs(cA_Inds,1);
+    
+    SigUnitInds = cA_pValues > 2;
+    SigUnitAUCs = cA_AUCs(SigUnitInds);
+    AreawiseAUCANDpvalues(cA,:) = {numel(cA_AUCs),sum(SigUnitAUCs),...
+        cA_pValues,cA_AUCs,SigUnitInds,SigUnitAUCs};
+end
+TotalUnitNumThres = 15;
+SigUnitNumThres = 3;
+AreaUnitNums = cat(1,AreawiseAUCANDpvalues{:,1});
+
+SigUnitFracs = cellfun(@mean,AreawiseAUCANDpvalues(:,5));
+DispSigUnitFracs = SigUnitFracs(AreaUnitNums >= TotalUnitNumThres); % at least 10 units for each area
+DispSigUnitFracAreaStrs = ValidAreaStrs(AreaUnitNums >= TotalUnitNumThres);
+
+SigUnitNums = cat(1,AreawiseAUCANDpvalues{:,2});
+SigUnitAUCs = cellfun(@mean,AreawiseAUCANDpvalues(:,6));
+
+UsedSigUnitInds = SigUnitNums > SigUnitNumThres & AreaUnitNums >= TotalUnitNumThres;
+UsedSigUnitAreaStrs = ValidAreaStrs(UsedSigUnitInds);
+UsedSigUnitNum = SigUnitNums(UsedSigUnitInds);
+UsedSigUnitAUCs = SigUnitAUCs(UsedSigUnitInds);
+
+%%
+hf_12_fracs = AreaValueDispFun(DispSigUnitFracs, DispSigUnitFracAreaStrs, ...
+    st,av,BrainRegionIndex,'p<0.01 Frac');
+%%
+
+hf_12_AUCs = AreaValueDispFun(UsedSigUnitAUCs, UsedSigUnitAreaStrs, ...
+    st,av,BrainRegionIndex,'p<0.01 AUCs');
+
+
+
+
 
 %%
 %% ###################################################################################################
@@ -3555,5 +3651,64 @@ save(dataSaveName2,'Area_BlockwiseTempScores','-v7.3');
 % %     save(saveName,'UnitUsedCoefs', 'AboveThresUnit', 'UnitFitmds_All', 'overAllTerms_mtx', 'DevThreshold','-v7.3');
 %     
 % end
+
+%%
+
+%%
+% allen_atlas_path = 'E:\AllenCCF';
+allen_atlas_path = 'E:\MatCode\AllentemplateData';
+tv = readNPY([allen_atlas_path filesep 'template_volume_10um.npy']);
+av = readNPY([allen_atlas_path filesep 'annotation_volume_10um_by_index.npy']);
+st = loadStructureTree([allen_atlas_path filesep 'structure_tree_safe_2017.csv']);
+
+TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+% TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+
+BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
+BrainRegionIndex = BrainRegionStrc.BrainRegions;
+
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+
+BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
+        'Sheet',1);
+BrainAreasStrCC = BrainAreasStrC(2:end);
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
+BrainAreasStr = [BrainAreasStrCC(~EmptyInds)];
+%%
+SagPlot1 = figure('position',[40 100 1400 700]);
+SagPlotpos1 = 490; 
+ax1 = gca;
+SlicedAreaNamePlots(ax1,'sagittal',SagPlotpos1,BrainAreasStr,linspecer(numel(BrainAreasStr)),st,av,BrainRegionIndex)
+
+%
+SagPlot2 = figure('position',[40 100 1400 700]);
+SagPlotpos2 = 360; 
+ax2 = gca;
+SlicedAreaNamePlots(ax2,'sagittal',SagPlotpos2,BrainAreasStr,linspecer(numel(BrainAreasStr)),st,av,BrainRegionIndex)
+
+
+SagPlot3 = figure('position',[40 100 1000 960]);
+SagPlotpos3 = 0; 
+ax3 = gca;
+SlicedAreaNamePlots(ax3,'topdown',SagPlotpos3,BrainAreasStr,linspecer(numel(BrainAreasStr)),st,av,BrainRegionIndex)
+
+%% save target brain region names
+savefolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\SlicedAreaNames';
+% savefolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\SlicedAreaNames';
+
+saveName1 = fullfile(savefolder,'sagitalfig1');
+saveas(SagPlot1,saveName1);
+print(SagPlot1,saveName1,'-dpng','-r350');
+
+saveName2 = fullfile(savefolder,'sagitalfig2');
+saveas(SagPlot2,saveName2);
+print(SagPlot2,saveName2,'-dpng','-r350');
+
+saveName3 = fullfile(savefolder,'topdown');
+saveas(SagPlot3,saveName3);
+print(SagPlot3,saveName3,'-dpng','-r350');
+
 
 

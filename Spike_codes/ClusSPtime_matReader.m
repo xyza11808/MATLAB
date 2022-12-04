@@ -70,28 +70,28 @@ for cClusIdInds = 1 : UnitClusIDNums
     end
 
 
-%     hf = figure('position',[100 100 680 280],'Visible','off');
-% %     subplot(311);
-%     hold on
-%     plot(CountCents,Counts/10,'ko');
-%     yscales = get(gca,'ylim');
-%     line([TaskStartTime TaskStartTime],yscales,'Color','b','linewidth',1.2,'linestyle','--');
-%     line([TaskEndsTime TaskEndsTime],yscales,'Color','r','linewidth',1.2,'linestyle','--');
-%     for cB = 1 : BlockSectionInfo.NumBlocks
-%         cb_BlockEndsInds = AfterBlockSWTrOnTime(cB);
-%         line([cb_BlockEndsInds cb_BlockEndsInds]-0.5,yscales,'Color','m','linewidth',1.4,'linestyle','-');
-%         text(cb_BlockEndsInds-800,yscales(2)*0.95,num2str(BlockFRs(cB),'FR=%.2f'),'Color','m','FontSize',10);
-%     end
-%     xlabel('Time (s)');
-%     ylabel('Firing rate (Hz)');
-%     title(sprintf('ClusID = %d, Chn = %d, OverAllFR = %.3f',cClusID,cU_chn,OverAllFR));
-%     set(gca,'FontSize',12);
-%    
-%     cFileSavePath = fullfile(figSaveFolder,sprintf('ClusID %d sptime and AmpPlot',cClusID));
-%     saveas(hf,cFileSavePath);
-% %     print(hf,cFileSavePath,'-dpdf','-bestfit');
-%     print(hf,cFileSavePath,'-dpng','-r350');
-%     close(hf);
+    hf = figure('position',[100 100 680 280],'Visible','off');
+%     subplot(311);
+    hold on
+    plot(CountCents,Counts/10,'ko');
+    yscales = get(gca,'ylim');
+    line([TaskStartTime TaskStartTime],yscales,'Color','b','linewidth',1.2,'linestyle','--');
+    line([TaskEndsTime TaskEndsTime],yscales,'Color','r','linewidth',1.2,'linestyle','--');
+    for cB = 1 : BlockSectionInfo.NumBlocks
+        cb_BlockEndsInds = AfterBlockSWTrOnTime(cB);
+        line([cb_BlockEndsInds cb_BlockEndsInds]-0.5,yscales,'Color','m','linewidth',1.4,'linestyle','-');
+        text(cb_BlockEndsInds-800,yscales(2)*0.95,num2str(BlockFRs(cB),'FR=%.2f'),'Color','m','FontSize',10);
+    end
+    xlabel('Time (s)');
+    ylabel('Firing rate (Hz)');
+    title(sprintf('ClusID = %d, Chn = %d, OverAllFR = %.3f',cClusID,cU_chn,OverAllFR));
+    set(gca,'FontSize',12);
+   
+    cFileSavePath = fullfile(figSaveFolder,sprintf('ClusID %d sptime and AmpPlot',cClusID));
+    saveas(hf,cFileSavePath);
+%     print(hf,cFileSavePath,'-dpdf','-bestfit');
+    print(hf,cFileSavePath,'-dpng','-r350');
+    close(hf);
     UnitFRDatas(cClusIdInds,:) = {OverAllFR, BlockFRs,CountCents,Counts/10};
 end
 
