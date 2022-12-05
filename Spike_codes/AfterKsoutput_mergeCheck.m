@@ -32,9 +32,13 @@ TotalSampleTime = TrigTimeANDSampleNumStrc.TotalSampleNums/SpikeStrc.sample_rate
 % ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 % TaskTrigOnTimes = ProbNPSess.UsedTrigOnTime{ProbNPSess.CurrentSessInds};
 TaskTrigOnTimes = TrigTimeANDSampleNumStrc.TaskTrigOnTimes;
-BehavData = load(fullfile(FolderPath,'NPClassHandleSaved.mat'),'behavResults');
-BlockSectionInfo = Bev2blockinfoFun(BehavData.behavResults);
-
+if exist(fullfile(FolderPath,'NPClassHandleSaved.mat'),'file')
+    BehavData = load(fullfile(FolderPath,'NPClassHandleSaved.mat'),'behavResults');
+    BlockSectionInfo = Bev2blockinfoFun(BehavData.behavResults);
+else % loading data from behavDatas
+    BehavData = load(fullfile(FolderPath,'BehavData.mat'),'behavResults');
+    BlockSectionInfo = Bev2blockinfoFun(BehavData.behavResults);
+end
 BlockEndsInds = BlockSectionInfo.BlockTrScales(:,2); % where block tr ends
 if BlockEndsInds(end) ~= numel(TaskTrigOnTimes)
     AfterBlockSWTrOnTime = TaskTrigOnTimes(BlockEndsInds+1);

@@ -1,5 +1,5 @@
 cclr
-datafolders = 'E:\datas\behavDatas';
+datafolders = 'E:\datas\behavDatas\20221130addedSess';
 cd(datafolders);
 sess_matfiles = dir(fullfile(datafolders,'*202*.mat'));
 

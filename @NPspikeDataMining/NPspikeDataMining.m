@@ -135,46 +135,94 @@ classdef NPspikeDataMining
             
             % spike data info reading
             obj.SpikeStrc = loadParamsPy(fullfile(FolderPath, 'params.py'));
+            ClusterFindMergefile = fullfile(FolderPath, 'AdjustedClusterInfo.mat');
+            if ~exist(ClusterFindMergefile,'file')
+                warning('The kilosorter outputs needs further processing before usage.\n');
+                return;
+            end
+            AdjKlClusters = load(fullfile(FolderPath,'AdjustedClusterInfo.mat'));
             
-            % read npy files
-            obj.SpikeClus = readNPY(fullfile(FolderPath, 'spike_clusters.npy'));
-            obj.SpikeTimeSample = readNPY(fullfile(FolderPath, 'spike_times.npy'));
-            obj.SpikeTimes = double(obj.SpikeTimeSample)/obj.SpikeStrc.sample_rate;
-            obj.chnMaps = readNPY(fullfile(FolderPath, 'channel_map.npy'));
-            
-            if ~exist(fullfile(FolderPath,'cluster_info.tsv'),'file')
-                
-                FolderPath = obj.ksFolder;
-                binfilepath = obj.binfilePath;
-                SR = obj.SpikeStrc.sample_rate;
-                disp('Constructing cluster info files...\n');
-                ks3_Result2Info_script;
-                %                 warning('Unbale to locate phy processed file.');
-                %                 return;
+            obj.SpikeClus = AdjKlClusters.FinalSPClusters;
+            obj.ClusterInfoAll = AdjKlClusters.FinalksLabels;
+            obj.SpikeTimes = double(AdjKlClusters.FinalSPTimeSample)/obj.SpikeStrc.sample_rate;
+            obj.SpikeTimeSample = AdjKlClusters.FinalSPTimeSample;
+            try 
+                waveformdatafile = fullfile(FolderPath,'AdjUnitWaveforms','AdjUnitWaveforms2.mat');
+                waveDataStrc = load(waveformdatafile);
+            catch
+                waveformdatafile = fullfile(FolderPath,'UnitwaveformDatas.mat');
+                waveDataStrc = load(waveformdatafile);
+            end
+            obj.UnitWaves = waveDataStrc.UnitDatas;
+            obj.UnitWaveFeatures = waveDataStrc.UnitFeatures;
+            if isfield(waveDataStrc,'AboveThresClusIDs') && isfield(waveDataStrc,'AboveThresClusMaxChn')
+                AboveThresClusIDs = waveDataStrc.AboveThresClusIDs;
+                AboveThresClusMaxChn = waveDataStrc.AboveThresClusMaxChn;
+            else % recal the good cluster IDs
+                GoodClusIDInds = strcmpi(obj.ClusterInfoAll.KSLabel,'good');
+                AboveThresClusIDs = obj.ClusterInfoAll.cluster_id(GoodClusIDInds);
+                AboveThresClusMaxChn = AdjKlClusters.FinalSPMaxChn(GoodClusIDInds);
             end
             
-            % sorted data have been processed by phy
-            % cluster include criteria: good, not noise, fr >=1
-            cgsFile = fullfile(FolderPath,'cluster_info.tsv');
-            [obj.FRIncludeClus,obj.FRIncludeChans,obj.FRUsedClusinds,...
-                obj.FRIncludeClusFRs,obj.ClusterInfoAll] = ClusterGroups_Reads(cgsFile);
-            
-            ChannelDepth = cell2mat(obj.ClusterInfoAll(2:end,7));
-            obj.FRUsedChnDepth = ChannelDepth(obj.FRUsedClusinds);
-            NumGoodClus = length(obj.FRIncludeClus);
-            fprintf('Totally %d number of good units were find.\n',NumGoodClus);
-            obj.RawClusANDchan_ids_All = {obj.FRIncludeClus, obj.FRIncludeChans};
-            % load unit waveform data if saved file exists
-            if exist(fullfile(FolderPath,'UnitwaveformDatas.mat'),'file')
-                waveDatas = load(fullfile(FolderPath,'UnitwaveformDatas.mat'));
-                if size(waveDatas.UnitDatas,2) ~= 2
-                    [~,~] = SpikeWaveFeature_single(obj,0);
-                    waveDatas = load(fullfile(FolderPath,'UnitwaveformDatas.mat'));
-                end
-                obj.UnitWaves = waveDatas.UnitDatas;
-                obj.UnitWaveFeatures = waveDatas.UnitFeatures;
-                
+            GoodClusTypes = AboveThresClusIDs; %SPClusTypes(SPClusGoodClusInds);
+            SessDur = double(obj.Numsamp)/obj.SpikeStrc.sample_rate;
+
+            NumGoodClus = length(GoodClusTypes);
+            GoodClusFRs = zeros(numel(GoodClusTypes),1);
+            for cClus = 1 : NumGoodClus
+                GoodClusFRs(cClus) = sum(obj.SpikeClus == GoodClusTypes(cClus))/SessDur;
             end
+            FRAboveThresInds = GoodClusFRs > 0.01;
+            obj.GoodClusIDs = AboveThresClusIDs(FRAboveThresInds);
+            obj.GoodClusFRs = GoodClusFRs(FRAboveThresInds);
+            obj.GoodClusMaxChn = AboveThresClusMaxChn(FRAboveThresInds);
+
+            ChnAreaStrsStrc = load(fullfile(FolderPath,'Chnlocation.mat'));
+            obj.ChannelAreaStrs = ChnAreaStrsStrc.AlignedAreaStrings;
+
+            
+% % %             % read npy files
+% % %             obj.SpikeClus = readNPY(fullfile(FolderPath, 'spike_clusters.npy'));
+% % %             obj.SpikeTimeSample = readNPY(fullfile(FolderPath, 'spike_times.npy'));
+% % %             obj.SpikeTimes = double(obj.SpikeTimeSample)/obj.SpikeStrc.sample_rate;
+% % %             obj.chnMaps = readNPY(fullfile(FolderPath, 'channel_map.npy'));
+% %             This section had been processed while performing
+% %             spikesorting
+% %             if ~exist(fullfile(FolderPath,'cluster_info.tsv'),'file')
+% %                 
+% %                 FolderPath = obj.ksFolder;
+% %                 binfilepath = obj.binfilePath;
+% %                 SR = obj.SpikeStrc.sample_rate;
+% %                 disp('Constructing cluster info files...\n');
+% %                 ks3_Result2Info_script;
+% %                 %                 warning('Unbale to locate phy processed file.');
+% %                 %                 return;
+% %             end
+            
+% % %             % sorted data have been processed by phy
+% % %             % cluster include criteria: good, not noise, fr >=1
+% % %             cgsFile = fullfile(FolderPath,'cluster_info.tsv');
+% % %             [obj.FRIncludeClus,obj.FRIncludeChans,obj.FRUsedClusinds,...
+% % %                 obj.FRIncludeClusFRs,obj.ClusterInfoAll] = ClusterGroups_Reads(cgsFile);
+% % %             
+% % %             ChannelDepth = cell2mat(obj.ClusterInfoAll(2:end,7));
+% % %             obj.FRUsedChnDepth = ChannelDepth(obj.FRUsedClusinds);
+% % %             NumGoodClus = length(obj.FRIncludeClus);
+% % %             fprintf('Totally %d number of good units were find.\n',NumGoodClus);
+% % %             obj.RawClusANDchan_ids_All = {obj.FRIncludeClus, obj.FRIncludeChans};
+% % %             
+% % %             
+% % %             % load unit waveform data if saved file exists
+% % %             if exist(fullfile(FolderPath,'UnitwaveformDatas.mat'),'file')
+% % %                 waveDatas = load(fullfile(FolderPath,'UnitwaveformDatas.mat'));
+% % %                 if size(waveDatas.UnitDatas,2) ~= 2
+% % %                     [~,~] = SpikeWaveFeature_single(obj,0);
+% % %                     waveDatas = load(fullfile(FolderPath,'UnitwaveformDatas.mat'));
+% % %                 end
+% % %                 obj.UnitWaves = waveDatas.UnitDatas;
+% % %                 obj.UnitWaveFeatures = waveDatas.UnitFeatures;
+% % %                 
+% % %             end
             
         end
         
@@ -442,6 +490,7 @@ classdef NPspikeDataMining
             fprintf('Totally %d number of triggers were detected.\n',length(obj.UsedTrigOnTime{SessTypeInds}));
             
         end
+        
         
         % function used for initial spike time binned calculation
         function obj = TrigPSTH(obj,timeWin,smoothbin,varargin)
