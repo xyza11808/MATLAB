@@ -34,8 +34,11 @@ if ~exist('IsKsCall','var')
 end
 
 if IsKsCall
-    fullpaths = rez.ops.fbinary; % bin file path
-
+    try
+        fullpaths = rez.ops.fbinaryRaw; % check whether raw file path is given
+    catch
+        fullpaths = rez.ops.fbinary; % bin file path
+    end
     ksfolder = fullfile(rez.ops.ksFolderPath,'ks2_5');
     if ~isfolder(ksfolder)
         ksfolder = fullfile(rez.ops.ksFolderPath,'kilosort3');

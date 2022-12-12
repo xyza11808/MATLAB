@@ -1,5 +1,5 @@
 function varargout = ...
-    LDAclassifierFun(X, y, varargin)
+    LDAclassifierFun_unilab(X, y, varargin)
 % default outputs: [DisScore,LDA_Accuracy,TrainANDtestScores,beta]
 % if output number is larger than 4, the fifth output is ShufScores
 
@@ -42,7 +42,9 @@ end
 % TrainLabels = double(rand(100,1) > 0.5);
 % TestData = rand(24,25);
 
-[Alluniqlabel,~,Alltruelabels] = unique(y);
+% [Alluniqlabel,~,Alltruelabels] = unique(y);
+Alluniqlabel = [1;2];
+Alltruelabels = y(:);
 DataMtx = X(TrainInds,:);
 TrainLabels = Alltruelabels(TrainInds);
 TestData = X(TestInds,:);
@@ -50,11 +52,11 @@ TestLabels = Alltruelabels(TestInds);
 %%
 % ref from : https://www.youtube.com/watch?v=moqPyJQHR_s
 
-NumberLabels = length(Alluniqlabel);
-if NumberLabels > 2
-    warning('Currently cannot handled with class more than 2 (%d)',NumberLabels);
-    return;
-end
+% NumberLabels = length(Alluniqlabel);
+% if NumberLabels > 2
+%     warning('Currently cannot handled with class more than 2 (%d)',NumberLabels);
+%     return;
+% end
 
 C1DataInds = TrainLabels == 1;
 C2DataInds = TrainLabels == 2;

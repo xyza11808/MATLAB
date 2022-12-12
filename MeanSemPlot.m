@@ -24,14 +24,14 @@ if ~iscell(data)
         MeanTrace = (sgolayfilt(data,3,7));
         TraceSem = zeros(size(MeanTrace));
     elseif nROws == 2
-        MeanTrace = (sgolayfilt(mean(data),3,7));
+        MeanTrace = (sgolayfilt(mean(data,'omitnan'),3,7));
         TraceSem = zeros(size(MeanTrace));
     else
         % MeanTrace = (smooth(mean(data),7))';
-        MeanTrace = (sgolayfilt(mean(data),3,7));
+        MeanTrace = (sgolayfilt(mean(data,'omitnan'),3,7));
         % MeanTrace = mean(data);
         % MeanTrace = wdenoise(mean(data));
-        TraceSem = std(data)/sqrt(nROws) * SEMratio; 
+        TraceSem = std(data,'omitnan')/sqrt(nROws) * SEMratio; 
     end
 else
     % if the input data is cell format, means the input data 

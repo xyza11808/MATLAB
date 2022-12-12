@@ -1,4 +1,4 @@
-function IsTopdownShow = SlicedAreaNamePlots(PlotAx, sliceName, LateralPos, uacr, colors, st, av, tpidx)
+function IsAreaNotShow = SlicedAreaNamePlots(PlotAx, sliceName, LateralPos, uacr, colors, st, av, tpidx)
 
 if strcmpi(sliceName, 'sagittal')
     sliceName = 'sagittal'; 
@@ -6,7 +6,7 @@ if strcmpi(sliceName, 'sagittal')
     slicePos = LateralPos; 
     avs = squeeze(av(:,:,slicePos))';
     
-    IsSagitalShow = plotRLMBChelp(PlotAx, avs, uacr, colors, st, tpidx);
+    IsAreaNotShow = plotRLMBChelp(PlotAx, avs, uacr, colors, st, tpidx);
 end
 if strcmpi(sliceName, 'topdown')
     % sagittal
@@ -17,7 +17,7 @@ if strcmpi(sliceName, 'topdown')
     % avs = avs(:,1:size(avs,2)/2);
     slicePos = LateralPos;
     
-    IsTopdownShow = plotRLMBChelp(PlotAx, avs, uacr, colors, st, tpidx);
+    IsAreaNotShow = plotRLMBChelp(PlotAx, avs, uacr, colors, st, tpidx);
 end
 
 
@@ -34,6 +34,7 @@ if isstruct(tpidx)
     AreaNameStrs = fieldnames(tpidx);
     IsAreaStrctGiven = 1;
 end
+AreaCents = cell(numel(uacr),1);
 for q = 1:numel(uacr)
     if IsAreaStrctGiven
         uIdx = strcmpi(AreaNameStrs, uacr{q});
@@ -50,6 +51,7 @@ for q = 1:numel(uacr)
         
         c = contourc(double(ismember(avs,below)), [0.5 0.5]);
         coordsReg = makeSmoothCoords(c);
+        CoordCenters = cell(numel(coordsReg),3);
 %         title(ax, uacr{q});
         for cidx = 1:numel(coordsReg)
             h = patch(ax, coordsReg(cidx).x,coordsReg(cidx).y, thisColor); hold on;
@@ -57,14 +59,21 @@ for q = 1:numel(uacr)
             
             CoordCentx = mean(coordsReg(cidx).x);
             CoordCenty = mean(coordsReg(cidx).y);
-            text(CoordCentx,CoordCenty,uacr{q},'HorizontalAlignment','cent','FontSize',10);
+            CoordCenters(cidx,:) = {CoordCentx, CoordCenty, uacr{q}};
+%             text(CoordCentx,CoordCenty,uacr{q},'HorizontalAlignment','cent','FontSize',10);
         end                
-        
+        AreaCents(q) = {CoordCenters};
     else
        IsAreaShow(q) = 1; 
         
     end
+    
 end
+fprintf('All Areas plotted.\n');
+AllAreaCents = cat(1,AreaCents{:});
+AllAreaCents_x = cat(1,AllAreaCents{:,1});
+AllAreaCents_y = cat(1,AllAreaCents{:,2});
+text(ax,AllAreaCents_x,AllAreaCents_y,AllAreaCents(:,3),'HorizontalAlignment','cent','FontSize',10);
 
 % colorbar
 % % add annotations last so they're on top

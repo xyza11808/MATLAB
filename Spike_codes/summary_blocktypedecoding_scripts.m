@@ -1,7 +1,7 @@
 cclr
 
-AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -27,8 +27,8 @@ Areawise_popuSVMpredInfo = cell(NumUsedSess,NumAllTargetAreas,3);
 Areawise_BehavChoiceDiff = cell(NumUsedSess,NumAllTargetAreas);
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS};
-%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup');
-    cSessPath = strrep(SessionFolders{cS},'F:','E:\NPCCGs');
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup');
+%     cSessPath = strrep(SessionFolders{cS},'F:','E:\NPCCGs');
     
     SessblocktypeDecfile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktype','PopudecodingDatas.mat');
     SessUnitAUCfile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktype','SingleUnitAUC.mat');
@@ -111,8 +111,8 @@ for cS = 1 :  NumUsedSess
 end
 
 %% summary figure plots saved position
-sumfigsavefolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\blocktype_baseline_encoding';
-% sumfigsavefolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\blocktype_baseline_SVMpred';
+% sumfigsavefolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\blocktype_baseline_encoding';
+sumfigsavefolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\blocktype_baseline_encoding';
 if ~isfolder(sumfigsavefolder)
     mkdir(sumfigsavefolder);
 end
@@ -132,7 +132,7 @@ AllSVMthresDatas_Vec = cell2mat(AllAreaSess_SVMThres(NonEmptyInds));
 AllSVMnumberDatas_Vec = cell2mat(AllAreaSess_SVMunitnums(NonEmptyInds));
 
 SVMperfSigInds = AllSVMperfDatas_Vec > AllSVMthresDatas_Vec;
-
+%%
 hf = figure('position',[100 100 840 640]);
 hold on
 % three dimensional plot, each dimension is area, unitnum, SVMperf
@@ -142,8 +142,8 @@ plot3(AreaInds(SVMperfSigInds), AllSVMnumberDatas_Vec(SVMperfSigInds), ...
 plot3(AreaInds(~SVMperfSigInds), AllSVMnumberDatas_Vec(~SVMperfSigInds), ...
     AllSVMperfDatas_Vec(~SVMperfSigInds),'o','MarkerSize',12,...
     'MarkerFaceColor',[.7 .7 .7],'MarkerEdgeColor','b','linewidth',1.4);
-set(gca,'xlim',[0 NumAllTargetAreas],'xtick',1:NumAllTargetAreas-1,...
-    'xticklabel',BrainAreasStr(1:end-1));
+set(gca,'xlim',[0 NumAllTargetAreas],'xtick',1:NumAllTargetAreas,...
+    'xticklabel',BrainAreasStr);
 grid on
 xlabel('Brain areas');
 ylabel('Unit Numbers');
@@ -153,6 +153,73 @@ title('SVM decoding perf')
 %%
 saveas(hf,fullfile(sumfigsavefolder,'SVMperf 3d plot save'));
 saveas(hf,fullfile(sumfigsavefolder,'SVMperf 3d plot save'),'png');
+
+%% area decoding perf boxplot
+[AreaIndsTypes,~,AreaContinueIndex] = unique(AreaInds);
+AreaSessNum = accumarray(AreaContinueIndex,1);
+MinimumSessNum = 4;
+UsedAreaIndsTypes = AreaIndsTypes(AreaSessNum > MinimumSessNum);
+UsedAreaSessNum = AreaSessNum(AreaSessNum > MinimumSessNum);
+UsedAreaNameStr = BrainAreasStr(UsedAreaIndsTypes);
+
+NumUsedAreas = length(UsedAreaIndsTypes);
+UsedAreaColors = linspecer(NumUsedAreas);
+
+AreaPerfScales = zeros(NumUsedAreas,5);
+AreaUnitNums = zeros(NumUsedAreas,3);
+AreaSessNum = zeros(NumUsedAreas, 1);
+% UAPlotDatas = cell(NumUsedAreas,1);
+for cUA = 1 : NumUsedAreas
+    cUA_index = UsedAreaIndsTypes(cUA);
+    cUA_SVMPerfInds = AreaInds == cUA_index;
+    
+    cUA_SVMPerfValues = AllSVMperfDatas_Vec(cUA_SVMPerfInds);
+    cUA_SVMSessUnitNum = AllSVMnumberDatas_Vec(cUA_SVMPerfInds);
+    
+    cUA_plotDatas = prctile(cUA_SVMPerfValues,[10 25 50 75 90]);
+    AreaPerfScales(cUA,:) = cUA_plotDatas;
+    AreaUnitNums(cUA,:) = prctile(cUA_SVMSessUnitNum,[10 50 90]);
+end
+
+[~,SortInds] = sort(AreaPerfScales(:,3),'descend');
+SortAreaPerfScales = AreaPerfScales(SortInds,:);
+SortAreaUnitNums = AreaUnitNums(SortInds,:);
+SortAreaNameStr = UsedAreaNameStr(SortInds);
+SortAreaSessNum = UsedAreaSessNum(SortInds);
+hf_SVMperf2 = figure('position',[100 100 980 260]);
+ax1 = subplot(211);
+hold on
+
+ax2 = subplot(212);
+hold on
+
+for cUA = 1 : NumUsedAreas
+    cUA_plotDatas = SortAreaPerfScales(cUA,:);
+    patch(ax1,[cUA-0.3 cUA+0.3 cUA+0.3 cUA-0.3],cUA_plotDatas([2 2 4 4]),1,'FaceColor',UsedAreaColors(cUA,:),...
+        'EdgeColor','none','faceAlpha',0.9);
+    line(ax1,[cUA-0.3 cUA+0.3],cUA_plotDatas([3,3]),'Color','k','linewidth',1.4);
+    
+    bar(ax2,cUA,SortAreaUnitNums(cUA,2),0.6,'FaceColor',UsedAreaColors(cUA,:),'edgeColor','none');
+end
+AreaxInds = 1:NumUsedAreas;
+errorbar(ax1,AreaxInds,SortAreaPerfScales(:,3),SortAreaPerfScales(:,3)-SortAreaPerfScales(:,1),...
+    SortAreaPerfScales(:,5)-SortAreaPerfScales(:,3),'ko','linewidth',0.6);
+text(ax1,AreaxInds,SortAreaPerfScales(:,5)+0.05,cellstr(num2str(SortAreaSessNum(:),'%d')),...
+    'HorizontalAlignment','center','Color','m','FontSize',8);
+errorbar(ax2,AreaxInds,SortAreaUnitNums(:,2),SortAreaUnitNums(:,2)-SortAreaUnitNums(:,1),...
+    SortAreaUnitNums(:,3)-SortAreaUnitNums(:,2),'ko','linewidth',0.6);
+
+set(ax1,'xtick',[],'xlim',[0 NumUsedAreas+1]);
+ylabel(ax1,'SVM performance');
+set(ax2,'xtick',AreaxInds,'xticklabel',SortAreaNameStr,'xlim',[0 NumUsedAreas+1]);
+ylabel(ax2,'Decoder unit size');
+
+%%
+saveName_SVM = fullfile(sumfigsavefolder,'Area SVM decoding of BT with SessNum');
+saveas(hf_SVMperf2,saveName_SVM);
+print(hf_SVMperf2,saveName_SVM,'-dpng','-r350');
+print(hf_SVMperf2,saveName_SVM,'-dpdf','-bestfit');
+
 
 %% anova analysis 
 tbl = table(AllSVMperfDatas_Vec,AreaInds,AllSVMnumberDatas_Vec,...

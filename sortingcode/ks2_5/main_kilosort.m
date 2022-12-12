@@ -4,7 +4,7 @@
 % addpath('D:\GitHub\npy-matlab') % for converting to Phy
 % rootZ = 'G:\Spikes\Sample'; % the raw data binary file is in this folder
 % rootH = 'H:\'; % path to temporary binary file (same size as data, should be on fast SSD)
-rootH = fullfile(rootZ,'temp');
+% rootH = fullfile(rootZ,'temp');
 if ~isdir(rootH)
     mkdir(rootH);
 end
@@ -35,13 +35,20 @@ end
 % find the binary file
 fs          = [dir(fullfile(rootZ, '*.ap.bin')) dir(fullfile(rootZ, '*.dat'))];
 ops.fbinary = fullfile(rootZ, fs(1).name);
+ops.ksFolderPath = rootZ;
+
+fsRaw          = dir(fullfile(rootRaw, '*.ap.bin'));
+ops.fbinaryRaw = fullfile(rootRaw, fsRaw(1).name);
+
+% ops.ksFolderPath = rootZ;
 
 % extract trigger times
 try
-    ExtractTriggerInfo(ops);
+    ExtractTriggerInfo(ops,1);
 catch
     fprintf('Trigger info extraction error.\n');
 end
+
 %%
 % preprocess data to create temp_wh.dat
 rez = preprocessDataSub(ops);
@@ -100,11 +107,6 @@ for i = 1:numel(rez_fields)
     end
 end
 
-% save final results as rez2
-fprintf('Saving final results in rez2...\n')
-fname = fullfile(rootZ, 'rez2.mat');
-save(fname, 'rez', '-v7.3');
-
 %% save figures
 % save component figure
 
@@ -135,21 +137,35 @@ rmdir(rootH,'s');
 %% construct group info file
 FolderPath = rootZ;
 SR = rez.ops.fs;
-disp('Constructing cluster info files...\n');
+fprintf('Constructing cluster info files...\n');
 ks3_Result2Info_script;
 
 
 %% calculate unit waveform for each unit
+if exist(ops.fbinaryRaw,'file')
+    rez.ops.IsRawfileUsed = 1;
+else
+    rez.ops.IsRawfileUsed = 0;
+end
 [UsedClus_IDs,~] = SpikeWaveFeature_single(rez);
 
-%% calculate the ccg for each clusters
-spdata.SpikeClus = readNPY(fullfile(rez.ops.ksFolderPath,'ks2_5','spike_clusters.npy'));
-spdata.SpikeTimeSample = readNPY(fullfile(rez.ops.ksFolderPath,'ks2_5','spike_times.npy'));
-spdata.ksfolder = rootZ;
-spdata.sample_rate = rez.ops.fs;
-spdata.UsedClus_IDs = UsedClus_IDs;
+%%
 
-refractoryPeriodCal_sg(spdata,[],2,1e-3); % [] indicates all clustes
+TotalSamples = rez.ops.sampsToRead;
+% save final results as rez2
+fprintf('Saving final results in rez2...\n')
+fname = fullfile(rootZ, 'rez2.mat');
+save(fname, 'rez','TotalSamples', '-v7.3');
+
+
+% %% calculate the ccg for each clusters
+% spdata.SpikeClus = readNPY(fullfile(rez.ops.ksFolderPath,'ks2_5','spike_clusters.npy'));
+% spdata.SpikeTimeSample = readNPY(fullfile(rez.ops.ksFolderPath,'ks2_5','spike_times.npy'));
+% spdata.ksfolder = rootZ;
+% spdata.sample_rate = rez.ops.fs;
+% spdata.UsedClus_IDs = UsedClus_IDs;
+% 
+% refractoryPeriodCal_sg(spdata,[],2,1e-3); % [] indicates all clustes
 
 %% calculate LFP signals from *.lf.bin file
 myKsDir = fullfile(rootZ,'..');

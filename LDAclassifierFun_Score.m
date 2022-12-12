@@ -1,20 +1,28 @@
 function [D_sqr,PerfAccu,TrainScores] = ...
-    LDAclassifierFun_Score(X, y, beta, BoundScore)
-if ~exist('BoundScore','var')
-    BoundScore = 0;
+    LDAclassifierFun_Score(X, y, beta, varargin)
+% have to make sure the labels are 1 and 2 while calling this function, so
+% that we dont need to use unique function to increase time cost
+
+% if ~exist('BoundScore','var')
+%     BoundScore = 0;
+% end
+ BoundScore = 0;
+if nargin > 3
+    if ~isempty(varargin{1})
+        BoundScore = varargin{1};
+    end
 end
-
-[Alluniqlabel,~,Alltruelabels] = unique(y);
-
+% [Alluniqlabel,~,Alltruelabels] = unique(y);
+Alltruelabels = y(:);
 DataMtx = X;
 %%
 % ref from : https://www.youtube.com/watch?v=moqPyJQHR_s
 
-NumberLabels = length(Alluniqlabel);
-if NumberLabels > 2
-    warning('Currently cannot handled with class more than 2 (%d)',NumberLabels);
-    return;
-end
+% NumberLabels = length(Alluniqlabel);
+% if NumberLabels > 2
+%     warning('Currently cannot handled with class more than 2 (%d)',NumberLabels);
+%     return;
+% end
 
 C1DataInds = Alltruelabels == 1;
 C2DataInds = Alltruelabels == 2;
@@ -22,8 +30,8 @@ C2DataInds = Alltruelabels == 2;
 C1_rawData = DataMtx(C1DataInds,:);
 C2_rawData = DataMtx(C2DataInds,:);
 
-C1_Avg = mean(C1_rawData);
-C2_Avg = mean(C2_rawData);
+C1_Avg = sum(C1_rawData)/size(C1_rawData,1);
+C2_Avg = sum(C2_rawData)/size(C2_rawData,1);
 
 C1_cov = cov(C1_rawData);
 C2_cov = cov(C2_rawData);
@@ -45,10 +53,11 @@ TrainScores = (DataMtx - (C1_Avg + C2_Avg)/2)*beta;  % training data score, sign
 % BoundScore = log(C1_SampleNum/C2_SampleNum);
 
 Trainc1_scoreInds = TrainScores > BoundScore;
-TrainClassLabels = nan(numel(Alltruelabels),1);
+NumAlltruelabels = numel(Alltruelabels);
+TrainClassLabels = nan(NumAlltruelabels,1);
 TrainClassLabels(Trainc1_scoreInds) = 1;
 TrainClassLabels(~Trainc1_scoreInds) = 2;
-PerfAccu = mean(Alltruelabels == TrainClassLabels)*100;
+PerfAccu = sum(Alltruelabels == TrainClassLabels)/NumAlltruelabels*100;
 
 
 
