@@ -69,9 +69,9 @@ C2_rawData = DataMtx(C2DataInds,:);
 
 C1_Avg = sum(C1_rawData)/size(C1_rawData,1);
 C2_Avg = sum(C2_rawData)/size(C2_rawData,1);
-
-C1_cov = cov(C1_rawData);
-C2_cov = cov(C2_rawData);
+UnitNum = size(DataMtx, 2);
+C1_cov = cov_cus(C1_rawData,[C1_SampleNum, UnitNum]);
+C2_cov = cov_cus(C2_rawData,[C2_SampleNum, UnitNum]);
 %%
 MtxStableTerm = 1e-6; %1e-6; % served to stabilize matrix inversion
 pooled_cov = (C1_SampleNum*C1_cov + C2_SampleNum*C2_cov)/(C1_SampleNum + C2_SampleNum);
@@ -113,11 +113,14 @@ PredClassLabels(~Abovec1_scoreInds) = Alluniqlabel(2);
 C1_data_test = TestData(TestLabels == 1,:);
 C2_data_test = TestData(TestLabels == 2,:);
 
+C1_testNum = sum(TestLabels == 1);
+C2_testNum = sum(TestLabels == 2);
+
 C1_Avg_test = sum(C1_data_test)/size(C1_data_test,1);
 C2_Avg_test = sum(C2_data_test)/size(C2_data_test,1);
 
-C1_cov_test = cov(C1_data_test);
-C2_cov_test = cov(C2_data_test);
+C1_cov_test = cov_cus(C1_data_test ,[C1_testNum, UnitNum]);
+C2_cov_test = cov_cus(C2_data_test ,[C2_testNum, UnitNum]);
 
 Cov_test_Avg = (C1_cov_test + C2_cov_test)/2;
 

@@ -1,4 +1,6 @@
-function [RepeatAvgScores, RepeatAvgPerfs] = TrEqualSampleinfo(Datas, labelNumInds, ratio)
+function [RepeatAvgScores, RepeatAvgPerfs] = TrEqualSampleinfo_3d(Datas, labelNumInds, ratio)
+% same function as TrEqualSampleinfo, but to handling 3d input datas
+
 % the trial type labels will firstly equal sampled, and then using the
 % ratio to generate train and test dataset
 % ####################################################################
@@ -35,11 +37,12 @@ label1RandRatioThres = prctile(label1RandData,Label1TrainSampleRatio*100,2);
 label2RandRatioThres = prctile(label2RandData,Label2TrainSampleRatio*100,2);
 %%
 ShufwithinRepeats = 10;
+BinSize = size(Datas,3);
 TotalrandData = rand(TotalTrNums, ShufwithinRepeats, NumRepeats);
 [~, randDataSortInds] = sort(TotalrandData);
 AllTrTrainInds = false(numel(labelNumInds),1);
-AllRepeatScores = zeros(NumRepeats, 2);
-AllRepeatPerfs = zeros(NumRepeats, 2);
+AllRepeatScores = zeros(BinSize, 2, NumRepeats);
+AllRepeatPerfs = zeros(BinSize, 2,NumRepeats);
 AllShufPerfs = cell(NumRepeats,1);
 for cR = 1 : NumRepeats
     cRTrainInds = AllTrTrainInds;
@@ -48,30 +51,30 @@ for cR = 1 : NumRepeats
     AllTrainLabelIndex = [cRLabel1_usedTrIndex(:);cRLabel2_usedTrIndex(:)];
     cRTrainInds(AllTrainLabelIndex) = true;
     
-    [DisScores,MdPerfs,~,beta] = LDAclassifierFun_unilab(Datas, ...
+    [DisScores,MdPerfs,~,beta] = LDAclassifierFun_3d(Datas, ...
             labelNumInds, {cRTrainInds,~cRTrainInds});
-    AllRepeatScores(cR,:) = DisScores;
-    AllRepeatPerfs(cR,:) = MdPerfs;
+    AllRepeatScores(:,:,cR) = DisScores;
+    AllRepeatPerfs(:,:,cR) = MdPerfs;
     
 %     randSampleInds = rand(ShufwithinRepeats,TotalTrNums);
-    ShufScoreANDperf = zeros(ShufwithinRepeats,2);
+    ShufScoreANDperf = zeros(ShufwithinRepeats,BinSize,2);
     for cShuf = 1 : ShufwithinRepeats
 %         [~,sortInds] = sort(randSampleInds(cShuf,:));
         sortInds = randDataSortInds(:,cShuf,cR);
         ShufLabels = labelNumInds(sortInds);
-        [Score,Perf,~] = LDAclassifierFun_Score(Datas(~cRTrainInds,:),...
+        [Score,Perf,~] = LDAclassifierFun_Score_3d(Datas(~cRTrainInds,:,:),...
             ShufLabels(~cRTrainInds),beta);
-        ShufScoreANDperf(cShuf,:) = [Score,Perf];
+        ShufScoreANDperf(cShuf,:,:) = [Score,Perf];
     end
     AllShufPerfs{cR} = ShufScoreANDperf;
 end
 ShufPerfsAll = cat(1,AllShufPerfs{:});
-ShufThres = prctile(ShufPerfsAll,99);
+ShufThres = squeeze(prctile(ShufPerfsAll,99));
 % RepeatAvgScores = [mean(AllRepeatScores);std(AllRepeatScores)/sqrt(NumRepeats)];
 % RepeatAvgPerfs = [mean(AllRepeatPerfs);std(AllRepeatPerfs)/sqrt(NumRepeats)];
 
-RepeatAvgScores = [mean(AllRepeatScores),ShufThres(1)];
-RepeatAvgPerfs = [mean(AllRepeatPerfs),ShufThres(2)];
+RepeatAvgScores = [mean(AllRepeatScores,3),ShufThres(:,1)];
+RepeatAvgPerfs = [mean(AllRepeatPerfs,3),ShufThres(:,2)];
 
 
 

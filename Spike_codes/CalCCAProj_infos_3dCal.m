@@ -44,18 +44,21 @@ TrialVarDatasPermu = cellfun(@(x) permute(x,[2, 1, 3]),TrialVarDatas,'un',0);
 % fourTypeRawDatas = {BlockVarDatasPermu{1},TrialVarDatasPermu{1},BlockVarDatasPermu{3},TrialVarDatasPermu{3}};
 fourTypeValidDatas = {BlockVarDatasPermu{2},TrialVarDatasPermu{2},BlockVarDatasPermu{4},TrialVarDatasPermu{4}};
 NumPairs = size(TypeRespCalResults,1);
-AllPairInfos = cell(NumPairs, 2);
+AllPairInfos = cell(NumPairs, 4);
 %%
 CalDataTypeStrs = {'Base_BVar','Af_BVar','Base_TrVar','Af_TrVar'};
-
-for cPairInds = 1:1 %NumPairs
+tic
+for cPairInds = 1:NumPairs
     cPairUsedAreaInds = PairAreaInds(cPairInds,:);
     cPair_Area1_unitInds = ExistField_ClusIDs{cPairUsedAreaInds(1),2};
     cPair_Area2_unitInds = ExistField_ClusIDs{cPairUsedAreaInds(2),2};
     cPairRepeatCals = TypeRespCalResults(cPairInds,:); % Base_BVar,Af_BVar,Base_TrVar,Af_TrVar
     
-    TypeDataCalInfo_Choice = cell(1, 4);
-    TypeDataCalInfo_BT = cell(1, 4);
+    TypeDataCalInfo_Choice_A1 = cell(1, 4);
+    TypeDataCalInfo_BT_A1 = cell(1, 4);
+    TypeDataCalInfo_Choice_A2 = cell(1, 4);
+    TypeDataCalInfo_BT_A2 = cell(1, 4);
+    
     % valid dataset already contains raw data part
     for cDataType = 1 : 4
         cData_cals = cPairRepeatCals{cDataType};
@@ -68,9 +71,11 @@ for cPairInds = 1:1 %NumPairs
         NumMaxComponents = min(size(cTypeValidData_A1, 1), size(cTypeValidData_A2, 1));
         NumMaxComponents = min(NumMaxComponents,10); % maximumly top ten component is calculated
         nRepeats = size(cData_cals, 1);
-        RepeatInfos_choice = zeros(NumMaxComponents, NumTimeBin,3,nRepeats);
-        RepeatInfos_Ch = zeros(NumMaxComponents, NumTimeBin,3,nRepeats);
-        for cRepeat = 1 :  nRepeats
+        RepeatInfos_choice_A1 = zeros(NumMaxComponents, NumTimeBin,3,nRepeats);
+        RepeatInfos_choice_A2 = zeros(NumMaxComponents, NumTimeBin,3,nRepeats);
+        RepeatInfos_BT_A1 = zeros(NumMaxComponents, NumTimeBin,3,nRepeats);
+        RepeatInfos_BT_A2 = zeros(NumMaxComponents, NumTimeBin,3,nRepeats);
+        parfor cRepeat = 1 :  nRepeats
             %         cRepeat = 1;
             cRCorrCoefs = cData_cals(cRepeat,:);
             %     {A1_base, A2_base, R_base, SampleR, cat(2,FrameCorrs{:}), cat(2,ShufCorrs{:})};
@@ -97,43 +102,51 @@ for cPairInds = 1:1 %NumPairs
             ValidProjDataInfo_A1 = zeros(NumMaxComponents, NumTimeBin, 3, 2, 2);
             ValidProjDataInfo_A2 = zeros(NumMaxComponents, NumTimeBin, 3, 2, 2);
             for cComp = 1 : NumMaxComponents
-                for cTimeBin = 1 : NumTimeBin
+%                 for cTimeBin = 1 : NumTimeBin
                     
                     % calculate for valid datas
-                    cProjDatas_cA1 = cA1_proj_Valid(:, cComp,cTimeBin);
-                    [RepeatAvgScores_BT, RepeatAvgPerfs_BT] = TrEqualSampleinfo(cProjDatas_cA1, BlockLabelInds, 0.6);
-                    [RepeatAvgScores_Ch, RepeatAvgPerfs_Ch] = TrEqualSampleinfo(cProjDatas_cA1, ChoiceLabelInds, 0.6);
-                    ValidProjDataInfo_A1(cComp, cTimeBin, :, 1, 1) = RepeatAvgScores_BT;
-                    ValidProjDataInfo_A1(cComp, cTimeBin, :, 2, 1) = RepeatAvgPerfs_BT;
-                    ValidProjDataInfo_A1(cComp, cTimeBin, :, 1, 2) = RepeatAvgScores_Ch;
-                    ValidProjDataInfo_A1(cComp, cTimeBin, :, 2, 2) = RepeatAvgPerfs_Ch;
+                    cProjDatas_cA1 = cA1_proj_Valid(:, cComp,:);
+                    [RepeatAvgScores_BT, RepeatAvgPerfs_BT] = TrEqualSampleinfo_3d(cProjDatas_cA1, BlockLabelInds, 0.6);
+                    [RepeatAvgScores_Ch, RepeatAvgPerfs_Ch] = TrEqualSampleinfo_3d(cProjDatas_cA1, ChoiceLabelInds, 0.6);
+                    ValidProjDataInfo_A1(cComp, :, :, 1, 1) = RepeatAvgScores_BT;
+                    ValidProjDataInfo_A1(cComp, :, :, 2, 1) = RepeatAvgPerfs_BT;
+                    ValidProjDataInfo_A1(cComp, :, :, 1, 2) = RepeatAvgScores_Ch;
+                    ValidProjDataInfo_A1(cComp, :, :, 2, 2) = RepeatAvgPerfs_Ch;
                     
-                    cProjDatas_cA2 = cA2_proj_Valid(:, cComp,cTimeBin);
-                    [A2RepeatAvgScores_BT, A2RepeatAvgPerfs_BT] = TrEqualSampleinfo(cProjDatas_cA2, BlockLabelInds, 0.6);
-                    [A2RepeatAvgScores_Ch, A2RepeatAvgPerfs_Ch] = TrEqualSampleinfo(cProjDatas_cA2, ChoiceLabelInds, 0.6);
-                    ValidProjDataInfo_A2(cComp, cTimeBin, :, 1, 1) = A2RepeatAvgScores_BT;
-                    ValidProjDataInfo_A2(cComp, cTimeBin, :, 2, 1) = A2RepeatAvgPerfs_BT;
-                    ValidProjDataInfo_A2(cComp, cTimeBin, :, 1, 2) = A2RepeatAvgScores_Ch;
-                    ValidProjDataInfo_A2(cComp, cTimeBin, :, 2, 2) = A2RepeatAvgPerfs_Ch;
+                    cProjDatas_cA2 = cA2_proj_Valid(:, cComp,:);
+                    [A2RepeatAvgScores_BT, A2RepeatAvgPerfs_BT] = TrEqualSampleinfo_3d(cProjDatas_cA2, BlockLabelInds, 0.6);
+                    [A2RepeatAvgScores_Ch, A2RepeatAvgPerfs_Ch] = TrEqualSampleinfo_3d(cProjDatas_cA2, ChoiceLabelInds, 0.6);
+                    ValidProjDataInfo_A2(cComp, :, :, 1, 1) = A2RepeatAvgScores_BT;
+                    ValidProjDataInfo_A2(cComp, :, :, 2, 1) = A2RepeatAvgPerfs_BT;
+                    ValidProjDataInfo_A2(cComp, :, :, 1, 2) = A2RepeatAvgScores_Ch;
+                    ValidProjDataInfo_A2(cComp, :, :, 2, 2) = A2RepeatAvgPerfs_Ch;
                     
-                end
+%                 end
             end
-            A1_usedInfoData_BT = ValidProjDataInfo_A1(:,:,:,1,1); % only choice score is seprated
+            A1_usedInfoData_BT = ValidProjDataInfo_A1(:,:,:,1,1); % only score is seprated
             A1_usedInfoData_Ch = ValidProjDataInfo_A1(:,:,:,1,2);
             
-            RepeatInfos_choice(:,:,:,cRepeat) = A1_usedInfoData_BT;
-            RepeatInfos_Ch(:,:,:,cRepeat) = A1_usedInfoData_Ch;
+            A2_usedInfoData_BT = ValidProjDataInfo_A2(:,:,:,1,1); % only score is seprated
+            A2_usedInfoData_Ch = ValidProjDataInfo_A2(:,:,:,1,2);
+            
+            RepeatInfos_choice_A1(:,:,:,cRepeat) = A1_usedInfoData_Ch;
+            RepeatInfos_choice_A2(:,:,:,cRepeat) = A2_usedInfoData_Ch;
+            RepeatInfos_BT_A1(:,:,:,cRepeat) = A1_usedInfoData_BT;
+            RepeatInfos_BT_A2(:,:,:,cRepeat) = A2_usedInfoData_BT;
         end
         
-        TypeDataCalInfo_BT{cDataType} = mean(RepeatInfos_choice, 4); % train test and threshold
-        TypeDataCalInfo_Choice{cDataType} = mean(RepeatInfos_Ch, 4);
-        
+        TypeDataCalInfo_BT_A1{cDataType} = mean(RepeatInfos_BT_A1, 4); % train test and threshold
+        TypeDataCalInfo_Choice_A1{cDataType} = mean(RepeatInfos_choice_A1, 4);
+        TypeDataCalInfo_BT_A2{cDataType} = mean(RepeatInfos_BT_A2, 4); % train test and threshold
+        TypeDataCalInfo_Choice_A2{cDataType} = mean(RepeatInfos_choice_A2, 4);
     end
     
     % cPairTypeInfos = [TypeDataCalInfo_BT,TypeDataCalInfo_Choice];
     
-    AllPairInfos(cPairInds,:) = {TypeDataCalInfo_BT,TypeDataCalInfo_Choice};
+    AllPairInfos(cPairInds,:) = {TypeDataCalInfo_BT_A1,TypeDataCalInfo_BT_A2...
+        TypeDataCalInfo_Choice_A1,TypeDataCalInfo_Choice_A2}; % A1_info_BT,A2_info_BT,A1_info_choice,A2_info_choice
 end
+toc
 %%
 savefilename = fullfile(ksfolder,'jeccAnA','ProjDataInfo.mat');
 save(savefilename,'AllPairInfos','PairAreaInds','ExistField_ClusIDs','-v7.3');

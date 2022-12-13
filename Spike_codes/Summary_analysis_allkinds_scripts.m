@@ -3750,12 +3750,39 @@ end
 
 
 %%
-PlotEdges = CorrDiffValuesNor(:,1,1) > 0.05;
-G1_sig = graph(PairAreaStrs(PlotEdges,1),PairAreaStrs(PlotEdges,2),CorrDiffValuesNor(PlotEdges,1,1));
-figure;
-hg_sig = plot(G1_sig,'layout','circle');
-hg_sig.LineWidth = (CorrDiffValuesNor(PlotEdges,1,1) - min(CorrDiffValuesNor(PlotEdges,1,1)))*20+0.2;
+AllnodeStr = unique(PairAreaStrs(:));
+AFPlotDatas = CorrDiffValuesNor(:,2,1);
+% AFG1_sig = graph(PairAreaStrs(:,1),PairAreaStrs(:,2));
+AFPlotEdges =  AFPlotDatas > 0.05;
+AFG1_sig = graph(PairAreaStrs(AFPlotEdges,1),PairAreaStrs(AFPlotEdges,2),AFPlotDatas(AFPlotEdges));
+IsNodeExists = ismember(AllnodeStr,table2cell(AFG1_sig.Nodes));
+AFG1_sig = addnode(AFG1_sig,AllnodeStr(~IsNodeExists));
+AFh = figure;
+AFhg_sig = plot(AFG1_sig,'layout','circle');
+AFhg_sig.LineWidth = (AFPlotDatas(AFPlotEdges) - min(AFPlotDatas(AFPlotEdges)))*20+0.2;
 
+BasePlotDatas = CorrDiffValuesNor(:,1,1);
+BasePlotEdges =  BasePlotDatas > 0.05;
+% BaseG1_sig = graph(PairAreaStrs(:,1),PairAreaStrs(:,2));
+BaseG1_sig = graph(PairAreaStrs(BasePlotEdges,1),PairAreaStrs(BasePlotEdges,2),BasePlotDatas(BasePlotEdges));
+IsNodeExists2 = ismember(AllnodeStr,table2cell(BaseG1_sig.Nodes));
+BaseG1_sig = addnode(BaseG1_sig,AllnodeStr(~IsNodeExists2));
+
+Baseh = figure;
+Basehg_sig = plot(BaseG1_sig,'layout','circle');
+Basehg_sig.LineWidth = (BasePlotDatas(BasePlotEdges) - min(BasePlotDatas(BasePlotEdges)))*20+0.2;
+%%
+AfNodeLabels = AFhg_sig.NodeLabel;
+BaseNodeLabels = Basehg_sig.NodeLabel;
+
+[~, Inds] = ismember(BaseNodeLabels, AfNodeLabels);
+
+Af_xData = AFhg_sig.XData;
+Af_yData = AFhg_sig.YData;
+
+Basehg_sig.XData = Af_xData(Inds);
+Basehg_sig.YData = Af_yData(Inds);
+% Basehg_sig.NodeLabel = AfNodeLabels(Inds);
 %%
 NumPairSess = size(BaseBVarDatas, 1);
 close;
