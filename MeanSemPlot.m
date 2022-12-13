@@ -81,7 +81,7 @@ end
 hold on;
 hp = patch(xpatch,ypatch,1,'facecolor',shadowColor,...
               'edgecolor','none',...
-              'facealpha',0.4);
+              'facealpha',0.3);
 hline = plot(xticks,MeanTrace,varargin{:});
 if nargout > 0
     varargout{1} = h;

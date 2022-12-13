@@ -1,5 +1,5 @@
 
-clearvars behavResults TypeRespCalResults TypeAreaPairInfo BlockVarDatas TrialVarDatas
+clearvars behavResults TypeRespCalResults TypeAreaPairInfo BlockVarDatas TrialVarDatas PairAreaInds AllPairInfos
 
 load(fullfile(ksfolder,'NewClassHandle2.mat'), 'behavResults');
 load(fullfile(ksfolder,'jeccAnA','CCACalDatas.mat'));

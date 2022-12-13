@@ -3783,6 +3783,64 @@ Af_yData = AFhg_sig.YData;
 Basehg_sig.XData = Af_xData(Inds);
 Basehg_sig.YData = Af_yData(Inds);
 % Basehg_sig.NodeLabel = AfNodeLabels(Inds);
+
+%%
+AllAreastrs = unique(PairAreaStrs(:));
+AfPairCorrs = CorrDiffValuesNor(:,2,1); % component 1
+BasePairCorrs = CorrDiffValuesNor(:,1,1); % component 1
+AreaPairFusionMtx = zeros(length(AllAreastrs));
+[~, Pair1_inds] = ismember(PairAreaStrs(:,1),AllAreastrs);
+[~, Pair2_inds] = ismember(PairAreaStrs(:,2),AllAreastrs);
+Pairinds2Sub = sub2ind([length(AllAreastrs) length(AllAreastrs)],Pair1_inds,Pair2_inds);
+Pairinds2Sub_2 = sub2ind([length(AllAreastrs) length(AllAreastrs)],Pair2_inds,Pair1_inds);
+AfCorrFusionMtx = AreaPairFusionMtx;
+AfCorrFusionMtx(Pairinds2Sub) = AfPairCorrs;
+AfCorrFusionMtx(Pairinds2Sub_2) = AfPairCorrs;
+
+BaseCorrFusionMtx = AreaPairFusionMtx;
+BaseCorrFusionMtx(Pairinds2Sub) = BasePairCorrs;
+BaseCorrFusionMtx(Pairinds2Sub_2) = BasePairCorrs;
+% %%
+% figure
+% zz = linkage(AfCorrFusionMtx,'average','correlation');
+% T = cluster(zz,'maxclust',4);
+% % groups = cluster(zz,'cutoff',CuroffValues(c_Cut),'criterion','distance');
+% cutoff = median([zz(end-8,3) zz(end-1,3)]);
+% dendrogram(zz,'ColorThreshold',cutoff)
+% 
+% %%
+% [SortGrInds, SortInds] = sort(T);
+% figure;
+% imagesc(AfCorrFusionMtx(SortInds,SortInds),[0 0.1])
+% set(gca,'xtick',1:numel(SortInds),'xticklabel',AllAreastrs(SortInds),...
+%     'ytick',1:numel(SortInds),'yticklabel',AllAreastrs(SortInds));
+% 
+% %%
+% % [SortGrInds, SortInds] = sort(T);
+% figure;
+% imagesc(BaseCorrFusionMtx(SortInds,SortInds),[0 0.1])
+% set(gca,'xtick',1:numel(SortInds),'xticklabel',AllAreastrs(SortInds),...
+%     'ytick',1:numel(SortInds),'yticklabel',AllAreastrs(SortInds));
+% 
+% 
+% %%
+% CorrDifMtx = AfCorrFusionMtx-BaseCorrFusionMtx;
+% 
+% figure
+% zz = linkage(CorrDifMtx,'average','cosine');
+% T = cluster(zz,'maxclust',5);
+% % groups = cluster(zz,'cutoff',CuroffValues(c_Cut),'criterion','distance');
+% cutoff = median([zz(end-10,3) zz(end-1,3)]);
+% dendrogram(zz,'ColorThreshold',cutoff)
+% 
+% %%
+% [SortGrInds, SortInds] = sort(T);
+% figure;
+% imagesc(CorrDifMtx(SortInds,SortInds),[-0.1  0.1])
+% set(gca,'xtick',1:numel(SortInds),'xticklabel',AllAreastrs(SortInds),...
+%     'ytick',1:numel(SortInds),'yticklabel',AllAreastrs(SortInds));
+
+
 %%
 NumPairSess = size(BaseBVarDatas, 1);
 close;
