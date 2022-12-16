@@ -1715,8 +1715,8 @@ title(sprintf('Regions %s',UniPairStrs{cT}))
 %% summary analysis 8, regressor analysis summary part 2
 cclr
 
-AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -1752,16 +1752,16 @@ for cS = 1 :  NumUsedSess
     ksfolder = fullfile(cSessPath,'ks2_5');
     try
         
-        UnitSltFile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypes.mat');
+        UnitSltFile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypesNew.mat');
         UnitSltDataStrc = load(UnitSltFile);
         RegressorDatafile = fullfile(ksfolder,'Regressor_ANA','RegressorDataSave6.mat');
-        RegressorDataStrc = load(RegressorDatafile,'AreaUnitNumbers','NewAdd_ExistAreaNames','FullRegressorInfosCell');
+        RegressorDataStrc = load(RegressorDatafile,'AreaUnitNumbers','NewAdd_ExistAreaNames'); %,'FullRegressorInfosCell'
     catch ME
         fprintf('Error exists in session %d.\n',cS);
     end
     
     NewAdd_ExistAreaNames = RegressorDataStrc.NewAdd_ExistAreaNames;
-	RegressorEVAlls = RegressorDataStrc.FullRegressorInfosCell;
+% 	RegressorEVAlls = RegressorDataStrc.FullRegressorInfosCell;
     IsUnitRespMtx = UnitSltDataStrc.IsUnitGLMResp;
     
     Numfieldnames = length(NewAdd_ExistAreaNames);
@@ -1854,11 +1854,11 @@ end
 
 %% plot and save some figures
 
-% savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim';
-% % savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim';
+savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim';
+% savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim';
 
-savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim';
-% savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim';
+% savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim';
+% % savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim';
 
 if ~isfolder(savePathfolder)
     mkdir(savePathfolder)
@@ -1943,7 +1943,368 @@ summaryDatapath8 = fullfile(savePathfolder,'SigUnit_EVsummaryData.mat');
 save(summaryDatapath8,'Area_RespMtxAll','Areawise_RespUnitEVars','Areawise_RespUnitRespField',...
     'RespUnit_ColStr','BrainAreasStr','AreaSigUnit_TypeRespEV','-v7.3');
 
+%% plot area explained variance, all units will be plotted
+
+Area_RespMtxAll = cell(NumAllTargetAreas,3);
+
+for cA = 1 : NumAllTargetAreas
+    cA_EvarCellData = Areawise_RespUnitEVars(:,cA);
+    cA_IsUnitRespMtx = Areawise_RespUnitRespField(:,cA);
+    cA_SessNums = sum(~cellfun(@isempty,cA_EvarCellData));
+    cA_EvarMtxAll = cat(1,cA_EvarCellData{:});
+    if ~isempty(cA_EvarMtxAll)
+        cA_RespMtx = cat(1,cA_IsUnitRespMtx{:});
+        cA_RespUsedMtx = [cA_RespMtx(:,1:2),cA_RespMtx(:,3)|cA_RespMtx(:,4)];
+        
+        cA_fullUnitEVarMtx = cA_EvarMtxAll(:,1:3); % each col is blocktype, stimulus and choice
+        cA_fullUnitEVarMtx(cA_fullUnitEVarMtx < 1e-5) = 0;
+        
+        Area_RespMtxAll(cA,:) = {cA_fullUnitEVarMtx, cA_RespUsedMtx, cA_SessNums};
+    end
+end
+
 %%
+
+savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim_frac';
+% savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim_frac';
+
+% savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim';
+% % savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim';
+
+if ~isfolder(savePathfolder)
+    mkdir(savePathfolder)
+end
+
+AllColors = {'r','g','b'};
+
+% for all three type responsive ROI exists
+FracTypeStr = {'BT&Stim','BT&Choice','Stim&Choice','All'};
+AllTypeStr = {'Block','Stimulus','Choice'};
+AllLabelStr = [AllTypeStr, FracTypeStr];
+
+% for two responsive Unit exists
+FracTypeStr_2 = {'S%C','BT&C','BT&S'};
+AllTypeStr_2 = {'Block','Stimulus','Choice'};
+% close 
+AreaFracDatas = cell(NumAllTargetAreas,3);
+for cA = 1: NumAllTargetAreas
+    %
+    cA_data  = Area_RespMtxAll(cA,:);
+    if ~isempty(cA_data{2}) && cA_data{3} >= 2
+        cA_AllUnitEV = cA_data{1};
+        cA_AllUnitIsResp = cA_data{2}; % BT, Stim, Choice
+        TotalUnitNum = size(cA_AllUnitEV,1);
+        
+        BT_AllUnitEVAlls = cA_AllUnitEV(:,1);
+        Stim_AllUnitEVAlls = cA_AllUnitEV(:,2);
+        Choice_AllUnitEVAlls = cA_AllUnitEV(:,3);
+        AreaFracDatas(cA,1:2) = {cA_AllUnitEV, cA_AllUnitIsResp};
+        
+        h8f = figure('position',[100 100 800 220]);
+        StimANDBTsigInds = cA_AllUnitIsResp(:,1) | cA_AllUnitIsResp(:,2);
+        StimAx = subplot(131);
+        hold on
+        plot(StimAx, BT_AllUnitEVAlls(~StimANDBTsigInds),Stim_AllUnitEVAlls(~StimANDBTsigInds),'o','MarkerSize',6,...
+            'MarkerFaceColor',[.7 .7 .7],'MarkeredgeColor','none');
+        plot(StimAx, BT_AllUnitEVAlls(StimANDBTsigInds),Stim_AllUnitEVAlls(StimANDBTsigInds),'o','MarkerSize',6,...
+            'MarkerFaceColor',[0.8 0.2 0.2],'MarkeredgeColor','none');
+        
+        xscale = [min(BT_AllUnitEVAlls)-0.01,max(BT_AllUnitEVAlls)+0.06];
+        yscale = [min(Stim_AllUnitEVAlls)-0.01,max(Stim_AllUnitEVAlls)+0.04];
+        CommonScale = [min(xscale(1),yscale(1)),max(xscale(2),yscale(2))];
+        
+        line(CommonScale,CommonScale,'Color','k','linewidth',1,'linestyle','--');
+        text(xscale(2)*0.2,yscale(2)*0.7,sprintf('n = %d',TotalUnitNum),'Color','m','FontSize',10);
+        set(StimAx,'xlim',xscale,'ylim',yscale);
+        xlabel('BlockType Explained Variance','FontSize',10);
+        ylabel('Stimulus Explained Variance','FontSize',10);
+        
+        ChoiceAx = subplot(132);
+        hold on
+        ChoiceANDBTsigInds = cA_AllUnitIsResp(:,1) | cA_AllUnitIsResp(:,3);
+        plot(ChoiceAx, BT_AllUnitEVAlls(~ChoiceANDBTsigInds),Choice_AllUnitEVAlls(~ChoiceANDBTsigInds),'o','MarkerSize',6,...
+            'MarkerFaceColor',[.7 .7 .7],'MarkeredgeColor','none');
+        plot(ChoiceAx, BT_AllUnitEVAlls(ChoiceANDBTsigInds),Choice_AllUnitEVAlls(ChoiceANDBTsigInds),'bo','MarkerSize',6,...
+            'MarkerFaceColor',[0.2 0.2 0.8],'MarkeredgeColor','none');
+        
+        yscale = [min(Choice_AllUnitEVAlls)-0.01,max(Choice_AllUnitEVAlls)+0.04];
+        CommonScale = [min(xscale(1),yscale(1)),max(xscale(2),yscale(2))];
+        
+        line(CommonScale,CommonScale,'Color','k','linewidth',1,'linestyle','--');
+        set(ChoiceAx,'xlim',xscale,'ylim',yscale);
+        xlabel('BlockType Explained Variance','FontSize',10);
+        ylabel('Choice Explained Variance','FontSize',10);
+        
+        cAreaStr = BrainAreasStr{cA};
+        annotation('textbox',[0.02 0.1 0.1 0.05],'String',cAreaStr,'FitBoxToText','on','Color','r');
+        
+        FracNums = [sum(cA_AllUnitIsResp(:,1) & cA_AllUnitIsResp(:,2)),sum(cA_AllUnitIsResp(:,1) & cA_AllUnitIsResp(:,3)),...
+                sum(cA_AllUnitIsResp(:,3) & cA_AllUnitIsResp(:,2)),sum(cA_AllUnitIsResp(:,1) & cA_AllUnitIsResp(:,2) & cA_AllUnitIsResp(:,3))];
+        IndiTypeFracs = mean(cA_AllUnitIsResp);
+        OverlapFracs = FracNums/TotalUnitNum;
+        AllFracs = [IndiTypeFracs,OverlapFracs];
+        AreaFracDatas(cA,3) = {AllFracs};
+        try
+            FracAx = subplot(133);
+            hold on
+            InfividualTypeFrac = mean(cA_AllUnitIsResp);
+            EachTypeNum = sum(cA_AllUnitIsResp);
+            if all(EachTypeNum > 0) 
+                FracNums = [sum(cA_AllUnitIsResp(:,1) & cA_AllUnitIsResp(:,2)),sum(cA_AllUnitIsResp(:,1) & cA_AllUnitIsResp(:,3)),...
+                    sum(cA_AllUnitIsResp(:,3) & cA_AllUnitIsResp(:,2)),sum(cA_AllUnitIsResp(:,1) & cA_AllUnitIsResp(:,2) & cA_AllUnitIsResp(:,3))];
+                OverlapFracs = FracNums/TotalUnitNum;
+%                 if any(FracNums == 0)
+%                     EachTypeNum = EachTypeNum*20+5;
+%                     FracNums = FracNums*20 + 2;
+%                 end
+                [H, S] = venn(EachTypeNum,...
+                    FracNums,'FaceAlpha', 0.4,'edgeColor','none');
+                for i = 1:3
+                    text(S.ZoneCentroid(i,1), S.ZoneCentroid(i,2), AllLabelStr{i},'HorizontalAlignment','center');
+                end
+                set(FracAx,'xtick',[],'ytick',[],'xColor','none','yColor','none');
+                hlg = legend(H,cellstr(num2str(InfividualTypeFrac(:)*100,'%.2f%%')),'Box','off','location','northEast');
+                axPos = get(FracAx,'position');
+                set(FracAx,'position',axPos.*[1 1 0.8 0.8]+[-0.05 0.02 0.01 0]);
+                lgPos = get(hlg,'position');
+                set(hlg,'position',lgPos+[0.15 0 0 0]);
+
+
+                annotation('textbox',[lgPos(1)+0.13,0.1,0.06 0.4],'String',{sprintf('BT&S = %.2f%%',OverlapFracs(1)*100);...
+                    sprintf('BT&C = %.2f%%',OverlapFracs(2)*100);sprintf('S&C = %.2f%%',OverlapFracs(3)*100);...
+                    sprintf('All = %.2f%%',OverlapFracs(4)*100)},'FitBoxToText','on','Color','m','FontSize',8);
+
+            elseif sum(EachTypeNum > 0) == 2
+                EmptyInds = find(EachTypeNum < 0.001);
+                TwoTypeStr = AllTypeStr_2;
+                TwoTypeStr(EmptyInds) = [];
+                TwoTypeMergeStr = FracTypeStr_2{EmptyInds};
+
+                LeftTwoTypeRespInds = cA_AllUnitIsResp;
+                LeftTwoTypeRespInds(:,EmptyInds) = [];
+                twoFracNum = sum(LeftTwoTypeRespInds(:,1) & LeftTwoTypeRespInds(:,2));
+%                 if twoFracNum == 0
+%                     TwoTypeNum = TwoTypeNum * 20+5;
+%                     twoFracNum = 1;
+%                 else
+                    TwoTypeNum = sum(LeftTwoTypeRespInds);
+%                 end
+                TwoTypeFracs = mean(LeftTwoTypeRespInds);
+                twoTypeColors = AllColors;
+                twoTypeColors(EmptyInds) = [];
+
+                [H, S] = venn(TwoTypeNum,...
+                    twoFracNum,'FaceColor',twoTypeColors,'FaceAlpha', 0.4,'edgeColor','none');
+                for i = 1:2
+                    text(S.ZoneCentroid(i,1), S.ZoneCentroid(i,2), TwoTypeStr{i},'HorizontalAlignment','center');
+                end
+                set(FracAx,'xtick',[],'ytick',[],'xColor','none','yColor','none');
+                hlg = legend(H,cellstr(num2str(TwoTypeFracs(:)*100,'%.2f%%')),'Box','off','location','northEast');
+                axPos = get(FracAx,'position');
+                set(FracAx,'position',axPos.*[1 1 0.8 0.8]+[-0.05 0 0.01 0]);
+                lgPos = get(hlg,'position');
+                set(hlg,'position',lgPos+[0.15 0 0 0]);
+
+                OverlapFracs = twoFracNum/TotalUnitNum;
+                annotation('textbox',[lgPos(1)+0.13,0.1,0.06 0.4],'String',sprintf('%s = %.2f%%',TwoTypeMergeStr,OverlapFracs(1)*100),...
+                    'FitBoxToText','on','Color','m','FontSize',8);
+            elseif sum(EachTypeNum > 0) == 1
+                TypeFracs = EachTypeNum/TotalUnitNum;
+                text(1,2,{sprintf('BlockFrac = %.2f%%',TypeFracs(1)*100);sprintf('StimulusFrac = %.2f%%',TypeFracs(2)*100);...
+                    sprintf('ChoiceFrac = %.2f%%',TypeFracs(3)*100)},'Color','m','FontSize',8);
+            else
+                text(1,2,'No Responsive unit to any behavior parameters.');
+            end
+        catch
+%             cla(FracAx);
+%             
+%             for cType = 1 : 7
+%                 text(FracAx,1,10-cType,sprintf('%s = %.2f%%',AllLabelStr{cType},AllFracs(cType)*100));
+%             end
+%             set(FracAx,'xtick',[],'ytick',[],'xColor','none','yColor','none','xlim',[0.5 3],'ylim',[2 11]);
+        end
+        
+        cASaveName = fullfile(savePathfolder,sprintf('%s_AllUnit_EV_scatter_plot',cAreaStr));
+        saveas(h8f,cASaveName);
+        print(h8f,cASaveName,'-dpng','-r400');
+        print(h8f,cASaveName,'-dpdf','-bestfit');
+        close(h8f);
+        
+    end
+    
+end
+
+%%
+savedataName = fullfile(savePathfolder,'AllFracData_EVarcompareDatas.mat');
+save(savedataName,'AreaFracDatas','BrainAreasStr','AllLabelStr','-v7.3');
+
+%% calculate the area averaged explained variance for each areas
+% in order to exclude some outliers, we will calculate median and mean
+% values between [10 90] prctile datas
+
+% AreaFracDatas = cell(NumAllTargetAreas,3);
+ThresedAvgDatas = cell(NumAllTargetAreas, 2);
+for cA = 1: NumAllTargetAreas
+    cA_data = AreaFracDatas(cA,:);
+    if ~isempty(cA_data{1}) && size(cA_data{1},1) >= 30
+%         cA_AllUnitEV = cA_data{1};
+%         cA_AllUnitIsResp = cA_data{2}; % BT, Stim, Choice
+%         TotalUnitNum = size(cA_AllUnitEV,1);
+%         
+%         BT_AllUnitEVAlls = cA_AllUnitEV(:,1);
+%         Stim_AllUnitEVAlls = cA_AllUnitEV(:,2);
+%         Choice_AllUnitEVAlls = cA_AllUnitEV(:,3);
+%         AreaFracDatas(cA,1:2) = {cA_AllUnitEV, cA_AllUnitIsResp};
+        cAEVarDatas = cA_data{1}; % BT, Stim, Choice
+        cAIsRespDatas = cA_data{2};
+        TypeAvgDatas = zeros(3,8);
+        TypeSigUnitAvgDatas = zeros(3,4);
+        for n = 1 : 3
+            cEVarData = cAEVarDatas(:,n);
+            cIsRespData = cAIsRespDatas(:,n);
+            MedianValues = median(cEVarData);
+            
+%             EVarThresData = prctile(cEVarData,[1 99]);
+            EVarThresData = CorrectOutlierPoints(cEVarData);
+            WithinThresInds = cEVarData >= EVarThresData(1) & cEVarData <= EVarThresData(2); %
+            
+            WinThresEVars = cEVarData(WithinThresInds);
+            WinThresIsResp = cIsRespData(WithinThresInds);
+            NumRestUnits = length(WinThresEVars);
+%             if NumRestUnits < 10
+%                 TypeAvgDatas(n,:) = [MedianValues, mean(WinThresEVars),std(WinThresEVars)/sqrt(NumRestUnits),...
+%                     mean(WinThresIsResp),NumRestUnits,EVarThresData];
+%             else
+            TypeAvgDatas(n,:) = [mean(cEVarData), MedianValues, mean(WinThresEVars),std(WinThresEVars)/sqrt(NumRestUnits),...
+                mean(WinThresIsResp),NumRestUnits,EVarThresData];
+%             end
+            % calculate the averaged explained variance for significantly
+            % selective units only
+            
+            SigUnitEVars = WinThresEVars(WinThresIsResp > 0);
+            NumSigUnitEVars = length(SigUnitEVars);
+            if NumSigUnitEVars > 3
+                TypeSigUnitAvgDatas(n,:) = [mean(SigUnitEVars),std(SigUnitEVars)/sqrt(NumSigUnitEVars),...
+                    NumSigUnitEVars,NumRestUnits];
+            else
+                TypeSigUnitAvgDatas(n,:) = [mean(SigUnitEVars),0,...
+                    NumSigUnitEVars,NumRestUnits];
+            end
+        end
+        
+        ThresedAvgDatas(cA,:) = {TypeAvgDatas, TypeSigUnitAvgDatas};
+    end
+    
+
+end
+
+
+%%
+
+savePathfolder2 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim_frac\WithinThres';
+% savePathfolder2 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim_frac\WithinThres';
+
+% savePathfolder2 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim\WithinThres';
+% % savePathfolder2 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim\WithinThres';
+if ~isfolder(savePathfolder2)
+    mkdir(savePathfolder2)
+end
+
+DataSavefile2 = fullfile(savePathfolder2,'WithinThresDataEVarFrac.mat');
+save(DataSavefile2,'ThresedAvgDatas','BrainAreasStr','-v7.3');
+
+%%
+
+% allen_atlas_path = 'E:\AllenCCF';
+allen_atlas_path = 'E:\MatCode\AllentemplateData';
+tv = readNPY([allen_atlas_path filesep 'template_volume_10um.npy']);
+av = readNPY([allen_atlas_path filesep 'annotation_volume_10um_by_index.npy']);
+st = loadStructureTree([allen_atlas_path filesep 'structure_tree_safe_2017.csv']);
+
+TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+% TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+
+BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
+BrainRegionIndex = BrainRegionStrc.BrainRegions;
+
+
+%% Thresed fraction plot
+UsedAreaInds = ~cellfun(@isempty,ThresedAvgDatas(:,1));
+UsedAreaAvgDatas = ThresedAvgDatas(UsedAreaInds,1);
+NEBrainStrs = BrainAreasStr(UsedAreaInds);
+
+AllAreaFracStr = {'BlockType','Stimlulus','Choice'};
+AllAreaFracCell = cellfun(@(x) x(:,5),UsedAreaAvgDatas,'un',0);
+AllAreaFracs = cat(2,AllAreaFracCell{:})';
+for UsedTypeInds = 1 : length(AllAreaFracStr)
+    UsedTypeFracStr = AllAreaFracStr{UsedTypeInds};
+    UsedAreaFracs = AllAreaFracs(:,UsedTypeInds);
+%     Value2Colors = linearValue2colorFun(UsedAreaFracs);
+    h6f = AreaValueDispFun(UsedAreaFracs, NEBrainStrs, ...
+        st,av,BrainRegionIndex,UsedTypeFracStr);
+%     SaveNames = fullfile(savePathfolder,sprintf('%s summary slice plot withExStim',UsedTypeFracStr));
+      SaveNames = fullfile(savePathfolder2,sprintf('%s summary slice plot Thresed Frac NoStim',UsedTypeFracStr));
+% 
+    saveas(h6f,SaveNames);
+
+    print(h6f,SaveNames,'-dpng','-r350');
+    print(h6f,SaveNames,'-dpdf','-bestfit');
+    close(h6f);
+end
+
+%% thresholded average explained variance plot
+UsedAreaInds = ~cellfun(@isempty,ThresedAvgDatas(:,1));
+UsedAreaAvgDatas = ThresedAvgDatas(UsedAreaInds,1);
+NEBrainStrs = BrainAreasStr(UsedAreaInds);
+
+AllAreaFracStr = {'BlockType','Stimlulus','Choice'};
+AllAreaFracCell = cellfun(@(x) x(:,3),UsedAreaAvgDatas,'un',0);
+AllAreaEVars = cat(2,AllAreaFracCell{:})';
+for UsedTypeInds = 1 : length(AllAreaFracStr)
+    UsedTypeFracStr = AllAreaFracStr{UsedTypeInds};
+    UsedAreaFracs = AllAreaEVars(:,UsedTypeInds);
+%     Value2Colors = linearValue2colorFun(UsedAreaFracs);
+    h7f = AreaValueDispFun(UsedAreaFracs, NEBrainStrs, ...
+        st,av,BrainRegionIndex,UsedTypeFracStr);
+%     SaveNames = fullfile(savePathfolder,sprintf('%s summary slice plot withExStim',UsedTypeFracStr));
+      SaveNames = fullfile(savePathfolder2,sprintf('%s summary slice plot Thres EVar NoStim',UsedTypeFracStr));
+% 
+    saveas(h7f,SaveNames);
+
+    print(h7f,SaveNames,'-dpng','-r350');
+    print(h7f,SaveNames,'-dpdf','-bestfit');
+    close(h7f);
+end
+
+%% thresholded average explained variance for sig units only
+UsedAreaInds = ~cellfun(@isempty,ThresedAvgDatas(:,2));
+UsedAreaAvgDatas = ThresedAvgDatas(UsedAreaInds,2);
+NEBrainStrs = BrainAreasStr(UsedAreaInds);
+
+AllAreaFracStr = {'BlockType','Stimlulus','Choice'};
+AllAreaFracCell = cellfun(@(x) x(:,1),UsedAreaAvgDatas,'un',0);
+AllAreaSigUEVars = cat(2,AllAreaFracCell{:})';
+for UsedTypeInds = 1 : length(AllAreaFracStr)
+    UsedTypeFracStr = AllAreaFracStr{UsedTypeInds};
+    UsedAreaFracs = AllAreaSigUEVars(:,UsedTypeInds);
+    UsedNEBrainStrs = NEBrainStrs;
+    AnynanDatas = isnan(UsedAreaFracs);
+    UsedAreaFracs(AnynanDatas) = [];
+    UsedNEBrainStrs(AnynanDatas) = [];
+%     Value2Colors = linearValue2colorFun(UsedAreaFracs);
+    h7f = AreaValueDispFun(UsedAreaFracs, UsedNEBrainStrs, ...
+        st,av,BrainRegionIndex,UsedTypeFracStr);
+%     SaveNames = fullfile(savePathfolder,sprintf('%s summary slice plot withExStim',UsedTypeFracStr));
+      SaveNames = fullfile(savePathfolder2,sprintf('%s summary slice plot SigEVarAvg NoStim',UsedTypeFracStr));
+% 
+    saveas(h7f,SaveNames);
+
+    print(h7f,SaveNames,'-dpng','-r350');
+    print(h7f,SaveNames,'-dpdf','-bestfit');
+    close(h7f);
+end
+
+
 %%
 % ###################################################################################################
 % Summary codes 9: summary of choice decoding score analysis
@@ -3489,7 +3850,7 @@ BehavThres = 0;
 % Area_BlockwiseTempScores = cell(NumAllTargetAreas,4);
 % 
 % for cA = 1:NumAllTargetAreas
-        cA = 87;
+        cA = 102;
     cA_Str = BrainAreasStr{cA};
     cA_leftScoreTrace = cat(1,LeftTempScoreTrace{:,cA});
     if isempty(cA_leftScoreTrace) || size(cA_leftScoreTrace,1) < 5
@@ -3505,13 +3866,15 @@ BehavThres = 0;
     WindowInfoScoresMtxRaw = permute(cat(3,WindowInfoScores{:,cA}),[3,1,2]); % Allblocks, window, Types
     WindowInfoScoresMtx = cat(2,WindowInfoScoresMtxRaw,mean(WindowInfoScoresMtxRaw(:,[1,2],:),2));
     
-    Block0Inds = cA_AllSessBlockTypes == 0 & (1-cA_RT_LeftChoiceProb) >= BehavThres;
+%     Block0Inds = cA_AllSessBlockTypes == 0 & (1-cA_RT_LeftChoiceProb) >= BehavThres;
+    Block0Inds = cA_AllSessBlockTypes == 0 & sum(cA_AllSessRevTrialNum,2) >= 30;
     Block0LeftChoiceProb = cA_RT_LeftChoiceProb(Block0Inds);
     Block0TraceAll_L = cA_leftScoreTrace(Block0Inds,:);
     Block0TraceAll_R = cA_rightScoreTrace(Block0Inds,:);
     
     
-    Block1Inds = cA_AllSessBlockTypes == 1 & cA_RT_LeftChoiceProb >= BehavThres;
+%     Block1Inds = cA_AllSessBlockTypes == 1 & cA_RT_LeftChoiceProb >= BehavThres;
+    Block1Inds = cA_AllSessBlockTypes == 1 & sum(cA_AllSessRevTrialNum,2) >= 30;
     Block1TraceAll_L = cA_leftScoreTrace(Block1Inds,:);
     Block1TraceAll_R = cA_rightScoreTrace(Block1Inds,:);
     Block1LeftChoiceProb = cA_RT_LeftChoiceProb(Block1Inds);
@@ -3708,12 +4071,15 @@ ValidStrPairsNum = NewPairIndsNum(ValidStrPairIndex);
 % ValidPairStr = UniquePairsNew(ValidStrPairIndex);
 
 %%
-
+ExcludeAreas = {'AON','OLF','cc','aco'};
 NumValidPairs = length(ValidStrPairsAll);
 CorrDiffValuesNor = zeros(NumValidPairs, 2, 3);
+CorrDiff_pvalues = zeros(NumValidPairs, 2, 3);
+CorrThres = zeros(NumValidPairs,1);
 PairAreaStrs = cell(NumValidPairs, 2);
+IsPairWithExcludeArea = false(NumValidPairs, 1);
 for cPair = 1 : NumValidPairs
-
+    
     % cValidInds = 147;
 
     cValidRealIndex = ValidStrPairIndex(cPair);
@@ -3732,37 +4098,61 @@ for cPair = 1 : NumValidPairs
     BaseTrVarDatas = double(cat(1,cAreaPairDatafilled{:,3}));
     AfTrVarDatas = double(cat(1,cAreaPairDatafilled{:,4}));
     CorrThresDatas = mean(cat(1,cPairThresDatafilled{:}),'omitnan');
-
+    
+    CorrThres(cPair) = mean(CorrThresDatas(1:10));
     % calculate the correlation diff between the first three components
     BaseBVar_Avgs = mean(BaseBVarDatas(:,1:3),'omitnan');
     AfBVar_Avgs = mean(AfBVarDatas(:,1:3),'omitnan');
     BaseTrVar_Avgs = mean(BaseTrVarDatas(:,1:3),'omitnan');
     AfTrVar_Avgs = mean(AfTrVarDatas(:,1:3),'omitnan');
-
+    
+    [~, BaseCorrComp_p] = ttest2(BaseBVarDatas(:,1:3), BaseTrVarDatas(:,1:3));
+    [~, AfCorrComp_p] = ttest2(AfBVarDatas(:,1:3), AfTrVarDatas(:,1:3));
+    
     Baseker_corrDiff = (BaseBVar_Avgs - BaseTrVar_Avgs); % ./ max(BaseBVar_Avgs, BaseTrVar_Avgs);
     Afker_corrDiff = (AfBVar_Avgs - AfTrVar_Avgs); %  ./ max(AfBVar_Avgs, AfTrVar_Avgs);
     PairStrsCell = strsplit(cValidPairStr,'-');
     
     CorrDiffValuesNor(cPair, 1,:) = Baseker_corrDiff;
     CorrDiffValuesNor(cPair, 2,:) = Afker_corrDiff;
+    CorrDiff_pvalues(cPair, 1,:) = BaseCorrComp_p;
+    CorrDiff_pvalues(cPair, 2,:) = AfCorrComp_p;
     PairAreaStrs(cPair, :) = PairStrsCell;
+    
+    IsPairWithExcludeArea(cPair) = any(ismember(PairStrsCell, ExcludeAreas)) || strcmpi(PairStrsCell{1},PairStrsCell{2});
 end
+AllPairDatas = {CorrDiffValuesNor,CorrDiff_pvalues,CorrThres,PairAreaStrs,IsPairWithExcludeArea};
+
+CorrDiffValuesNor = CorrDiffValuesNor(~IsPairWithExcludeArea,:,:); %zeros(NumValidPairs, 2, 3);
+CorrDiff_pvalues = CorrDiff_pvalues(~IsPairWithExcludeArea,:,:); %zeros(NumValidPairs, 2, 3);
+CorrThres = CorrThres(~IsPairWithExcludeArea); %zeros(NumValidPairs,1);
+PairAreaStrs = PairAreaStrs(~IsPairWithExcludeArea,:); %cell(NumValidPairs, 2);
 
 
 %%
 AllnodeStr = unique(PairAreaStrs(:));
 AFPlotDatas = CorrDiffValuesNor(:,2,1);
+AFSigDiffp = CorrDiff_pvalues(:,2,1);
 % AFG1_sig = graph(PairAreaStrs(:,1),PairAreaStrs(:,2));
-AFPlotEdges =  AFPlotDatas > 0.05;
+% AFPlotEdges =  AFPlotDatas > 0.1;
+% AFPlotEdges =  AFSigDiffp < 0.05;
+AFPlotEdges =  AFPlotDatas > CorrThres;
 AFG1_sig = graph(PairAreaStrs(AFPlotEdges,1),PairAreaStrs(AFPlotEdges,2),AFPlotDatas(AFPlotEdges));
 IsNodeExists = ismember(AllnodeStr,table2cell(AFG1_sig.Nodes));
 AFG1_sig = addnode(AFG1_sig,AllnodeStr(~IsNodeExists));
 AFh = figure;
 AFhg_sig = plot(AFG1_sig,'layout','circle');
 AFhg_sig.LineWidth = (AFPlotDatas(AFPlotEdges) - min(AFPlotDatas(AFPlotEdges)))*20+0.2;
+deg_ranks = centrality(AFG1_sig,'degree','Importance',AFG1_sig.Edges.Weight); % pagerank,degree,eigenvector  {,'MaxIterations',1000}
+rankRatio1 = 20/max(deg_ranks);
+AFhg_sig.MarkerSize = deg_ranks*rankRatio1+5;
+title('AfterResp corr');
 
 BasePlotDatas = CorrDiffValuesNor(:,1,1);
-BasePlotEdges =  BasePlotDatas > 0.05;
+BaseSigDiffp = CorrDiff_pvalues(:,1,1);
+% BasePlotEdges =  BasePlotDatas > 0.1;
+BasePlotEdges =  BasePlotDatas > CorrThres;
+% BasePlotEdges =  BaseSigDiffp < 0.05;
 % BaseG1_sig = graph(PairAreaStrs(:,1),PairAreaStrs(:,2));
 BaseG1_sig = graph(PairAreaStrs(BasePlotEdges,1),PairAreaStrs(BasePlotEdges,2),BasePlotDatas(BasePlotEdges));
 IsNodeExists2 = ismember(AllnodeStr,table2cell(BaseG1_sig.Nodes));
@@ -3771,7 +4161,11 @@ BaseG1_sig = addnode(BaseG1_sig,AllnodeStr(~IsNodeExists2));
 Baseh = figure;
 Basehg_sig = plot(BaseG1_sig,'layout','circle');
 Basehg_sig.LineWidth = (BasePlotDatas(BasePlotEdges) - min(BasePlotDatas(BasePlotEdges)))*20+0.2;
-%%
+deg_ranks_base = centrality(BaseG1_sig,'degree','Importance',BaseG1_sig.Edges.Weight);% pagerank,degree,eigenvector
+rankRatio2 = 20/max(deg_ranks_base);
+Basehg_sig.MarkerSize = deg_ranks_base*rankRatio2+5;
+title('Base corr');
+%
 AfNodeLabels = AFhg_sig.NodeLabel;
 BaseNodeLabels = Basehg_sig.NodeLabel;
 
@@ -3783,6 +4177,25 @@ Af_yData = AFhg_sig.YData;
 Basehg_sig.XData = Af_xData(Inds);
 Basehg_sig.YData = Af_yData(Inds);
 % Basehg_sig.NodeLabel = AfNodeLabels(Inds);
+
+%% hightlight some connections
+AFhg_sig.NodeColor = [0 0.45 0.74];
+AFhg_sig.EdgeColor = [0 0.45 0.74];
+Basehg_sig.NodeColor = [0 0.45 0.74];
+Basehg_sig.EdgeColor = [0 0.45 0.74];
+
+HightNodes = 'CA1';
+nHNodes_AF = neighbors(AFG1_sig, HightNodes);
+nHNodes_Base = neighbors(BaseG1_sig, HightNodes);
+
+highlight(AFhg_sig,HightNodes,'NodeColor',[0 0.8 0]);
+highlight(AFhg_sig,nHNodes_AF,'NodeColor','r');
+highlight(AFhg_sig,HightNodes,nHNodes_AF,'EdgeColor','r');
+
+highlight(Basehg_sig,HightNodes,'NodeColor',[0 0.8 0]);
+highlight(Basehg_sig,nHNodes_Base,'NodeColor','r');
+highlight(Basehg_sig,HightNodes,nHNodes_Base,'EdgeColor','r');
+
 
 %%
 AllAreastrs = unique(PairAreaStrs(:));
@@ -3823,23 +4236,31 @@ BaseCorrFusionMtx(Pairinds2Sub_2) = BasePairCorrs;
 %     'ytick',1:numel(SortInds),'yticklabel',AllAreastrs(SortInds));
 % 
 % 
-% %%
-% CorrDifMtx = AfCorrFusionMtx-BaseCorrFusionMtx;
-% 
-% figure
-% zz = linkage(CorrDifMtx,'average','cosine');
-% T = cluster(zz,'maxclust',5);
-% % groups = cluster(zz,'cutoff',CuroffValues(c_Cut),'criterion','distance');
-% cutoff = median([zz(end-10,3) zz(end-1,3)]);
-% dendrogram(zz,'ColorThreshold',cutoff)
-% 
-% %%
-% [SortGrInds, SortInds] = sort(T);
-% figure;
-% imagesc(CorrDifMtx(SortInds,SortInds),[-0.1  0.1])
-% set(gca,'xtick',1:numel(SortInds),'xticklabel',AllAreastrs(SortInds),...
-%     'ytick',1:numel(SortInds),'yticklabel',AllAreastrs(SortInds));
+%%
+CorrDifMtx = AfCorrFusionMtx-BaseCorrFusionMtx;
 
+figure
+zz = linkage(CorrDifMtx,'average','cosine');
+% T = cluster(zz,'maxclust',7);
+T = cluster(zz,'Cutoff',0.55);
+% groups = cluster(zz,'cutoff',CuroffValues(c_Cut),'criterion','distance');
+cutoff = median([zz(end-15,3) zz(end-1,3)]);
+dendrogram(zz,'ColorThreshold',0.55)
+
+%%
+[SortGrInds, SortInds] = sort(T);
+figure;
+imagesc(CorrDifMtx(SortInds,SortInds),[-0.1  0.1])
+set(gca,'xtick',1:numel(SortInds),'xticklabel',AllAreastrs(SortInds),...
+    'ytick',1:numel(SortInds),'yticklabel',AllAreastrs(SortInds));
+
+%%
+DiffG1 = graph(CorrDifMtx,AllAreastrs);
+Diffh = figure;
+% DiffG1_sig
+DiffG1_sig = plot(DiffG1,'layout','circle');
+% DiffG1_sig.LineWidth = (BasePlotDatas(BasePlotEdges) - min(BasePlotDatas(BasePlotEdges)))*20+0.2;
+DiffG1_sig.LineWidth = DiffG1.Edges.Weight*20+1;
 
 %%
 NumPairSess = size(BaseBVarDatas, 1);

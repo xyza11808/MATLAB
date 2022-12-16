@@ -12,7 +12,8 @@ batchClusMerge_callScript
 probeNPSess = NPspikeDataMining(ksfolder,'Task');
 
 %%
-BehavDataPath = fullfile(ksfolder,'..','mouse6_20220917.mat');
+BehavDataFile = dir(fullfile(ksfolder,'..','mouse*.mat'));
+BehavDataPath = **;
 BehavDataStrc = load(BehavDataPath);
 if ~isfield(BehavDataStrc,'behavResults')
     [behavResults,behavSettings] = behav_cell2struct(BehavDataStrc.SessionResults,BehavDataStrc.SessionSettings);

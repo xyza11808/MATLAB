@@ -29,12 +29,15 @@ freqTypes = unique(NMTrFreqs);
 NumFreqTypes = length(freqTypes);
 RevFreqs = BlockSectionInfo.BlockFreqTypes(logical(BlockSectionInfo.IsFreq_asReverse));
 NumRevFreqs = length(RevFreqs);
-cU = 68;
+cU = 30;
 cUdata = NMBinDatas(:,:,cU);
 close
 hf = figure('position',[100 100 220*NumBlocks 560]);
 AxsAll = gobjects(NumRevFreqs*NumBlocks, 1);
 AllAxsScale = zeros(NumRevFreqs*NumBlocks, 2);
+isLegAdd = 0;
+IsRHave = 0;
+IsLHave = 0;
 k = 1;
 for cB = 1 : NumBlocks
     for cFreq = 1 : NumRevFreqs
@@ -49,13 +52,21 @@ for cB = 1 : NumBlocks
         AxsAll(k) = cAx;
         hold on
         if ~isempty(cLeftTraceData)
-            MeanSemPlot(cLeftTraceData,xtimes,cAx,0.5,[0.4 0.4 0.8],'Color','b','linewidth',1.5);
+            IsLHave = 1;
+            [~,~,hl] = MeanSemPlot(cLeftTraceData,xtimes,cAx,0.5,[0.4 0.4 0.8],'Color','b','linewidth',1.5);
         end
         if ~isempty(cRightTraceData)
-           MeanSemPlot(cRightTraceData,xtimes,cAx,0.5,[0.8 0.4 0.4],'Color','r','linewidth',1.5);
+            IsRHave = 1;
+            [~,~,hr] = MeanSemPlot(cRightTraceData,xtimes,cAx,0.5,[0.8 0.4 0.4],'Color','r','linewidth',1.5);
         end 
         yscales = get(cAx,'ylim');
-        
+        if ~isLegAdd
+            if IsLHave && IsRHave
+                legend([hl,hr],{'LeftC','RightC'},'box','off','location','northeast',...
+                    'FontSize',8,'autoupdate','off');
+                isLegAdd = 1;
+            end
+        end
         AllAxsScale(k,:) = yscales;
         
         if cFreq == NumRevFreqs
@@ -70,6 +81,8 @@ for cB = 1 : NumBlocks
         if cB == 1
             ylabel('Firing rate');
         end
+        IsLHave = 0;
+        IsRHave = 0;
     end
 end
 CommonyScales = [max(0,min(AllAxsScale(:,1))),max(AllAxsScale(:,2))];

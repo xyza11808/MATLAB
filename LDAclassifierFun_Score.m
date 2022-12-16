@@ -12,8 +12,11 @@ if nargin > 3
         BoundScore = varargin{1};
     end
 end
-% [Alluniqlabel,~,Alltruelabels] = unique(y);
-Alltruelabels = y(:);
+if any(y == 0)
+	[~,~,Alltruelabels] = unique(y);
+else
+    Alltruelabels = y(:);
+end
 DataMtx = X;
 %%
 % ref from : https://www.youtube.com/watch?v=moqPyJQHR_s
