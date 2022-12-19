@@ -130,7 +130,7 @@ end
 
 % [m,n] = size(x);
 m = xSize(1);
-m = xSize(2);
+n = xSize(2);
 if isempty(x)
     if m==0 && n==0
         c = NaN('like', x);

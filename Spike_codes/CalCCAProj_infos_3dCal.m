@@ -1,5 +1,10 @@
 
 clearvars behavResults TypeRespCalResults TypeAreaPairInfo BlockVarDatas TrialVarDatas PairAreaInds AllPairInfos
+savefilename = fullfile(ksfolder,'jeccAnA','ProjDataInfo.mat');
+
+% if exist(savefilename,'file')
+%     return;
+% end
 
 load(fullfile(ksfolder,'NewClassHandle2.mat'), 'behavResults');
 load(fullfile(ksfolder,'jeccAnA','CCACalDatas.mat'));
@@ -46,7 +51,7 @@ fourTypeValidDatas = {BlockVarDatasPermu{2},TrialVarDatasPermu{2},BlockVarDatasP
 NumPairs = size(TypeRespCalResults,1);
 AllPairInfos = cell(NumPairs, 4);
 %%
-CalDataTypeStrs = {'Base_BVar','Af_BVar','Base_TrVar','Af_TrVar'};
+CalDataTypeStrs = {'Base_BVar','Base_TrVar','Af_BVar','Af_TrVar'};
 tic
 for cPairInds = 1:NumPairs
     cPairUsedAreaInds = PairAreaInds(cPairInds,:);
@@ -99,8 +104,8 @@ for cPairInds = 1:NumPairs
             %         [~, NumMaxComponents, NumTimeBin] = size(cA1_proj_Valid);
             %         RawProjDataInfo_A1 = zeros(NumMaxComponents, NumTimeBin, 2, 2, 2); % the last four dimensions are [Train test threshold], [Score, Perf],[BT choice]
             %         RawProjDataInfo_A2 = zeros(NumMaxComponents, NumTimeBin, 2, 2, 2);
-            ValidProjDataInfo_A1 = zeros(NumMaxComponents, NumTimeBin, 3, 2, 2);
-            ValidProjDataInfo_A2 = zeros(NumMaxComponents, NumTimeBin, 3, 2, 2);
+            ValidProjDataInfo_A1 = zeros(NumMaxComponents, NumTimeBin, 3, 2, 2,'single');
+            ValidProjDataInfo_A2 = zeros(NumMaxComponents, NumTimeBin, 3, 2, 2,'single');
             for cComp = 1 : NumMaxComponents
 %                 for cTimeBin = 1 : NumTimeBin
                     
@@ -139,15 +144,21 @@ for cPairInds = 1:NumPairs
         TypeDataCalInfo_Choice_A1{cDataType} = mean(RepeatInfos_choice_A1, 4);
         TypeDataCalInfo_BT_A2{cDataType} = mean(RepeatInfos_BT_A2, 4); % train test and threshold
         TypeDataCalInfo_Choice_A2{cDataType} = mean(RepeatInfos_choice_A2, 4);
+        
+        
     end
     
     % cPairTypeInfos = [TypeDataCalInfo_BT,TypeDataCalInfo_Choice];
     
     AllPairInfos(cPairInds,:) = {TypeDataCalInfo_BT_A1,TypeDataCalInfo_BT_A2...
         TypeDataCalInfo_Choice_A1,TypeDataCalInfo_Choice_A2}; % A1_info_BT,A2_info_BT,A1_info_choice,A2_info_choice
+    
+    clearvars TypeDataCalInfo_BT_A1 TypeDataCalInfo_BT_A2...
+            TypeDataCalInfo_Choice_A1 TypeDataCalInfo_Choice_A2
 end
 toc
+
 %%
-savefilename = fullfile(ksfolder,'jeccAnA','ProjDataInfo.mat');
+% savefilename = fullfile(ksfolder,'jeccAnA','ProjDataInfo.mat');
 save(savefilename,'AllPairInfos','PairAreaInds','ExistField_ClusIDs','-v7.3');
 

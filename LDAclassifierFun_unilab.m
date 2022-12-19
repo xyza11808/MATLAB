@@ -73,7 +73,7 @@ UnitNum = size(DataMtx, 2);
 C1_cov = cov_cus(C1_rawData,[C1_SampleNum, UnitNum]);
 C2_cov = cov_cus(C2_rawData,[C2_SampleNum, UnitNum]);
 %%
-MtxStableTerm = 1e-6; %1e-6; % served to stabilize matrix inversion
+MtxStableTerm = 1e-10; %1e-6; % served to stabilize matrix inversion
 pooled_cov = (C1_SampleNum*C1_cov + C2_SampleNum*C2_cov)/(C1_SampleNum + C2_SampleNum);
 pooled_cov = pooled_cov + eye(size(pooled_cov))*MtxStableTerm; 
 % pooled_cov = (C1_cov + C2_cov)/2;

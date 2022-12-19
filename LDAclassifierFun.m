@@ -38,11 +38,24 @@ if nargin > 3
     end
 end
 
+% check whether the input label is already processed with 1 and 2 only
+IsLabelProcessed = 0;
+if nargin > 4
+    if ~isempty(varargin{3})
+        IsLabelProcessed = varargin{3};
+    end
+end
+
+
 % DataMtx = rand(100,25);
 % TrainLabels = double(rand(100,1) > 0.5);
 % TestData = rand(24,25);
-
-[Alluniqlabel,~,Alltruelabels] = unique(y);
+if ~IsLabelProcessed
+    [Alluniqlabel,~,Alltruelabels] = unique(y);
+else
+    Alluniqlabel = [1,2];
+    Alltruelabels = y(:);
+end
 DataMtx = X(TrainInds,:);
 TrainLabels = Alltruelabels(TrainInds);
 TestData = X(TestInds,:);
@@ -71,7 +84,7 @@ C2_Avg = sum(C2_rawData)/size(C2_rawData,1);
 C1_cov = cov(C1_rawData);
 C2_cov = cov(C2_rawData);
 %%
-MtxStableTerm = 1e-6; %1e-6; % served to stabilize matrix inversion
+MtxStableTerm = 1e-8; %1e-6; % served to stabilize matrix inversion
 pooled_cov = (C1_SampleNum*C1_cov + C2_SampleNum*C2_cov)/(C1_SampleNum + C2_SampleNum);
 pooled_cov = pooled_cov + eye(size(pooled_cov))*MtxStableTerm; 
 % pooled_cov = (C1_cov + C2_cov)/2;
@@ -124,11 +137,11 @@ d_opt_sqr = ((C1_Avg_test - C2_Avg_test) * beta).^2/(beta' * Cov_test_Avg * beta
 % d_opt_sqr = (C1_Avg_test - C2_Avg_test) * beta;
 
 % fprintf('TestData discrimination distance is %.3f.\n',d_opt_sqr);
-
+TestLabels = Alluniqlabel(TestLabels);
 if iscell(Alluniqlabel(1))
     PredPerfs = cellfun(@(x,y) strcmpi(x,y),PredClassLabels,Alluniqlabel(TestLabels));
 else
-    PredPerfs = PredClassLabels == Alluniqlabel(TestLabels);
+    PredPerfs = PredClassLabels == TestLabels(:);
 end
 % fprintf('The prediction accuracy is %.2f%%.\n',mean(PredPerfs)*100);
 PredAccuracy = sum(PredPerfs)/numel(PredPerfs)*100;
