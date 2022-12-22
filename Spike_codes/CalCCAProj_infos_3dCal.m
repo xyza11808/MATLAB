@@ -1,6 +1,6 @@
 
 clearvars behavResults TypeRespCalResults TypeAreaPairInfo BlockVarDatas TrialVarDatas PairAreaInds AllPairInfos
-savefilename = fullfile(ksfolder,'jeccAnA','ProjDataInfo.mat');
+savefilename = fullfile(ksfolder,'jeccAnA','ProjDataInfo_baseSub.mat');
 
 % if exist(savefilename,'file')
 %     return;
@@ -70,9 +70,19 @@ for cPairInds = 1:NumPairs
         % only non-miss trial is used for calculation
         %     cTypeRawData_A1 = fourTypeRawDatas{cDataType}(cPair_Area1_unitInds,NMTrInds,:);
         %     cTypeRawData_A2 = fourTypeRawDatas{cDataType}(cPair_Area2_unitInds,NMTrInds,:);
-        cTypeValidData_A1 = fourTypeValidDatas{cDataType}(cPair_Area1_unitInds,NMTrInds,:);
-        cTypeValidData_A2 = fourTypeValidDatas{cDataType}(cPair_Area2_unitInds,NMTrInds,:);
+        cTypeValidData_A1_raw = fourTypeValidDatas{cDataType}(cPair_Area1_unitInds,NMTrInds,:);
+        cTypeValidData_A2_raw = fourTypeValidDatas{cDataType}(cPair_Area2_unitInds,NMTrInds,:);
+        
         NumTimeBin = size(cTypeValidData_A1, 3);
+        cTypeValidData_A1 = zeros(size(cTypeValidData_A1_raw));
+        cTypeValidData_A2 = zeros(size(cTypeValidData_A2_raw));
+        for cBin = 1 : NumTimeBin
+            cA1Data = (cTypeValidData_A1_raw(:,:,cBin))';
+            cTypeValidData_A1(:,:,cBin) = (cA1Data - mean(cA1Data))';
+            cA2Data = (cTypeValidData_A2_raw(:,:,cBin))';
+            cTypeValidData_A2(:,:,cBin) = (cA2Data - mean(cA2Data))';
+        end
+        
         NumMaxComponents = min(size(cTypeValidData_A1, 1), size(cTypeValidData_A2, 1));
         NumMaxComponents = min(NumMaxComponents,10); % maximumly top ten component is calculated
         nRepeats = size(cData_cals, 1);

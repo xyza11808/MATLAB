@@ -1,5 +1,5 @@
-function [RepeatCorrSum, RepeatAvgs] = crossValCCA_SepData(RawFullDataIn,ValidFullDataIn,...
-    RawFullDataIn2,ValidFullDataIn2,CVRatio)
+function [RepeatCorrSum, RepeatAvgs, TypeDataClaInfos] = crossValCCA_SepData_projInfo(RawFullDataIn,ValidFullDataIn,...
+    RawFullDataIn2,ValidFullDataIn2,CVRatio, TrTypeLabels)
 % fucntion used to calculation cross-validated CCA for given datas
 
 if ~exist('CVRatio','var') || isempty(CVRatio)
@@ -12,6 +12,7 @@ TrialBaseInds = false(AllTrialNum,1);
 if AllTrialNum ~= AllTrialNum2 || FrameNum ~= FrameNum2
     error('The trial num or frame number from two dataset is different, please check your input.');
 end
+[BlockLabelInds, ChoiceLabelInds] = deal(TrTypeLabels{:});
 
 % normalize unit variance into 1 for first dataset
 RawFullData = zeros(size(RawFullDataIn));
@@ -21,13 +22,15 @@ RawFullDataIn = permute(RawFullDataIn,[1,3,2]);
 for cU = 1 : NumUnit
     cU_rawFullData = RawFullDataIn(:,:,cU);
     cU_DataVar = std(cU_rawFullData(:));
+    cU_ValidData = squeeze(ValidFullDataIn(:,cU,:));
     if cU_DataVar < 1e-6
         RawFullData(:,cU,:) = cU_rawFullData;
-        ValidFullData(:,cU,:) = ValidFullDataIn(:,cU,:);
+        cU_UnitVarData = cU_ValidData;
     else
         RawFullData(:,cU,:) = cU_rawFullData/cU_DataVar;
-        ValidFullData(:,cU,:) = ValidFullDataIn(:,cU,:)/cU_DataVar;
+        cU_UnitVarData = cU_ValidData/cU_DataVar;
     end
+    ValidFullData(:,cU,:) = cU_UnitVarData;
 end
 ValidFrameNum = size(ValidFullData,3);
 
@@ -48,12 +51,22 @@ for cU = 1 : NumUnit2
     end
 end
 
+% mean value subtraction
+ValidFullData_ZM = zeros(size(ValidFullData));
+ValidFullData2_ZM = zeros(size(ValidFullData2));
+for cBin = 1 : ValidFrameNum
+    ValidFullData_ZM(:,:,cBin) = ValidFullData(:,:,cBin) - mean(ValidFullData(:,:,cBin));
+    ValidFullData2_ZM(:,:,cBin) = ValidFullData2(:,:,cBin) - mean(ValidFullData2(:,:,cBin));
+end
+
+ValidFullData_ZM_trans = permute(ValidFullData_ZM,[2,1,3]);
+ValidFullData2_ZM_trans = permute(ValidFullData2_ZM,[2,1,3]);
+maxComp = min(NumUnit, NumUnit2);
 
 TrCellData = mat2cell(RawFullData,ones(AllTrialNum,1),NumUnit, FrameNum);
 TrCellData = cellfun(@squeeze, TrCellData, 'un',0);
 TrCellData2 = mat2cell(RawFullData2,ones(AllTrialNum,1),NumUnit2, FrameNum);
 TrCellData2 = cellfun(@squeeze, TrCellData2, 'un',0);
-
 
 RawFullTrace = (reshape(permute(RawFullData,[2,3,1]),size(RawFullData,2),[]))'; % NumTimepoints by NumUnits
 RawFullTrace2 = (reshape(permute(RawFullData2,[2,3,1]),size(RawFullData2,2),[]))'; % NumTimepoints by NumUnits
@@ -63,7 +76,11 @@ warning off
 RepeatNum = 100;
 ShufExtraRePeat = 5; % totally 500 times shuffling
 RepeatCorrSum = cell(RepeatNum,6);
-for cR = 1 : RepeatNum
+RepeatInfos_choice_A1 = zeros(maxComp, ValidFrameNum,3,RepeatNum);
+RepeatInfos_choice_A2 = zeros(maxComp, ValidFrameNum,3,RepeatNum);
+RepeatInfos_BT_A1 = zeros(maxComp, ValidFrameNum,3,RepeatNum);
+RepeatInfos_BT_A2 = zeros(maxComp, ValidFrameNum,3,RepeatNum);
+parfor cR = 1 : RepeatNum
 %     cR = 1;
     cR_TrainTrSample = randsample(AllTrialNum,round(AllTrialNum*CVRatio));
     cR_TrainTrInds = TrialBaseInds;
@@ -130,6 +147,35 @@ for cR = 1 : RepeatNum
     RepeatCorrSum(cR,:) = {single(A1_base), single(A2_base), single(R_base), single(SampleR), ...
         single(cat(2,FrameCorrs{:})), single(cat(2,ShufCorrs{:}))};
     
+    % calculate the proj data info
+    cA1_proj_Valid = permute(pagemtimes(A1_base', ValidFullData_ZM_trans),[2,1,3]); %
+    cA2_proj_Valid = permute(pagemtimes(A2_base', ValidFullData2_ZM_trans),[2,1,3]); %
+    
+    ValidProjDataInfo_A1 = zeros(maxComp, ValidFrameNum, 3, 2,'single');
+    ValidProjDataInfo_A2 = zeros(maxComp, ValidFrameNum, 3, 2,'single');
+    for cComp = 1 : maxComp
+        % calculate for valid datas
+        cProjDatas_cA1 = cA1_proj_Valid(:, cComp,:);
+        [RepeatAvgScores_BT, ~] = TrEqualSampleinfo_3d(cProjDatas_cA1, BlockLabelInds, 0.6);
+        [RepeatAvgScores_Ch, ~] = TrEqualSampleinfo_3d(cProjDatas_cA1, ChoiceLabelInds, 0.6);
+        ValidProjDataInfo_A1(cComp, :, :, 1) = RepeatAvgScores_BT;
+%         ValidProjDataInfo_A1(cComp, :, :, 2, 1) = RepeatAvgPerfs_BT;
+        ValidProjDataInfo_A1(cComp, :, :, 2) = RepeatAvgScores_Ch;
+%         ValidProjDataInfo_A1(cComp, :, :, 2, 2) = RepeatAvgPerfs_Ch;
+
+        cProjDatas_cA2 = cA2_proj_Valid(:, cComp,:);
+        [A2RepeatAvgScores_BT, ~] = TrEqualSampleinfo_3d(cProjDatas_cA2, BlockLabelInds, 0.6);
+        [A2RepeatAvgScores_Ch, ~] = TrEqualSampleinfo_3d(cProjDatas_cA2, ChoiceLabelInds, 0.6);
+        ValidProjDataInfo_A2(cComp, :, :, 1) = A2RepeatAvgScores_BT;
+%         ValidProjDataInfo_A2(cComp, :, :, 2, 1) = A2RepeatAvgPerfs_BT;
+        ValidProjDataInfo_A2(cComp, :, :, 2) = A2RepeatAvgScores_Ch;
+%         ValidProjDataInfo_A2(cComp, :, :, 2, 2) = A2RepeatAvgPerfs_Ch;
+
+    end
+    RepeatInfos_choice_A1(:,:,:,cR) = ValidProjDataInfo_A1(:,:,:,2);
+    RepeatInfos_choice_A2(:,:,:,cR) = ValidProjDataInfo_A2(:,:,:,2);
+    RepeatInfos_BT_A1(:,:,:,cR) = ValidProjDataInfo_A1(:,:,:,1);
+    RepeatInfos_BT_A2(:,:,:,cR) = ValidProjDataInfo_A2(:,:,:,1);
 end
 
 % Train data correlation
@@ -150,6 +196,10 @@ BaseTrainCorrAvg = dataSEMmean(BaseTrainCorrs,'Trace');
 BaseTestCorrsAvg = dataSEMmean(BaseTestCorrs','Trace');
 
 RepeatAvgs = {BaseTrainCorrAvg, BaseTestCorrsAvg, BaseValidTimeCorrAvg,BaseValidTimeCorrSTD,BaseShufCorrThres};
+
+TypeDataClaInfos = {mean(RepeatInfos_BT_A1,4),mean(RepeatInfos_BT_A2, 4),mean(RepeatInfos_choice_A1,4),...
+    mean(RepeatInfos_choice_A2, 4)};
+
 
 warning on
 
