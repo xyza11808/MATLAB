@@ -182,16 +182,28 @@ if ~isempty(FullClusSelectionops.SNR) % Amplitude SNR
             UnitSNRs(cUnit) = 0;
         else
             cUnitSPwaves = UnitSPWaveformAll{cUnit};
+%             cUnitSPwaves((abs(cUnitSPwaves)) > 200) = nan;
             nanSPs = sum(isnan(cUnitSPwaves),2) > 0;
             cUnitSPwaves(nanSPs,:) = [];
 
             AvgWaveform = mean(cUnitSPwaves);
             Residues = cUnitSPwaves - AvgWaveform;
             ResValueSTD = std(Residues(:));
-
+            
+            BaselineAvg = mean(cUnitSPwaves(:,1:10),'all');
+            OutlierThres = BaselineAvg + ResValueSTD*6;
+            
+            cUnitSPwaves((abs(cUnitSPwaves - BaselineAvg)) > OutlierThres) = nan;
+            nanSPs2 = sum(isnan(cUnitSPwaves),2) > 0;
+            cUnitSPwaves(nanSPs2,:) = [];
+            
+            AvgWaveform2 = mean(cUnitSPwaves);
+            Residues2 = cUnitSPwaves - AvgWaveform2;
+            ResValueSTDUsed = std(Residues2(:));
+            
             % from siegle et al, 2021 nature paper, the SNR is defined as the
             % ratio between amplitude and residue std
-            UnitSNRs(cUnit) = UnitAmps(cUnit) / ResValueSTD;
+            UnitSNRs(cUnit) = UnitAmps(cUnit) / ResValueSTDUsed;
         end
     end
     %%

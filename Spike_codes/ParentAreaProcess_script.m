@@ -428,14 +428,18 @@ close(hf3);
 
 %% BT Evars calculation, because we can not find events for BT info
 
-NonRevTr_BaselineBT = cellfun(@(x) (x(:,3))',UsedAreaAvgDatas(:,2),'un',0);
+% NonRevTr_BaselineBT = cellfun(@(x) (x(:,3))',UsedAreaAvgDatas(:,2),'un',0);
+NonRevTr_BaselineBT = cellfun(@(x) (x(:,1))',UsedAreaAvgDatas(:,2),'un',0);
 NonRevTr_BaselineBTMtx = cat(1,NonRevTr_BaselineBT{:});
-NonRevTr_APBT = cellfun(@(x) (x(:,4))',UsedAreaAvgDatas(:,2),'un',0);
+% NonRevTr_APBT = cellfun(@(x) (x(:,4))',UsedAreaAvgDatas(:,2),'un',0);
+NonRevTr_APBT = cellfun(@(x) (x(:,2))',UsedAreaAvgDatas(:,2),'un',0);
 NonRevTr_APBTMtx = cat(1,NonRevTr_APBT{:});
 
-RevTr_BaselineBT = cellfun(@(x) (x(:,7))',UsedAreaAvgDatas(:,2),'un',0);
+% RevTr_BaselineBT = cellfun(@(x) (x(:,7))',UsedAreaAvgDatas(:,2),'un',0);
+RevTr_BaselineBT = cellfun(@(x) (x(:,5))',UsedAreaAvgDatas(:,2),'un',0);
 RevTr_BaselineBTMtx = cat(1,RevTr_BaselineBT{:});
-RevTr_APBT = cellfun(@(x) (x(:,8))',UsedAreaAvgDatas(:,2),'un',0);
+% RevTr_APBT = cellfun(@(x) (x(:,8))',UsedAreaAvgDatas(:,2),'un',0);
+RevTr_APBT = cellfun(@(x) (x(:,6))',UsedAreaAvgDatas(:,2),'un',0);
 RevTr_APBTMtx = cat(1,RevTr_APBT{:});
 
 PlotDatas = {NonRevTr_BaselineBTMtx,NonRevTr_APBTMtx,RevTr_BaselineBTMtx,RevTr_APBTMtx};
@@ -893,5 +897,136 @@ plot3(DenoiseData(Group2AreaInds,1),DenoiseData(Group2AreaInds,2),DenoiseData(Gr
     'o','MarkerFaceColor','g','MarkerSize',10);
 plot3(DenoiseData(Group3AreaInds,1),DenoiseData(Group3AreaInds,2),DenoiseData(Group3AreaInds,3),...
     'o','MarkerFaceColor','b','MarkerSize',10);
+
+
+%% save folders 4
+cclr
+
+savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
+% savePathfolder4 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
+
+DataSavefile4 = fullfile(savePathfolder4,'plsChoiceInfo_CompData.mat');
+ThresAvgDataStrc = load(DataSavefile4,'AreaDataInfos','BrainAreasStr');
+
+% load parent str datas
+ParantAreaListFile = fullfile('K:\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+% ParantAreaListFile = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+
+ParentRegionStrCell = readcell(ParantAreaListFile,'Range','A:A',...
+    'Sheet','Sheet1');
+IsCellStrInds = cellfun(@(x) ischar(x),ParentRegionStrCell);
+IsCellStrInds(1) = false;
+AllAreaStrsIndex = find(IsCellStrInds)-1;
+AllParentAreaStrs = ParentRegionStrCell(AllAreaStrsIndex+1);
+
+ChildRegStrCell = readcell(ParantAreaListFile,'Range','B:B',...
+    'Sheet','Sheet1');
+ChildRegUsedStrs = ChildRegStrCell(2:end);
+
+NumParentAreas = length(AllParentAreaStrs);
+NumChildAreas = length(ChildRegUsedStrs);
+Child2ParentInds = zeros(NumChildAreas,1);
+Child2ParentInds(AllAreaStrsIndex) = 1;
+Child2ParentMapInds = cumsum(Child2ParentInds);
+
+%%
+UsedAreaInds = ~cellfun(@isempty,ThresAvgDataStrc.AreaDataInfos(:,1));
+UsedAreaAvgDatas = ThresAvgDataStrc.AreaDataInfos(UsedAreaInds,5);
+NEBrainStrs = ThresAvgDataStrc.BrainAreasStr(UsedAreaInds);
+%
+AllAreaAvgRatio = cellfun(@mean,UsedAreaAvgDatas);
+AllAreaRatioSEM = cellfun(@(x) std(x)/sqrt(numel(x)),UsedAreaAvgDatas);
+
+
+%%
+AllBrainNames = NEBrainStrs;
+NumBrainAreas = length(AllBrainNames);
+Area2ParentMapDatas = cell(NumBrainAreas,5);  % AreaStr, ParentIndex, 
+IsAreaUsed = false(NumBrainAreas,1);
+for cStrInds = 1 : NumBrainAreas
+    
+    cAreaStr = AllBrainNames{cStrInds};
+    
+    TF = matches(ChildRegUsedStrs,cAreaStr,'IgnoreCase',true);
+    if any(TF)
+        AllenRegionInds = find(TF);
+        if length(AllenRegionInds) > 1
+            fprintf('Multiple fits exist for area <%s>.\n',cAreaStr);
+            continue;
+        end
+        
+        Area2ParentMapDatas(cStrInds,:) = {cAreaStr,Child2ParentMapInds(TF),...
+            AllAreaAvgRatio(cStrInds),AllAreaRatioSEM(cStrInds),UsedAreaAvgDatas{cStrInds}};
+        IsAreaUsed(cStrInds) = true;
+    end
+end
+
+UsedAreaDatas = Area2ParentMapDatas(IsAreaUsed,:);
+
+%%
+
+AllAreaIndex = cat(1,UsedAreaDatas{:,2});
+[SortedPIIndex, SortIds] = sort(AllAreaIndex);
+
+UsedAreaStrs = UsedAreaDatas(SortIds,1);
+UsedAreaRatioAvg = cat(1,UsedAreaDatas{SortIds, 3});
+UsedAreaRatioSEM = cat(1,UsedAreaDatas{SortIds, 4});
+UsedAreaAllRatios = UsedAreaDatas(SortIds, 5);
+
+% stim peak time and 
+BoundIndex = find([1;diff(SortedPIIndex)]);
+UsedBoundIndexAll = [BoundIndex;numel(SortedPIIndex)+1];
+PIBoundCents = floor((UsedBoundIndexAll(1:end-1)+UsedBoundIndexAll(2:end))/2);
+
+PITypes = unique(SortedPIIndex);
+NumPIType = length(PITypes);
+BarColors = linspecer(NumPIType,'qualitative');
+PIAreaStrs = AllParentAreaStrs(PITypes);
+%%
+NumUsedAreas = numel(UsedAreaRatioAvg);
+
+
+hf4 = figure('position',[100 100 780 320]);
+
+ax1 = subplot(211);
+hold on;
+
+ax2 = subplot(212);
+hold on;
+
+for cAI = 1 : NumUsedAreas
+    cA_datas = UsedAreaAllRatios{cAI};
+    cA_Color = BarColors(SortedPIIndex(cAI)==PITypes,:);
+    plot(ax1, cAI, cA_datas, 'o', 'linewidth', 1, 'MarkerEdgeColor',cA_Color,'MarkerSize',6);
+    [~, p] = ttest(cA_datas, 1);
+    if p < 0.05
+        text(ax1, cAI, max(cA_datas)+1, '*','FontSize',16,'HorizontalAlignment','center');
+    end
+end
+set(ax1,'xtick',1:NumUsedAreas,'xticklabel',UsedAreaStrs,'xlim',[0 NumUsedAreas+2]);
+line(ax1, [0.5 NumUsedAreas+0.5],[1 1],'Color','c','linewidth',1,'linestyle','--');
+ylabel(ax1,'ChoiceInfo Ratio');
+
+for cPI = 1 : NumPIType
+    cPIInds = UsedBoundIndexAll(cPI):UsedBoundIndexAll(cPI+1)-1;
+    cPI_cType_Ratios = UsedAreaRatioAvg(cPIInds); %cellfun(@(x) x(cTypeInds),cPI_CellFracs)+1e-3;
+    cPI_cType_RatioSEM = UsedAreaRatioSEM(cPIInds); 
+    bar(ax2, cPIInds,cPI_cType_Ratios,0.6,'FaceColor',BarColors(cPI,:),'EdgeColor','none');
+    errorbar(ax2, cPIInds,cPI_cType_Ratios,cPI_cType_RatioSEM,'k.','Marker','none','linewidth',1.4);
+end
+NumUsedAreas = numel(UsedAreaRatioAvg);
+set(ax2,'xtick',PIBoundCents,'xticklabel',PIAreaStrs,'xlim',[0 NumUsedAreas+2]);
+line(ax2, [0.5 NumUsedAreas+0.5],[1 1],'Color','m','linewidth',1,'linestyle','--');
+ylabel(ax2,'ChoiceInfo Ratio');
+
+%%
+savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
+% savePathfolder4 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
+
+ParentAreaSaveName = fullfile(savePathfolder4, 'Parent area Choiceinfo ratio summary plot');
+saveas(hf4, ParentAreaSaveName);
+print(hf4, ParentAreaSaveName, '-dpng','-r350');
+print(hf4, ParentAreaSaveName, '-dpdf','-bestfit');
+
 
 

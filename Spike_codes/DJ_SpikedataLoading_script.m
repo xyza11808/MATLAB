@@ -13,7 +13,7 @@ probeNPSess = NPspikeDataMining(ksfolder,'Task');
 
 %%
 BehavDataFile = dir(fullfile(ksfolder,'..','mouse*.mat'));
-BehavDataPath = **;
+% BehavDataPath = **;
 BehavDataStrc = load(BehavDataPath);
 if ~isfield(BehavDataStrc,'behavResults')
     [behavResults,behavSettings] = behav_cell2struct(BehavDataStrc.SessionResults,BehavDataStrc.SessionSettings);
@@ -42,7 +42,16 @@ probeNPSess.CurrentSessInds = strcmpi('Task',probeNPSess.SessTypeStrs);
 %%
 probeNPSess.CurrentSessInds = strcmpi('Task',probeNPSess.SessTypeStrs);
 probeNPSess.ksFolder = ksfolder;
-probeNPSess = probeNPSess.ClusScreeningFun;
+
+InputOps = struct('Unitwaveform',true,...
+                    'ISIviolation',0.1,...  % default threshold value is 0.1, or 10%
+                    'SessSpiketimeCheck',true,...
+                    'Amplitude',10,... % threshold amplitude value, default is 70uv for subcortical neurons
+                    'WaveformSpread',1000,... % 1000um, about 50 channels?.
+                    'FiringRate',0.02,... % 1Hz
+                    'SNR',1);
+                
+probeNPSess = probeNPSess.ClusScreeningFun(InputOps);
 fprintf('\nNew cluster screening left units is %d/%d.\n',numel(probeNPSess.UsedClus_IDs),numel(probeNPSess.GoodClusIDs));
 
 %%

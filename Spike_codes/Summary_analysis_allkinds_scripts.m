@@ -951,8 +951,8 @@ Areawise_unittempAUCTraces = cell(NumUsedSess,NumAllTargetAreas,2, 2); % only tw
 Areawise_unitStimRespAUC = cell(NumUsedSess,NumAllTargetAreas,2); % used to store stim-response AUC, each for one stimuli 
 for cS = 1 : NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
-    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
-%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
 %     try
@@ -4288,6 +4288,160 @@ set(ax1,'FontSize',8);
 hlg = legend([hl1,hl2,hl11,hl22,hl_thres],{'BaseBVar','BaseTrVar','AfBVar','AfTrVar','Shuffle'},'position',[0.70 0.65 0.04 0.06],...%'northeast',...
     'box','off','AutoUpdate','off','FontSize',10);
 
+
+%% ############################################################################
+%% summary analysis 16, Choice information compared between raw and baseline-subtracted datas
+cclr
+
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+
+BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
+        'Sheet',1);
+BrainAreasStrCC = BrainAreasStrC(2:end);
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
+BrainAreasStr = [BrainAreasStrCC(~EmptyInds)];
+
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+% EmptyInds2 = cellfun(@(x) isempty(x) ||any(ismissing(x)),FullBrainStrCC);
+% FullBrainStr = [FullBrainStrCC(~EmptyInds);{'Others'}];
+
+SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
+        'Sheet',1);
+SessionFoldersRaw = SessionFoldersC(2:end);
+EmptyInds2 = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
+SessionFolders = SessionFoldersRaw(~EmptyInds2);
+
+NumUsedSess = length(SessionFolders);
+NumAllTargetAreas = length(BrainAreasStr);
+
+%%
+Areawise_ChoiceInfo = cell(NumUsedSess,NumAllTargetAreas,5);
+
+for cS = 1 :  NumUsedSess
+%     cSessPath = SessionFolders{cS}; %(2:end-1)
+%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    
+    ksfolder = fullfile(cSessPath,'ks2_5');
+    try
+        ChoiceInfofile = fullfile(ksfolder,'ChoiceANDBT_LDAinfo_ana','plsInfoDataSave.mat');
+        ChoiceInfoStrc = load(ChoiceInfofile,'AreaInfos','UsedArea_strs','UsedUnitNums');
+        
+    catch ME
+        fprintf('Error exists in session %d.\n',cS);
+    end
+    AreaChoiceInfos = ChoiceInfoStrc.AreaInfos;
+    AreaStrs = ChoiceInfoStrc.UsedArea_strs;
+    AreaUnitNums = ChoiceInfoStrc.UsedUnitNums;
+    
+    NumAreas = length(AreaStrs);
+    for cAreaInds = 1 : NumAreas % including the 'Others' region at the end
+        cAreaStr = AreaStrs{cAreaInds};
+        if isempty(cAreaStr)
+            continue;
+        end
+        AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
+        if ~sum(AreaMatchInds)
+            continue;
+        end
+        
+        RawDataInfo = AreaChoiceInfos{cAreaInds,1}(:,2);
+        RawShufInfo = AreaChoiceInfos{cAreaInds,4}(:,2,1); % 99% threshold of shuffle datas
+        BaseSubDatInfo = AreaChoiceInfos{cAreaInds,5}(:,2);
+        BSubShufInfo = AreaChoiceInfos{cAreaInds,8}(:,2,1);
+        
+        Areawise_ChoiceInfo(cS,AreaMatchInds,:) = {RawDataInfo, RawShufInfo, ...
+            BaseSubDatInfo, BSubShufInfo, AreaUnitNums(cAreaInds)};
+    end
+    
+end
+
+%%
+figSavePath16 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
+% figSavePath16 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
+
+%%
+UsedplsColNum = 5;
+AreaDataInfos = cell(length(BrainAreasStr), 5);
+for cA = 1:length(BrainAreasStr)
+    %
+    cA_RawDataInfo = cat(2, Areawise_ChoiceInfo{:,cA,1});
+    if ~isempty(cA_RawDataInfo)
+        cA_RawShufInfo = cat(2, Areawise_ChoiceInfo{:,cA,2});
+        cA_BaseSubInfo = cat(2, Areawise_ChoiceInfo{:,cA,3});
+        cA_BaseSubShufInfo = cat(2, Areawise_ChoiceInfo{:,cA,4});
+        cA_AllUnitNums = cat(1, Areawise_ChoiceInfo{:,cA,5});
+
+        NumSess = size(cA_RawDataInfo,2);
+%
+        if NumSess >= 5 % enough sessions for comparison
+            cA_RawDataInfo_used = cA_RawDataInfo(UsedplsColNum,:);
+            cA_RawShufInfo_used = cA_RawShufInfo(UsedplsColNum,:);
+            cA_BaseSubInfo_used = cA_BaseSubInfo(UsedplsColNum,:);
+            cA_BaseSubShufInfo_used = cA_BaseSubShufInfo(UsedplsColNum,:);
+
+            [~, p_RawComp] = ttest(cA_RawDataInfo_used, cA_BaseSubInfo_used);
+            [~, p_ShufComp] = ttest(cA_RawShufInfo_used, cA_BaseSubShufInfo_used);
+            [~, p_RatioComp] = ttest(cA_RawDataInfo_used./cA_BaseSubInfo_used, 1);
+
+            cA_str = BrainAreasStr{cA};
+            MaxInfoValue = max(max(cA_RawDataInfo_used),max(cA_BaseSubInfo_used));
+            MaxShufInfoValue = max(max(cA_RawShufInfo_used),max(cA_BaseSubShufInfo_used));
+
+            hf16 = figure('position',[100 100 580 160]);
+            ax1 = subplot(131);
+            hold on
+            plot([cA_RawDataInfo_used;cA_BaseSubInfo_used],'Color',[.7 .7 .7],'linewidth',0.8);
+            plot([1,2],[mean(cA_RawDataInfo_used),mean(cA_BaseSubInfo_used)],'Color','k','linewidth',1.5);
+    %         yscales = get(ax1,'ylim');
+            text(1.5, MaxInfoValue*1.1,num2str(p_RawComp,'p = %.2e'),'HorizontalAlignment','center','FontSize',6);
+            set(ax1,'xlim',[0.5 2.5],'xticklabel',{'Raw','BaseSub'},'xtick',[1 2],'ylim',[0 MaxInfoValue*1.2],'FontSize',8);
+            ylabel(ax1,sprintf('Choice info (N = %d)',NumSess));
+            title(ax1,sprintf('Area %s',cA_str));
+
+            ax2 = subplot(132);
+            hold on
+            plot(ax2, [cA_RawShufInfo_used;cA_BaseSubShufInfo_used],'Color',[.7 .7 .7],'linewidth',0.8);
+            plot(ax2, [1,2],[mean(cA_RawShufInfo_used),mean(cA_BaseSubShufInfo_used)],'Color','k','linewidth',1.5);
+    %         yscales = get(ax2,'ylim');
+            text(ax2, 1.5, MaxShufInfoValue*1.1,num2str(p_ShufComp,'p = %.2e'),'HorizontalAlignment','center','FontSize',6);
+            set(ax2,'xlim',[0.5 2.5],'xticklabel',{'RawShuf','BSshuf'},'xtick',[1 2],'ylim',[0 MaxShufInfoValue*1.3],'FontSize',8);
+    %         ylabel(ax2,sprintf('Choice info (N = %d)',NumSess));
+    %         title(ax2,sprintf('Area %s',cA_str));
+
+            Raw2BaseSubRatio = cA_RawDataInfo_used./cA_BaseSubInfo_used;
+            RatioMeanSEM = [mean(Raw2BaseSubRatio),std(Raw2BaseSubRatio)/sqrt(NumSess)];
+            ax3 = subplot(133);
+            hold on
+            plot(ax3, 1,Raw2BaseSubRatio,'o','MarkerEdgeColor',[.7 .7 .7],'MarkerSize',8,'MarkerFaceColor','none','linewidth',0.75);
+            errorbar(ax3, 1.2 ,RatioMeanSEM(1),RatioMeanSEM(2),'ko','linewidth',1.2);
+    %         yscales = get(ax3,'ylim');
+            text(ax3, 1.3, max(Raw2BaseSubRatio)*1.1,num2str(p_RatioComp,'p = %.2e'),'HorizontalAlignment','left','FontSize',6);
+            text(ax3, 1.3, max(Raw2BaseSubRatio)*0.9,sprintf('%.3f/%.4f',RatioMeanSEM(1),RatioMeanSEM(2)),...
+                'HorizontalAlignment','left','FontSize',6);
+            set(ax3,'xtick',1,'xticklabel',{'Raw2BSinfoRatio'},'xlim',[0.5 2],...
+                'ylim',[min(Raw2BaseSubRatio)-0.1 max(Raw2BaseSubRatio)*1.15],'FontSize',8);
+    %         ylabel(ax3,sprintf('Choice info (N = %d)',NumSess));
+            title(ax3, sprintf('Info Ratio'));
+%
+            cfigSavePath = fullfile(figSavePath16,sprintf('Area %s ChoiceInfo compare RawANDSub', cA_str));
+            saveas(hf16, cfigSavePath);
+            print(hf16, cfigSavePath, '-dpng','-r350');
+            print(hf16, cfigSavePath, '-dpdf','-bestfit');
+            close(hf16);
+            
+            AreaDataInfos(cA,:) = {cA_RawDataInfo_used, cA_BaseSubInfo_used, cA_RawShufInfo_used, ...
+                cA_BaseSubShufInfo_used, Raw2BaseSubRatio};
+        end
+
+    end
+end
+
+%%
+DataSavePath16 = fullfile(figSavePath16,'plsChoiceInfo_CompData.mat');
+save(DataSavePath16, 'AreaDataInfos','BrainAreasStr','Areawise_ChoiceInfo','-v7.3');
 
 %%
 % % sum(UsedSessNums > 5);

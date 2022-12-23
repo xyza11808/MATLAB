@@ -9,6 +9,13 @@ ResidueFolder = fullfile(ksfolder,'jeccAnA','ResidueInfo');
 if ~isfolder(ResidueFolder)
     mkdir(ResidueFolder);
 end
+%%
+A1_BT_InfoDatas = cat(1,AllPairInfos{:,1});
+A2_BT_InfoDatas = cat(1,AllPairInfos{:,2});
+
+A1_Choice_InfoDatas = cat(1,AllPairInfos{:,3});
+A2_Choice_InfoDatas = cat(1,AllPairInfos{:,4});
+
 
 NumPairs  = size(PairAreaInds,1);
 AllPairInfoDatas = cell(NumPairs, 2);
@@ -19,19 +26,13 @@ for cPair = 1 : NumPairs
     cPairedAreaStr = [cPairStrs{1},'-',cPairStrs{2}];
     AllPair_AreaStrs(cPair,:) = cPairStrs;
     
-    A1_BT_InfoDatas = cat(1,AllPairInfos{:,1});
-    A2_BT_InfoDatas = cat(1,AllPairInfos{:,2});
-
-    A1_Choice_InfoDatas = cat(1,AllPairInfos{:,3});
-    A2_Choice_InfoDatas = cat(1,AllPairInfos{:,4});
-
+    
     [huf_BT, BTInfoDatas] = CCAPorjInfo_plot_fun([100 100 380 480],A1_BT_InfoDatas,...
         A2_BT_InfoDatas,cPair,cPairStrs,'BTinfo');
     %
     [huf_Choice, ChoiceInfoDatas] = CCAPorjInfo_plot_fun([600 100 380 480],A1_Choice_InfoDatas,...
         A2_Choice_InfoDatas,cPair,cPairStrs,'Choiceinfo');
     
-%
 
     FigsavePath1 = fullfile(ResidueFolder,sprintf('Pair %s Residues_BTInfoPlot',cPairedAreaStr));
     FigsavePath2 = fullfile(ResidueFolder,sprintf('Pair %s Residues_ChInfoPlot',cPairedAreaStr));
@@ -45,7 +46,7 @@ for cPair = 1 : NumPairs
     
     AllPairInfoDatas(cPair,:) = {BTInfoDatas, ChoiceInfoDatas};
 end
-
+%%
 dataSavePath = fullfile(ResidueFolder,'AreaResidue_info.mat');
 save(dataSavePath,'AllPairInfoDatas','AllPair_AreaStrs','PairAreaInds','ExistField_ClusIDs','-v7.3');
 

@@ -11,7 +11,7 @@ TestPredAccu = zeros(MaxPlsDim,2,Repeat);
 Repeatpctvar = zeros(MaxPlsDim,2,Repeat);
 ShufScores = zeros(Repeat,MaxPlsDim,2,ShufRepeatNum);
 TrainBaseAll = false(nTrs,1);
-for cR = 1 : Repeat
+parfor cR = 1 : Repeat
     %     TrainInds = randsample(nTrs,round(nTrs/2));
     cc = cvpartition(nTrs,'kFold',3);
     

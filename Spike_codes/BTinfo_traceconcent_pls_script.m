@@ -55,26 +55,27 @@ BaselineSubData = RawResponseData - repmat(BaselineAvgDatas,1,1,FrameNum);
 BaselineWin = 1:OnsetBin-1;
 AfterRespWin = [0:0.1:1.4]/AlreadyCaledDatas.OutDataStrc.USedbin(2)+OnsetBin;
 %%
-tic
-AreaInfos = cell(NumUsedAreas, 8);
+AreaInfos_Af = cell(NumUsedAreas, 8);
 AreaInfos_base = cell(NumUsedAreas, 8);
 for cA = 1 : NumUsedAreas
     cA_UnitInds = UsedUnitInds{cA,2};
     cA_UnitData_Raw = RawResponseData(:,cA_UnitInds,:);
     cA_UnitData_Sub = BaselineSubData(:,cA_UnitInds,:);
-    % decoding using After stimulus response
+    
+    % decoding using afterward responses
     cA_AfDataConcent_Raw = reshape(permute(cA_UnitData_Raw(:,:,AfterRespWin),[1,3,2]),nmTrNum,[]);
     cA_AfDataConcent_Sub = reshape(permute(cA_UnitData_Sub(:,:,AfterRespWin),[1,3,2]),nmTrNum,[]);
     
-    [cA_Af_Raw_choiceInfo, cA_Af_Raw_PredAccu, cA_Af_Rawpctvar, ShufInfo_raw] = plsInfoCaledFun(cA_AfDataConcent_Raw, NMActionChoices,20);
-    [cA_Af_Sub_choiceInfo, cA_Af_Sub_PredAccu, cA_Af_Subpctvar, ShufInfo_sub] = plsInfoCaledFun(cA_AfDataConcent_Sub, NMActionChoices,20);
+    [cA_Af_Raw_BTInfo, cA_Af_Raw_PredAccu, cA_Af_Rawpctvar, ShufInfo_raw] = plsInfoCaledFun(cA_AfDataConcent_Raw, NMBlockTypeLabels,20);
+    [cA_Af_Sub_BTInfo, cA_Af_Sub_PredAccu, cA_Af_Subpctvar, ShufInfo_sub] = plsInfoCaledFun(cA_AfDataConcent_Sub, NMBlockTypeLabels,20);
     
     % decoding using baseline datas
     cA_baseDataConcent_Raw = reshape(permute(cA_UnitData_Raw(:,:,BaselineWin),[1,3,2]),nmTrNum,[]);
     cA_baseDataConcent_Sub = reshape(permute(cA_UnitData_Sub(:,:,BaselineWin),[1,3,2]),nmTrNum,[]);
     
-    [cA_base_Raw_choiceInfo, cA_base_Raw_PredAccu, cA_base_Rawpctvar, baseShufInfo_raw] = plsInfoCaledFun(cA_baseDataConcent_Raw, NMActionChoices,20);
-    [cA_base_Sub_choiceInfo, cA_base_Sub_PredAccu, cA_base_Subpctvar, baseShufInfo_sub] = plsInfoCaledFun(cA_baseDataConcent_Sub, NMActionChoices,20);
+    [cA_base_Raw_BTInfo, cA_base_Raw_PredAccu, cA_base_Rawpctvar, baseShufInfo_raw] = plsInfoCaledFun(cA_baseDataConcent_Raw, NMBlockTypeLabels,20);
+    [cA_base_Sub_BTInfo, cA_base_Sub_PredAccu, cA_base_Subpctvar, baseShufInfo_sub] = plsInfoCaledFun(cA_baseDataConcent_Sub, NMBlockTypeLabels,20);
+    
     
     AfShufThres_raw = zeros(20,2,2); % the last two is 99 prctile thres and 95 prctile thres
     AfShufThres_sub = zeros(20,2,2); 
@@ -97,30 +98,28 @@ for cA = 1 : NumUsedAreas
         end
     end
     
-    AreaInfos(cA,:) = {mean(cA_Af_Raw_choiceInfo,3), mean(cA_Af_Raw_PredAccu,3), mean(cA_Af_Rawpctvar,3), AfShufThres_raw...
-        mean(cA_Af_Sub_choiceInfo,3), mean(cA_Af_Sub_PredAccu,3), mean(cA_Af_Subpctvar,3),AfShufThres_sub};
-    AreaInfos_base(cA,:) = {mean(cA_base_Raw_choiceInfo,3), mean(cA_base_Raw_PredAccu,3), mean(cA_base_Rawpctvar,3), baseShufThres_raw...
-        mean(cA_base_Sub_choiceInfo,3), mean(cA_base_Sub_PredAccu,3), mean(cA_base_Subpctvar,3),baseShufThres_sub};
-    
+    AreaInfos_Af(cA,:) = {mean(cA_Af_Raw_BTInfo,3), mean(cA_Af_Raw_PredAccu,3), mean(cA_Af_Rawpctvar,3), AfShufThres_raw...
+        mean(cA_Af_Sub_BTInfo,3), mean(cA_Af_Sub_PredAccu,3), mean(cA_Af_Subpctvar,3),AfShufThres_sub};
+    AreaInfos_base(cA,:) = {mean(cA_base_Raw_BTInfo,3), mean(cA_base_Raw_PredAccu,3), mean(cA_base_Rawpctvar,3), baseShufThres_raw...
+        mean(cA_base_Sub_BTInfo,3), mean(cA_base_Sub_PredAccu,3), mean(cA_base_Subpctvar,3),baseShufThres_sub};
 end
-toc
 %%
-CalSaveDatafile = (fullfile(fullsavePath,'plsInfoDataSave_Choice.mat'));
-save(CalSaveDatafile,'AreaInfos','AreaInfos_base','UsedArea_strs','UsedUnitNums','UsedUnitInds','NMActionChoices',...
+CalSaveDatafile = (fullfile(fullsavePath,'plsInfoDataSave_BT.mat'));
+save(CalSaveDatafile,'AreaInfos_Af','AreaInfos_base','UsedArea_strs','UsedUnitNums','UsedUnitInds','NMActionChoices',...
     'NMBlockTypeLabels','NMTrInds','-v7.3');
 
 
-% %%
+%%
 % close;
 % cA = 1;
 % cA_Str = UsedArea_strs{cA};
 % hf = figure('position',[100 100 540 240]);
 % subplot(121)
 % hold on
-% hl1 = plot(AreaInfos{cA,1}(:,2),'Color','k','linewidth',1.5);
-% hl1_1 = plot(AreaInfos{cA,4}(:,2,1),'Color',[.7 .7 .7],'linewidth',1,'linestyle','--');
-% hl2 = plot(AreaInfos{cA,5}(:,2),'Color','r','linewidth',1.5);
-% hl2_2 = plot(AreaInfos{cA,8}(:,2,1),'Color',[0.8 0.2 0.2],'linewidth',1,'linestyle','--');
+% hl1 = plot(AreaInfos_Af{cA,1}(:,2),'Color','k','linewidth',1.5);
+% hl1_1 = plot(AreaInfos_Af{cA,4}(:,2,1),'Color',[.7 .7 .7],'linewidth',1,'linestyle','--');
+% hl2 = plot(AreaInfos_Af{cA,5}(:,2),'Color','r','linewidth',1.5);
+% hl2_2 = plot(AreaInfos_Af{cA,8}(:,2,1),'Color',[0.8 0.2 0.2],'linewidth',1,'linestyle','--');
 % set(gca,'xlim',[0 21]);
 % xlabel('Num pls compnents');
 % ylabel('Choice Info');
@@ -142,4 +141,6 @@ save(CalSaveDatafile,'AreaInfos','AreaInfos_base','UsedArea_strs','UsedUnitNums'
 % title(sprintf('pls crossValid info (%s) Base',cA_Str));
 % legend([hl1 hl1_1 hl2 hl2_2],{'Raw','RawShuf','BaseSub','BSubShuf'},'location','east',...
 %     'autoupdate','off','FontSize',6);
+
+
 

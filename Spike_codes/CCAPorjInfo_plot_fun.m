@@ -5,7 +5,7 @@ AfValidTimeCents = -0.95:0.1:2;
 huf = figure('position',figpos);
 % plots for section 1
 % Plottype = 3; % 1 is train, 2 is test, 3 is shuffle
-cPair_A1_BTinfo_BaseBVar = A1_BT_InfoDatas{cPair,1}(:,:,2)./A1_BT_InfoDatas{cPair,1}(:,:,3); % test info
+cPair_A1_BTinfo_BaseBVar = A1_BT_InfoDatas{cPair,1}(:,:,2)./A1_BT_InfoDatas{cPair,1}(:,:,3); % test info %;%
 cPair_A1_BTinfo_BaseTrVar = A1_BT_InfoDatas{cPair,2}(:,:,2)./A1_BT_InfoDatas{cPair,2}(:,:,3);
 NumComponents = size(cPair_A1_BTinfo_BaseBVar,1);
 if NumComponents > 20
@@ -18,7 +18,7 @@ end
 cPair_A1_BTinfo_AfBVar = A1_BT_InfoDatas{cPair,3}(:,:,2)./A1_BT_InfoDatas{cPair,3}(:,:,3); % test info
 cPair_A1_BTinfo_AfTrVar = A1_BT_InfoDatas{cPair,4}(:,:,2)./A1_BT_InfoDatas{cPair,4}(:,:,3);
 
-A1_allDatas = cat(3,cPair_A1_BTinfo_BaseBVar,cPair_A1_BTinfo_BaseTrVar,cPair_A1_BTinfo_AfBVar,cPair_A1_BTinfo_AfTrVar);
+A1_allDatas = {cPair_A1_BTinfo_BaseBVar,cPair_A1_BTinfo_BaseTrVar,cPair_A1_BTinfo_AfBVar,cPair_A1_BTinfo_AfTrVar};
 
 AllDatas = [cPair_A1_BTinfo_BaseBVar(:);cPair_A1_BTinfo_BaseTrVar(:);...
     cPair_A1_BTinfo_AfBVar(:);cPair_A1_BTinfo_AfTrVar(:)];
@@ -63,7 +63,7 @@ set(ax1_4,'xlim',[-1 2],'ylim',[0.5 NumComponents+0.5],'ydir','Reverse','ytick',
 axPos = get(ax1_4,'position');
 hbar = colorbar;
 set(ax1_4,'position',axPos+[-0.06 0 0 0]);
-
+set(get(hbar,'title'),'String','Nor.Info','Color','m');
 
 % plots for section 1
 cPair_A2_BTinfo_BaseBVar = A2_BT_InfoDatas{cPair,1}(:,:,2)./A2_BT_InfoDatas{cPair,1}(:,:,3); % test info
@@ -72,7 +72,7 @@ cPair_A2_BTinfo_BaseTrVar = A2_BT_InfoDatas{cPair,2}(:,:,2)./A2_BT_InfoDatas{cPa
 cPair_A2_BTinfo_AfBVar = A2_BT_InfoDatas{cPair,3}(:,:,2)./A2_BT_InfoDatas{cPair,3}(:,:,3); % test info
 cPair_A2_BTinfo_AfTrVar = A2_BT_InfoDatas{cPair,4}(:,:,2)./A2_BT_InfoDatas{cPair,4}(:,:,3);
 
-A2_allDatas = cat(3,cPair_A2_BTinfo_BaseBVar,cPair_A2_BTinfo_BaseTrVar,cPair_A2_BTinfo_AfBVar,cPair_A2_BTinfo_AfTrVar);
+A2_allDatas = {cPair_A2_BTinfo_BaseBVar,cPair_A2_BTinfo_BaseTrVar,cPair_A2_BTinfo_AfBVar,cPair_A2_BTinfo_AfTrVar};
 
 AllDatas2 = [cPair_A2_BTinfo_BaseBVar(:);cPair_A2_BTinfo_BaseTrVar(:);...
     cPair_A2_BTinfo_AfBVar(:);cPair_A2_BTinfo_AfTrVar(:)];
@@ -119,6 +119,7 @@ axPos = get(ax1_4,'position');
 hbar = colorbar;
 set(ax1_4,'position',axPos+[-0.06 0 0 0]);
 xlabel('Time (s)');
+set(get(hbar,'title'),'String','Nor.Info','Color','m');
 
 AreaDataStrc = struct();
 AreaDataStrc.A1Datas = A1_allDatas;

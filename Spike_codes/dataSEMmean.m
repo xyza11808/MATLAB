@@ -34,8 +34,22 @@ elseif Datanum < 5
         SEM = zeros(1, size(data,2));
     end
 else
-    Avg = mean(data,'omitnan');
-    SEM = std(data,'omitnan')/sqrt(Datanum);
+    % exclude some outliers is the data num is large enough
+    data(isnan(data)) = [];
+    Datanum = numel(data);
+    if numel(data) < 10
+        Avg = mean(data);
+        SEM = std(data)/sqrt(Datanum);
+    else
+        
+        EVarThresData = CorrectOutlierPoints(data,3);
+        UsedDataInds = data >= EVarThresData(1) & data <= EVarThresData(2);
+        if any(~UsedDataInds)
+            warning('Excluded some outliers.\n');
+        end
+        Avg = mean(data(UsedDataInds));
+        SEM = std(data(UsedDataInds))/sqrt(Datanum);
+    end
 end
 
 if nargout == 1
