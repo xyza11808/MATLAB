@@ -3,14 +3,16 @@ function varargout = dataSEMmean(data, CalType)
 if ~exist('CalType','var') || isempty(CalType)
     CalType = 'AllasOne';
 end
-
+IsOutlierCue = 0;
 switch CalType
     case 'AllasOne'
         data = data(:);
         Datanum = numel(data);
+        IsOutlierCue = 1;
     case 'Trace'
 %         data = data;
         Datanum = size(data, 1); % only performing average at the first dimension
+        IsOutlierCue = 0;
     otherwise
         warning('Unknowed calculation type, used default calculation.\n');
         data = data(:);
@@ -20,7 +22,15 @@ if isvector(data)
     if any(isnan(data))
         warning('There are some nan datas in input, ignoring them.\n');
         data(isnan(data)) = [];
+        Datanum = numel(data);
     end
+else
+    if any(isnan(data))
+        warning('Trials have nan datas in input was ignored.\n');
+        data(sum(isnan(data),2) > 0,:) = [];
+        Datanum = size(data, 1);
+    end
+    
 end
 
 % Datanum = numel(data);
@@ -35,20 +45,24 @@ elseif Datanum < 5
     end
 else
     % exclude some outliers is the data num is large enough
-    data(isnan(data)) = [];
-    Datanum = numel(data);
+%     data(isnan(data)) = [];
+%     Datanum = numel(data);
     if numel(data) < 10
         Avg = mean(data);
         SEM = std(data)/sqrt(Datanum);
     else
-        
-        EVarThresData = CorrectOutlierPoints(data,3);
-        UsedDataInds = data >= EVarThresData(1) & data <= EVarThresData(2);
-        if any(~UsedDataInds)
-            warning('Excluded some outliers.\n');
+        if IsOutlierCue
+            EVarThresData = CorrectOutlierPoints(data,3);
+            UsedDataInds = data >= EVarThresData(1) & data <= EVarThresData(2);
+            if any(~UsedDataInds)
+                warning('Excluded some outliers.\n');
+            end
+            Avg = mean(data(UsedDataInds));
+            SEM = std(data(UsedDataInds))/sqrt(Datanum);
+        else
+            Avg = mean(data);
+            SEM = std(data)/sqrt(Datanum);
         end
-        Avg = mean(data(UsedDataInds));
-        SEM = std(data(UsedDataInds))/sqrt(Datanum);
     end
 end
 

@@ -20,18 +20,35 @@ if ~iscell(data)
     end
 
     [nROws,nCloumns] = size(data);
-    if nROws == 1
-        MeanTrace = (sgolayfilt(data,3,7));
-        TraceSem = zeros(size(MeanTrace));
-    elseif nROws == 2
-        MeanTrace = (sgolayfilt(mean(data,'omitnan'),3,7));
-        TraceSem = zeros(size(MeanTrace));
+    if nCloumns > 10
+        if nROws == 1
+            MeanTrace = (sgolayfilt(data,3,7));
+            TraceSem = zeros(size(MeanTrace));
+        elseif nROws == 2
+            MeanTrace = (sgolayfilt(mean(data,'omitnan'),3,7));
+            TraceSem = zeros(size(MeanTrace));
+        else
+            % MeanTrace = (smooth(mean(data),7))';
+            MeanTrace = (sgolayfilt(mean(data,'omitnan'),3,7));
+            % MeanTrace = mean(data);
+            % MeanTrace = wdenoise(mean(data));
+            TraceSem = std(data,'omitnan')/sqrt(nROws) * SEMratio; 
+        end
     else
-        % MeanTrace = (smooth(mean(data),7))';
-        MeanTrace = (sgolayfilt(mean(data,'omitnan'),3,7));
-        % MeanTrace = mean(data);
-        % MeanTrace = wdenoise(mean(data));
-        TraceSem = std(data,'omitnan')/sqrt(nROws) * SEMratio; 
+        if nROws == 1
+            MeanTrace = data;
+            TraceSem = zeros(size(MeanTrace));
+        elseif nROws == 2
+            MeanTrace = mean(data,'omitnan');
+            TraceSem = zeros(size(MeanTrace));
+        else
+            % MeanTrace = (smooth(mean(data),7))';
+            MeanTrace = mean(data,'omitnan');
+            % MeanTrace = mean(data);
+            % MeanTrace = wdenoise(mean(data));
+            TraceSem = std(data,'omitnan')/sqrt(nROws) * SEMratio; 
+        end
+        
     end
 else
     % if the input data is cell format, means the input data 

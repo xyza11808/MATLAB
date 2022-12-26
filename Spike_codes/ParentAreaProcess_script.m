@@ -902,15 +902,21 @@ plot3(DenoiseData(Group3AreaInds,1),DenoiseData(Group3AreaInds,2),DenoiseData(Gr
 %% save folders 4
 cclr
 
-savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
+% % savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
 % savePathfolder4 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
+% 
+% DataSavefile4 = fullfile(savePathfolder4,'plsChoiceInfo_CompData.mat');
+% ThresAvgDataStrc = load(DataSavefile4,'AreaDataInfos','BrainAreasStr','AllDataDespStr');
 
-DataSavefile4 = fullfile(savePathfolder4,'plsChoiceInfo_CompData.mat');
-ThresAvgDataStrc = load(DataSavefile4,'AreaDataInfos','BrainAreasStr');
+% savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
+savePathfolder4 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
+
+DataSavefile4 = fullfile(savePathfolder4,'plsChoiceInfo_CompData_zsed.mat');
+ThresAvgDataStrc = load(DataSavefile4,'AreaDataInfos','BrainAreasStr','AllDataDespStr');
 
 % load parent str datas
-ParantAreaListFile = fullfile('K:\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
-% ParantAreaListFile = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+% ParantAreaListFile = fullfile('K:\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+ParantAreaListFile = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
 
 ParentRegionStrCell = readcell(ParantAreaListFile,'Range','A:A',...
     'Sheet','Sheet1');
@@ -930,18 +936,20 @@ Child2ParentInds(AllAreaStrsIndex) = 1;
 Child2ParentMapInds = cumsum(Child2ParentInds);
 
 %%
-UsedAreaInds = ~cellfun(@isempty,ThresAvgDataStrc.AreaDataInfos(:,1));
-UsedAreaAvgDatas = ThresAvgDataStrc.AreaDataInfos(UsedAreaInds,5);
+UsedAreaInds = ~cellfun(@isempty,ThresAvgDataStrc.AreaDataInfos(:,1,1));
+UsedAreaAvgDatas = squeeze(ThresAvgDataStrc.AreaDataInfos(UsedAreaInds,5,:));
 NEBrainStrs = ThresAvgDataStrc.BrainAreasStr(UsedAreaInds);
 %
 AllAreaAvgRatio = cellfun(@mean,UsedAreaAvgDatas);
 AllAreaRatioSEM = cellfun(@(x) std(x)/sqrt(numel(x)),UsedAreaAvgDatas);
 
-
+UsedAreaAvgAllDatas = squeeze(ThresAvgDataStrc.AreaDataInfos(UsedAreaInds,:,:));
+UsedAreaAllDataInfoAvgs = cellfun(@mean,UsedAreaAvgAllDatas);
+UsedAreaAllDataInfoSEMs = cellfun(@(x) std(x)/sqrt(numel(x)),UsedAreaAvgAllDatas);
 %%
 AllBrainNames = NEBrainStrs;
 NumBrainAreas = length(AllBrainNames);
-Area2ParentMapDatas = cell(NumBrainAreas,5);  % AreaStr, ParentIndex, 
+Area2ParentMapDatas = cell(NumBrainAreas,7);  % AreaStr, ParentIndex, 
 IsAreaUsed = false(NumBrainAreas,1);
 for cStrInds = 1 : NumBrainAreas
     
@@ -956,7 +964,8 @@ for cStrInds = 1 : NumBrainAreas
         end
         
         Area2ParentMapDatas(cStrInds,:) = {cAreaStr,Child2ParentMapInds(TF),...
-            AllAreaAvgRatio(cStrInds),AllAreaRatioSEM(cStrInds),UsedAreaAvgDatas{cStrInds}};
+            AllAreaAvgRatio(cStrInds,:),AllAreaRatioSEM(cStrInds,:),UsedAreaAvgDatas(cStrInds,:),...
+            UsedAreaAllDataInfoAvgs(cStrInds,:,:),UsedAreaAllDataInfoSEMs(cStrInds,:,:)};
         IsAreaUsed(cStrInds) = true;
     end
 end
@@ -971,8 +980,9 @@ AllAreaIndex = cat(1,UsedAreaDatas{:,2});
 UsedAreaStrs = UsedAreaDatas(SortIds,1);
 UsedAreaRatioAvg = cat(1,UsedAreaDatas{SortIds, 3});
 UsedAreaRatioSEM = cat(1,UsedAreaDatas{SortIds, 4});
-UsedAreaAllRatios = UsedAreaDatas(SortIds, 5);
-
+UsedAreaAllRatios = cat(1, UsedAreaDatas{SortIds, 5});
+SortAreaAllDataInfoAvgs = cat(1,UsedAreaDatas{SortIds, 6});
+SortAreaAllDataInfoSEM = cat(1,UsedAreaDatas{SortIds, 7});
 % stim peak time and 
 BoundIndex = find([1;diff(SortedPIIndex)]);
 UsedBoundIndexAll = [BoundIndex;numel(SortedPIIndex)+1];
@@ -983,8 +993,7 @@ NumPIType = length(PITypes);
 BarColors = linspecer(NumPIType,'qualitative');
 PIAreaStrs = AllParentAreaStrs(PITypes);
 %%
-NumUsedAreas = numel(UsedAreaRatioAvg);
-
+NumUsedAreas = size(UsedAreaRatioAvg,1);
 
 hf4 = figure('position',[100 100 780 320]);
 
@@ -995,7 +1004,7 @@ ax2 = subplot(212);
 hold on;
 
 for cAI = 1 : NumUsedAreas
-    cA_datas = UsedAreaAllRatios{cAI};
+    cA_datas = UsedAreaAllRatios{cAI,1};
     cA_Color = BarColors(SortedPIIndex(cAI)==PITypes,:);
     plot(ax1, cAI, cA_datas, 'o', 'linewidth', 1, 'MarkerEdgeColor',cA_Color,'MarkerSize',6);
     [~, p] = ttest(cA_datas, 1);
@@ -1005,28 +1014,233 @@ for cAI = 1 : NumUsedAreas
 end
 set(ax1,'xtick',1:NumUsedAreas,'xticklabel',UsedAreaStrs,'xlim',[0 NumUsedAreas+2]);
 line(ax1, [0.5 NumUsedAreas+0.5],[1 1],'Color','c','linewidth',1,'linestyle','--');
-ylabel(ax1,'ChoiceInfo Ratio');
+ylabel(ax1,sprintf('%s Info Ratio',ThresAvgDataStrc.AllDataDespStr{1}));
 
 for cPI = 1 : NumPIType
     cPIInds = UsedBoundIndexAll(cPI):UsedBoundIndexAll(cPI+1)-1;
-    cPI_cType_Ratios = UsedAreaRatioAvg(cPIInds); %cellfun(@(x) x(cTypeInds),cPI_CellFracs)+1e-3;
-    cPI_cType_RatioSEM = UsedAreaRatioSEM(cPIInds); 
+    cPI_cType_Ratios = UsedAreaRatioAvg(cPIInds,1); %cellfun(@(x) x(cTypeInds),cPI_CellFracs)+1e-3;
+    cPI_cType_RatioSEM = UsedAreaRatioSEM(cPIInds,1); 
     bar(ax2, cPIInds,cPI_cType_Ratios,0.6,'FaceColor',BarColors(cPI,:),'EdgeColor','none');
     errorbar(ax2, cPIInds,cPI_cType_Ratios,cPI_cType_RatioSEM,'k.','Marker','none','linewidth',1.4);
 end
-NumUsedAreas = numel(UsedAreaRatioAvg);
 set(ax2,'xtick',PIBoundCents,'xticklabel',PIAreaStrs,'xlim',[0 NumUsedAreas+2]);
 line(ax2, [0.5 NumUsedAreas+0.5],[1 1],'Color','m','linewidth',1,'linestyle','--');
-ylabel(ax2,'ChoiceInfo Ratio');
+ylabel(ax2,sprintf('%s Info Ratio',ThresAvgDataStrc.AllDataDespStr{1}));
 
 %%
-savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
+% % savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
 % savePathfolder4 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
 
-ParentAreaSaveName = fullfile(savePathfolder4, 'Parent area Choiceinfo ratio summary plot');
+% savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
+savePathfolder4 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
+
+ParentAreaSaveName = fullfile(savePathfolder4, 'Parent area zsedData ChoiceAfinfo ratio summary plot');
 saveas(hf4, ParentAreaSaveName);
 print(hf4, ParentAreaSaveName, '-dpng','-r350');
 print(hf4, ParentAreaSaveName, '-dpdf','-bestfit');
+
+%%
+
+hf4_2 = figure('position',[100 100 780 320]);
+
+ax1 = subplot(211);
+hold on;
+
+ax2 = subplot(212);
+hold on;
+
+for cAI = 1 : NumUsedAreas
+    cA_datas = UsedAreaAllRatios{cAI,3};
+    cA_Color = BarColors(SortedPIIndex(cAI)==PITypes,:);
+    plot(ax1, cAI, cA_datas, 'o', 'linewidth', 1, 'MarkerEdgeColor',cA_Color,'MarkerSize',6);
+    [~, p] = ttest(cA_datas, 1);
+    if p < 0.05
+        text(ax1, cAI, max(cA_datas)+1, '*','FontSize',16,'HorizontalAlignment','center');
+    end
+end
+set(ax1,'xtick',1:NumUsedAreas,'xticklabel',UsedAreaStrs,'xlim',[0 NumUsedAreas+2]);
+line(ax1, [0.5 NumUsedAreas+0.5],[1 1],'Color','c','linewidth',1,'linestyle','--');
+ylabel(ax1,sprintf('%s Info Ratio',ThresAvgDataStrc.AllDataDespStr{3}));
+
+for cPI = 1 : NumPIType
+    cPIInds = UsedBoundIndexAll(cPI):UsedBoundIndexAll(cPI+1)-1;
+    cPI_cType_Ratios = UsedAreaRatioAvg(cPIInds,3); %cellfun(@(x) x(cTypeInds),cPI_CellFracs)+1e-3;
+    cPI_cType_RatioSEM = UsedAreaRatioSEM(cPIInds,3); 
+    bar(ax2, cPIInds,cPI_cType_Ratios,0.6,'FaceColor',BarColors(cPI,:),'EdgeColor','none');
+    errorbar(ax2, cPIInds,cPI_cType_Ratios,cPI_cType_RatioSEM,'k.','Marker','none','linewidth',1.4);
+end
+set(ax2,'xtick',PIBoundCents,'xticklabel',PIAreaStrs,'xlim',[0 NumUsedAreas+2]);
+line(ax2, [0.5 NumUsedAreas+0.5],[1 1],'Color','m','linewidth',1,'linestyle','--');
+ylabel(ax2,sprintf('%s Info ratio',ThresAvgDataStrc.AllDataDespStr{3}));
+
+%%
+% % savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
+% savePathfolder4 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
+
+ParentAreaSaveName2 = fullfile(savePathfolder4, 'Parent area zsed BTAfinfo ratio summary plot');
+saveas(hf4_2, ParentAreaSaveName2);
+print(hf4_2, ParentAreaSaveName2, '-dpng','-r350');
+print(hf4_2, ParentAreaSaveName2, '-dpdf','-bestfit');
+
+%% plot the real info size
+ChoiceAfDataAll = SortAreaAllDataInfoAvgs(:,:,1);
+BTAfDataAll = SortAreaAllDataInfoAvgs(:,:,3);
+ChoiceAfDataAllSEM = SortAreaAllDataInfoSEM(:,:,1);
+BTAfDataAllSEM = SortAreaAllDataInfoSEM(:,:,3);
+
+hf4_3 = figure('position',[100 100 540 220]);
+ChoiceAx = subplot(121);
+hold on
+
+BTAx = subplot(122);
+hold on
+
+% choice plot
+for cPI = 1 : NumPIType
+    cPIInds = UsedBoundIndexAll(cPI):UsedBoundIndexAll(cPI+1)-1;
+    cPI_RawInfo_Avgs = ChoiceAfDataAll(cPIInds,1); %cellfun(@(x) x(cTypeInds),cPI_CellFracs)+1e-3;
+    cPI_RawInfo_SEM = ChoiceAfDataAllSEM(cPIInds,1)*0.2;
+    
+    cPI_SubInfo_Avgs = ChoiceAfDataAll(cPIInds,2); %cellfun(@(x) x(cTypeInds),cPI_CellFracs)+1e-3;
+    cPI_SubInfo_SEM = ChoiceAfDataAllSEM(cPIInds,2)*0.2;
+    
+    plot(ChoiceAx, cPI_RawInfo_Avgs,cPI_SubInfo_Avgs,'o','MarkerEdgeColor',BarColors(cPI,:),...
+        'MarkerFaceColor',BarColors(cPI,:),'linewidth',0.8);
+%     errorbar(ChoiceAx, cPI_RawInfo_Avgs,cPI_SubInfo_Avgs,cPI_SubInfo_SEM,cPI_SubInfo_SEM,...
+%         cPI_RawInfo_SEM,cPI_RawInfo_SEM,'ko','linewidth',0.6);
+end
+Comscale = uniAxesAdj(ChoiceAx);
+tb1 = fitlm(ChoiceAfDataAll(:,1),ChoiceAfDataAll(:,2));
+% fprintf('Model fit result.\n');
+% disp(tb1.Coefficients);
+% disp(tb1);
+InterValue = tb1.Coefficients.Estimate(1);
+CoefValue = tb1.Coefficients.Estimate(2);
+Rsqr = tb1.Rsquared.Adjusted;
+PredValue = predict(tb1,Comscale(:));
+line(ChoiceAx, Comscale, PredValue, 'Color','m','linewidth',0.6,'linestyle','--');
+text(ChoiceAx,Comscale(1)+1,Comscale(2)-5,{sprintf('Slope = %.4f',CoefValue);sprintf('Rsqr = %.4f',Rsqr)},...
+    'fontSize',8);
+xlabel(ChoiceAx, 'RawData');
+ylabel(ChoiceAx, 'Baseline subtracted');
+title(ChoiceAx, 'Choice Info');
+set(gca,'FontSize',10)
+
+% BT plot
+for cPI = 1 : NumPIType
+    cPIInds = UsedBoundIndexAll(cPI):UsedBoundIndexAll(cPI+1)-1;
+    cPI_RawInfo_Avgs = BTAfDataAll(cPIInds,1); %cellfun(@(x) x(cTypeInds),cPI_CellFracs)+1e-3;
+    cPI_RawInfo_SEM = BTAfDataAllSEM(cPIInds,1)*0.2;
+    
+    cPI_SubInfo_Avgs = BTAfDataAll(cPIInds,2); %cellfun(@(x) x(cTypeInds),cPI_CellFracs)+1e-3;
+    cPI_SubInfo_SEM = BTAfDataAllSEM(cPIInds,2)*0.2;
+    
+    plot(BTAx, cPI_RawInfo_Avgs,cPI_SubInfo_Avgs,'o','MarkerEdgeColor',BarColors(cPI,:),...
+        'MarkerFaceColor',BarColors(cPI,:),'linewidth',0.8);
+%     errorbar(ChoiceAx, cPI_RawInfo_Avgs,cPI_SubInfo_Avgs,cPI_SubInfo_SEM,cPI_SubInfo_SEM,...
+%         cPI_RawInfo_SEM,cPI_RawInfo_SEM,'ko','linewidth',0.6);
+end
+Comscale2 = uniAxesAdj(BTAx);
+tb12 = fitlm(BTAfDataAll(:,1),BTAfDataAll(:,2));
+% fprintf('Model fit result.\n');
+% disp(tb1.Coefficients);
+% disp(tb1);
+InterValue = tb12.Coefficients.Estimate(1);
+CoefValue = tb12.Coefficients.Estimate(2);
+Rsqr = tb12.Rsquared.Adjusted;
+PredValue = predict(tb12,Comscale2(:));
+line(BTAx, Comscale2, PredValue, 'Color','m','linewidth',0.6,'linestyle','--');
+text(BTAx,Comscale2(1)+1,Comscale2(2)-5,{sprintf('Slope = %.4f',CoefValue);sprintf('Rsqr = %.4f',Rsqr)},...
+    'fontSize',8);
+xlabel(BTAx, 'RawData');
+ylabel(BTAx, 'Baseline subtracted');
+title(BTAx,'BT Info');
+set(gca,'FontSize',10)
+
+%% shuf threshold data plot
+hf4_4 = figure('position',[100 100 540 220]);
+ChoiceAx = subplot(121);
+hold on
+
+BTAx = subplot(122);
+hold on
+
+% choice plot
+for cPI = 1 : NumPIType
+    cPIInds = UsedBoundIndexAll(cPI):UsedBoundIndexAll(cPI+1)-1;
+    cPI_RawInfo_Avgs = ChoiceAfDataAll(cPIInds,3); %cellfun(@(x) x(cTypeInds),cPI_CellFracs)+1e-3;
+    cPI_RawInfo_SEM = ChoiceAfDataAllSEM(cPIInds,1)*0.2;
+    
+    cPI_SubInfo_Avgs = ChoiceAfDataAll(cPIInds,4); %cellfun(@(x) x(cTypeInds),cPI_CellFracs)+1e-3;
+    cPI_SubInfo_SEM = ChoiceAfDataAllSEM(cPIInds,2)*0.2;
+    
+    plot(ChoiceAx, cPI_RawInfo_Avgs,cPI_SubInfo_Avgs,'o','MarkerEdgeColor',BarColors(cPI,:),...
+        'MarkerFaceColor',BarColors(cPI,:),'linewidth',0.8);
+%     errorbar(ChoiceAx, cPI_RawInfo_Avgs,cPI_SubInfo_Avgs,cPI_SubInfo_SEM,cPI_SubInfo_SEM,...
+%         cPI_RawInfo_SEM,cPI_RawInfo_SEM,'ko','linewidth',0.6);
+end
+Comscale = uniAxesAdj(ChoiceAx);
+tb1 = fitlm(ChoiceAfDataAll(:,3),ChoiceAfDataAll(:,4));
+% fprintf('Model fit result.\n');
+% disp(tb1.Coefficients);
+% disp(tb1);
+InterValue = tb1.Coefficients.Estimate(1);
+CoefValue = tb1.Coefficients.Estimate(2);
+Rsqr = tb1.Rsquared.Adjusted;
+PredValue = predict(tb1,Comscale(:));
+line(ChoiceAx, Comscale, PredValue, 'Color','m','linewidth',0.6,'linestyle','--');
+text(ChoiceAx,Comscale(1)+0.01,Comscale(2)-0.02,{sprintf('Slope = %.4f',CoefValue);sprintf('Rsqr = %.4f',Rsqr)},...
+    'fontSize',8);
+xlabel(ChoiceAx, 'RawData');
+ylabel(ChoiceAx, 'Baseline subtracted');
+title(ChoiceAx, 'Choice Info threshold');
+set(gca,'FontSize',10)
+
+% BT plot
+for cPI = 1 : NumPIType
+    cPIInds = UsedBoundIndexAll(cPI):UsedBoundIndexAll(cPI+1)-1;
+    cPI_RawInfo_Avgs = BTAfDataAll(cPIInds,3); %cellfun(@(x) x(cTypeInds),cPI_CellFracs)+1e-3;
+    cPI_RawInfo_SEM = BTAfDataAllSEM(cPIInds,1)*0.2;
+    
+    cPI_SubInfo_Avgs = BTAfDataAll(cPIInds,4); %cellfun(@(x) x(cTypeInds),cPI_CellFracs)+1e-3;
+    cPI_SubInfo_SEM = BTAfDataAllSEM(cPIInds,2)*0.2;
+    
+    plot(BTAx, cPI_RawInfo_Avgs,cPI_SubInfo_Avgs,'o','MarkerEdgeColor',BarColors(cPI,:),...
+        'MarkerFaceColor',BarColors(cPI,:),'linewidth',0.8);
+%     errorbar(ChoiceAx, cPI_RawInfo_Avgs,cPI_SubInfo_Avgs,cPI_SubInfo_SEM,cPI_SubInfo_SEM,...
+%         cPI_RawInfo_SEM,cPI_RawInfo_SEM,'ko','linewidth',0.6);
+end
+Comscale2 = uniAxesAdj(BTAx);
+tb12 = fitlm(BTAfDataAll(:,3),BTAfDataAll(:,4));
+% fprintf('Model fit result.\n');
+% disp(tb1.Coefficients);
+% disp(tb1);
+InterValue = tb12.Coefficients.Estimate(1);
+CoefValue = tb12.Coefficients.Estimate(2);
+Rsqr = tb12.Rsquared.Adjusted;
+PredValue = predict(tb12,Comscale2(:));
+line(BTAx, Comscale2, PredValue, 'Color','m','linewidth',0.6,'linestyle','--');
+text(BTAx,Comscale2(1)+0.01,Comscale2(2)-0.02,{sprintf('Slope = %.4f',CoefValue);sprintf('Rsqr = %.4f',Rsqr)},...
+    'fontSize',8);
+xlabel(BTAx, 'RawData');
+ylabel(BTAx, 'Baseline subtracted');
+title(BTAx,'BT Info threshold');
+set(gca,'FontSize',10)
+
+
+%%
+
+ParentAreaSaveName3 = fullfile(savePathfolder4, 'Parent area Info Compared summary plot');
+saveas(hf4_3, ParentAreaSaveName3);
+print(hf4_3, ParentAreaSaveName3, '-dpng','-r350');
+print(hf4_3, ParentAreaSaveName3, '-dpdf','-bestfit');
+
+
+ParentAreaSaveName4 = fullfile(savePathfolder4, 'Parent area InfoThreshold Compared summary plot');
+saveas(hf4_4, ParentAreaSaveName4);
+print(hf4_4, ParentAreaSaveName4, '-dpng','-r350');
+print(hf4_4, ParentAreaSaveName4, '-dpdf','-bestfit');
+
 
 
 

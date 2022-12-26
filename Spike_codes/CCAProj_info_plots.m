@@ -31,8 +31,6 @@ for cPair = 1 : NumPairs
     %
     [huf_Choice, ChoiceInfoDatas] = CCAPorjInfo_plot_fun([600 100 380 480],A1_Choice_InfoDatas,...
         A2_Choice_InfoDatas,cPair,cPairStrs,'Choiceinfo');
-    
-%
 
     FigsavePath1 = fullfile(ResidueFolder,sprintf('Pair %s Residues_BTInfoPlot',cPairedAreaStr));
     FigsavePath2 = fullfile(ResidueFolder,sprintf('Pair %s Residues_ChInfoPlot',cPairedAreaStr));

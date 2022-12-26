@@ -3975,8 +3975,8 @@ save(dataSaveName2,'Area_BlockwiseTempScores','-v7.3');
 %% summary analysis 15, canonical correlation caled using two type residues
 cclr
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -4000,17 +4000,20 @@ NumAllTargetAreas = length(BrainAreasStr);
 
 %%
 SesswiseCCAdatas = cell(NumUsedSess,1);
+SesswiseResInfoData = cell(NumUsedSess,4);
+
 
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
-%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
-    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     try
         CCADatafile = fullfile(ksfolder,'jeccAnA','ComponentCorrplot','PairCCADatas.mat');
         CCADataStrc = load(CCADatafile);
-        
+        ResidueInfofile = fullfile(ksfolder,'jeccAnA','ResidueInfo','AreaResidue_info.mat');
+        ResidueInfoStrc = load(ResidueInfofile,'AllPairInfoDatas_BT','AllPairInfoDatas_Choice');
     catch ME
         fprintf('Error exists in session %d.\n',cS);
     end
@@ -4019,12 +4022,19 @@ for cS = 1 :  NumUsedSess
     
     SesswiseCCAdatas{cS} = [cSessPairCCAs,cSessPairInfos,cellfun(@(x,y) [x,'-',y],cSessPairInfos(:,1),...
         cSessPairInfos(:,2),'un',0)];
+    SesswiseResInfoData(cS,:) = {ResidueInfoStrc.AllPairInfoDatas_BT(:,:,1),ResidueInfoStrc.AllPairInfoDatas_BT(:,:,2),...
+        ResidueInfoStrc.AllPairInfoDatas_Choice(:,:,1),ResidueInfoStrc.AllPairInfoDatas_Choice(:,:,2)};
     
 end
+sameProbe_BTinfo_A1 = cat(1,SesswiseResInfoData{:,1});
+sameProbe_BTinfo_A2 = cat(1,SesswiseResInfoData{:,2});
 
+sameProbe_Choiceinfo_A1 = cat(1,SesswiseResInfoData{:,3});
+sameProbe_Choiceinfo_A2 = cat(1,SesswiseResInfoData{:,4});
 %%
 SesswiseCCAdata_Cell_sameProbe = cat(1,SesswiseCCAdatas{:});
-BetProbeCCAsfile = 'K:\ComponentCorrplot\PairCCADatas.mat';
+% BetProbeCCAsfile = 'K:\ComponentCorrplot\PairCCADatas.mat';
+BetProbeCCAsfile = 'E:\NPCCGs\PairedSessionDatas\ComponentCorrplot\PairCCADatas.mat';
 BetProbeCCAsStrc = load(BetProbeCCAsfile);
 SesswiseCCAdata_betProbe = BetProbeCCAsStrc.PairCCADatasAllCell;
 Betprobe_pairInfo = BetProbeCCAsStrc.TypeAreaPairInfo;
@@ -4036,6 +4046,15 @@ AllPairedCCADatas = [SesswiseCCAdata_Cell_sameProbe;SesswiseCCAdata_Cell_betProb
 AllPairComponentCorrs = cat(1,AllPairedCCADatas{:,1});
 TestDataCompontCorr = cellfun(@(x) x(1,:,2),AllPairComponentCorrs(:,1:4),'un',0);
 TestDataCorrThres = cellfun(@(x) x',AllPairComponentCorrs(:,5),'un',0);
+
+AllBaseBVar_infos = [sameProbe_BTinfo_A1(:,1),sameProbe_BTinfo_A2(:,1),...
+    sameProbe_Choiceinfo_A1(:,1),sameProbe_Choiceinfo_A2(:,1)];
+AllAfBVar_infos = [sameProbe_BTinfo_A1(:,3),sameProbe_BTinfo_A2(:,3),...
+    sameProbe_Choiceinfo_A1(:,3),sameProbe_Choiceinfo_A2(:,3)];
+AllBaseTrVar_infos = [sameProbe_BTinfo_A1(:,2),sameProbe_BTinfo_A2(:,2),...
+    sameProbe_Choiceinfo_A1(:,2),sameProbe_Choiceinfo_A2(:,2)];
+AllAfTrVar_infos = [sameProbe_BTinfo_A1(:,4),sameProbe_BTinfo_A2(:,4),...
+    sameProbe_Choiceinfo_A1(:,4),sameProbe_Choiceinfo_A2(:,4)];
 
 %% unique area pairs
 [UniquePairs, ~, uniPairIndex] = unique(AllPairedCCADatas(:,6));
@@ -4055,6 +4074,7 @@ for cP = 1 : NumInitPairs
     end
     tf = strcmpi(UniquePairsNew,cPStr_Rev);
     if any(tf) % reversed same str pair
+        fprintf('Reverse pair str: %s .\n',cPStr_Rev);
         RevPairIndex = find(tf);
         UniquePairsNew{tf} = '';
         uniPairIndexNew(uniPairIndex == RevPairIndex) = cP;
@@ -4071,12 +4091,20 @@ ValidStrPairsNum = NewPairIndsNum(ValidStrPairIndex);
 % ValidPairStr = UniquePairsNew(ValidStrPairIndex);
 
 %%
-ExcludeAreas = {'AON','OLF','cc','aco'};
+AreaPairInfoPlotSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\AreaCrossCorrPlots\PairedAreaCorrPlots';
+% AreaPairInfoPlotSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\AreaCrossCorrPlots\PairedAreaCorrPlots';
+
+%%
+BaseValidTimeCents = -0.95:0.1:1;
+AfValidTimeCents = -0.95:0.1:2;
+
+ExcludeAreas = {'ccc'}; %'AON','OLF','cc','aco'
 NumValidPairs = length(ValidStrPairsAll);
 CorrDiffValuesNor = zeros(NumValidPairs, 2, 3);
 CorrDiff_pvalues = zeros(NumValidPairs, 2, 3);
 CorrThres = zeros(NumValidPairs,1);
 PairAreaStrs = cell(NumValidPairs, 2);
+PairAllRawDatas = cell(NumValidPairs, 4);
 IsPairWithExcludeArea = false(NumValidPairs, 1);
 for cPair = 1 : NumValidPairs
     
@@ -4084,6 +4112,7 @@ for cPair = 1 : NumValidPairs
 
     cValidRealIndex = ValidStrPairIndex(cPair);
     cValidDataInds = uniPairIndexNew == cValidRealIndex;
+    
     cValidDataAlls = TestDataCompontCorr(cValidDataInds,:);
     cValidDataCorrThres = TestDataCorrThres(cValidDataInds);
     cValidPairStr = ValidStrPairsAll{cPair};
@@ -4109,6 +4138,9 @@ for cPair = 1 : NumValidPairs
     [~, BaseCorrComp_p] = ttest2(BaseBVarDatas(:,1:3), BaseTrVarDatas(:,1:3));
     [~, AfCorrComp_p] = ttest2(AfBVarDatas(:,1:3), AfTrVarDatas(:,1:3));
     
+    PairAllRawDatas(cPair, :) = {BaseBVarDatas(:,1:6), BaseTrVarDatas(:,1:6),...
+        AfBVarDatas(:,1:6), AfTrVarDatas(:,1:6)};
+    
     Baseker_corrDiff = (BaseBVar_Avgs - BaseTrVar_Avgs); % ./ max(BaseBVar_Avgs, BaseTrVar_Avgs);
     Afker_corrDiff = (AfBVar_Avgs - AfTrVar_Avgs); %  ./ max(AfBVar_Avgs, AfTrVar_Avgs);
     PairStrsCell = strsplit(cValidPairStr,'-');
@@ -4120,6 +4152,166 @@ for cPair = 1 : NumValidPairs
     PairAreaStrs(cPair, :) = PairStrsCell;
     
     IsPairWithExcludeArea(cPair) = any(ismember(PairStrsCell, ExcludeAreas)) || strcmpi(PairStrsCell{1},PairStrsCell{2});
+    
+    if ~IsPairWithExcludeArea(cPair) % used area pair
+        hf = figure('position',[100 100 780 460]);
+        cValidBaseBVarInfo = cellfun(@(x) x(1:6,:),AllBaseBVar_infos(cValidDataInds,:),'un',0);
+        cValidBaseTrVarInfo = cellfun(@(x) x(1:6,:),AllBaseTrVar_infos(cValidDataInds,:),'un',0);
+        cValidAfBVarInfo = cellfun(@(x) x(1:6,:),AllAfBVar_infos(cValidDataInds,:),'un',0);
+        cValidAfTrVarInfo = cellfun(@(x) x(1:6,:),AllAfTrVar_infos(cValidDataInds,:),'un',0);
+        
+        CorrThres_used = CorrThresDatas(1:6);
+        % plots for base corr
+        [BaseBVarAvg, BaseBVarSEM, BaseBVarTrNum] = dataSEMmean(BaseBVarDatas(:,1:6),'Trace');
+        [BaseTrVarAvg, BaseTrVarSEM, BaseTrVarTrNum] = dataSEMmean(BaseTrVarDatas(:,1:6),'Trace');
+        BTinfo_A1_BaseBVar = cat(3,cValidBaseBVarInfo{:,1});
+        BTinfo_A2_BaseBVar = cat(3,cValidBaseBVarInfo{:,2});
+        
+        Choiceinfo_A1_BaseBVar = cat(3,cValidBaseBVarInfo{:,3});
+        Choiceinfo_A2_BaseBVar = cat(3,cValidBaseBVarInfo{:,4});
+        
+        BTinfo_A1_BaseTrVar = cat(3,cValidBaseTrVarInfo{:,1});
+        BTinfo_A2_BaseTrVar = cat(3,cValidBaseTrVarInfo{:,2});
+        
+        Choiceinfo_A1_BaseTrVar = cat(3,cValidBaseTrVarInfo{:,3});
+        Choiceinfo_A2_BaseTrVar = cat(3,cValidBaseTrVarInfo{:,4});
+        
+        ax_BaseCorr = subplot(5,4,1);
+        hold on
+        [~,~,hl1] = MeanSemPlot(BaseBVarDatas(:,1:6),[],ax_BaseCorr,1,[.7 .7 .7],'k','linewidth',1.5);
+        [~,~,hl2] = MeanSemPlot(BaseTrVarDatas(:,1:6),[],ax_BaseCorr,1,[.8 .3 .3],'r','linewidth',1.5);
+        plot(ax_BaseCorr, CorrThres_used,'color',[.5 .5 .5],'linewidth',1.5,'linestyle','--');
+        
+        xlabel(ax_BaseCorr,'Components');
+        ylabel(ax_BaseCorr,'Coefficient');
+        axPos = get(ax_BaseCorr,'position');
+        legend(ax_BaseCorr,[hl1, hl2],{'BaseBVar','BaseTrVar'},'location','northeastoutside','box','off','autoupdate',false);
+        set(ax_BaseCorr,'position',axPos + [0 0.03 0 0],'xlim',[0.5 6.5],'xtick',1:6);
+        title(ax_BaseCorr,sprintf('Area pair %s',cValidPairStr));
+        
+        
+        AllColorplotDatas = {BTinfo_A1_BaseBVar,BTinfo_A2_BaseBVar,BTinfo_A1_BaseTrVar,BTinfo_A2_BaseTrVar,...
+            Choiceinfo_A1_BaseBVar,Choiceinfo_A2_BaseBVar,Choiceinfo_A1_BaseTrVar,Choiceinfo_A2_BaseTrVar};
+        DataDespStr = {'BTBaseBVar A1','BTBaseBVar A2','BTBaseTrVar A1','BTBaseTrVar A2',...
+            'ChBaseBVar A1','ChBaseBVar A2','ChBaseTrVar A1','ChBaseTrVar A2'};
+        AllPlotDataAvgs = cellfun(@(x) mean(x,3),AllColorplotDatas,'un',0);
+        BTInfoDatas = cat(3,AllPlotDataAvgs{1:4});
+        BTColorlim = [0, prctile(BTInfoDatas(:),99)];
+        ChoiceInfoDatas = cat(3,AllPlotDataAvgs{5:8});
+        ChoiceColorlim = [0, prctile(ChoiceInfoDatas(:),99)];
+        for cPlotInds = 1 : 8
+            if mod(cPlotInds,2)
+                AxIndex = cPlotInds*2+3;
+            else
+                AxIndex =cPlotInds*2+2;
+            end
+            cPlotData = AllColorplotDatas{cPlotInds};
+            cPlotDataAvg = mean(cPlotData, 3);
+            if cPlotInds < 5
+                Plotclim = BTColorlim;
+            else
+                Plotclim = ChoiceColorlim;
+            end
+            ax = subplot(5,4,AxIndex);
+            imagesc(ax, BaseValidTimeCents,1:6,cPlotDataAvg,Plotclim);
+            line(ax, [0 0], [0.5 6.5],'Color','m','linewidth',1.2,'linestyle','--');
+            title(ax, DataDespStr{cPlotInds});
+            if AxIndex > 16
+                xlabel('Time (s)');
+            end
+            if mod(cPlotInds,2)
+                ylabel('Components');
+            end
+            if ~mod(cPlotInds, 4)
+                axPos = get(ax,'position');
+                hbar = colorbar;
+                OldBarPos = get(hbar, 'position');
+                set(ax,'position',[axPos(1) axPos(2) axPos(3) 0.0993]);
+                set(hbar,'position',[axPos(1)+axPos(3)+0.01 axPos(2) OldBarPos(3)*0.5 OldBarPos(4)*0.3]);
+            else
+               LatestAxHieght = get(ax,'position'); 
+            end
+        end
+        % #####################################################################################################
+        % plot another kernal data for afterward responses
+        [AfBVarAvg, AfBVarSEM, AfBVarTrNum] = dataSEMmean(AfBVarDatas(:,1:6),'Trace');
+        [AfTrVarAvg, AfTrVarSEM, AfTrVarTrNum] = dataSEMmean(AfTrVarDatas(:,1:6),'Trace');
+        BTinfo_A1_AfBVar = cat(3,cValidAfBVarInfo{:,1});
+        BTinfo_A2_AfBVar = cat(3,cValidAfBVarInfo{:,2});
+        
+        Choiceinfo_A1_AfBVar = cat(3,cValidAfBVarInfo{:,3});
+        Choiceinfo_A2_AfBVar = cat(3,cValidAfBVarInfo{:,4});
+        
+        BTinfo_A1_AfTrVar = cat(3,cValidAfTrVarInfo{:,1});
+        BTinfo_A2_AfTrVar = cat(3,cValidAfTrVarInfo{:,2});
+        
+        Choiceinfo_A1_AfTrVar = cat(3,cValidAfTrVarInfo{:,3});
+        Choiceinfo_A2_AfTrVar = cat(3,cValidAfTrVarInfo{:,4});
+        
+        ax_AfCorr = subplot(5,4,3);
+        hold on
+        [~,~,hl1] = MeanSemPlot(AfBVarDatas(:,1:6),[],ax_AfCorr,1,[.7 .7 .7],'k','linewidth',1.5);
+        [~,~,hl2] = MeanSemPlot(AfTrVarDatas(:,1:6),[],ax_AfCorr,1,[.8 .3 .3],'r','linewidth',1.5);
+        plot(ax_AfCorr, CorrThres_used,'color',[.5 .5 .5],'linewidth',1.5,'linestyle','--');
+        
+        xlabel(ax_AfCorr,'Components');
+        ylabel(ax_AfCorr,'Coefficient');
+        axPos = get(ax_AfCorr,'position');
+        legend(ax_AfCorr,[hl1, hl2],{'AfBVar','AfTrVar'},'location','northeastoutside','box','off','autoupdate',false);
+        set(ax_AfCorr,'position',axPos + [0 0.03 0 0],'xlim',[0.5 6.5],'xtick',1:6);
+        title(ax_AfCorr,sprintf('Area pair (%d Sess)',AfBVarTrNum));
+        
+        
+        AllColorplotDatas = {BTinfo_A1_AfBVar,BTinfo_A2_AfBVar,BTinfo_A1_AfTrVar,BTinfo_A2_AfTrVar,...
+            Choiceinfo_A1_AfBVar,Choiceinfo_A2_AfBVar,Choiceinfo_A1_AfTrVar,Choiceinfo_A2_AfTrVar};
+        DataDespStr = {'BTAfBVar A1','BTAfBVar A2','BTAfTrVar A1','BTAfTrVar A2',...
+            'ChAfBVar A1','ChAfBVar A2','ChAfTrVar A1','ChAfTrVar A2'};
+        AllPlotDataAvgs = cellfun(@(x) mean(x,3),AllColorplotDatas,'un',0);
+        BTInfoDatas = cat(3,AllPlotDataAvgs{1:4});
+        BTColorlim = [0, prctile(BTInfoDatas(:),99)];
+        ChoiceInfoDatas = cat(3,AllPlotDataAvgs{5:8});
+        ChoiceColorlim = [0, prctile(ChoiceInfoDatas(:),99)];
+        for cPlotInds = 1 : 8
+            if mod(cPlotInds,2)
+                AxIndex = cPlotInds*2+5;
+            else
+                AxIndex =cPlotInds*2+4;
+            end
+            cPlotData = AllColorplotDatas{cPlotInds};
+            cPlotDataAvg = mean(cPlotData, 3);
+            if cPlotInds < 5
+                Plotclim = BTColorlim;
+            else
+                Plotclim = ChoiceColorlim;
+            end
+            ax = subplot(5,4,AxIndex);
+            imagesc(ax, AfValidTimeCents,1:6,cPlotDataAvg,Plotclim);
+            line(ax, [0 0], [0.5 6.5],'Color','m','linewidth',1.2,'linestyle','--');
+            title(ax, DataDespStr{cPlotInds});
+            if AxIndex > 16
+                xlabel('Time (s)');
+            end
+%             if mod(cPlotInds,2)
+%                 ylabel('Components');
+%             end
+            if ~mod(cPlotInds, 4)
+                axPos = get(ax,'position');
+                hbar = colorbar;
+                OldBarPos = get(hbar, 'position');
+                set(ax,'position',[axPos(1) axPos(2) axPos(3) 0.0993]);
+                set(hbar,'position',[axPos(1)+axPos(3)+0.01 axPos(2) OldBarPos(3)*0.5 OldBarPos(4)*0.3]);
+            else
+               LatestAxHieght = get(ax,'position'); 
+            end
+        end
+        
+        saveName = fullfile(AreaPairInfoPlotSavePath,sprintf('Pair %s CorrANDInfo plots',cValidPairStr));
+        saveas(hf, saveName);
+        print(hf, saveName, '-dpng','-r350');
+        close(hf);
+        
+    end
+        
 end
 AllPairDatas = {CorrDiffValuesNor,CorrDiff_pvalues,CorrThres,PairAreaStrs,IsPairWithExcludeArea};
 
@@ -4127,6 +4319,7 @@ CorrDiffValuesNor = CorrDiffValuesNor(~IsPairWithExcludeArea,:,:); %zeros(NumVal
 CorrDiff_pvalues = CorrDiff_pvalues(~IsPairWithExcludeArea,:,:); %zeros(NumValidPairs, 2, 3);
 CorrThres = CorrThres(~IsPairWithExcludeArea); %zeros(NumValidPairs,1);
 PairAreaStrs = PairAreaStrs(~IsPairWithExcludeArea,:); %cell(NumValidPairs, 2);
+UsedPairRawDatas = PairAllRawDatas(~IsPairWithExcludeArea,:); 
 
 
 %%
@@ -4293,8 +4486,8 @@ hlg = legend([hl1,hl2,hl11,hl22,hl_thres],{'BaseBVar','BaseTrVar','AfBVar','AfTr
 %% summary analysis 16, Choice information compared between raw and baseline-subtracted datas
 cclr
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -4317,22 +4510,31 @@ NumUsedSess = length(SessionFolders);
 NumAllTargetAreas = length(BrainAreasStr);
 
 %%
-Areawise_ChoiceInfo = cell(NumUsedSess,NumAllTargetAreas,5);
+Areawise_ChoiceInfo_Af = cell(NumUsedSess,NumAllTargetAreas,5);
+Areawise_ChoiceInfo_base = cell(NumUsedSess,NumAllTargetAreas,5);
+Areawise_BTInfo_Af = cell(NumUsedSess,NumAllTargetAreas,5);
+Areawise_BTInfo_base = cell(NumUsedSess,NumAllTargetAreas,5);
 
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
-%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
-    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     try
-        ChoiceInfofile = fullfile(ksfolder,'ChoiceANDBT_LDAinfo_ana','plsInfoDataSave.mat');
-        ChoiceInfoStrc = load(ChoiceInfofile,'AreaInfos','UsedArea_strs','UsedUnitNums');
+        ChoiceInfofile = fullfile(ksfolder,'ChoiceANDBT_LDAinfo_ana','plsInfoDataSave_Choice_zs.mat');
+        ChoiceInfoStrc = load(ChoiceInfofile,'AreaInfos','AreaInfos_base','UsedArea_strs','UsedUnitNums');
+        BTInfofile = fullfile(ksfolder,'ChoiceANDBT_LDAinfo_ana','plsInfoDataSave_BT_zs.mat');
+        BTInfoStrc = load(BTInfofile,'AreaInfos_Af','AreaInfos_base','UsedArea_strs','UsedUnitNums');
         
     catch ME
         fprintf('Error exists in session %d.\n',cS);
     end
     AreaChoiceInfos = ChoiceInfoStrc.AreaInfos;
+    AreaChoiceInfo_base = ChoiceInfoStrc.AreaInfos_base;
+    AreaBTInfos_Af = BTInfoStrc.AreaInfos_Af;
+    AreaBTInfos_base = BTInfoStrc.AreaInfos_base;
+    
     AreaStrs = ChoiceInfoStrc.UsedArea_strs;
     AreaUnitNums = ChoiceInfoStrc.UsedUnitNums;
     
@@ -4352,96 +4554,62 @@ for cS = 1 :  NumUsedSess
         BaseSubDatInfo = AreaChoiceInfos{cAreaInds,5}(:,2);
         BSubShufInfo = AreaChoiceInfos{cAreaInds,8}(:,2,1);
         
-        Areawise_ChoiceInfo(cS,AreaMatchInds,:) = {RawDataInfo, RawShufInfo, ...
+        Areawise_ChoiceInfo_Af(cS,AreaMatchInds,:) = {RawDataInfo, RawShufInfo, ...
             BaseSubDatInfo, BSubShufInfo, AreaUnitNums(cAreaInds)};
+        
+        Areawise_ChoiceInfo_base(cS,AreaMatchInds,:) = {AreaChoiceInfo_base{cAreaInds,1}(:,2),AreaChoiceInfo_base{cAreaInds,4}(:,2,1),...
+            AreaChoiceInfo_base{cAreaInds,5}(:,2),AreaChoiceInfo_base{cAreaInds,8}(:,2,1),AreaUnitNums(cAreaInds)};
+        
+        Areawise_BTInfo_Af(cS,AreaMatchInds,:) = {AreaBTInfos_Af{cAreaInds,1}(:,2),AreaBTInfos_Af{cAreaInds,4}(:,2,1),...
+            AreaBTInfos_Af{cAreaInds,5}(:,2),AreaBTInfos_Af{cAreaInds,8}(:,2,1),AreaUnitNums(cAreaInds)};
+        
+        Areawise_BTInfo_base(cS,AreaMatchInds,:) = {AreaBTInfos_base{cAreaInds,1}(:,2),AreaBTInfos_base{cAreaInds,4}(:,2,1),...
+            AreaBTInfos_base{cAreaInds,5}(:,2),AreaBTInfos_base{cAreaInds,8}(:,2,1),AreaUnitNums(cAreaInds)};
+        
     end
     
 end
 
 %%
-figSavePath16 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
+% % figSavePath16 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
 % figSavePath16 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
+
+% figSavePath16 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
+figSavePath16 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
 
 %%
 UsedplsColNum = 5;
-AreaDataInfos = cell(length(BrainAreasStr), 5);
+AreaDataInfos = cell(length(BrainAreasStr), 5, 4);
+AllAreawiseDatas = {Areawise_ChoiceInfo_Af, Areawise_ChoiceInfo_base, Areawise_BTInfo_Af, Areawise_BTInfo_base};
+AllDataDespStr = {'ChoiceAf','Choicebase','BTAf','BTbase'};
 for cA = 1:length(BrainAreasStr)
     %
-    cA_RawDataInfo = cat(2, Areawise_ChoiceInfo{:,cA,1});
-    if ~isempty(cA_RawDataInfo)
-        cA_RawShufInfo = cat(2, Areawise_ChoiceInfo{:,cA,2});
-        cA_BaseSubInfo = cat(2, Areawise_ChoiceInfo{:,cA,3});
-        cA_BaseSubShufInfo = cat(2, Areawise_ChoiceInfo{:,cA,4});
-        cA_AllUnitNums = cat(1, Areawise_ChoiceInfo{:,cA,5});
-
-        NumSess = size(cA_RawDataInfo,2);
-%
-        if NumSess >= 5 % enough sessions for comparison
-            cA_RawDataInfo_used = cA_RawDataInfo(UsedplsColNum,:);
-            cA_RawShufInfo_used = cA_RawShufInfo(UsedplsColNum,:);
-            cA_BaseSubInfo_used = cA_BaseSubInfo(UsedplsColNum,:);
-            cA_BaseSubShufInfo_used = cA_BaseSubShufInfo(UsedplsColNum,:);
-
-            [~, p_RawComp] = ttest(cA_RawDataInfo_used, cA_BaseSubInfo_used);
-            [~, p_ShufComp] = ttest(cA_RawShufInfo_used, cA_BaseSubShufInfo_used);
-            [~, p_RatioComp] = ttest(cA_RawDataInfo_used./cA_BaseSubInfo_used, 1);
-
-            cA_str = BrainAreasStr{cA};
-            MaxInfoValue = max(max(cA_RawDataInfo_used),max(cA_BaseSubInfo_used));
-            MaxShufInfoValue = max(max(cA_RawShufInfo_used),max(cA_BaseSubShufInfo_used));
-
-            hf16 = figure('position',[100 100 580 160]);
-            ax1 = subplot(131);
+    cA_RawDataInfo = cat(2, Areawise_ChoiceInfo_Af{:,cA,1});
+    if ~isempty(cA_RawDataInfo) && size(cA_RawDataInfo,2) >= 5
+        hf16 = figure('position',[100 100 580 680]);
+        for cPlot = 1 : 4
+            cPlotData = AllAreawiseDatas{cPlot};
+            ax1 = subplot(4,3,(cPlot*3-2));
             hold on
-            plot([cA_RawDataInfo_used;cA_BaseSubInfo_used],'Color',[.7 .7 .7],'linewidth',0.8);
-            plot([1,2],[mean(cA_RawDataInfo_used),mean(cA_BaseSubInfo_used)],'Color','k','linewidth',1.5);
-    %         yscales = get(ax1,'ylim');
-            text(1.5, MaxInfoValue*1.1,num2str(p_RawComp,'p = %.2e'),'HorizontalAlignment','center','FontSize',6);
-            set(ax1,'xlim',[0.5 2.5],'xticklabel',{'Raw','BaseSub'},'xtick',[1 2],'ylim',[0 MaxInfoValue*1.2],'FontSize',8);
-            ylabel(ax1,sprintf('Choice info (N = %d)',NumSess));
-            title(ax1,sprintf('Area %s',cA_str));
-
-            ax2 = subplot(132);
+            ax2 = subplot(4,3,(cPlot*3-1));
             hold on
-            plot(ax2, [cA_RawShufInfo_used;cA_BaseSubShufInfo_used],'Color',[.7 .7 .7],'linewidth',0.8);
-            plot(ax2, [1,2],[mean(cA_RawShufInfo_used),mean(cA_BaseSubShufInfo_used)],'Color','k','linewidth',1.5);
-    %         yscales = get(ax2,'ylim');
-            text(ax2, 1.5, MaxShufInfoValue*1.1,num2str(p_ShufComp,'p = %.2e'),'HorizontalAlignment','center','FontSize',6);
-            set(ax2,'xlim',[0.5 2.5],'xticklabel',{'RawShuf','BSshuf'},'xtick',[1 2],'ylim',[0 MaxShufInfoValue*1.3],'FontSize',8);
-    %         ylabel(ax2,sprintf('Choice info (N = %d)',NumSess));
-    %         title(ax2,sprintf('Area %s',cA_str));
-
-            Raw2BaseSubRatio = cA_RawDataInfo_used./cA_BaseSubInfo_used;
-            RatioMeanSEM = [mean(Raw2BaseSubRatio),std(Raw2BaseSubRatio)/sqrt(NumSess)];
-            ax3 = subplot(133);
+            ax3 = subplot(4,3,(cPlot*3));
             hold on
-            plot(ax3, 1,Raw2BaseSubRatio,'o','MarkerEdgeColor',[.7 .7 .7],'MarkerSize',8,'MarkerFaceColor','none','linewidth',0.75);
-            errorbar(ax3, 1.2 ,RatioMeanSEM(1),RatioMeanSEM(2),'ko','linewidth',1.2);
-    %         yscales = get(ax3,'ylim');
-            text(ax3, 1.3, max(Raw2BaseSubRatio)*1.1,num2str(p_RatioComp,'p = %.2e'),'HorizontalAlignment','left','FontSize',6);
-            text(ax3, 1.3, max(Raw2BaseSubRatio)*0.9,sprintf('%.3f/%.4f',RatioMeanSEM(1),RatioMeanSEM(2)),...
-                'HorizontalAlignment','left','FontSize',6);
-            set(ax3,'xtick',1,'xticklabel',{'Raw2BSinfoRatio'},'xlim',[0.5 2],...
-                'ylim',[min(Raw2BaseSubRatio)-0.1 max(Raw2BaseSubRatio)*1.15],'FontSize',8);
-    %         ylabel(ax3,sprintf('Choice info (N = %d)',NumSess));
-            title(ax3, sprintf('Info Ratio'));
-%
-            cfigSavePath = fullfile(figSavePath16,sprintf('Area %s ChoiceInfo compare RawANDSub', cA_str));
-            saveas(hf16, cfigSavePath);
-            print(hf16, cfigSavePath, '-dpng','-r350');
-            print(hf16, cfigSavePath, '-dpdf','-bestfit');
-            close(hf16);
+            cA_AreaInfos = InfoCalPlotFun(cPlotData, BrainAreasStr, AllDataDespStr{cPlot}, cA, {ax1, ax2, ax3});
+            AreaDataInfos(cA,:,cPlot) = cA_AreaInfos;
             
-            AreaDataInfos(cA,:) = {cA_RawDataInfo_used, cA_BaseSubInfo_used, cA_RawShufInfo_used, ...
-                cA_BaseSubShufInfo_used, Raw2BaseSubRatio};
         end
-
+        cfigSavePath = fullfile(figSavePath16,sprintf('Area %s ZsedData plsInfo compare RawANDSub', BrainAreasStr{cA}));
+        saveas(hf16, cfigSavePath);
+        print(hf16, cfigSavePath, '-dpng','-r350');
+        print(hf16, cfigSavePath, '-dpdf','-bestfit');
+        close(hf16);
     end
 end
 
 %%
-DataSavePath16 = fullfile(figSavePath16,'plsChoiceInfo_CompData.mat');
-save(DataSavePath16, 'AreaDataInfos','BrainAreasStr','Areawise_ChoiceInfo','-v7.3');
+DataSavePath16 = fullfile(figSavePath16,'plsChoiceInfo_CompData_zsed.mat');
+save(DataSavePath16, 'AreaDataInfos','BrainAreasStr','AllAreawiseDatas','AllDataDespStr','-v7.3');
 
 %%
 % % sum(UsedSessNums > 5);

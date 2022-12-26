@@ -51,7 +51,15 @@ RawResponseData = NewBinnedDatas(NMTrInds,:,:);
 [nmTrNum, UnitNums, FrameNum] = size(RawResponseData);
 BaselineAvgDatas = mean(RawResponseData(:,:,1:OnsetBin-1),3);
 BaselineSubData = RawResponseData - repmat(BaselineAvgDatas,1,1,FrameNum);
-
+RawResponseData_zs = zeros(size(RawResponseData));
+BaselineSubData_zs = zeros(size(BaselineSubData));
+for cU = 1 : UnitNums
+    cU_Raw = RawResponseData(:,cU,:);
+    RawResponseData_zs(:,cU,:) = (cU_Raw - mean(cU_Raw,'all'))/std(cU_Raw(:));
+    
+    cU_Sub = BaselineSubData(:,cU,:);
+    BaselineSubData_zs(:,cU,:) = (cU_Sub - mean(cU_Sub,'all'))/std(cU_Sub(:));
+end
 BaselineWin = 1:OnsetBin-1;
 AfterRespWin = [0:0.1:1.4]/AlreadyCaledDatas.OutDataStrc.USedbin(2)+OnsetBin;
 %%
@@ -60,8 +68,8 @@ AreaInfos = cell(NumUsedAreas, 8);
 AreaInfos_base = cell(NumUsedAreas, 8);
 for cA = 1 : NumUsedAreas
     cA_UnitInds = UsedUnitInds{cA,2};
-    cA_UnitData_Raw = RawResponseData(:,cA_UnitInds,:);
-    cA_UnitData_Sub = BaselineSubData(:,cA_UnitInds,:);
+    cA_UnitData_Raw = RawResponseData_zs(:,cA_UnitInds,:);
+    cA_UnitData_Sub = BaselineSubData_zs(:,cA_UnitInds,:);
     % decoding using After stimulus response
     cA_AfDataConcent_Raw = reshape(permute(cA_UnitData_Raw(:,:,AfterRespWin),[1,3,2]),nmTrNum,[]);
     cA_AfDataConcent_Sub = reshape(permute(cA_UnitData_Sub(:,:,AfterRespWin),[1,3,2]),nmTrNum,[]);
@@ -105,14 +113,14 @@ for cA = 1 : NumUsedAreas
 end
 toc
 %%
-CalSaveDatafile = (fullfile(fullsavePath,'plsInfoDataSave_Choice.mat'));
+CalSaveDatafile = (fullfile(fullsavePath,'plsInfoDataSave_Choice_zs.mat'));
 save(CalSaveDatafile,'AreaInfos','AreaInfos_base','UsedArea_strs','UsedUnitNums','UsedUnitInds','NMActionChoices',...
     'NMBlockTypeLabels','NMTrInds','-v7.3');
 
 
-% %%
-% close;
-% cA = 1;
+%%
+% % close;
+% cA = 3;
 % cA_Str = UsedArea_strs{cA};
 % hf = figure('position',[100 100 540 240]);
 % subplot(121)
@@ -142,4 +150,4 @@ save(CalSaveDatafile,'AreaInfos','AreaInfos_base','UsedArea_strs','UsedUnitNums'
 % title(sprintf('pls crossValid info (%s) Base',cA_Str));
 % legend([hl1 hl1_1 hl2 hl2_2],{'Raw','RawShuf','BaseSub','BSubShuf'},'location','east',...
 %     'autoupdate','off','FontSize',6);
-
+% 

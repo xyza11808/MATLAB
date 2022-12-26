@@ -51,7 +51,15 @@ RawResponseData = NewBinnedDatas(NMTrInds,:,:);
 [nmTrNum, UnitNums, FrameNum] = size(RawResponseData);
 BaselineAvgDatas = mean(RawResponseData(:,:,1:OnsetBin-1),3);
 BaselineSubData = RawResponseData - repmat(BaselineAvgDatas,1,1,FrameNum);
-
+RawResponseData_zs = zeros(size(RawResponseData));
+BaselineSubData_zs = zeros(size(BaselineSubData));
+for cU = 1 : UnitNums
+    cU_Raw = RawResponseData(:,cU,:);
+    RawResponseData_zs(:,cU,:) = (cU_Raw - mean(cU_Raw,'all'))/std(cU_Raw(:));
+    
+    cU_Sub = BaselineSubData(:,cU,:);
+    BaselineSubData_zs(:,cU,:) = (cU_Sub - mean(cU_Sub,'all'))/std(cU_Sub(:));
+end
 BaselineWin = 1:OnsetBin-1;
 AfterRespWin = [0:0.1:1.4]/AlreadyCaledDatas.OutDataStrc.USedbin(2)+OnsetBin;
 %%
@@ -59,8 +67,8 @@ AreaInfos_Af = cell(NumUsedAreas, 8);
 AreaInfos_base = cell(NumUsedAreas, 8);
 for cA = 1 : NumUsedAreas
     cA_UnitInds = UsedUnitInds{cA,2};
-    cA_UnitData_Raw = RawResponseData(:,cA_UnitInds,:);
-    cA_UnitData_Sub = BaselineSubData(:,cA_UnitInds,:);
+    cA_UnitData_Raw = RawResponseData_zs(:,cA_UnitInds,:);
+    cA_UnitData_Sub = BaselineSubData_zs(:,cA_UnitInds,:);
     
     % decoding using afterward responses
     cA_AfDataConcent_Raw = reshape(permute(cA_UnitData_Raw(:,:,AfterRespWin),[1,3,2]),nmTrNum,[]);
@@ -104,7 +112,7 @@ for cA = 1 : NumUsedAreas
         mean(cA_base_Sub_BTInfo,3), mean(cA_base_Sub_PredAccu,3), mean(cA_base_Subpctvar,3),baseShufThres_sub};
 end
 %%
-CalSaveDatafile = (fullfile(fullsavePath,'plsInfoDataSave_BT.mat'));
+CalSaveDatafile = (fullfile(fullsavePath,'plsInfoDataSave_BT_zs.mat'));
 save(CalSaveDatafile,'AreaInfos_Af','AreaInfos_base','UsedArea_strs','UsedUnitNums','UsedUnitInds','NMActionChoices',...
     'NMBlockTypeLabels','NMTrInds','-v7.3');
 

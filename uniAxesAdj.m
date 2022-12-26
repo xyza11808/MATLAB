@@ -1,4 +1,4 @@
-function uniAxesAdj(hObj)
+function varargout = uniAxesAdj(hObj)
 % function used to set x and y axis at same scale
 if ~ishandle(hObj)
     wawrning('The input must be a handle object');
@@ -25,7 +25,10 @@ elseif isgraphics(hObj,'axes')
         'linewidth',1.2,'linestyle','--');
 else
     warning('Unkowned object types');
+    maxScales = [];
 end
 
-
+if nargout > 0
+    varargout = {maxScales};
+end
 
