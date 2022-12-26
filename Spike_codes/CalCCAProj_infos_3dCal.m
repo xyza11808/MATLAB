@@ -152,7 +152,7 @@ for cPairInds = 1:NumPairs
         
         TypeDataCalInfo_BT_A1{cDataType} = mean(RepeatInfos_BT_A1, 4); % train test and threshold
         TypeDataCalInfo_Choice_A1{cDataType} = mean(RepeatInfos_choice_A1, 4);
-        TypeDataCalInfo_BT_A2{cDataType} = mean(RepeatInfos_BT_A2, 4); % train test and threshold
+        TypeDataCalInfo_BT_A2{cDataType} = mean(RepeatInfos_BT_A2, 4); % train tegst and threshold
         TypeDataCalInfo_Choice_A2{cDataType} = mean(RepeatInfos_choice_A2, 4);
         
         
