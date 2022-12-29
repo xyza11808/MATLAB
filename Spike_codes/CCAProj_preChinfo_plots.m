@@ -1,14 +1,22 @@
 % AllPairInfos(cPairInds,:) = {TypeDataCalInfo_BT_A1,TypeDataCalInfo_BT_A2...
 %         TypeDataCalInfo_Choice_A1,TypeDataCalInfo_Choice_A2}; % A1_info_BT,A2_info_BT,A1_info_choice,A2_info_choice
+
+ResidueFolder = fullfile(ksfolder,'jeccAnA','ResidueInfo_preCh');
+if ~isfolder(ResidueFolder)
+    mkdir(ResidueFolder);
+end
+
+dataSavePath = fullfile(ResidueFolder,'AreaResidue_preChinfo.mat');
+
+if exist(dataSavePath,'file')
+    return;
+end
+
 load(fullfile(ksfolder,'jeccAnA','ProjDataInfo_PrechoiceInfo.mat'));
 
 CalDataTypeStrs = {'Base_BVar','Base_TrVar','Af_BVar','Af_TrVar'};
 BaseValidTimeCents = -0.95:0.1:1;
 AfValidTimeCents = -0.95:0.1:2;
-ResidueFolder = fullfile(ksfolder,'jeccAnA','ResidueInfo_preCh');
-if ~isfolder(ResidueFolder)
-    mkdir(ResidueFolder);
-end
 
 NumPairs  = size(PairAreaInds,1);
 AllPairInfoDatas_preCh = cell(NumPairs, 4, 2);
@@ -38,6 +46,6 @@ for cPair = 1 : NumPairs
     
 end
 %%
-dataSavePath = fullfile(ResidueFolder,'AreaResidue_preChinfo.mat');
+
 save(dataSavePath,'AllPairInfoDatas_preCh','AllPair_AreaStrs',...
     'PairAreaInds','ExistField_ClusIDs','CalDataTypeStrs','-v7.3');

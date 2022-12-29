@@ -1,5 +1,16 @@
 SavedFolderPathName = 'jeccAnA';
 fullsavePath = fullfile(ksfolder, SavedFolderPathName);
+
+dataSavefolder = fullfile(ksfolder, SavedFolderPathName,'RawDataInfo');
+if ~isfolder(dataSavefolder)
+    mkdir(dataSavefolder);
+end
+dataSavefile = fullfile(dataSavefolder,'RawData_CCACorr_AllInfo.mat');
+
+if exist(dataSavefile,'file')
+    return;
+end
+
 AlreadyCaledDatas = load(fullfile(fullsavePath,'CCA_TypeSubCal.mat'),'ExistField_ClusIDs',...
     'NewAdd_ExistAreaNames', 'OutDataStrc');
 AreaUnitNumbers = cellfun(@numel,AlreadyCaledDatas.ExistField_ClusIDs(:,2));
@@ -61,18 +72,20 @@ for cU = 1 : UnitNums
 end
 FrameBinTime = AlreadyCaledDatas.OutDataStrc.USedbin(2);
 BaselineWin = 1:OnsetBin-1;
-AfterRespWin = (0:0.1:1.9)/FrameBinTime+OnsetBin;
+AfterRespWin = round((0:0.1:1.9)/FrameBinTime)+OnsetBin;
 
 ValidWin = 1:(OnsetBin+2/FrameBinTime);
 % AfterRespWin = [0:0.1:1.4]/FrameBinTime+OnsetBin;
 AllTimeCents = AlreadyCaledDatas.OutDataStrc.BinCenters;
 AllTimeWins = {AllTimeCents(BaselineWin),AllTimeCents(AfterRespWin),AllTimeCents(ValidWin)};
 %%
+InfoDespStrs = {'BT_A1','BT_A2','Ch_A1','Ch_A2','perCh_A1','perCh_A2','PairName'};
 PairedAreNums = (NumUsedAreas-1)*NumUsedAreas/2;
-PairedAreaCorrs = cell(PairedAreNums, 3);
-PairedAreaAvgs = cell(PairedAreNums, 3);
+PairedAreaCorrs = cell(PairedAreNums, 4);
+PairedAreaAvgs = cell(PairedAreNums, 2);
 AllPairInfos = cell(PairedAreNums, 7);
 AllPairStrs = cell(PairedAreNums, 2);
+tic
 ks = 1;
 for cA1 = 1 : NumUsedAreas
     for cA2 = cA1+1 : NumUsedAreas
@@ -93,8 +106,8 @@ for cA1 = 1 : NumUsedAreas
         [BVar_AfcorrData, BVar_AfAvgs, BVarAfInfos] = crossValCCA_SepData_proj_xnInfo(cA1_Data_Af,cA1_Data_valid,...
             cA2_Data_Af,cA2_Data_valid,0.5, {NMBlockTypeLabels(2:end), NMActionChoices(2:end),NMActionChoices(1:end-1)});
         
-        PairedAreaCorrs(ks,:) = {BVar_basecorrData, BVar_AfcorrData, sprintf('%s-%s',cf1AreaNameStr,cf2AreaNameStr),...
-            [numel(cf1AreaInds),numel(cf2AreaInds)]};
+        PairedAreaCorrs(ks,:) = {BVar_basecorrData, BVar_AfcorrData, sprintf('%s-%s',AllPairStrs{ks,1},AllPairStrs{ks,2}),...
+            [numel(UsedUnitInds{cA1,2}),numel(UsedUnitInds{cA2,2})]};
         PairedAreaAvgs(ks,:) = {BVar_baseAvgs,BVar_AfAvgs};
 
         TypeDataCalInfo_Choice_A1 = [BVarBaseInfos(3),BVarAfInfos(3)];
@@ -106,17 +119,13 @@ for cA1 = 1 : NumUsedAreas
         
         AllPairInfos(ks,:) = {TypeDataCalInfo_BT_A1,TypeDataCalInfo_BT_A2...
             TypeDataCalInfo_Choice_A1,TypeDataCalInfo_Choice_A2,...
-            TypeDataCalInfo_preCh_A1,TypeDataCalInfo_preCh_A2,sprintf('%s-%s',cf1AreaNameStr,cf2AreaNameStr)};
-        
+            TypeDataCalInfo_preCh_A1,TypeDataCalInfo_preCh_A2,sprintf('%s-%s',AllPairStrs{ks,1},AllPairStrs{ks,2})};
+        ks = ks + 1;
     end
 end
-
+toc
 %%
-dataSavefolder = fullfile(ksfolder, SavedFolderPathName,'RawDataInfo');
-if ~isfolder(dataSavefolder)
-    mkdir(dataSavefolder);
-end
-dataSavefile = fullfile(dataSavefolder,'RawData_CCACorr_AllInfo.mat');
-save(dataSavefile,'PairedAreaCorrs','PairedAreaAvgs','AllPairInfos','AllPairStrs','AllTimeWins','-v7.3')
+
+save(dataSavefile,'PairedAreaCorrs','PairedAreaAvgs','AllPairInfos','AllPairStrs','AllTimeWins','InfoDespStrs','-v7.3')
 
 
