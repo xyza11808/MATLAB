@@ -67,12 +67,15 @@ C2_Avg = sum(C2_rawData,3)/size(C2_rawData,3);
 C1_rawData_noPermute = DataMtx(C1DataInds,:,:);
 C2_rawData_noPermute = DataMtx(C2DataInds,:,:);
 [NumTrainTrials,NumUnits,NumTimeBins] = size(DataMtx);
-C1_cov = zeros(NumUnits,NumUnits,NumTimeBins);
-C2_cov = zeros(NumUnits,NumUnits,NumTimeBins);
-for cTimeBin = 1 : NumTimeBins
-    C1_cov(:,:,cTimeBin) = cov_cus(C1_rawData_noPermute(:,:,cTimeBin),[C1_SampleNum,NumUnits]);
-    C2_cov(:,:,cTimeBin) = cov_cus(C2_rawData_noPermute(:,:,cTimeBin),[C2_SampleNum,NumUnits]);
-end
+C1_cov = cov3d(C1_rawData_noPermute);
+C2_cov = cov3d(C2_rawData_noPermute);
+% C1_cov = zeros(NumUnits,NumUnits,NumTimeBins);
+% C2_cov = zeros(NumUnits,NumUnits,NumTimeBins);
+% for cTimeBin = 1 : NumTimeBins
+%     C1_cov(:,:,cTimeBin) = cov_cus(C1_rawData_noPermute(:,:,cTimeBin),[C1_SampleNum,NumUnits]);
+%     C2_cov(:,:,cTimeBin) = cov_cus(C2_rawData_noPermute(:,:,cTimeBin),[C2_SampleNum,NumUnits]);
+% end
+
 % C1_rawData = DataMtx(C1DataInds,:,:);
 % C2_rawData = DataMtx(C2DataInds,:,:);
 

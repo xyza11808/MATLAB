@@ -83,7 +83,7 @@ RepeatInfos_Alllabels_A2 = zeros(maxComp, ValidFrameNum, 3, NumLabels,RepeatNum,
 % RepeatInfos_choice_A2 = zeros(maxComp, ValidFrameNum,3,RepeatNum);
 % RepeatInfos_BT_A1 = zeros(maxComp, ValidFrameNum,3,RepeatNum);
 % RepeatInfos_BT_A2 = zeros(maxComp, ValidFrameNum,3,RepeatNum);
-for cR = 1 : RepeatNum
+parfor cR = 1 : RepeatNum
 %     cR = 1;
     cR_TrainTrSample = randsample(AllTrialNum,round(AllTrialNum*CVRatio));
     cR_TrainTrInds = TrialBaseInds;
@@ -178,8 +178,29 @@ for cR = 1 : RepeatNum
     end
 end
 
-% Train data correlation
-BaseTrainCorrs = cat(1,RepeatCorrSum{:,3});
+try
+    % Train data correlation
+    BaseTrainCorrs = cat(1,RepeatCorrSum{:,3});
+    
+catch ME
+    disp(ME.message);
+    MaxLen = max(cellfun(@length,RepeatCorrSum(:,3)));
+    nRepeats = size(RepeatCorrSum, 1);
+    for cR = 1 : nRepeats
+        LeftNum = MaxLen - length(RepeatCorrSum{cR,3});
+        RepeatCorrSum{cR,3} = [RepeatCorrSum{cR,3},zeros(1,LeftNum,'single')];
+        RepeatCorrSum{cR,1} = [RepeatCorrSum{cR,1},rand(size(RepeatCorrSum{cR,1},1),LeftNum,'single')*1e-5];
+        RepeatCorrSum{cR,2} = [RepeatCorrSum{cR,2},rand(size(RepeatCorrSum{cR,2},1),LeftNum,'single')*1e-5];
+        NullData = zeros(MaxLen,'single');
+        NullData(1:end-LeftNum,1:end-LeftNum) = RepeatCorrSum{cR,4};
+        RepeatCorrSum{cR,4} = NullData;
+        RepeatCorrSum{cR,5} = [RepeatCorrSum{cR,5};zeros(LeftNum,size(RepeatCorrSum{cR,5},2),'single')];
+        RepeatCorrSum{cR,6} = [RepeatCorrSum{cR,6};zeros(LeftNum,size(RepeatCorrSum{cR,6},2),'single')];
+    end
+    % Train data correlation
+    BaseTrainCorrs = cat(1,RepeatCorrSum{:,3});
+end
+
 % test data correlation
 BaseTestCorrs = cellfun(@diag,RepeatCorrSum(:,4),'un',0);
 BaseTestCorrs = cat(2,BaseTestCorrs{:});
