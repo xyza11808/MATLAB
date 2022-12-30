@@ -76,10 +76,10 @@ warning off
 RepeatNum = 100;
 ShufExtraRePeat = 5; % totally 500 times shuffling
 RepeatCorrSum = cell(RepeatNum,6);
-RepeatInfos_choice_A1 = zeros(maxComp, ValidFrameNum,3,RepeatNum);
-RepeatInfos_choice_A2 = zeros(maxComp, ValidFrameNum,3,RepeatNum);
-RepeatInfos_BT_A1 = zeros(maxComp, ValidFrameNum,3,RepeatNum);
-RepeatInfos_BT_A2 = zeros(maxComp, ValidFrameNum,3,RepeatNum);
+RepeatInfos_choice_A1 = zeros(maxComp, ValidFrameNum,3,RepeatNum,'single');
+RepeatInfos_choice_A2 = zeros(maxComp, ValidFrameNum,3,RepeatNum,'single');
+RepeatInfos_BT_A1 = zeros(maxComp, ValidFrameNum,3,RepeatNum,'single');
+RepeatInfos_BT_A2 = zeros(maxComp, ValidFrameNum,3,RepeatNum,'single');
 parfor cR = 1 : RepeatNum
 %     cR = 1;
     cR_TrainTrSample = randsample(AllTrialNum,round(AllTrialNum*CVRatio));

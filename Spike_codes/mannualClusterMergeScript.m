@@ -99,8 +99,8 @@ save(savefilePath,'FileDatas','SessUnit2ClusInds','SessUnittsnePoints','SigGrUni
 %% find all the averaged cluster trace and unique them
 
 % FileNamePrefix = 'Mannual_clustering_data_';
-% DataSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
-DataSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+DataSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+% DataSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
 PosFiles = dir(fullfile(DataSavePath,'Mannual_clustering_data_NewData*.mat'));
 load(fullfile(DataSavePath,'AllPSTHData.mat'));
 
@@ -167,16 +167,22 @@ UsedClus_clusAvgTraces = AllAvgTraces(UsedClus_clusIndex,:);
 [ClusInds, ClusSortInds] = sort(UsedClus_clusIndex);
 SortedAvgPSTH = UsedClus_clusAvgTraces(ClusSortInds,:);
 Corrs = corrcoef(SortedAvgPSTH');
-figure;
-imagesc(Corrs,[0.5 1]);
+hcf = figure;
+imagesc(Corrs,[0.7 1]);
 Counts = accumarray(ClusInds,1);
 AccumGrCounts = cumsum(Counts);
+AccumGrEdges = [1;AccumGrCounts];
+AccumGrCents = (AccumGrEdges(1:end-1)+AccumGrEdges(2:end))/2;
+NumClusters = numel(AccumGrCounts);
 for cGr = 1 : numel(AccumGrCounts)
     line([1 numel(ClusInds)],[AccumGrCounts(cGr) AccumGrCounts(cGr)],'Color','m',...
         'linewidth',1.5);
     line([AccumGrCounts(cGr) AccumGrCounts(cGr)],[1 numel(ClusInds)],'Color','m',...
         'linewidth',1.5);
 end
+set(gca,'xtick',AccumGrCents(1:5:NumClusters),'xticklabel',(1:5:NumClusters),...
+    'ytick',AccumGrCents(1:5:NumClusters),'yticklabel',(1:5:NumClusters),'box','off');
+
 %%
 [SigCorrAvgData, SigCorrSEMData, SigCorrGrNums] = DataTypeClassification(SortedAvgPSTH,ClusInds);
 
@@ -364,8 +370,8 @@ save(saveName4,'LHsortAvgTraces','NewClusSortInds','NewClusInds','ThresCut_unitI
     'SigCorrAvgDataFinal','SigCorrGrNumsFinal','SigCorrSEMDataFinal','CorrThres_ClusInds','CorrThres_SortPSTH','-v7.3');
 
 %% resort all clusters based on mannually defined types
-ClusTypefile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult\cluster2Type.txt';
-% ClusTypefile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult\cluster2Type.txt';
+% ClusTypefile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult\cluster2Type.txt';
+ClusTypefile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult\cluster2Type.txt';
 
 fid = fopen(ClusTypefile,'r');
 k = 1;
@@ -383,26 +389,33 @@ end
 fclose(fid);
 
 %%
-dataSaveName = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult',...
-    'ClusterTypeDesp.mat');
+% savePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult';
+savePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult';
+dataSaveName = fullfile(savePath, 'ClusterTypeDesp.mat');
 save(dataSaveName,'ClusStrANDInds','-v7.3');
 
 %% Only Meaningful clusters will be used for plotting
-FigSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult';
-% FigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\FinalClusterResult';
-load(fullfile(FigSavePath,'FinalClusterData.mat'));
-load(fullfile(FigSavePath,'ClusterTypeDesp.mat'));
+% FigSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+FigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+load(fullfile(FigSavePath,'FinalClusterResult','FinalClusterData.mat'));
+load(fullfile(FigSavePath,'FinalClusterResult','ClusterTypeDesp.mat'));
 SigCorrAvgDataRaw = SigCorrAvgDataFinal;
-
+load(fullfile(FigSavePath,'UnitPSTHDatasTemp2.mat'),'ExistAreaPSTHAreaInds','ExistAreas','BrainAreasStr');
 
 %%
+AreaUnitNums = accumarray(ExistAreaPSTHAreaInds, 1);
+AreaIndsSorted = ExistAreaPSTHAreaInds(NewClusSortInds);
+CorrThres_areaInds = AreaIndsSorted(ThresCut_unitInds); 
+fewUnitExlcudeInds = ismember(CorrThres_areaInds,find(AreaUnitNums < 20));
 ExcludedClusInds = ClusStrANDInds{end,2};
-IsUnitExcluded = ismember(CorrThres_ClusInds,ExcludedClusInds);
+IsUnitExcluded = ismember(CorrThres_ClusInds,ExcludedClusInds) | fewUnitExlcudeInds;
 
 SigCorrAvgDataFinal(ExcludedClusInds,:) = [];
 SigCorrGrNumsFinal(ExcludedClusInds) = [];
 UsedThresSortedPSTH = CorrThres_SortPSTH(~IsUnitExcluded,:);
 UsedThresClusInds = CorrThres_ClusInds(~IsUnitExcluded);
+UsedAreaInds = CorrThres_areaInds(~IsUnitExcluded);
+UsedAreaIndex = ExistAreas(UsedAreaInds);
 %%
 h0cf = figure('position',[100 100 340 780]);
 imagesc(UsedThresSortedPSTH,[-1 3]);
@@ -466,6 +479,86 @@ saveas(h00f,saveName3);
 print(h00f,saveName3,'-dpng','-r350');
 print(h00f,saveName3,'-dpdf','-bestfit');
 
+%% assign cluster inds to each area
+
+% define cluster response types
+BehavTypeIndex.ContextTypeIndex = 1;
+BehavTypeIndex.SoundTypeIndex = 2;
+BehavTypeIndex.categoryTypeIndex = [9, 10];
+BehavTypeIndex.RewardTypeIndex = [3, 4, 5];
+BehavTypeIndex.ChoiceTypeIndex = [6,7,8,11,12,13];
+BehavTypeIndex.ChoiceANDcategIndex = 14;
+BehavTypeIndex.ChoiceANDruleIndex = [15,16];
+BehavTypeIndex.rewardContext = 17;
+
+IndexFieldNames = fieldnames(BehavTypeIndex);
+numBehavTypes = length(IndexFieldNames);
+
+%%
+MaxAreaIndex = max(ExistAreas);
+BehavType2AreaCounts = zeros(numBehavTypes, MaxAreaIndex);
+for cType = 1 : numBehavTypes
+    cTypeClus = BehavTypeIndex.(IndexFieldNames{cType});
+    cBehavTypeClusInds = cat(2,ClusStrANDInds{cTypeClus,2});
+    cBehavUnitInds = ismember(UsedThresClusInds,cBehavTypeClusInds);
+    cBehavUnitAreaInds = UsedAreaIndex(cBehavUnitInds);
+    cBehav2AreaCounts = accumarray(cBehavUnitAreaInds, 1);
+    BehavType2AreaCounts(cType,1:numel(cBehav2AreaCounts)) = cBehav2AreaCounts;
+    
+end
+
+AreaUnitTotalCounts = zeros(1, MaxAreaIndex);
+AreaCounts = accumarray(ExistAreas(ExistAreaPSTHAreaInds), 1);
+AreaUnitTotalCounts(1:numel(AreaCounts)) = AreaCounts;
+
+%%
+
+saveFolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\BehavTypeFracs';
+% saveFolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\BehavTypeFracs';
+
+% allen_atlas_path = 'E:\AllenCCF';
+allen_atlas_path = 'E:\MatCode\AllentemplateData';
+tv = readNPY([allen_atlas_path filesep 'template_volume_10um.npy']);
+av = readNPY([allen_atlas_path filesep 'annotation_volume_10um_by_index.npy']);
+st = loadStructureTree([allen_atlas_path filesep 'structure_tree_safe_2017.csv']);
+
+TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+% TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+
+BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
+BrainRegionIndex = BrainRegionStrc.BrainRegions;
+
+
+%%
+
+UsedAreaInds = AreaUnitTotalCounts > 30; % at least 30 units for each area
+UsedAreaStrs = BrainAreasStr(UsedAreaInds);
+UsedAreaTotalCounts = AreaUnitTotalCounts(:,UsedAreaInds);
+BehavTypeCounts_used = BehavType2AreaCounts(:,UsedAreaInds);
+BehavTypeFracs_used = BehavTypeCounts_used ./ UsedAreaTotalCounts;
+
+
+for UsedTypeInds = 1 : length(IndexFieldNames)
+    cTypeFracStr = IndexFieldNames{UsedTypeInds};
+    UsedTypeFracStr = erase(cTypeFracStr,{'Type','Index'});
+    UsedAreaFracs = BehavTypeFracs_used(UsedTypeInds, :);
+%     Value2Colors = linearValue2colorFun(UsedAreaFracs);
+    h6f = AreaValueDispFun(UsedAreaFracs, UsedAreaStrs, ...
+        st,av,BrainRegionIndex,UsedTypeFracStr);
+
+    SaveNames = fullfile(saveFolder,sprintf('%s PSTH clusting respType fraction',UsedTypeFracStr));
+
+    saveas(h6f,SaveNames);
+
+    print(h6f,SaveNames,'-dpng','-r350');
+    print(h6f,SaveNames,'-dpdf','-bestfit');
+    close(h6f);
+end
+%%
+% dataSavepath = fullfile(savePathfolder,'RegAreawiseFrac_withExStim.mat');
+dataSavepath = fullfile(saveFolder,'PSTHclusTypeFracs.mat');
+save(dataSavepath, 'AreaUnitTotalCounts','BehavType2AreaCounts','BehavTypeFracs_used',...
+    'UsedAreaInds','UsedAreaStrs','BrainAreasStr','-v7.3');
 
 
 %% 

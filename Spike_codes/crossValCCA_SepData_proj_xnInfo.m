@@ -83,7 +83,7 @@ RepeatInfos_Alllabels_A2 = zeros(maxComp, ValidFrameNum, 3, NumLabels,RepeatNum,
 % RepeatInfos_choice_A2 = zeros(maxComp, ValidFrameNum,3,RepeatNum);
 % RepeatInfos_BT_A1 = zeros(maxComp, ValidFrameNum,3,RepeatNum);
 % RepeatInfos_BT_A2 = zeros(maxComp, ValidFrameNum,3,RepeatNum);
-parfor cR = 1 : RepeatNum
+for cR = 1 : RepeatNum
 %     cR = 1;
     cR_TrainTrSample = randsample(AllTrialNum,round(AllTrialNum*CVRatio));
     cR_TrainTrInds = TrialBaseInds;
@@ -160,7 +160,7 @@ parfor cR = 1 : RepeatNum
 %     ValidProjDataInfo_A2 = zeros(maxComp, ValidFrameNum, 3, 2,'single');
     for cLabel = 1 : NumLabels
 
-        for cComp = 1 : maxComp
+        for cComp = 1 : min(maxComp,numel(R_base))
             % calculate for valid datas
             cProjDatas_cA1 = cA1_proj_Valid(:, cComp,:);
             [RepeatAvgScores, ~] = TrEqualSampleinfo_3d(cProjDatas_cA1, TrTypeLabels{cLabel}, 0.6);

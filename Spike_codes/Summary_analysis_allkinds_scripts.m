@@ -2793,10 +2793,10 @@ print(hf100,saveName,'-dpng','-r350');
 print(hf100,saveName,'-dpdf','-bestfit');
 
 %%
-SumDataSavefile = fullfile(SummarySavePath10,'UnitPSTHDatasTemp.mat');
+SumDataSavefile = fullfile(SummarySavePath10,'UnitPSTHDatasTemp2.mat');
 save(SumDataSavefile,'AllUnitPSTHExpends','SessTrialTypeNums','UsedFolderPath','PSTHColStrs','BrainAreasStr',...
     'ExistAreaPSTHData_zs','ExistAreaErrorPSTHData_zs','ExistAreaPSTHAreaInds','ExistAreaPSTHUnitRespType',...
-    'ExistAreaPSTHUnitSessInds','TotalUnitSess_excluInds','-v7.3');
+    'ExistAreaPSTHUnitSessInds','TotalUnitSess_excluInds','ExistAreas','-v7.3');
 
 
 %% Unit response type matrix

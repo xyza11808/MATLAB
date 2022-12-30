@@ -31,7 +31,7 @@ SessPairedDataSavePath = 'K:\NPdatas\acrossProbeData';
 
 AllSessFolderDatas = cell(NumSess, 3);
 % AllSessCalDatas = cell(NumSess, 3);
-for cSess = NumSess: -1 : 8
+for cSess = NumSess%: -1 : 8
     tic
     try
         AllSessFolderDatas = cell(1,3);
@@ -83,7 +83,7 @@ for cSess = NumSess: -1 : 8
         %
         % loop through each session folders to calculate all area pairs
         AllLoopNum = SessNumfolders*(SessNumfolders-1)/2;
-        cSessFolderDatas = cell(AllLoopNum, 3);
+        cSessFolderDatas = cell(AllLoopNum, 3); %%
         SessFoldInds = cell(AllLoopNum, 2);
         
         k = 1;
@@ -185,7 +185,7 @@ for cSess = NumSess: -1 : 8
         fprintf('Sess %d is processed.\n', cSess);
     catch ME
         
-        clearvars AllSessFolderDatas PairedAreaCorrs PairedAreaAvgs AllPairInfos
+        clearvars AllSessFolderDatas PairedAreaCorrs PairedAreaAvgs AllPairInfos cSessFolderDatas
         fprintf('Sess %d have something wrong.\n', cSess);
     end
     toc
