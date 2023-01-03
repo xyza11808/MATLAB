@@ -1,8 +1,8 @@
 % batched through all used sessions
 cclr
 
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 sortingcode_string = 'ks2_5';
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
@@ -41,6 +41,8 @@ for cSess = NumSess: -1 : 1
         % load behavior info
         cSfolder = fullfile(strrep(cSessfolders{1},'F:','I:\ksOutput_backup'),sortingcode_string);
         load(fullfile(cSfolder,'NewClassHandle2.mat'),'behavResults');
+        behavDataPath = fullfile(cSfolder,'BehavBlockBoundshift.mat');
+        behavData_BoundShift = load(behavDataPath,'OverAllBoundShift');
         %
         BlockSectionInfo = Bev2blockinfoFun(behavResults);
         % performing trialtype average subtraction for each frequency types
@@ -220,6 +222,55 @@ end
 %%
 % savefileName = fullfile(SessPairedDataSavePath,'AcrossProbe_CCA_calResults.mat');
 % save(savefileName,'AllSessFolderDatas','AllSessCalDatas','-v7.3');
+
+%% get the behavior data for each session
+SessPairedDataSavePath = 'E:\NPCCGs\PairedSessionDatas';
+% SessPairedDataSavePath = 'K:\NPdatas\acrossProbeData\RawDataInfo';
+% SessPairedDataSavePath = 'D:\data\NPRawData\PairedSessionDatas\rawDataCCAInfo';
+
+% AllSessFolderDatas = cell(NumSess, 2);
+% AllSessCalDatas = cell(NumSess, 3);
+AllSessBehavBoundShifts = cell(NumSess, 1);
+for cSess = NumSess: -1 : 1 
+
+        cSessIndex = UniqueSessTypes(cSess);
+        cSessfolders = SessionFolders(SessIndexUsed == cSessIndex);
+        SessNumfolders = length(cSessfolders);
+        
+        
+        % load behavior info
+        cSfolder = fullfile(strrep(cSessfolders{1},'F:','E:\NPCCGs'),sortingcode_string);
+        load(fullfile(cSfolder,'NewClassHandle2.mat'),'behavResults');
+        behavDataPath = fullfile(cSfolder,'BehavBlockBoundshift.mat');
+        behavData_BoundShift = load(behavDataPath,'OverAllBoundShift');
+        cSf_AreaNum = zeros(SessNumfolders, 1);
+        for cSf = 1 : SessNumfolders
+    %         cSfolder = cSessfolders{cSf};
+            cSfolder = fullfile(strrep(cSessfolders{cSf},'F:','E:\NPCCGs'),sortingcode_string);
+            cSf_datafile = fullfile(cSfolder,'jeccAnA','CCA_TypeSubCal.mat');
+            cSf_dataStrc = load(cSf_datafile);
+            cSf_AreaNum(cSf) = length(cSf_dataStrc.NewAdd_ExistAreaNames);
+        end
+        %
+        % loop through each session folders to calculate all area pairs
+        AllLoopNum = SessNumfolders*(SessNumfolders-1)/2;
+        cSessFolderCals = cell(AllLoopNum, 1);
+        k = 1;
+        for cf1 = 1 : SessNumfolders
+            for cf2 = cf1+1 : SessNumfolders
+                AreaPairNum = cSf_AreaNum(cf1)*cSf_AreaNum(cf2);
+                cSessFolderCals{k} = behavData_BoundShift.OverAllBoundShift*ones(AreaPairNum, 1);
+                k = k + 1;
+            end
+        end
+        SesspairedBoundShift = cat(1,cSessFolderCals{:});
+        AllSessBehavBoundShifts(cSess) = {SesspairedBoundShift};
+        fprintf('Sess %d is processed.\n', cSess);
+end
+
+%%
+dataSavefile = fullfile(SessPairedDataSavePath,'AllSessBehavBoundShiftsData.mat');
+save(dataSavefile,'AllSessBehavBoundShifts','-v7.3');
 
 
 

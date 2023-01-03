@@ -4001,7 +4001,7 @@ NumAllTargetAreas = length(BrainAreasStr);
 %%
 SesswiseCCAdatas = cell(NumUsedSess,1);
 SesswiseResInfoData = cell(NumUsedSess,4);
-
+SessBehavBoundShift = cell(NumUsedSess,1);
 
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
@@ -4009,6 +4009,8 @@ for cS = 1 :  NumUsedSess
 %     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
+    behavDataPath = fullfile(cSessPath,'ks2_5','BehavBlockBoundshift.mat');
+    behavData_BoundShift = load(behavDataPath,'OverAllBoundShift');
     try
         CCADatafile = fullfile(ksfolder,'jeccAnA','ComponentCorrplot','PairCCADatas.mat');
         CCADataStrc = load(CCADatafile);
@@ -4024,13 +4026,41 @@ for cS = 1 :  NumUsedSess
         cSessPairInfos(:,2),'un',0)];
     SesswiseResInfoData(cS,:) = {ResidueInfoStrc.AllPairInfoDatas_BT(:,:,1),ResidueInfoStrc.AllPairInfoDatas_BT(:,:,2),...
         ResidueInfoStrc.AllPairInfoDatas_Choice(:,:,1),ResidueInfoStrc.AllPairInfoDatas_Choice(:,:,2)};
-    
+    SessBehavBoundShift{cS} = behavData_BoundShift.OverAllBoundShift*ones(size(cSessPairCCAs,1),1);
 end
 sameProbe_BTinfo_A1 = cat(1,SesswiseResInfoData{:,1});
 sameProbe_BTinfo_A2 = cat(1,SesswiseResInfoData{:,2});
 
 sameProbe_Choiceinfo_A1 = cat(1,SesswiseResInfoData{:,3});
 sameProbe_Choiceinfo_A2 = cat(1,SesswiseResInfoData{:,4});
+
+sameProbe_BoundShifts = cat(1,SessBehavBoundShift{:});
+
+%%
+Betprobe_projInfostrc = load('E:\NPCCGs\PairedSessionDatas\ResidueDataInfos\SummaryCorrANDinfofile.mat');
+AllSessPair_info = cat(1,Betprobe_projInfostrc.AllSessProjInfos{:});
+AllSessPair_CCA_corrs = cat(1,Betprobe_projInfostrc.AllSessCorrAvgs{:});
+Betprobe_BehavDataStrc = load('E:\NPCCGs\PairedSessionDatas\AllSessBehavBoundShiftsData.mat');
+Betprobe_BoundShift = Betprobe_BehavDataStrc.AllSessBehavBoundShifts;
+
+%%
+betProbe_BTinfo_A1 = cellfun(@(x) x(:,:,2),cat(1,AllSessPair_info{:,1}),'un',0);
+betProbe_BTinfo_A2 = cellfun(@(x) x(:,:,2),cat(1,AllSessPair_info{:,2}),'un',0);
+
+betProbe_Choiceinfo_A1 = cellfun(@(x) x(:,:,2),cat(1,AllSessPair_info{:,3}),'un',0);
+betProbe_Choiceinfo_A2 = cellfun(@(x) x(:,:,2),cat(1,AllSessPair_info{:,4}),'un',0);
+betProbe_PairStrs = AllSessPair_info(:,5);
+
+Betprobe_BoundShiftsVec = cat(1,Betprobe_BoundShift{:});
+
+%%
+AllProbe_BTinfo_A1 = [sameProbe_BTinfo_A1;betProbe_BTinfo_A1];
+AllProbe_BTinfo_A2 = [sameProbe_BTinfo_A2;betProbe_BTinfo_A2];
+
+AllProbe_Choiceinfo_A1 = [sameProbe_Choiceinfo_A1;betProbe_Choiceinfo_A1];
+AllProbe_Choiceinfo_A2 = [sameProbe_Choiceinfo_A2;betProbe_Choiceinfo_A2];
+
+AllProbe_BoundShifts = [sameProbe_BoundShifts;Betprobe_BoundShiftsVec];
 %%
 SesswiseCCAdata_Cell_sameProbe = cat(1,SesswiseCCAdatas{:});
 % BetProbeCCAsfile = 'K:\ComponentCorrplot\PairCCADatas.mat';
@@ -4047,21 +4077,24 @@ AllPairComponentCorrs = cat(1,AllPairedCCADatas{:,1});
 TestDataCompontCorr = cellfun(@(x) x(1,:,2),AllPairComponentCorrs(:,1:4),'un',0);
 TestDataCorrThres = cellfun(@(x) x',AllPairComponentCorrs(:,5),'un',0);
 
-AllBaseBVar_infos = [sameProbe_BTinfo_A1(:,1),sameProbe_BTinfo_A2(:,1),...
-    sameProbe_Choiceinfo_A1(:,1),sameProbe_Choiceinfo_A2(:,1)];
-AllAfBVar_infos = [sameProbe_BTinfo_A1(:,3),sameProbe_BTinfo_A2(:,3),...
-    sameProbe_Choiceinfo_A1(:,3),sameProbe_Choiceinfo_A2(:,3)];
-AllBaseTrVar_infos = [sameProbe_BTinfo_A1(:,2),sameProbe_BTinfo_A2(:,2),...
-    sameProbe_Choiceinfo_A1(:,2),sameProbe_Choiceinfo_A2(:,2)];
-AllAfTrVar_infos = [sameProbe_BTinfo_A1(:,4),sameProbe_BTinfo_A2(:,4),...
-    sameProbe_Choiceinfo_A1(:,4),sameProbe_Choiceinfo_A2(:,4)];
+AllBaseBVar_infosRaw = [AllProbe_BTinfo_A1(:,1),AllProbe_BTinfo_A2(:,1),...
+    AllProbe_Choiceinfo_A1(:,1),AllProbe_Choiceinfo_A2(:,1)];
+AllAfBVar_infosRaw = [AllProbe_BTinfo_A1(:,3),AllProbe_BTinfo_A2(:,3),...
+    AllProbe_Choiceinfo_A1(:,3),AllProbe_Choiceinfo_A2(:,3)];
+AllBaseTrVar_infosRaw = [AllProbe_BTinfo_A1(:,2),AllProbe_BTinfo_A2(:,2),...
+    AllProbe_Choiceinfo_A1(:,2),AllProbe_Choiceinfo_A2(:,2)];
+AllAfTrVar_infosRaw = [AllProbe_BTinfo_A1(:,4),AllProbe_BTinfo_A2(:,4),...
+    AllProbe_Choiceinfo_A1(:,4),AllProbe_Choiceinfo_A2(:,4)];
 
 %% unique area pairs
 [UniquePairs, ~, uniPairIndex] = unique(AllPairedCCADatas(:,6));
 NumInitPairs = length(UniquePairs);
 uniPairIndexNew = uniPairIndex;
 UniquePairsNew = UniquePairs;
-
+AllBaseBVar_infos = AllBaseBVar_infosRaw;
+AllAfBVar_infos = AllAfBVar_infosRaw ;
+AllBaseTrVar_infos = AllBaseTrVar_infosRaw;
+AllAfTrVar_infos = AllAfTrVar_infosRaw;
 for cP = 1 : NumInitPairs
     cPStr = UniquePairsNew{cP};
     if isempty(cPStr)
@@ -4078,6 +4111,22 @@ for cP = 1 : NumInitPairs
         RevPairIndex = find(tf);
         UniquePairsNew{tf} = '';
         uniPairIndexNew(uniPairIndex == RevPairIndex) = cP;
+        
+        cA2_olddata = AllBaseBVar_infos(uniPairIndex == RevPairIndex,[2,4]);
+        AllBaseBVar_infos(uniPairIndex == RevPairIndex,[2,4]) = AllBaseBVar_infos(uniPairIndex == RevPairIndex,[1,3]);
+        AllBaseBVar_infos(uniPairIndex == RevPairIndex,[1,3]) = cA2_olddata;
+        
+        cA2_olddata = AllAfBVar_infos(uniPairIndex == RevPairIndex,[2,4]);
+        AllAfBVar_infos(uniPairIndex == RevPairIndex,[2,4]) = AllAfBVar_infos(uniPairIndex == RevPairIndex,[1,3]);
+        AllAfBVar_infos(uniPairIndex == RevPairIndex,[1,3]) = cA2_olddata;
+        
+        cA2_olddata = AllBaseTrVar_infos(uniPairIndex == RevPairIndex,[2,4]);
+        AllBaseTrVar_infos(uniPairIndex == RevPairIndex,[2,4]) = AllBaseTrVar_infos(uniPairIndex == RevPairIndex,[1,3]);
+        AllBaseTrVar_infos(uniPairIndex == RevPairIndex,[1,3]) = cA2_olddata;
+        
+        cA2_olddata = AllAfTrVar_infos(uniPairIndex == RevPairIndex,[2,4]);
+        AllAfTrVar_infos(uniPairIndex == RevPairIndex,[2,4]) = AllAfTrVar_infos(uniPairIndex == RevPairIndex,[1,3]);
+        AllAfTrVar_infos(uniPairIndex == RevPairIndex,[1,3]) = cA2_olddata;
     end
         
 end        
@@ -4088,6 +4137,7 @@ NewPairIndsNum = accumarray(uniPairIndexNew, 1);
 ValidStrPairIndex = find(NewPairIndsNum > 4);
 ValidStrPairsAll = UniquePairsNew(ValidStrPairIndex);
 ValidStrPairsNum = NewPairIndsNum(ValidStrPairIndex);
+
 % ValidPairStr = UniquePairsNew(ValidStrPairIndex);
 
 %%
@@ -4105,6 +4155,7 @@ CorrDiff_pvalues = zeros(NumValidPairs, 2, 3);
 CorrThres = zeros(NumValidPairs,1);
 PairAreaStrs = cell(NumValidPairs, 2);
 PairAllRawDatas = cell(NumValidPairs, 4);
+PairAllInfos = cell(NumValidPairs, 7);
 IsPairWithExcludeArea = false(NumValidPairs, 1);
 for cPair = 1 : NumValidPairs
     
@@ -4192,6 +4243,8 @@ for cPair = 1 : NumValidPairs
         
         AllColorplotDatas = {BTinfo_A1_BaseBVar,BTinfo_A2_BaseBVar,BTinfo_A1_BaseTrVar,BTinfo_A2_BaseTrVar,...
             Choiceinfo_A1_BaseBVar,Choiceinfo_A2_BaseBVar,Choiceinfo_A1_BaseTrVar,Choiceinfo_A2_BaseTrVar};
+        AllBaseInfo_avgData_basewin = cellfun(@(x) squeeze(mean(x(:,1:10,:),2)),AllColorplotDatas,'un',0);
+        AllBaseInfo_avgData_Afwin = cellfun(@(x) squeeze(mean(x(:,11:20,:),2)),AllColorplotDatas,'un',0);
         DataDespStr = {'BTBaseBVar A1','BTBaseBVar A2','BTBaseTrVar A1','BTBaseTrVar A2',...
             'ChBaseBVar A1','ChBaseBVar A2','ChBaseTrVar A1','ChBaseTrVar A2'};
         AllPlotDataAvgs = cellfun(@(x) mean(x,3),AllColorplotDatas,'un',0);
@@ -4262,11 +4315,13 @@ for cPair = 1 : NumValidPairs
         title(ax_AfCorr,sprintf('Area pair (%d Sess)',AfBVarTrNum));
         
         
-        AllColorplotDatas = {BTinfo_A1_AfBVar,BTinfo_A2_AfBVar,BTinfo_A1_AfTrVar,BTinfo_A2_AfTrVar,...
+        AllColorplotDatas_Af = {BTinfo_A1_AfBVar,BTinfo_A2_AfBVar,BTinfo_A1_AfTrVar,BTinfo_A2_AfTrVar,...
             Choiceinfo_A1_AfBVar,Choiceinfo_A2_AfBVar,Choiceinfo_A1_AfTrVar,Choiceinfo_A2_AfTrVar};
+        AllAfInfo_avgData_basewin = cellfun(@(x) squeeze(mean(x(:,1:10,:),2)),AllColorplotDatas_Af,'un',0);
+        AllAfInfo_avgData_Afwin = cellfun(@(x) squeeze(mean(x(:,11:20,:),2)),AllColorplotDatas_Af,'un',0);
         DataDespStr = {'BTAfBVar A1','BTAfBVar A2','BTAfTrVar A1','BTAfTrVar A2',...
             'ChAfBVar A1','ChAfBVar A2','ChAfTrVar A1','ChAfTrVar A2'};
-        AllPlotDataAvgs = cellfun(@(x) mean(x,3),AllColorplotDatas,'un',0);
+        AllPlotDataAvgs = cellfun(@(x) mean(x,3),AllColorplotDatas_Af,'un',0);
         BTInfoDatas = cat(3,AllPlotDataAvgs{1:4});
         BTColorlim = [0, prctile(BTInfoDatas(:),99)];
         ChoiceInfoDatas = cat(3,AllPlotDataAvgs{5:8});
@@ -4277,7 +4332,7 @@ for cPair = 1 : NumValidPairs
             else
                 AxIndex =cPlotInds*2+4;
             end
-            cPlotData = AllColorplotDatas{cPlotInds};
+            cPlotData = AllColorplotDatas_Af{cPlotInds};
             cPlotDataAvg = mean(cPlotData, 3);
             if cPlotInds < 5
                 Plotclim = BTColorlim;
@@ -4307,19 +4362,29 @@ for cPair = 1 : NumValidPairs
         
         saveName = fullfile(AreaPairInfoPlotSavePath,sprintf('Pair %s CorrANDInfo plots',cValidPairStr));
         saveas(hf, saveName);
-        print(hf, saveName, '-dpng','-r350');
+        print(hf, saveName, '-dpng','-r300');
         close(hf);
         
+        PairAllInfos(cPair, :) = {AllColorplotDatas,AllBaseInfo_avgData_basewin,AllBaseInfo_avgData_Afwin,...
+            AllColorplotDatas_Af,AllAfInfo_avgData_basewin,AllAfInfo_avgData_Afwin,AllProbe_BoundShifts(cValidDataInds)};
     end
         
 end
+
+%%
 AllPairDatas = {CorrDiffValuesNor,CorrDiff_pvalues,CorrThres,PairAreaStrs,IsPairWithExcludeArea};
 
 CorrDiffValuesNor = CorrDiffValuesNor(~IsPairWithExcludeArea,:,:); %zeros(NumValidPairs, 2, 3);
 CorrDiff_pvalues = CorrDiff_pvalues(~IsPairWithExcludeArea,:,:); %zeros(NumValidPairs, 2, 3);
 CorrThres = CorrThres(~IsPairWithExcludeArea); %zeros(NumValidPairs,1);
-PairAreaStrs = PairAreaStrs(~IsPairWithExcludeArea,:); %cell(NumValidPairs, 2);
+PairAreaStrsUsed = PairAreaStrs(~IsPairWithExcludeArea,:); %cell(NumValidPairs, 2);
 UsedPairRawDatas = PairAllRawDatas(~IsPairWithExcludeArea,:); 
+
+%%
+summaryDataSavePath = fullfile(AreaPairInfoPlotSavePath,'ResidueCCAAndInfoSummaryDatas.mat');
+save(summaryDataSavePath,'PairAllInfos', 'PairAllRawDatas', 'PairAreaStrs', 'CorrDiffValuesNor',...
+    'CorrDiff_pvalues', 'CorrThres', 'IsPairWithExcludeArea','-v7.3');
+
 
 
 %%
@@ -4335,7 +4400,8 @@ IsNodeExists = ismember(AllnodeStr,table2cell(AFG1_sig.Nodes));
 AFG1_sig = addnode(AFG1_sig,AllnodeStr(~IsNodeExists));
 AFh = figure;
 AFhg_sig = plot(AFG1_sig,'layout','circle');
-AFhg_sig.LineWidth = (AFPlotDatas(AFPlotEdges) - min(AFPlotDatas(AFPlotEdges)))*20+0.2;
+GraphWeights = AFG1_sig.Edges.Weight;
+AFhg_sig.LineWidth = (GraphWeights - min(GraphWeights))*20+0.2;
 deg_ranks = centrality(AFG1_sig,'degree','Importance',AFG1_sig.Edges.Weight); % pagerank,degree,eigenvector  {,'MaxIterations',1000}
 rankRatio1 = 20/max(deg_ranks);
 AFhg_sig.MarkerSize = deg_ranks*rankRatio1+5;
@@ -4353,7 +4419,8 @@ BaseG1_sig = addnode(BaseG1_sig,AllnodeStr(~IsNodeExists2));
 
 Baseh = figure;
 Basehg_sig = plot(BaseG1_sig,'layout','circle');
-Basehg_sig.LineWidth = (BasePlotDatas(BasePlotEdges) - min(BasePlotDatas(BasePlotEdges)))*20+0.2;
+GraphWeights2 = Basehg_sig.Edges.Weight;
+Basehg_sig.LineWidth = (GraphWeights2 - min(GraphWeights2))*20+0.2;
 deg_ranks_base = centrality(BaseG1_sig,'degree','Importance',BaseG1_sig.Edges.Weight);% pagerank,degree,eigenvector
 rankRatio2 = 20/max(deg_ranks_base);
 Basehg_sig.MarkerSize = deg_ranks_base*rankRatio2+5;

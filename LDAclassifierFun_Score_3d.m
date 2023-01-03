@@ -41,13 +41,15 @@ if NumUnits == 1
     C1_Avg = C1_Avg';
     C2_Avg = C2_Avg';
 end
-% UnitNum = size(DataMtx, 2);
-C1_cov = zeros(NumUnits, NumUnits, NumTimeBins);
-C2_cov = zeros(NumUnits, NumUnits, NumTimeBins);
-for cBin = 1 : NumTimeBins
-    C1_cov(:,:,cBin) = cov_cus(C1_rawData(:,:,cBin),[C1_SampleNum, NumUnits]);
-    C2_cov(:,:,cBin) = cov_cus(C2_rawData(:,:,cBin),[C2_SampleNum, NumUnits]);
-end
+C1_cov = cov3d(C1_rawData);
+C2_cov = cov3d(C2_rawData);
+% % UnitNum = size(DataMtx, 2);
+% C1_cov = zeros(NumUnits, NumUnits, NumTimeBins);
+% C2_cov = zeros(NumUnits, NumUnits, NumTimeBins);
+% for cBin = 1 : NumTimeBins
+%     C1_cov(:,:,cBin) = cov_cus(C1_rawData(:,:,cBin),[C1_SampleNum, NumUnits]);
+%     C2_cov(:,:,cBin) = cov_cus(C2_rawData(:,:,cBin),[C2_SampleNum, NumUnits]);
+% end
 % MtxStableTerm = 1e-6; % served to stabilize matrix inversion
 % pooled_cov = (C1_SampleNum*C1_cov + C2_SampleNum*C2_cov)/(C1_SampleNum + C2_SampleNum);
 % pooled_cov = pooled_cov + eye(size(pooled_cov))*MtxStableTerm; 
