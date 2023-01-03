@@ -3975,8 +3975,8 @@ save(dataSaveName2,'Area_BlockwiseTempScores','-v7.3');
 %% summary analysis 15, canonical correlation caled using two type residues
 cclr
 
-AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -4005,8 +4005,8 @@ SessBehavBoundShift = cell(NumUsedSess,1);
 
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
-    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
-%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     behavDataPath = fullfile(cSessPath,'ks2_5','BehavBlockBoundshift.mat');
@@ -4035,7 +4035,7 @@ sameProbe_Choiceinfo_A1 = cat(1,SesswiseResInfoData{:,3});
 sameProbe_Choiceinfo_A2 = cat(1,SesswiseResInfoData{:,4});
 
 sameProbe_BoundShifts = cat(1,SessBehavBoundShift{:});
-
+SesswiseCCAdata_Cell_sameProbe = cat(1,SesswiseCCAdatas{:});
 %%
 Betprobe_projInfostrc = load('E:\NPCCGs\PairedSessionDatas\ResidueDataInfos\SummaryCorrANDinfofile.mat');
 AllSessPair_info = cat(1,Betprobe_projInfostrc.AllSessProjInfos{:});
@@ -4062,9 +4062,9 @@ AllProbe_Choiceinfo_A2 = [sameProbe_Choiceinfo_A2;betProbe_Choiceinfo_A2];
 
 AllProbe_BoundShifts = [sameProbe_BoundShifts;Betprobe_BoundShiftsVec];
 %%
-SesswiseCCAdata_Cell_sameProbe = cat(1,SesswiseCCAdatas{:});
-% BetProbeCCAsfile = 'K:\ComponentCorrplot\PairCCADatas.mat';
-BetProbeCCAsfile = 'E:\NPCCGs\PairedSessionDatas\ComponentCorrplot\PairCCADatas.mat';
+
+BetProbeCCAsfile = 'K:\ComponentCorrplot\PairCCADatas.mat';
+% BetProbeCCAsfile = 'E:\NPCCGs\PairedSessionDatas\ComponentCorrplot\PairCCADatas.mat';
 BetProbeCCAsStrc = load(BetProbeCCAsfile);
 SesswiseCCAdata_betProbe = BetProbeCCAsStrc.PairCCADatasAllCell;
 Betprobe_pairInfo = BetProbeCCAsStrc.TypeAreaPairInfo;
@@ -4085,6 +4085,14 @@ AllBaseTrVar_infosRaw = [AllProbe_BTinfo_A1(:,2),AllProbe_BTinfo_A2(:,2),...
     AllProbe_Choiceinfo_A1(:,2),AllProbe_Choiceinfo_A2(:,2)];
 AllAfTrVar_infosRaw = [AllProbe_BTinfo_A1(:,4),AllProbe_BTinfo_A2(:,4),...
     AllProbe_Choiceinfo_A1(:,4),AllProbe_Choiceinfo_A2(:,4)];
+%%
+BaseValidTimeCents = -0.95:0.1:1;
+AfValidTimeCents = -0.95:0.1:2;
+ValidDataCorrs = cat(2,AllPairedCCADatas{:,2}); % the valid data type can be seen from the fifth column
+
+
+
+
 
 %% unique area pairs
 [UniquePairs, ~, uniPairIndex] = unique(AllPairedCCADatas(:,6));
@@ -4154,6 +4162,7 @@ CorrDiffValuesNor = zeros(NumValidPairs, 2, 3);
 CorrDiff_pvalues = zeros(NumValidPairs, 2, 3);
 CorrThres = zeros(NumValidPairs,1);
 PairAreaStrs = cell(NumValidPairs, 2);
+PairValidCorrs = cell(NumValidPairs, 2);
 PairAllRawDatas = cell(NumValidPairs, 4);
 PairAllInfos = cell(NumValidPairs, 7);
 IsPairWithExcludeArea = false(NumValidPairs, 1);
@@ -4167,12 +4176,17 @@ for cPair = 1 : NumValidPairs
     cValidDataAlls = TestDataCompontCorr(cValidDataInds,:);
     cValidDataCorrThres = TestDataCorrThres(cValidDataInds);
     cValidPairStr = ValidStrPairsAll{cPair};
-
+    
+    cValidDataCorrs = ValidDataCorrs(cValidDataInds,1:4);
+    cValidDataCorrs_real = cellfun(@(x) x(:,:,1),cValidDataCorrs,'un',0);
+    cValidDataCorrs_thres = cellfun(@(x) x(:,:,2),cValidDataCorrs,'un',0);
+    PairValidCorrs(cPair, :) = {cValidDataCorrs_real, cValidDataCorrs_thres};
+    
     SessAreaUnitNums = cellfun(@numel,cValidDataAlls(:,1));
     MaxUnitNum = max(SessAreaUnitNums);
     cAreaPairDatafilled = cellfun(@(x) single([x,nan(1,MaxUnitNum-numel(x))]),cValidDataAlls,'un',0);
     cPairThresDatafilled = cellfun(@(x) single([x,nan(1,MaxUnitNum-numel(x))]),cValidDataCorrThres,'un',0);
-
+    
     BaseBVarDatas = double(cat(1,cAreaPairDatafilled{:,1}));
     AfBVarDatas = double(cat(1,cAreaPairDatafilled{:,2}));
     BaseTrVarDatas = double(cat(1,cAreaPairDatafilled{:,3}));
