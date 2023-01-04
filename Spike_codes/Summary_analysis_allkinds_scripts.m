@@ -4088,8 +4088,8 @@ AllAfTrVar_infosRaw = [AllProbe_BTinfo_A1(:,4),AllProbe_BTinfo_A2(:,4),...
 %%
 BaseValidTimeCents = -0.95:0.1:1;
 AfValidTimeCents = -0.95:0.1:2;
-ValidDataCorrs = cat(2,AllPairedCCADatas{:,2}); % the valid data type can be seen from the fifth column
-
+ValidDataCorrs = cat(1,AllPairedCCADatas{:,2}); % the valid data type can be seen from the fifth column
+ValidCorrColStr = ValidDataCorrs{1,5};
 
 
 
@@ -4155,7 +4155,7 @@ AreaPairInfoPlotSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\su
 %%
 BaseValidTimeCents = -0.95:0.1:1;
 AfValidTimeCents = -0.95:0.1:2;
-
+TimeWins = {BaseValidTimeCents, AfValidTimeCents};
 ExcludeAreas = {'ccc'}; %'AON','OLF','cc','aco'
 NumValidPairs = length(ValidStrPairsAll);
 CorrDiffValuesNor = zeros(NumValidPairs, 2, 3);
@@ -4381,6 +4381,17 @@ for cPair = 1 : NumValidPairs
         
         PairAllInfos(cPair, :) = {AllColorplotDatas,AllBaseInfo_avgData_basewin,AllBaseInfo_avgData_Afwin,...
             AllColorplotDatas_Af,AllAfInfo_avgData_basewin,AllAfInfo_avgData_Afwin,AllProbe_BoundShifts(cValidDataInds)};
+        
+        % plot the valid data correlation coefficients
+        cValidCorrs_real_4plot = cellfun(@(x) x(1:5,:),cValidDataCorrs_real,'un',0);
+        cValidCorrs_thres_4plot = cellfun(@(x) x(1:5,:),cValidDataCorrs_thres,'un',0);
+        hf2 = ValidCorrPlots(cValidCorrs_real_4plot,ValidCorrColStr,cValidPairStr,TimeWins,cValidCorrs_thres_4plot);
+        
+        saveName = fullfile(AreaPairInfoPlotSavePath,sprintf('Pair %s CValid Correlation plots',cValidPairStr));
+        saveas(hf2, saveName);
+        print(hf2, saveName, '-dpng','-r300');
+        close(hf2);
+        
     end
         
 end
@@ -4397,10 +4408,13 @@ UsedPairRawDatas = PairAllRawDatas(~IsPairWithExcludeArea,:);
 %%
 summaryDataSavePath = fullfile(AreaPairInfoPlotSavePath,'ResidueCCAAndInfoSummaryDatas.mat');
 save(summaryDataSavePath,'PairAllInfos', 'PairAllRawDatas', 'PairAreaStrs', 'CorrDiffValuesNor',...
-    'CorrDiff_pvalues', 'CorrThres', 'IsPairWithExcludeArea','-v7.3');
+    'CorrDiff_pvalues', 'CorrThres', 'IsPairWithExcludeArea','PairValidCorrs','-v7.3');
 
-
-
+%%
+AllCCAandInfoSavePath = fullfile(AreaPairInfoPlotSavePath,'..','AllCCAandInfoDataSummary.mat');
+save(AllCCAandInfoSavePath,'ValidStrPairsAll', 'ValidStrPairsNum', 'UniquePairs', 'AllPairedCCADatas',...
+    'AllProbe_BoundShifts', 'AllProbe_BTinfo_A1',...
+    'AllProbe_BTinfo_A2', 'AllProbe_Choiceinfo_A1', 'AllProbe_Choiceinfo_A2','-v7.3');
 %%
 AllnodeStr = unique(PairAreaStrs(:));
 AFPlotDatas = CorrDiffValuesNor(:,2,1);

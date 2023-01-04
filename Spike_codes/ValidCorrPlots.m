@@ -1,4 +1,4 @@
-function hf = ValidCorrPlots(ValidCorrsCell,DataDespStr,AreaNames,TimeWins)
+function hf = ValidCorrPlots(ValidCorrsCell,DataDespStr,AreaNames,TimeWins,CorrThresData)
 % for TimeWins, the first input must be baseline valid times, and the
 % second must be afterResp valid times.
 
@@ -21,6 +21,8 @@ hold on
 yscalesAll = zeros(4, 2);
 for cA = 1 : 4
     cA_datas = permute(cat(3,ValidCorrsCell{:,cA}),[3,2,1]); % repeats, frames, components
+    cA_Threshold = permute(cat(3,CorrThresData{:,cA}),[3,2,1]); % repeats, frames, components
+    PlottedThres = mean(cA_Threshold(:,:,1));
     NumSessions = size(cA_datas, 1);
     cATypeStr = strrep(DataDespStr{cA},'Valid','');
     
@@ -31,6 +33,7 @@ for cA = 1 : 4
         'Color',lineColors{cA},'linewidth',1.4);
     [~,~,hl2] = MeanSemPlot(double(cA_datas(:,:,2)),TimeWins{cPlotInds},ax,1,ShadowColors{cA},...
         'Color',lineColors{cA},'linewidth',1.4,'linestyle','--');
+    plot(TimeWins{cPlotInds}, PlottedThres,'Color',[.7 .7 .7],'linewidth',1,'linestyle','--');
     
     LegendObj{cPlotInds} = [LegendObj{cPlotInds},[hl1,hl2]];
     LegendStrs{cPlotInds} = [LegendStrs{cPlotInds},{[cATypeStr,'-M1'],[cATypeStr,'-M2']}];
