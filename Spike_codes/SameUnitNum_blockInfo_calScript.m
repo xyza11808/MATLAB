@@ -11,7 +11,7 @@ NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 %% find target cluster inds and IDs
 % ksfolder = pwd;
 
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
@@ -72,14 +72,15 @@ FreqTypes = unique(NMTrFreqsAll);
 FreqTypeNum = length(FreqTypes);
 
 % find fieldnames
-AllNameStrs = AlreadyCaledDatas.NewAdd_ExistAreaNames;
-AllAreaUnitInds = AlreadyCaledDatas.ExistField_ClusIDs;
+AllNameStrs = NewAdd_ExistAreaNames;
+AllAreaUnitInds = ExistField_ClusIDs;
 AllAreaUnitNums = cellfun(@numel,AllAreaUnitInds(:,2));
-ExcludeAreaInds = AllAreaUnitNums >= 5;
+UsedUnitNumsThres = 10;
+IncludeAreaInds = AllAreaUnitNums >= UsedUnitNumsThres;
 
-UsedArea_strs = AllNameStrs(ExcludeAreaInds);
-UsedUnitNums = AllAreaUnitNums(ExcludeAreaInds);
-UsedUnitInds = AllAreaUnitInds(ExcludeAreaInds,:);
+UsedArea_strs = AllNameStrs(IncludeAreaInds);
+UsedUnitNums = AllAreaUnitNums(IncludeAreaInds);
+UsedUnitInds = AllAreaUnitInds(IncludeAreaInds,:);
 NumUsedAreas = length(UsedArea_strs);
 %% precalculations
 RawResponseData = NewBinnedDatas(NMTrInds,:,:);
@@ -95,14 +96,39 @@ for cU = 1 : UnitNums
 %     cU_Sub = BaselineSubData(:,cU,:);
 %     BaselineSubData_zs(:,cU,:) = (cU_Sub - mean(cU_Sub,'all'))/std(cU_Sub(:));
 end
-
+FrameBinTime = OutDataStrc.USedbin(2);
 BaselineWin = 1:OnsetBin-1;
 AfterRespWin = round((0.1:0.1:1)/FrameBinTime)+OnsetBin;
+BaselineDataTrace = (reshape(permute(RawResponseData_zs(:,:,BaselineWin),[2,3,1]),UnitNums,[]))';
+BaselineLabels = (repmat(NMBlockTypeLabels(:),1,numel(BaselineWin)))';
+BaselineLabelsVec = BaselineLabels(:);
+%%
+NumRepeats = 200;
+AreaFixUnitScores = cell(NumUsedAreas, 2);
+for cA = 1 : NumUsedAreas
+    cA_UnitInds = UsedUnitInds{cA,2};
+    cA_UnitNums = numel(cA_UnitInds);
+    cA_UnitData = BaselineDataTrace(:,cA_UnitInds);
+    
+    AllRepeatScores = zeros(NumRepeats, 3);
+    AllRepeatPerfs = zeros(NumRepeats, 3);
+    parfor cR = 1 : NumRepeats
+        cUsedUnitsInds = randsample(cA_UnitNums, UsedUnitNumsThres);
+        cRUsedData = cA_UnitData(:,cUsedUnitsInds);
+        [cRepeatAvgScores, cRepeatAvgPerfs] = TrEqualSampleinfo(cRUsedData, BaselineLabelsVec, 0.6);
+        AllRepeatScores(cR,:) = cRepeatAvgScores;
+        AllRepeatPerfs(cR,:) = cRepeatAvgPerfs;
+    end
+    AreaFixUnitScores(cA,:) = {AllRepeatScores, AllRepeatPerfs};
+end
 
 %%
-
-
-
+DataSavefolder = fullfile(ksfolder,'BlockTypeScores');
+if ~isfolder(DataSavefolder)
+    mkdir(DataSavefolder);
+end
+DataSavefile = fullfile(DataSavefolder,'RepeatBTScores.mat');
+save(DataSavefile,'AreaFixUnitScores','UsedArea_strs','UsedUnitInds','UsedUnitNums','OutDataStrc','-v7.3');
 
 
 
