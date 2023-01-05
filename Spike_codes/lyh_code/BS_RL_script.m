@@ -11,7 +11,7 @@ if exist(filename_2,'file')
     return;
 end
 
-load(fullfile(ksfolder,'NPClassHandleSaved.mat'),'behavResults');
+load(fullfile(ksfolder,'NewClassHandle2.mat'),'behavResults');
 if ~isfolder(saveFoldername)
     mkdir(saveFoldername);
 end
