@@ -1,13 +1,18 @@
 clearvars SessAreaIndexStrc ProbNPSess AreaDecodeDataCell AreaProcessDatas BlockpsyInfo ExistField_ClusIDs NewAdd_ExistAreaNames
 
-load(fullfile(ksfolder,'NewClassHandle2.mat'));
-ProbNPSess = NewNPClusHandle;
-clearvars NewNPClusHandle
-ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
-OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
+load(fullfile(ksfolder,'NewClassHandle2.mat'),'behavResults');
+% ProbNPSess = NewNPClusHandle;
+% clearvars NewNPClusHandle
+% ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
+% OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
+
+DataSavefolder = fullfile(ksfolder,'BlockTypeScores');
+% if ~isfolder(DataSavefolder)
+%     mkdir(DataSavefolder);
+% end
+DataSavefileO = fullfile(DataSavefolder,'RepeatBTScores.mat');
+load(DataSavefileO,'OutDataStrc');
 NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
-
-
 %% find target cluster inds and IDs
 % ksfolder = pwd;
 
@@ -75,7 +80,7 @@ FreqTypeNum = length(FreqTypes);
 AllNameStrs = NewAdd_ExistAreaNames;
 AllAreaUnitInds = ExistField_ClusIDs;
 AllAreaUnitNums = cellfun(@numel,AllAreaUnitInds(:,2));
-UsedUnitNumsThres = 10;
+UsedUnitNumsThres = 30;
 IncludeAreaInds = AllAreaUnitNums >= UsedUnitNumsThres;
 
 UsedArea_strs = AllNameStrs(IncludeAreaInds);
@@ -103,15 +108,15 @@ BaselineDataTrace = (reshape(permute(RawResponseData_zs(:,:,BaselineWin),[2,3,1]
 BaselineLabels = (repmat(NMBlockTypeLabels(:),1,numel(BaselineWin)))';
 BaselineLabelsVec = BaselineLabels(:);
 %%
-NumRepeats = 200;
+NumRepeats = 500;
 AreaFixUnitScores = cell(NumUsedAreas, 2);
 for cA = 1 : NumUsedAreas
     cA_UnitInds = UsedUnitInds{cA,2};
     cA_UnitNums = numel(cA_UnitInds);
     cA_UnitData = BaselineDataTrace(:,cA_UnitInds);
     
-    AllRepeatScores = zeros(NumRepeats, 3);
-    AllRepeatPerfs = zeros(NumRepeats, 3);
+    AllRepeatScores = zeros(NumRepeats, 3,'single');
+    AllRepeatPerfs = zeros(NumRepeats, 3,'single');
     parfor cR = 1 : NumRepeats
         cUsedUnitsInds = randsample(cA_UnitNums, UsedUnitNumsThres);
         cRUsedData = cA_UnitData(:,cUsedUnitsInds);
@@ -123,12 +128,12 @@ for cA = 1 : NumUsedAreas
 end
 
 %%
-DataSavefolder = fullfile(ksfolder,'BlockTypeScores');
-if ~isfolder(DataSavefolder)
-    mkdir(DataSavefolder);
-end
-DataSavefile = fullfile(DataSavefolder,'RepeatBTScores.mat');
-save(DataSavefile,'AreaFixUnitScores','UsedArea_strs','UsedUnitInds','UsedUnitNums','OutDataStrc','-v7.3');
+% DataSavefolder = fullfile(ksfolder,'BlockTypeScores');
+% if ~isfolder(DataSavefolder)
+%     mkdir(DataSavefolder);
+% end
+DataSavefile = fullfile(DataSavefolder,'RepeatBTScores4.mat');
+save(DataSavefile,'AreaFixUnitScores','UsedArea_strs','UsedUnitInds','UsedUnitNums','OutDataStrc','UsedUnitNumsThres','-v7.3');
 
 
 

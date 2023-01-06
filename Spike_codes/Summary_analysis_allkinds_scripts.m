@@ -4753,8 +4753,8 @@ save(DataSavePath16, 'AreaDataInfos','BrainAreasStr','AllAreawiseDatas','AllData
 %% summary analysis 17, fixed unit number block type decoding
 cclr
 
-AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -4780,7 +4780,7 @@ NumUsedSess = length(SessionFolders);
 NumAllTargetAreas = length(BrainAreasStr);
 
 %%
-Areawise_BTPerfs = cell(NumUsedSess,NumAllTargetAreas, 3);
+Areawise_BTPerfs = cell(NumUsedSess,NumAllTargetAreas, 4, 3);
 
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
@@ -4790,26 +4790,22 @@ for cS = 1 :  NumUsedSess
     ksfolder = fullfile(cSessPath,'ks2_5');
     try
         
-        NewSessAreaStrc = load(fullfile(ksfolder,'BlockTypeScores','RepeatBTScores.mat'));
-        UnitSltFile = fullfile(ksfolder,'AreaFixUnitScores','UsedArea_strs','UsedUnitNumsThres'); 
-        UnitSltDataStrc = load(UnitSltFile);
-        if isfield(UnitSltDataStrc,'UsedUnitNumsThres')
+        UnitSltFile = (fullfile(ksfolder,'BlockTypeScores','RepeatBTScores.mat'));
+        UnitSltDataStrc = load(UnitSltFile,'AreaFixUnitScores','UsedArea_strs','UsedUnitNumsThres','UsedUnitNums');
+        if ~isfield(UnitSltDataStrc,'UsedUnitNumsThres')
             UnitSltDataStrc.UsedUnitNumsThres = 10;
         end
         
-        NewSessAreaStrc = load(fullfile(ksfolder,'BlockTypeScores','RepeatBTScores2.mat'));
-        UnitSltFile = fullfile(ksfolder,'AreaFixUnitScores','UsedArea_strs','UsedUnitNumsThres','UsedUnitNums'); 
-        UnitSltDataStrc2 = load(UnitSltFile);
+        UnitSltFile = (fullfile(ksfolder,'BlockTypeScores','RepeatBTScores2.mat'));
+        UnitSltDataStrc2 = load(UnitSltFile,'AreaFixUnitScores','UsedArea_strs','UsedUnitNumsThres','UsedUnitNums'); 
         
-        NewSessAreaStrc = load(fullfile(ksfolder,'BlockTypeScores','RepeatBTScores3.mat'));
-        UnitSltFile = fullfile(ksfolder,'AreaFixUnitScores','UsedArea_strs','UsedUnitNumsThres','UsedUnitNums'); 
-        UnitSltDataStrc3 = load(UnitSltFile);
+        UnitSltFile = (fullfile(ksfolder,'BlockTypeScores','RepeatBTScores3.mat'));
+        UnitSltDataStrc3 = load(UnitSltFile,'AreaFixUnitScores','UsedArea_strs','UsedUnitNumsThres','UsedUnitNums'); 
         
     catch ME
         fprintf('Error exists in session %d.\n',cS);
     end
     CaledDatas = {UnitSltDataStrc,UnitSltDataStrc2,UnitSltDataStrc3};
-    AreaUnitNumThres = zeros(3,1);
     for cData = 1 : 3
         Numfieldnames = length(CaledDatas{cData}.UsedArea_strs);
         if Numfieldnames < 1
@@ -4822,21 +4818,25 @@ for cS = 1 :  NumUsedSess
         
         AreaUnitNumbers = CaledDatas{cData}.UsedUnitNums;
         AreaUnitNumThres = CaledDatas{cData}.UsedUnitNumsThres;
-        AreaUnitNumThres(cData) = AreaUnitNumThres;
         for cAreaInds = 1 : Numfieldnames 
             cAreaStr = CaledDatas{cData}.UsedArea_strs{cAreaInds};
             AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
             if ~sum(AreaMatchInds)
                 continue;
             end
-            Areawise_BTPerfs(cS,AreaMatchInds,cData) = {cCalDataScoreANDperf(cAreaInds,:),...
-                cCalDataThres(cAreaInds,:),AreaUnitNumbers(cAreaInds)};
+            Areawise_BTPerfs(cS,AreaMatchInds,:,cData) = {cCalDataScoreANDperf(cAreaInds,:),...
+                cCalDataThres(cAreaInds,:),AreaUnitNumbers(cAreaInds),AreaUnitNumThres};
 
         end
         
     end
 end
 
+%%
+% sumDataSavePath17 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
+sumDataSavePath17 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
+savefile = fullfile(sumDataSavePath17,'FixedUBTscoreSum.mat');
+save(savefile,'Areawise_BTPerfs','BrainAreasStr','-v7.3');
 
 
 %%
