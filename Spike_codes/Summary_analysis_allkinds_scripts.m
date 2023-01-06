@@ -3975,8 +3975,8 @@ save(dataSaveName2,'Area_BlockwiseTempScores','-v7.3');
 %% summary analysis 15, canonical correlation caled using two type residues
 cclr
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -4005,8 +4005,8 @@ SessBehavBoundShift = cell(NumUsedSess,1);
 
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
-%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
-    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     behavDataPath = fullfile(cSessPath,'ks2_5','BehavBlockBoundshift.mat');
@@ -4063,8 +4063,8 @@ AllProbe_Choiceinfo_A2 = [sameProbe_Choiceinfo_A2;betProbe_Choiceinfo_A2];
 AllProbe_BoundShifts = [sameProbe_BoundShifts;Betprobe_BoundShiftsVec];
 %%
 
-BetProbeCCAsfile = 'K:\ComponentCorrplot\PairCCADatas.mat';
-% BetProbeCCAsfile = 'E:\NPCCGs\PairedSessionDatas\ComponentCorrplot\PairCCADatas.mat';
+% BetProbeCCAsfile = 'K:\ComponentCorrplot\PairCCADatas.mat';
+BetProbeCCAsfile = 'E:\NPCCGs\PairedSessionDatas\ComponentCorrplot\PairCCADatas.mat';
 BetProbeCCAsStrc = load(BetProbeCCAsfile);
 SesswiseCCAdata_betProbe = BetProbeCCAsStrc.PairCCADatasAllCell;
 Betprobe_pairInfo = BetProbeCCAsStrc.TypeAreaPairInfo;
@@ -4085,14 +4085,9 @@ AllBaseTrVar_infosRaw = [AllProbe_BTinfo_A1(:,2),AllProbe_BTinfo_A2(:,2),...
     AllProbe_Choiceinfo_A1(:,2),AllProbe_Choiceinfo_A2(:,2)];
 AllAfTrVar_infosRaw = [AllProbe_BTinfo_A1(:,4),AllProbe_BTinfo_A2(:,4),...
     AllProbe_Choiceinfo_A1(:,4),AllProbe_Choiceinfo_A2(:,4)];
-%%
-BaseValidTimeCents = -0.95:0.1:1;
-AfValidTimeCents = -0.95:0.1:2;
+
 ValidDataCorrs = cat(1,AllPairedCCADatas{:,2}); % the valid data type can be seen from the fifth column
 ValidCorrColStr = ValidDataCorrs{1,5};
-
-
-
 
 %% unique area pairs
 [UniquePairs, ~, uniPairIndex] = unique(AllPairedCCADatas(:,6));
@@ -4165,6 +4160,7 @@ PairAreaStrs = cell(NumValidPairs, 2);
 PairValidCorrs = cell(NumValidPairs, 2);
 PairAllRawDatas = cell(NumValidPairs, 4);
 PairAllInfos = cell(NumValidPairs, 7);
+PairCorrDiffANDBTBVarInfo = cell(NumValidPairs, 3);
 IsPairWithExcludeArea = false(NumValidPairs, 1);
 for cPair = 1 : NumValidPairs
     
@@ -4328,7 +4324,6 @@ for cPair = 1 : NumValidPairs
         set(ax_AfCorr,'position',axPos + [0 0.03 0 0],'xlim',[0.5 6.5],'xtick',1:6);
         title(ax_AfCorr,sprintf('Area pair (%d Sess)',AfBVarTrNum));
         
-        
         AllColorplotDatas_Af = {BTinfo_A1_AfBVar,BTinfo_A2_AfBVar,BTinfo_A1_AfTrVar,BTinfo_A2_AfTrVar,...
             Choiceinfo_A1_AfBVar,Choiceinfo_A2_AfBVar,Choiceinfo_A1_AfTrVar,Choiceinfo_A2_AfTrVar};
         AllAfInfo_avgData_basewin = cellfun(@(x) squeeze(mean(x(:,1:10,:),2)),AllColorplotDatas_Af,'un',0);
@@ -4385,13 +4380,61 @@ for cPair = 1 : NumValidPairs
         % plot the valid data correlation coefficients
         cValidCorrs_real_4plot = cellfun(@(x) x(1:5,:),cValidDataCorrs_real,'un',0);
         cValidCorrs_thres_4plot = cellfun(@(x) x(1:5,:),cValidDataCorrs_thres,'un',0);
-        hf2 = ValidCorrPlots(cValidCorrs_real_4plot,ValidCorrColStr,cValidPairStr,TimeWins,cValidCorrs_thres_4plot);
+        hf2 = figure('position',[100 100 960 300]);
+        ax1 = subplot(131);
+        hold on
+        ax2 = subplot(132);
+        hold on
+        [~, TypeCorrDatas] = ValidCorrPlots(cValidCorrs_real_4plot,ValidCorrColStr,cValidPairStr,TimeWins,...
+            cValidCorrs_thres_4plot,[ax1, ax2]);
+        %
+        BaseWinvalidCorrData = TypeCorrDatas(:,1,1);
+        BaseWin_baseValidCorrDif = BaseWinvalidCorrData{1} - BaseWinvalidCorrData{3};
+        BaseWin_AfValidCorrDif = BaseWinvalidCorrData{2} - BaseWinvalidCorrData{4};
+        AfWinvalidCorrData = TypeCorrDatas(:,2,1);
+        AfWin_baseValidCorrDiff = AfWinvalidCorrData{1} - AfWinvalidCorrData{3};
+        AfWin_AfValidCorrDiff = AfWinvalidCorrData{2} - AfWinvalidCorrData{4};
+        TypePairinfos = cellfun(@(x) x(1:2),PairAllInfos(cPair, [2,3,5,6]),'un',0);
+        TypePairinfosCell = cat(1,TypePairinfos{:}); % baseinfo_basewin, baseinfo_Afwin, AfInfo_basewin, Afinfo_Afwin
+        CorrDifDatas = {BaseWin_baseValidCorrDif,AfWin_baseValidCorrDiff,BaseWin_AfValidCorrDif,AfWin_AfValidCorrDiff};
+        TypeDespStr = {'BiBw','BiAw','AiBw','AiAw'};
+        
+        PairCorrDiffANDBTBVarInfo(cPair, :) = {TypePairinfosCell, CorrDifDatas, TypeDespStr};
+        
+        ax3 = subplot(133);
+        hold on
+        TypeDataCorrDifANDinfo = cell(4, 1);
+        TypeDataTypes = {'*','d','p','o'};
+        Typehandles = gobjects(4,1);
+        TypelegStrs = cell(4,1);
+        for cType = 1 : 4
+            cT_data = CorrDifDatas{cType};
+            [MaxCorrDiff, MaxInds] = max(cT_data,[],2);
+            cTypeInfo = TypePairinfosCell(cType,:);
+            InfoDataSize = size(cTypeInfo{1});
+            Max2InfoInds = sub2ind(InfoDataSize,MaxInds',1:InfoDataSize(2));
+            cTypeInfo_maxIndsInfo = [cTypeInfo{1}(Max2InfoInds)',cTypeInfo{2}(Max2InfoInds)'];
+            TF = isoutlier(mean(cTypeInfo_maxIndsInfo,2),'quartiles');
+            UsedMaxCorrDiff = MaxCorrDiff(~TF);
+            UsedmaxIndsInfo = cTypeInfo_maxIndsInfo(~TF,:);
+            TypeDataCorrDifANDinfo{cType} = [UsedMaxCorrDiff(:),mean(UsedmaxIndsInfo,2)];
+            hl = plot(ax3,UsedMaxCorrDiff,mean(UsedmaxIndsInfo,2),TypeDataTypes{cType},...
+                'MarkerEdgeColor','k','MarkerFaceColor','none');
+            Typehandles(cType)=hl;
+            [r,p] = corrcoef(UsedMaxCorrDiff,mean(UsedmaxIndsInfo,2));
+            TypelegStrs{cType} = sprintf('%s p(%.2e) r(%.3f)',TypeDespStr{cType},p(1,2),r(1,2));
+        end
+        AllDatas = cat(1,TypeDataCorrDifANDinfo{:});
+        [rr,pp] = corrcoef(AllDatas(:,1),AllDatas(:,2));
+        legend(ax3,Typehandles,TypelegStrs,'location','northwest','box','on');
+        xlabel(ax3,'\delta Coefficients');
+        ylabel(ax3,'Paired Area InfoAvg');
+        title(ax3,sprintf('r(%.3f) p(%.2e)',rr(1,2),pp(1,2)));
         
         saveName = fullfile(AreaPairInfoPlotSavePath,sprintf('Pair %s CValid Correlation plots',cValidPairStr));
         saveas(hf2, saveName);
         print(hf2, saveName, '-dpng','-r300');
         close(hf2);
-        
     end
         
 end
@@ -4408,7 +4451,7 @@ UsedPairRawDatas = PairAllRawDatas(~IsPairWithExcludeArea,:);
 %%
 summaryDataSavePath = fullfile(AreaPairInfoPlotSavePath,'ResidueCCAAndInfoSummaryDatas.mat');
 save(summaryDataSavePath,'PairAllInfos', 'PairAllRawDatas', 'PairAreaStrs', 'CorrDiffValuesNor',...
-    'CorrDiff_pvalues', 'CorrThres', 'IsPairWithExcludeArea','PairValidCorrs','-v7.3');
+    'CorrDiff_pvalues', 'CorrThres', 'IsPairWithExcludeArea','PairValidCorrs','PairCorrDiffANDBTBVarInfo','-v7.3');
 
 %%
 AllCCAandInfoSavePath = fullfile(AreaPairInfoPlotSavePath,'..','AllCCAandInfoDataSummary.mat');
@@ -4705,6 +4748,96 @@ end
 %%
 DataSavePath16 = fullfile(figSavePath16,'plsChoiceInfo_CompData_zsed.mat');
 save(DataSavePath16, 'AreaDataInfos','BrainAreasStr','AllAreawiseDatas','AllDataDespStr','-v7.3');
+
+
+%% summary analysis 17, fixed unit number block type decoding
+cclr
+
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+
+BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
+        'Sheet',1);
+BrainAreasStrCC = BrainAreasStrC(2:end);
+% BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
+BrainAreasStr = BrainAreasStrCC(~EmptyInds); %;{'Others'}
+
+% FullBrainStrC = readcell(AllSessFolderPathfile,'Range','E:E',...
+%         'Sheet',1);
+% FullBrainStrCC = FullBrainStrC(2:end);
+% % BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
+% % EmptyInds2 = cellfun(@(x) isempty(x) ||any(ismissing(x)),FullBrainStrCC);
+% FullBrainStr = [FullBrainStrCC(~EmptyInds)]; %;{'Others'}
+
+SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
+        'Sheet',1);
+SessionFoldersRaw = SessionFoldersC(2:end);
+EmptyInds2 = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
+SessionFolders = SessionFoldersRaw(~EmptyInds2);
+
+NumUsedSess = length(SessionFolders);
+NumAllTargetAreas = length(BrainAreasStr);
+
+%%
+Areawise_BTPerfs = cell(NumUsedSess,NumAllTargetAreas, 3);
+
+for cS = 1 :  NumUsedSess
+%     cSessPath = SessionFolders{cS}; %(2:end-1)
+%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
+    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    
+    ksfolder = fullfile(cSessPath,'ks2_5');
+    try
+        
+        NewSessAreaStrc = load(fullfile(ksfolder,'BlockTypeScores','RepeatBTScores.mat'));
+        UnitSltFile = fullfile(ksfolder,'AreaFixUnitScores','UsedArea_strs','UsedUnitNumsThres'); 
+        UnitSltDataStrc = load(UnitSltFile);
+        if isfield(UnitSltDataStrc,'UsedUnitNumsThres')
+            UnitSltDataStrc.UsedUnitNumsThres = 10;
+        end
+        
+        NewSessAreaStrc = load(fullfile(ksfolder,'BlockTypeScores','RepeatBTScores2.mat'));
+        UnitSltFile = fullfile(ksfolder,'AreaFixUnitScores','UsedArea_strs','UsedUnitNumsThres','UsedUnitNums'); 
+        UnitSltDataStrc2 = load(UnitSltFile);
+        
+        NewSessAreaStrc = load(fullfile(ksfolder,'BlockTypeScores','RepeatBTScores3.mat'));
+        UnitSltFile = fullfile(ksfolder,'AreaFixUnitScores','UsedArea_strs','UsedUnitNumsThres','UsedUnitNums'); 
+        UnitSltDataStrc3 = load(UnitSltFile);
+        
+    catch ME
+        fprintf('Error exists in session %d.\n',cS);
+    end
+    CaledDatas = {UnitSltDataStrc,UnitSltDataStrc2,UnitSltDataStrc3};
+    AreaUnitNumThres = zeros(3,1);
+    for cData = 1 : 3
+        Numfieldnames = length(CaledDatas{cData}.UsedArea_strs);
+        if Numfieldnames < 1
+            warning('There is no target units within following folder:\n %s \n ##################\n',cSessPath);
+            continue;
+        end
+        
+        cCalDataScoreANDperf = cellfun(@(x) mean(x(:,2)),CaledDatas{cData}.AreaFixUnitScores);
+        cCalDataThres = cellfun(@(x) mean(x(:,3)),CaledDatas{cData}.AreaFixUnitScores);
+        
+        AreaUnitNumbers = CaledDatas{cData}.UsedUnitNums;
+        AreaUnitNumThres = CaledDatas{cData}.UsedUnitNumsThres;
+        AreaUnitNumThres(cData) = AreaUnitNumThres;
+        for cAreaInds = 1 : Numfieldnames 
+            cAreaStr = CaledDatas{cData}.UsedArea_strs{cAreaInds};
+            AreaMatchInds = matches(BrainAreasStr,cAreaStr,'IgnoreCase',true);
+            if ~sum(AreaMatchInds)
+                continue;
+            end
+            Areawise_BTPerfs(cS,AreaMatchInds,cData) = {cCalDataScoreANDperf(cAreaInds,:),...
+                cCalDataThres(cAreaInds,:),AreaUnitNumbers(cAreaInds)};
+
+        end
+        
+    end
+end
+
+
 
 %%
 % % sum(UsedSessNums > 5);
