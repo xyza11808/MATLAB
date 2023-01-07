@@ -1242,5 +1242,144 @@ print(hf4_4, ParentAreaSaveName4, '-dpng','-r350');
 print(hf4_4, ParentAreaSaveName4, '-dpdf','-bestfit');
 
 
+%% plot 5
+cclr
+% load parent str datas
+% ParantAreaListFile = fullfile('K:\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+ParantAreaListFile = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
 
+ParentRegionStrCell = readcell(ParantAreaListFile,'Range','A:A',...
+    'Sheet','Sheet1');
+IsCellStrInds = cellfun(@(x) ischar(x),ParentRegionStrCell);
+IsCellStrInds(1) = false;
+AllAreaStrsIndex = find(IsCellStrInds)-1;
+AllParentAreaStrs = ParentRegionStrCell(AllAreaStrsIndex+1);
 
+ChildRegStrCell = readcell(ParantAreaListFile,'Range','B:B',...
+    'Sheet','Sheet1');
+ChildRegUsedStrs = ChildRegStrCell(2:end);
+
+NumParentAreas = length(AllParentAreaStrs);
+NumChildAreas = length(ChildRegUsedStrs);
+Child2ParentInds = zeros(NumChildAreas,1);
+Child2ParentInds(AllAreaStrsIndex) = 1;
+Child2ParentMapInds = cumsum(Child2ParentInds);
+
+%%
+sumDataSavePath17 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
+% sumDataSavePath17 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
+savefile = fullfile(sumDataSavePath17,'FixedUBTscoreSum.mat');
+load(savefile,'BrainAreasStr', 'AreasumDatas', 'AreaAvgDatas', 'AreaUnitNumThres');
+
+%%
+IsAreaEmpty = cellfun(@isempty, AreaAvgDatas);
+AllEmptyAreaInds = sum(IsAreaEmpty,2) > 2;
+
+NEBrainStrs = BrainAreasStr(~AllEmptyAreaInds);
+NEAreaAvgDatas = AreaAvgDatas(~AllEmptyAreaInds,:);
+NEAreaUnitNumThres = AreaUnitNumThres(~AllEmptyAreaInds,:);
+UsedFixedUnitNum = max(NEAreaUnitNumThres);
+%%
+AllBrainNames = NEBrainStrs;
+NumBrainAreas = length(AllBrainNames);
+FixUnitNumTypes = size(NEAreaAvgDatas, 2);
+TypeArea2ParentMapDatas = cell(FixUnitNumTypes,1);
+IsAreaUsed = false(NumBrainAreas,FixUnitNumTypes);
+
+for cNumThresType = 1 : FixUnitNumTypes 
+    
+    cTypeData = NEAreaAvgDatas(:,cNumThresType);
+    
+    Area2ParentMapDatas = cell(NumBrainAreas,3);  % AreaStr, ParentIndex, 
+    for cStrInds = 1 : NumBrainAreas
+
+        cAreaStr = AllBrainNames{cStrInds};
+        if isempty(cTypeData{cStrInds})
+            continue;
+        end
+        TF = matches(ChildRegUsedStrs,cAreaStr,'IgnoreCase',true);
+        if any(TF)
+            AllenRegionInds = find(TF);
+            if length(AllenRegionInds) > 1
+                fprintf('Multiple fits exist for area <%s>.\n',cAreaStr);
+                continue;
+            end
+
+            Area2ParentMapDatas(cStrInds,:) = {cAreaStr,Child2ParentMapInds(TF),...
+                cTypeData{cStrInds}};
+            IsAreaUsed(cStrInds, cNumThresType) = true;
+        end
+    end
+    TypeArea2ParentMapDatas{cNumThresType} = Area2ParentMapDatas;
+    
+end
+
+%
+
+%%
+for cNumThresType = 1 : FixUnitNumTypes 
+    cTypeData = TypeArea2ParentMapDatas{cNumThresType};
+    cTypeIsUsed = IsAreaUsed(:,cNumThresType);
+    UsedAreaDatas = cTypeData(cTypeIsUsed,:);
+    
+    % performing plots
+    AllAreaIndex = cat(1,UsedAreaDatas{:,2});
+    [SortedPIIndex, SortIds] = sort(AllAreaIndex);
+
+    UsedAreaStrs = UsedAreaDatas(SortIds,1);
+    UsedAreaScoreAvg = cat(3,UsedAreaDatas{SortIds, 3});
+    UsedAreaScoresData = squeeze(UsedAreaScoreAvg(:,1,:));
+    UsedAreaPerfsData = squeeze(UsedAreaScoreAvg(:,2,:));
+    
+    %
+    % stim peak time and 
+    BoundIndex = find([1;diff(SortedPIIndex)]);
+    UsedBoundIndexAll = [BoundIndex;numel(SortedPIIndex)+1];
+    PIBoundCents = ((UsedBoundIndexAll(1:end-1)+UsedBoundIndexAll(2:end))/2);
+
+    PITypes = unique(SortedPIIndex);
+    NumPIType = length(PITypes);
+    BarColors = linspecer(NumPIType,'qualitative');
+    PIAreaStrs = AllParentAreaStrs(PITypes);
+    %
+    NumUsedAreas = size(UsedAreaScoresData,2);
+
+    hf5 = figure('position',[100 100 780 320]);
+
+    ax1 = subplot(211);
+    hold on;
+
+    ax2 = subplot(212);
+    hold on;
+
+    for cAI = 1 : NumPIType
+        cAI_Inds = find(SortedPIIndex == PITypes(cAI));
+        cA_datas = UsedAreaScoresData(:,cAI_Inds);
+        cA_Color = BarColors(cAI,:);
+        bar(ax1, cAI_Inds, cA_datas(1,:),0.6, 'EdgeColor','none','FaceColor',cA_Color);
+        
+        cA_datas2 = UsedAreaPerfsData(:,cAI_Inds);
+        bar(ax2, cAI_Inds, cA_datas2(1,:),0.6, 'EdgeColor','none','FaceColor',cA_Color);
+        
+    end
+    errorbar(ax1, 1:NumUsedAreas, UsedAreaScoresData(1,:),UsedAreaScoresData(2,:),'ko','linewidth',1.2);
+%     text(ax1, 1:NumUsedAreas+0.2, UsedAreaScoresData(1,:)+0.2,cellstr(num2str(UsedAreaScoresData(4,:)','%d')),...
+%         'HorizontalAlignment','center','FontSize',8,'Color','m');
+    errorbar(ax2, 1:NumUsedAreas, UsedAreaPerfsData(1,:),UsedAreaPerfsData(2,:),'ko','linewidth',1.2);
+    
+    plot(ax1,1:NumUsedAreas, UsedAreaScoresData(3,:),'Color',[.7 .7 .7],'linewidth',1.2,'linestyle','--');
+    plot(ax2,1:NumUsedAreas, UsedAreaPerfsData(3,:),'Color',[.7 .7 .7],'linewidth',1.2,'linestyle','--');
+    
+    set(ax1,'xtick',1:NumUsedAreas,'xticklabel',UsedAreaStrs,'xlim',[0 NumUsedAreas+1]);
+    set(ax2,'xtick',PIBoundCents,'xticklabel',PIAreaStrs,'xlim',[0 NumUsedAreas+1]);
+    
+    ylabel(ax1,{sprintf('FixUnitNum (%d)',UsedFixedUnitNum(cNumThresType));'Blocktype Info'});
+    ylabel(ax2,{sprintf('FixUnitNum (%d)',UsedFixedUnitNum(cNumThresType));'Blocktype Dec. Perfs.'});
+
+    
+    figplotSavePath = fullfile(sumDataSavePath17,sprintf('UnitSize %d Blocktype decoding results',UsedFixedUnitNum(cNumThresType)));
+    saveas(hf5, figplotSavePath);
+    print(hf5, figplotSavePath,'-dpng','-r350');
+    print(hf5, figplotSavePath,'-dpdf','-bestfit');
+    close(hf5);
+end

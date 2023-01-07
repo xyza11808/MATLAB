@@ -4160,7 +4160,7 @@ PairAreaStrs = cell(NumValidPairs, 2);
 PairValidCorrs = cell(NumValidPairs, 2);
 PairAllRawDatas = cell(NumValidPairs, 4);
 PairAllInfos = cell(NumValidPairs, 7);
-PairCorrDiffANDBTBVarInfo = cell(NumValidPairs, 3);
+PairCorrDiffANDBTBVarInfo = cell(NumValidPairs, 4);
 IsPairWithExcludeArea = false(NumValidPairs, 1);
 for cPair = 1 : NumValidPairs
     
@@ -4398,9 +4398,7 @@ for cPair = 1 : NumValidPairs
         TypePairinfosCell = cat(1,TypePairinfos{:}); % baseinfo_basewin, baseinfo_Afwin, AfInfo_basewin, Afinfo_Afwin
         CorrDifDatas = {BaseWin_baseValidCorrDif,AfWin_baseValidCorrDiff,BaseWin_AfValidCorrDif,AfWin_AfValidCorrDiff};
         TypeDespStr = {'BiBw','BiAw','AiBw','AiAw'};
-        
-        PairCorrDiffANDBTBVarInfo(cPair, :) = {TypePairinfosCell, CorrDifDatas, TypeDespStr};
-        
+                
         ax3 = subplot(133);
         hold on
         TypeDataCorrDifANDinfo = cell(4, 1);
@@ -4424,6 +4422,7 @@ for cPair = 1 : NumValidPairs
             [r,p] = corrcoef(UsedMaxCorrDiff,mean(UsedmaxIndsInfo,2));
             TypelegStrs{cType} = sprintf('%s p(%.2e) r(%.3f)',TypeDespStr{cType},p(1,2),r(1,2));
         end
+        PairCorrDiffANDBTBVarInfo(cPair, :) = {TypePairinfosCell, CorrDifDatas, TypeDespStr, TypeDataCorrDifANDinfo};
         AllDatas = cat(1,TypeDataCorrDifANDinfo{:});
         [rr,pp] = corrcoef(AllDatas(:,1),AllDatas(:,2));
         legend(ax3,Typehandles,TypelegStrs,'location','northwest','box','on');
@@ -4832,11 +4831,61 @@ for cS = 1 :  NumUsedSess
     end
 end
 
+
 %%
-% sumDataSavePath17 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
-sumDataSavePath17 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
+NumAreas = length(BrainAreasStr);
+FixUnitNumTypes = size(Areawise_BTPerfs,4);
+AreasumDatas = cell(NumAreas, FixUnitNumTypes, 3);
+AreaAvgDatas = cell(NumAreas, FixUnitNumTypes);
+AreaUnitNumThres = zeros(NumAreas, FixUnitNumTypes);
+for cA = 1 : NumAreas
+    cAData = squeeze(Areawise_BTPerfs(:,cA,:,:));
+    cAData_1 = cat(1,cAData{:,1,1});
+    if isempty(cAData_1)
+        continue;
+    end
+    
+    for cU = 1 : FixUnitNumTypes
+        cFU_data = cAData(:,:,cU);
+        cFU_ScorePerfData = cat(1,cFU_data{:,1});
+        if isempty(cFU_ScorePerfData)
+            continue;
+        end
+        cFU_ThresData = cat(1,cFU_data{:,2});
+        cFU_AreaUnitNums = cat(1,cFU_data{:,3});
+        cFU_UnitNumsThres = cat(1,cFU_data{:,4});
+        AreaUnitNumThres(cA,cU) = cFU_UnitNumsThres(1);
+        AreasumDatas(cA,cU,:) = {cFU_ScorePerfData, cFU_ThresData, cFU_AreaUnitNums};
+        NumSess = size(cFU_ScorePerfData,1);
+        if NumSess == 1
+            AreaAvgScorePerfs = cFU_ScorePerfData;
+            AreaSEMScorePerfs = [0 0];
+            AreaAvgThres = cFU_ThresData;
+        elseif NumSess < 5
+            AreaAvgScorePerfs = mean(cFU_ScorePerfData);
+            AreaSEMScorePerfs = [0 0];
+            AreaAvgThres = mean(cFU_ThresData);
+        else
+            AreaAvgScorePerfs = mean(cFU_ScorePerfData);
+            AreaSEMScorePerfs = std(cFU_ScorePerfData)/sqrt(NumSess);
+            AreaAvgThres = mean(cFU_ThresData);
+        end
+        AreaSessNum = [NumSess NumSess];
+        AreaAvgDatas(cA,cU) = {[AreaAvgScorePerfs;AreaSEMScorePerfs;AreaAvgThres;AreaSessNum]};
+    end
+    
+end
+
+%%
+sumDataSavePath17 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
+% sumDataSavePath17 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
 savefile = fullfile(sumDataSavePath17,'FixedUBTscoreSum.mat');
-save(savefile,'Areawise_BTPerfs','BrainAreasStr','-v7.3');
+save(savefile,'Areawise_BTPerfs','BrainAreasStr', 'AreasumDatas', 'AreaAvgDatas', 'AreaUnitNumThres','-v7.3');
+
+
+%%
+
+
 
 
 %%
