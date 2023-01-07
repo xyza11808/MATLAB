@@ -2,10 +2,11 @@
 clearvars behavResults TypeRespCalResults TypeAreaPairInfo BlockVarDatas TrialVarDatas
 
 load(fullfile(ksfolder,'NewClassHandle2.mat'), 'behavResults');
-load(fullfile(ksfolder,'jeccAnA','CCACalDatas.mat'));
-load(fullfile(ksfolder,'jeccAnA','CCA_TypeSubCal.mat'), 'TypeRespCalResults','TypeAreaPairInfo');
 
-
+load(fullfile(ksfolder,'jeccAnA','CCA_TypeSubCal.mat')); %, 'TypeRespCalResults','TypeAreaPairInfo'
+if ~exist('BlockVarDatas','var') || ~exist('TrialVarDatas','var')
+    load(fullfile(ksfolder,'jeccAnA','CCACalDatas.mat'));
+end
 %%
 
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
@@ -48,7 +49,7 @@ AllPairInfos = cell(NumPairs, 2);
 %%
 CalDataTypeStrs = {'Base_BVar','Af_BVar','Base_TrVar','Af_TrVar'};
 
-for cPairInds = 1:1 %NumPairs
+for cPairInds = 1:NumPairs
     cPairUsedAreaInds = PairAreaInds(cPairInds,:);
     cPair_Area1_unitInds = ExistField_ClusIDs{cPairUsedAreaInds(1),2};
     cPair_Area2_unitInds = ExistField_ClusIDs{cPairUsedAreaInds(2),2};

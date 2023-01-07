@@ -1,6 +1,14 @@
 
 clearvars TypeRespCalResults TypeRespCalAvgs TypeAreaPairInfo OutDataStrc ExistField_ClusIDs
 
+Savepath = fullfile(ksfolder,'jeccAnA');
+if ~isfolder(Savepath)
+    mkdir(Savepath);
+end
+dataSavePath = fullfile(Savepath,'CCA_TypeSubCal.mat');
+if exist(dataSavePath,'file')
+    return;
+end
 % ksfolder = strrep(cSessFolder,'F:\','E:\NPCCGs\');
 % ksfolder = pwd;
 load(fullfile(ksfolder,'NewClassHandle2.mat'),'behavResults');
@@ -8,7 +16,7 @@ load(fullfile(ksfolder,'NewClassHandle2.mat'),'behavResults');
 % clearvars NewNPClusHandle
 % ProbNPSess.SpikeTimes = double(ProbNPSess.SpikeTimeSample)/30000;
 %% find target cluster inds and IDs
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
@@ -41,9 +49,9 @@ end
 % ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 % 
 % OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
-Savepath = fullfile(ksfolder,'jeccAnA');
-dataSavePath = fullfile(Savepath,'CCA_TypeSubCal.mat');
-load(dataSavePath,'OutDataStrc');
+% Savepath = fullfile(ksfolder,'jeccAnA');
+% dataSavePath = fullfile(Savepath,'CCA_TypeSubCal.mat');
+load(fullfile(ksfolder,'BlockTypeScores','RepeatBTScores.mat'),'OutDataStrc');
 NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 % SMBinDataMtxRaw = SMBinDataMtx;
 % clearvars ProbNPSess
@@ -86,6 +94,7 @@ BaseValidExpData = FreqAvgSubDatas(:,:,(OnsetBin+BeforeWin1(1)):(OnsetBin+Before
 AfterWinData = FreqAvgSubDatas(:,:,(OnsetBin+AfterWin1(1)):(OnsetBin+AfterWin1(2)-1));
 AfterValidExpData = FreqAvgSubDatas(:,:,(OnsetBin+AfterWin1(1)-ExpandedRange):(OnsetBin+AfterWin1(2)-1));
 
+BlockVarDatas = {BeforeWinData,BaseValidExpData,AfterWinData,AfterValidExpData};
 %% #############################################################
 % reperforming trial type avg subtraction using block wise manner
 
@@ -122,6 +131,8 @@ BaseValidExpData2 = FreqAvgSubDatas2(:,:,(OnsetBin+BeforeWin1(1)):(OnsetBin+Befo
 
 AfterWinData2 = FreqAvgSubDatas2(:,:,(OnsetBin+AfterWin1(1)):(OnsetBin+AfterWin1(2)-1));
 AfterValidExpData2 = FreqAvgSubDatas2(:,:,(OnsetBin+AfterWin1(1)-ExpandedRange):(OnsetBin+AfterWin1(2)-1));
+
+TrialVarDatas = {BeforeWinData2,BaseValidExpData2,AfterWinData2,AfterValidExpData2};
 
 AllTimeWin = {BeforeWin1, AfterWin1, ExpandedRange, OnsetBin};
 %% loop to calculate for each area pair
@@ -225,14 +236,10 @@ for cAr = 1 : Numfieldnames
     end
 end
 %%
-% Savepath = fullfile(ksfolder,'jeccAnA');
-% if ~isfolder(Savepath)
-%     mkdir(Savepath);
-% end
-% dataSavePath = fullfile(Savepath,'CCA_TypeSubCal.mat');
+
 
 save(dataSavePath,'TypeRespCalResults','TypeRespCalAvgs','OutDataStrc','TypeAreaPairInfo',...
-    'ExistField_ClusIDs','NewAdd_ExistAreaNames','AllTimeWin','-v7.3');
+    'ExistField_ClusIDs','NewAdd_ExistAreaNames','AllTimeWin','TrialVarDatas','BlockVarDatas','AreaUnitNumbers','-v7.3');
 %%
 % CalTimeBinNums = [min(OutDataStrc.BinCenters),max(OutDataStrc.BinCenters)];
 % StimOnBinTime = 0; %OutDataStrc.BinCenters(OutDataStrc.TriggerStartBin);

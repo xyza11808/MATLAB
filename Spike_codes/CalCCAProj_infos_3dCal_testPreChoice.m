@@ -7,10 +7,10 @@ if exist(savefilename,'file')
 end
 
 load(fullfile(ksfolder,'NewClassHandle2.mat'), 'behavResults');
-load(fullfile(ksfolder,'jeccAnA','CCACalDatas.mat'));
-load(fullfile(ksfolder,'jeccAnA','CCA_TypeSubCal.mat'), 'TypeRespCalResults','TypeAreaPairInfo');
-
-
+load(fullfile(ksfolder,'jeccAnA','CCA_TypeSubCal.mat')); %, 'TypeRespCalResults','TypeAreaPairInfo'
+if ~exist('BlockVarDatas','var') || ~exist('TrialVarDatas','var')
+    load(fullfile(ksfolder,'jeccAnA','CCACalDatas.mat'));
+end
 %%
 
 BlockSectionInfo = Bev2blockinfoFun(behavResults);

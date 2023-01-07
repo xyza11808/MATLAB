@@ -1245,8 +1245,8 @@ print(hf4_4, ParentAreaSaveName4, '-dpdf','-bestfit');
 %% plot 5
 cclr
 % load parent str datas
-% ParantAreaListFile = fullfile('K:\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
-ParantAreaListFile = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+ParantAreaListFile = fullfile('K:\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+% ParantAreaListFile = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
 
 ParentRegionStrCell = readcell(ParantAreaListFile,'Range','A:A',...
     'Sheet','Sheet1');
@@ -1266,8 +1266,8 @@ Child2ParentInds(AllAreaStrsIndex) = 1;
 Child2ParentMapInds = cumsum(Child2ParentInds);
 
 %%
-sumDataSavePath17 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
-% sumDataSavePath17 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
+% sumDataSavePath17 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
+sumDataSavePath17 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
 savefile = fullfile(sumDataSavePath17,'FixedUBTscoreSum.mat');
 load(savefile,'BrainAreasStr', 'AreasumDatas', 'AreaAvgDatas', 'AreaUnitNumThres');
 
@@ -1363,8 +1363,8 @@ for cNumThresType = 1 : FixUnitNumTypes
         
     end
     errorbar(ax1, 1:NumUsedAreas, UsedAreaScoresData(1,:),UsedAreaScoresData(2,:),'ko','linewidth',1.2);
-%     text(ax1, 1:NumUsedAreas+0.2, UsedAreaScoresData(1,:)+0.2,cellstr(num2str(UsedAreaScoresData(4,:)','%d')),...
-%         'HorizontalAlignment','center','FontSize',8,'Color','m');
+    text(ax1, 1:NumUsedAreas+0.2, UsedAreaScoresData(1,:)+0.2,cellstr(num2str(UsedAreaScoresData(4,:)','%d')),...
+        'HorizontalAlignment','center','FontSize',8,'Color','m');
     errorbar(ax2, 1:NumUsedAreas, UsedAreaPerfsData(1,:),UsedAreaPerfsData(2,:),'ko','linewidth',1.2);
     
     plot(ax1,1:NumUsedAreas, UsedAreaScoresData(3,:),'Color',[.7 .7 .7],'linewidth',1.2,'linestyle','--');
@@ -1377,7 +1377,8 @@ for cNumThresType = 1 : FixUnitNumTypes
     ylabel(ax2,{sprintf('FixUnitNum (%d)',UsedFixedUnitNum(cNumThresType));'Blocktype Dec. Perfs.'});
 
     
-    figplotSavePath = fullfile(sumDataSavePath17,sprintf('UnitSize %d Blocktype decoding results',UsedFixedUnitNum(cNumThresType)));
+%     figplotSavePath = fullfile(sumDataSavePath17,sprintf('UnitSize %d Blocktype decoding results',UsedFixedUnitNum(cNumThresType)));
+    figplotSavePath = fullfile(sumDataSavePath17,sprintf('UnitSize %d Blocktype decoding results wSess',UsedFixedUnitNum(cNumThresType)));
     saveas(hf5, figplotSavePath);
     print(hf5, figplotSavePath,'-dpng','-r350');
     print(hf5, figplotSavePath,'-dpdf','-bestfit');

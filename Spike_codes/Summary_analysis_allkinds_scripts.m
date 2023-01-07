@@ -4770,7 +4770,7 @@ BrainAreasStr = BrainAreasStrCC(~EmptyInds); %;{'Others'}
 % FullBrainStr = [FullBrainStrCC(~EmptyInds)]; %;{'Others'}
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-        'Sheet',1);
+        'Sheet',3); 
 SessionFoldersRaw = SessionFoldersC(2:end);
 EmptyInds2 = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
 SessionFolders = SessionFoldersRaw(~EmptyInds2);
@@ -4779,7 +4779,7 @@ NumUsedSess = length(SessionFolders);
 NumAllTargetAreas = length(BrainAreasStr);
 
 %%
-Areawise_BTPerfs = cell(NumUsedSess,NumAllTargetAreas, 4, 3);
+Areawise_BTPerfs = cell(NumUsedSess,NumAllTargetAreas, 4, 4);
 
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
@@ -4801,11 +4801,18 @@ for cS = 1 :  NumUsedSess
         UnitSltFile = (fullfile(ksfolder,'BlockTypeScores','RepeatBTScores3.mat'));
         UnitSltDataStrc3 = load(UnitSltFile,'AreaFixUnitScores','UsedArea_strs','UsedUnitNumsThres','UsedUnitNums'); 
         
+        UnitSltFile = (fullfile(ksfolder,'BlockTypeScores','RepeatBTScores4.mat'));
+        UnitSltDataStrc4 = load(UnitSltFile,'AreaFixUnitScores','UsedArea_strs','UsedUnitNumsThres','UsedUnitNums'); 
     catch ME
         fprintf('Error exists in session %d.\n',cS);
     end
-    CaledDatas = {UnitSltDataStrc,UnitSltDataStrc2,UnitSltDataStrc3};
-    for cData = 1 : 3
+    
+    CaledDatasRaw = {UnitSltDataStrc,UnitSltDataStrc2,UnitSltDataStrc3,UnitSltDataStrc4};
+    AllCaledNumThres = cellfun(@(x) x.UsedUnitNumsThres,CaledDatasRaw);
+    [~, sortInds] = sort(AllCaledNumThres);
+    CaledDatas = CaledDatasRaw(sortInds);
+    
+    for cData = 1 : length(CaledDatas)
         Numfieldnames = length(CaledDatas{cData}.UsedArea_strs);
         if Numfieldnames < 1
             warning('There is no target units within following folder:\n %s \n ##################\n',cSessPath);
@@ -4877,8 +4884,8 @@ for cA = 1 : NumAreas
 end
 
 %%
-sumDataSavePath17 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
-% sumDataSavePath17 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
+% sumDataSavePath17 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
+sumDataSavePath17 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\FixUnitBTinfoSummary';
 savefile = fullfile(sumDataSavePath17,'FixedUBTscoreSum.mat');
 save(savefile,'Areawise_BTPerfs','BrainAreasStr', 'AreasumDatas', 'AreaAvgDatas', 'AreaUnitNumThres','-v7.3');
 

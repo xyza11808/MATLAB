@@ -1,22 +1,25 @@
 clearvars SessAreaIndexStrc ProbNPSess AreaDecodeDataCell AreaProcessDatas BlockpsyInfo ExistField_ClusIDs NewAdd_ExistAreaNames
 
 load(fullfile(ksfolder,'NewClassHandle2.mat'),'behavResults');
+% load(fullfile(ksfolder,'NewClassHandle2.mat')); %,'behavResults'
 % ProbNPSess = NewNPClusHandle;
 % clearvars NewNPClusHandle
 % ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 % OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
 
 DataSavefolder = fullfile(ksfolder,'BlockTypeScores');
-% if ~isfolder(DataSavefolder)
-%     mkdir(DataSavefolder);
-% end
+if ~isfolder(DataSavefolder)
+    mkdir(DataSavefolder);
+end
 DataSavefileO = fullfile(DataSavefolder,'RepeatBTScores.mat');
 load(DataSavefileO,'OutDataStrc');
 NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
+
+
 %% find target cluster inds and IDs
 % ksfolder = pwd;
 
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
@@ -80,7 +83,7 @@ FreqTypeNum = length(FreqTypes);
 AllNameStrs = NewAdd_ExistAreaNames;
 AllAreaUnitInds = ExistField_ClusIDs;
 AllAreaUnitNums = cellfun(@numel,AllAreaUnitInds(:,2));
-UsedUnitNumsThres = 30;
+UsedUnitNumsThres = 30; % 10, 15, 25, 30
 IncludeAreaInds = AllAreaUnitNums >= UsedUnitNumsThres;
 
 UsedArea_strs = AllNameStrs(IncludeAreaInds);

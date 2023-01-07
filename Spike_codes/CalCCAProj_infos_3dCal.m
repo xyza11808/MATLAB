@@ -7,9 +7,10 @@ savefilename = fullfile(ksfolder,'jeccAnA','ProjDataInfo_baseSub.mat');
 % end
 
 load(fullfile(ksfolder,'NewClassHandle2.mat'), 'behavResults');
-load(fullfile(ksfolder,'jeccAnA','CCACalDatas.mat'));
-load(fullfile(ksfolder,'jeccAnA','CCA_TypeSubCal.mat'), 'TypeRespCalResults','TypeAreaPairInfo');
-
+load(fullfile(ksfolder,'jeccAnA','CCA_TypeSubCal.mat')); %, 'TypeRespCalResults','TypeAreaPairInfo'
+if ~exist('BlockVarDatas','var') || ~exist('TrialVarDatas','var')
+    load(fullfile(ksfolder,'jeccAnA','CCACalDatas.mat'));
+end
 
 %%
 
@@ -153,8 +154,6 @@ for cPairInds = 1:NumPairs
         TypeDataCalInfo_Choice_A1{cDataType} = mean(RepeatInfos_choice_A1, 4);
         TypeDataCalInfo_BT_A2{cDataType} = mean(RepeatInfos_BT_A2, 4); % train tegst and threshold
         TypeDataCalInfo_Choice_A2{cDataType} = mean(RepeatInfos_choice_A2, 4);
-        
-        
     end
     
     % cPairTypeInfos = [TypeDataCalInfo_BT,TypeDataCalInfo_Choice];
