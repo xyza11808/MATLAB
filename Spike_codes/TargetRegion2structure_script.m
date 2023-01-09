@@ -67,8 +67,8 @@ NumprocessedNPSess = length(SessionFolders);
 
 
 %%
-TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
-% TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+% TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
 
 BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
 TargetRegionNamesAll = fieldnames(BrainRegionStrc.BrainRegions);
@@ -97,15 +97,15 @@ for cP = 1 : NumprocessedNPSess
 %          continue;
      end
 %      ProbNPSess.ChannelAreaStrs = ChnArea_Strings(2:end,:);
-     ProbNPSess.ChannelAreaStrs = AlignedAreaStrings;
+     NewNPClusHandle.ChannelAreaStrs = AlignedAreaStrings;
 %     end
     %
-    UnitMaxampChnInds = ProbNPSess.ChannelUseds_id; % already had +1 for matlab indexing
+    UnitMaxampChnInds = NewNPClusHandle.ChannelUseds_id; % already had +1 for matlab indexing
 %     UnitNumsAll(cP) = length(UnitMaxampChnInds);
     
 %     UnitChnAreasAll = ProbNPSess.ChannelAreaStrs(UnitMaxampChnInds,:);
 %     UnitChnAreaIndexAll = cell2mat(UnitChnAreasAll(:,2));
-    UnitChnAreaIndexAll = ProbNPSess.ChannelAreaStrs{1}(UnitMaxampChnInds);
+    UnitChnAreaIndexAll = NewNPClusHandle.ChannelAreaStrs{1}(UnitMaxampChnInds);
     
     totalUnitNum = length(UnitMaxampChnInds);
     SessAreaIndexStrc = struct();
@@ -115,7 +115,7 @@ for cP = 1 : NumprocessedNPSess
         [Lia, Lib] = ismember(UnitChnAreaIndexAll,BrainRegionStrc.BrainRegions.(TargetRegionNamesAll{cNameNum}));
         if sum(Lia)
             SessAreaIndexStrc.(TargetRegionNamesAll{cNameNum}) = struct('MatchedInds',BrainRegionStrc.BrainRegions.(TargetRegionNamesAll{cNameNum}),...
-                'MatchedUnitInds',find(Lia),'MatchUnitRealIndex',ProbNPSess.UsedClus_IDs(Lia),'MatchUnitRealChn',...
+                'MatchedUnitInds',find(Lia),'MatchUnitRealIndex',NewNPClusHandle.UsedClus_IDs(Lia),'MatchUnitRealChn',...
                 UnitMaxampChnInds(Lia),'MatchedBrainAreas',unique(UnitChnAreaIndexAll(Lia)));
             IstargetfieldExist(cNameNum) = true;
             IsUnitAreTarget(Lia)=true;
@@ -127,7 +127,7 @@ for cP = 1 : NumprocessedNPSess
     OtherRegionsUnit = ~IsUnitAreTarget;
     if sum(OtherRegionsUnit)
         SessAreaIndexStrc.Others = struct('MatchedInds',unique(UnitChnAreaIndexAll(~IsUnitAreTarget)),...
-            'MatchedUnitInds',find(~IsUnitAreTarget),'MatchUnitRealIndex',ProbNPSess.UsedClus_IDs(~IsUnitAreTarget),...
+            'MatchedUnitInds',find(~IsUnitAreTarget),'MatchUnitRealIndex',NewNPClusHandle.UsedClus_IDs(~IsUnitAreTarget),...
             'MatchUnitRealChn',UnitMaxampChnInds(~IsUnitAreTarget),'MatchedBrainAreas',unique(UnitChnAreaIndexAll(~IsUnitAreTarget)));
         IstargetfieldExist(end) = true;
     end

@@ -100,7 +100,8 @@ parfor cR = 1 : RepeatNum
         ShufCorrs{cShuf} = diag(SampleRShuf);
     end
     
-    RepeatCorrSum(cR,:) = {A1_base, A2_base, R_base, SampleR, cat(2,FrameCorrs{:}), cat(2,ShufCorrs{:})};
+    RepeatCorrSum(cR,:) = {single(A1_base), single(A2_base), single(R_base), single(SampleR), ...
+        single(cat(2,FrameCorrs{:})), single(cat(2,ShufCorrs{:}))};
     
 end
 

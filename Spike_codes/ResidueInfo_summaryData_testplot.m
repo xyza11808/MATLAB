@@ -21,7 +21,6 @@ if ~isfolder(cfigSaveFolder)
     mkdir(cfigSaveFolder)
 end
 
-
 %%
 AllPairInfoDatas = cell(NumUsedPairs,4,2,2);
 %%
@@ -29,7 +28,7 @@ AddInds = [0, 1];
 DataAddedInds = [0, 2];
 Typeprefix = {'Base','Af'};
     
-for cP = 1 %: NumUsedPairs
+for cP = 1 : NumUsedPairs
     hf = figure('position',[100 100 600 560]);
     
     BTBVar_Infos = cell(4,2);% base kernal and after response kernal
@@ -228,6 +227,102 @@ title('BTinfo Area2');
 % InfoWeightScale = 1.5;
 highlight(AFhg_sig2,'Edges',find(GraphWeights2 > InfoWeightScale),'edgeColor','r');
 highlight(AFhg_sig2,'Edges',find(GraphWeights2 <= InfoWeightScale),'linestyle','--');
+
+
+%%
+AllPairInfoDatapath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\AreaCrossCorrPlots\PairedAreaCorrPlots';
+% AllPairInfoDatapath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\AreaCrossCorrPlots\PairedAreaCorrPlots';
+AllPairInfoDatafile = fullfile(AllPairInfoDatapath,'ResidueCCAAndInfoSummaryDatas.mat');
+PairInfoDataStrc = load(AllPairInfoDatafile,'PairAllInfos', 'PairAllRawDatas', ...
+    'PairAreaStrs','IsPairWithExcludeArea','PairCorrDiffANDBTBVarInfo');
+UsedPairInfos = PairInfoDataStrc.PairAllInfos(~PairInfoDataStrc.IsPairWithExcludeArea,[2,3,5,6]);
+UsedPairBoundShifts = PairInfoDataStrc.PairAllInfos(~PairInfoDataStrc.IsPairWithExcludeArea,7);
+% PairAllInfos(cPair, :) = {AllColorplotDatas,AllBaseInfo_avgData_basewin,AllBaseInfo_avgData_Afwin,...
+%             AllColorplotDatas_Af,AllAfInfo_avgData_basewin,AllAfInfo_avgData_Afwin};
+% DataDespStr = {'BTBVar A1','BTBVar A2','BTTrVar A1','BTTrVar A2',...
+%             'ChBVar A1','ChBVar A2','ChTrVar A1','ChTrVar A2'};
+UsedPairCorrs = PairInfoDataStrc.PairAllRawDatas(~PairInfoDataStrc.IsPairWithExcludeArea,:);
+UsedPairStrs = PairInfoDataStrc.PairAreaStrs(~PairInfoDataStrc.IsPairWithExcludeArea,:);
+
+NumUsedPairs = size(UsedPairInfos,1);
+%
+cfigSaveFolder = fullfile(AllPairInfoDatapath,'Info_Avgtrace_plots');
+%% for PairInfoAboveThreshold plots
+TypeDespStr = {'BiBw','BiAw','AiBw','AiAw'};
+AvgPairCorrANDinfos = cat(2,PairCorrDiffANDBTBVarInfo{:,4});
+AvgPairStrs = PairAreaStrs(~IsPairWithExcludeArea,:);
+% baseinfo_basewin, baseinfo_Afwin
+PairInfoAbove1Fracs = cellfun(@(x) mean(x(:,2) >= 1), AvgPairCorrANDinfos);
+PairInfoAbove1InfoAvg = cellfun(@(x) mean(x(x(:,2) >= 1,2)), AvgPairCorrANDinfos,'un',0);
+AllnodeStr = unique(AvgPairStrs(:));
+BTFrach = figure('position',[100 100 800 640]);
+AllGraphplotHandle = cell(4,1);
+AllGraphs = cell(4,1);
+for cA = 1 : 4
+        ax1 = subplot(2,2,cA);
+        cData_pairFracs = PairInfoAbove1Fracs(cA,:);
+        UsedDataFracInds = cData_pairFracs > 0.2; %1e-6
+        cUsedDataFracs = cData_pairFracs(UsedDataFracInds);
+        cUsedDataPairStrs = AvgPairStrs(UsedDataFracInds,:);
+        
+        AllPair_MaxBTinfo_BTBVar_BWA1 = cUsedDataFracs;
+        %     largeWeightsInds = AllPair_MaxBTinfo_BTBVar_BWA1>InfoWeightScale;
+        largeWeightsInds = AllPair_MaxBTinfo_BTBVar_BWA1>0; % use all connections
+        AFG1_sig = graph(cUsedDataPairStrs(largeWeightsInds,1),cUsedDataPairStrs(largeWeightsInds,2),...
+        AllPair_MaxBTinfo_BTBVar_BWA1(largeWeightsInds));
+        IsNodeExists = ismember(AllnodeStr,table2cell(AFG1_sig.Nodes));
+        AFG1_sig = addnode(AFG1_sig,AllnodeStr(~IsNodeExists));
+        AFG1_sig = rmnode(AFG1_sig,{'cc','aco'});
+        graphNodeStrs = AFG1_sig.Edges.EndNodes;
+        
+        AFhg_sig = plot(AFG1_sig,'layout','circle');
+        GraphWeights = double(AFG1_sig.Edges.Weight); % this weights is not the same sequence as the raw input weights
+        AFhg_sig.LineWidth = (GraphWeights - min(GraphWeights))*5+0.4;
+
+        deg_ranks = centrality(AFG1_sig,'degree','Importance',...
+            GraphWeights); % pagerank,degree,eigenvector  {,'MaxIterations',1000}
+        
+        rankRatio1 = 10/max(deg_ranks);
+        AFhg_sig.MarkerSize = deg_ranks*rankRatio1+5;
+        title(TypeDespStr{cA});
+        set(ax1,'box','off','xcolor','w','ycolor','w');
+        AllGraphplotHandle{cA} = AFhg_sig;
+        AllGraphs{cA} = AFG1_sig;
+end
+%%
+AfNodeLabels = AllGraphplotHandle{1}.NodeLabel;
+BaseNodeLabels = AllGraphplotHandle{2}.NodeLabel;
+
+[~, Inds] = ismember(BaseNodeLabels, AfNodeLabels);
+
+Af_xData = AllGraphplotHandle{1}.XData;
+Af_yData = AllGraphplotHandle{1}.YData;
+
+AllGraphplotHandle{2}.XData = Af_xData(Inds);
+AllGraphplotHandle{2}.YData = Af_yData(Inds);
+
+%%
+AfNodeLabels = AllGraphplotHandle{3}.NodeLabel;
+BaseNodeLabels = AllGraphplotHandle{4}.NodeLabel;
+
+[~, Inds] = ismember(BaseNodeLabels, AfNodeLabels);
+
+Af_xData = AllGraphplotHandle{3}.XData;
+Af_yData = AllGraphplotHandle{3}.YData;
+
+AllGraphplotHandle{4}.XData = Af_xData(Inds);
+AllGraphplotHandle{4}.YData = Af_yData(Inds);
+
+
+
+%%
+cFigSaveName = fullfile(cfigSaveFolder,'SigBTInfo fraction graph plots');
+    
+saveas(BTFrach, cFigSaveName);
+print(BTFrach, cFigSaveName,'-dpng','-r350');
+print(BTFrach, cFigSaveName,'-dpdf','-bestfit');
+close(BTFrach);
+
 
 
 
