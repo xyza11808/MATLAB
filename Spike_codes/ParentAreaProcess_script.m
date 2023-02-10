@@ -1,6 +1,6 @@
 cclr
-ParantAreaListFile = fullfile('K:\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
-% ParantAreaListFile = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+% ParantAreaListFile = fullfile('K:\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+ParantAreaListFile = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
 
 ParentRegionStrCell = readcell(ParantAreaListFile,'Range','A:A',...
     'Sheet','Sheet1');
@@ -22,8 +22,8 @@ Child2ParentMapInds = cumsum(Child2ParentInds);
 % used area strs will be: Child2ParentMapInds ChildRegUsedStrs
 % AllParentAreaStrs
 %%
-SelectiveAreaDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim\SigUnit_EVsummaryData.mat';
-% SelectiveAreaDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim\SigUnit_EVsummaryData.mat';
+% SelectiveAreaDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\UnitEVscatterPlot\NoStim\SigUnit_EVsummaryData.mat';
+SelectiveAreaDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\UnitEVscatterPlot\NoStim\SigUnit_EVsummaryData.mat';
 AreaSelectEVStrc = load(SelectiveAreaDatafile,'AreaSigUnit_TypeRespEV','BrainAreasStr','Area_RespMtxAll');
 
 %%
@@ -86,8 +86,8 @@ AllParentIndex = cat(1,FinalAreaDatas{:,2});
 SortPIAreaDatas = FinalAreaDatas(ParentSortInds,:);
 
 %%
-FigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\ParentAreaSummary';
-% FigSavePath = 'E:\sycDatas\\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\ParentAreaSummary';
+% FigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\PASummary';
+FigSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\PASummary';
 saveDataname = fullfile(FigSavePath,'ParentAreaSumData_NoStim.mat');
 save(saveDataname,'UsedArea2ParentMap','IsAreaUsed','AreaSelectEVStrc','Child2ParentMapInds',...
     'ChildRegUsedStrs','AllParentAreaStrs','FinalAreaDatas','-v7.3');
@@ -175,8 +175,8 @@ end
 %% parent anova peaktime and peak value calculation
 cclr
 % load anova peak analysis data
-AnovaDataSumDataPath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2';
-% AnovaDataSumDataPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2';
+% AnovaDataSumDataPath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\AnovaSum_wiDJ';
+AnovaDataSumDataPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\AnovaSum_wiDJ';
 saveFilePath = fullfile(AnovaDataSumDataPath,'AnovaPeak_sumPlot','AnovaPeakSumData.mat');
 AnovaData = load(saveFilePath,'AreaPeakFactor_peakDatasAll','AreaBT_AvgDatasAll','BrainAreasStr');
 % AreaBT_AvgDatasAll: the first column is Non-reverse trials, the second
@@ -185,8 +185,8 @@ AnovaData = load(saveFilePath,'AreaPeakFactor_peakDatasAll','AreaBT_AvgDatasAll'
 %                               stimulus
 
 % load parent str datas
-ParantAreaListFile = fullfile('K:\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
-% ParantAreaListFile = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+% ParantAreaListFile = fullfile('K:\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+ParantAreaListFile = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
 
 ParentRegionStrCell = readcell(ParantAreaListFile,'Range','A:A',...
     'Sheet','Sheet1');
@@ -235,8 +235,8 @@ for cStrInds = 1 : NumBrainAreas
     end
 end
 %%
-FigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\ParentAreaSummary';
-% FigSavePath = 'E:\sycDatas\\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\ParentAreaSummary';
+% FigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\PASummary';
+FigSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\PASummary';
 saveDataname = fullfile(FigSavePath,'ParentAreaAnovaPeakData.mat');
 save(saveDataname,'Area2ParentMapDatas','IsAreaUsed','Child2ParentMapInds',...
     'ChildRegUsedStrs','AllParentAreaStrs','AllBrainNames','-v7.3');
@@ -488,14 +488,14 @@ close(hf4);
 
 cclr
 % load anova peak analysis data
-EVarDataSumDataPath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim_frac';
-% AnovaDataSumDataPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim_frac';
+% EVarDataSumDataPath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\UnitEVscatterPlot\NoStim_frac';
+EVarDataSumDataPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\UnitEVscatterPlot\NoStim_frac';
 saveFilePath = fullfile(EVarDataSumDataPath,'AllFracData_EVarcompareDatas.mat');
 EVarData = load(saveFilePath,'AreaFracDatas','BrainAreasStr','AllLabelStr');
 
 % load parent str datas
-ParantAreaListFile = fullfile('K:\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
-% ParantAreaListFile = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+% ParantAreaListFile = fullfile('K:\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+ParantAreaListFile = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
 
 ParentRegionStrCell = readcell(ParantAreaListFile,'Range','A:A',...
     'Sheet','Sheet1');
@@ -545,9 +545,12 @@ end
 
 UsedAreaDatas = Area2ParentMapDatas(IsAreaUsed,:);
 %%
-FigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\ParentAreaSummary\ExplainedVarsPlot';
-% FigSavePath = 'E:\sycDatas\\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\ParentAreaSummary\ExplainedVarsPlot';
+% FigSavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\PASummary\EVarsPlot';
+FigSavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\PASummary\EVarsPlot';
 
+if ~isfolder(FigSavePath)
+    mkdir(FigSavePath);
+end
 
 %%
 
@@ -676,8 +679,8 @@ save(summaryDatasavefile,'ParentAreaFracDatas','UsedAreaDatas','AllParentAreaStr
 %%
 cclr
 
-savePathfolder2 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim_frac\WithinThres';
-% savePathfolder2 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim_frac\WithinThres';
+% savePathfolder2 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\UnitEVscatterPlot\NoStim_frac\WithinThres';
+savePathfolder2 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\UnitEVscatterPlot\NoStim_frac\WithinThres';
 
 % savePathfolder2 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim\WithinThres';
 % % savePathfolder2 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim\WithinThres';
@@ -686,8 +689,8 @@ DataSavefile2 = fullfile(savePathfolder2,'WithinThresDataEVarFrac.mat');
 ThresAvgDataStrc = load(DataSavefile2,'ThresedAvgDatas','BrainAreasStr');
 
 % load parent str datas
-ParantAreaListFile = fullfile('K:\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
-% ParantAreaListFile = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+% ParantAreaListFile = fullfile('K:\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
+ParantAreaListFile = fullfile('E:\sycDatas\Documents\me\projects\NP_reversaltask\Parent_areas_list.xlsx');
 
 ParentRegionStrCell = readcell(ParantAreaListFile,'Range','A:A',...
     'Sheet','Sheet1');
@@ -908,8 +911,11 @@ cclr
 % DataSavefile4 = fullfile(savePathfolder4,'plsChoiceInfo_CompData.mat');
 % ThresAvgDataStrc = load(DataSavefile4,'AreaDataInfos','BrainAreasStr','AllDataDespStr');
 
-% savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
-savePathfolder4 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
+% % savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
+% savePathfolder4 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
+
+% savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSumDJ\plsChoiceScoreSum';
+savePathfolder4 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSumDJ\plsChoiceScoreSum';
 
 DataSavefile4 = fullfile(savePathfolder4,'plsChoiceInfo_CompData_zsed.mat');
 ThresAvgDataStrc = load(DataSavefile4,'AreaDataInfos','BrainAreasStr','AllDataDespStr');
@@ -1031,8 +1037,8 @@ ylabel(ax2,sprintf('%s Info Ratio',ThresAvgDataStrc.AllDataDespStr{1}));
 % % savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
 % savePathfolder4 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
 
-% savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
-savePathfolder4 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
+% % savePathfolder4 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
+% savePathfolder4 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
 
 ParentAreaSaveName = fullfile(savePathfolder4, 'Parent area zsedData ChoiceAfinfo ratio summary plot');
 saveas(hf4, ParentAreaSaveName);

@@ -1,10 +1,10 @@
 cclr
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
-        'Sheet',1);
+        'Sheet',3);
 BrainAreasStrCC = BrainAreasStrC(2:end);
 % BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
@@ -12,7 +12,7 @@ BrainAreasStr = [BrainAreasStrCC(~EmptyInds)]; %;{'Others'}
 
 %%
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-    'Sheet',1);
+    'Sheet',3);
 SessionFoldersRaw = SessionFoldersC(2:end);
 EmptyInds2 = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
 SessionFolders = SessionFoldersRaw(~EmptyInds2);
@@ -24,11 +24,11 @@ Areawise_UnitAUC = cell(NumUsedSess,NumAllTargetAreas,2);
 Areawise_PopuPredCC = cell(NumUsedSess,NumAllTargetAreas,2);
 Areawise_PopuSVMCC = cell(NumUsedSess,NumAllTargetAreas,2);
 Areawise_popuSVMpredInfo = cell(NumUsedSess,NumAllTargetAreas,3);
-Areawise_BehavChoiceDiff = cell(NumUsedSess,NumAllTargetAreas);
+Areawise_BehavChoiceDiff = zeros(NumUsedSess,NumAllTargetAreas);
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS};
-    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup');
-%     cSessPath = strrep(SessionFolders{cS},'F:','E:\NPCCGs');
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup');
+    cSessPath = strrep(SessionFolders{cS},'F:','E:\NPCCGs');
     
     SessblocktypeDecfile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktype','PopudecodingDatas.mat');
     SessUnitAUCfile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktype','SingleUnitAUC.mat');
@@ -36,16 +36,19 @@ for cS = 1 :  NumUsedSess
     
     SessBT_sVMScorefile = fullfile(cSessPath,'ks2_5','BaselinePredofBlocktypeSVM','PopudecodingDatas.mat');
 %     UnitAreafile = fullfile(cSessPath,'ks2_5','SessAreaIndexData.mat');
-    
-    SessblocktypeDecDataStrc = load(SessblocktypeDecfile,'ExistAreas_Names','SVMDecodingAccuracy','logRegressorProbofBlock');
-    
+    try
+        SessblocktypeDecDataStrc = load(SessblocktypeDecfile,'ExistAreas_Names','SVMDecodingAccuracy','logRegressorProbofBlock');
+    catch
+        fprintf('File missing for session %d.\n',cS);
+        continue;
+    end
     SessBT_sVMScoreStrc = load(SessBT_sVMScorefile, 'ExistAreas_Names', 'SVMSCoreProbofBlock', 'AreaPredInfo');
     
     SessUnitAUCStrc = load(SessUnitAUCfile,'AUCValuesAll');
     try
         BehavBlockchoiceDiff = load(behavFilePath,'H2L_choiceprob_diff');
     catch
-        behavfilepath = fullfile(cSessPath,'ks2_5','SessPSTHdataSaveNew2.mat');
+        behavfilepath = fullfile(cSessPath,'ks2_5','NewClassHandle2.mat');
         SavePlotFolder = fullfile(cSessPath,'ks2_5');
         behavSwitchplot_script;
         clearvars behavfilepath SavePlotFolder behavResults BlockSectionInfo
@@ -83,7 +86,7 @@ for cS = 1 :  NumUsedSess
             SessBT_sVMScoreStrc.AreaPredInfo{cAreaInds,2},...
             numel(cAreaUnitInds)};
         
-        Areawise_BehavChoiceDiff(cS,AreaMatchInds) = {BehavBlockchoiceDiff.H2L_choiceprob_diff};
+        Areawise_BehavChoiceDiff(cS,AreaMatchInds) = BehavBlockchoiceDiff.H2L_choiceprob_diff;
         if ~isempty(SessblocktypeDecDataStrc.logRegressorProbofBlock{cAreaInds,5})
             cAreaCCData = SessblocktypeDecDataStrc.logRegressorProbofBlock{cAreaInds,5};
             cAreaCC_values = smooth(cAreaCCData{1},5);
@@ -111,8 +114,8 @@ for cS = 1 :  NumUsedSess
 end
 
 %% summary figure plots saved position
-% sumfigsavefolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\blocktype_baseline_encoding';
-sumfigsavefolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\blocktype_baseline_encoding';
+sumfigsavefolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\blocktype_baseline_encoding_DJ';
+% sumfigsavefolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\blocktype_baseline_encoding_DJ';
 if ~isfolder(sumfigsavefolder)
     mkdir(sumfigsavefolder);
 end
@@ -130,6 +133,7 @@ NonEmptyInds = find(cellfun(@(x) ~isempty(x),AllAreaSess_SVMperfs));
 AllSVMperfDatas_Vec = cell2mat(AllAreaSess_SVMperfs(NonEmptyInds));
 AllSVMthresDatas_Vec = cell2mat(AllAreaSess_SVMThres(NonEmptyInds));
 AllSVMnumberDatas_Vec = cell2mat(AllAreaSess_SVMunitnums(NonEmptyInds));
+AllSVMbehavPerfs = Areawise_BehavChoiceDiff(NonEmptyInds);
 
 SVMperfSigInds = AllSVMperfDatas_Vec > AllSVMthresDatas_Vec;
 %%
@@ -221,14 +225,15 @@ print(hf_SVMperf2,saveName_SVM,'-dpng','-r350');
 print(hf_SVMperf2,saveName_SVM,'-dpdf','-bestfit');
 
 
-%% anova analysis 
-tbl = table(AllSVMperfDatas_Vec,AreaInds,AllSVMnumberDatas_Vec,...
-                'VariableNames',{'SVMPerf','Areas','UnitNumber'});
+%% anova analysis, behavPerf seems not working with the final decoding performance
+tbl = table(AllSVMperfDatas_Vec,AreaInds,AllSVMnumberDatas_Vec,AllSVMbehavPerfs,...
+                'VariableNames',{'SVMPerf','Areas','UnitNumber','behavPerf'});
 tbl.Areas = categorical(tbl.Areas);
 
-mmdl = fitlm(tbl,'SVMPerf ~ Areas+UnitNumber+Areas:UnitNumber');
+mmdl = fitlm(tbl,'SVMPerf ~ Areas+UnitNumber+behavPerf+Areas:UnitNumber+behavPerf:Areas+behavPerf:UnitNumber');
 anovaTable = anova(mmdl);
 Areawise_sessDecPerf= Areawise_sessDecPerfRaw;
+%%
 save(fullfile(sumfigsavefolder,'SVM_accuracyData.mat'),'anovaTable','Areawise_sessDecPerf','BrainAreasStr',...
     'Areawise_UnitAUC', 'Areawise_PopuPredCC', 'Areawise_PopuSVMCC',...
     'Areawise_popuSVMpredInfo', 'Areawise_BehavChoiceDiff','-v7.3')

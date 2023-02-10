@@ -92,7 +92,7 @@ if ~isempty(hf) && ishandle(hf)
         h = hf;
     end
 else
-    h = figure('position',[200 200 1000 800]);
+    h = figure('position',[100 100 300 240]);
 end
 
 hold on;

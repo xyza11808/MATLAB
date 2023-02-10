@@ -1,18 +1,21 @@
 clearvars SessAreaIndexStrc ProbNPSess cAUnitInds BaselineResp_First BaselineResp_Last
-load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
+% load(fullfile(ksfolder,'NPClassHandleSaved.mat'))
 % load('Chnlocation.mat');
-load(fullfile(ksfolder,'SessAreaIndexDataAligned.mat'));
+load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
 % if isempty(ProbNPSess.ChannelAreaStrs)
 %     ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
 % end
+load(fullfile(ksfolder,'NewClassHandle2.mat'));
+ProbNPSess = NewNPClusHandle;
+clearvars NewNPClusHandle
 %%
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
 % TimeWin = [-1.5,8]; % time window used to calculate the psth, usually includes before and after trigger time, in seconds
 % Smoothbin = [50,10]; %
 % ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, Smoothbin, double(behavResults.Time_stimOnset(:)));
 % save(fullfile(pwd,'ks2_5','NPClassHandleSaved.mat'),'ProbNPSess', 'PassSoundDatas', 'behavResults', '-v7.3');
-
-SMBinDataMtx = permute(cat(3,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds}{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+fullData = cellfun(@full,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds},'un',0);
+SMBinDataMtx = permute(cat(3,fullData{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
 
 
 if ~isempty(ProbNPSess.SurviveInds)

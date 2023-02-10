@@ -1,7 +1,7 @@
 cclr
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -10,8 +10,8 @@ BrainAreasStrCC = BrainAreasStrC(2:end);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
 BrainAreasStr = [BrainAreasStrCC(~EmptyInds)];
 
-AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2\AllArea_anovaEV_ANDAUC_datas.mat';
-% AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2\AllArea_anovaEV_ANDAUC_datas.mat';
+% AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\AnovaSum_wiDJ\AllArea_anovaEV_ANDAUC_datas.mat';
+AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\AnovaSum_wiDJ\AllArea_anovaEV_ANDAUC_datas.mat';
 load(AnovaDataSumDatafile,'AllArea_anovaEVdatas','AllArea_BTAnova_freqwise');
 StimOnsetBin = 149;
 winGoesStep = 0.01;
@@ -191,14 +191,14 @@ end
 
 
 %%
-AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2';
-% AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2';
+% AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\AnovaSum_wiDJ';
+AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\AnovaSum_wiDJ';
 AnovasumPlotPath = fullfile(AnovaDataSumDatafile,'AnovaPeak_sumPlot');
 if ~isfolder(AnovasumPlotPath)
     mkdir(AnovasumPlotPath);
 end
 %%
-UnitNumThres = 5;
+UnitNumThres = 30;
 ValueAllAreaDatas = nan(NumAreas,6,4); % the last dimension is median and mean
 % ValueAllAreaCIs = nan(NumAreas,6,2); % CIs 
 BTValuesIsEnough = false(NumAreas,1);
@@ -423,8 +423,8 @@ save(saveFilePath,'AreaPeakFactor_peakDatasAll','AreaBT_AvgDatasAll','StimOnsetB
 
 %% add allen scores
 
-% AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
-AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
+AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
+% AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
 AllenRegionStrsCell = readcell(AllenHScoreFullPath,'Range','A:A',...
         'Sheet','hierarchy_all_regions');
 AllenRegionStrsUsed = AllenRegionStrsCell(2:end);
@@ -674,9 +674,9 @@ set(hbar,'position',[0.05 0.1 oldBarPos(3) oldBarPos(4)*0.2]);
 set(get(hbar,'title'),'String','AllenScores');
 
 yscales = get(ax11,'ylim');
-line([0.2 0.2],yscales,'Color','c','linewidth',1.4,'linestyle','--');
-line([0.3 0.3],yscales,'Color','c','linewidth',1.4,'linestyle','--');
-line([0.6 0.6],yscales,'Color','c','linewidth',1.4,'linestyle','--');
+% line([0.2 0.2],yscales,'Color','c','linewidth',1.4,'linestyle','--');
+% line([0.3 0.3],yscales,'Color','c','linewidth',1.4,'linestyle','--');
+% line([0.6 0.6],yscales,'Color','c','linewidth',1.4,'linestyle','--');
 xlabel('StimPeakTime (s)');
 set(ax11,'ytick',StimAreaInds,'yticklabel',SortStimAreaStr,'ylim',[0 numel(StimPeakTimeSort)+1]);
 title('Size (PeakValue)');
@@ -780,8 +780,8 @@ set(ax14,'ytick',ChoiceAreaInds,'yticklabel',SortChoiceAreaStr,'ylim',[0 numel(C
 title('Size (PeakWidth)');
 
 %%
-AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2\AnovaPeak_sumPlot';
-% AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2\AnovaPeak_sumPlot';
+% AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\AnovaSum_wiDJ\AnovaPeak_sumPlot';
+AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\AnovaSum_wiDJ\AnovaPeak_sumPlot';
 AnovasumPlotPath2 = fullfile(AnovaDataSumDatafile,'AreaSummaryPlots');
 if ~isfolder(AnovasumPlotPath2)
     mkdir(AnovasumPlotPath2);
@@ -796,8 +796,8 @@ print(h3f,sortSavePath,'-dpdf','-bestfit');
 %% ￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥
 % only the first peak was considered  in the analysis
 cclr
-AnovaDataSumDataPath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2';
-% AnovaDataSumDataPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2';
+% AnovaDataSumDataPath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\AnovaSum_wiDJ';
+AnovaDataSumDataPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\AnovaSum_wiDJ';
 % AnovasumPlotPath = fullfile(AnovaDataSumDatafile,'AnovaPeak_sumPlot');
 % % if ~isfolder(AnovasumPlotPath)
 % %     mkdir(AnovasumPlotPath);
@@ -805,8 +805,8 @@ AnovaDataSumDataPath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\an
 % saveFilePath = fullfile(AnovasumPlotPath,'AnovaPeakSumData.mat');
 
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -831,8 +831,8 @@ load(saveFilePath,'AreaPeakFactor_peakDatasAll','AreaBT_AvgDatasAll');
 
 %% add allen scores
 
-% AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
-AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
+AllenHScoreFullPath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
+% AllenHScoreFullPath = 'K:\Documents\me\projects\NP_reversaltask\AllenBrainHireachy\Results\hierarchy_summary_CreConf.xlsx';
 AllenRegionStrsCell = readcell(AllenHScoreFullPath,'Range','A:A',...
         'Sheet','hierarchy_all_regions');
 AllenRegionStrsUsed = AllenRegionStrsCell(2:end);
@@ -1241,8 +1241,8 @@ set(ax14,'ytick',ChoiceAreaInds,'yticklabel',SortChoiceAreaStr,'ylim',[0 numel(C
 title('Size (PeakWidth)');
 
 %%
-AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2\AnovaPeak_sumPlot\FirstPeakAnaPlot';
-% AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2\AnovaPeak_sumPlot\FirstPeakAnaPlot';
+% AnovaDataSumDatafile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\AnovaSum_wiDJ\AnovaPeak_sumPlot\FirstPeakAnaPlot';
+AnovaDataSumDatafile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\AnovaSum_wiDJ\AnovaPeak_sumPlot\FirstPeakAnaPlot';
 % AnovasumPlotPath3 = fullfile(AnovaDataSumDatafile,'AreaSummaryPlots');
 % if ~isfolder(AnovasumPlotPath2)
 %     mkdir(AnovasumPlotPath2);

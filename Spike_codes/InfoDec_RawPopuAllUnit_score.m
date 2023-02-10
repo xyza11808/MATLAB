@@ -8,11 +8,13 @@ clearvars SessAreaIndexStrc ProbNPSess AreaDecodeDataCell AreaProcessDatas Block
 %          && isempty(fieldnames(SessAreaIndexStrc.ACA))
 %     return;
 % end
-load(fullfile(ksfolder,'NewClassHandle2.mat'));
-ProbNPSess = NewNPClusHandle;
-clearvars NewNPClusHandle
-ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
-OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
+load(fullfile(ksfolder,'NewClassHandle2.mat'),'behavResults');
+% ProbNPSess = NewNPClusHandle;
+% clearvars NewNPClusHandle
+% ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
+% OutDataStrc = ProbNPSess.TrigPSTH_Ext([-1 5],[300 100],ProbNPSess.StimAlignedTime{ProbNPSess.CurrentSessInds});
+
+load(fullfile(ksfolder,'BlockTypeScores','RepeatBTScores.mat'),'OutDataStrc');
 NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 
 % load(fullfile(fullsavePath,'LDAinfo_ChoiceScores.mat'));
@@ -24,7 +26,7 @@ NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 %% find target cluster inds and IDs
 % ksfolder = pwd;
 
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);

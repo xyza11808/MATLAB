@@ -14,7 +14,7 @@ BaselineResp = mean(NewBinnedDatas(:,:,1:OnsetBin),3);
 BaseLineEndInds = OutDataStrc.TriggerStartBin - 1;
 %% find target cluster inds and IDs
 
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
 NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
 NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
 NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);

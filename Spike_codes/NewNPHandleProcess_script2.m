@@ -7,7 +7,7 @@ AdjKlClusters = load(fullfile(ksfolder,'AdjustedClusterInfo.mat'));
 % PreNPClusHandle = load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 % PreNPClusHandle.ProbNPSess.SpikeTimes = [];
 load(fullfile(ksfolder,'NewClassHandle.mat'));
-TotalSampleANDtaskT = load(fullfile(ksfolder,'TrigTimeANDallSampNum.mat'));
+% TotalSampleANDtaskT = load(fullfile(ksfolder,'TrigTimeANDallSampNum.mat'));
 
 % NewNPClusHandle = PreNPClusHandle.ProbNPSess;
 NewNPClusHandle.SpikeClus = AdjKlClusters.FinalSPClusters;
@@ -74,7 +74,7 @@ AboveThresClusMaxChn = waveDataStrc.AboveThresClusMaxChn;
 
 GoodClusTypes = AboveThresClusIDs; %SPClusTypes(SPClusGoodClusInds);
 % GoodClusMaxChn = SPClusMaxChn(SPClusGoodClusInds);
-SessDur = TotalSampleANDtaskT.TotalSampleNums/30000;
+SessDur = double(NewNPClusHandle.Numsamp)/30000;
 
 NumGoodClus = length(GoodClusTypes);
 GoodClusFRs = zeros(numel(GoodClusTypes),1);
@@ -158,7 +158,7 @@ fprintf('\nNew cluster screening left units is %d/%d.\n',numel(NewNPClusHandle.U
 NewNPClusHandle.SpikeTimes = [];
 % behavResults = PreNPClusHandle.behavResults;
 % PassSoundDatas = PreNPClusHandle.PassSoundDatas;
-save(fullfile(ksfolder,'NewClassHandle2.mat'),'NewNPClusHandle','behavResults','PassSoundDatas','-v7.3');
+save(fullfile(ksfolder,'NewClassHandle2.mat'),'NewNPClusHandle','behavResults','-v7.3'); %,'PassSoundDatas'
 
 SessAreaIndexReCal(ksfolder, NewNPClusHandle,BrainRegionStrc);
 

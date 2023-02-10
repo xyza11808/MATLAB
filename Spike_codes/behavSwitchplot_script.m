@@ -113,9 +113,14 @@ elseif BlockSectionInfo.NumBlocks > 2 % if multiple switch exists
         fitcurve = feval(md,fit_data_x);
         plot(fit_data_x,fitcurve,'r','linewidth',1.4); %'color',linecolors(cswitch,:)
         syms x
-        s = solve(md.a*exp(-x/md.tau) == 0.5);
-        HalfPeakTrial(cswitch) = double(s);
-        if HalfPeakTrial(cswitch) <0 || HalfPeakTrial(cswitch) > 50
+        s = solve(md.a*exp(-x/md.tau) == 0.5,x);
+        if isempty(s)
+            HalfPeakTrial(cswitch) = NaN;
+        else
+            HalfPeakTrial(cswitch) = double(s);
+        end
+        
+        if HalfPeakTrial(cswitch) < 0 || HalfPeakTrial(cswitch) > 50
            HalfPeakTrial(cswitch) = NaN;
         end
         text(40,1-0.05*cswitch,sprintf('Tau = %.2f, HalfPeakTr = %.2f',md.tau, HalfPeakTrial),...

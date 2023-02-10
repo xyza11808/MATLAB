@@ -8,10 +8,10 @@ clearvars UnitAfterStimAUC UnitAS_BLSubAUC UnitBaselineAUC SVMDecVecs
 % % %     ProbNPSess.ChannelAreaStrs = {ChnArea_indexes,ChnArea_Strings(:,3)};
 % % % end
 
-% load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
-% load(fullfile(ksfolder,'NewClassHandle2.mat'))
-% ProbNPSess = NewNPClusHandle;
-% clearvars NewNPClusHandle
+load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
+load(fullfile(ksfolder,'NewClassHandle2.mat'))
+ProbNPSess = NewNPClusHandle;
+clearvars NewNPClusHandle
 %%
 figSaveFolder = fullfile(ksfolder,'BTANDChoiceAUC_compPlot');
 if isfolder(figSaveFolder)
@@ -26,22 +26,22 @@ end
 % % Smoothbin = [50,10]; %
 % % ProbNPSess = ProbNPSess.TrigPSTH(TimeWin, Smoothbin, double(behavResults.Time_stimOnset(:)));
 % % save(fullfile(pwd,'ks2_5','NPClassHandleSaved.mat'),'ProbNPSess', 'PassSoundDatas', 'behavResults', '-v7.3');
-% fullData = cellfun(@full,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds},'un',0);
-% SMBinDataMtx = permute(cat(3,fullData{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
+fullData = cellfun(@full,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds},'un',0);
+SMBinDataMtx = permute(cat(3,fullData{:,1}),[1,3,2]); % transfromed into trial-by-units-by-bin matrix
 
 
-% if ~isempty(ProbNPSess.SurviveInds)
-%     SMBinDataMtx = SMBinDataMtx(:,ProbNPSess.SurviveInds,:);
-% end
-% SMBinDataMtxRaw = SMBinDataMtx;
+if ~isempty(ProbNPSess.SurviveInds)
+    SMBinDataMtx = SMBinDataMtx(:,ProbNPSess.SurviveInds,:);
+end
+SMBinDataMtxRaw = SMBinDataMtx;
 
 Allfieldnames = fieldnames(SessAreaIndexStrc);
 ExistAreas_Indexes = find(SessAreaIndexStrc.UsedAbbreviations);
 ExistAreas_Names = Allfieldnames(SessAreaIndexStrc.UsedAbbreviations);
 NumExistAreas = length(ExistAreas_Names);
-% if NumExistAreas< 1
-%     return;
-% end
+if NumExistAreas< 1
+    return;
+end
 %%
 TriggerAlignBin = ProbNPSess.TriggerStartBin{ProbNPSess.CurrentSessInds};
 BaselineResp_All = mean(SMBinDataMtx(:,:,1:TriggerAlignBin-1),3);

@@ -4,7 +4,7 @@
 % Summary codes 1: summary of BT_and_Choice AUC values
 %
 cclr
-%%
+%
 AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 % AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
@@ -22,18 +22,15 @@ FullBrainStrCC = FullBrainStrC(2:end);
 % EmptyInds2 = cellfun(@(x) isempty(x) ||any(ismissing(x)),FullBrainStrCC);
 FullBrainStr = [FullBrainStrCC(~EmptyInds)];
 
-
-%%
-
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-        'Sheet',1);
+        'Sheet',3);
 SessionFoldersRaw = SessionFoldersC(2:end);
 EmptyInds2 = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
 SessionFolders = SessionFoldersRaw(~EmptyInds2);
 
 NumUsedSess = length(SessionFolders);
 NumAllTargetAreas = length(BrainAreasStr);
-
+%%
 Areawise_BTANDChoiceAUC = cell(NumUsedSess,NumAllTargetAreas,3);
 Areawise_PopuVec = cell(NumUsedSess,NumAllTargetAreas,4);
 Areawise_PopuBTChoicePerf = zeros(NumUsedSess,NumAllTargetAreas,2);
@@ -45,13 +42,20 @@ for cS = 1 :  NumUsedSess
 %     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
-    
     SessAreaIndexDatafile = fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat');
-    SessAreaIndexData = load(SessAreaIndexDatafile);
+    if exist(SessAreaIndexDatafile,'file')
+        SessAreaIndexData = load(SessAreaIndexDatafile);
+    else
+        SessAreaIndexData = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
+    end
+    try
     BTANDChoiceAUC_file = fullfile(ksfolder,'BTANDChoiceAUC_compPlot','BTANDChoiceAUC_popuVec.mat');
     BTANDChoiceAUCStrc = load(BTANDChoiceAUC_file,'UnitAfterStimAUC','UnitAS_BLSubAUC',...
         'UnitBaselineAUC','SVMDecVecs');
-    
+    catch ME
+        fprintf('Error for session %d.\n',cS);
+        continue;
+    end
     
     AreaNames = BTANDChoiceAUCStrc.SVMDecVecs(:,1);
     AreaNames(strcmpi(AreaNames,'Others')) = [];
@@ -134,8 +138,8 @@ for cA = 1 : NumBrainAreas
 end
 
 %%
-% summarySaveFolder1 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\BlockType_ChoiceVecANDAUCAdd';
-summarySaveFolder1 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\BlockType_ChoiceVecANDAUCAdd';
+% summarySaveFolder1 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\BlockType_ChoiceVecANDAUCAwDJ';
+summarySaveFolder1 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\BlockType_ChoiceVecANDAUCAwDJ';
 if ~isfolder(summarySaveFolder1)
     mkdir(summarySaveFolder1);
 end
@@ -161,7 +165,7 @@ for cAA = 1 : NumBrainAreas
             continue;
         end
         
-        hf = figure('position',[100 50 720 580],'PaperPositionMode', 'manual');
+        hf = figure('position',[100 50 600 490],'PaperPositionMode', 'manual');
         ax1 = subplot(331);
         hold on
         cA_AS_AUC_SigInds = cA_AS_AUCs(:,1) > cA_AS_AUCs(:,2);
@@ -171,29 +175,38 @@ for cAA = 1 : NumBrainAreas
             'o','Color',[.7 .7 .7]);
         plot(cA_AS_AUCs(cA_AS_AUC_SigInds,1),cA_BLS_AUCs(cA_AS_AUC_SigInds,1),'bo');
         plot(cA_AS_AUCs(cA_BLS_AUC_SigInds,1),cA_BLS_AUCs(cA_BLS_AUC_SigInds,1),'bo');
-        
-        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
+        ca_sigInds = cA_AS_AUC_SigInds | cA_AS_AUC_SigInds;
+        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.2);
+        line([0 1],[.5 .5],'Color','k','linestyle','--','linewidth',1.2);
+        line([.5 .5],[0 1],'Color','k','linestyle','--','linewidth',1.2);
         xlabel('AfterStim resp, BlockType');
         ylabel('baselineSub resp, BlockType');
         set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off','xlim',[0 1],'ylim',[0 1]);
         [~, p_BT] = ttest(cA_AS_AUCs(:,1),cA_BLS_AUCs(:,1));
         title(sprintf('Area %s, p = %.3e',cAreaStr, p_BT));
-        text(0.3,0.2,sprintf('n = %d',NumTotalUnits));
+        text(0.6,0.1,sprintf('n = %d',NumTotalUnits));
         text(0.1,0.7,{'SigFraction:';sprintf('x Frac.: %.3f',mean(cA_AS_AUC_SigInds));...
             sprintf('y Frac.: %.3f',mean(cA_BLS_AUC_SigInds))},'FontSize',6);
-
+        tb1 = fitlm(cA_AS_AUCs(:,1),cA_BLS_AUCs(:,1));
+        slope1 = tb1.Coefficients.Estimate(2);
+        text(0.5,0.3,sprintf('Slope = %.4f',slope1),'FontSize',6);
+        text(0.05,0.2,{sprintf('x:%.3f,%.4f',mean(cA_AS_AUCs(ca_sigInds,1)),std(cA_AS_AUCs(ca_sigInds,1)));...
+            sprintf('y:%.3f,%.4f',mean(cA_BLS_AUCs(ca_sigInds,1)),std(cA_BLS_AUCs(ca_sigInds,1)))},'FontSize',6);
+        
         ax2 = subplot(332);
         hold on
         cA_AS_AUCChoiceSig = cA_AS_AUCs(:,3) > cA_AS_AUCs(:,4);
         cA_BLS_AUCChoiceSig = cA_BLS_AUCs(:,3) > cA_BLS_AUCs(:,4);
-        
+        ca_sigInds = cA_AS_AUCChoiceSig | cA_AS_AUCChoiceSig;
         plot(cA_AS_AUCs(~cA_AS_AUCChoiceSig & ~cA_BLS_AUCChoiceSig,3),...
             cA_BLS_AUCs(~cA_AS_AUCChoiceSig & ~cA_BLS_AUCChoiceSig,3),'o',...
             'Color',[.7 .7 .7]);
         plot(cA_AS_AUCs(cA_AS_AUCChoiceSig,3),cA_BLS_AUCs(cA_AS_AUCChoiceSig,3),'bo');
         plot(cA_AS_AUCs(cA_BLS_AUCChoiceSig,3),cA_BLS_AUCs(cA_BLS_AUCChoiceSig,3),'bo');
         
-        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
+        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.2);
+        line([0 1],[.5 .5],'Color','k','linestyle','--','linewidth',1.2);
+        line([.5 .5],[0 1],'Color','k','linestyle','--','linewidth',1.2);
         xlabel('AfterStim resp, Choice');
         ylabel('baselineSub resp, Choice');
         set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off');
@@ -201,6 +214,11 @@ for cAA = 1 : NumBrainAreas
         title(sprintf('p = %.3e',p_Choice));
         text(0.1,0.7,{'SigFraction:';sprintf('x Frac.: %.3f',mean(cA_AS_AUCChoiceSig));...
             sprintf('y Frac.: %.3f',mean(cA_BLS_AUCChoiceSig))},'FontSize',6);
+        tb2 = fitlm(cA_AS_AUCs(:,3),cA_BLS_AUCs(:,3));
+        slope1 = tb2.Coefficients.Estimate(2);
+        text(0.5,0.3,sprintf('Slope = %.4f',slope1),'FontSize',6);
+        text(0.05,0.2,{sprintf('x:%.3f,%.4f',mean(cA_AS_AUCs(ca_sigInds,3)),std(cA_AS_AUCs(ca_sigInds,3)));...
+            sprintf('y:%.3f,%.4f',mean(cA_BLS_AUCs(ca_sigInds,3)),std(cA_BLS_AUCs(ca_sigInds,3)))},'FontSize',6);
         
         % compare block type decoding with baseline data
 %         h2f = figure('position',[100 100 920 360]);
@@ -213,7 +231,9 @@ for cAA = 1 : NumBrainAreas
         plot(cA_AS_AUCs(cA_BL_AUCSig,1),cA_BL_AUCs(cA_BL_AUCSig,1),'ro');
         plot(cA_AS_AUCs(cA_AS_AUC_SigInds,1),cA_BL_AUCs(cA_AS_AUC_SigInds,1),'ro');
         
-        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
+        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.2);
+        line([0 1],[.5 .5],'Color','k','linestyle','--','linewidth',1.2);
+        line([.5 .5],[0 1],'Color','k','linestyle','--','linewidth',1.2);
         xlabel('AfterStim resp, BlockType');
         ylabel('baseline, BlockType');
         set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off');
@@ -222,7 +242,10 @@ for cAA = 1 : NumBrainAreas
         text(0.1,0.7,{'SigFraction:';...
             sprintf('y Frac.: %.3f',mean(cA_BL_AUCSig))},'FontSize',6);
 %         text(0.3,0.2,sprintf('n = %d',NumUsedUnits));
-
+        tb3 = fitlm(cA_AS_AUCs(:,1),cA_BL_AUCs(:,1));
+        slope1 = tb3.Coefficients.Estimate(2);
+        text(0.5,0.3,sprintf('Slope = %.4f',slope1),'FontSize',6);
+        
         ax4 = subplot(335);
         hold on
         plot(cA_BLS_AUCs(~cA_BLS_AUC_SigInds & ~cA_BL_AUCSig,1),...
@@ -230,7 +253,9 @@ for cAA = 1 : NumBrainAreas
         plot(cA_BLS_AUCs(cA_BL_AUCSig,1),cA_BL_AUCs(cA_BL_AUCSig,1),'ro');
         plot(cA_BLS_AUCs(cA_BLS_AUC_SigInds,1),cA_BL_AUCs(cA_BLS_AUC_SigInds,1),'ro');
         
-        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
+        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.2);
+        line([0 1],[.5 .5],'Color','k','linestyle','--','linewidth',1.2);
+        line([.5 .5],[0 1],'Color','k','linestyle','--','linewidth',1.2);
         xlabel('baselineSub resp, BlockType');
         ylabel('baseline, BlockType');
         set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off');
@@ -239,6 +264,9 @@ for cAA = 1 : NumBrainAreas
         SlopeValue0 = tb10.Coefficients.Estimate(2);
         
         title(sprintf('p = %.3e, slope = %.4f',p_Choice,SlopeValue0));
+        tb4 = fitlm(cA_BLS_AUCs(:,1),cA_BL_AUCs(:,1));
+        slope1 = tb4.Coefficients.Estimate(2);
+        text(0.5,0.3,sprintf('Slope = %.4f',slope1),'FontSize',6);
         
         % is there correlation between choice decoding and blocktype decoding
         ax5 = subplot(337);
@@ -248,13 +276,18 @@ for cAA = 1 : NumBrainAreas
         plot(cA_AS_AUCs(cA_AS_AUC_SigInds,1),cA_AS_AUCs(cA_AS_AUC_SigInds,3),'mo');
         plot(cA_AS_AUCs(cA_AS_AUCChoiceSig,1),cA_AS_AUCs(cA_AS_AUCChoiceSig,3),'mo');
         
-        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
+        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.2);
+        line([0 1],[.5 .5],'Color','k','linestyle','--','linewidth',1.2);
+        line([.5 .5],[0 1],'Color','k','linestyle','--','linewidth',1.2);
         xlabel('AfterStim resp, BlockType');
         ylabel('AfterStim resp, Choice');
         set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off');
         [r1, p3] = corrcoef(cA_AS_AUCs(:,1),cA_AS_AUCs(:,3));
         title(sprintf('p = %.3e, r = %.3f',p3(1,2),r1(1,2)));
 %         text(0.3,0.2,sprintf('n = %d',NumUsedUnits));
+        tb5 = fitlm(cA_AS_AUCs(:,1),cA_AS_AUCs(:,3));
+        slope1 = tb5.Coefficients.Estimate(2);
+        text(0.5,0.3,sprintf('Slope = %.4f',slope1),'FontSize',6);
         
         AfterRespSigAUCFracs(cAA,1:2) = [mean(cA_AS_AUCChoiceSig), mean(cA_AS_AUC_SigInds)];
         AfterRespSigAUCFracs(cAA,3) = (AfterRespSigAUCFracs(cAA,2) - AfterRespSigAUCFracs(cAA,1))/...
@@ -272,7 +305,9 @@ for cAA = 1 : NumBrainAreas
         plot(cA_BLS_AUCs(cA_BLS_AUC_SigInds,1),cA_BLS_AUCs(cA_BLS_AUC_SigInds,3),'mo');
         plot(cA_BLS_AUCs(cA_BLS_AUCChoiceSig,1),cA_BLS_AUCs(cA_BLS_AUCChoiceSig,3),'mo');
         
-        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.4);
+        line([0 1],[0 1],'Color','k','linestyle','--','linewidth',1.2);
+        line([0 1],[.5 .5],'Color','k','linestyle','--','linewidth',1.2);
+        line([.5 .5],[0 1],'Color','k','linestyle','--','linewidth',1.2);
         xlabel('baselineSub resp, BlockType');
         ylabel('baselineSub resp, Choice');
         set(gca,'xtick',0:0.5:1,'ytick',0:0.5:1,'box','off');
@@ -280,6 +315,9 @@ for cAA = 1 : NumBrainAreas
         tb1 = fitlm(cA_BLS_AUCs(:,1),cA_BLS_AUCs(:,3));
         SlopeValue = tb1.Coefficients.Estimate(2);
         title(sprintf('p = %.3e, Slope = %.3f',p_Choice3(1,2),SlopeValue));
+        tb6 = fitlm(cA_BLS_AUCs(:,1),cA_BLS_AUCs(:,3));
+        slope1 = tb6.Coefficients.Estimate(2);
+        text(0.5,0.3,sprintf('Slope = %.4f',slope1),'FontSize',6);
         
        ax7 = subplot(333);
 %        PerfEdges = 0:0.05:1;
@@ -373,17 +411,15 @@ FullBrainStrCC = FullBrainStrC(2:end);
 % EmptyInds2 = cellfun(@(x) isempty(x) ||any(ismissing(x)),FullBrainStrCC);
 FullBrainStr = [FullBrainStrCC(~EmptyInds)];
 
-%%
-
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-        'Sheet',1);
+        'Sheet',3);
 SessionFoldersRaw = SessionFoldersC(2:end);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
 SessionFolders = SessionFoldersRaw(~EmptyInds);
 
 NumUsedSess = length(SessionFolders);
 NumAllTargetAreas = length(BrainAreasStr);
-
+%%
 Areawise_BTANDChoiceAUC = cell(NumUsedSess,NumAllTargetAreas,3);
 Areawise_PopuBTChoicePerf = cell(NumUsedSess,NumAllTargetAreas,2);
 % Areawise_PopuSVMCC = cell(NumUsedSess,NumAllTargetAreas,2);
@@ -396,12 +432,19 @@ for cS = 1 :  NumUsedSess
     ksfolder = fullfile(cSessPath,'ks2_5');
         
     SessAreaIndexDatafile = fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat');
-    SessAreaIndexData = load(SessAreaIndexDatafile);
-    BTANDChoiceAUC_file = fullfile(ksfolder,'BTANDChoiceAUC_TrWise','BTANDChoiceAUC_TrTypeWise.mat');
-    BTANDChoiceAUCStrc = load(BTANDChoiceAUC_file,'UnitAfterStimAUC','UnitAS_BLSubAUC',...
-        'UnitBaselineAUC','SVMDecVecs');
-    
-    
+    if exist(SessAreaIndexDatafile,'file')
+        SessAreaIndexData = load(SessAreaIndexDatafile);
+    else
+        SessAreaIndexData = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
+    end
+    try
+        BTANDChoiceAUC_file = fullfile(ksfolder,'BTANDChoiceAUC_TrWise','BTANDChoiceAUC_TrTypeWise.mat');
+        BTANDChoiceAUCStrc = load(BTANDChoiceAUC_file,'UnitAfterStimAUC','UnitAS_BLSubAUC',...
+            'UnitBaselineAUC','SVMDecVecs');
+    catch ME
+        fprintf('Error for sess %d.\n',cS);
+        continue;
+    end
     AreaNames = BTANDChoiceAUCStrc.SVMDecVecs(:,1);
     AreaNames(strcmpi(AreaNames,'Others')) = [];
     NumAreas = length(AreaNames);
@@ -451,8 +494,8 @@ Area_popuBTChoicePerfs_row = cellfun(@(x) [x(1,:),x(2,:)],Area_popuBTChoicePerfs
 Area_popuBTChoicePerfs_size = cell2mat(Areawise_PopuBTChoicePerf_size(IsEmptyAreaSess));
 
 %%
-% summarySaveFolder2 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\BlockType_ChoiceVecANDAUC';
-summarySaveFolder2 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\Trialwise_BTChoiceAUC';
+% summarySaveFolder2 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\Trialwise_BTChoiceAUCDJ';
+summarySaveFolder2 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\Trialwise_BTChoiceAUCDJ';
 if ~isfolder(summarySaveFolder2)
     mkdir(summarySaveFolder2);
 end
@@ -496,7 +539,7 @@ for cA = 1 : NumAllTargetAreas
            cA_BS_AreawiseAUC_NRT_Vec,cA_Used_popuPerfs};
        
        % plot the comparison
-       h1f = figure('position',[100 50 720 850],'paperpositionmode','manual');
+       h1f = figure('position',[100 50 540 590],'paperpositionmode','manual');
         ax1 = subplot(321);
         hold on
         AS_BT_RevTrs = cA_AS_AreawiseAUC_RT_Vec(:,1);
@@ -605,7 +648,7 @@ for cA = 1 : NumAllTargetAreas
         savename = fullfile(summarySaveFolder2,sprintf('Area %s trialtype wise AUC compare',cAName));
         saveas(h1f,savename);
         
-        print(h1f,savename,'-dpng','-r0');
+        print(h1f,savename,'-dpng','-r350');
         print(h1f,savename,'-dpdf','-bestfit'); %print(gcf,'Unit111example','-dpdf','-bestfit');
         close(h1f);
     end
@@ -783,17 +826,15 @@ BrainAreasStrCC = BrainAreasStrC(2:end);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
 BrainAreasStr = [BrainAreasStrCC(~EmptyInds);{'Others'}];
 
-%%
-
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-        'Sheet',1);
+        'Sheet',3);
 SessionFoldersRaw = SessionFoldersC(2:end);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
 SessionFolders = SessionFoldersRaw(~EmptyInds);
 
 NumUsedSess = length(SessionFolders);
 NumAllTargetAreas = length(BrainAreasStr);
-
+%%
 AreaWise_ChoiceScoreData = cell(NumUsedSess,NumAllTargetAreas);
 
 for cS = 1 :  NumUsedSess
@@ -933,17 +974,14 @@ BrainAreasStrFullCC = BrainAreasFullStrC(2:end);
 
 BrainAreasStrFull = [BrainAreasStrFullCC(~EmptyInds);{'Others'}];
 
-
-%%
-
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-        'Sheet',1);
+        'Sheet',3);
 SessionFoldersRaw = SessionFoldersC(2:end);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
 SessionFolders = SessionFoldersRaw(~EmptyInds);
 NumUsedSess = length(SessionFolders);
 NumAllTargetAreas = length(BrainAreasStr);
-
+%%
 Areawise_unitAnovaTrace = cell(NumUsedSess,NumAllTargetAreas,3, 2); % 3 corresponding to three factors, 2 corresponding to real and threshld data
 Areawise_BTfreqwiseAnova = cell(NumUsedSess, NumAllTargetAreas, 2, 2);  % 2 corresponding to two condition, 2 corresponding to real and threshld data
 Areawise_unitAnovaSigNum = cell(NumUsedSess,NumAllTargetAreas); % units that were defined as significant, used to calculate the fraction
@@ -951,18 +989,20 @@ Areawise_unittempAUCTraces = cell(NumUsedSess,NumAllTargetAreas,2, 2); % only tw
 Areawise_unitStimRespAUC = cell(NumUsedSess,NumAllTargetAreas,2); % used to store stim-response AUC, each for one stimuli 
 for cS = 1 : NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
-%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
-    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
-%     try
+    try
         AreaUnitAnovaEV_file = fullfile(ksfolder,'AnovanAnA','SigAnovaTracedataSave2.mat');
         AreaUnitAnovaEV_Strc = load(AreaUnitAnovaEV_file); % AreaValidInfoDatas, ExistAreaNames, ExistField_ClusIDs
         AreaUnitTempAUC_file = fullfile(ksfolder,'AnovanAnA','TempAUCTracedata.mat');
         AreaUnitTempAUC_Data = load(AreaUnitTempAUC_file,'AUCValidInfoDatas');
         AreaUnitStimRespAUC_file = fullfile(ksfolder,'AnovanAnA','StimRespAUCdata_AreaWise.mat');
         AreaUnitStimRespAUC = load(AreaUnitStimRespAUC_file,'StimAUCValidInfoDatas');
-
+    catch ME
+       fprintf('Some error in session %d.\n',cS);
+    end
         AreaNames = AreaUnitAnovaEV_Strc.SeqAreaNames;
         NumAreas = length(AreaNames);
         if NumAreas < 1
@@ -999,8 +1039,8 @@ end
 
 
 %%
-summarySavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2';
-% summarySavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\anova_analysis_datas2';
+summarySavePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\AnovaSum_wiDJ';
+% summarySavePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\AnovaSum_wiDJ';
 if ~isfolder(summarySavePath)
     mkdir(summarySavePath);
 end
@@ -1039,7 +1079,7 @@ for cA = 1 : NumAllTargetAreas
     if isempty(cF_unitNums) || sum(cF_unitNums,'all') == 0
         continue;
     end
-    huf = figure('position',[100 100 940 320]);
+    huf = figure('position',[100 100 890 250]);
     for cF = 1 : FactorNum
         cx = subplot(2,FactorNum+1,cF);
         hold on
@@ -1195,11 +1235,11 @@ save(datasaveName5,'AllArea_anovaEVdatas','Areawise_unitAnovaSigNum',...
 %% summary analysis 6, regressor analysis summary
 cclr
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
-        'Sheet',1);
+        'Sheet',3);
 BrainAreasStrCC = BrainAreasStrC(2:end);
 % BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),BrainAreasStrCC);
@@ -1213,7 +1253,7 @@ BrainAreasStr = [BrainAreasStrCC(~EmptyInds)]; %;{'Others'}
 % FullBrainStr = [FullBrainStrCC(~EmptyInds)]; %;{'Others'}
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-        'Sheet',1);
+        'Sheet',3);
 SessionFoldersRaw = SessionFoldersC(2:end);
 EmptyInds2 = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
 SessionFolders = SessionFoldersRaw(~EmptyInds2);
@@ -1226,17 +1266,29 @@ Areawise_RespUnitInds = cell(NumUsedSess,NumAllTargetAreas);
 IsColRespTypeExists = 0;
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
-%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
-    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     try
-        
-        NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
+        if exist(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'),'file')
+            NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
+        elseif exist(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'),'file')
+            NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
+        else
+            error('Sess unit area file doesnt exists.');
+        end
         UnitSltFile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypesNew.mat'); %UnitSelectiveTypesNew  %UnitSelectiveTypes_stim
         UnitSltDataStrc = load(UnitSltFile);
-        RegressorDatafile = fullfile(ksfolder,'Regressor_ANA','REgressorDataSave6.mat');
-        RegressorDataStrc = load(RegressorDatafile,'AreaUnitNumbers','NewAdd_ExistAreaNames');
+        if exist(fullfile(ksfolder,'Regressor_ANA','REgressorDataSave6.mat'),'file')
+            RegressorDataStrc = load(fullfile(ksfolder,'Regressor_ANA','REgressorDataSave6.mat'),...
+                'AreaUnitNumbers','NewAdd_ExistAreaNames');
+        elseif exist(fullfile(ksfolder,'Regressor_ANA','REgressorDataSave4.mat'),'file')
+            RegressorDataStrc = load(fullfile(ksfolder,'Regressor_ANA','REgressorDataSave4.mat'),...
+                'AreaUnitNumbers','NewAdd_ExistAreaNames');
+        else
+            error('Regressior file doesnt exists.');
+        end        
     catch ME
         fprintf('Error exists in session %d.\n',cS);
     end
@@ -1278,7 +1330,7 @@ ExplainVarsMtx_AllC = cell(NumAllTargetAreas, 1);
 IsAreaEmpty = false(NumAllTargetAreas,1);
 for cArea = 1 : NumAllTargetAreas
     cA_AllRespMtx = cat(1,Areawise_RespUnitInds{:,cArea});
-    if isempty(cA_AllRespMtx) || size(cA_AllRespMtx,1) < 10 || AreaSessionNum(cArea) < 3
+    if isempty(cA_AllRespMtx) || size(cA_AllRespMtx,1) < 10 || AreaSessionNum(cArea) < 5
         IsAreaEmpty(cArea) = true;
     else
         ExplainVarsMtx_AllC{cArea} = cA_AllRespMtx;
@@ -1317,14 +1369,14 @@ AllAreaFracStr = FracTypeStrs([2,4,5]-1);
 % set(gca,'box','off');
 %%
 
-% allen_atlas_path = 'E:\AllenCCF';
-allen_atlas_path = 'E:\MatCode\AllentemplateData';
+allen_atlas_path = 'E:\AllenCCF';
+% allen_atlas_path = 'E:\MatCode\AllentemplateData';
 tv = readNPY([allen_atlas_path filesep 'template_volume_10um.npy']);
 av = readNPY([allen_atlas_path filesep 'annotation_volume_10um_by_index.npy']);
 st = loadStructureTree([allen_atlas_path filesep 'structure_tree_safe_2017.csv']);
 
-TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
-% TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+% TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
 
 BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
 BrainRegionIndex = BrainRegionStrc.BrainRegions;
@@ -1332,8 +1384,8 @@ BrainRegionIndex = BrainRegionStrc.BrainRegions;
 %%
 % plot sagital and topdown plots
 % UsedTypeInds = 3;
-savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary2';
-% savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary2';
+% savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ';
+savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ';
 for UsedTypeInds = 1 : length(AllAreaFracStr)
     UsedTypeFracStr = AllAreaFracStr{UsedTypeInds};
     UsedAreaFracs = AllAreaFracs(:,UsedTypeInds);
@@ -1484,7 +1536,7 @@ SaveNames1 = fullfile(savePathfolder,'AreaFraction scatter plot save StimANDBT n
 
 saveas(hhu1f,SaveNames1);
 
-print(hhu1f,SaveNames1,'-dpng','-r500');
+print(hhu1f,SaveNames1,'-dpng','-r350');
 print(hhu1f,SaveNames1,'-dpdf','-bestfit');
 
 
@@ -1492,7 +1544,7 @@ print(hhu1f,SaveNames1,'-dpdf','-bestfit');
 SaveNames2 = fullfile(savePathfolder,'AreaFraction scatter plot save ChoiceANDBT noExStim');
 saveas(hhu2f,SaveNames2);
 
-print(hhu2f,SaveNames2,'-dpng','-r500');
+print(hhu2f,SaveNames2,'-dpng','-r350');
 print(hhu2f,SaveNames2,'-dpdf','-bestfit');
 
 %%
@@ -1715,8 +1767,8 @@ title(sprintf('Regions %s',UniPairStrs{cT}))
 %% summary analysis 8, regressor analysis summary part 2
 cclr
 
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -1733,7 +1785,7 @@ BrainAreasStr = [BrainAreasStrCC(~EmptyInds)]; %;{'Others'}
 % FullBrainStr = [FullBrainStrCC(~EmptyInds)]; %;{'Others'}
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-        'Sheet',1);
+        'Sheet',3);
 SessionFoldersRaw = SessionFoldersC(2:end);
 EmptyInds2 = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
 SessionFolders = SessionFoldersRaw(~EmptyInds2);
@@ -1746,16 +1798,23 @@ Areawise_RespUnitEVars = cell(NumUsedSess,NumAllTargetAreas);
 Areawise_RespUnitRespField = cell(NumUsedSess,NumAllTargetAreas);
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
-%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
-    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     try
         
         UnitSltFile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypesNew.mat');
         UnitSltDataStrc = load(UnitSltFile);
-        RegressorDatafile = fullfile(ksfolder,'Regressor_ANA','RegressorDataSave6.mat');
-        RegressorDataStrc = load(RegressorDatafile,'AreaUnitNumbers','NewAdd_ExistAreaNames'); %,'FullRegressorInfosCell'
+        if exist(fullfile(ksfolder,'Regressor_ANA','RegressorDataSave6.mat'),'file')
+            RegressorDatafile = fullfile(ksfolder,'Regressor_ANA','RegressorDataSave6.mat');
+            RegressorDataStrc = load(RegressorDatafile,'AreaUnitNumbers','NewAdd_ExistAreaNames'); %,'FullRegressorInfosCell'
+        elseif exist(fullfile(ksfolder,'Regressor_ANA','RegressorDataSave4.mat'),'file')
+            RegressorDataStrc = load(fullfile(ksfolder,'Regressor_ANA','RegressorDataSave4.mat'),...
+                'AreaUnitNumbers','NewAdd_ExistAreaNames'); 
+        else
+            error('Target file missing');
+        end
     catch ME
         fprintf('Error exists in session %d.\n',cS);
     end
@@ -1854,8 +1913,8 @@ end
 
 %% plot and save some figures
 
-savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim';
-% savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim';
+% savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\UnitEVscatterPlot\NoStim';
+savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\UnitEVscatterPlot\NoStim';
 
 % savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim';
 % % savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim';
@@ -1965,8 +2024,8 @@ end
 
 %%
 
-savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim_frac';
-% savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim_frac';
+% savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\UnitEVscatterPlot\NoStim_frac';
+savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\UnitEVscatterPlot\NoStim_frac';
 
 % savePathfolder = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim';
 % % savePathfolder = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim';
@@ -2201,8 +2260,8 @@ end
 
 %%
 
-savePathfolder2 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim_frac\WithinThres';
-% savePathfolder2 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\NoStim_frac\WithinThres';
+% savePathfolder2 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\UnitEVscatterPlot\NoStim_frac\WithinThres';
+savePathfolder2 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSum_wiDJ\UnitEVscatterPlot\NoStim_frac\WithinThres';
 
 % savePathfolder2 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim\WithinThres';
 % % savePathfolder2 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\RegressionSummary\UnitEVscatterPlot\WithStim\WithinThres';
@@ -2215,14 +2274,14 @@ save(DataSavefile2,'ThresedAvgDatas','BrainAreasStr','-v7.3');
 
 %%
 
-% allen_atlas_path = 'E:\AllenCCF';
-allen_atlas_path = 'E:\MatCode\AllentemplateData';
+allen_atlas_path = 'E:\AllenCCF';
+% allen_atlas_path = 'E:\MatCode\AllentemplateData';
 tv = readNPY([allen_atlas_path filesep 'template_volume_10um.npy']);
 av = readNPY([allen_atlas_path filesep 'annotation_volume_10um_by_index.npy']);
 st = loadStructureTree([allen_atlas_path filesep 'structure_tree_safe_2017.csv']);
 
-TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
-% TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+% TargetBrainArea_file = 'K:\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
+TargetBrainArea_file = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\BrainAreaANDIndex.mat';
 
 BrainRegionStrc = load(TargetBrainArea_file); % BrainRegions
 BrainRegionIndex = BrainRegionStrc.BrainRegions;
@@ -2311,8 +2370,8 @@ end
 %
 cclr
 %
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -2324,7 +2383,7 @@ BrainAreasStr = [BrainAreasStrCC(~EmptyInds)];
 %
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-        'Sheet',1);
+        'Sheet',3);
 SessionFoldersRaw = SessionFoldersC(2:end);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
 SessionFolders = SessionFoldersRaw(~EmptyInds);
@@ -2337,17 +2396,23 @@ AreaWise_ChoiceScoreData = cell(NumUsedSess,NumAllTargetAreas,4);
 AreaWise_ChoiceScoreDiffData = cell(NumUsedSess,NumAllTargetAreas);
 AreaWise_dsqrSummaryData = cell(NumUsedSess,NumAllTargetAreas,3);
 AreaWise_FreqwiseScoreData = cell(NumUsedSess,NumAllTargetAreas,3,2);
+AreaSesswise_behvPerfs = nan(NumUsedSess,NumAllTargetAreas);
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
-%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
-    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
-    
+    try
     cS_ChoiceScoreDatafile = fullfile(ksfolder,'ChoiceANDBT_LDAinfo_ana','LDAinfo_FreqwiseScoresAllUnit.mat');
     cS_ChoiceScoreData_Strc = load(cS_ChoiceScoreDatafile,'AreaProcessDatas','ExistField_ClusIDs',...
         'NewAdd_ExistAreaNames','AreaUnitNumbers','AreaFreqwiseScores');
+    catch ME
+        fprintf('Error for session %d.\n',cS);
+    end
     
+    behavFilePath = fullfile(ksfolder,'BehavSwitchData.mat');
+    BehavBlockchoiceDiff = load(behavFilePath,'H2L_choiceprob_diff');
     
     AreaNames = cS_ChoiceScoreData_Strc.NewAdd_ExistAreaNames;
     NumAreas = length(AreaNames);
@@ -2401,6 +2466,8 @@ for cS = 1 :  NumUsedSess
 
             AreaWise_FreqwiseScoreData(cS,AreaMatchInds,:,1) = {BaseSub_freqwiseAvgScore,RawResp_freqwiseAvgScore,BaseData_freqwiseAvgScore};
             AreaWise_FreqwiseScoreData(cS,AreaMatchInds,:,2) = {BaseSub_freqwiseSTDScore,RawResp_freqwiseSTDScore,BaseData_freqwiseSTDScore};
+            
+            AreaSesswise_behvPerfs(cS,AreaMatchInds) = BehavBlockchoiceDiff.H2L_choiceprob_diff;
         end
     end
 end
@@ -2430,8 +2497,8 @@ for cA = 1 : NumAllTargetAreas
 end
 
 %% freq-wise Choice scores
-SummarySavePath9 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary';
-% SummarySavePath9 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary';
+% SummarySavePath9 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSumDJ';
+SummarySavePath9 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSumDJ';
 
 OctTypes = log2(FreqTypes/FreqTypes(1));
 AreaWise_freqwise_avgScore = AreaWise_FreqwiseScoreData(:,:,:,1);
@@ -2446,7 +2513,8 @@ for cA = 1 : NumAllTargetAreas
     if isempty(cA_Basesub_scoreMtx)
         continue;
     end
-    
+    cA_allbehavPerfs = AreaSesswise_behvPerfs(:,cA);
+    cA_allbehavPerfs(isnan(cA_allbehavPerfs)) = [];
     cA_RawResp_Avgscore = AreaWise_freqwise_avgScore(:,cA,2);
     cA_BaseData_Avgscore = AreaWise_freqwise_avgScore(:,cA,3);
     
@@ -2479,9 +2547,11 @@ for cA = 1 : NumAllTargetAreas
     
     cA_Basesub_scoreAvg = -mean(cA_Basesub_scoreMtx,3);
     cA_Basesub_ZSscoreAvg = -mean(cA_Basesub_ZS_score,3);
+    cA_Basesub_ZSscoreSEM = std(cA_Basesub_ZS_score,[],3)/sqrt(size(cA_Basesub_ZS_score,3));
     
     cA_RawResp_scoreAvg = -mean(cA_RawResp_scoreMtx,3);
     cA_RawResp_ZSscoreAvg = -mean(cA_RawResp_ZS_score,3);
+    cA_RawResp_ZSscoreSEM = std(cA_RawResp_ZS_score,[],3)/sqrt(size(cA_RawResp_ZS_score,3));
     
     cA_BaseData_scoreAvg = -mean(cA_BaseData_scoreMtx,3);
     cA_BaseData_ZSscoreAvg = -mean(cA_BaseData_ZS_score,3);
@@ -2542,6 +2612,12 @@ for cA = 1 : NumAllTargetAreas
         plot(RawRespOutDataStrc.HighFitCurve(:,1),RawRespOutDataStrc.HighFitCurve(:,2),'r','linestyle','--')
         plot(RawRespOutDataStrc.LowFitCurve(:,1),RawRespOutDataStrc.LowFitCurve(:,2),'b','linestyle','--')
         
+%         errorbar(OctTypes,cA_Basesub_ZSscoreAvg(:,1),cA_Basesub_ZSscoreSEM(:,1),'bo','linewidth',1,'MarkerSize',12);
+%         errorbar(OctTypes,cA_Basesub_ZSscoreAvg(:,2),cA_Basesub_ZSscoreSEM(:,2),'ro','linewidth',1,'MarkerSize',12);
+% 
+%         errorbar(OctTypes,cA_RawResp_ZSscoreAvg(:,1),cA_RawResp_ZSscoreSEM(:,1),'bp','linewidth',1,'MarkerSize',8);
+%         errorbar(OctTypes,cA_RawResp_ZSscoreAvg(:,2),cA_RawResp_ZSscoreSEM(:,2),'rp','linewidth',1,'MarkerSize',8);
+        
         plot(OctTypes,cA_Basesub_ZSscoreAvg(:,1),'bo','linewidth',1,'MarkerSize',12);
         plot(OctTypes,cA_Basesub_ZSscoreAvg(:,2),'ro','linewidth',1,'MarkerSize',12);
 
@@ -2563,6 +2639,93 @@ for cA = 1 : NumAllTargetAreas
     close(hf9);
     
 end
+
+%% check whether behavior performance will affect neural coding
+close
+cA = 97;
+
+cA_Basesub_Avgscore = AreaWise_freqwise_avgScore(:,cA,1);
+cA_Basesub_scoreMtx = cat(3,cA_Basesub_Avgscore{:});
+if isempty(cA_Basesub_scoreMtx) || size(cA_Basesub_scoreMtx,3) < 6
+    return;
+end
+cA_allbehavPerfs = AreaSesswise_behvPerfs(:,cA);
+cA_allbehavPerfs(isnan(cA_allbehavPerfs)) = [];
+cA_RawResp_Avgscore = AreaWise_freqwise_avgScore(:,cA,2);
+cA_BaseData_Avgscore = AreaWise_freqwise_avgScore(:,cA,3);
+
+cA_RawResp_scoreMtx = cat(3,cA_RawResp_Avgscore{:});
+cA_BaseData_scoreMtx = cat(3,cA_BaseData_Avgscore{:});
+
+NumSess = size(cA_Basesub_scoreMtx,3);
+cA_Basesub_ZS_score = zeros(size(cA_Basesub_scoreMtx));
+cA_RawResp_ZS_score = zeros(size(cA_RawResp_scoreMtx));
+cA_BaseData_ZS_score = zeros(size(cA_BaseData_scoreMtx));
+for cS = 1 : NumSess
+    cA_Basesub_ZS_score(:,:,cS) = (cA_Basesub_scoreMtx(:,:,cS) - mean(cA_Basesub_scoreMtx(:,:,cS),'all'))/...
+        std(cA_Basesub_scoreMtx(:,:,cS),[],'all');
+    cA_RawResp_ZS_score(:,:,cS) = (cA_RawResp_scoreMtx(:,:,cS) - mean(cA_RawResp_scoreMtx(:,:,cS),'all'))/...
+        std(cA_RawResp_scoreMtx(:,:,cS),[],'all');
+    cA_BaseData_ZS_score(:,:,cS) = (cA_BaseData_scoreMtx(:,:,cS) - mean(cA_BaseData_scoreMtx(:,:,cS),'all'))/...
+        std(cA_BaseData_scoreMtx(:,:,cS),[],'all');
+end
+
+
+hf = figure('position',[100 100 640 280]);
+
+ax1 = subplot(121);
+hold on
+
+BPInds = cA_allbehavPerfs<=0.35; % bad behavioral performance inds
+
+if sum(BPInds)
+    BPBaseSubOutDataStrc = FreqScore2psyCurve(-cA_Basesub_ZS_score(:,:,BPInds), OctTypes);
+    BPRawRespOutDataStrc = FreqScore2psyCurve(-cA_RawResp_ZS_score(:,:,BPInds), OctTypes);
+
+    cA_Basesub_ZSscoreAvg = -mean(cA_Basesub_ZS_score(:,:,BPInds),3);
+    cA_RawResp_ZSscoreAvg = -mean(cA_RawResp_ZS_score(:,:,BPInds),3);
+
+    plot(OctTypes,cA_Basesub_ZSscoreAvg(:,1),'bo','linewidth',1,'MarkerSize',12);
+    plot(OctTypes,cA_Basesub_ZSscoreAvg(:,2),'ro','linewidth',1,'MarkerSize',12);
+    plot(OctTypes,cA_RawResp_ZSscoreAvg(:,1),'b*','linewidth',1,'MarkerSize',8);
+    plot(OctTypes,cA_RawResp_ZSscoreAvg(:,2),'r*','linewidth',1,'MarkerSize',8);
+
+    plot(BPBaseSubOutDataStrc.LowFitCurve(:,1),BPBaseSubOutDataStrc.LowFitCurve(:,2),'b')
+    plot(BPBaseSubOutDataStrc.HighFitCurve(:,1),BPBaseSubOutDataStrc.HighFitCurve(:,2),'r')
+
+    plot(BPRawRespOutDataStrc.HighFitCurve(:,1),BPRawRespOutDataStrc.HighFitCurve(:,2),'r','linestyle','--')
+    plot(BPRawRespOutDataStrc.LowFitCurve(:,1),BPRawRespOutDataStrc.LowFitCurve(:,2),'b','linestyle','--')
+
+    title(sprintf('BP n = %d (0.35 Thres/%.3f Avg.)',sum(BPInds),mean(cA_allbehavPerfs(BPInds))));
+    ylabel(ax1,sprintf('Area %s',BrainAreasStr{cA}));
+end
+
+% for GP
+ax2 = subplot(122);
+hold on
+
+GPInds = ~BPInds; % bad behavioral performance inds
+if sum(GPInds)
+    GPBaseSubOutDataStrc = FreqScore2psyCurve(-cA_Basesub_ZS_score(:,:,GPInds), OctTypes);
+    GPRawRespOutDataStrc = FreqScore2psyCurve(-cA_RawResp_ZS_score(:,:,GPInds), OctTypes);
+
+    cA_Basesub_ZSscoreAvg = -mean(cA_Basesub_ZS_score(:,:,GPInds),3);
+    cA_RawResp_ZSscoreAvg = -mean(cA_RawResp_ZS_score(:,:,GPInds),3);
+
+    plot(OctTypes,cA_Basesub_ZSscoreAvg(:,1),'bo','linewidth',1,'MarkerSize',12);
+    plot(OctTypes,cA_Basesub_ZSscoreAvg(:,2),'ro','linewidth',1,'MarkerSize',12);
+    plot(OctTypes,cA_RawResp_ZSscoreAvg(:,1),'b*','linewidth',1,'MarkerSize',8);
+    plot(OctTypes,cA_RawResp_ZSscoreAvg(:,2),'r*','linewidth',1,'MarkerSize',8);
+
+    plot(GPBaseSubOutDataStrc.LowFitCurve(:,1),GPBaseSubOutDataStrc.LowFitCurve(:,2),'b')
+    plot(GPBaseSubOutDataStrc.HighFitCurve(:,1),GPBaseSubOutDataStrc.HighFitCurve(:,2),'r')
+
+    plot(GPRawRespOutDataStrc.HighFitCurve(:,1),GPRawRespOutDataStrc.HighFitCurve(:,2),'r','linestyle','--')
+    plot(GPRawRespOutDataStrc.LowFitCurve(:,1),GPRawRespOutDataStrc.LowFitCurve(:,2),'b','linestyle','--')
+
+    title(sprintf('GP n = %d (0.35 Thres/%.3f Avg.)',sum(GPInds),mean(cA_allbehavPerfs(GPInds))));
+end
+
 %%
 summaryDatapath9 = fullfile(SummarySavePath9,'SessFreqwiseScoreData.mat');
 save(summaryDatapath9,'AreaWise_FreqwiseScoreData','AreaBoundCurveFits','BrainAreasStr',...
@@ -2571,6 +2734,7 @@ save(summaryDatapath9,'AreaWise_FreqwiseScoreData','AreaBoundCurveFits','BrainAr
 %%
 IsEmptySess = cellfun(@isempty,AreaBoundCurveFits(:,1));
 UsedSessData = AreaBoundCurveFits(~IsEmptySess,:);
+UsedSessAreaStrs = BrainAreasStr(~IsEmptySess);
 
 BaseSub_dataBound = cellfun(@(x) x.BoundAll,UsedSessData(:,1),'un',0);
 BaseSub_BoundMtx = cat(1,BaseSub_dataBound{:});
@@ -2586,16 +2750,18 @@ BoundData = [BaseSub_BoundDiff, RawResp_BoundDiff];
 UsedSessInds = UsedSessNums > 4;
 [~,p] = ttest(BaseSub_BoundDiff(UsedSessInds), RawResp_BoundDiff(UsedSessInds));
 
-% sum(UsedSessNums > 5);
+%% sum(UsedSessNums > 5);
 UpperThresData = max(BoundData(UsedSessInds,:),[],'all')+0.1;
 
 h99f = figure('position',[100 100 330 280]);
 hold on
 plot([1,2],BoundData(UsedSessInds,:)','Color',[.7 .7 .7],'linewidth',1.2);
 plot([1,2],mean(BoundData(UsedSessInds,:)),'Color','k','linewidth',1.5);
+text(0.6,mean(BoundData(UsedSessInds,1)),{mean(BoundData(UsedSessInds,1));std(BoundData(UsedSessInds,1))},'FontSize',8);
+text(2.05,mean(BoundData(UsedSessInds,2)),{mean(BoundData(UsedSessInds,2));std(BoundData(UsedSessInds,2))},'FontSize',8);
 line([1,2],[UpperThresData UpperThresData],'Color','c','linewidth',1.5);
-text(1.5,UpperThresData+0.2,num2str(p,'p = %.4f'),'HorizontalAlignment','center');
-text(0.7,UpperThresData+0.2,num2str(sum(UsedSessInds),'N = %d'));
+text(1.5,UpperThresData+0.2,num2str(p,'p = %.3e'),'HorizontalAlignment','center','FontSize',8);
+text(0.6,UpperThresData+0.2,{num2str(sum(UsedSessInds),'N = %d');'nSess>4'},'FontSize',8);
 set(gca,'xlim',[0.5 2.5],'xtick',1:2,'xticklabel',{'BaseSub','RawResp'},'ylim',[0 UpperThresData+0.4]);%
 ylabel(gca,'Boundary shiftment in octave');
 %%
@@ -2610,8 +2776,8 @@ print(h99f,filesavePath99,'-dpdf','-bestfit');
 %
 cclr
 %
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -2623,7 +2789,7 @@ BrainAreasStr = [BrainAreasStrCC(~EmptyInds)];
 %
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-        'Sheet',1);
+        'Sheet',3);
 SessionFoldersRaw = SessionFoldersC(2:end);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
 SessionFolders = SessionFoldersRaw(~EmptyInds);
@@ -2641,16 +2807,19 @@ UsedFolderPath = cell(NumUsedSess,1);
 SessTrialTypeNums = cell(NumUsedSess,2);
 for cS = 1 : NumUsedSess
     
-%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
-    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     UsedFolderPath{cS} = ksfolder;
-    
-    cSessPSTHDatafile = fullfile(ksfolder,'SessPSTHdataSaveNew2.mat');
-    cSessPSTHDataStrc = load(cSessPSTHDatafile,'ExpendTraceAll');
-    UnitTypefile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypesNew.mat');
-    SessUnitTypeMtxStrc = load(UnitTypefile,'IsUnitGLMResp');
+    try
+        cSessPSTHDatafile = fullfile(ksfolder,'SessPSTHdataSaveNew2.mat');
+        cSessPSTHDataStrc = load(cSessPSTHDatafile,'ExpendTraceAll');
+        UnitTypefile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypesNew.mat');
+        SessUnitTypeMtxStrc = load(UnitTypefile,'IsUnitGLMResp');
+    catch ME
+        continue;
+    end
 %     SessUnitTypeMtxStrc.IsUnitGLMResp = zeros(size(cSessPSTHDataStrc.ExpendTraceAll,1),5); % false data for testing for now
     
     cSessCorrTrNum = cSessPSTHDataStrc.ExpendTraceAll{1,5};
@@ -2780,8 +2949,8 @@ set(gca,'FontSize',10);
 ylabel('# Units');
 
 %%
-SummarySavePath10 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
-% SummarySavePath10 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+% SummarySavePath10 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
+SummarySavePath10 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas';
 if ~isfolder(SummarySavePath10)
     mkdir(SummarySavePath10);
 end
@@ -2907,14 +3076,14 @@ AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\proce
 % BrainAreasStr = [BrainAreasStrCC(~EmptyInds)];
 
 SessNumIndexC = readcell(AllSessFolderPathfile,'Range','D:D',...
-        'Sheet',1);
+        'Sheet',3);
 SessNumIndexCC = SessNumIndexC(2:end);
 % BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessNumIndexCC);
 SessNumIndex = SessNumIndexCC(~EmptyInds);
 
 AnmLabelIndexC = readcell(AllSessFolderPathfile,'Range','F:F',...
-        'Sheet',1);
+        'Sheet',3);
 AnmLabelIndexCC = AnmLabelIndexC(2:end);
 % BrainAreasStrCCC = cellfun(@(x) x,BrainAreasStrCC,'UniformOutput',false);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),AnmLabelIndexCC);
@@ -2922,7 +3091,7 @@ AnmLabelIndex = AnmLabelIndexCC(~EmptyInds);
 AnmLabelIndex = cat(1,AnmLabelIndex{:});
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-        'Sheet',1);
+        'Sheet',3);
 SessionFoldersRaw = SessionFoldersC(2:end);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
 SessionFolders = SessionFoldersRaw(~EmptyInds);
@@ -3225,13 +3394,43 @@ print(h11_4f,figSavePath4,'-dpdf','-bestfit');
 print(h11_4f,figSavePath4,'-dpng','-r350');
 
 save(fullfile(savePath,'AnmWiseBehavData_curveData.mat'),'AnmLowHighBounds','AnmBehavCurves','-v7.3')
+
+%%
+cMeanData = mean(AnmLowHighBounds);
+cSEMData = std(AnmLowHighBounds)/sqrt(size(AnmLowHighBounds, 1));
+
+hf_11_5 = figure('position',[100 100 380 240]);
+hold on
+bar(1,cMeanData(1),0.6, 'faceColor',[0.2 0.8 0.2],'edgeColor','none');
+bar(2,cMeanData(2),0.6,'faceColor',[0.8 0.5 0.2],'edgeColor','none');
+plot([1,2],AnmLowHighBounds','Color',[.7 .7 .7],'linewidth',1);
+% plot(2,AnmLowHighBounds(:,2),'o','Color',[.7 .7 .7]);
+% errorbar([1,2],cMeanData,cSEMData,'ko','linewidth',1.4);
+ylabel('Relative Boundary');
+text(0.2,cMeanData(1),{num2str(cMeanData(1),'%.3f');num2str(cSEMData(1),'%.3f')});
+text(2.4,cMeanData(2),{num2str(cMeanData(2),'%.3f');num2str(cSEMData(2),'%.3f')});
+set(gca,'xtick',[1 2],'xticklabel',{'LBBlock','HBBlock'},...
+    'xlim',[0 3],'FontSize',12);
+[~, p] = ttest(AnmLowHighBounds(:,1),AnmLowHighBounds(:,2));
+title(sprintf('p = %.3e',p));
+%%
+savePath = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\sessbehaviorsummary';
+% savePath = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\sessbehaviorsummary';
+
+figSavePath5 = fullfile(savePath,'BoundShiftment IndividualAnm barplots');
+
+saveas(hf_11_5,figSavePath5);
+print(hf_11_5,figSavePath5,'-dpdf','-bestfit');
+print(hf_11_5,figSavePath5,'-dpng','-r350');
+
+
 %% ###################################################################################################
 % Summary codes 12: unit baseline response data summary
 %
 cclr
 %
-% AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
-AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+AllSessFolderPathfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
+% AllSessFolderPathfile = 'K:\Documents\me\projects\NP_reversaltask\processed_ksfolder_paths_nAdd.xlsx';
 
 BrainAreasStrC = readcell(AllSessFolderPathfile,'Range','B:B',...
         'Sheet',1);
@@ -3243,7 +3442,7 @@ BrainAreasStr = [BrainAreasStrCC(~EmptyInds)];
 %
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-        'Sheet',1);
+        'Sheet',3);
 SessionFoldersRaw = SessionFoldersC(2:end);
 EmptyInds = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
 SessionFolders = SessionFoldersRaw(~EmptyInds);
@@ -3257,22 +3456,26 @@ AllSessUnitBaseFRzs = cell(NumUsedSess,1);
 AllSessUnitBaseFR_rawResp = cell(NumUsedSess,4);
 for cS = 1 : NumUsedSess
     
-%     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
-    cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
+    cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\');
+%     cSessPath = strrep(SessionFolders{cS},'F:','I:\ksOutput_backup'); %(2:end-1)
     
     ksfolder = fullfile(cSessPath,'ks2_5');
     UsedFolderPath{cS} = ksfolder;
-    %
-    cSessbaseDatafile = fullfile(ksfolder,'BaselineRespDataNew2.mat');
-    cSessbaseDataStrc = load(cSessbaseDatafile,'BlockTypeResps','LowBlockBaseData',...
-        'HighBlockBaseData','BlockSectionInfo','AllUnitAreaStrs','LHAllTrBaseData');
-    UnitTypefile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypesNew.mat');
-    SessUnitTypeMtxStrc = load(UnitTypefile,'IsUnitGLMResp');
-    % load baseline AUC datas
-    BaseAUCfile = fullfile(ksfolder,'BTANDChoiceAUC_compPlot','BTANDChoiceAUC_popuVec.mat');
-    BaseAUCDataStrc = load(BaseAUCfile,'UnitBaselineAUC');
-    SessUsedUnitfile = fullfile(ksfolder,'SessPSTHdataSaveNew2.mat');
-    SessUsedUnitStrc = load(SessUsedUnitfile,'ExistField_ClusIDs');
+    try
+        cSessbaseDatafile = fullfile(ksfolder,'BaselineRespDataNew2.mat');
+        cSessbaseDataStrc = load(cSessbaseDatafile,'BlockTypeResps','LowBlockBaseData',...
+            'HighBlockBaseData','BlockSectionInfo','AllUnitAreaStrs','LHAllTrBaseData');
+        UnitTypefile = fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypesNew.mat');
+        SessUnitTypeMtxStrc = load(UnitTypefile,'IsUnitGLMResp');
+        % load baseline AUC datas
+        BaseAUCfile = fullfile(ksfolder,'BTANDChoiceAUC_compPlot','BTANDChoiceAUC_popuVec.mat');
+        BaseAUCDataStrc = load(BaseAUCfile,'UnitBaselineAUC');
+        SessUsedUnitfile = fullfile(ksfolder,'SessPSTHdataSaveNew2.mat');
+        SessUsedUnitStrc = load(SessUsedUnitfile,'ExistField_ClusIDs');
+    catch ME
+        continue;
+    end 
+    
     UsedUnitInds = cat(1,SessUsedUnitStrc.ExistField_ClusIDs{:,2});
     UsedUnitBaseAUCs = BaseAUCDataStrc.UnitBaselineAUC(UsedUnitInds,:);
     
@@ -3333,8 +3536,8 @@ end
 AllUnitBaseFR_zsed = cat(1,AllSessUnitBaseFRzs{:});
 
 %%
-figSavePath12 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
-% figSavePath12 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
+% figSavePath12 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
+figSavePath12 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\unitBaselineData';
 dataSavefile = fullfile(figSavePath12,'BaselineDataSummary.mat');
 save(dataSavefile,'AllSessUnitBaseFRzs','AllSessUnitBaseFR_rawResp','-v7.3');
 
@@ -3347,8 +3550,8 @@ AllUnitBaseResp = cat(1,AllUnitBaseFR_zsed{:,1});
 
 % % % UsedDataInds = ~(sum(isnan(AllUnitBaseResp),2) | isnan(AllUnitAreaInds));
 % load used unit inds from the PSTH dataset
-PSTHSumfile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\UnitPSTHDatasTemp.mat';
-% PSTHSumfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\UnitPSTHDatasTemp.mat';
+% PSTHSumfile = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\UnitPSTHDatasTemp2.mat';
+PSTHSumfile = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\UnitPSTHdatas\UnitPSTHDatasTemp2.mat';
 PSTHIndsStrc = load(PSTHSumfile,'TotalUnitSess_excluInds');
 UsedDataInds = ~PSTHIndsStrc.TotalUnitSess_excluInds;
 %%
@@ -4638,7 +4841,7 @@ BrainAreasStr = [BrainAreasStrCC(~EmptyInds)];
 % FullBrainStr = [FullBrainStrCC(~EmptyInds);{'Others'}];
 
 SessionFoldersC = readcell(AllSessFolderPathfile,'Range','A:A',...
-        'Sheet',1);
+        'Sheet',3);
 SessionFoldersRaw = SessionFoldersC(2:end);
 EmptyInds2 = cellfun(@(x) isempty(x) ||any( ismissing(x)),SessionFoldersRaw);
 SessionFolders = SessionFoldersRaw(~EmptyInds2);
@@ -4651,7 +4854,7 @@ Areawise_ChoiceInfo_Af = cell(NumUsedSess,NumAllTargetAreas,5);
 Areawise_ChoiceInfo_base = cell(NumUsedSess,NumAllTargetAreas,5);
 Areawise_BTInfo_Af = cell(NumUsedSess,NumAllTargetAreas,5);
 Areawise_BTInfo_base = cell(NumUsedSess,NumAllTargetAreas,5);
-
+Areawise_BehavBoundDiff = nan(NumUsedSess,NumAllTargetAreas);
 for cS = 1 :  NumUsedSess
 %     cSessPath = SessionFolders{cS}; %(2:end-1)
     cSessPath = strrep(SessionFolders{cS},'F:\','E:\NPCCGs\'); % 'E:\NPCCGs\'
@@ -4663,6 +4866,8 @@ for cS = 1 :  NumUsedSess
         ChoiceInfoStrc = load(ChoiceInfofile,'AreaInfos','AreaInfos_base','UsedArea_strs','UsedUnitNums');
         BTInfofile = fullfile(ksfolder,'ChoiceANDBT_LDAinfo_ana','plsInfoDataSave_BT_zs.mat');
         BTInfoStrc = load(BTInfofile,'AreaInfos_Af','AreaInfos_base','UsedArea_strs','UsedUnitNums');
+        BehavBoundDifffile = fullfile(ksfolder,'BSRL_ReversingTrials','BSRL_modelData.mat');
+        BehavBoundDif = load(BehavBoundDifffile,'HighAndLowBlock_bound');
         
     catch ME
         fprintf('Error exists in session %d.\n',cS);
@@ -4703,16 +4908,18 @@ for cS = 1 :  NumUsedSess
         Areawise_BTInfo_base(cS,AreaMatchInds,:) = {AreaBTInfos_base{cAreaInds,1}(:,2),AreaBTInfos_base{cAreaInds,4}(:,2,1),...
             AreaBTInfos_base{cAreaInds,5}(:,2),AreaBTInfos_base{cAreaInds,8}(:,2,1),AreaUnitNums(cAreaInds)};
         
+        Areawise_BehavBoundDiff(cS,AreaMatchInds) = BehavBoundDif.HighAndLowBlock_bound;
+        
     end
     
 end
 
 %%
-% % figSavePath16 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
-% figSavePath16 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum';
+% figSavePath16 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSumDJ\plsChoiceScoreSum';
+figSavePath16 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSumDJ\plsChoiceScoreSum';
 
-% figSavePath16 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
-figSavePath16 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
+% % figSavePath16 = 'K:\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
+% figSavePath16 = 'E:\sycDatas\Documents\me\projects\NP_reversaltask\summaryDatas\ChoiceScoreSummary\plsChoiceScoreSum_zsed';
 
 %%
 UsedplsColNum = 5;

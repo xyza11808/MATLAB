@@ -12,56 +12,13 @@ dataSaveNames = fullfile(savefolder,'REgressorDataSave4.mat');
 %     return;
 % end
 
-load(fullfile(ksfolder,'NewClassHandle2.mat'));
-ProbNPSess = NewNPClusHandle;
+load(fullfile(ksfolder,'NPClassHandleSaved.mat'));
 clearvars RegressorInfosCell
-%
-SessBSRLdata_file = fullfile(ksfolder,'BSRL_ReversingTrials','BSRL_modelData.mat');
-SessBSRLdata_strc = load(SessBSRLdata_file,'P_bound_low','P_bound_high','delta');
-BlockProbValues = zscore(SessBSRLdata_strc.P_bound_low - SessBSRLdata_strc.P_bound_high);
-UsedIndsfile = fullfile(ksfolder,'BSRL_ReversingTrials','UsedIndsDatas.mat');
-load(UsedIndsfile);
-FittedTrInds = UsedIndsStrc.IndsUsed;
-%
-FullTrBlockProbValues = zeros(numel(FittedTrInds),1);
-FullTrBlockProbValues(FittedTrInds) = BlockProbValues(2:end);
-ExistDatapointIndex = find(FittedTrInds);
-InterpPointIndex = find(~FittedTrInds);
-InterpValues = interp1(ExistDatapointIndex,BlockProbValues(2:end),InterpPointIndex,'spline');
-FullTrBlockProbValues(InterpPointIndex) = InterpValues;
 
-FullTrDeltaValues = zeros(numel(FittedTrInds),1);
-FullTrDeltaValues(FittedTrInds) = SessBSRLdata_strc.delta;
-DeltaInterpValue = interp1(ExistDatapointIndex,SessBSRLdata_strc.delta,InterpPointIndex,'spline');
-FullTrDeltaValues(InterpPointIndex) = DeltaInterpValue;
-
-%% find target cluster inds and IDs
-NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
-NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
-NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
-NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
-if strcmpi(NewAdd_ExistAreaNames(end),'Others')
-    NewAdd_ExistAreaNames(end) = [];
-end
-NewAdd_NumExistAreas = length(NewAdd_ExistAreaNames);
-
-Numfieldnames = length(NewAdd_ExistAreaNames);
-ExistField_ClusIDs = [];
-AreaUnitNumbers = zeros(NewAdd_NumExistAreas,1);
-AreaNameIndex = cell(Numfieldnames,1);
-for cA = 1 : Numfieldnames
-    cA_Clus_IDs = NewSessAreaStrc.SessAreaIndexStrc.(NewAdd_ExistAreaNames{cA}).MatchUnitRealIndex;
-    cA_clus_inds = NewSessAreaStrc.SessAreaIndexStrc.(NewAdd_ExistAreaNames{cA}).MatchedUnitInds;
-    ExistField_ClusIDs = [ExistField_ClusIDs;[cA_Clus_IDs,cA_clus_inds]]; % real Clus_IDs and Clus indexing inds
-    AreaUnitNumbers(cA) = numel(cA_clus_inds);
-    AreaNameIndex(cA) = {cA*ones(AreaUnitNumbers(cA),1)};
-end
 
 %%
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
-if isempty(ProbNPSess.SpikeTimes)
-    ProbNPSess.SpikeTimes = double(ProbNPSess.SpikeTimeSample)/30000;
-end
+
 TaskTrigOnTimes = ProbNPSess.UsedTrigOnTime{ProbNPSess.CurrentSessInds};
 
 BeforeFirstTrigLen = 10; % seconds
@@ -97,9 +54,18 @@ end
 BinnedSPdatas = BinnedSPdatas./nanstd(BinnedSPdatas,[],2);
 
 %% construct behavior datas
-StimWin = single([-0.1,0.4]);
-ChoiceWin = ([-0.3,2]);
-ReWin = ([-0.5,1]);
+IsSpikeData = 1;
+
+if IsSpikeData
+    StimWin = single([-0.1,0.6]);
+    ChoiceWin = ([-0.3,1]);
+    ReWin = ([-0.2,1.5]);
+else % if input is calcium data
+    StimWin = single([-0.1,2]);
+    ChoiceWin = ([-1,0.5]);
+    ReWin = ([-0.5,3]);
+end
+
 
 StimFrameWins = round(StimWin(1)/TimeBinSize):round(StimWin(2)/TimeBinSize);
 Behav_stimOnset = single(behavResults.Time_stimOnset(:))/1000; % seconds
