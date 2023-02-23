@@ -40,7 +40,9 @@ end
 
 %%
 ProbNPSess.CurrentSessInds = strcmpi('Task',ProbNPSess.SessTypeStrs);
-
+if isempty(ProbNPSess.SpikeTimes)
+    ProbNPSess.SpikeTimes = double(ProbNPSess.SpikeTimeSample)/30000;
+end
 TaskTrigOnTimes = ProbNPSess.UsedTrigOnTime{ProbNPSess.CurrentSessInds};
 
 BeforeFirstTrigLen = 10; % seconds

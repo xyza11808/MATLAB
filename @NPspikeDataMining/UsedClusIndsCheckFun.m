@@ -330,3 +330,182 @@ function UnitFeatures = SpikeWaveFeature(obj,varargin)
 
 end
 
+
+function [fpRate, numViolations] = ISIViolations(spikeTrain, minISI, refDur)
+% computes an estimated false positive rate of the spikes in the given
+% spike train. You probably don't want this to be greater than a few
+% percent of the spikes. 
+%
+% - minISI [sec] = minimum *possible* ISI (based on your cutoff window); likely 1ms
+% or so. It's important that you have this number right.
+% - refDur [sec] = estimate of the duration of the refractory period; suggested value = 0.002.
+% It's also important that you have this number right, but there's no way
+% to know... also, if it's a fast spiking cell, you could use a smaller
+% value than for regular spiking.
+
+% The false positive value should less than 0.1, Ref from 
+% https://doi.org/10.1038/s41586-020-03166-8
+
+totalRate = length(spikeTrain)/spikeTrain(end);
+numViolations = sum(diff(spikeTrain) <= refDur);
+
+% Spikes occurring under the minimum ISI are by definition false positives;
+% their total rate relative to the rate of the neuron overall gives the
+% estimated false positive rate.
+% NOTE: This does not use the equation from Dan Hill's paper (see below)
+% but instead uses the equation from his UltraMegaSort
+violationTime = 2*length(spikeTrain)*(refDur-minISI); % total time available for violations - 
+                                                    % there is an available
+                                                    % window of length
+                                                    % (refDur-minISI) after
+                                                    % each spike.
+violationRate = numViolations/violationTime;
+fpRate = violationRate/totalRate;
+
+if fpRate>1
+    % it is nonsense to have a rate >1, however having such large rates
+    % does tell you something interesting, namely that the assumptions of
+    % this analysis are failing!
+    fpRate = 1; 
+end
+
+end
+
+function RemainedInds = SessResp_binnedcheckFun(ProbNPSess)
+TrigDataFull = cellfun(@full,ProbNPSess.TrigData_Bin{ProbNPSess.CurrentSessInds}(:,1),'un',0);
+SMBinDataMtx = permute(cat(3,TrigDataFull{:}),[1,3,2]);
+
+TrBatchSize = 10;
+TrAvgSPnums = mean(SMBinDataMtx,3);
+[TrNums, ROINums] = size(TrAvgSPnums);
+%%
+BatchNums = round(TrNums/TrBatchSize);
+BatchBinnedDatas = zeros(ROINums, BatchNums);
+ybase = 1;
+for cy = 1 : BatchNums
+    yend = min(TrBatchSize*cy, TrNums);
+    BatchBinnedDatas(:,cy) = mean(TrAvgSPnums(ybase:yend,:));
+    ybase = TrBatchSize*cy+1;
+end
+
+%%
+binMaxValues = prctile(BatchBinnedDatas,95,2);
+Isbinlessthanhalfpeak = (BatchBinnedDatas - binMaxValues/2) < 0;
+binLessThanhalfPeak = mean(Isbinlessthanhalfpeak, 2);
+
+FRBasedInds = mean(BatchBinnedDatas > 0.1,2);
+FRBasedInds2 = mean(BatchBinnedDatas > 10,2);
+% %%
+% cR = 2;
+% % close;
+% figure;
+% 
+% plot(BatchBinnedDatas(cR,:));
+% title(num2str(binLessThanhalfPeak(cR),'%.4f'));
+
+%% criterias for unit exclusion
+% 1, the binned value should have no more than 70% of the bins have value
+% less than half of the maximum value
+% 2, for those have less than 70% bins below half-maximum, the consecutive
+% bins should not more than 200 trials (normally 20 bins with a bin size of 10 trials)
+
+% criteria 1
+criteria1_inds = binLessThanhalfPeak < 0.3;
+
+
+% criteria 2
+UsedInds2 = binLessThanhalfPeak >= 0.3;
+UsedInds2_Real = find(UsedInds2);
+
+tempUsedUnit_isless = Isbinlessthanhalfpeak(UsedInds2,:);
+tempUsed_binlessthanhalf = binLessThanhalfPeak(UsedInds2);
+
+leftUnitNum = length(tempUsed_binlessthanhalf);
+IsGivenasNaN = zeros(leftUnitNum, 1);
+for cU = 1 : leftUnitNum
+   if tempUsed_binlessthanhalf(cU) < 0.75
+       % only use bin number fraction less than 0.5 but more than 0.3
+       cunit_binisless =  tempUsedUnit_isless(cU,:);
+       binlogi_SM = conv(cunit_binisless, (1/21)*ones(21,1),'same');
+       binlogi_SM(1) = 0;
+       binlogi_SM(end) = 0;
+       Is_consecutiveBins = find(binlogi_SM > 0.99, 1, 'first');
+       if ~isempty(Is_consecutiveBins)
+           if ~(all(cunit_binisless(1:3) == 0) && all(cunit_binisless(end-2:end) == 0))
+               IsGivenasNaN(cU) = NaN;
+           end
+           if FRBasedInds(UsedInds2_Real(cU)) > 0.6
+               IsGivenasNaN(cU) = 0;
+           end
+       end
+   else
+       if FRBasedInds2(UsedInds2_Real(cU)) < 0.9
+            IsGivenasNaN(cU) = NaN;
+       end
+   end
+end
+
+criteria2_inds = true(size(criteria1_inds));
+criteria2_inds(UsedInds2_Real(isnan(IsGivenasNaN))) = false;
+
+% TotalUnits = size(SMBinDataMtx,2);
+% RemainedInds = true(TotalUnits,1);
+% RemainedInds(isnan(UsedInds1_Real)) = false;
+RemainedInds = criteria1_inds | criteria2_inds;
+
+
+% if exist(fullfile(ProbNPSess.ksFolder,'UnitspikeAmpSave.mat'),'file') 
+%     % load unit amplitude data if exists
+%    cAmpfData = load(fullfile(ProbNPSess.ksFolder,'UnitspikeAmpSave.mat'));
+%    UintExplainV = cellfun(@(x) x.Ordinary,cAmpfData.UnitLlmfits(:,2));
+%    AmpExcludeInds = UintExplainV(:) > 0.5 & binLessThanhalfPeak(:) > 0.1; % is the varience explain is too large, excluded it
+%    
+%    RemainedInds = RemainedInds & ~AmpExcludeInds;
+% else
+%    warning('Unable to load spike amplitude datas.\n'); 
+% end
+
+end
+
+
+function SpreadLength = peakAmpSpreadFun(AllChnAmpData, toughPeakInds, MaxChnIndex)
+% function to calculate the amplitude spread, which is the channel have 12%
+% of the maximum channel amplitude
+
+% UnitAllchnWaveData = AllchnData.UnitDatas; % SPNums,channel(384),spikewindowlength    
+
+% Amplitude4AllSP = squeeze(AllChnAmpData(:,:,toughPeakInds(2)) - AllChnAmpData(:,:,toughPeakInds(1)));
+% ChnAmp_spikeAvg = mean(Amplitude4AllSP);
+try
+    ChnAmp_spikeAvg = AllChnAmpData(:,toughPeakInds(2)) - AllChnAmpData(:,toughPeakInds(1));
+catch ME
+    SpreadLength = 2000;
+   fprintf('Something is wrong.\n'); 
+    return;
+end
+MaximumAmp = ChnAmp_spikeAvg(MaxChnIndex);
+AmpThres = MaximumAmp * 0.12;
+
+LowerChnThresInds = find(ChnAmp_spikeAvg(1:MaxChnIndex) < AmpThres,1,'last');
+if isempty(LowerChnThresInds)
+    LowerChnThresInds = 0;
+end
+RealStartInds = LowerChnThresInds + 1;
+
+HigherChnThresInds = find(ChnAmp_spikeAvg(MaxChnIndex:end) < AmpThres , 1, 'first');
+if isempty(HigherChnThresInds)
+    HigherChnThresInds = numel(ChnAmp_spikeAvg)+1;
+else
+    HigherChnThresInds = HigherChnThresInds + MaxChnIndex;
+end
+RealEndInds = HigherChnThresInds - 1;
+
+if RealEndInds < RealStartInds
+    % abnormal distribution for current unit
+    fprintf('Something is wrong 2.\n');
+    SpreadLength = 2000;
+    return;
+end
+SpreadLength = (RealEndInds - RealStartInds) * 20; % in um, for NP 1.0 probe
+
+end

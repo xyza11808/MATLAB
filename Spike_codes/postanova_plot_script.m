@@ -10,10 +10,15 @@ figSavefolder = fullfile(ksfolder, 'AnovanAnA');
 % end
 
 AnovaDatafile = fullfile(figSavefolder,'OmegaSqrDatasNew.mat');
-AnovaDataStrc = load(AnovaDatafile,'NewNSMUnitOmegaSqrData','NewAllNullThres_Mtx','NewCalWinUnitOmegaSqrs');
-NSMUnitOmegaSqrData = AnovaDataStrc.NewNSMUnitOmegaSqrData;
-AllNullThres_Mtx = AnovaDataStrc.NewAllNullThres_Mtx;
-CalWinUnitOmegaSqrs = AnovaDataStrc.NewCalWinUnitOmegaSqrs;
+try
+    AnovaDataStrc = load(AnovaDatafile,'NewNSMUnitOmegaSqrData','NewAllNullThres_Mtx','NewCalWinUnitOmegaSqrs');
+    NSMUnitOmegaSqrData = AnovaDataStrc.NewNSMUnitOmegaSqrData;
+    AllNullThres_Mtx = AnovaDataStrc.NewAllNullThres_Mtx;
+    CalWinUnitOmegaSqrs = AnovaDataStrc.NewCalWinUnitOmegaSqrs;
+catch
+    load(AnovaDatafile,'NSMUnitOmegaSqrData','AllNullThres_Mtx','CalWinUnitOmegaSqrs');
+    
+end
 clearvars AnovaDataStrc
 AreaIndexStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign2.mat'));
 RegUnitTypes = load(fullfile(ksfolder,'Regressor_ANA','UnitSelectiveTypesNew.mat'),'IsUnitGLMResp');
