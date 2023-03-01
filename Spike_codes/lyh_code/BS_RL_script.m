@@ -23,7 +23,7 @@ lb = [0,1e-10,0.4,0];
 ub = [1,10,1,1];
 
 NumParas = numel(ub);
-ntime = 20;
+ntime = 10;
 
 matfileBlockInfos = BlockpsyCurveCalFun(behavResults);
 BlockSectionInfo = matfileBlockInfos{1};

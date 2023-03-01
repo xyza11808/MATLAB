@@ -4,7 +4,7 @@
 clearvars behavResults FullRegressorInfosCell RegressorInfosCell NewExistField_ClusIDs 
 load(fullfile(ksfolder,'NewClassHandle2.mat'),'behavResults');
 
-load(fullfile(ksfolder,'Regressor_ANA','REgressorDataSave6.mat'),'FullRegressorInfosCell',...
+load(fullfile(ksfolder,'Regressor_ANA','REgressorDataSave4.mat'),'FullRegressorInfosCell',...
     'ExistField_ClusIDs','RegressorInfosCell');
 StimRegInfo = load(fullfile(ksfolder,'Regressor_ANA','REgressorDataSaveStim.mat'),'FullRegressorInfosCell');
 if size(FullRegressorInfosCell,1) ~= size(StimRegInfo.FullRegressorInfosCell,1)

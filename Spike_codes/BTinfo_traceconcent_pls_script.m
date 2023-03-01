@@ -1,10 +1,42 @@
 
 SavedFolderPathName = 'ChoiceANDBT_LDAinfo_ana';
 fullsavePath = fullfile(ksfolder, SavedFolderPathName);
-AlreadyCaledDatas = load(fullfile(fullsavePath,'LDAinfo_FreqwiseScoresAllUnit.mat'),'ExistField_ClusIDs',...
-    'NewAdd_ExistAreaNames','AreaUnitNumbers', 'AreaProcessDatas','OutDataStrc');
+AlreadyCaledDatas = load(fullfile(fullsavePath,'plsInfoDataSave_Choice_zs.mat'),'OutDataStrc');
 
 load(fullfile(ksfolder,'NewClassHandle2.mat'),'behavResults');
+
+%%
+%% find target cluster inds and IDs
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
+NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
+NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
+NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
+if strcmpi(NewAdd_ExistAreaNames(end),'Others')
+    NewAdd_ExistAreaNames(end) = [];
+end
+NewAdd_NumExistAreas = length(NewAdd_ExistAreaNames);
+
+Numfieldnames = length(NewAdd_ExistAreaNames);
+ExistField_ClusIDs = cell(Numfieldnames,4);
+AreaUnitNumbers = zeros(NewAdd_NumExistAreas,1);
+for cA = 1 : Numfieldnames
+    cA_Clus_IDs = NewSessAreaStrc.SessAreaIndexStrc.(NewAdd_ExistAreaNames{cA}).MatchUnitRealIndex;
+    cA_clus_inds = NewSessAreaStrc.SessAreaIndexStrc.(NewAdd_ExistAreaNames{cA}).MatchedUnitInds;
+    ExistField_ClusIDs(cA,:) = {cA_Clus_IDs,cA_clus_inds,numel(cA_clus_inds) > 5,...
+        NewAdd_ExistAreaNames{cA}}; % real Clus_IDs and Clus indexing inds
+    AreaUnitNumbers(cA) = numel(cA_clus_inds);
+    
+end
+
+USedAreas = cell2mat(ExistField_ClusIDs(:,3)) < 1;
+if sum(USedAreas)
+    ExistField_ClusIDs(USedAreas,:) = [];
+    AreaUnitNumbers(USedAreas) = [];
+    Numfieldnames = Numfieldnames - sum(USedAreas);
+    NewAdd_ExistAreaNames(USedAreas) = [];
+end
+
+
 %% some preprocessing
 NewBinnedDatas = permute(cat(3,AlreadyCaledDatas.OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
 OnsetBin = AlreadyCaledDatas.OutDataStrc.TriggerStartBin;
@@ -37,8 +69,8 @@ FreqTypes = unique(NMTrFreqsAll);
 FreqTypeNum = length(FreqTypes);
 
 % find fieldnames
-AllNameStrs = AlreadyCaledDatas.NewAdd_ExistAreaNames;
-AllAreaUnitInds = AlreadyCaledDatas.ExistField_ClusIDs;
+AllNameStrs = NewAdd_ExistAreaNames;
+AllAreaUnitInds = ExistField_ClusIDs;
 AllAreaUnitNums = cellfun(@numel,AllAreaUnitInds(:,2));
 ExcludeAreaInds = AllAreaUnitNums >= 5;
 

@@ -1,13 +1,48 @@
 
 SavedFolderPathName = 'ChoiceANDBT_LDAinfo_ana';
 fullsavePath = fullfile(ksfolder, SavedFolderPathName);
-AlreadyCaledDatas = load(fullfile(fullsavePath,'LDAinfo_FreqwiseScoresAllUnit.mat'),'ExistField_ClusIDs',...
-    'NewAdd_ExistAreaNames','AreaUnitNumbers', 'AreaProcessDatas','OutDataStrc');
+if ~isfolder(fullsavePath)
+    mkdir(fullsavePath);
+end
+% AlreadyCaledDatas = load(fullfile(fullsavePath,'LDAinfo_FreqwiseScoresAllUnit.mat'),'ExistField_ClusIDs',...
+%     'NewAdd_ExistAreaNames','AreaUnitNumbers', 'AreaProcessDatas','OutDataStrc');
 
-load(fullfile(ksfolder,'NewClassHandle2.mat'),'behavResults');
+load(fullfile(ksfolder,'NewClassHandle2.mat'));
+NewNPClusHandle.SpikeTimes = double(NewNPClusHandle.SpikeTimeSample)/30000;
+%% find target cluster inds and IDs
+NewSessAreaStrc = load(fullfile(ksfolder,'SessAreaIndexDataNewAlign.mat'));
+NewAdd_AllfieldNames = fieldnames(NewSessAreaStrc.SessAreaIndexStrc);
+NewAdd_ExistAreasInds = find(NewSessAreaStrc.SessAreaIndexStrc.UsedAbbreviations);
+NewAdd_ExistAreaNames = NewAdd_AllfieldNames(NewAdd_ExistAreasInds);
+if strcmpi(NewAdd_ExistAreaNames(end),'Others')
+    NewAdd_ExistAreaNames(end) = [];
+end
+NewAdd_NumExistAreas = length(NewAdd_ExistAreaNames);
+
+Numfieldnames = length(NewAdd_ExistAreaNames);
+ExistField_ClusIDs = cell(Numfieldnames,4);
+AreaUnitNumbers = zeros(NewAdd_NumExistAreas,1);
+for cA = 1 : Numfieldnames
+    cA_Clus_IDs = NewSessAreaStrc.SessAreaIndexStrc.(NewAdd_ExistAreaNames{cA}).MatchUnitRealIndex;
+    cA_clus_inds = NewSessAreaStrc.SessAreaIndexStrc.(NewAdd_ExistAreaNames{cA}).MatchedUnitInds;
+    ExistField_ClusIDs(cA,:) = {cA_Clus_IDs,cA_clus_inds,numel(cA_clus_inds) > 5,...
+        NewAdd_ExistAreaNames{cA}}; % real Clus_IDs and Clus indexing inds
+    AreaUnitNumbers(cA) = numel(cA_clus_inds);
+    
+end
+
+USedAreas = cell2mat(ExistField_ClusIDs(:,3)) < 1;
+if sum(USedAreas)
+    ExistField_ClusIDs(USedAreas,:) = [];
+    AreaUnitNumbers(USedAreas) = [];
+    Numfieldnames = Numfieldnames - sum(USedAreas);
+    NewAdd_ExistAreaNames(USedAreas) = [];
+end
 %% some preprocessing
-NewBinnedDatas = permute(cat(3,AlreadyCaledDatas.OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
-OnsetBin = AlreadyCaledDatas.OutDataStrc.TriggerStartBin;
+NewNPClusHandle.CurrentSessInds = strcmpi('Task',NewNPClusHandle.SessTypeStrs);
+OutDataStrc = NewNPClusHandle.TrigPSTH_Ext([-1 5],[300 100],NewNPClusHandle.StimAlignedTime{NewNPClusHandle.CurrentSessInds});
+NewBinnedDatas = permute(cat(3,OutDataStrc.TrigData_Bin{:,1}),[1,3,2]);
+OnsetBin = OutDataStrc.TriggerStartBin;
 
 % behavior datas
 BlockSectionInfo = Bev2blockinfoFun(behavResults);
@@ -37,8 +72,8 @@ FreqTypes = unique(NMTrFreqsAll);
 FreqTypeNum = length(FreqTypes);
 
 % find fieldnames
-AllNameStrs = AlreadyCaledDatas.NewAdd_ExistAreaNames;
-AllAreaUnitInds = AlreadyCaledDatas.ExistField_ClusIDs;
+AllNameStrs = NewAdd_ExistAreaNames;
+AllAreaUnitInds = ExistField_ClusIDs;
 AllAreaUnitNums = cellfun(@numel,AllAreaUnitInds(:,2));
 ExcludeAreaInds = AllAreaUnitNums >= 5;
 
@@ -61,7 +96,7 @@ for cU = 1 : UnitNums
     BaselineSubData_zs(:,cU,:) = (cU_Sub - mean(cU_Sub,'all'))/std(cU_Sub(:));
 end
 BaselineWin = 1:OnsetBin-1;
-AfterRespWin = [0:0.1:1.4]/AlreadyCaledDatas.OutDataStrc.USedbin(2)+OnsetBin;
+AfterRespWin = [0:0.1:1.4]/OutDataStrc.USedbin(2)+OnsetBin;
 %%
 tic
 AreaInfos = cell(NumUsedAreas, 8);
@@ -115,7 +150,7 @@ toc
 %%
 CalSaveDatafile = (fullfile(fullsavePath,'plsInfoDataSave_Choice_zs.mat'));
 save(CalSaveDatafile,'AreaInfos','AreaInfos_base','UsedArea_strs','UsedUnitNums','UsedUnitInds','NMActionChoices',...
-    'NMBlockTypeLabels','NMTrInds','-v7.3');
+    'NMBlockTypeLabels','NMTrInds','OutDataStrc','-v7.3');
 
 
 %%
