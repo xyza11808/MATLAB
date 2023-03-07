@@ -22,7 +22,7 @@ function varargout = SimpleROI_Draw_GUI(varargin)
 
 % Edit the above text to modify the response to help SimpleROI_Draw_GUI
 
-% Last Modified by GUIDE v2.5 19-Aug-2019 20:25:54
+% Last Modified by GUIDE v2.5 04-Mar-2023 13:57:49
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -792,4 +792,49 @@ if cROI > 0
     end
 end
 
+
+
+
+% --- Executes on button press in DataExtraxtTag.
+function DataExtraxtTag_Callback(hObject, eventdata, handles)
+% hObject    handle to DataExtraxtTag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global ROIDataSummary
+if length(ROIDataSummary.ROIDataSum) < 1
+    warning('No ROI exists');
+    return;
+end
+
+% search for tif files within current folder
+AllTifFiles = dir(fullfile(ROIDataSummary.SessPath ,'*.tif'));
+Numfiles = length(AllTifFiles);
+fprintf('Loading %d files for ROI data extraction...\n',Numfiles);
+
+nROIs = length(ROIDataSummary.ROIDataSum);
+fileROIData = cell(Numfiles, nROIs);
+filenamePrefix = cell(Numfiles, 1);
+for cf = 1 : Numfiles
+    cfname = AllTifFiles(cf).name;
+    cfname_prefix = cfname(1:end-4);
+    fprintf('Loading file %s...\n',cfname);
+    [im,~] = load_scim_data(fullfile(ROIDataSummary.SessPath, cfname));
+    fileFrameNum = size(im,3);
+    
+    cfDatas = zeros(nROIs, fileFrameNum);
+    for cR = 1:nROIs
+        cR_mask = ROIDataSummary.ROIDataSum(cR).ROIMask;
+        for cframe = 1 : fileFrameNum
+            cfdata = im(:,:,cframe);
+            cfDatas(cR, cframe) = mean(cfdata(cR_mask));
+        end
+    end
+    fileROIData(cf) = {cfDatas};
+    filenamePrefix{cf} = cfname_prefix;
+end
+ROIInfoDatas = ROIDataSummary.ROIDataSum;
+
+fprintf('Save ROI data in folder: \n %s \n',ROIDataSummary.SessPath);
+save(fullfile(ROIDataSummary.SessPath,'ROIDataResults.mat'),'fileROIData','filenamePrefix','-v7.3');
+save(fullfile(ROIDataSummary.SessPath,'ROIinfoData.mat'),'ROIInfoDatas','-v7.3');
 
