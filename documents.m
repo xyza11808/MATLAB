@@ -325,6 +325,27 @@ v_noise = fminsearch(@(v) ErrorYData(v(1),v(2),v(3),v(4),x),([1 1 0 1])'); % how
 % hold on
 % plot3(Test2_datas(:,1)*30,Test2_datas(:,2)*30,Test2_datas(:,3)*30,'bo');
 
+
+% % #######
+% % gradient direction plot for 2d plane
+% mu = [0 0];
+% Sigma = [0.25 0.3; 0.3 1];
+% x1 = -3:0.2:3;
+% x2 = -3:0.2:3;
+% [X1,X2] = meshgrid(x1,x2);
+% X = [X1(:) X2(:)];
+% 
+% y = mvnpdf(X,mu,Sigma);
+% y = reshape(y,length(x2),length(x1));
+% figure;
+% [px,py] = gradient(y);
+% contour(X1,X2,y)
+% hold on
+% quiver(X1,X2,px,py)
+% hold off
+
+
+
 %% 3d brain region mesh plot
 % ways to plot 3d brain meshes
 % load the corresponded .obj file, the file name is the corresponded "id"
