@@ -188,9 +188,14 @@ if ~isempty(header)
         CaTrial.DaqInfo = header.SI4;
         CaTrial.nFrames = header.SI4.acqNumFrames;
         CaTrial.FrameTime = header.SI4.scanFramePeriod;
+    elseif isfield(header, 'SI')
+        CaTrial.DaqInfo = header.SI;
+        CaTrial.nFrames = header.SI.hStackManager.framesPerSlice;
+        CaTrial.FrameTime = header.SI.hRoiManager.scanFramePeriod;
     else
         CaTrial.nFrames = header.n_frame;
         CaTrial.FrameTime = [];
+        CaTrial.nFrames = nan;
     end
     if CaTrial.FrameTime < 1 % some earlier version of ScanImage use sec as unit for msPerLine
         CaTrial.FrameTime = CaTrial.FrameTime*1000;
@@ -239,7 +244,7 @@ if exist(datapath, 'dir')
 %     if exist('M:\2p_data','dir')
 %         cd('M:\2p_data');
 %     end
-end;
+end
 if ~exist('filename', 'var')
 %     clearvars -global;
 %     CaSignal_ROI_GUI_NP_extract_OpeningFcn(hObject, eventdata, handles);
@@ -258,7 +263,7 @@ if ~exist('filename', 'var')
     CaSignal.data_file_names = {};
     for i = 1:length(CaSignal.data_files)
         CaSignal.data_file_names{i} = CaSignal.data_files(i).name;
-    end;
+    end
 end
 datapath = pwd;
 set(handles.DataPathEdit,'String',datapath);
@@ -276,12 +281,23 @@ set(handles.msgBox, 'String', ['Loading image file ' filename ' ...']);
 % t_elapsed = toc;
 set(handles.msgBox, 'String', ['Loaded file ' filename]);
 % check if continued-acquisition session
-if isempty(header.SI4.triggerNextTrigSrc)
-    CaSignal.ContAcqCheck = 0;
-    set(handles.IsConAcqCheck,'value',0);
-else
-    CaSignal.ContAcqCheck = 1;
+if isfield(header,'SI4')
+    if isempty(header.SI4.triggerNextTrigSrc)
+        CaSignal.ContAcqCheck = 0;
+    else
+        CaSignal.ContAcqCheck = 1;
+    end
+elseif isfield(header,'SI')
+    if isempty(header.SI.hScan2D.trigNextEdge)
+        CaSignal.ContAcqCheck = 0;
+    else
+        CaSignal.ContAcqCheck = 1;
+    end
+end
+if CaSignal.ContAcqCheck
     set(handles.IsConAcqCheck,'value',1);
+else
+    set(handles.IsConAcqCheck,'value',0);
 end
 
 TrialNo = find(strcmp(filename, CaSignal.data_file_names));
@@ -295,19 +311,30 @@ info = imfinfo(filename);
 CaSignal.ImInfo = info;
 
 if isfield(info(1), 'ImageDescription')
-    CaSignal.ImageDescription = info(1).ImageDescription; % used by Turboreg
+    CaSignal.ImageDescription = strrep(info(1).ImageDescription,'   ',''); % used by Turboreg
 else
-    CaSignal.ImageDescription = '';
+    CaSignal.ImageDescription = header;
 end
 CaSignal.ImageArray = im;
 CaSignal.imSize = size(im);
-AcqFrameNum = header.SI4.acqNumFrames;
+
 if ~CaSignal.ContAcqCheck
-    if AcqFrameNum ~= size(im,3)
-        fprintf('Current trial frame number(%d) is different from required trial(%d).\n',size(im,3),AcqFrameNum);
-        CaSignal.IsTrialExcluded(TrialNo) = true;
-        set(handles.ExcludeCTr,'value',1);
+    if isfield(header,'SI4')
+        AcqFrameNum = header.SI4.acqNumFrames;
+        if AcqFrameNum ~= size(im,3)
+            fprintf('Current trial frame number(%d) is different from required trial(%d).\n',size(im,3),AcqFrameNum);
+            CaSignal.IsTrialExcluded(TrialNo) = true;
+            set(handles.ExcludeCTr,'value',1);
+        end
+    elseif isfield(header,'SI')
+        AcqFrameNum = header.SI.hStackManager.framesPerSlice;
+        if AcqFrameNum ~= size(im,3)
+            fprintf('Current trial frame number(%d) is different from required trial(%d).\n',size(im,3),AcqFrameNum);
+            CaSignal.IsTrialExcluded(TrialNo) = true;
+            set(handles.ExcludeCTr,'value',1);
+        end
     end
+    
 end
 
 set(handles.cTrFNumDisp,'String',num2str(size(im,3)));
@@ -386,8 +413,10 @@ if isfield(header,'acq')
     ['zStep: ' num2str(header.acq.zStepSize)] ...
     ['triggerTime: ' header.internal.triggerTimeString]...
     };
-else
-    CaSignal.info_disp = [];
+elseif isfield(header,'SI4')
+    CaSignal.info_disp = header.SI4;
+elseif isfield(header,'SI')
+    CaSignal.info_disp = header.SI;
 end
 %     dispModeImageInfoButton_Callback(hObject, eventdata, handles)
 % end;
@@ -1024,6 +1053,8 @@ else
             figure(CaSignal.h_mean_fig);
         elseif isfield(CaSignal,'h_maxDelta_fig')
             figure(CaSignal.h_maxDelta_fig);
+        elseif isfield(CaSignal,'h_max_fig')
+            figure(CaSignal.h_max_fig);
         end
         
 end

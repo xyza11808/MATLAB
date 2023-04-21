@@ -45,29 +45,34 @@ try
     if strncmp('state',headerString,5) 
         fileVersion = 3;
         header = parseHeader(headerString);
-    else
+    elseif ~isempty(strfind(headerString,'SI.'))
         fileVersion = 4;
         header = assignments2StructOrObj(headerString);
+    elseif isempty(strfind(headerString,'SI.')) && isfield(info(1),'Software')
+        fileVersion = 2023;
+        header = parseStr2Struct2023({headerString,info(1).Software});
     end
-    IsScanim = 1;
+    header.SoftVer = fileVersion;
+%     IsScanim = 1;
 catch
     header = [];
-    IsScanim = 0;
+%     IsScanim = 0;
 end
+
 if IsDataLoad
     %Extracts header info required by scim_openTif()
-    if IsScanim
-        hdr = extractHeaderData(header,fileVersion);
-
-        % %VI120910A: Detect/handle header-only operation (don't read data)
-        % if nargout <=1 % && ~forceOutput 
-        %     return;
-        % end
-        im = zeros(hdr.numLines, hdr.numPixels, length(frame_inds), 'int16');
-    else
+%     if IsScanim
+%         hdr = extractHeaderData(header,fileVersion);
+% 
+%         % %VI120910A: Detect/handle header-only operation (don't read data)
+%         % if nargout <=1 % && ~forceOutput 
+%         %     return;
+%         % end
+%         im = zeros(hdr.numLines, hdr.numPixels, length(frame_inds), 'int16');
+%     else
         xx = info(1);
         im = zeros(xx.Height, xx.Width, length(frame_inds), 'int16');
-    end
+%     end
     hTif = Tiff(filename,'r');
     
     for i = 1:length(frame_inds)
@@ -225,5 +230,24 @@ for c = 1:numel(rows)
         end
     end
 end
+
+end
+
+function s = parseStr2Struct2023(InputStrsCell)
+% {headerString,info(1).Software}
+s = struct();
+NumStrs = length(InputStrsCell);
+for cStr = 1:NumStrs
+    cStrs = InputStrsCell{cStr};
+    NumAssignStrs = strsplit(cStrs,newline);
+    for cAssigns = 1 : length(NumAssignStrs)
+        try 
+            eval(['s.',NumAssignStrs{cAssigns},';']);
+        catch
+            % do nothing
+        end
+    end
+end
+
 
 end
