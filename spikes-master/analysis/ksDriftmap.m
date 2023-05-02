@@ -15,8 +15,11 @@ if localizedSpikesOnly % go over all templates and check which are not localized
   for t = 1:size(sp.temps,1)
     M = max(max(abs(squeeze(sp.temps(t,:,:)))));
     ch = find(max(abs(squeeze(sp.temps(t,:,:)))) > 0.5*M); % the channels where the template has significant weight
-    localizedTemplates(t) = max(ch) - min(ch) <= 20; % all channels at most 20 apart?
-    
+    try
+        localizedTemplates(t) = max(ch) - min(ch) <= 20; % all channels at most 20 apart?
+    catch
+        localizedTemplates(t) = false;
+    end
     %assert(sum(sum(squeeze(sp.temps(t,:,:)).^2)) == 1, 'template norm not 1?!')
     %com = sp.ycoords .* max(abs(squeeze(sp.temps(t,:,:)))).^2 / sum(max(abs(squeeze(sp.temps(t,:,:)))).^2)
   end
@@ -30,7 +33,7 @@ if localizedSpikesOnly % go over all templates and check which are not localized
   clear i localizedTemplates M ch t
 end
 
-ycoords = sp.ycoords;
+ycoords = single(sp.ycoords);
 pcFeat = sp.pcFeat;
 pcFeat = squeeze(pcFeat(:,1,:)); % take first PC only
 pcFeat(pcFeat<0) = 0; % some entries are negative, but we don't really want to push the CoM away from there.
@@ -47,12 +50,24 @@ spikeTimes = sp.st;
 % which channels for each spike?
 spikeFeatInd = pcFeatInd(spikeTemps+1,:);
 
-% ycoords of those channels?
-spikeFeatYcoords = ycoords(spikeFeatInd+1); % 2D matrix of size #spikes x 12
+if size(spikeFeatInd,1) > 1e7
+    spikeDepths = zeros(size(spikeFeatInd,1),1,'single');
+    SubIndsScale = [0:1e7:size(spikeFeatInd,1),size(spikeFeatInd,1)];
+    for cInds = 1:length(SubIndsScale)-1
+        cSubInds = SubIndsScale(cInds)+1:SubIndsScale(cInds+1);
+        % ycoords of those channels?
+        spikeFeatYcoords = ycoords(spikeFeatInd(cSubInds,:)+1); % 2D matrix of size #spikes x 12
 
-% center of mass is sum(coords.*features)/sum(features)
-spikeDepths = sum(spikeFeatYcoords.*pcFeat.^2,2)./sum(pcFeat.^2,2);
+        % center of mass is sum(coords.*features)/sum(features)
+        spikeDepths(cSubInds) = sum(spikeFeatYcoords.*pcFeat(cSubInds,:).^2,2)./sum(pcFeat(cSubInds,:).^2,2);
+    end
+else
+    % ycoords of those channels?
+    spikeFeatYcoords = ycoords(spikeFeatInd+1); % 2D matrix of size #spikes x 12
 
+    % center of mass is sum(coords.*features)/sum(features)
+    spikeDepths = sum(spikeFeatYcoords.*pcFeat.^2,2)./sum(pcFeat.^2,2);
+end
 
 %% for plotting, we need the amplitude of each spike, both so we can draw a
 % threshold and exclude the low-amp noisy ones, and so we can color the
