@@ -3,14 +3,14 @@ cclr
 %% 1) Load CCF and set paths for slide and slice images
 
 % Load CCF atlas
-allen_atlas_path = 'E:\MatCode\AllentemplateData';
-% allen_atlas_path = 'E:\AllenCCF';
+% allen_atlas_path = 'E:\MatCode\AllentemplateData';
+allen_atlas_path = 'E:\AllenCCF';
 tv = readNPY([allen_atlas_path filesep 'template_volume_10um.npy']);
 av = readNPY([allen_atlas_path filesep 'annotation_volume_10um_by_index.npy']);
 st = loadStructureTree([allen_atlas_path filesep 'structure_tree_safe_2017.csv']);
 
 % Set paths for histology images and directory to save slice/alignment
-im_path = 'Y:\#members\xy\NP_anatomyDatabackup\b105a07\RGBfiles';
+im_path = 'E:\datas\anatomy\b106a02_RGBfiles';
 slice_path = [im_path filesep 'slices'];
 
 %% 2) Preprocess slide images to produce slice images
@@ -23,10 +23,10 @@ slice_path = [im_path filesep 'slices'];
 
 % Set resize factor
 % resize_factor = []; % (slides ome.tiff: auto-resize ~CCF size 10um/px)
-ImageSizeInfo = 5559.24/2138; % um/px for the real image
+ImageSizeInfo = 5951.55/2289; % um/px for the real image
 resize_factor = ImageSizeInfo/10; % um/px is the allen reference size
 % resize_factor = 1; % (slides tiff: resize factor)
-
+%%
 % Set slide or slice images
 % slice_images = false; % (images are slides - extract individual slices)
 slice_images = true; % (images are already individual slices)
@@ -52,14 +52,14 @@ AP_manual_align_histology_ccf(tv,av,st,slice_path);
 % Display aligned CCF over histology slices
 AP_view_aligned_histology(st,slice_path);
 
-% Display histology within 3D CCF
-AP_view_aligned_histology_volume(tv,av,st,slice_path,2);
+% % Display histology within 3D CCF
+% AP_view_aligned_histology_volume(tv,av,st,slice_path,2);
 %%
 % Get probe trajectory from histology, convert to CCF coordinates
 % input probe channel file location, and extract each channel's area
 % loation
-probechnfile = 'E:\MatCode\MATLAB\sortingcode\Kilosort3\configFiles\neuropixPhase3B2_kilosortChanMap.mat';
-% probechnfile = 'E:\codes\matcodes\MATLAB\sortingcode\Kilosort3\configFiles\neuropixPhase3B2_kilosortChanMap.mat';
+% probechnfile = 'E:\MatCode\MATLAB\sortingcode\Kilosort3\configFiles\neuropixPhase3B2_kilosortChanMap.mat';
+probechnfile = 'E:\codes\matcodes\MATLAB\sortingcode\Kilosort3\configFiles\neuropixPhase3B2_kilosortChanMap.mat';
 % probechnfile = 'E:\codes\matcodes\ks2_5\configFiles\neuropixPhase3B2_kilosortChanMap.mat';
 AP_get_probe_histology(tv,av,st,slice_path,probechnfile);
 %%
